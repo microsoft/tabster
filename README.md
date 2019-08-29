@@ -1,14 +1,50 @@
+# Ability Helpers
 
-# Contributing
+A set of tools and concepts for making a dynamic web application properly accessible and keyboard-navigable.
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+## About
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+*This project is pretty much in a work-in-progress proof-of-concept state. More docs and examples are to come.*
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+The way a browser and the screen readers handle a web application is evolved from the static web era. A process of making a modern dynamic web application accessible presents a number of challenges like, for example, the proper focus management between modal dialogs, popups, lists and other parts of the dynamically changing application. This project is an attempt to solve some of those challenges.
+
+## Dependencies
+
+This project is framework-agnostic. It operates on the DOM level and has no external runtime dependencies. Though it is possible that your framework or application might have own logic to achieve similar result, in that case runtime conflicts and behavioural inconsistencies are definitely possible. At the same time, it does not do things automatically and parts of it should be explicitly enabled.
+
+## Parts
+
+### Announcer
+
+An API for the accessibility announcements. To keep the screen reader users informed about the application state changes.
+
+### Focusable
+
+An API for traversing focusable elements.
+
+### FocusDeloser
+
+When you remove, for example, a button which has focus from the DOM, the focus gets lost which is confusing for the screen reader and keyboard navigation users. FocusDeloser is a concept which helps to automatically restore the focus when it gets lost without manually calling `.focus()` method from the application code.
+
+### FocusedElementState
+
+An event and a couple of methods to track and change currently focused element.
+
+### KeyboardNavigationState
+
+An event and a method to determine if the user is using keyboard to navigate through the application.
+
+### ModalityLayer
+
+When you show, for example, a modal dialog, the rest of the application might need to be excluded from the keyboard and screen reader navigation flow. ModalityLayer is a concept to conveniently make that possible.
+
+### Outline
+
+When people navigate with the keyboard, the currently focused element should be properly highlighted. There is a CSS property called `outline`, which is unfortunately insufficient: the outline of an element gets cropped when a parent element has `overflow: hidden`, there is no way to limit the outline visibility to only the cases when the user is navigating with keyboard. So, we have a custom outline component which is supposed to solve both of the problems.
+
+## Contributing
+
+Contributions are welcome (see the [CONTRIBUTING](./CONTRIBUTING.md) file), though please keep in mind the work-in-progress proof-of-concept state. Might make sense to just observe/discuss until the thing gets stable and well-documented.
+
+## License
+This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.
