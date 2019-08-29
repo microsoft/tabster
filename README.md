@@ -34,6 +34,10 @@ An event and a couple of methods to track and change currently focused element.
 
 An event and a method to determine if the user is using keyboard to navigate through the application.
 
+### List
+
+Keyboard navigation for the lists should allow to avoid going through every list item when the users use Tab key (only one item of the list should be tabbable), also the arrow keys and Home/End/PageUp/PageDown keys should be handled to move between the list items. This is an API to easily make properly behaving lists.
+
 ### ModalityLayer
 
 When you show, for example, a modal dialog, the rest of the application might need to be excluded from the keyboard and screen reader navigation flow. ModalityLayer is a concept to conveniently make that possible.
