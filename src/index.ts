@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AbilityHelpers, setupIFrame } from './AbilityHelpers';
+import { AbilityHelpers, setupIFrame, Types } from './AbilityHelpers';
 
 export {
     AbilityHelpers,
-    setupIFrame
+    setupIFrame,
+    Types
 };

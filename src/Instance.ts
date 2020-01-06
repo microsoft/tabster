@@ -15,7 +15,7 @@ export interface WindowWithAbilityHelpers extends Window {
     };
 }
 
-export interface HTMLElementWithAbilityHelpers extends HTMLElement  {
+export interface HTMLElementWithAbilityHelpers extends HTMLElement {
     __abilityHelpers?: Types.AbilityHelpersOnElement;
 }
 

@@ -4,16 +4,17 @@
  */
 
 import { Announcer } from './Announcer';
-import { Focusable } from './Focusable';
+import { Focusable, setupFocusableInIFrame } from './Focusable';
 import { FocusDeloser } from './FocusDeloser';
 import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
 import { WindowWithAbilityHelpers } from './Instance';
 import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
-import { List, setupListInIFrame } from './List';
 import { ModalityLayer, setupModalityLayerInIFrame } from './ModalityLayer';
 import { observeMutations } from './MutationEvent';
 import { Outline, setupOutlineInIFrame } from './Outline';
 import * as Types from './Types';
+
+export { Types };
 
 class AbilityHelpers implements Types.AbilityHelpers {
     announcer: Announcer;
@@ -23,7 +24,6 @@ class AbilityHelpers implements Types.AbilityHelpers {
     focusDeloser: FocusDeloser;
     focusable: Focusable;
     modalityLayer: ModalityLayer;
-    list: List;
 
     constructor(mainWindow: Window) {
         observeMutations(mainWindow.document);
@@ -32,9 +32,8 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.focusedElement = new FocusedElementState(mainWindow, this);
         this.outline = new Outline(mainWindow, this);
         this.focusDeloser = new FocusDeloser(mainWindow, this);
-        this.focusable = new Focusable(this);
+        this.focusable = new Focusable(mainWindow, this);
         this.modalityLayer = new ModalityLayer(mainWindow, this);
-        this.list = new List(mainWindow, this);
     }
 }
 
@@ -74,6 +73,6 @@ export function setupIFrame(iframeDocument: HTMLDocument) {
     setupFocusedElementStateInIFrame(mainWindow, iframeDocument);
     setupKeyboardNavigationStateInIFrame(mainWindow, iframeDocument);
     setupOutlineInIFrame(mainWindow, iframeDocument);
+    setupFocusableInIFrame(mainWindow, iframeDocument);
     setupModalityLayerInIFrame(mainWindow, iframeDocument);
-    setupListInIFrame(mainWindow, iframeDocument);
 }

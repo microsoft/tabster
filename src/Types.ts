@@ -11,7 +11,6 @@ export interface AbilityHelpers {
     focusDeloser: FocusDeloser;
     focusable: Focusable;
     modalityLayer: ModalityLayer;
-    list: List;
 }
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -43,6 +42,7 @@ export interface FocusedElementDetails {
 
 export interface FocusedElementState extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
     getFocusedElement(): HTMLElement | undefined;
+    getLastFocusedElement(): HTMLElement | undefined;
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
 }
 
@@ -99,30 +99,84 @@ export interface FocusDeloser {
     resume(restore?: boolean): void;
 }
 
-export interface FocusableElementInfo {
-    isDefaultFocusable: boolean;
-    isIgnoredFocusable: boolean;
+export interface FocusableProps {
+    isDefault: boolean;
+    isIgnored: boolean;
+}
+
+export interface FocusableGroupState {
+    isCurrent: boolean;
+    isPrevious: boolean;
+    isNext: boolean;
+    isFirst: boolean;
+    isLast: boolean;
+    isVisible: boolean;
+}
+
+export interface FocusableGroupProps {
+    isDefault?: boolean | (() => boolean);
+    onChange?: ((state: FocusableGroupState) => void) | null;
+}
+
+export interface FocusableGroupContainerProps {
+    getCurrent?: () => HTMLElement;
+}
+
+export interface FocusableGroupContainer {
+    readonly id: string;
+    dispose(): void;
+    setProps(props: Partial<FocusableGroupContainerProps> | null): void;
+    getProps(): FocusableGroupContainerProps;
+    getElement(): HTMLElement;
+    addGroup(group: FocusableGroup): void;
+    removeGroup(group: FocusableGroup): void;
+    setCurrentGroup(group: FocusableGroup): void;
+    getCurrentGroup(): FocusableGroup | null;
+    getGroupState(group: FocusableGroup): FocusableGroupState;
+    isEmpty(): boolean;
+}
+
+export interface FocusableGroup {
+    readonly id: string;
+    dispose(): void;
+    getElement(): HTMLElement;
+    moveTo(newElement: HTMLElement): void;
+    getState(): FocusableGroupState;
+    makeCurrent(): void;
+    isDefault(): boolean;
+    getProps(): FocusableGroupProps;
+    setupContainer(remove?: boolean): void;
 }
 
 export interface Focusable {
-    getInfo(element: HTMLElement): FocusableElementInfo;
-    setup(element: HTMLElement, info: Partial<FocusableElementInfo>): void;
-    isFocusable(el: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
-    isVisible(el: HTMLElement): boolean;
-    isAccessible(el: HTMLElement): boolean;
-    findFirst(container: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
-    findLast(container: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
-    findNext(includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean,
-            container?: HTMLElement, focused?: HTMLElement): HTMLElement | null;
-    findPrev(includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean,
-            container?: HTMLElement, focused?: HTMLElement): HTMLElement | null;
-    findFirstListItem(container: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
-    findLastListItem(container: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
-    findNextListItem(includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean,
-            container?: HTMLElement, focused?: HTMLElement): HTMLElement | null;
-    findPrevListItem(includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean,
-            container?: HTMLElement, focused?: HTMLElement): HTMLElement | null;
-    findDefault(container: HTMLElement): HTMLElement | null;
+    addGroup(element: HTMLElement, props: FocusableGroupProps): void;
+    removeGroup(element: HTMLElement): void;
+    moveGroup(from: HTMLElement, to: HTMLElement): void;
+    setCurrentGroup(element: HTMLElement): void;
+    isInCurrentGroup(element: HTMLElement): boolean;
+    findGroup(element: HTMLElement): HTMLElement | null;
+
+    findFirstGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
+    findLastGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
+    findNextGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
+    findPrevGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
+
+    getGroupContainerProps(element: HTMLElement): FocusableGroupContainerProps | null;
+    setGroupContainerProps(element: HTMLElement, props: Partial<FocusableGroupContainerProps> | null): void;
+
+    getProps(element: HTMLElement): FocusableProps;
+    setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
+
+    isFocusable(element: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
+    isVisible(element: HTMLElement): boolean;
+    isAccessible(element: HTMLElement): boolean;
+    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
+    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
+    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean): HTMLElement | null;
+    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean): HTMLElement | null;
+    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
 }
 
 export interface ModalityLayerProps extends FocusDeloserProps {
@@ -174,37 +228,6 @@ export interface ModalityLayer {
     focusLayer(elementFromLayer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
 }
 
-export interface ListProps extends FocusDeloserProps {
-    bottomUp?: boolean;
-}
-
-export interface ListContainer {
-    readonly id: string;
-    dispose(): void;
-    move(newElement: HTMLElement): void;
-    getCurrentItem(): ListItem | undefined;
-    setCurrentItem(item: ListItem | undefined): void;
-    getElement(): HTMLElement;
-}
-
-export interface ListItem {
-    readonly id: string;
-    dispose(): void;
-    move(newElement: HTMLElement): void;
-    getElement(): HTMLElement;
-}
-
-export interface List {
-    add(element: HTMLElement, props?: ListProps): void;
-    remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
-    addItem(element: HTMLElement): void;
-    removeItem(element: HTMLElement): void;
-    moveItem(from: HTMLElement, to: HTMLElement): void;
-    setActionable(element: HTMLElement, isActionable?: boolean): void;
-    setCurrent(context: HTMLElement, element: HTMLElement | undefined): boolean;
-}
-
 export interface FocusDeloserOnElement {
     focusDeloser?: FocusDeloserContainer;
 }
@@ -217,23 +240,16 @@ export interface ModalityLayerOnElement {
     modalityLayer?: ModalityLayerContainer;
 }
 
-export interface ListOnElement {
-    list?: ListContainer;
-}
-
-export interface ListItemOnElement {
-    listItem?: ListItem;
-}
-
-export interface ListActionableOnElement {
-    listActionable?: boolean;
-}
-
 export interface FocusableOnElement {
-    focusable?: {
-        default?: boolean;
-        ignored?: boolean;
-    };
+    focusable?: FocusableProps;
+}
+
+export interface FocusableGroupOnElement {
+    focusableGroup?: FocusableGroup;
+}
+
+export interface FocusableGroupContainerOnElement {
+    focusableGroupContainer?: FocusableGroupContainer;
 }
 
 export interface OutlineOnElement {
@@ -244,8 +260,7 @@ export type AbilityHelpersOnElement =
     FocusDeloserOnElement &
     ModalityLayerRootOnElement &
     ModalityLayerOnElement &
-    ListOnElement &
-    ListItemOnElement &
-    ListActionableOnElement &
     FocusableOnElement &
+    FocusableGroupOnElement &
+    FocusableGroupContainerOnElement &
     OutlineOnElement;

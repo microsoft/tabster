@@ -5,7 +5,6 @@
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from '../IFrameEvents';
 import { Keys } from '../Keys';
-import { List, ListNavigation } from '../List';
 import { ModalityLayer } from '../ModalityLayer';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
@@ -61,9 +60,8 @@ export class FocusedElementState
     private _initTimer: number | undefined;
     private _mainWindow: Window;
     private _moveOutInput: HTMLInputElement | undefined;
-    private _insideListTimer: number | undefined;
-    private _curList: Types.ListContainer | undefined;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
+    private _lastVal: HTMLElement | undefined;
 
     constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
         super();
@@ -77,13 +75,12 @@ export class FocusedElementState
     private _init = (): void => {
         this._initTimer = undefined;
 
-        FocusedElementState.replaceFocus(this._mainWindow.document);
+        FocusedElementState._replaceFocus(this._mainWindow.document);
 
         this._mainWindow.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
         this._mainWindow.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
         this._mainWindow.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._mainWindow.addEventListener('keydown', this._onKeyDown, true); // Capture!
-
         this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
@@ -95,17 +92,23 @@ export class FocusedElementState
             this._initTimer = undefined;
         }
 
-        this._mainWindow.document.removeEventListener('focusin', this._onFocusIn, true);
-        this._mainWindow.document.removeEventListener('focusout', this._onFocusOut, true);
-
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true);
-
+        this._mainWindow.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
+        this._mainWindow.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
+        this._mainWindow.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._mainWindow.removeEventListener('keydown', this._onKeyDown, true); // Capture!
-        this._mainWindow.document.removeEventListener('mousedown', this._onMouseDown, true);
+        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
     getFocusedElement(): HTMLElement | undefined {
         return this.getVal();
+    }
+
+    getLastFocusedElement(): HTMLElement | undefined {
+        if (this._lastVal && (!this._lastVal.ownerDocument || !this._lastVal.ownerDocument.contains(this._lastVal))) {
+            this._lastVal = undefined;
+        }
+
+        return this._lastVal;
     }
 
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
@@ -150,6 +153,14 @@ export class FocusedElementState
         this._nextVal = undefined;
     }
 
+    protected setVal(val: HTMLElement | undefined, details: Types.FocusedElementDetails): void {
+        super.setVal(val, details);
+
+        if (val) {
+            this._lastVal = val;
+        }
+    }
+
     private _onFocusIn = (e: FocusEvent): void => {
         this._setFocusedElement(e.target as HTMLElement, (e.relatedTarget as HTMLElement) || undefined);
     }
@@ -188,7 +199,7 @@ export class FocusedElementState
         }
     }
 
-    private static replaceFocus(doc: HTMLDocument): void {
+    private static _replaceFocus(doc: HTMLDocument): void {
         const win = doc.defaultView as (WindowWithHTMLElement | null);
 
         if (!win) {
@@ -213,10 +224,10 @@ export class FocusedElementState
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
-        const li = List.getItemFor(e.target as HTMLElement);
+        const group = this._ah.focusable.findGroup(e.target as HTMLElement);
 
-        if (li && (li.list.getCurrentItem() !== li.listItem)) {
-            li.list.setCurrentItem(li.listItem);
+        if (group) {
+            this._ah.focusable.setCurrentGroup(group);
         }
     }
 
@@ -233,8 +244,6 @@ export class FocusedElementState
             case Keys.Right:
             case Keys.Up:
             case Keys.Left:
-            case Keys.Enter:
-            case Keys.Space:
             case Keys.PageDown:
             case Keys.PageUp:
             case Keys.Home:
@@ -249,18 +258,16 @@ export class FocusedElementState
             let l = ModalityLayer.getLayerFor(curElement);
 
             if (!l) {
-                const li = List.getItemFor(curElement);
-
-                if (!li) {
-                    // We're not in a modality layer and not in a list,
+                if (!this._ah.focusable.isInCurrentGroup(curElement)) {
+                    // We're not in a modality layer and not in a current group,
                     // do not custom-handle the Tab press.
                     return;
                 }
             }
 
             const next = e.shiftKey
-                ? this._ah.focusable.findPrev()
-                : this._ah.focusable.findNext();
+                ? this._ah.focusable.findPrev(curElement)
+                : this._ah.focusable.findNext(curElement);
 
             if (l && l.layer) {
                 const nml = next && ModalityLayer.getLayerFor(next);
@@ -282,56 +289,57 @@ export class FocusedElementState
                 this._moveOutWithDefaultAction(l ? l.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
             }
         } else {
-            const li = List.getItemFor(curElement);
+            const group = this._ah.focusable.findGroup(curElement);
 
-            if (!li) {
-                return;
-            }
-
-            if ((e.keyCode === Keys.Enter) || (e.keyCode === Keys.Space)) {
-                const liElement = li.listItem.getElement();
-
-                if (liElement === curElement) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-
-                    (List.findActionable(liElement) || liElement).click();
-                }
-
+            if (!group) {
                 return;
             }
 
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            const listNavigation = new ListNavigation(li.list.getElement(), curElement, (el) => callOriginalFocusOnly(el), this._ah);
+            // const listNavigation = new ListNavigation(li.list.getElement(), curElement, (el) => callOriginalFocusOnly(el), this._ah);
+
+            let next: HTMLElement | null = null;
 
             switch (e.keyCode) {
                 case Keys.Down:
                 case Keys.Right:
-                    listNavigation.next();
+                    next = this._ah.focusable.findNextGroup(group);
                     break;
 
                 case Keys.Up:
                 case Keys.Left:
-                    listNavigation.prev();
+                    next = this._ah.focusable.findPrevGroup(group);
                     break;
 
                 case Keys.PageDown:
-                    listNavigation.pageDown();
+//                    listNavigation.pageDown();
                     break;
 
                 case Keys.PageUp:
-                    listNavigation.pageUp();
+//                    listNavigation.pageUp();
                     break;
 
                 case Keys.Home:
-                    listNavigation.home();
+//                    listNavigation.home();
                     break;
 
                 case Keys.End:
-                    listNavigation.end();
+//                    listNavigation.end();
                     break;
+            }
+
+            if (next) {
+                this._ah.focusable.setCurrentGroup(next);
+
+                if (!this._ah.focusable.isFocusable(next)) {
+                    next = this._ah.focusable.findFirst(next);
+                }
+
+                if (next) {
+                    callOriginalFocusOnly(next);
+                }
             }
         }
     }
@@ -382,36 +390,11 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (e: HTMLElement | undefined, d: Types.FocusedElementDetails): void => {
-        if (this._insideListTimer) {
-            this._mainWindow.clearTimeout(this._insideListTimer);
-            this._insideListTimer = undefined;
-        }
-
         if (e) {
-            const li = List.getItemFor(e);
             const l = ModalityLayer.getLayerFor(e);
             const curLayerId = l ? l.root.getCurrentLayerId() : undefined;
 
-            if (li && (!l || curLayerId === undefined || (l.layer.userId === curLayerId))) {
-                if (this._curList === li.list) {
-                    if (li && (li.list.getCurrentItem() !== li.listItem)) {
-                        li.list.setCurrentItem(li.listItem);
-                    }
-                } else {
-                    this._curList = li.list;
-
-                    const cur = li.list.getCurrentItem();
-                    const el = cur ? cur.getElement() : undefined;
-
-                    if (el && (el !== e) && !el.contains(e)) {
-                        this._ah.focusedElement.focus(el);
-
-                        return;
-                    }
-                }
-            } else {
-                this._curList = undefined;
-            }
+            this._ah.focusable.setCurrentGroup(e);
 
             if (!l) {
                 return;
@@ -445,18 +428,10 @@ export class FocusedElementState
                     this._ah.focusedElement.focus(toFocus);
                 } else {
                     // Current layer doesn't seem to have focusable elements.
-                    // Blurring the one outside which is focused.
+                    // Blurring the currently focused element which is outside of the current layer.
                     e.blur();
                 }
            }
-        } else if (this._curList) {
-            // In case the list item is focused by the screen reader,
-            // we want to avoid refocusing the previously selected item in
-            // the list.
-            this._insideListTimer = this._mainWindow.setTimeout(() => {
-                this._insideListTimer = undefined;
-                this._curList = undefined;
-            }, 0);
         }
     }
 }

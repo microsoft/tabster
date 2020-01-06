@@ -10,8 +10,7 @@ import { createElementTreeWalker } from './Utils';
 export interface MutationEventDetails {
     root?: Types.ModalityLayerRoot;
     layer?: Types.ModalityLayerContainer;
-    list?: Types.ListContainer;
-    item?: Types.ListItem;
+    group?: Types.FocusableGroup;
     removed?: boolean;
 }
 
@@ -29,8 +28,7 @@ export function observeMutations(doc: HTMLDocument): void {
     const observer = new MutationObserver(mutations => {
         const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.ModalityLayerRoot; } } = {};
         const changedLayers: { [id: string]: { removedFrom?: Node; addedTo?: Node; layer: Types.ModalityLayerContainer; } } = {};
-        const changedLists: { [id: string]: { removedFrom?: Node; addedTo?: Node; list: Types.ListContainer; } } = {};
-        const changedListItems: { [id: string]: { removedFrom?: Node; addedTo?: Node; item: Types.ListItem; } } = {};
+        const changedGroups: { [id: string]: { removedFrom?: Node; addedTo?: Node; group: Types.FocusableGroup } } = {};
 
         for (let mutation of mutations) {
             const removed = mutation.removedNodes;
@@ -69,27 +67,15 @@ export function observeMutations(doc: HTMLDocument): void {
             }
         }
 
-        for (let id of Object.keys(changedLists)) {
-            const l = changedLists[id];
+        for (let id of Object.keys(changedGroups)) {
+            const g = changedGroups[id];
 
-            if (l.removedFrom) {
-                dispatchMutationEvent(l.removedFrom, { list: l.list, removed: true });
+            if (g.removedFrom) {
+                dispatchMutationEvent(g.removedFrom, { group: g.group, removed: true });
             }
 
-            if (l.addedTo) {
-                dispatchMutationEvent(l.addedTo, { list: l.list, removed: false });
-            }
-        }
-
-        for (let id of Object.keys(changedListItems)) {
-            const i = changedListItems[id];
-
-            if (i.removedFrom) {
-                dispatchMutationEvent(i.removedFrom, { item: i.item, removed: true });
-            }
-
-            if (i.addedTo) {
-                dispatchMutationEvent(i.addedTo, { item: i.item, removed: false });
+            if (g.addedTo) {
+                dispatchMutationEvent(g.addedTo, { group: g.group, removed: false });
             }
         }
 
@@ -117,12 +103,8 @@ export function observeMutations(doc: HTMLDocument): void {
                     addLayerTarget(ah.modalityLayer, removedFrom, addedTo);
                 }
 
-                if (ah.list) {
-                    addListTarget(ah.list, removedFrom, addedTo);
-                }
-
-                if (ah.listItem) {
-                    addListItemTarget(ah.listItem, removedFrom, addedTo);
+                if (ah.focusableGroup) {
+                    addGroupTarget(element, ah.focusableGroup, removedFrom, addedTo);
                 }
             }
 
@@ -161,35 +143,19 @@ export function observeMutations(doc: HTMLDocument): void {
             }
         }
 
-        function addListTarget(list: Types.ListContainer, removedFrom?: Node, addedTo?: Node): void {
-            let l = changedLists[list.id];
+        function addGroupTarget(el: Node, group: Types.FocusableGroup, removedFrom?: Node, addedTo?: Node): void {
+            let g = changedGroups[group.id];
 
-            if (!l) {
-                l = changedLists[list.id] = { list };
+            if (!g) {
+                g = changedGroups[group.id] = { group };
             }
 
             if (removedFrom) {
-                l.removedFrom = removedFrom;
+                g.removedFrom = removedFrom;
             }
 
             if (addedTo) {
-                l.addedTo = addedTo;
-            }
-        }
-
-        function addListItemTarget(item: Types.ListItem, removedFrom?: Node, addedTo?: Node): void {
-            let i = changedListItems[item.id];
-
-            if (!i) {
-                i = changedListItems[item.id] = { item };
-            }
-
-            if (removedFrom) {
-                i.removedFrom = removedFrom;
-            }
-
-            if (addedTo) {
-                i.addedTo = addedTo;
+                g.addedTo = addedTo;
             }
         }
     });
