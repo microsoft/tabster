@@ -1,6 +1,6 @@
 {
   "name": "ability-helpers-react",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Web application accessibility components for React",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "ability-helpers": "^0.0.1"
+    "ability-helpers": "^0.0.2"
   },
   "peerDependencies": {
     "@types/react": "^16.9.17",

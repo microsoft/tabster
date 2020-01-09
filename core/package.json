@@ -1,6 +1,6 @@
 {
   "name": "ability-helpers",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Web application accessibility tools",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -27,6 +27,5 @@
     "tslint-microsoft-contrib": "^6.0.0",
     "tsutils": "^2.28.0",
     "typescript": "^3.7.4"
-  },
-  "dependencies": {}
+  }
 }
