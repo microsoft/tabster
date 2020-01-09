@@ -298,8 +298,6 @@ export class FocusedElementState
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            // const listNavigation = new ListNavigation(li.list.getElement(), curElement, (el) => callOriginalFocusOnly(el), this._ah);
-
             let next: HTMLElement | null = null;
 
             switch (e.keyCode) {
@@ -314,19 +312,29 @@ export class FocusedElementState
                     break;
 
                 case Keys.PageDown:
-//                    listNavigation.pageDown();
+                    next = this._findPageDownGroup(group);
+                    if (next) {
+                        scrollIntoView(next, true);
+                    }
                     break;
 
                 case Keys.PageUp:
-//                    listNavigation.pageUp();
+                    next = this._findPageUpGroup(group);
+                    if (next) {
+                        scrollIntoView(next, false);
+                    }
                     break;
 
                 case Keys.Home:
-//                    listNavigation.home();
+                    if (group.parentElement) {
+                        next = this._ah.focusable.findFirstGroup(group);
+                    }
                     break;
 
                 case Keys.End:
-//                    listNavigation.end();
+                    if (group.parentElement) {
+                        next = this._ah.focusable.findLastGroup(group);
+                    }
                     break;
             }
 
@@ -342,6 +350,36 @@ export class FocusedElementState
                 }
             }
         }
+    }
+
+    private _findPageUpGroup(from: HTMLElement): HTMLElement | null {
+        let ue = this._ah.focusable.findPrevGroup(from);
+        let pue: HTMLElement | null = null;
+
+        while (ue) {
+            pue = ue;
+
+            ue = isElementVisibleInContainer(ue)
+                ? this._ah.focusable.findPrevGroup(ue)
+                : null;
+        }
+
+        return pue;
+    }
+
+    private _findPageDownGroup(from: HTMLElement): HTMLElement | null {
+        let de = this._ah.focusable.findNextGroup(from);
+        let pde: HTMLElement | null = null;
+
+        while (de) {
+            pde = de;
+
+            de = isElementVisibleInContainer(de)
+                ? this._ah.focusable.findNextGroup(de)
+                : null;
+        }
+
+        return pde;
     }
 
     private _moveOutWithDefaultAction(element: HTMLElement, prev?: boolean): void {
@@ -455,4 +493,37 @@ export function setupFocusedElementStateInIFrame(mainWindow: Window, iframeDocum
         { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
         { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: true }
     ]);
+}
+
+function isElementVisibleInContainer(element: HTMLElement): boolean {
+    const container = element.parentElement;
+
+    if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+
+        return (elementRect.left >= containerRect.left) &&
+            (elementRect.top >= containerRect.top) &&
+            (elementRect.right <= containerRect.right) &&
+            (elementRect.bottom <= containerRect.bottom);
+    }
+
+    return false;
+}
+
+function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
+    // Built-in DOM's scrollIntoView() is cool, but when we have nested containers,
+    // it scrolls all of them, not just the deepest one. So, trying to work it around.
+    const container = element.parentElement;
+
+    if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+
+        if (alignToTop) {
+            container.scrollTop += (elementRect.top - containerRect.top);
+        } else {
+            container.scrollTop += (elementRect.bottom - containerRect.bottom);
+        }
+    }
 }

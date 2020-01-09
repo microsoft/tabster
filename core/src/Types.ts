@@ -105,7 +105,7 @@ export interface FocusableProps {
 }
 
 export interface FocusableGroupState {
-    isCurrent: boolean;
+    isCurrent: boolean | undefined;
     isPrevious: boolean;
     isNext: boolean;
     isFirst: boolean;

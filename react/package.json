@@ -1,0 +1,44 @@
+{
+  "name": "ability-helpers-react",
+  "version": "0.0.2",
+  "description": "Web application accessibility components for React",
+  "author": "Marat Abdullin <marata@microsoft.com>",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/ability-helpers-react.esm.js",
+  "typings": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/ability-helpers"
+  },
+  "scripts": {
+    "build": "npm run tslint && npm run clean && tsdx build",
+    "clean": "rimraf dist",
+    "tslint": "tslint --project tsconfig.json -r tslint.json -r ./node_modules/tslint-microsoft-contrib --fix || true",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "ability-helpers": "^0.0.2"
+  },
+  "peerDependencies": {
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "rimraf": "^3.0.0",
+    "tsdx": "^0.9.3",
+    "tslint": "^5.20.1",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "tsutils": "^3.17.1",
+    "typescript": "^3.7.4"
+  }
+}

@@ -235,7 +235,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         let isVisible = false;
 
         return {
-            isCurrent: !this._current || (this._current === group),
+            isCurrent: this._current ? (this._current === group) : undefined,
             isPrevious: this._prev === group,
             isNext: this._next === group,
             isFirst: this._first === group,
@@ -298,7 +298,7 @@ export class FocusableGroup implements Types.FocusableGroup {
         return this._container
             ? this._container.getGroupState(this)
             : {
-                isCurrent: false,
+                isCurrent: undefined,
                 isPrevious: false,
                 isNext: false,
                 isFirst: false,
@@ -448,7 +448,7 @@ export class Focusable implements Types.Focusable {
         let group = this._findGroup(element);
 
         while (group) {
-            if (!group.getState().isCurrent) {
+            if (group.getState().isCurrent === false) {
                 return false;
             }
 

@@ -1,32 +1,11 @@
 {
-  "name": "ability-helpers",
-  "version": "0.0.1",
-  "description": "Web application accessibility tools",
-  "author": "Marat Abdullin <marata@microsoft.com>",
-  "license": "MIT",
-  "main": "./dist/index.js",
-  "module": "./dist/ability-helpers.esm.js",
-  "typings": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/microsoft/ability-helpers"
-  },
+  "private": true,
   "scripts": {
-    "build": "npm run tslint && npm run clean && tsdx build",
-    "clean": "rimraf dist",
-    "tslint": "tslint --project tsconfig.json -r tslint.json -r ./node_modules/tslint-microsoft-contrib --fix || true",
-    "prepare": "npm run build"
+    "bootstrap": "npm run clean && lerna bootstrap --no-ci",
+    "build": "lerna exec -- npm run build",
+    "clean": "lerna exec -- npm run clean && lerna clean --yes"
   },
   "devDependencies": {
-    "rimraf": "^2.7.1",
-    "tsdx": "^0.7.2",
-    "tslint": "^5.12.0",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "tsutils": "^2.28.0",
-    "typescript": "^3.2.2"
-  },
-  "dependencies": {}
+    "lerna": "^3.20.2"
+  }
 }
