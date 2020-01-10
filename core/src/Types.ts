@@ -111,11 +111,14 @@ export interface FocusableGroupState {
     isFirst: boolean;
     isLast: boolean;
     isVisible: boolean;
+    hasFocus: boolean;
+    siblingHasFocus: boolean;
 }
 
 export interface FocusableGroupProps {
     isDefault?: boolean | (() => boolean);
     onChange?: ((state: FocusableGroupState) => void) | null;
+    canFocus?: ((element: HTMLElement) => boolean) | null;
 }
 
 export interface FocusableGroupContainerProps {
@@ -130,6 +133,7 @@ export interface FocusableGroupContainer {
     getElement(): HTMLElement;
     addGroup(group: FocusableGroup): void;
     removeGroup(group: FocusableGroup): void;
+    setFocusedGroup(group: FocusableGroup | undefined): void;
     setCurrentGroup(group: FocusableGroup): void;
     getCurrentGroup(): FocusableGroup | null;
     getGroupState(group: FocusableGroup): FocusableGroupState;
@@ -145,6 +149,8 @@ export interface FocusableGroup {
     makeCurrent(): void;
     isDefault(): boolean;
     getProps(): FocusableGroupProps;
+    setFocused(focused: boolean): void;
+    canFocus(element: HTMLElement): boolean;
     setupContainer(remove?: boolean): void;
 }
 

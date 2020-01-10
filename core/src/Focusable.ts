@@ -26,6 +26,8 @@ const _customEventName = 'ability-helpers:focusable-related';
 
 let _lastId = 0;
 
+let _focusedGroups: { [id: string]: Types.FocusableGroup } = {};
+
 export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _element: HTMLElement;
 
@@ -34,12 +36,14 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _next: Types.FocusableGroup | undefined;
     private _first: Types.FocusableGroup | undefined;
     private _last: Types.FocusableGroup | undefined;
+    private _focused: Types.FocusableGroup | undefined;
 
     private _prevCurrent: Types.FocusableGroup | undefined;
     private _prevPrev: Types.FocusableGroup | undefined;
     private _prevNext: Types.FocusableGroup | undefined;
     private _prevFirst: Types.FocusableGroup | undefined;
     private _prevLast: Types.FocusableGroup | undefined;
+    private _prevFocused: Types.FocusableGroup | undefined;
 
     private _onChangeTimer: number | undefined;
 
@@ -98,6 +102,13 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         this._setFirstLast();
     }
 
+    setFocusedGroup(group: Types.FocusableGroup | undefined): void {
+        if (group !== this._focused) {
+            this._focused = group;
+            this._processOnChange();
+        }
+    }
+
     private _processOnChange(): void {
         if (this._onChangeTimer) {
             return;
@@ -136,6 +147,13 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
                 changed.push(this._prevLast);
                 changed.push(this._last);
                 this._prevLast = this._last;
+            }
+
+            if (this._prevFocused !== this._focused) {
+                for (let id of Object.keys(this._groups)) {
+                    changed.push(this._groups[id]);
+                }
+                this._prevFocused = this._focused;
             }
 
             const processed: { [id: string]: boolean } = {};
@@ -240,7 +258,9 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             isNext: this._next === group,
             isFirst: this._first === group,
             isLast: this._last === group,
-            isVisible
+            isVisible,
+            hasFocus: this._focused === group,
+            siblingHasFocus: !!this._focused
         };
     }
 
@@ -303,7 +323,9 @@ export class FocusableGroup implements Types.FocusableGroup {
                 isNext: false,
                 isFirst: false,
                 isLast: false,
-                isVisible: false
+                isVisible: false,
+                hasFocus: false,
+                siblingHasFocus: false
             };
     }
 
@@ -316,6 +338,16 @@ export class FocusableGroup implements Types.FocusableGroup {
     isDefault(): boolean {
         const isDefault = this._props.isDefault;
         return (typeof isDefault === 'function') ? isDefault.call(this._element) : isDefault;
+    }
+
+    setFocused(focused: boolean): void {
+        if (this._container) {
+            this._container.setFocusedGroup(focused ? this : undefined);
+        }
+    }
+
+    canFocus(element: HTMLElement): boolean {
+        return this._props.canFocus ? this._props.canFocus(element) : true;
     }
 
     setupContainer(remove?: boolean): void {
@@ -363,6 +395,8 @@ export class Focusable implements Types.Focusable {
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
+
+        this._ah.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
@@ -373,6 +407,36 @@ export class Focusable implements Types.Focusable {
 
         this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
+
+        this._ah.focusedElement.unsubscribe(this._onFocus);
+    }
+
+    private _onFocus = (element: HTMLElement | undefined): void => {
+        if (element) {
+            const newFocusedGroups: typeof _focusedGroups = {};
+
+            for (let el = element as HTMLElement | null; el; el = el.parentElement) {
+                const ah = getAbilityHelpersOnElement(el);
+
+                if (ah && ah.focusableGroup) {
+                    newFocusedGroups[ah.focusableGroup.id] = ah.focusableGroup;
+                }
+            }
+
+            for (let gid of Object.keys(_focusedGroups)) {
+                if (!newFocusedGroups[gid]) {
+                    _focusedGroups[gid].setFocused(false);
+                }
+            }
+
+            for (let gid of Object.keys(newFocusedGroups)) {
+                if (!_focusedGroups[gid]) {
+                    newFocusedGroups[gid].setFocused(true);
+                }
+            }
+
+            _focusedGroups = newFocusedGroups;
+        }
     }
 
     private _onIFrameEvent = (e: EventFromIFrame): void => {
@@ -445,10 +509,18 @@ export class Focusable implements Types.Focusable {
     }
 
     isInCurrentGroup(element: HTMLElement): boolean {
+        return this._isInCurrentGroup(element);
+    }
+
+    private _isInCurrentGroup(element: HTMLElement, checkCanFocus?: boolean): boolean {
         let group = this._findGroup(element);
 
         while (group) {
             if (group.getState().isCurrent === false) {
+                return false;
+            }
+
+            if (checkCanFocus && !group.canFocus(element)) {
                 return false;
             }
 
@@ -712,7 +784,7 @@ export class Focusable implements Types.Focusable {
                 (currentLayerId === layerInfo.layer.userId) ||
                 layerInfo.layer.isAlwaysAccessible()) {
 
-            if (!this.isInCurrentGroup(element)) {
+            if (!this._isInCurrentGroup(element, true)) {
                 return NodeFilter.FILTER_REJECT;
             }
 

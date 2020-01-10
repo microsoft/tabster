@@ -13,11 +13,11 @@ ReactDOM.render(
 
         <button>Lalala</button>
 
-        <Group label='Hello' onChange={ onGroupChange }>
+        <Group label='Hello' onChange={ onGroupChange } isFocusable={ true }>
             <button>Button1</button>
             <button>Button2</button>
         </Group>
-        <Group label={ (state) => 'World ' + JSON.stringify(state) } onChange={ onGroupChange }>
+        <Group isFocusable={ true } label={ (state) => 'World ' + JSON.stringify(state) } onChange={ onGroupChange }>
             <button>Button3</button>
             <button>Button4</button>
         </Group>

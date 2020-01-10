@@ -11,6 +11,7 @@ const GroupContext = React.createContext<((group: HTMLElement, removed?: boolean
 export type GroupState = Types.FocusableGroupState;
 
 export interface GroupProperties {
+    style?: React.CSSProperties;
     label?: string | ((state: GroupState) => string);
     isFocusable?: boolean;
     role?: string;
@@ -27,7 +28,11 @@ export class Group extends React.Component<GroupProperties> {
 
     render() {
         return (
-            <div ref={ this._onRef } tabIndex={ this.props.isFocusable ? 0 : undefined }>
+            <div
+                ref={ this._onRef }
+                tabIndex={ this.props.isFocusable ? 0 : undefined }
+                style={ this.props.style }
+            >
                 <GroupContext.Provider value={ this._addChildGroup }>
                     { this.props.children }
                 </GroupContext.Provider>
@@ -69,7 +74,10 @@ export class Group extends React.Component<GroupProperties> {
 
                 AbilityHelpers.focusable.moveGroup(this._div, div);
             } else {
-                AbilityHelpers.focusable.addGroup(div, { onChange: this._onChange });
+                AbilityHelpers.focusable.addGroup(div, {
+                    onChange: this._onChange,
+                    canFocus: this._canFocus
+                });
             }
 
             if (this.context) {
@@ -153,5 +161,9 @@ export class Group extends React.Component<GroupProperties> {
         } else {
             throw new Error('Inconsistent element state');
         }
+    }
+
+    private _canFocus = (element: HTMLElement): boolean => {
+        return element === this._div;
     }
 }
