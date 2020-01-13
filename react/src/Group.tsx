@@ -75,8 +75,7 @@ export class Group extends React.Component<GroupProperties> {
                 AbilityHelpers.focusable.moveGroup(this._div, div);
             } else {
                 AbilityHelpers.focusable.addGroup(div, {
-                    onChange: this._onChange,
-                    canFocus: this._canFocus
+                    onChange: this._onChange
                 });
             }
 
@@ -161,9 +160,5 @@ export class Group extends React.Component<GroupProperties> {
         } else {
             throw new Error('Inconsistent element state');
         }
-    }
-
-    private _canFocus = (element: HTMLElement): boolean => {
-        return element === this._div;
     }
 }

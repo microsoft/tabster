@@ -4,6 +4,7 @@
  */
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from '../IFrameEvents';
+import { getAbilityHelpersOnElement } from '../Instance';
 import { Keys } from '../Keys';
 import { ModalityLayer } from '../ModalityLayer';
 import { Subscribable } from './Subscribable';
@@ -239,6 +240,8 @@ export class FocusedElementState
         }
 
         switch (e.keyCode) {
+            case Keys.Enter:
+            case Keys.Esc:
             case Keys.Tab:
             case Keys.Down:
             case Keys.Right:
@@ -289,9 +292,9 @@ export class FocusedElementState
                 this._moveOutWithDefaultAction(l ? l.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
             }
         } else {
-            const group = this._ah.focusable.findGroup(curElement);
+            let groupElement = this._ah.focusable.findGroup(curElement);
 
-            if (!group) {
+            if (!groupElement) {
                 return;
             }
 
@@ -301,39 +304,82 @@ export class FocusedElementState
             let next: HTMLElement | null = null;
 
             switch (e.keyCode) {
+                case Keys.Enter:
+                case Keys.Esc:
+                    let ah = getAbilityHelpersOnElement(groupElement);
+                    let group = ah && ah.focusableGroup;
+
+                    if (group) {
+                        let state = group.getState();
+
+                        if (e.keyCode === Keys.Enter) {
+                            if ((curElement === groupElement) && state.isLimited) {
+                                group.setUnlimited(true);
+
+                                next = this._ah.focusable.findNext(groupElement);
+
+                                if (!groupElement.contains(next)) {
+                                    next = null;
+                                }
+                            }
+                        } else { // Esc
+                            if (state.isLimited) {
+                                if (groupElement.parentElement) {
+                                    const parentGroupElement = this._ah.focusable.findGroup(groupElement.parentElement);
+
+                                    if (parentGroupElement) {
+                                        const ah2 = getAbilityHelpersOnElement(parentGroupElement);
+
+                                        if (ah2 && ah2.focusableGroup) {
+                                            groupElement = parentGroupElement;
+                                            group = ah2.focusableGroup;
+                                            state = ah2.focusableGroup.getState();
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!state.isLimited) {
+                                group.setUnlimited(false);
+                                next = groupElement;
+                            }
+                        }
+                    }
+                    break;
+
                 case Keys.Down:
                 case Keys.Right:
-                    next = this._ah.focusable.findNextGroup(group);
+                    next = this._ah.focusable.findNextGroup(groupElement);
                     break;
 
                 case Keys.Up:
                 case Keys.Left:
-                    next = this._ah.focusable.findPrevGroup(group);
+                    next = this._ah.focusable.findPrevGroup(groupElement);
                     break;
 
                 case Keys.PageDown:
-                    next = this._findPageDownGroup(group);
+                    next = this._findPageDownGroup(groupElement);
                     if (next) {
                         scrollIntoView(next, true);
                     }
                     break;
 
                 case Keys.PageUp:
-                    next = this._findPageUpGroup(group);
+                    next = this._findPageUpGroup(groupElement);
                     if (next) {
                         scrollIntoView(next, false);
                     }
                     break;
 
                 case Keys.Home:
-                    if (group.parentElement) {
-                        next = this._ah.focusable.findFirstGroup(group);
+                    if (groupElement.parentElement) {
+                        next = this._ah.focusable.findFirstGroup(groupElement);
                     }
                     break;
 
                 case Keys.End:
-                    if (group.parentElement) {
-                        next = this._ah.focusable.findLastGroup(group);
+                    if (groupElement.parentElement) {
+                        next = this._ah.focusable.findLastGroup(groupElement);
                     }
                     break;
             }

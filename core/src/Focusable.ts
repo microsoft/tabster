@@ -37,6 +37,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _first: Types.FocusableGroup | undefined;
     private _last: Types.FocusableGroup | undefined;
     private _focused: Types.FocusableGroup | undefined;
+    private _unlimited: Types.FocusableGroup | undefined;
 
     private _prevCurrent: Types.FocusableGroup | undefined;
     private _prevPrev: Types.FocusableGroup | undefined;
@@ -44,6 +45,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _prevFirst: Types.FocusableGroup | undefined;
     private _prevLast: Types.FocusableGroup | undefined;
     private _prevFocused: Types.FocusableGroup | undefined;
+    private _prevUnlimited: Types.FocusableGroup | undefined;
 
     private _onChangeTimer: number | undefined;
 
@@ -109,6 +111,13 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         }
     }
 
+    setUnlimitedGroup(group: Types.FocusableGroup): void {
+        if (group !== this._unlimited) {
+            this._unlimited = group;
+            this._processOnChange();
+        }
+    }
+
     private _processOnChange(): void {
         if (this._onChangeTimer) {
             return;
@@ -154,6 +163,12 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
                     changed.push(this._groups[id]);
                 }
                 this._prevFocused = this._focused;
+            }
+
+            if (this._prevUnlimited !== this._unlimited) {
+                changed.push(this._prevUnlimited);
+                changed.push(this._unlimited);
+                this._prevUnlimited = this._unlimited;
             }
 
             const processed: { [id: string]: boolean } = {};
@@ -234,18 +249,6 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
         this._current = undefined;
 
-        if (this._props.getCurrent) {
-            const cur = this._props.getCurrent();
-
-            if (cur && (cur.parentElement === this._element)) {
-                const ah = getAbilityHelpersOnElement(cur);
-
-                if (ah && ah.focusableGroup && (ah.focusableGroup.id in this._groups)) {
-                    this.setCurrentGroup(ah.focusableGroup);
-                }
-            }
-        }
-
         return this._current || null;
     }
 
@@ -260,7 +263,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             isLast: this._last === group,
             isVisible,
             hasFocus: this._focused === group,
-            siblingHasFocus: !!this._focused
+            siblingHasFocus: !!this._focused && (this._focused !== group),
+            isLimited: this._props.limitFocus ? this._unlimited !== group : false
         };
     }
 
@@ -325,7 +329,8 @@ export class FocusableGroup implements Types.FocusableGroup {
                 isLast: false,
                 isVisible: false,
                 hasFocus: false,
-                siblingHasFocus: false
+                siblingHasFocus: false,
+                isLimited: false
             };
     }
 
@@ -346,8 +351,10 @@ export class FocusableGroup implements Types.FocusableGroup {
         }
     }
 
-    canFocus(element: HTMLElement): boolean {
-        return this._props.canFocus ? this._props.canFocus(element) : true;
+    setUnlimited(unlimited: boolean): void {
+        if (this._container) {
+            this._container.setUnlimitedGroup(unlimited ? this : undefined);
+        }
     }
 
     setupContainer(remove?: boolean): void {
@@ -361,7 +368,7 @@ export class FocusableGroup implements Types.FocusableGroup {
             container = cAh && cAh.focusableGroupContainer;
 
             if (!container && !remove) {
-                container = new FocusableGroupContainer(containerElement, {});
+                container = new FocusableGroupContainer(containerElement, { limitFocus: true });
             }
         }
 
@@ -425,13 +432,21 @@ export class Focusable implements Types.Focusable {
 
             for (let gid of Object.keys(_focusedGroups)) {
                 if (!newFocusedGroups[gid]) {
-                    _focusedGroups[gid].setFocused(false);
+                    const g = _focusedGroups[gid];
+                    g.setFocused(false);
+                    g.setUnlimited(false);
                 }
             }
 
             for (let gid of Object.keys(newFocusedGroups)) {
                 if (!_focusedGroups[gid]) {
-                    newFocusedGroups[gid].setFocused(true);
+                    const g = newFocusedGroups[gid];
+
+                    g.setFocused(true);
+
+                    if (g.getElement() !== element) {
+                        g.setUnlimited(true);
+                    }
                 }
             }
 
@@ -509,18 +524,25 @@ export class Focusable implements Types.Focusable {
     }
 
     isInCurrentGroup(element: HTMLElement): boolean {
-        return this._isInCurrentGroup(element);
+        return this._isInCurrentGroup(element, false);
     }
 
-    private _isInCurrentGroup(element: HTMLElement, checkCanFocus?: boolean): boolean {
+    private _isInCurrentGroup(element: HTMLElement, checkLimited: boolean): boolean {
         let group = this._findGroup(element);
+        let elementIsGroup = false;
+
+        if (checkLimited && group) {
+            elementIsGroup = group.getElement() === element;
+        }
 
         while (group) {
-            if (group.getState().isCurrent === false) {
+            const state = group.getState();
+
+            if (state.isCurrent === false) {
                 return false;
             }
 
-            if (checkCanFocus && !group.canFocus(element)) {
+            if (checkLimited && state.isLimited && !elementIsGroup) {
                 return false;
             }
 
