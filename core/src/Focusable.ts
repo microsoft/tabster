@@ -253,6 +253,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     }
 
     getGroupState(group: Types.FocusableGroup): Types.FocusableGroupState {
+        const isLimited = group.getProps().isLimited;
         let isVisible = false;
 
         return {
@@ -264,7 +265,10 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             isVisible,
             hasFocus: this._focused === group,
             siblingHasFocus: !!this._focused && (this._focused !== group),
-            isLimited: this._props.limitFocus ? this._unlimited !== group : false
+            isLimited: (
+                (isLimited === Types.FocusableGroupFocusLimit.CanLimitLimited) ||
+                (isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited)
+            ) ? this._unlimited !== group : false
         };
     }
 
@@ -290,6 +294,10 @@ export class FocusableGroup implements Types.FocusableGroup {
         });
 
         this.setupContainer();
+
+        if (props.isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited) {
+            this.setUnlimited(true);
+        }
     }
 
     dispose(): void {
@@ -352,7 +360,10 @@ export class FocusableGroup implements Types.FocusableGroup {
     }
 
     setUnlimited(unlimited: boolean): void {
-        if (this._container) {
+        if (this._container && (
+                (this._props.isLimited === Types.FocusableGroupFocusLimit.CanLimitLimited) ||
+                (this._props.isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited))
+        ) {
             this._container.setUnlimitedGroup(unlimited ? this : undefined);
         }
     }
@@ -368,7 +379,7 @@ export class FocusableGroup implements Types.FocusableGroup {
             container = cAh && cAh.focusableGroupContainer;
 
             if (!container && !remove) {
-                container = new FocusableGroupContainer(containerElement, { limitFocus: true });
+                container = new FocusableGroupContainer(containerElement, {});
             }
         }
 

@@ -10,12 +10,16 @@ const GroupContext = React.createContext<((group: HTMLElement, removed?: boolean
 
 export type GroupState = Types.FocusableGroupState;
 
+export import NextGroupDirection = Types.FocusableGroupNextDirection;
+
 export interface GroupProperties {
     style?: React.CSSProperties;
     label?: string | ((state: GroupState) => string);
-    isFocusable?: boolean;
     role?: string;
+    isFocusable?: boolean;
+    isLimited?: boolean;
     isRowingRegion?: boolean;
+    nextDirection?: NextGroupDirection;
     onChange?: (state: GroupState) => void;
 }
 
@@ -75,7 +79,9 @@ export class Group extends React.Component<GroupProperties> {
                 AbilityHelpers.focusable.moveGroup(this._div, div);
             } else {
                 AbilityHelpers.focusable.addGroup(div, {
-                    onChange: this._onChange
+                    onChange: this._onChange,
+                    isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.CanLimitLimited : undefined,
+                    nextDirection: this.props.nextDirection
                 });
             }
 

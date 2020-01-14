@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Group, GroupState } from 'ability-helpers-react';
+import { Group, GroupState, NextGroupDirection } from 'ability-helpers-react';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -13,11 +13,23 @@ ReactDOM.render(
 
         <button>Lalala</button>
 
-        <Group label='Hello' onChange={ onGroupChange } isFocusable={ true }>
+        <Group
+            label='Hello'
+            onChange={ onGroupChange }
+            isFocusable={ true }
+            isLimited={ true }
+            nextDirection={ NextGroupDirection.Grid }
+        >
             <button>Button1</button>
             <button>Button2</button>
         </Group>
-        <Group isFocusable={ true } label={ (state) => 'World ' + JSON.stringify(state) } onChange={ onGroupChange }>
+        <Group
+            isFocusable={ true }
+            nextDirection={ NextGroupDirection.Grid }
+            isLimited={ true }
+            label={ (state) => 'World ' + JSON.stringify(state) }
+            onChange={ onGroupChange }
+        >
             <button>Button3</button>
             <button>Button4</button>
         </Group>

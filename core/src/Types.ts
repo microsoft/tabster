@@ -116,14 +116,27 @@ export interface FocusableGroupState {
     isLimited: boolean;
 }
 
+export enum FocusableGroupFocusLimit {
+    Unlimited = 0,
+    CanLimitLimited = 1, // The focus is limitable, limited initially.
+    CanLimitUnlimited = 2 // The focus is limitable, unlimited initially.
+}
+
+export enum FocusableGroupNextDirection {
+    Both = 0, // Default, both left/up keys move to the previous, right/down move to the next.
+    Vertical = 1, // Only up/down arrows move to the next/previous.
+    Horizontal = 2, // Only left/right arrows move to the next/previous.
+    Grid = 3 // Two-dimentional movement depending on the visual placement.
+}
+
 export interface FocusableGroupProps {
     isDefault?: boolean | (() => boolean);
-    isLimited?: boolean;
+    isLimited?: FocusableGroupFocusLimit;
+    nextDirection?: FocusableGroupNextDirection;
     onChange?: ((state: FocusableGroupState) => void) | null;
 }
 
 export interface FocusableGroupContainerProps {
-    limitFocus?: boolean;
 }
 
 export interface FocusableGroupContainer {

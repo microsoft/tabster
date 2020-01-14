@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Group, GroupProperties, GroupState } from './Group';
+import { Group, GroupProperties, GroupState, NextGroupDirection as _NextGroupDirection } from './Group';
 
 export {
     Group,
     GroupState,
     GroupProperties
 };
+
+export import NextGroupDirection = _NextGroupDirection;

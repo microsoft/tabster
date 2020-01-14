@@ -298,6 +298,13 @@ export class FocusedElementState
                 return;
             }
 
+            let ah = getAbilityHelpersOnElement(groupElement);
+            let group = ah && ah.focusableGroup;
+
+            if (!group) {
+                return;
+            }
+
             e.preventDefault();
             e.stopImmediatePropagation();
 
@@ -306,55 +313,47 @@ export class FocusedElementState
             switch (e.keyCode) {
                 case Keys.Enter:
                 case Keys.Esc:
-                    let ah = getAbilityHelpersOnElement(groupElement);
-                    let group = ah && ah.focusableGroup;
+                    let state = group.getState();
 
-                    if (group) {
-                        let state = group.getState();
+                    if (e.keyCode === Keys.Enter) {
+                        if ((curElement === groupElement) && state.isLimited) {
+                            group.setUnlimited(true);
 
-                        if (e.keyCode === Keys.Enter) {
-                            if ((curElement === groupElement) && state.isLimited) {
-                                group.setUnlimited(true);
+                            next = this._ah.focusable.findNext(groupElement);
 
-                                next = this._ah.focusable.findNext(groupElement);
-
-                                if (!groupElement.contains(next)) {
-                                    next = null;
-                                }
+                            if (!groupElement.contains(next)) {
+                                next = null;
                             }
-                        } else { // Esc
-                            if (state.isLimited) {
-                                if (groupElement.parentElement) {
-                                    const parentGroupElement = this._ah.focusable.findGroup(groupElement.parentElement);
+                        }
+                    } else { // Esc
+                        if (state.isLimited) {
+                            if (groupElement.parentElement) {
+                                const parentGroupElement = this._ah.focusable.findGroup(groupElement.parentElement);
 
-                                    if (parentGroupElement) {
-                                        const ah2 = getAbilityHelpersOnElement(parentGroupElement);
+                                if (parentGroupElement) {
+                                    const ah2 = getAbilityHelpersOnElement(parentGroupElement);
 
-                                        if (ah2 && ah2.focusableGroup) {
-                                            groupElement = parentGroupElement;
-                                            group = ah2.focusableGroup;
-                                            state = ah2.focusableGroup.getState();
-                                        }
+                                    if (ah2 && ah2.focusableGroup) {
+                                        groupElement = parentGroupElement;
+                                        group = ah2.focusableGroup;
+                                        state = ah2.focusableGroup.getState();
                                     }
                                 }
                             }
+                        }
 
-                            if (!state.isLimited) {
-                                group.setUnlimited(false);
-                                next = groupElement;
-                            }
+                        if (!state.isLimited) {
+                            group.setUnlimited(false);
+                            next = groupElement;
                         }
                     }
                     break;
 
                 case Keys.Down:
                 case Keys.Right:
-                    next = this._ah.focusable.findNextGroup(groupElement);
-                    break;
-
                 case Keys.Up:
                 case Keys.Left:
-                    next = this._ah.focusable.findPrevGroup(groupElement);
+                    next = this._findNextGroup(groupElement, e.keyCode, group.getProps().nextDirection);
                     break;
 
                 case Keys.PageDown:
@@ -396,6 +395,81 @@ export class FocusedElementState
                 }
             }
         }
+    }
+
+    private _findNextGroup(from: HTMLElement, key: Keys, direction?: Types.FocusableGroupNextDirection): HTMLElement | null {
+        if ((direction === Types.FocusableGroupNextDirection.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
+            return null;
+        }
+
+        if ((direction === Types.FocusableGroupNextDirection.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
+            return null;
+        }
+
+        if ((direction === undefined) || (direction === Types.FocusableGroupNextDirection.Both)) {
+            if ((key === Keys.Left) || (key === Keys.Up)) {
+                return this._ah.focusable.findPrevGroup(from);
+            } else {
+                return this._ah.focusable.findNextGroup(from);
+            }
+        }
+
+        const fromRect = from.getBoundingClientRect();
+        let next: HTMLElement | undefined;
+        let lastEl: HTMLElement | undefined;
+        let prevTop: number | undefined;
+
+        const nextMethod = ((key === Keys.Down) || (key === Keys.Right)) ? 'findNextGroup' : 'findPrevGroup';
+
+        for (let el = this._ah.focusable[nextMethod](from); el; el = this._ah.focusable[nextMethod](el)) {
+            const rect = el.getBoundingClientRect();
+
+            if (key === Keys.Up) {
+                if (rect.top < fromRect.top) {
+                    if (prevTop === undefined) {
+                        prevTop = rect.top;
+                    } else if (rect.top < prevTop) {
+                        break;
+                    }
+
+                    if (rect.left < fromRect.left) {
+                        if (!next) {
+                            next = el;
+                        }
+
+                        break;
+                    }
+
+                    next = el;
+                }
+            } else if (key === Keys.Down) {
+                if (rect.top > fromRect.top) {
+                    if (prevTop === undefined) {
+                        prevTop = rect.top;
+                    } else if (rect.top > prevTop) {
+                        break;
+                    }
+
+                    if (rect.left > fromRect.left) {
+                        if (!next) {
+                            next = el;
+                        }
+
+                        break;
+                    }
+
+                    next = el;
+                }
+
+            } else if ((key === Keys.Left) || (key === Keys.Right)) {
+                next = el;
+                break;
+            }
+
+            lastEl = el;
+        }
+
+        return next || lastEl || null;
     }
 
     private _findPageUpGroup(from: HTMLElement): HTMLElement | null {
