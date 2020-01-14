@@ -12,15 +12,14 @@ export type GroupState = Types.FocusableGroupState;
 
 export import NextGroupDirection = Types.FocusableGroupNextDirection;
 
-export interface GroupProperties {
-    style?: React.CSSProperties;
-    label?: string | ((state: GroupState) => string);
+export interface GroupProperties extends React.HTMLAttributes<HTMLDivElement> {
     role?: string;
+    groupLabel?: string | ((state: GroupState) => string);
     isFocusable?: boolean;
     isLimited?: boolean;
     isRowingRegion?: boolean;
-    nextDirection?: NextGroupDirection;
-    onChange?: (state: GroupState) => void;
+    nextGroupDirection?: NextGroupDirection;
+    onGroupChange?: (state: GroupState) => void;
 }
 
 export class Group extends React.Component<GroupProperties> {
@@ -31,11 +30,24 @@ export class Group extends React.Component<GroupProperties> {
     private _childGroups: { [id: string]: Types.FocusableGroup } = {};
 
     render() {
+        const {
+            groupLabel,
+            role,
+            isFocusable,
+            isLimited,
+            isRowingRegion,
+            nextGroupDirection,
+            onGroupChange,
+            tabIndex,
+            'aria-label': ariaLabel,
+            ...restProps
+        } = this.props;
+
         return (
             <div
                 ref={ this._onRef }
                 tabIndex={ this.props.isFocusable ? 0 : undefined }
-                style={ this.props.style }
+                { ...restProps }
             >
                 <GroupContext.Provider value={ this._addChildGroup }>
                     { this.props.children }
@@ -81,7 +93,7 @@ export class Group extends React.Component<GroupProperties> {
                 AbilityHelpers.focusable.addGroup(div, {
                     onChange: this._onChange,
                     isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.CanLimitLimited : undefined,
-                    nextDirection: this.props.nextDirection
+                    nextDirection: this.props.nextGroupDirection
                 });
             }
 
@@ -138,15 +150,15 @@ export class Group extends React.Component<GroupProperties> {
             this._div.setAttribute('role', role);
         }
 
-        if (this.props.onChange) {
-            this.props.onChange.call(this, state);
+        if (this.props.onGroupChange) {
+            this.props.onGroupChange.call(this, state);
         }
     }
 
     private _setLabel(state: GroupState): boolean {
-        const label = (typeof this.props.label === 'function')
-            ? this.props.label.call(this, state)
-            : (this.props.label !== undefined ? this.props.label : undefined);
+        const label = (typeof this.props.groupLabel === 'function')
+            ? this.props.groupLabel.call(this, state)
+            : (this.props.groupLabel !== undefined ? this.props.groupLabel : this.props['aria-label']);
 
         if (this._div && (label !== undefined)) {
             this._div.setAttribute('aria-label', label);

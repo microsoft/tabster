@@ -14,21 +14,21 @@ ReactDOM.render(
         <button>Lalala</button>
 
         <Group
-            label='Hello'
-            onChange={ onGroupChange }
+            groupLabel='Hello'
+            onGroupChange={ onGroupChange }
             isFocusable={ true }
             isLimited={ true }
-            nextDirection={ NextGroupDirection.Grid }
+            nextGroupDirection={ NextGroupDirection.Grid }
         >
             <button>Button1</button>
             <button>Button2</button>
         </Group>
         <Group
             isFocusable={ true }
-            nextDirection={ NextGroupDirection.Grid }
+            nextGroupDirection={ NextGroupDirection.Grid }
             isLimited={ true }
-            label={ (state) => 'World ' + JSON.stringify(state) }
-            onChange={ onGroupChange }
+            groupLabel={ (state) => 'World ' + JSON.stringify(state) }
+            onGroupChange={ onGroupChange }
         >
             <button>Button3</button>
             <button>Button4</button>
