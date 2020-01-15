@@ -56,6 +56,12 @@ export class Group extends React.Component<GroupProperties> {
         );
     }
 
+    componentDidUpdate() {
+        if (this._div) {
+            AbilityHelpers.focusable.setGroupProps(this._div, this._buildGroupProps());
+        }
+    }
+
     private _onRef = (div: HTMLDivElement | null) => {
         if (div) {
             this._addGroup(div);
@@ -77,6 +83,14 @@ export class Group extends React.Component<GroupProperties> {
         }
     }
 
+    private _buildGroupProps(): Types.FocusableGroupProps {
+        return {
+            onChange: this._onChange,
+            isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.LimitedTrapFocus : undefined,
+            nextDirection: this.props.nextGroupDirection
+        };
+    }
+
     private _addGroup(div: HTMLDivElement | null) {
         if (this._div === div) {
             return;
@@ -90,11 +104,7 @@ export class Group extends React.Component<GroupProperties> {
 
                 AbilityHelpers.focusable.moveGroup(this._div, div);
             } else {
-                AbilityHelpers.focusable.addGroup(div, {
-                    onChange: this._onChange,
-                    isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.LimitedTrapFocus : undefined,
-                    nextDirection: this.props.nextGroupDirection
-                });
+                AbilityHelpers.focusable.addGroup(div, this._buildGroupProps());
             }
 
             if (this.context) {

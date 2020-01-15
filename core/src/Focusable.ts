@@ -77,8 +77,6 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             for (let name of Object.keys(props) as (keyof Types.FocusableGroupContainerProps)[]) {
                 this._props[name] = props[name];
             }
-
-            this._props = props;
         } else {
             this._props = {};
         }
@@ -308,6 +306,16 @@ export class FocusableGroup implements Types.FocusableGroup {
         return this._props;
     }
 
+    setProps(props: Types.FocusableGroupProps): void {
+        for (let name of Object.keys(props) as (keyof Types.FocusableGroupProps)[]) {
+            if (props[name] === undefined) {
+                delete this._props[name];
+            } else {
+                (this._props[name] as (Types.FocusableGroupProps[keyof Types.FocusableGroupProps])) = props[name];
+            }
+        }
+    }
+
     getElement(): HTMLElement {
         return this._element;
     }
@@ -515,6 +523,14 @@ export class Focusable implements Types.Focusable {
                 dispatchMutationEvent(from, { group, removed: true });
                 dispatchMutationEvent(to, { group });
             }
+        }
+    }
+
+    setGroupProps(element: HTMLElement, props: Types.FocusableGroupProps): void {
+        let group = this._findGroup(element);
+
+        if (group) {
+            group.setProps(props);
         }
     }
 

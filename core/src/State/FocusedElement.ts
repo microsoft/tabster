@@ -635,7 +635,7 @@ export function setupFocusedElementStateInIFrame(mainWindow: Window, iframeDocum
 }
 
 function isElementVisibleInContainer(element: HTMLElement): boolean {
-    const container = element.parentElement;
+    const container = getScrollableContainer(element);
 
     if (container) {
         const containerRect = container.getBoundingClientRect();
@@ -653,7 +653,7 @@ function isElementVisibleInContainer(element: HTMLElement): boolean {
 function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
     // Built-in DOM's scrollIntoView() is cool, but when we have nested containers,
     // it scrolls all of them, not just the deepest one. So, trying to work it around.
-    const container = element.parentElement;
+    const container = getScrollableContainer(element);
 
     if (container) {
         const containerRect = container.getBoundingClientRect();
@@ -665,4 +665,20 @@ function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
             container.scrollTop += (elementRect.bottom - containerRect.bottom);
         }
     }
+}
+
+function getScrollableContainer(element: HTMLElement): HTMLElement | null {
+    const doc = element.ownerDocument;
+
+    if (doc) {
+        for (let el: HTMLElement | null = element.parentElement; el; el = el.parentElement) {
+            if (el.scrollHeight > el.clientHeight) {
+                return el;
+            }
+        }
+
+        return doc.body;
+    }
+
+    return null;
 }

@@ -133,7 +133,7 @@ export interface FocusableGroupProps {
     isDefault?: boolean | (() => boolean);
     isLimited?: FocusableGroupFocusLimit;
     nextDirection?: FocusableGroupNextDirection;
-    onChange?: ((state: FocusableGroupState) => void) | null;
+    onChange?: (state: FocusableGroupState) => void;
 }
 
 export interface FocusableGroupContainerProps {
@@ -164,6 +164,7 @@ export interface FocusableGroup {
     makeCurrent(): void;
     isDefault(): boolean;
     getProps(): FocusableGroupProps;
+    setProps(props: FocusableGroupProps): void;
     setFocused(focused: boolean): void;
     setUnlimited(unlimited: boolean): void;
     setupContainer(remove?: boolean): void;
@@ -173,6 +174,7 @@ export interface Focusable {
     addGroup(element: HTMLElement, props: FocusableGroupProps): void;
     removeGroup(element: HTMLElement): void;
     moveGroup(from: HTMLElement, to: HTMLElement): void;
+    setGroupProps(element: HTMLElement, props: FocusableGroupProps): void;
     setCurrentGroup(element: HTMLElement): void;
     isInCurrentGroup(element: HTMLElement): boolean;
     findGroup(element: HTMLElement): HTMLElement | null;
