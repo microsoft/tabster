@@ -266,8 +266,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             hasFocus: this._focused === group,
             siblingHasFocus: !!this._focused && (this._focused !== group),
             isLimited: (
-                (isLimited === Types.FocusableGroupFocusLimit.CanLimitLimited) ||
-                (isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited)
+                (isLimited === Types.FocusableGroupFocusLimit.Limited) ||
+                (isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus)
             ) ? this._unlimited !== group : false
         };
     }
@@ -294,10 +294,6 @@ export class FocusableGroup implements Types.FocusableGroup {
         });
 
         this.setupContainer();
-
-        if (props.isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited) {
-            this.setUnlimited(true);
-        }
     }
 
     dispose(): void {
@@ -361,8 +357,8 @@ export class FocusableGroup implements Types.FocusableGroup {
 
     setUnlimited(unlimited: boolean): void {
         if (this._container && (
-                (this._props.isLimited === Types.FocusableGroupFocusLimit.CanLimitLimited) ||
-                (this._props.isLimited === Types.FocusableGroupFocusLimit.CanLimitUnlimited))
+                (this._props.isLimited === Types.FocusableGroupFocusLimit.Limited) ||
+                (this._props.isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus))
         ) {
             this._container.setUnlimitedGroup(unlimited ? this : undefined);
         }
@@ -799,6 +795,22 @@ export class Focusable implements Types.Focusable {
 
         if (currentElement) {
             walker.currentNode = currentElement;
+        } else if (prev) {
+            let lastChild: HTMLElement | null = null;
+
+            for (let i = container.lastElementChild; i; i = i.lastElementChild) {
+                lastChild = i as HTMLElement;
+            }
+
+            if (!lastChild) {
+                return null;
+            }
+
+            if (this._acceptElement(lastChild, acceptCondition!!!, ignoreLayer) === NodeFilter.FILTER_ACCEPT) {
+                return lastChild;
+            } else {
+                walker.currentNode = lastChild;
+            }
         }
 
         return (prev ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null);

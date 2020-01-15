@@ -118,8 +118,8 @@ export interface FocusableGroupState {
 
 export enum FocusableGroupFocusLimit {
     Unlimited = 0,
-    CanLimitLimited = 1, // The focus is limitable, limited initially.
-    CanLimitUnlimited = 2 // The focus is limitable, unlimited initially.
+    Limited = 1, // The focus is limited to the container only and explicit Enter is needed to go inside.
+    LimitedTrapFocus = 2 // The focus is limited as above, plus trapped when inside.
 }
 
 export enum FocusableGroupNextDirection {

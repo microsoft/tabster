@@ -12,7 +12,9 @@ export type GroupState = Types.FocusableGroupState;
 
 export import NextGroupDirection = Types.FocusableGroupNextDirection;
 
-export interface GroupProperties extends React.HTMLAttributes<HTMLDivElement> {
+type GroupHTMLProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role' | 'aria-label' | 'tabIndex'>;
+
+export interface GroupProperties extends GroupHTMLProps {
     role?: string;
     groupLabel?: string | ((state: GroupState) => string);
     isFocusable?: boolean;
@@ -31,15 +33,13 @@ export class Group extends React.Component<GroupProperties> {
 
     render() {
         const {
-            groupLabel,
             role,
+            groupLabel,
             isFocusable,
             isLimited,
             isRowingRegion,
             nextGroupDirection,
             onGroupChange,
-            tabIndex,
-            'aria-label': ariaLabel,
             ...restProps
         } = this.props;
 
@@ -92,7 +92,7 @@ export class Group extends React.Component<GroupProperties> {
             } else {
                 AbilityHelpers.focusable.addGroup(div, {
                     onChange: this._onChange,
-                    isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.CanLimitLimited : undefined,
+                    isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.LimitedTrapFocus : undefined,
                     nextDirection: this.props.nextGroupDirection
                 });
             }
@@ -158,7 +158,7 @@ export class Group extends React.Component<GroupProperties> {
     private _setLabel(state: GroupState): boolean {
         const label = (typeof this.props.groupLabel === 'function')
             ? this.props.groupLabel.call(this, state)
-            : (this.props.groupLabel !== undefined ? this.props.groupLabel : this.props['aria-label']);
+            : (this.props.groupLabel !== undefined ? this.props.groupLabel : undefined);
 
         if (this._div && (label !== undefined)) {
             this._div.setAttribute('aria-label', label);

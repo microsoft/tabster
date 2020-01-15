@@ -268,9 +268,24 @@ export class FocusedElementState
                 }
             }
 
-            const next = e.shiftKey
+            let next = e.shiftKey
                 ? this._ah.focusable.findPrev(curElement)
                 : this._ah.focusable.findNext(curElement);
+
+            const group = this._getGroup(curElement);
+
+            if (group) {
+                const groupElement = group.getElement();
+
+                if ((curElement !== groupElement) &&
+                    (group.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus) &&
+                    (!next || (next === groupElement) || !groupElement.contains(next))
+                ) {
+                    next = e.shiftKey
+                        ? this._ah.focusable.findLast(groupElement)
+                        : this._ah.focusable.findNext(groupElement, groupElement);
+                }
+            }
 
             if (l && l.layer) {
                 const nml = next && ModalityLayer.getLayerFor(next);
@@ -292,18 +307,13 @@ export class FocusedElementState
                 this._moveOutWithDefaultAction(l ? l.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
             }
         } else {
-            let groupElement = this._ah.focusable.findGroup(curElement);
-
-            if (!groupElement) {
-                return;
-            }
-
-            let ah = getAbilityHelpersOnElement(groupElement);
-            let group = ah && ah.focusableGroup;
+            let group = this._getGroup(curElement);
 
             if (!group) {
                 return;
             }
+
+            let groupElement = group.getElement();
 
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -328,16 +338,13 @@ export class FocusedElementState
                     } else { // Esc
                         if (state.isLimited) {
                             if (groupElement.parentElement) {
-                                const parentGroupElement = this._ah.focusable.findGroup(groupElement.parentElement);
+                                const parentGroup = this._getGroup(groupElement.parentElement);
 
-                                if (parentGroupElement) {
-                                    const ah2 = getAbilityHelpersOnElement(parentGroupElement);
+                                if (parentGroup) {
+                                    groupElement = parentGroup.getElement();
+                                    group = parentGroup;
+                                    state = parentGroup.getState();
 
-                                    if (ah2 && ah2.focusableGroup) {
-                                        groupElement = parentGroupElement;
-                                        group = ah2.focusableGroup;
-                                        state = ah2.focusableGroup.getState();
-                                    }
                                 }
                             }
                         }
@@ -395,6 +402,18 @@ export class FocusedElementState
                 }
             }
         }
+    }
+
+    private _getGroup(element: HTMLElement): Types.FocusableGroup | undefined {
+        let groupElement = this._ah.focusable.findGroup(element);
+
+        if (!groupElement) {
+            return;
+        }
+
+        let ah = getAbilityHelpersOnElement(groupElement);
+
+        return ah && ah.focusableGroup;
     }
 
     private _findNextGroup(from: HTMLElement, key: Keys, direction?: Types.FocusableGroupNextDirection): HTMLElement | null {
