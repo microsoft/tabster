@@ -498,7 +498,7 @@ export class FocusedElementState
         while (ue) {
             pue = ue;
 
-            ue = isElementVisibleInContainer(ue)
+            ue = isElementVerticallyVisibleInContainer(ue)
                 ? this._ah.focusable.findPrevGroup(ue)
                 : null;
         }
@@ -513,7 +513,7 @@ export class FocusedElementState
         while (de) {
             pde = de;
 
-            de = isElementVisibleInContainer(de)
+            de = isElementVerticallyVisibleInContainer(de)
                 ? this._ah.focusable.findNextGroup(de)
                 : null;
         }
@@ -634,16 +634,14 @@ export function setupFocusedElementStateInIFrame(mainWindow: Window, iframeDocum
     ]);
 }
 
-function isElementVisibleInContainer(element: HTMLElement): boolean {
+function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = container.getBoundingClientRect();
+        const containerRect = getScrollableBoundingRect(container);
         const elementRect = element.getBoundingClientRect();
 
-        return (elementRect.left >= containerRect.left) &&
-            (elementRect.top >= containerRect.top) &&
-            (elementRect.right <= containerRect.right) &&
+        return (elementRect.top >= containerRect.top) &&
             (elementRect.bottom <= containerRect.bottom);
     }
 
@@ -656,7 +654,7 @@ function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = container.getBoundingClientRect();
+        const containerRect = getScrollableBoundingRect(container);
         const elementRect = element.getBoundingClientRect();
 
         if (alignToTop) {
@@ -681,4 +679,16 @@ function getScrollableContainer(element: HTMLElement): HTMLElement | null {
     }
 
     return null;
+}
+
+function getScrollableBoundingRect(element: HTMLElement): DOMRect {
+    const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
+
+    if (element === scrollingElement) {
+        // A bounding rect of the top-level element contains the whole page regardless of the
+        // scrollbar. So, we improvise a little...
+        return new DOMRect(0, 0, scrollingElement.clientWidth, scrollingElement.clientHeight);
+    }
+
+    return element.getBoundingClientRect();
 }
