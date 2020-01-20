@@ -153,6 +153,10 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
             }
         }, _dismissTimeout);
     }
+
+    static setVal(instance: Types.KeyboardNavigationState, val: boolean): void {
+        (instance as KeyboardNavigationState).setVal(val, undefined);
+    }
 }
 
 export function setupKeyboardNavigationStateInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {

@@ -5,10 +5,12 @@
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from '../IFrameEvents';
 import { getAbilityHelpersOnElement } from '../Instance';
+import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Keys } from '../Keys';
 import { ModalityLayer } from '../ModalityLayer';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
+import { getBoundingRect } from '../Utils';
 
 interface FocusedElementWithIgnoreFlag extends HTMLElement {
     __shouldIgnoreFocus: boolean;
@@ -398,6 +400,7 @@ export class FocusedElementState
                 }
 
                 if (next) {
+                    KeyboardNavigationState.setVal(this._ah.keyboardNavigation, true);
                     callOriginalFocusOnly(next);
                 }
             }
@@ -638,7 +641,7 @@ function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = getScrollableBoundingRect(container);
+        const containerRect = getBoundingRect(container);
         const elementRect = element.getBoundingClientRect();
 
         return (elementRect.top >= containerRect.top) &&
@@ -654,7 +657,7 @@ function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = getScrollableBoundingRect(container);
+        const containerRect = getBoundingRect(container);
         const elementRect = element.getBoundingClientRect();
 
         if (alignToTop) {
@@ -679,16 +682,4 @@ function getScrollableContainer(element: HTMLElement): HTMLElement | null {
     }
 
     return null;
-}
-
-function getScrollableBoundingRect(element: HTMLElement): DOMRect {
-    const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
-
-    if (element === scrollingElement) {
-        // A bounding rect of the top-level element contains the whole page regardless of the
-        // scrollbar. So, we improvise a little...
-        return new DOMRect(0, 0, scrollingElement.clientWidth, scrollingElement.clientHeight);
-    }
-
-    return element.getBoundingClientRect();
 }

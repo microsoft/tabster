@@ -26,3 +26,15 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
 
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
+
+export function getBoundingRect(element: HTMLElement): DOMRect {
+    const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
+
+    if (element === scrollingElement) {
+        // A bounding rect of the top-level element contains the whole page regardless of the
+        // scrollbar. So, we improvise a little...
+        return new DOMRect(0, 0, scrollingElement.clientWidth, scrollingElement.clientHeight);
+    }
+
+    return element.getBoundingClientRect();
+}

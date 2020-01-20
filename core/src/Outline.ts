@@ -11,6 +11,7 @@ import {
 } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement, WindowWithAbilityHelpers } from './Instance';
 import * as Types from './Types';
+import { getBoundingRect } from './Utils';
 
 const _customEventName = 'ability-helpers:outline-related';
 
@@ -330,7 +331,7 @@ export class Outline implements Types.Outline {
             return;
         }
 
-        let boundingRect = this._outlinedElement.getBoundingClientRect();
+        let boundingRect = getBoundingRect(this._outlinedElement);
 
         const position = new OutlinePosition(
             boundingRect.left,
@@ -374,7 +375,7 @@ export class Outline implements Types.Outline {
                 break;
             }
 
-            boundingRect = parent.getBoundingClientRect();
+            boundingRect = getBoundingRect(parent);
 
             const win = parent.ownerDocument && parent.ownerDocument.defaultView;
 
@@ -396,8 +397,9 @@ export class Outline implements Types.Outline {
             }
         }
 
-        const allWidth = container.parentElement.clientWidth;
-        const allHeight = container.parentElement.clientHeight;
+        const allRect = getBoundingRect(container.parentElement);
+        const allWidth = allRect.left + allRect.right;
+        const allHeight = allRect.top + allRect.bottom;
         const ow = _props.outlineWidth;
 
         p.left = p.left > ow ? p.left - ow : 0;
