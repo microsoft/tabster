@@ -267,7 +267,7 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
 
 export class FocusDeloser implements Types.FocusDeloser {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
     private _curDeloser: Types.FocusDeloserContainer | undefined;
@@ -277,20 +277,30 @@ export class FocusDeloser implements Types.FocusDeloser {
     private _lastFocusedElement: HTMLElement | undefined;
     private _isPaused = false;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
-
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         this._ah = ah;
+
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         this._ah.focusedElement.subscribe(this._onElementFocused);
     }
 
     protected dispose(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -370,6 +380,10 @@ export class FocusDeloser implements Types.FocusDeloser {
     }
 
     pause(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._isPaused = true;
 
         if (this._restoreFocusTimer) {
@@ -399,6 +413,10 @@ export class FocusDeloser implements Types.FocusDeloser {
     }
 
     private _onElementFocused = (e: HTMLElement | undefined): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._restoreFocusTimer) {
             this._mainWindow.clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
@@ -491,6 +509,10 @@ export class FocusDeloser implements Types.FocusDeloser {
     }
 
     private _scheduleRestoreFocus(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._isPaused) {
             return;
         }

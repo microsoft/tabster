@@ -15,6 +15,7 @@ export import NextGroupDirection = Types.FocusableGroupNextDirection;
 type GroupHTMLProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role' | 'aria-label' | 'tabIndex'>;
 
 export interface GroupProperties extends GroupHTMLProps {
+    as?: React.ReactType;
     role?: string;
     groupLabel?: string | ((state: GroupState) => string);
     isFocusable?: boolean;
@@ -33,6 +34,7 @@ export class Group extends React.Component<GroupProperties> {
 
     render() {
         const {
+            as: _as,
             role,
             groupLabel,
             isFocusable,
@@ -43,16 +45,18 @@ export class Group extends React.Component<GroupProperties> {
             ...restProps
         } = this.props;
 
-        return (
-            <div
-                ref={ this._onRef }
-                tabIndex={ this.props.isFocusable ? 0 : undefined }
-                { ...restProps }
-            >
+        return React.createElement(
+            _as || 'div',
+            {
+                ref: this._onRef,
+                tabIndex: (this.props.isFocusable ? 0 : undefined),
+                ...restProps
+            },
+            (
                 <GroupContext.Provider value={ this._addChildGroup }>
                     { this.props.children }
                 </GroupContext.Provider>
-            </div>
+            )
         );
     }
 

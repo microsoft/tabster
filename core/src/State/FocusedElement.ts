@@ -61,21 +61,27 @@ export class FocusedElementState
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _moveOutInput: HTMLInputElement | undefined;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         super();
 
         this._ah = ah;
 
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         FocusedElementState._replaceFocus(this._mainWindow.document);
@@ -89,6 +95,10 @@ export class FocusedElementState
 
     protected dispose(): void {
         super.dispose();
+
+        if (!this._mainWindow) {
+            return;
+        }
 
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
@@ -626,8 +636,12 @@ function callOriginalFocusOnly(element: HTMLElement): void {
     }
 }
 
-export function setupFocusedElementStateInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {
+export function setupFocusedElementStateInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
     (FocusedElementState as any).replaceFocus(iframeDocument);
+
+    if (!mainWindow) {
+        return;
+    }
 
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
         { type: EventFromIFrameDescriptorType.Document, name: 'focusin', capture: true },

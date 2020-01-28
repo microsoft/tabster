@@ -15,21 +15,27 @@ const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
 
 export class KeyboardNavigationState extends Subscribable<boolean> implements Types.KeyboardNavigationState {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _dismissTimer: number | undefined;
     private _initTimer: number | undefined;
     private _isMouseUsed = false;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         super();
 
         this._ah = ah;
 
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         this._mainWindow.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
@@ -42,6 +48,10 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
 
     protected dispose(): void {
         super.dispose();
+
+        if (!this._mainWindow) {
+            return;
+        }
 
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
@@ -134,6 +144,10 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     }
 
     private _scheduleDismiss(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._dismissTimer) {
             this._mainWindow.clearTimeout(this._dismissTimer);
             this._dismissTimer = undefined;
@@ -159,7 +173,11 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     }
 }
 
-export function setupKeyboardNavigationStateInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {
+export function setupKeyboardNavigationStateInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
+    if (!mainWindow) {
+        return;
+    }
+
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
         { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
         { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: true }

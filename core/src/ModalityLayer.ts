@@ -346,19 +346,25 @@ export class ModalityLayerRoot implements Types.ModalityLayerRoot {
 
 export class ModalityLayer implements Types.ModalityLayer {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
     private _curFocusInLayer: Types.ModalityLayerContainer | undefined;
     private _focusOutTimer: number | undefined;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         this._ah = ah;
 
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         this._ah.focusedElement.subscribe(this._onElementFocused);
@@ -370,6 +376,10 @@ export class ModalityLayer implements Types.ModalityLayer {
     }
 
     protected dispose(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -552,6 +562,10 @@ export class ModalityLayer implements Types.ModalityLayer {
     }
 
     private _onElementFocused = (e: HTMLElement): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._focusOutTimer) {
             this._mainWindow.clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
@@ -647,7 +661,11 @@ export class ModalityLayer implements Types.ModalityLayer {
     }
 }
 
-export function setupModalityLayerInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {
+export function setupModalityLayerInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
+    if (!mainWindow) {
+        return;
+    }
+
     observeMutationEvents(iframeDocument);
 
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [

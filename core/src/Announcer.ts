@@ -17,14 +17,16 @@ const defaultProps: Types.AnnouncerProps = {
 };
 
 export class Announcer implements Types.Announcer {
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _props: Types.AnnouncerProps = defaultProps;
     private _container: HTMLDivElement | undefined;
     private _announcements: Announcement[] = [];
     private _cleanupTimer: number | undefined;
 
-    constructor(mainWindow: Window) {
-        this._mainWindow = mainWindow;
+    constructor(mainWindow?: Window) {
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+        }
     }
 
     setup(props: Partial<Types.AnnouncerProps>): void {
@@ -44,18 +46,24 @@ export class Announcer implements Types.Announcer {
     }
 
     protected dispose(): void {
+        const mainWindow = this._mainWindow;
+
+        if (!mainWindow) {
+            return;
+        }
+
         if (!this._container) {
             return;
         }
 
         if (this._cleanupTimer) {
-            this._mainWindow.clearTimeout(this._cleanupTimer);
+            mainWindow.clearTimeout(this._cleanupTimer);
             this._cleanupTimer = undefined;
         }
 
         this._announcements.forEach((a) => {
             if (a.timer) {
-                this._mainWindow.clearTimeout(a.timer);
+                mainWindow.clearTimeout(a.timer);
                 a.timer = undefined;
             }
         });
@@ -69,6 +77,10 @@ export class Announcer implements Types.Announcer {
     }
 
     announce(text: string, assertive?: boolean): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (!text.trim()) {
             return;
         }
@@ -112,6 +124,10 @@ export class Announcer implements Types.Announcer {
     }
 
     private _shrinkHistory(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (!this._container) {
             return;
         }
@@ -131,6 +147,10 @@ export class Announcer implements Types.Announcer {
     }
 
     private _init(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._container) {
             return;
         }

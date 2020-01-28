@@ -36,18 +36,20 @@ let _props: Types.OutlineProps = defaultProps;
 let _fullScreenEventName: string | undefined;
 let _fullScreenElementName: string | undefined;
 
-if ('onfullscreenchange' in document) {
-    _fullScreenEventName = 'fullscreenchange';
-    _fullScreenElementName = 'fullscreenElement';
-} else if ('onwebkitfullscreenchange' in document) {
-    _fullScreenEventName = 'webkitfullscreenchange';
-    _fullScreenElementName = 'webkitFullscreenElement';
-} else if ('onmozfullscreenchange' in document) {
-    _fullScreenEventName = 'mozfullscreenchange';
-    _fullScreenElementName = 'mozFullScreenElement';
-} else if ('onmsfullscreenchange' in document) {
-    _fullScreenEventName = 'msfullscreenchange';
-    _fullScreenElementName = 'msFullscreenElement';
+if (typeof document !== 'undefined') {
+    if ('onfullscreenchange' in document) {
+        _fullScreenEventName = 'fullscreenchange';
+        _fullScreenElementName = 'fullscreenElement';
+    } else if ('onwebkitfullscreenchange' in document) {
+        _fullScreenEventName = 'webkitfullscreenchange';
+        _fullScreenElementName = 'webkitFullscreenElement';
+    } else if ('onmozfullscreenchange' in document) {
+        _fullScreenEventName = 'mozfullscreenchange';
+        _fullScreenElementName = 'mozFullScreenElement';
+    } else if ('onmsfullscreenchange' in document) {
+        _fullScreenEventName = 'msfullscreenchange';
+        _fullScreenElementName = 'msFullscreenElement';
+    }
 }
 
 class OutlinePosition {
@@ -77,10 +79,9 @@ class OutlinePosition {
 
 export class Outline implements Types.Outline {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
-    private _scrollTimer: number | undefined;
     private _outlinedElement: HTMLElement | undefined;
     private _curPos: OutlinePosition | undefined;
     private _isVisible = false;
@@ -88,14 +89,20 @@ export class Outline implements Types.Outline {
     private _allOutlineElements: OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         this._ah = ah;
 
-        this._mainWindow = mainWindow;
-        this._mainWindow.setTimeout(this._init, 0);
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         this._ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
@@ -111,6 +118,10 @@ export class Outline implements Types.Outline {
     }
 
     setup(props: Partial<Types.OutlineProps>): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         _props = { ..._props, ...props };
 
         const win = this._mainWindow as WindowWithAbilityHelpers;
@@ -129,6 +140,10 @@ export class Outline implements Types.Outline {
     }
 
     protected dispose(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -137,11 +152,6 @@ export class Outline implements Types.Outline {
         if (this._updateTimer) {
             this._mainWindow.clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
-        }
-
-        if (this._scrollTimer) {
-            this._mainWindow.clearTimeout(this._scrollTimer);
-            this._scrollTimer = undefined;
         }
 
         this._ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
@@ -207,6 +217,10 @@ export class Outline implements Types.Outline {
     }
 
     private _updateOutlinedElement(e: HTMLElement | undefined): boolean {
+        if (!this._mainWindow) {
+            return false;
+        }
+
         this._outlinedElement = undefined;
 
         if (this._updateTimer) {
@@ -286,16 +300,16 @@ export class Outline implements Types.Outline {
             return;
         }
 
-        if (this._scrollTimer) {
-            this._mainWindow.clearTimeout(this._scrollTimer);
-        }
-
         this._curPos = undefined;
 
         this._setOutlinePosition();
     }
 
     private _updateOutline(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._setOutlinePosition();
 
         if (this._updateTimer) {
@@ -359,11 +373,13 @@ export class Outline implements Types.Outline {
         this._curPos = position;
 
         const p = position.clone();
-        let hasAbsolutelyPositionedParent = false;
+        let hasAbsolutePositionedParent = false;
+        let hasFixedPositionedParent = false;
 
         const container = outlineElements.container;
+        const scrollingElement = container && container.ownerDocument && container.ownerDocument.scrollingElement as HTMLElement;
 
-        if (!container.parentElement) {
+        if (!scrollingElement) {
             return;
         }
 
@@ -384,12 +400,19 @@ export class Outline implements Types.Outline {
             }
 
             const computedStyle = win.getComputedStyle(parent);
+            const position = computedStyle.position;
 
-            if (computedStyle.position === 'absolute') {
-                hasAbsolutelyPositionedParent = true;
+            if (position === 'absolute') {
+                hasAbsolutePositionedParent = true;
+            } else if ((position === 'fixed') || (position === 'sticky')) {
+                hasFixedPositionedParent = true;
             }
 
-            if (!hasAbsolutelyPositionedParent || (computedStyle.overflow === 'hidden')) {
+            if (computedStyle.overflow === 'visible') {
+                continue;
+            }
+
+            if ((!hasAbsolutePositionedParent && !hasFixedPositionedParent) || (computedStyle.overflow === 'hidden')) {
                 if (boundingRect.left > p.left) { p.left = boundingRect.left; }
                 if (boundingRect.top > p.top) { p.top = boundingRect.top; }
                 if (boundingRect.right < p.right) { p.right = boundingRect.right; }
@@ -397,7 +420,7 @@ export class Outline implements Types.Outline {
             }
         }
 
-        const allRect = getBoundingRect(container.parentElement);
+        const allRect = getBoundingRect(scrollingElement);
         const allWidth = allRect.left + allRect.right;
         const allHeight = allRect.top + allRect.bottom;
         const ow = _props.outlineWidth;
@@ -415,8 +438,10 @@ export class Outline implements Types.Outline {
             const topBorderNode = outlineElements.top;
             const rightBorderNode = outlineElements.right;
             const bottomBorderNode = outlineElements.bottom;
-            const sx = this._fullScreenElement ? 0 : win.pageXOffset;
-            const sy = this._fullScreenElement ? 0 : win.pageYOffset;
+            const sx = (this._fullScreenElement || hasFixedPositionedParent) ? 0 : win.pageXOffset;
+            const sy = (this._fullScreenElement || hasFixedPositionedParent) ? 0 : win.pageYOffset;
+
+            container.style.position = hasFixedPositionedParent ? 'fixed' : 'absolute';
 
             leftBorderNode.style.left =
             topBorderNode.style.left =
@@ -515,7 +540,11 @@ export class Outline implements Types.Outline {
     }
 }
 
-export function setupOutlineInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {
+export function setupOutlineInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
+    if (!mainWindow) {
+        return;
+    }
+
     const descriptors: EventFromIFrameDescriptor[] = [
         { type: EventFromIFrameDescriptorType.Window, name: 'scroll', capture: true }
     ];

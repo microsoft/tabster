@@ -403,16 +403,25 @@ export class FocusableGroup implements Types.FocusableGroup {
 
 export class Focusable implements Types.Focusable {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _mainWindow: Window | undefined;
+    private _body: HTMLElement | undefined;
     private _initTimer: number | undefined;
 
-    constructor(mainWindow: Window, ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         this._ah = ah;
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+
+        if (mainWindow) {
+            this._mainWindow = mainWindow;
+            this._body = mainWindow.document.body;
+            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        }
     }
 
     private _init = (): void => {
+        if (!this._mainWindow) {
+            return;
+        }
+
         this._initTimer = undefined;
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
@@ -422,6 +431,10 @@ export class Focusable implements Types.Focusable {
     }
 
     protected dispose(): void {
+        if (!this._mainWindow) {
+            return;
+        }
+
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -755,26 +768,26 @@ export class Focusable implements Types.Focusable {
     }
 
     findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._mainWindow.document.body, null, includeProgrammaticallyFocusable, ignoreLayer, false);
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, false);
     }
 
     findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._mainWindow.document.body, null, includeProgrammaticallyFocusable, ignoreLayer, true);
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, true);
     }
 
     findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
             ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._mainWindow.document.body, current, includeProgrammaticallyFocusable, ignoreLayer, false);
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, false);
     }
 
     findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
             ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._mainWindow.document.body, current, includeProgrammaticallyFocusable, ignoreLayer, true);
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, true);
     }
 
     findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
         return this._findElement(
-            context || this._mainWindow.document.body,
+            context || this._body,
             null,
             includeProgrammaticallyFocusable,
             ignoreLayer,
@@ -784,13 +797,17 @@ export class Focusable implements Types.Focusable {
     }
 
     private _findElement(
-        container: HTMLElement,
+        container: HTMLElement | undefined,
         currentElement: HTMLElement | null,
         includeProgrammaticallyFocusable?: boolean,
         ignoreLayer?: boolean,
         prev?: boolean,
         acceptCondition?: (el: HTMLElement) => boolean
     ): HTMLElement | null {
+        if (!container) {
+            return null;
+        }
+
         if (!container.ownerDocument || (currentElement && (container !== currentElement) && !container.contains(currentElement))) {
             return null;
         }
@@ -856,7 +873,11 @@ export class Focusable implements Types.Focusable {
     }
 }
 
-export function setupFocusableInIFrame(mainWindow: Window, iframeDocument: HTMLDocument): void {
+export function setupFocusableInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
+    if (!mainWindow) {
+        return;
+    }
+
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
         { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: true }
     ]);

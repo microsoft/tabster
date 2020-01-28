@@ -16,6 +16,8 @@ import * as Types from './Types';
 
 export { Types };
 
+let _mainWindow: Window | undefined;
+
 class AbilityHelpers implements Types.AbilityHelpers {
     announcer: Announcer;
     keyboardNavigation: KeyboardNavigationState;
@@ -25,33 +27,50 @@ class AbilityHelpers implements Types.AbilityHelpers {
     focusable: Focusable;
     modalityLayer: ModalityLayer;
 
-    constructor(mainWindow: Window) {
-        observeMutations(mainWindow.document);
+    constructor(mainWindow?: Window) {
+        // mainWindow === undefined means some testing environment.
+        // All the componetnts will be no-op.
+
+        if (mainWindow && mainWindow.document) {
+            observeMutations(mainWindow.document);
+        }
+
         this.announcer = new Announcer(mainWindow);
-        this.keyboardNavigation = new KeyboardNavigationState(mainWindow, this);
-        this.focusedElement = new FocusedElementState(mainWindow, this);
-        this.outline = new Outline(mainWindow, this);
-        this.focusDeloser = new FocusDeloser(mainWindow, this);
-        this.focusable = new Focusable(mainWindow, this);
-        this.modalityLayer = new ModalityLayer(mainWindow, this);
+        this.keyboardNavigation = new KeyboardNavigationState(this, mainWindow);
+        this.focusedElement = new FocusedElementState(this, mainWindow);
+        this.outline = new Outline(this, mainWindow);
+        this.focusDeloser = new FocusDeloser(this, mainWindow);
+        this.focusable = new Focusable(this, mainWindow);
+        this.modalityLayer = new ModalityLayer(this, mainWindow);
     }
 }
 
 function getAbilityHelpers() {
-    const win = (window as WindowWithAbilityHelpers);
+    const win = typeof window !== 'undefined' ? (window as WindowWithAbilityHelpers) : undefined;
 
-    if (!win.__abilityHelpers) {
-        win.__abilityHelpers = {
-            helpers: new AbilityHelpers(win),
-            mainWindow: win
-        };
+    let helpers: Types.AbilityHelpers | undefined;
+
+    if (win && win.__abilityHelpers) {
+        helpers = win.__abilityHelpers.helpers;
     }
 
-    return win.__abilityHelpers;
+    if (!helpers) {
+        helpers = new AbilityHelpers(win);
+
+        if (win) {
+            _mainWindow = win;
+
+            win.__abilityHelpers = {
+                helpers,
+                mainWindow: win
+            };
+        }
+    }
+
+    return helpers;
 }
 
-const abilityHelpers = getAbilityHelpers();
-const instance = abilityHelpers.helpers;
+const instance = getAbilityHelpers();
 
 export { instance as AbilityHelpers };
 
@@ -63,16 +82,14 @@ export function setupIFrame(iframeDocument: HTMLDocument) {
     }
 
     win.__abilityHelpers = {
-        helpers: abilityHelpers.helpers,
-        mainWindow: abilityHelpers.mainWindow
+        helpers: instance,
+        mainWindow: _mainWindow || win
     };
 
-    const mainWindow = abilityHelpers.mainWindow;
-
     observeMutations(iframeDocument);
-    setupFocusedElementStateInIFrame(mainWindow, iframeDocument);
-    setupKeyboardNavigationStateInIFrame(mainWindow, iframeDocument);
-    setupOutlineInIFrame(mainWindow, iframeDocument);
-    setupFocusableInIFrame(mainWindow, iframeDocument);
-    setupModalityLayerInIFrame(mainWindow, iframeDocument);
+    setupFocusedElementStateInIFrame(iframeDocument, _mainWindow);
+    setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
+    setupOutlineInIFrame(iframeDocument, _mainWindow);
+    setupFocusableInIFrame(iframeDocument, _mainWindow);
+    setupModalityLayerInIFrame(iframeDocument, _mainWindow);
 }
