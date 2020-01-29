@@ -288,7 +288,7 @@ export class FocusedElementState
 
             if (group) {
                 const groupElement = group.getElement();
-                const first = this._ah.focusable.isFocusable(groupElement) ? groupElement : this._ah.focusable.findFirst(groupElement);
+                const first = this._getGroupFirst(groupElement, false);
 
                 if (first && (curElement !== first) &&
                     (group.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus) &&
@@ -337,20 +337,20 @@ export class FocusedElementState
                     let state = group.getState();
 
                     if (e.keyCode === Keys.Enter) {
-                        if (
-                            state.isLimited &&
-                            ((curElement === groupElement) ||
-                             (curElement === this._ah.focusable.findFirst(groupElement, false, false, true)))
-                        ) {
+                        if (state.isLimited && (curElement === this._getGroupFirst(groupElement, true))) {
                             group.setUnlimited(true);
 
                             next = this._ah.focusable.findNext(curElement);
 
-                            if (next === null) {
-                                shouldStopPropagation = false;
-                            } else if (!groupElement.contains(next)) {
+                            if (!groupElement.contains(next)) {
                                 next = null;
                             }
+
+                            if (next === null) {
+                                shouldStopPropagation = false;
+                            }
+                        } else {
+                            shouldStopPropagation = false;
                         }
                     } else { // Esc
                         if (state.isLimited) {
@@ -425,6 +425,12 @@ export class FocusedElementState
                 }
             }
         }
+    }
+
+    private _getGroupFirst(groupElement: HTMLElement, ignoreGroup: boolean): HTMLElement | null {
+        return this._ah.focusable.isFocusable(groupElement)
+            ? groupElement
+            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroup);
     }
 
     private _getGroup(element: HTMLElement): Types.FocusableGroup | undefined {

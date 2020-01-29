@@ -470,11 +470,10 @@ export class Focusable implements Types.Focusable {
                 if (!_focusedGroups[gid]) {
                     const g = newFocusedGroups[gid];
                     const groupElement = g.getElement();
-                    const first = this._ah.focusable.isFocusable(groupElement) ? groupElement : this._ah.focusable.findFirst(groupElement);
 
                     g.setFocused(true);
 
-                    if (first !== element) {
+                    if (element !== this._getGroupFirst(groupElement, false)) {
                         g.setUnlimited(true);
                     }
                 }
@@ -502,6 +501,12 @@ export class Focusable implements Types.Focusable {
         }
 
         // TODO.
+    }
+
+    private _getGroupFirst(groupElement: HTMLElement, ignoreGroup: boolean): HTMLElement | null {
+        return this._ah.focusable.isFocusable(groupElement)
+            ? groupElement
+            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroup);
     }
 
     addGroup(element: HTMLElement, props: Types.FocusableGroupProps): void {
@@ -577,11 +582,7 @@ export class Focusable implements Types.Focusable {
 
         if (unlimitedOnly) {
             // For a limited group only first focusable in the group is valid.
-            const first = this._ah.focusable.isFocusable(groupElement)
-                ? groupElement
-                : this._findElement(groupElement, null, false, false, true);
-
-            isValidForLimited = element.contains(first);
+            isValidForLimited = element.contains(this._getGroupFirst(groupElement, true));
         }
 
         while (group) {
