@@ -8,7 +8,7 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instan
 import { ModalityLayer } from './ModalityLayer';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
-import { createElementTreeWalker } from './Utils';
+import { createElementTreeWalker, isElementVisibleInContainer } from './Utils';
 
 //const _defaultFocusableAttributeName = 'data-ah-default';
 
@@ -23,12 +23,15 @@ const _focusableSelector = [
 ].join(', ');
 
 const _customEventName = 'ability-helpers:focusable-related';
+const _isVisibleTimeout = 200;
 
 let _lastId = 0;
 
 let _focusedGroups: { [id: string]: Types.FocusableGroup } = {};
 
 export class FocusableGroupContainer implements Types.FocusableGroupContainer {
+    private static _containers: { [id: string]: FocusableGroupContainer } = {};
+
     private _element: HTMLElement;
 
     private _current: Types.FocusableGroup | undefined;
@@ -38,6 +41,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _last: Types.FocusableGroup | undefined;
     private _focused: Types.FocusableGroup | undefined;
     private _unlimited: Types.FocusableGroup | undefined;
+    private _visibleGroups: { [id: string]: Types.ElementVisibility } = {};
 
     private _prevCurrent: Types.FocusableGroup | undefined;
     private _prevPrev: Types.FocusableGroup | undefined;
@@ -46,8 +50,10 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _prevLast: Types.FocusableGroup | undefined;
     private _prevFocused: Types.FocusableGroup | undefined;
     private _prevUnlimited: Types.FocusableGroup | undefined;
+    private _prevVisibleGroups: { [id: string]: Types.ElementVisibility } = {};
 
     private _onChangeTimer: number | undefined;
+    private _updateVisibleTimer: number | undefined;
 
     private _props: Types.FocusableGroupContainerProps;
     private _groups: { [id: string]: Types.FocusableGroup } = {};
@@ -62,14 +68,23 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         setAbilityHelpersOnElement(element, {
             focusableGroupContainer: this
         });
+
+        FocusableGroupContainer._containers[this.id] = this;
     }
 
     dispose(): void {
         this._groups = {};
 
+        if (this._updateVisibleTimer) {
+            window.clearTimeout(this._updateVisibleTimer);
+            this._updateVisibleTimer = undefined;
+        }
+
         setAbilityHelpersOnElement(this._element, {
             focusableGroupContainer: undefined
         });
+
+        delete FocusableGroupContainer._containers[this.id];
     }
 
     setProps(props: Partial<Types.FocusableGroupContainerProps> | null): void {
@@ -94,12 +109,18 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         this._groups[group.id] = group;
 
         this._setFirstLast();
+
+        this._updateVisible();
     }
 
     removeGroup(group: Types.FocusableGroup): void {
         delete this._groups[group.id];
+        delete this._visibleGroups[group.id];
+        delete this._prevVisibleGroups[group.id];
 
         this._setFirstLast();
+
+        this._updateVisible();
     }
 
     setFocusedGroup(group: Types.FocusableGroup | undefined): void {
@@ -167,6 +188,22 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
                 changed.push(this._prevUnlimited);
                 changed.push(this._unlimited);
                 this._prevUnlimited = this._unlimited;
+            }
+
+            if (this._visibleGroups !== this._prevVisibleGroups) {
+                for (let id of Object.keys(this._visibleGroups)) {
+                    if (this._visibleGroups[id] !== this._prevVisibleGroups[id]) {
+                        changed.push(this._groups[id]);
+                    }
+                }
+
+                for (let id of Object.keys(this._prevVisibleGroups)) {
+                    if (this._visibleGroups[id] !== this._prevVisibleGroups[id]) {
+                        changed.push(this._groups[id]);
+                    }
+                }
+
+                this._prevVisibleGroups = this._visibleGroups;
             }
 
             const processed: { [id: string]: boolean } = {};
@@ -252,7 +289,6 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
     getGroupState(group: Types.FocusableGroup): Types.FocusableGroupState {
         const isLimited = group.getProps().isLimited;
-        let isVisible = false;
 
         return {
             isCurrent: this._current ? (this._current === group) : undefined,
@@ -260,7 +296,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             isNext: this._next === group,
             isFirst: this._first === group,
             isLast: this._last === group,
-            isVisible,
+            isVisible: this._visibleGroups[group.id] || Types.ElementVisibility.Invisible,
             hasFocus: this._focused === group,
             siblingHasFocus: !!this._focused && (this._focused !== group),
             isLimited: (
@@ -272,6 +308,56 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
     isEmpty(): boolean {
         return Object.keys(this._groups).length === 0;
+    }
+
+    private _updateVisible(): void {
+        if (this._updateVisibleTimer) {
+            return;
+        }
+
+        this._updateVisibleTimer = window.setTimeout(() => {
+            this._updateVisibleTimer = undefined;
+
+            let isChanged = false;
+            const visibleGroups: { [id: string]: Types.ElementVisibility } = {};
+
+            for (let id of Object.keys(this._groups)) {
+                const isVisible = isElementVisibleInContainer(this._groups[id].getElement());
+                const curIsVisible = this._visibleGroups[id] || Types.ElementVisibility.Invisible;
+
+                if (isVisible !== Types.ElementVisibility.Invisible) {
+                    visibleGroups[id] = isVisible;
+                }
+
+                if (curIsVisible !== isVisible) {
+                    isChanged = true;
+                }
+            }
+
+            if (isChanged) {
+                this._prevVisibleGroups = this._visibleGroups;
+                this._visibleGroups = visibleGroups;
+                this._processOnChange();
+            }
+        }, 0);
+    }
+
+    static updateVisible(scrolled: Node[]): void {
+        const containers: { [id: string]: FocusableGroupContainer } = {};
+
+        for (let s of scrolled) {
+            for (let id of Object.keys(FocusableGroupContainer._containers)) {
+                const container = FocusableGroupContainer._containers[id];
+
+                if (s.contains(container.getElement())) {
+                    containers[container.id] = container;
+                }
+            }
+        }
+
+        for (let id of Object.keys(containers)) {
+            containers[id]._updateVisible();
+        }
     }
 }
 
@@ -339,7 +425,7 @@ export class FocusableGroup implements Types.FocusableGroup {
                 isNext: false,
                 isFirst: false,
                 isLast: false,
-                isVisible: false,
+                isVisible: Types.ElementVisibility.Invisible,
                 hasFocus: false,
                 siblingHasFocus: false,
                 isLimited: false
@@ -406,6 +492,8 @@ export class Focusable implements Types.Focusable {
     private _mainWindow: Window | undefined;
     private _body: HTMLElement | undefined;
     private _initTimer: number | undefined;
+    private _scrollTimer: number | undefined;
+    private _scrollTargets: Node[] = [];
 
     constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         this._ah = ah;
@@ -426,6 +514,7 @@ export class Focusable implements Types.Focusable {
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
+        this._mainWindow.addEventListener('scroll', this._onScroll, true);
 
         this._ah.focusedElement.subscribe(this._onFocus);
     }
@@ -438,6 +527,11 @@ export class Focusable implements Types.Focusable {
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
+        }
+
+        if (this._scrollTimer) {
+            this._mainWindow.clearTimeout(this._scrollTimer);
+            this._scrollTimer = undefined;
         }
 
         this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
@@ -489,6 +583,10 @@ export class Focusable implements Types.Focusable {
         }
 
         switch (e.targetDetails.descriptor.name) {
+            case 'scroll':
+                this._onScroll(e.originalEvent as UIEvent);
+                break;
+
             case MUTATION_EVENT_NAME:
                 this._onMutation(e.originalEvent as MutationEvent);
                 break;
@@ -501,6 +599,37 @@ export class Focusable implements Types.Focusable {
         }
 
         // TODO.
+    }
+
+    private _onScroll = (e: UIEvent) => {
+        if (!this._mainWindow) {
+            return;
+        }
+
+        let isKnownTarget = false;
+
+        for (let t of this._scrollTargets) {
+            if (t === e.target) {
+                isKnownTarget = true;
+                break;
+            }
+        }
+
+        if (!isKnownTarget && (e.target instanceof Node)) {
+            this._scrollTargets.push(e.target);
+        }
+
+        if (this._scrollTimer) {
+            this._mainWindow.clearTimeout(this._scrollTimer);
+        }
+
+        this._scrollTimer = this._mainWindow.setTimeout(() => {
+            this._scrollTimer = undefined;
+
+            FocusableGroupContainer.updateVisible(this._scrollTargets);
+
+            this._scrollTargets = [];
+        }, _isVisibleTimeout);
     }
 
     private _getGroupFirst(groupElement: HTMLElement, ignoreGroup: boolean): HTMLElement | null {
@@ -928,6 +1057,7 @@ export function setupFocusableInIFrame(iframeDocument: HTMLDocument, mainWindow?
     }
 
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: true }
+        { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: true },
+        { type: EventFromIFrameDescriptorType.Window, name: 'scroll', capture: true }
     ]);
 }

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ElementVisibility } from './Types';
+
 let _isBrokenIE11: boolean;
 
 try {
@@ -37,4 +39,91 @@ export function getBoundingRect(element: HTMLElement): DOMRect {
     }
 
     return element.getBoundingClientRect();
+}
+
+export function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
+    const container = getScrollableContainer(element);
+
+    if (container) {
+        const containerRect = getBoundingRect(container);
+        const elementRect = element.getBoundingClientRect();
+
+        return (elementRect.top >= containerRect.top) &&
+            (elementRect.bottom <= containerRect.bottom);
+    }
+
+    return false;
+}
+
+export function isElementVisibleInContainer(element: HTMLElement): ElementVisibility {
+    const container = getScrollableContainer(element);
+
+    if (container) {
+        const containerRect = getBoundingRect(container);
+        const elementRect = element.getBoundingClientRect();
+
+        let top = false;
+        let bottom = false;
+        let left = false;
+        let right = false;
+
+        if ((elementRect.top >= containerRect.top) && (elementRect.top <= containerRect.bottom)) {
+            top = true;
+        }
+
+        if ((elementRect.bottom >= containerRect.top) && (elementRect.bottom <= containerRect.bottom)) {
+            bottom = true;
+        }
+
+        if ((elementRect.left >= containerRect.left) && (elementRect.left <= containerRect.right)) {
+            left = true;
+        }
+
+        if ((elementRect.right >= containerRect.left) && (elementRect.right <= containerRect.right)) {
+            right = true;
+        }
+
+        if (top && bottom && left && right) {
+            return ElementVisibility.Visible;
+        }
+
+        if ((top && left) || (bottom && right)) {
+            return ElementVisibility.PartiallyVisible;
+        }
+    }
+
+    return ElementVisibility.Invisible;
+}
+
+export function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
+    // Built-in DOM's scrollIntoView() is cool, but when we have nested containers,
+    // it scrolls all of them, not just the deepest one. So, trying to work it around.
+    const container = getScrollableContainer(element);
+
+    if (container) {
+        const containerRect = getBoundingRect(container);
+        const elementRect = element.getBoundingClientRect();
+
+        if (alignToTop) {
+            container.scrollTop += (elementRect.top - containerRect.top);
+        } else {
+            container.scrollTop += (elementRect.bottom - containerRect.bottom);
+        }
+    }
+}
+
+export function getScrollableContainer(element: HTMLElement): HTMLElement | null {
+    const doc = element.ownerDocument;
+
+    if (doc) {
+        for (let el: HTMLElement | null = element.parentElement; el; el = el.parentElement) {
+            if (el.scrollHeight > el.clientHeight) {
+                return el;
+            }
+        }
+
+        return doc.body;
+    }
+
+    return null;
 }

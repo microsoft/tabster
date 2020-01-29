@@ -104,13 +104,19 @@ export interface FocusableProps {
     isIgnored: boolean;
 }
 
+export enum ElementVisibility {
+    Invisible = 0,
+    Visible = 1,
+    PartiallyVisible = 2
+}
+
 export interface FocusableGroupState {
     isCurrent: boolean | undefined;
     isPrevious: boolean;
     isNext: boolean;
     isFirst: boolean;
     isLast: boolean;
-    isVisible: boolean;
+    isVisible: ElementVisibility;
     hasFocus: boolean;
     siblingHasFocus: boolean;
     isLimited: boolean;

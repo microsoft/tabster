@@ -10,7 +10,7 @@ import { Keys } from '../Keys';
 import { ModalityLayer } from '../ModalityLayer';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
-import { getBoundingRect } from '../Utils';
+import { isElementVerticallyVisibleInContainer, scrollIntoView } from '../Utils';
 
 interface FocusedElementWithIgnoreFlag extends HTMLElement {
     __shouldIgnoreFocus: boolean;
@@ -665,51 +665,4 @@ export function setupFocusedElementStateInIFrame(iframeDocument: HTMLDocument, m
         { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
         { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: true }
     ]);
-}
-
-function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
-    const container = getScrollableContainer(element);
-
-    if (container) {
-        const containerRect = getBoundingRect(container);
-        const elementRect = element.getBoundingClientRect();
-
-        return (elementRect.top >= containerRect.top) &&
-            (elementRect.bottom <= containerRect.bottom);
-    }
-
-    return false;
-}
-
-function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
-    // Built-in DOM's scrollIntoView() is cool, but when we have nested containers,
-    // it scrolls all of them, not just the deepest one. So, trying to work it around.
-    const container = getScrollableContainer(element);
-
-    if (container) {
-        const containerRect = getBoundingRect(container);
-        const elementRect = element.getBoundingClientRect();
-
-        if (alignToTop) {
-            container.scrollTop += (elementRect.top - containerRect.top);
-        } else {
-            container.scrollTop += (elementRect.bottom - containerRect.bottom);
-        }
-    }
-}
-
-function getScrollableContainer(element: HTMLElement): HTMLElement | null {
-    const doc = element.ownerDocument;
-
-    if (doc) {
-        for (let el: HTMLElement | null = element.parentElement; el; el = el.parentElement) {
-            if (el.scrollHeight > el.clientHeight) {
-                return el;
-            }
-        }
-
-        return doc.body;
-    }
-
-    return null;
 }
