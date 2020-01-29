@@ -469,10 +469,12 @@ export class Focusable implements Types.Focusable {
             for (let gid of Object.keys(newFocusedGroups)) {
                 if (!_focusedGroups[gid]) {
                     const g = newFocusedGroups[gid];
+                    const groupElement = g.getElement();
+                    const first = this._ah.focusable.isFocusable(groupElement) ? groupElement : this._ah.focusable.findFirst(groupElement);
 
                     g.setFocused(true);
 
-                    if (g.getElement() !== element) {
+                    if (first !== element) {
                         g.setUnlimited(true);
                     }
                 }
@@ -563,12 +565,23 @@ export class Focusable implements Types.Focusable {
         return this._isInCurrentGroup(element, false);
     }
 
-    private _isInCurrentGroup(element: HTMLElement, checkLimited: boolean): boolean {
+    private _isInCurrentGroup(element: HTMLElement, unlimitedOnly: boolean): boolean {
         let group = this._findGroup(element);
-        let elementIsGroup = false;
 
-        if (checkLimited && group) {
-            elementIsGroup = group.getElement() === element;
+        if (!group) {
+            return true;
+        }
+
+        let groupElement = group.getElement();
+        let isValidForLimited = false;
+
+        if (unlimitedOnly) {
+            // For a limited group only first focusable in the group is valid.
+            const first = this._ah.focusable.isFocusable(groupElement)
+                ? groupElement
+                : this._findElement(groupElement, null, false, false, true);
+
+            isValidForLimited = element.contains(first);
         }
 
         while (group) {
@@ -578,13 +591,17 @@ export class Focusable implements Types.Focusable {
                 return false;
             }
 
-            if (checkLimited && state.isLimited && !elementIsGroup) {
+            if (unlimitedOnly && state.isLimited && !isValidForLimited) {
                 return false;
             }
 
-            const parentEl = group.getElement().parentElement;
+            const parentEl = groupElement.parentElement;
 
             group = parentEl ? this._findGroup(parentEl) : null;
+
+            if (group) {
+                groupElement = group.getElement();
+            }
         }
 
         return true;
@@ -624,7 +641,11 @@ export class Focusable implements Types.Focusable {
                     const gAh = getAbilityHelpersOnElement(el);
 
                     if (gAh && gAh.focusableGroup && (ignoreLayer || this.isAccessible(el as HTMLElement))) {
-                        return el as HTMLElement;
+                        if (!this._ah.focusable.isFocusable(el) && !this._ah.focusable.findFirst(el, false, false, true)) {
+                            continue;
+                        }
+
+                        return el;
                     }
                 }
             }
@@ -767,30 +788,55 @@ export class Focusable implements Types.Focusable {
         return true;
     }
 
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, false);
+    findFirst(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean,
+        ignoreGroup?: boolean
+    ): HTMLElement | null {
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, false);
     }
 
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, true);
+    findLast(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean,
+        ignoreGroup?: boolean
+    ): HTMLElement | null {
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, true);
     }
 
-    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-            ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, false);
+    findNext(
+        current: HTMLElement,
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean,
+        ignoreGroup?: boolean
+    ): HTMLElement | null {
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, false);
     }
 
-    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-            ignoreLayer?: boolean): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, true);
+    findPrev(
+        current: HTMLElement,
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean, ignoreGroup?: boolean
+    ): HTMLElement | null {
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, true);
     }
 
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null {
+    findDefault(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean,
+        ignoreGroup?: boolean
+    ): HTMLElement | null {
         return this._findElement(
             context || this._body,
             null,
             includeProgrammaticallyFocusable,
             ignoreLayer,
+            ignoreGroup,
             false,
             el => (this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable) && this.getProps(el).isDefault)
         );
@@ -801,6 +847,7 @@ export class Focusable implements Types.Focusable {
         currentElement: HTMLElement | null,
         includeProgrammaticallyFocusable?: boolean,
         ignoreLayer?: boolean,
+        ignoreGroup?: boolean,
         prev?: boolean,
         acceptCondition?: (el: HTMLElement) => boolean
     ): HTMLElement | null {
@@ -819,7 +866,7 @@ export class Focusable implements Types.Focusable {
         const walker = createElementTreeWalker(
             container.ownerDocument,
             container,
-            (node) => this._acceptElement(node as HTMLElement, acceptCondition!!!, ignoreLayer)
+            (node) => this._acceptElement(node as HTMLElement, acceptCondition!!!, ignoreLayer, ignoreGroup)
         );
 
         if (!walker) {
@@ -839,7 +886,7 @@ export class Focusable implements Types.Focusable {
                 return null;
             }
 
-            if (this._acceptElement(lastChild, acceptCondition!!!, ignoreLayer) === NodeFilter.FILTER_ACCEPT) {
+            if (this._acceptElement(lastChild, acceptCondition!!!, ignoreLayer, ignoreGroup) === NodeFilter.FILTER_ACCEPT) {
                 return lastChild;
             } else {
                 walker.currentNode = lastChild;
@@ -852,7 +899,8 @@ export class Focusable implements Types.Focusable {
     private _acceptElement(
         element: HTMLElement,
         acceptCondition: (el: HTMLElement) => boolean,
-        ignoreLayer?: boolean
+        ignoreLayer?: boolean,
+        ignoreGroup?: boolean
     ): number {
         const layerInfo = ModalityLayer.getLayerFor(element);
         const currentLayerId = layerInfo && layerInfo.root.getCurrentLayerId();
@@ -862,7 +910,7 @@ export class Focusable implements Types.Focusable {
                 (currentLayerId === layerInfo.layer.userId) ||
                 layerInfo.layer.isAlwaysAccessible()) {
 
-            if (!this._isInCurrentGroup(element, true)) {
+            if (!ignoreGroup && !this._isInCurrentGroup(element, true)) {
                 return NodeFilter.FILTER_REJECT;
             }
 

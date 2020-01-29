@@ -193,13 +193,16 @@ export interface Focusable {
     isFocusable(element: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
+    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
+    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
     findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean): HTMLElement | null;
+        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
     findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean): HTMLElement | null;
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean, ignoreLayer?: boolean): HTMLElement | null;
+        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
+    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
 }
 
 export interface ModalityLayerProps extends FocusDeloserProps {

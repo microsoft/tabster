@@ -288,14 +288,15 @@ export class FocusedElementState
 
             if (group) {
                 const groupElement = group.getElement();
+                const first = this._ah.focusable.isFocusable(groupElement) ? groupElement : this._ah.focusable.findFirst(groupElement);
 
-                if ((curElement !== groupElement) &&
+                if (first && (curElement !== first) &&
                     (group.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus) &&
-                    (!next || (next === groupElement) || !groupElement.contains(next))
+                    (!next || (next === first) || !groupElement.contains(next))
                 ) {
                     next = e.shiftKey
                         ? this._ah.focusable.findLast(groupElement)
-                        : this._ah.focusable.findNext(groupElement, groupElement);
+                        : this._ah.focusable.findNext(first, groupElement);
                 }
             }
 
@@ -326,9 +327,7 @@ export class FocusedElementState
             }
 
             let groupElement = group.getElement();
-
-            e.preventDefault();
-            e.stopImmediatePropagation();
+            let shouldStopPropagation = true;
 
             let next: HTMLElement | null = null;
 
@@ -338,12 +337,18 @@ export class FocusedElementState
                     let state = group.getState();
 
                     if (e.keyCode === Keys.Enter) {
-                        if ((curElement === groupElement) && state.isLimited) {
+                        if (
+                            state.isLimited &&
+                            ((curElement === groupElement) ||
+                             (curElement === this._ah.focusable.findFirst(groupElement, false, false, true)))
+                        ) {
                             group.setUnlimited(true);
 
-                            next = this._ah.focusable.findNext(groupElement);
+                            next = this._ah.focusable.findNext(curElement);
 
-                            if (!groupElement.contains(next)) {
+                            if (next === null) {
+                                shouldStopPropagation = false;
+                            } else if (!groupElement.contains(next)) {
                                 next = null;
                             }
                         }
@@ -356,7 +361,6 @@ export class FocusedElementState
                                     groupElement = parentGroup.getElement();
                                     group = parentGroup;
                                     state = parentGroup.getState();
-
                                 }
                             }
                         }
@@ -402,15 +406,21 @@ export class FocusedElementState
                     break;
             }
 
-            if (next) {
-                this._ah.focusable.setCurrentGroup(next);
+            if (shouldStopPropagation) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
 
+            if (next) {
                 if (!this._ah.focusable.isFocusable(next)) {
-                    next = this._ah.focusable.findFirst(next);
+                    next = this._ah.focusable.findFirst(next, false, false, true);
                 }
 
                 if (next) {
+                    this._ah.focusable.setCurrentGroup(next);
+
                     KeyboardNavigationState.setVal(this._ah.keyboardNavigation, true);
+
                     callOriginalFocusOnly(next);
                 }
             }
