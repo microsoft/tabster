@@ -4,13 +4,13 @@
  */
 
 import { AbilityHelpers } from 'ability-helpers';
-import { Group, GroupProperties, GroupState, NextGroupDirection as _NextGroupDirection } from './Group';
+import { ListItem, ListItemProps, ListItemState, NextListItemDirection as _NextListItemDirection } from './ListItem';
 
 export {
     AbilityHelpers,
-    Group,
-    GroupState,
-    GroupProperties
+    ListItem,
+    ListItemState,
+    ListItemProps
 };
 
-export import NextGroupDirection = _NextGroupDirection;
+export import NextListItemDirection = _NextListItemDirection;

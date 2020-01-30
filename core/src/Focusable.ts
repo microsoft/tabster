@@ -42,6 +42,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     private _focused: Types.FocusableGroup | undefined;
     private _unlimited: Types.FocusableGroup | undefined;
     private _visibleGroups: { [id: string]: Types.ElementVisibility } = {};
+    private _hasFullyVisibleGroup = false;
 
     private _prevCurrent: Types.FocusableGroup | undefined;
     private _prevPrev: Types.FocusableGroup | undefined;
@@ -147,6 +148,20 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
             let changed: (Types.FocusableGroup | undefined)[] = [];
 
+            if (this._prevFocused !== this._focused) {
+                for (let id of Object.keys(this._groups)) {
+                    changed.push(this._groups[id]);
+                }
+
+                if (!this._focused && this._prevFocused && !this._prevFocused.getProps().memorizeCurrent) {
+                    this._current = undefined;
+                    this._prev = undefined;
+                    this._next = undefined;
+                }
+
+                this._prevFocused = this._focused;
+            }
+
             if (this._prevCurrent !== this._current) {
                 changed.push(this._prevCurrent);
                 changed.push(this._current);
@@ -177,13 +192,6 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
                 this._prevLast = this._last;
             }
 
-            if (this._prevFocused !== this._focused) {
-                for (let id of Object.keys(this._groups)) {
-                    changed.push(this._groups[id]);
-                }
-                this._prevFocused = this._focused;
-            }
-
             if (this._prevUnlimited !== this._unlimited) {
                 changed.push(this._prevUnlimited);
                 changed.push(this._unlimited);
@@ -191,9 +199,17 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             }
 
             if (this._visibleGroups !== this._prevVisibleGroups) {
+                this._hasFullyVisibleGroup = false;
+
                 for (let id of Object.keys(this._visibleGroups)) {
-                    if (this._visibleGroups[id] !== this._prevVisibleGroups[id]) {
+                    const isVisible = this._visibleGroups[id];
+
+                    if (isVisible !== this._prevVisibleGroups[id]) {
                         changed.push(this._groups[id]);
+                    }
+
+                    if (isVisible === Types.ElementVisibility.Visible) {
+                        this._hasFullyVisibleGroup = true;
                     }
                 }
 
@@ -288,15 +304,27 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     }
 
     getGroupState(group: Types.FocusableGroup): Types.FocusableGroupState {
-        const isLimited = group.getProps().isLimited;
+        const props = group.getProps();
+        const isLimited = props.isLimited;
+        const isVisible = this._visibleGroups[group.id] || Types.ElementVisibility.Invisible;
+        let isCurrent = this._current ? (this._current === group) : undefined;
+
+        if ((isCurrent === undefined) && (props.lookupVisibility !== Types.ElementVisibility.Invisible)) {
+            if (
+                (isVisible === Types.ElementVisibility.Invisible) ||
+                (this._hasFullyVisibleGroup && (isVisible === Types.ElementVisibility.PartiallyVisible))
+            ) {
+                isCurrent = false;
+            }
+        }
 
         return {
-            isCurrent: this._current ? (this._current === group) : undefined,
+            isCurrent,
             isPrevious: this._prev === group,
             isNext: this._next === group,
             isFirst: this._first === group,
             isLast: this._last === group,
-            isVisible: this._visibleGroups[group.id] || Types.ElementVisibility.Invisible,
+            isVisible,
             hasFocus: this._focused === group,
             siblingHasFocus: !!this._focused && (this._focused !== group),
             isLimited: (
@@ -598,7 +626,7 @@ export class Focusable implements Types.Focusable {
             return;
         }
 
-        // TODO.
+        e.details.group.setupContainer(e.details.removed);
     }
 
     private _onScroll = (e: UIEvent) => {

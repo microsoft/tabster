@@ -6,27 +6,26 @@
 import { AbilityHelpers, Types } from 'ability-helpers';
 import * as React from 'react';
 
-const GroupContext = React.createContext<((group: HTMLElement, removed?: boolean) => void) | undefined>(undefined);
+const ListItemContext = React.createContext<((group: HTMLElement, removed?: boolean) => void) | undefined>(undefined);
 
-export type GroupState = Types.FocusableGroupState;
+export type ListItemState = Types.FocusableGroupState;
 
-export import NextGroupDirection = Types.FocusableGroupNextDirection;
+export import NextListItemDirection = Types.FocusableGroupNextDirection;
 
-type GroupHTMLProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role' | 'aria-label' | 'tabIndex'>;
+type ListItemHTMLProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'aria-label'>;
 
-export interface GroupProperties extends GroupHTMLProps {
+export interface ListItemProps extends ListItemHTMLProps {
     as?: React.ReactType;
-    role?: string;
-    groupLabel?: string | ((state: GroupState) => string);
-    isFocusable?: boolean;
+    label?: string | ((state: ListItemState) => string);
     isLimited?: boolean;
     isRowingRegion?: boolean;
-    nextGroupDirection?: NextGroupDirection;
-    onGroupChange?: (state: GroupState) => void;
+    nextGroupDirection?: NextListItemDirection;
+    onStateChange?: (state: ListItemState) => void;
+    showDebug?: boolean;
 }
 
-export class Group extends React.Component<GroupProperties> {
-    static contextType = GroupContext;
+export class ListItem extends React.Component<ListItemProps> {
+    static contextType = ListItemContext;
     context: ((group: HTMLElement, removed?: boolean) => void) | undefined;
 
     private _div: HTMLDivElement | undefined;
@@ -36,12 +35,11 @@ export class Group extends React.Component<GroupProperties> {
         const {
             as: _as,
             role,
-            groupLabel,
-            isFocusable,
+            label,
             isLimited,
             isRowingRegion,
             nextGroupDirection,
-            onGroupChange,
+            onStateChange: onGroupChange,
             ...restProps
         } = this.props;
 
@@ -49,13 +47,12 @@ export class Group extends React.Component<GroupProperties> {
             _as || 'div',
             {
                 ref: this._onRef,
-                tabIndex: (this.props.isFocusable ? 0 : undefined),
                 ...restProps
             },
             (
-                <GroupContext.Provider value={ this._addChildGroup }>
+                <ListItemContext.Provider value={ this._addChildGroup }>
                     { this.props.children }
-                </GroupContext.Provider>
+                </ListItemContext.Provider>
             )
         );
     }
@@ -137,9 +134,21 @@ export class Group extends React.Component<GroupProperties> {
         }
     }
 
-    private _onChange = (state: GroupState) => {
+    private _onChange = (state: ListItemState) => {
         if (!this._div) {
             return;
+        }
+
+        if (this.props.showDebug) {
+            this._div.style.backgroundColor = (state.isVisible === 0)
+                ? 'rgba(255,0,0,.2)'
+                : ((state.isVisible === 2) ? 'rgba(0,255,0,.2)' : 'rgba(0,0,255,.2)');
+        }
+
+        if ((state.isVisible === 2) || (state.isCurrent !== undefined)) {
+            this._div.removeAttribute('aria-hidden');
+        } else {
+            this._div.setAttribute('aria-hidden', 'true');
         }
 
         const hasLabel = this._setLabel(state);
@@ -164,15 +173,15 @@ export class Group extends React.Component<GroupProperties> {
             this._div.setAttribute('role', role);
         }
 
-        if (this.props.onGroupChange) {
-            this.props.onGroupChange.call(this, state);
+        if (this.props.onStateChange) {
+            this.props.onStateChange.call(this, state);
         }
     }
 
-    private _setLabel(state: GroupState): boolean {
-        const label = (typeof this.props.groupLabel === 'function')
-            ? this.props.groupLabel.call(this, state)
-            : (this.props.groupLabel !== undefined ? this.props.groupLabel : undefined);
+    private _setLabel(state: ListItemState): boolean {
+        const label = (typeof this.props.label === 'function')
+            ? this.props.label.call(this, state)
+            : (this.props.label !== undefined ? this.props.label : undefined);
 
         if (this._div && (label !== undefined)) {
             this._div.setAttribute('aria-label', label);
@@ -183,7 +192,7 @@ export class Group extends React.Component<GroupProperties> {
         return false;
     }
 
-    private _getState(): GroupState {
+    private _getState(): ListItemState {
         const ah = ((this._div as any).__abilityHelpers) as (Types.AbilityHelpersOnElement | undefined);
         const g = ah && ah.focusableGroup;
 

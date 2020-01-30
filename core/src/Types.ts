@@ -106,8 +106,8 @@ export interface FocusableProps {
 
 export enum ElementVisibility {
     Invisible = 0,
-    Visible = 1,
-    PartiallyVisible = 2
+    PartiallyVisible = 1,
+    Visible = 2
 }
 
 export interface FocusableGroupState {
@@ -139,6 +139,8 @@ export interface FocusableGroupProps {
     isDefault?: boolean | (() => boolean);
     isLimited?: FocusableGroupFocusLimit;
     nextDirection?: FocusableGroupNextDirection;
+    memorizeCurrent?: boolean;
+    lookupVisibility?: ElementVisibility;
     onChange?: (state: FocusableGroupState) => void;
 }
 

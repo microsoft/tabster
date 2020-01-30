@@ -89,7 +89,7 @@ export class FocusedElementState
         this._mainWindow.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
         this._mainWindow.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
         this._mainWindow.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._mainWindow.addEventListener('keydown', this._onKeyDown, true); // Capture!
+        this._mainWindow.addEventListener('keydown', this._onKeyDown);
         this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
@@ -108,7 +108,7 @@ export class FocusedElementState
         this._mainWindow.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
         this._mainWindow.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
         this._mainWindow.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._mainWindow.removeEventListener('keydown', this._onKeyDown, true); // Capture!
+        this._mainWindow.removeEventListener('keydown', this._onKeyDown);
         this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
@@ -663,6 +663,6 @@ export function setupFocusedElementStateInIFrame(iframeDocument: HTMLDocument, m
         { type: EventFromIFrameDescriptorType.Document, name: 'focusin', capture: true },
         { type: EventFromIFrameDescriptorType.Document, name: 'focusout', capture: true },
         { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
-        { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: true }
+        { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: false }
     ]);
 }

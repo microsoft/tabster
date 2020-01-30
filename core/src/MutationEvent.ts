@@ -70,7 +70,7 @@ export function observeMutations(doc: HTMLDocument): void {
         for (let id of Object.keys(changedGroups)) {
             const g = changedGroups[id];
 
-            if (g.removedFrom) {
+            if (g.removedFrom && !g.addedTo) {
                 dispatchMutationEvent(g.removedFrom, { group: g.group, removed: true });
             }
 

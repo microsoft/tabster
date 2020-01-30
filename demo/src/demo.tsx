@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Group, GroupState, NextGroupDirection } from 'ability-helpers-react';
+import { ListItem, ListItemState, NextListItemDirection } from 'ability-helpers-react';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -13,26 +13,26 @@ ReactDOM.render(
 
         <button>Lalala</button>
 
-        <Group
-            groupLabel='Hello'
-            onGroupChange={ onGroupChange }
-            isFocusable={ true }
+        <ListItem
+            label='Hello'
+            onStateChange={ onStateChange }
+            tabIndex={ 0 }
             isLimited={ true }
-            nextGroupDirection={ NextGroupDirection.Grid }
+            nextGroupDirection={ NextListItemDirection.Grid }
         >
             <button>Button1</button>
             <button>Button2</button>
-        </Group>
-        <Group
-            isFocusable={ true }
-            nextGroupDirection={ NextGroupDirection.Grid }
+        </ListItem>
+        <ListItem
+            tabIndex={ 0 }
+            nextGroupDirection={ NextListItemDirection.Grid }
             isLimited={ true }
-            groupLabel={ (state) => 'World ' + JSON.stringify(state) }
-            onGroupChange={ onGroupChange }
+            label={ (state) => 'World ' + JSON.stringify(state) }
+            onStateChange={ onStateChange }
         >
             <button>Button3</button>
             <button>Button4</button>
-        </Group>
+        </ListItem>
 
         <button>Piu-piu</button>
     </>,
@@ -40,7 +40,7 @@ ReactDOM.render(
     document.getElementById('demo')
 );
 
-function onGroupChange(this: Group, state: GroupState) {
+function onStateChange(this: ListItem, state: ListItemState) {
     const div = ReactDOM.findDOMNode(this) as HTMLDivElement | null;
 
     if (div) {
