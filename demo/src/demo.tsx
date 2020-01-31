@@ -18,14 +18,14 @@ ReactDOM.render(
             onStateChange={ onStateChange }
             tabIndex={ 0 }
             isLimited={ true }
-            nextGroupDirection={ NextListItemDirection.Grid }
+            nextItemDirection={ NextListItemDirection.Grid }
         >
             <button>Button1</button>
             <button>Button2</button>
         </ListItem>
         <ListItem
             tabIndex={ 0 }
-            nextGroupDirection={ NextListItemDirection.Grid }
+            nextItemDirection={ NextListItemDirection.Grid }
             isLimited={ true }
             label={ (state) => 'World ' + JSON.stringify(state) }
             onStateChange={ onStateChange }

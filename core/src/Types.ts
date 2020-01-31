@@ -111,13 +111,14 @@ export enum ElementVisibility {
 }
 
 export interface FocusableGroupState {
-    isCurrent: boolean | undefined;
+    isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
     isPrevious: boolean;
     isNext: boolean;
     isFirst: boolean;
     isLast: boolean;
     isVisible: ElementVisibility;
     hasFocus: boolean;
+    siblingIsVisible: boolean;
     siblingHasFocus: boolean;
     isLimited: boolean;
 }

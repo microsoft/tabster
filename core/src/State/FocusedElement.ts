@@ -297,6 +297,16 @@ export class FocusedElementState
                     next = e.shiftKey
                         ? this._ah.focusable.findLast(groupElement)
                         : this._ah.focusable.findNext(first, groupElement);
+                } else if ((curElement === first) && groupElement.parentElement) {
+                    const parentGroup = this._getGroup(groupElement.parentElement);
+
+                    if (
+                        parentGroup &&
+                        !parentGroup.getElement().contains(next) &&
+                        parentGroup.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus
+                    ) {
+                        next = curElement;
+                    }
                 }
             }
 

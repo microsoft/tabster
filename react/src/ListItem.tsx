@@ -19,7 +19,7 @@ export interface ListItemProps extends ListItemHTMLProps {
     label?: string | ((state: ListItemState) => string);
     isLimited?: boolean;
     isRowingRegion?: boolean;
-    nextGroupDirection?: NextListItemDirection;
+    nextItemDirection?: NextListItemDirection;
     onStateChange?: (state: ListItemState) => void;
     showDebug?: boolean;
 }
@@ -38,7 +38,7 @@ export class ListItem extends React.Component<ListItemProps> {
             label,
             isLimited,
             isRowingRegion,
-            nextGroupDirection,
+            nextItemDirection: nextGroupDirection,
             onStateChange: onGroupChange,
             ...restProps
         } = this.props;
@@ -88,7 +88,7 @@ export class ListItem extends React.Component<ListItemProps> {
         return {
             onChange: this._onChange,
             isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.LimitedTrapFocus : undefined,
-            nextDirection: this.props.nextGroupDirection
+            nextDirection: this.props.nextItemDirection
         };
     }
 
@@ -142,10 +142,19 @@ export class ListItem extends React.Component<ListItemProps> {
         if (this.props.showDebug) {
             this._div.style.backgroundColor = (state.isVisible === 0)
                 ? 'rgba(255,0,0,.2)'
-                : ((state.isVisible === 2) ? 'rgba(0,255,0,.2)' : 'rgba(0,0,255,.2)');
+                : ((state.isVisible === Types.ElementVisibility.Visible) ? 'rgba(0,255,0,.2)' : 'rgba(0,0,255,.2)');
+
+            this._div.style.borderLeftColor = state.isFirst ? 'red' : (state.isLast ? 'orange' : '#aaa');
+            this._div.style.borderTopColor = state.isNext ? 'green' : (state.isPrevious ? 'maroon' : '#aaa');
+            this._div.style.borderRightColor = state.hasFocus ? 'yellow' : (state.siblingHasFocus ? 'blue' : '#aaa');
+            this._div.style.borderBottomColor = state.isCurrent ? 'black' : '#aaa';
         }
 
-        if ((state.isVisible === 2) || (state.isCurrent !== undefined)) {
+        if (
+            (state.isVisible === Types.ElementVisibility.Visible) ||
+            (state.isCurrent !== undefined) ||
+            (!state.siblingIsVisible && (state.isVisible === Types.ElementVisibility.PartiallyVisible))
+        ) {
             this._div.removeAttribute('aria-hidden');
         } else {
             this._div.setAttribute('aria-hidden', 'true');

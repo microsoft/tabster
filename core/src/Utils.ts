@@ -32,13 +32,24 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
 export function getBoundingRect(element: HTMLElement): DOMRect {
     const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
 
+    if (!scrollingElement) {
+        return new DOMRect();
+    }
+
     if (element === scrollingElement) {
         // A bounding rect of the top-level element contains the whole page regardless of the
         // scrollbar. So, we improvise a little...
         return new DOMRect(0, 0, scrollingElement.clientWidth, scrollingElement.clientHeight);
     }
 
-    return element.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+
+    const left = Math.max(0, rect.left);
+    const right = Math.min(scrollingElement.clientWidth, rect.right);
+    const top = Math.max(0, rect.top);
+    const bottom = Math.min(scrollingElement.clientHeight, rect.bottom);
+
+    return new DOMRect(left < right ? left : -1, top < bottom ? top : -1, left < right ? right - left : 0, top < bottom ? bottom - top : 0);
 }
 
 export function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
@@ -62,34 +73,23 @@ export function isElementVisibleInContainer(element: HTMLElement): ElementVisibi
         const containerRect = getBoundingRect(container);
         const elementRect = element.getBoundingClientRect();
 
-        let top = false;
-        let bottom = false;
-        let left = false;
-        let right = false;
-
-        if ((elementRect.top >= containerRect.top) && (elementRect.top <= containerRect.bottom)) {
-            top = true;
+        if (
+            ((elementRect.left > containerRect.right) || (elementRect.top > containerRect.bottom)) ||
+            ((elementRect.bottom < containerRect.top) || (elementRect.right < containerRect.left))
+        ) {
+            return ElementVisibility.Invisible;
         }
 
-        if ((elementRect.bottom >= containerRect.top) && (elementRect.bottom <= containerRect.bottom)) {
-            bottom = true;
-        }
-
-        if ((elementRect.left >= containerRect.left) && (elementRect.left <= containerRect.right)) {
-            left = true;
-        }
-
-        if ((elementRect.right >= containerRect.left) && (elementRect.right <= containerRect.right)) {
-            right = true;
-        }
-
-        if (top && bottom && left && right) {
+        if (
+            ((elementRect.top >= containerRect.top) && (elementRect.top <= containerRect.bottom)) &&
+            ((elementRect.bottom >= containerRect.top) && (elementRect.bottom <= containerRect.bottom)) &&
+            ((elementRect.left >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
+            ((elementRect.right >= containerRect.left) && (elementRect.right <= containerRect.right))
+        ) {
             return ElementVisibility.Visible;
         }
 
-        if ((top && left) || (bottom && right)) {
-            return ElementVisibility.PartiallyVisible;
-        }
+        return ElementVisibility.PartiallyVisible;
     }
 
     return ElementVisibility.Invisible;

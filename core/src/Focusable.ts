@@ -111,7 +111,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
         this._setFirstLast();
 
-        this._updateVisible();
+        this._updateVisible(true);
     }
 
     removeGroup(group: Types.FocusableGroup): void {
@@ -121,7 +121,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
         this._setFirstLast();
 
-        this._updateVisible();
+        this._updateVisible(true);
     }
 
     setFocusedGroup(group: Types.FocusableGroup | undefined): void {
@@ -327,6 +327,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             isVisible,
             hasFocus: this._focused === group,
             siblingHasFocus: !!this._focused && (this._focused !== group),
+            siblingIsVisible: this._hasFullyVisibleGroup,
             isLimited: (
                 (isLimited === Types.FocusableGroupFocusLimit.Limited) ||
                 (isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus)
@@ -338,9 +339,19 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         return Object.keys(this._groups).length === 0;
     }
 
-    private _updateVisible(): void {
+    private _updateVisible(updateParents: boolean): void {
         if (this._updateVisibleTimer) {
             return;
+        }
+
+        if (updateParents) {
+            for (let e = this._element.parentElement; e; e = e.parentElement) {
+                const ah = getAbilityHelpersOnElement(e);
+
+                if (ah && ah.focusableGroupContainer) {
+                    (ah.focusableGroupContainer as FocusableGroupContainer)._updateVisible(false);
+                }
+            }
         }
 
         this._updateVisibleTimer = window.setTimeout(() => {
@@ -384,7 +395,7 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         }
 
         for (let id of Object.keys(containers)) {
-            containers[id]._updateVisible();
+            containers[id]._updateVisible(false);
         }
     }
 }
@@ -409,6 +420,10 @@ export class FocusableGroup implements Types.FocusableGroup {
     }
 
     dispose(): void {
+        if (this._container) {
+            this._container.removeGroup(this);
+        }
+
         this.setupContainer(true);
 
         setAbilityHelpersOnElement(this._element, {
@@ -455,6 +470,7 @@ export class FocusableGroup implements Types.FocusableGroup {
                 isLast: false,
                 isVisible: Types.ElementVisibility.Invisible,
                 hasFocus: false,
+                siblingIsVisible: false,
                 siblingHasFocus: false,
                 isLimited: false
             };
