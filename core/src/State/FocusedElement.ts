@@ -7,7 +7,7 @@ import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindow
 import { getAbilityHelpersOnElement } from '../Instance';
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Keys } from '../Keys';
-import { ModalityLayer } from '../ModalityLayer';
+import { ModalizerAPI } from '../Modalizer';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { isElementVerticallyVisibleInContainer, scrollIntoView } from '../Utils';
@@ -237,10 +237,10 @@ export class FocusedElementState
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
-        const group = this._ah.focusable.findGroup(e.target as HTMLElement);
+        const groupper = this._ah.focusable.findGroupper(e.target as HTMLElement);
 
-        if (group) {
-            this._ah.focusable.setCurrentGroup(group);
+        if (groupper) {
+            this._ah.focusable.setCurrentGroupper(groupper);
         }
     }
 
@@ -270,11 +270,11 @@ export class FocusedElementState
         }
 
         if (e.keyCode === Keys.Tab) {
-            let l = ModalityLayer.getLayerFor(curElement);
+            let m = ModalizerAPI.findModalizer(curElement);
 
-            if (!l) {
-                if (!this._ah.focusable.isInCurrentGroup(curElement)) {
-                    // We're not in a modality layer and not in a current group,
+            if (!m) {
+                if (!this._ah.focusable.isInCurrentGroupper(curElement)) {
+                    // We're not in a Modalizer and not in a current Groupper,
                     // do not custom-handle the Tab press.
                     return;
                 }
@@ -284,37 +284,37 @@ export class FocusedElementState
                 ? this._ah.focusable.findPrev(curElement)
                 : this._ah.focusable.findNext(curElement);
 
-            const group = this._getGroup(curElement);
+            const groupper = this._getGroupper(curElement);
 
-            if (group) {
-                const groupElement = group.getElement();
-                const first = this._getGroupFirst(groupElement, false);
+            if (groupper) {
+                const groupperElement = groupper.getElement();
+                const first = this._getFirstInGroupper(groupperElement, false);
 
                 if (first && (curElement !== first) &&
-                    (group.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus) &&
-                    (!next || (next === first) || !groupElement.contains(next))
+                    (groupper.getBasicProps().isLimited === Types.GroupperFocusLimit.LimitedTrapFocus) &&
+                    (!next || (next === first) || !groupperElement.contains(next))
                 ) {
                     next = e.shiftKey
-                        ? this._ah.focusable.findLast(groupElement)
-                        : this._ah.focusable.findNext(first, groupElement);
-                } else if ((curElement === first) && groupElement.parentElement) {
-                    const parentGroup = this._getGroup(groupElement.parentElement);
+                        ? this._ah.focusable.findLast(groupperElement)
+                        : this._ah.focusable.findNext(first, groupperElement);
+                } else if ((curElement === first) && groupperElement.parentElement) {
+                    const parentGroupper = this._getGroupper(groupperElement.parentElement);
 
                     if (
-                        parentGroup &&
-                        !parentGroup.getElement().contains(next) &&
-                        parentGroup.getProps().isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus
+                        parentGroupper &&
+                        !parentGroupper.getElement().contains(next) &&
+                        parentGroupper.getBasicProps().isLimited === Types.GroupperFocusLimit.LimitedTrapFocus
                     ) {
                         next = curElement;
                     }
                 }
             }
 
-            if (l && l.layer) {
-                const nml = next && ModalityLayer.getLayerFor(next);
+            if (m && m.modalizer) {
+                const nml = next && ModalizerAPI.findModalizer(next);
 
-                if (!nml || (l.root.id !== nml.root.id) || (nml.root.getCurrentLayerId() !== nml.layer.userId)) {
-                    if (l.layer.onBeforeFocusOut()) {
+                if (!nml || (m.root.id !== nml.root.id) || (nml.root.getCurrentModalizerId() !== nml.modalizer.userId)) {
+                    if (m.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
 
                         return;
@@ -327,16 +327,16 @@ export class FocusedElementState
 
                 callOriginalFocusOnly(next);
             } else {
-                this._moveOutWithDefaultAction(l ? l.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
+                this._moveOutWithDefaultAction(m ? m.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
             }
         } else {
-            let group = this._getGroup(curElement);
+            let groupper = this._getGroupper(curElement);
 
-            if (!group) {
+            if (!groupper) {
                 return;
             }
 
-            let groupElement = group.getElement();
+            let groupperElement = groupper.getElement();
             let shouldStopPropagation = true;
 
             let next: HTMLElement | null = null;
@@ -344,15 +344,15 @@ export class FocusedElementState
             switch (e.keyCode) {
                 case Keys.Enter:
                 case Keys.Esc:
-                    let state = group.getState();
+                    let state = groupper.getState();
 
                     if (e.keyCode === Keys.Enter) {
-                        if (state.isLimited && (curElement === this._getGroupFirst(groupElement, true))) {
-                            group.setUnlimited(true);
+                        if (state.isLimited && (curElement === this._getFirstInGroupper(groupperElement, true))) {
+                            groupper.setUnlimited(true);
 
                             next = this._ah.focusable.findNext(curElement);
 
-                            if (!groupElement.contains(next)) {
+                            if (!groupperElement.contains(next)) {
                                 next = null;
                             }
 
@@ -364,20 +364,20 @@ export class FocusedElementState
                         }
                     } else { // Esc
                         if (state.isLimited) {
-                            if (groupElement.parentElement) {
-                                const parentGroup = this._getGroup(groupElement.parentElement);
+                            if (groupperElement.parentElement) {
+                                const parentGroupper = this._getGroupper(groupperElement.parentElement);
 
-                                if (parentGroup) {
-                                    groupElement = parentGroup.getElement();
-                                    group = parentGroup;
-                                    state = parentGroup.getState();
+                                if (parentGroupper) {
+                                    groupperElement = parentGroupper.getElement();
+                                    groupper = parentGroupper;
+                                    state = parentGroupper.getState();
                                 }
                             }
                         }
 
                         if (!state.isLimited) {
-                            group.setUnlimited(false);
-                            next = groupElement;
+                            groupper.setUnlimited(false);
+                            next = groupperElement;
                         }
                     }
                     break;
@@ -386,32 +386,32 @@ export class FocusedElementState
                 case Keys.Right:
                 case Keys.Up:
                 case Keys.Left:
-                    next = this._findNextGroup(groupElement, e.keyCode, group.getProps().nextDirection);
+                    next = this._findNextGroupper(groupperElement, e.keyCode, groupper.getBasicProps().nextDirection);
                     break;
 
                 case Keys.PageDown:
-                    next = this._findPageDownGroup(groupElement);
+                    next = this._findPageDownGroupper(groupperElement);
                     if (next) {
                         scrollIntoView(next, true);
                     }
                     break;
 
                 case Keys.PageUp:
-                    next = this._findPageUpGroup(groupElement);
+                    next = this._findPageUpGroupper(groupperElement);
                     if (next) {
                         scrollIntoView(next, false);
                     }
                     break;
 
                 case Keys.Home:
-                    if (groupElement.parentElement) {
-                        next = this._ah.focusable.findFirstGroup(groupElement);
+                    if (groupperElement.parentElement) {
+                        next = this._ah.focusable.findFirstGroupper(groupperElement);
                     }
                     break;
 
                 case Keys.End:
-                    if (groupElement.parentElement) {
-                        next = this._ah.focusable.findLastGroup(groupElement);
+                    if (groupperElement.parentElement) {
+                        next = this._ah.focusable.findLastGroupper(groupperElement);
                     }
                     break;
             }
@@ -427,7 +427,7 @@ export class FocusedElementState
                 }
 
                 if (next) {
-                    this._ah.focusable.setCurrentGroup(next);
+                    this._ah.focusable.setCurrentGroupper(next);
 
                     KeyboardNavigationState.setVal(this._ah.keyboardNavigation, true);
 
@@ -437,38 +437,38 @@ export class FocusedElementState
         }
     }
 
-    private _getGroupFirst(groupElement: HTMLElement, ignoreGroup: boolean): HTMLElement | null {
-        return this._ah.focusable.isFocusable(groupElement)
-            ? groupElement
-            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroup);
+    private _getFirstInGroupper(groupperElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
+        return this._ah.focusable.isFocusable(groupperElement)
+            ? groupperElement
+            : this._ah.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
     }
 
-    private _getGroup(element: HTMLElement): Types.FocusableGroup | undefined {
-        let groupElement = this._ah.focusable.findGroup(element);
+    private _getGroupper(element: HTMLElement): Types.Groupper | undefined {
+        let groupperElement = this._ah.focusable.findGroupper(element);
 
-        if (!groupElement) {
+        if (!groupperElement) {
             return;
         }
 
-        let ah = getAbilityHelpersOnElement(groupElement);
+        let ah = getAbilityHelpersOnElement(groupperElement);
 
-        return ah && ah.focusableGroup;
+        return ah && ah.groupper;
     }
 
-    private _findNextGroup(from: HTMLElement, key: Keys, direction?: Types.FocusableGroupNextDirection): HTMLElement | null {
-        if ((direction === Types.FocusableGroupNextDirection.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
+    private _findNextGroupper(from: HTMLElement, key: Keys, direction?: Types.GroupperNextDirection): HTMLElement | null {
+        if ((direction === Types.GroupperNextDirection.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
             return null;
         }
 
-        if ((direction === Types.FocusableGroupNextDirection.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
+        if ((direction === Types.GroupperNextDirection.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
             return null;
         }
 
-        if ((direction === undefined) || (direction === Types.FocusableGroupNextDirection.Both)) {
+        if ((direction === undefined) || (direction === Types.GroupperNextDirection.Both)) {
             if ((key === Keys.Left) || (key === Keys.Up)) {
-                return this._ah.focusable.findPrevGroup(from);
+                return this._ah.focusable.findPrevGroupper(from);
             } else {
-                return this._ah.focusable.findNextGroup(from);
+                return this._ah.focusable.findNextGroupper(from);
             }
         }
 
@@ -477,7 +477,7 @@ export class FocusedElementState
         let lastEl: HTMLElement | undefined;
         let prevTop: number | undefined;
 
-        const nextMethod = ((key === Keys.Down) || (key === Keys.Right)) ? 'findNextGroup' : 'findPrevGroup';
+        const nextMethod = ((key === Keys.Down) || (key === Keys.Right)) ? 'findNextGroupper' : 'findPrevGroupper';
 
         for (let el = this._ah.focusable[nextMethod](from); el; el = this._ah.focusable[nextMethod](el)) {
             const rect = el.getBoundingClientRect();
@@ -530,30 +530,30 @@ export class FocusedElementState
         return next || lastEl || null;
     }
 
-    private _findPageUpGroup(from: HTMLElement): HTMLElement | null {
-        let ue = this._ah.focusable.findPrevGroup(from);
+    private _findPageUpGroupper(from: HTMLElement): HTMLElement | null {
+        let ue = this._ah.focusable.findPrevGroupper(from);
         let pue: HTMLElement | null = null;
 
         while (ue) {
             pue = ue;
 
             ue = isElementVerticallyVisibleInContainer(ue)
-                ? this._ah.focusable.findPrevGroup(ue)
+                ? this._ah.focusable.findPrevGroupper(ue)
                 : null;
         }
 
         return pue;
     }
 
-    private _findPageDownGroup(from: HTMLElement): HTMLElement | null {
-        let de = this._ah.focusable.findNextGroup(from);
+    private _findPageDownGroupper(from: HTMLElement): HTMLElement | null {
+        let de = this._ah.focusable.findNextGroupper(from);
         let pde: HTMLElement | null = null;
 
         while (de) {
             pde = de;
 
             de = isElementVerticallyVisibleInContainer(de)
-                ? this._ah.focusable.findNextGroup(de)
+                ? this._ah.focusable.findNextGroupper(de)
                 : null;
         }
 
@@ -607,28 +607,28 @@ export class FocusedElementState
 
     private _validateFocusedElement = (e: HTMLElement | undefined, d: Types.FocusedElementDetails): void => {
         if (e) {
-            const l = ModalityLayer.getLayerFor(e);
-            const curLayerId = l ? l.root.getCurrentLayerId() : undefined;
+            const l = ModalizerAPI.findModalizer(e);
+            const curModalizerId = l ? l.root.getCurrentModalizerId() : undefined;
 
-            this._ah.focusable.setCurrentGroup(e);
+            this._ah.focusable.setCurrentGroupper(e);
 
             if (!l) {
                 return;
             }
 
-            let eLayer = l.layer;
+            let eModalizer = l.modalizer;
 
-            if (curLayerId === eLayer.userId) {
+            if (curModalizerId === eModalizer.userId) {
                 return;
             }
 
-            if ((curLayerId === undefined) || d.isFocusedProgrammatically) {
-                l.root.setCurrentLayerId(eLayer.userId);
+            if ((curModalizerId === undefined) || d.isFocusedProgrammatically) {
+                l.root.setCurrentModalizerId(eModalizer.userId);
 
                 return;
             }
 
-            if (eLayer && e.ownerDocument) {
+            if (eModalizer && e.ownerDocument) {
                 let toFocus = this._ah.focusable.findFirst(l.root.getElement());
 
                 if (toFocus) {
@@ -643,8 +643,8 @@ export class FocusedElementState
 
                     this._ah.focusedElement.focus(toFocus);
                 } else {
-                    // Current layer doesn't seem to have focusable elements.
-                    // Blurring the currently focused element which is outside of the current layer.
+                    // Current Modalizer doesn't seem to have focusable elements.
+                    // Blurring the currently focused element which is outside of the current Modalizer.
                     e.blur();
                 }
            }

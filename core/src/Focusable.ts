@@ -5,12 +5,10 @@
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { ModalityLayer } from './ModalityLayer';
+import { ModalizerAPI } from './Modalizer';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer } from './Utils';
-
-//const _defaultFocusableAttributeName = 'data-ah-default';
 
 const _focusableSelector = [
     'a[href]',
@@ -27,54 +25,52 @@ const _isVisibleTimeout = 200;
 
 let _lastId = 0;
 
-let _focusedGroups: { [id: string]: Types.FocusableGroup } = {};
+let _focusedGrouppers: { [id: string]: Types.Groupper } = {};
 
-export class FocusableGroupContainer implements Types.FocusableGroupContainer {
-    private static _containers: { [id: string]: FocusableGroupContainer } = {};
+export class GroupperContainer implements Types.UberGroupper {
+    private static _containers: { [id: string]: GroupperContainer } = {};
 
     private _element: HTMLElement;
 
-    private _current: Types.FocusableGroup | undefined;
-    private _prev: Types.FocusableGroup | undefined;
-    private _next: Types.FocusableGroup | undefined;
-    private _first: Types.FocusableGroup | undefined;
-    private _last: Types.FocusableGroup | undefined;
-    private _focused: Types.FocusableGroup | undefined;
-    private _unlimited: Types.FocusableGroup | undefined;
-    private _visibleGroups: { [id: string]: Types.ElementVisibility } = {};
-    private _hasFullyVisibleGroup = false;
+    private _current: Types.Groupper | undefined;
+    private _prev: Types.Groupper | undefined;
+    private _next: Types.Groupper | undefined;
+    private _first: Types.Groupper | undefined;
+    private _last: Types.Groupper | undefined;
+    private _focused: Types.Groupper | undefined;
+    private _unlimited: Types.Groupper | undefined;
+    private _visibleGrouppers: { [id: string]: Types.ElementVisibility } = {};
+    private _hasFullyVisibleGroupper = false;
 
-    private _prevCurrent: Types.FocusableGroup | undefined;
-    private _prevPrev: Types.FocusableGroup | undefined;
-    private _prevNext: Types.FocusableGroup | undefined;
-    private _prevFirst: Types.FocusableGroup | undefined;
-    private _prevLast: Types.FocusableGroup | undefined;
-    private _prevFocused: Types.FocusableGroup | undefined;
-    private _prevUnlimited: Types.FocusableGroup | undefined;
-    private _prevVisibleGroups: { [id: string]: Types.ElementVisibility } = {};
+    private _prevCurrent: Types.Groupper | undefined;
+    private _prevPrev: Types.Groupper | undefined;
+    private _prevNext: Types.Groupper | undefined;
+    private _prevFirst: Types.Groupper | undefined;
+    private _prevLast: Types.Groupper | undefined;
+    private _prevFocused: Types.Groupper | undefined;
+    private _prevUnlimited: Types.Groupper | undefined;
+    private _prevVisibleGrouppers: { [id: string]: Types.ElementVisibility } = {};
 
     private _onChangeTimer: number | undefined;
     private _updateVisibleTimer: number | undefined;
 
-    private _props: Types.FocusableGroupContainerProps;
-    private _groups: { [id: string]: Types.FocusableGroup } = {};
+    private _grouppers: { [id: string]: Types.Groupper } = {};
 
     readonly id: string;
 
-    constructor(element: HTMLElement, props?: Partial<Types.FocusableGroupContainerProps>) {
+    constructor(element: HTMLElement) {
         this._element = element;
-        this._props = props || {};
         this.id = 'fgc' + ++_lastId;
 
         setAbilityHelpersOnElement(element, {
-            focusableGroupContainer: this
+            groupperContainer: this
         });
 
-        FocusableGroupContainer._containers[this.id] = this;
+        GroupperContainer._containers[this.id] = this;
     }
 
     dispose(): void {
-        this._groups = {};
+        this._grouppers = {};
 
         if (this._updateVisibleTimer) {
             window.clearTimeout(this._updateVisibleTimer);
@@ -82,58 +78,44 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         }
 
         setAbilityHelpersOnElement(this._element, {
-            focusableGroupContainer: undefined
+            groupperContainer: undefined
         });
 
-        delete FocusableGroupContainer._containers[this.id];
-    }
-
-    setProps(props: Partial<Types.FocusableGroupContainerProps> | null): void {
-        if (props) {
-            for (let name of Object.keys(props) as (keyof Types.FocusableGroupContainerProps)[]) {
-                this._props[name] = props[name];
-            }
-        } else {
-            this._props = {};
-        }
-    }
-
-    getProps(): Types.FocusableGroupContainerProps {
-        return this._props;
+        delete GroupperContainer._containers[this.id];
     }
 
     getElement(): HTMLElement {
         return this._element;
     }
 
-    addGroup(group: Types.FocusableGroup): void {
-        this._groups[group.id] = group;
+    addGroupper(groupper: Types.Groupper): void {
+        this._grouppers[groupper.id] = groupper;
 
         this._setFirstLast();
 
         this._updateVisible(true);
     }
 
-    removeGroup(group: Types.FocusableGroup): void {
-        delete this._groups[group.id];
-        delete this._visibleGroups[group.id];
-        delete this._prevVisibleGroups[group.id];
+    removeGroupper(groupper: Types.Groupper): void {
+        delete this._grouppers[groupper.id];
+        delete this._visibleGrouppers[groupper.id];
+        delete this._prevVisibleGrouppers[groupper.id];
 
         this._setFirstLast();
 
         this._updateVisible(true);
     }
 
-    setFocusedGroup(group: Types.FocusableGroup | undefined): void {
-        if (group !== this._focused) {
-            this._focused = group;
+    setFocusedGroupper(groupper: Types.Groupper | undefined): void {
+        if (groupper !== this._focused) {
+            this._focused = groupper;
             this._processOnChange();
         }
     }
 
-    setUnlimitedGroup(group: Types.FocusableGroup): void {
-        if (group !== this._unlimited) {
-            this._unlimited = group;
+    setUnlimitedGroupper(groupper: Types.Groupper): void {
+        if (groupper !== this._unlimited) {
+            this._unlimited = groupper;
             this._processOnChange();
         }
     }
@@ -146,14 +128,14 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         this._onChangeTimer = window.setTimeout(() => {
             this._onChangeTimer = undefined;
 
-            let changed: (Types.FocusableGroup | undefined)[] = [];
+            let changed: (Types.Groupper | undefined)[] = [];
 
             if (this._prevFocused !== this._focused) {
-                for (let id of Object.keys(this._groups)) {
-                    changed.push(this._groups[id]);
+                for (let id of Object.keys(this._grouppers)) {
+                    changed.push(this._grouppers[id]);
                 }
 
-                if (!this._focused && this._prevFocused && !this._prevFocused.getProps().memorizeCurrent) {
+                if (!this._focused && this._prevFocused && !this._prevFocused.getBasicProps().memorizeCurrent) {
                     this._current = undefined;
                     this._prev = undefined;
                     this._next = undefined;
@@ -198,37 +180,37 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
                 this._prevUnlimited = this._unlimited;
             }
 
-            if (this._visibleGroups !== this._prevVisibleGroups) {
-                this._hasFullyVisibleGroup = false;
+            if (this._visibleGrouppers !== this._prevVisibleGrouppers) {
+                this._hasFullyVisibleGroupper = false;
 
-                for (let id of Object.keys(this._visibleGroups)) {
-                    const isVisible = this._visibleGroups[id];
+                for (let id of Object.keys(this._visibleGrouppers)) {
+                    const isVisible = this._visibleGrouppers[id];
 
-                    if (isVisible !== this._prevVisibleGroups[id]) {
-                        changed.push(this._groups[id]);
+                    if (isVisible !== this._prevVisibleGrouppers[id]) {
+                        changed.push(this._grouppers[id]);
                     }
 
                     if (isVisible === Types.ElementVisibility.Visible) {
-                        this._hasFullyVisibleGroup = true;
+                        this._hasFullyVisibleGroupper = true;
                     }
                 }
 
-                for (let id of Object.keys(this._prevVisibleGroups)) {
-                    if (this._visibleGroups[id] !== this._prevVisibleGroups[id]) {
-                        changed.push(this._groups[id]);
+                for (let id of Object.keys(this._prevVisibleGrouppers)) {
+                    if (this._visibleGrouppers[id] !== this._prevVisibleGrouppers[id]) {
+                        changed.push(this._grouppers[id]);
                     }
                 }
 
-                this._prevVisibleGroups = this._visibleGroups;
+                this._prevVisibleGrouppers = this._visibleGrouppers;
             }
 
             const processed: { [id: string]: boolean } = {};
 
-            for (let g of changed.filter(c => (c && this._groups[c.id]))) {
+            for (let g of changed.filter(c => (c && this._grouppers[c.id]))) {
                 if (g && !processed[g.id]) {
                     processed[g.id] = true;
 
-                    const onChange = g.getProps().onChange;
+                    const onChange = g.getExtendedProps().onChange;
 
                     if (onChange) {
                         onChange(g.getState());
@@ -245,8 +227,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         for (let e = this._element.firstElementChild; e; e = e.nextElementSibling) {
             const ah = getAbilityHelpersOnElement(e);
 
-            if (ah && ah.focusableGroup && (ah.focusableGroup.id in this._groups)) {
-                this._first = ah.focusableGroup;
+            if (ah && ah.groupper && (ah.groupper.id in this._grouppers)) {
+                this._first = ah.groupper;
                 break;
             }
         }
@@ -254,8 +236,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         for (let e = this._element.lastElementChild; e; e = e.previousElementSibling) {
             const ah = getAbilityHelpersOnElement(e);
 
-            if (ah && ah.focusableGroup && (ah.focusableGroup.id in this._groups)) {
-                this._last = ah.focusableGroup;
+            if (ah && ah.groupper && (ah.groupper.id in this._grouppers)) {
+                this._last = ah.groupper;
                 break;
             }
         }
@@ -263,8 +245,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         this._processOnChange();
     }
 
-    setCurrentGroup(group: Types.FocusableGroup): void {
-        this._current = (group.id in this._groups) ? group : undefined;
+    setCurrentGroupper(groupper: Types.Groupper): void {
+        this._current = (groupper.id in this._grouppers) ? groupper : undefined;
         this._prev = undefined;
         this._next = undefined;
 
@@ -274,8 +256,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             for (let e = curElement.previousElementSibling; e; e = e.previousElementSibling) {
                 const ah = getAbilityHelpersOnElement(e);
 
-                if (ah && ah.focusableGroup) {
-                    this._prev = ah.focusableGroup;
+                if (ah && ah.groupper) {
+                    this._prev = ah.groupper;
                     break;
                 }
             }
@@ -283,8 +265,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             for (let e = curElement.nextElementSibling; e; e = e.nextElementSibling) {
                 const ah = getAbilityHelpersOnElement(e);
 
-                if (ah && ah.focusableGroup) {
-                    this._next = ah.focusableGroup;
+                if (ah && ah.groupper) {
+                    this._next = ah.groupper;
                     break;
                 }
             }
@@ -293,8 +275,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         this._processOnChange();
     }
 
-    getCurrentGroup(): Types.FocusableGroup | null {
-        if (this._current && (this._current.id in this._groups)) {
+    getCurrentGroupper(): Types.Groupper | null {
+        if (this._current && (this._current.id in this._grouppers)) {
             return this._current;
         }
 
@@ -303,16 +285,16 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
         return this._current || null;
     }
 
-    getGroupState(group: Types.FocusableGroup): Types.FocusableGroupState {
-        const props = group.getProps();
+    getGroupperState(groupper: Types.Groupper): Types.GroupperState {
+        const props = groupper.getBasicProps();
         const isLimited = props.isLimited;
-        const isVisible = this._visibleGroups[group.id] || Types.ElementVisibility.Invisible;
-        let isCurrent = this._current ? (this._current === group) : undefined;
+        const isVisible = this._visibleGrouppers[groupper.id] || Types.ElementVisibility.Invisible;
+        let isCurrent = this._current ? (this._current === groupper) : undefined;
 
         if ((isCurrent === undefined) && (props.lookupVisibility !== Types.ElementVisibility.Invisible)) {
             if (
                 (isVisible === Types.ElementVisibility.Invisible) ||
-                (this._hasFullyVisibleGroup && (isVisible === Types.ElementVisibility.PartiallyVisible))
+                (this._hasFullyVisibleGroupper && (isVisible === Types.ElementVisibility.PartiallyVisible))
             ) {
                 isCurrent = false;
             }
@@ -320,23 +302,23 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
 
         return {
             isCurrent,
-            isPrevious: this._prev === group,
-            isNext: this._next === group,
-            isFirst: this._first === group,
-            isLast: this._last === group,
+            isPrevious: this._prev === groupper,
+            isNext: this._next === groupper,
+            isFirst: this._first === groupper,
+            isLast: this._last === groupper,
             isVisible,
-            hasFocus: this._focused === group,
-            siblingHasFocus: !!this._focused && (this._focused !== group),
-            siblingIsVisible: this._hasFullyVisibleGroup,
+            hasFocus: this._focused === groupper,
+            siblingHasFocus: !!this._focused && (this._focused !== groupper),
+            siblingIsVisible: this._hasFullyVisibleGroupper,
             isLimited: (
-                (isLimited === Types.FocusableGroupFocusLimit.Limited) ||
-                (isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus)
-            ) ? this._unlimited !== group : false
+                (isLimited === Types.GroupperFocusLimit.Limited) ||
+                (isLimited === Types.GroupperFocusLimit.LimitedTrapFocus)
+            ) ? this._unlimited !== groupper : false
         };
     }
 
     isEmpty(): boolean {
-        return Object.keys(this._groups).length === 0;
+        return Object.keys(this._grouppers).length === 0;
     }
 
     private _updateVisible(updateParents: boolean): void {
@@ -348,8 +330,8 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             for (let e = this._element.parentElement; e; e = e.parentElement) {
                 const ah = getAbilityHelpersOnElement(e);
 
-                if (ah && ah.focusableGroupContainer) {
-                    (ah.focusableGroupContainer as FocusableGroupContainer)._updateVisible(false);
+                if (ah && ah.groupperContainer) {
+                    (ah.groupperContainer as GroupperContainer)._updateVisible(false);
                 }
             }
         }
@@ -358,14 +340,14 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             this._updateVisibleTimer = undefined;
 
             let isChanged = false;
-            const visibleGroups: { [id: string]: Types.ElementVisibility } = {};
+            const visibleGrouppers: { [id: string]: Types.ElementVisibility } = {};
 
-            for (let id of Object.keys(this._groups)) {
-                const isVisible = isElementVisibleInContainer(this._groups[id].getElement());
-                const curIsVisible = this._visibleGroups[id] || Types.ElementVisibility.Invisible;
+            for (let id of Object.keys(this._grouppers)) {
+                const isVisible = isElementVisibleInContainer(this._grouppers[id].getElement());
+                const curIsVisible = this._visibleGrouppers[id] || Types.ElementVisibility.Invisible;
 
                 if (isVisible !== Types.ElementVisibility.Invisible) {
-                    visibleGroups[id] = isVisible;
+                    visibleGrouppers[id] = isVisible;
                 }
 
                 if (curIsVisible !== isVisible) {
@@ -374,19 +356,19 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
             }
 
             if (isChanged) {
-                this._prevVisibleGroups = this._visibleGroups;
-                this._visibleGroups = visibleGroups;
+                this._prevVisibleGrouppers = this._visibleGrouppers;
+                this._visibleGrouppers = visibleGrouppers;
                 this._processOnChange();
             }
         }, 0);
     }
 
     static updateVisible(scrolled: Node[]): void {
-        const containers: { [id: string]: FocusableGroupContainer } = {};
+        const containers: { [id: string]: GroupperContainer } = {};
 
         for (let s of scrolled) {
-            for (let id of Object.keys(FocusableGroupContainer._containers)) {
-                const container = FocusableGroupContainer._containers[id];
+            for (let id of Object.keys(GroupperContainer._containers)) {
+                const container = GroupperContainer._containers[id];
 
                 if (s.contains(container.getElement())) {
                     containers[container.id] = container;
@@ -400,20 +382,22 @@ export class FocusableGroupContainer implements Types.FocusableGroupContainer {
     }
 }
 
-export class FocusableGroup implements Types.FocusableGroup {
+export class Groupper implements Types.Groupper {
     private _element: HTMLElement;
-    private _container: Types.FocusableGroupContainer | undefined;
-    private _props: Types.FocusableGroupProps;
+    private _container: Types.UberGroupper | undefined;
+    private _basic: Types.GroupperBasicProps;
+    private _extended: Types.GroupperExtendedProps;
 
     readonly id: string;
 
-    constructor(element: HTMLElement, props: Types.FocusableGroupProps) {
+    constructor(element: HTMLElement, basic?: Types.GroupperBasicProps, extended?: Types.GroupperExtendedProps) {
         this._element = element;
-        this._props = props;
+        this._basic = basic || {};
+        this._extended = extended || {};
         this.id = 'fg' + ++_lastId;
 
         setAbilityHelpersOnElement(element, {
-            focusableGroup: this
+            groupper: this
         });
 
         this.setupContainer();
@@ -421,27 +405,35 @@ export class FocusableGroup implements Types.FocusableGroup {
 
     dispose(): void {
         if (this._container) {
-            this._container.removeGroup(this);
+            this._container.removeGroupper(this);
         }
 
         this.setupContainer(true);
 
         setAbilityHelpersOnElement(this._element, {
-            focusableGroup: undefined
+            groupper: undefined
         });
     }
 
-    getProps(): Types.FocusableGroupProps {
-        return this._props;
+    getBasicProps(): Types.GroupperBasicProps {
+        return this._basic;
     }
 
-    setProps(props: Types.FocusableGroupProps): void {
-        for (let name of Object.keys(props) as (keyof Types.FocusableGroupProps)[]) {
-            if (props[name] === undefined) {
-                delete this._props[name];
-            } else {
-                (this._props[name] as (Types.FocusableGroupProps[keyof Types.FocusableGroupProps])) = props[name];
-            }
+    getExtendedProps(): Types.GroupperExtendedProps {
+        return this._extended;
+    }
+
+    setProps(basic?: Partial<Types.GroupperBasicProps> | null, extended?: Partial<Types.GroupperExtendedProps> | null): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {};
+        }
+
+        if (extended) {
+            this._extended = { ...this._extended, ...extended };
+        } else if (extended === null) {
+            this._extended = {};
         }
     }
 
@@ -459,9 +451,9 @@ export class FocusableGroup implements Types.FocusableGroup {
         }
     }
 
-    getState(): Types.FocusableGroupState {
+    getState(): Types.GroupperState {
         return this._container
-            ? this._container.getGroupState(this)
+            ? this._container.getGroupperState(this)
             : {
                 isCurrent: undefined,
                 isPrevious: false,
@@ -478,60 +470,60 @@ export class FocusableGroup implements Types.FocusableGroup {
 
     makeCurrent(): void {
         if (this._container) {
-            this._container.setCurrentGroup(this);
+            this._container.setCurrentGroupper(this);
         }
     }
 
     isDefault(): boolean {
-        const isDefault = this._props.isDefault;
+        const isDefault = this._basic.isDefault || this._extended.isDefault;
         return (typeof isDefault === 'function') ? isDefault.call(this._element) : isDefault;
     }
 
     setFocused(focused: boolean): void {
         if (this._container) {
-            this._container.setFocusedGroup(focused ? this : undefined);
+            this._container.setFocusedGroupper(focused ? this : undefined);
         }
     }
 
     setUnlimited(unlimited: boolean): void {
         if (this._container && (
-                (this._props.isLimited === Types.FocusableGroupFocusLimit.Limited) ||
-                (this._props.isLimited === Types.FocusableGroupFocusLimit.LimitedTrapFocus))
+                (this._basic.isLimited === Types.GroupperFocusLimit.Limited) ||
+                (this._basic.isLimited === Types.GroupperFocusLimit.LimitedTrapFocus))
         ) {
-            this._container.setUnlimitedGroup(unlimited ? this : undefined);
+            this._container.setUnlimitedGroupper(unlimited ? this : undefined);
         }
     }
 
     setupContainer(remove?: boolean): void {
         const containerElement = this._element.parentElement;
         const curContainer = this._container;
-        let container: Types.FocusableGroupContainer | undefined;
+        let container: Types.UberGroupper | undefined;
 
         if (containerElement) {
             const cAh = getAbilityHelpersOnElement(containerElement);
 
-            container = cAh && cAh.focusableGroupContainer;
+            container = cAh && cAh.groupperContainer;
 
             if (!container && !remove) {
-                container = new FocusableGroupContainer(containerElement, {});
+                container = new GroupperContainer(containerElement);
             }
         }
 
         if (curContainer !== container) {
             if (curContainer) {
-                curContainer.removeGroup(this);
+                curContainer.removeGroupper(this);
             }
 
             this._container = container;
 
             if (!remove && container) {
-                container.addGroup(this);
+                container.addGroupper(this);
             }
         }
     }
 }
 
-export class Focusable implements Types.Focusable {
+export class FocusableAPI implements Types.FocusableAPI {
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window | undefined;
     private _body: HTMLElement | undefined;
@@ -586,27 +578,27 @@ export class Focusable implements Types.Focusable {
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
-            const newFocusedGroups: typeof _focusedGroups = {};
+            const newFocusedGrouppers: typeof _focusedGrouppers = {};
 
             for (let el = element as HTMLElement | null; el; el = el.parentElement) {
                 const ah = getAbilityHelpersOnElement(el);
 
-                if (ah && ah.focusableGroup) {
-                    newFocusedGroups[ah.focusableGroup.id] = ah.focusableGroup;
+                if (ah && ah.groupper) {
+                    newFocusedGrouppers[ah.groupper.id] = ah.groupper;
                 }
             }
 
-            for (let gid of Object.keys(_focusedGroups)) {
-                if (!newFocusedGroups[gid]) {
-                    const g = _focusedGroups[gid];
+            for (let gid of Object.keys(_focusedGrouppers)) {
+                if (!newFocusedGrouppers[gid]) {
+                    const g = _focusedGrouppers[gid];
                     g.setFocused(false);
                     g.setUnlimited(false);
                 }
             }
 
-            for (let gid of Object.keys(newFocusedGroups)) {
-                if (!_focusedGroups[gid]) {
-                    const g = newFocusedGroups[gid];
+            for (let gid of Object.keys(newFocusedGrouppers)) {
+                if (!_focusedGrouppers[gid]) {
+                    const g = newFocusedGrouppers[gid];
                     const groupElement = g.getElement();
 
                     g.setFocused(true);
@@ -617,7 +609,7 @@ export class Focusable implements Types.Focusable {
                 }
             }
 
-            _focusedGroups = newFocusedGroups;
+            _focusedGrouppers = newFocusedGrouppers;
         }
     }
 
@@ -638,11 +630,11 @@ export class Focusable implements Types.Focusable {
     }
 
     private _onMutation = (e: MutationEvent): void => {
-        if (!e.target || !e.details.group) {
+        if (!e.target || !e.details.groupper) {
             return;
         }
 
-        e.details.group.setupContainer(e.details.removed);
+        e.details.groupper.setupContainer(e.details.removed);
     }
 
     private _onScroll = (e: UIEvent) => {
@@ -670,87 +662,91 @@ export class Focusable implements Types.Focusable {
         this._scrollTimer = this._mainWindow.setTimeout(() => {
             this._scrollTimer = undefined;
 
-            FocusableGroupContainer.updateVisible(this._scrollTargets);
+            GroupperContainer.updateVisible(this._scrollTargets);
 
             this._scrollTargets = [];
         }, _isVisibleTimeout);
     }
 
-    private _getGroupFirst(groupElement: HTMLElement, ignoreGroup: boolean): HTMLElement | null {
+    private _getGroupFirst(groupElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
         return this._ah.focusable.isFocusable(groupElement)
             ? groupElement
-            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroup);
+            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroupper);
     }
 
-    addGroup(element: HTMLElement, props: Types.FocusableGroupProps): void {
+    addGroupper(element: HTMLElement, basic?: Types.GroupperBasicProps, extended?: Types.GroupperExtendedProps): void {
         const ah = getAbilityHelpersOnElement(element);
 
-        if (ah && ah.focusableGroup) {
+        if (ah && ah.groupper) {
             throw new Error('The element already has a focus group');
         }
 
-        const group = new FocusableGroup(element, props || {});
+        const groupper = new Groupper(element, basic, extended);
 
-        dispatchMutationEvent(element, { group });
+        dispatchMutationEvent(element, { groupper });
     }
 
-    removeGroup(element: HTMLElement): void {
+    removeGroupper(element: HTMLElement): void {
         const ah = getAbilityHelpersOnElement(element);
-        const group = ah && ah.focusableGroup;
+        const groupper = ah && ah.groupper;
 
-        if (group) {
-            group.dispose();
+        if (groupper) {
+            groupper.dispose();
 
-            dispatchMutationEvent(element, { group, removed: true });
+            dispatchMutationEvent(element, { groupper, removed: true });
         }
     }
 
-    moveGroup(from: HTMLElement, to: HTMLElement): void {
+    moveGroupper(from: HTMLElement, to: HTMLElement): void {
         if (from !== to) {
             const ahFrom = getAbilityHelpersOnElement(from);
-            const group = ahFrom && ahFrom.focusableGroup;
+            const groupper = ahFrom && ahFrom.groupper;
 
-            if (group) {
-                group.moveTo(to);
+            if (groupper) {
+                groupper.moveTo(to);
 
-                dispatchMutationEvent(from, { group, removed: true });
-                dispatchMutationEvent(to, { group });
+                dispatchMutationEvent(from, { groupper, removed: true });
+                dispatchMutationEvent(to, { groupper });
             }
         }
     }
 
-    setGroupProps(element: HTMLElement, props: Types.FocusableGroupProps): void {
-        let group = this._findGroup(element);
+    setGroupperProps(
+        element: HTMLElement,
+        basic?: Partial<Types.GroupperBasicProps> | null,
+        extended?: Partial<Types.GroupperExtendedProps> | null
+    ): void {
+        let groupper = this._findGroupper(element);
 
-        if (group) {
-            group.setProps(props);
+        if (groupper) {
+            groupper.setProps(basic, extended);
         }
     }
 
-    setCurrentGroup(element: HTMLElement): void {
-        let group = this._findGroup(element);
+    setCurrentGroupper(element: HTMLElement): void {
+        let groupper = this._findGroupper(element);
 
-        while (group) {
-            group.makeCurrent();
+        while (groupper) {
+            groupper.makeCurrent();
 
-            const parentEl = group.getElement().parentElement;
+            const parentEl = groupper.getElement().parentElement;
 
-            group = parentEl ? this._findGroup(parentEl) : null;
+            groupper = parentEl ? this._findGroupper(parentEl) : null;
         }
     }
 
-    isInCurrentGroup(element: HTMLElement): boolean {
-        return this._isInCurrentGroup(element, false);
+    isInCurrentGroupper(element: HTMLElement): boolean {
+        return this._isInCurrentGroupper(element, false);
     }
 
-    private _isInCurrentGroup(element: HTMLElement, unlimitedOnly: boolean): boolean {
-        let group = this._findGroup(element);
+    private _isInCurrentGroupper(element: HTMLElement, unlimitedOnly: boolean): boolean {
+        let groupper = this._findGroupper(element);
 
-        if (!group) {
+        if (!groupper) {
             return true;
         }
 
-        let groupElement = group.getElement();
+        let groupElement = groupper.getElement();
         let isValidForLimited = false;
 
         if (unlimitedOnly) {
@@ -758,8 +754,8 @@ export class Focusable implements Types.Focusable {
             isValidForLimited = element.contains(this._getGroupFirst(groupElement, true));
         }
 
-        while (group) {
-            const state = group.getState();
+        while (groupper) {
+            const state = groupper.getState();
 
             if (state.isCurrent === false) {
                 return false;
@@ -771,50 +767,50 @@ export class Focusable implements Types.Focusable {
 
             const parentEl = groupElement.parentElement;
 
-            group = parentEl ? this._findGroup(parentEl) : null;
+            groupper = parentEl ? this._findGroupper(parentEl) : null;
 
-            if (group) {
-                groupElement = group.getElement();
+            if (groupper) {
+                groupElement = groupper.getElement();
             }
         }
 
         return true;
     }
 
-    private _findGroup(element: HTMLElement): Types.FocusableGroup | null {
+    private _findGroupper(element: HTMLElement): Types.Groupper | null {
         for (let el = element as HTMLElement | null; el; el = el.parentElement) {
             const ah = getAbilityHelpersOnElement(el);
 
-            if (ah && ah.focusableGroup) {
-                return ah.focusableGroup;
+            if (ah && ah.groupper) {
+                return ah.groupper;
             }
         }
 
         return null;
     }
 
-    findGroup(element: HTMLElement): HTMLElement | null {
-        const group = this._findGroup(element);
+    findGroupper(element: HTMLElement): HTMLElement | null {
+        const groupper = this._findGroupper(element);
 
-        return group ? group.getElement() : null;
+        return groupper ? groupper.getElement() : null;
     }
 
-    private _findNextGroup(element: HTMLElement,
-            next: (container: Types.FocusableGroupContainer, initial: HTMLElement, el?: HTMLElement | null) => HTMLElement | null,
-            ignoreLayer?: boolean): HTMLElement | null {
-
-        const cur = this.findGroup(element);
+    private _findNextGroupper(element: HTMLElement,
+        next: (container: Types.UberGroupper, initial: HTMLElement, el?: HTMLElement | null) => HTMLElement | null,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null {
+        const cur = this.findGroupper(element);
         const containerElement = cur && cur.parentElement;
 
         if (cur && containerElement) {
             const ah = getAbilityHelpersOnElement(containerElement);
-            const container = ah && ah.focusableGroupContainer;
+            const container = ah && ah.groupperContainer;
 
             if (container) {
                 for (let el = next(container, cur); el; el = next(container, cur, el)) {
                     const gAh = getAbilityHelpersOnElement(el);
 
-                    if (gAh && gAh.focusableGroup && (ignoreLayer || this.isAccessible(el as HTMLElement))) {
+                    if (gAh && gAh.groupper && (ignoreModalizer || this.isAccessible(el as HTMLElement))) {
                         if (!this._ah.focusable.isFocusable(el) && !this._ah.focusable.findFirst(el, false, false, true)) {
                             continue;
                         }
@@ -828,61 +824,40 @@ export class Focusable implements Types.Focusable {
         return null;
     }
 
-    findFirstGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findNextGroup(context, (container, initial, el) =>
+    findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
+        return this._findNextGroupper(context, (container, initial, el) =>
             ((el === undefined)
                 ? container.getElement().firstElementChild
                 : (el ? el.nextElementSibling : null)) as HTMLElement | null,
-            ignoreLayer
+            ignoreModalizer
         );
     }
 
-    findLastGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findNextGroup(context, (container, initial, el) =>
+    findLastGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
+        return this._findNextGroupper(context, (container, initial, el) =>
             ((el === undefined)
                 ? container.getElement().lastElementChild
                 : (el ? el.previousElementSibling : null)) as HTMLElement | null,
-            ignoreLayer
+            ignoreModalizer
         );
     }
 
-    findNextGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findNextGroup(context, (container, initial, el) =>
+    findNextGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
+        return this._findNextGroupper(context, (container, initial, el) =>
             ((el === undefined)
                 ? initial.nextElementSibling
                 : (el ? el.nextElementSibling : null)) as HTMLElement | null,
-            ignoreLayer
+            ignoreModalizer
         );
     }
 
-    findPrevGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null {
-        return this._findNextGroup(context, (container, initial, el) =>
+    findPrevGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
+        return this._findNextGroupper(context, (container, initial, el) =>
             ((el === undefined)
                 ? initial.previousElementSibling
                 : (el ? el.previousElementSibling as HTMLElement : null)) as HTMLElement | null,
-            ignoreLayer
+            ignoreModalizer
         );
-    }
-
-    getGroupContainerProps(element: HTMLElement): Types.FocusableGroupContainerProps | null {
-        const ah = getAbilityHelpersOnElement(element);
-
-        return (ah && ah.focusableGroupContainer) ? ah.focusableGroupContainer.getProps() : null;
-    }
-
-    setGroupContainerProps(element: HTMLElement, props: Partial<Types.FocusableGroupContainerProps> | null): void {
-        const ah = getAbilityHelpersOnElement(element);
-        let container = ah && ah.focusableGroupContainer;
-
-        if (container) {
-            if ((props === null) && container.isEmpty()) {
-                container.dispose();
-            } else {
-                container.setProps(props);
-            }
-        } else if (props) {
-            container = new FocusableGroupContainer(element, props);
-        }
     }
 
     getProps(element: HTMLElement): Types.FocusableProps {
@@ -942,7 +917,7 @@ export class Focusable implements Types.Focusable {
         for (let e: (HTMLElement | null) = el; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(e);
 
-            if (ah && ah.modalityLayer && !ah.modalityLayer.isActive()) {
+            if (ah && ah.modalizer && !ah.modalizer.isActive()) {
                 return true;
             }
 
@@ -965,52 +940,53 @@ export class Focusable implements Types.Focusable {
     findFirst(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, false);
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, false);
     }
 
     findLast(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, true);
+        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, true);
     }
 
     findNext(
         current: HTMLElement,
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, false);
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, false);
     }
 
     findPrev(
         current: HTMLElement,
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreLayer, ignoreGroup, true);
+        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, true);
     }
 
     findDefault(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this._findElement(
             context || this._body,
             null,
             includeProgrammaticallyFocusable,
-            ignoreLayer,
-            ignoreGroup,
+            ignoreModalizer,
+            ignoreGroupper,
             false,
             el => (this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable) && this.getProps(el).isDefault)
         );
@@ -1020,8 +996,8 @@ export class Focusable implements Types.Focusable {
         container: HTMLElement | undefined,
         currentElement: HTMLElement | null,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean,
         prev?: boolean,
         acceptCondition?: (el: HTMLElement) => boolean
     ): HTMLElement | null {
@@ -1040,7 +1016,7 @@ export class Focusable implements Types.Focusable {
         const walker = createElementTreeWalker(
             container.ownerDocument,
             container,
-            (node) => this._acceptElement(node as HTMLElement, acceptCondition!!!, ignoreLayer, ignoreGroup)
+            (node) => this._acceptElement(node as HTMLElement, acceptCondition!!!, ignoreModalizer, ignoreGroupper)
         );
 
         if (!walker) {
@@ -1060,7 +1036,7 @@ export class Focusable implements Types.Focusable {
                 return null;
             }
 
-            if (this._acceptElement(lastChild, acceptCondition!!!, ignoreLayer, ignoreGroup) === NodeFilter.FILTER_ACCEPT) {
+            if (this._acceptElement(lastChild, acceptCondition!!!, ignoreModalizer, ignoreGroupper) === NodeFilter.FILTER_ACCEPT) {
                 return lastChild;
             } else {
                 walker.currentNode = lastChild;
@@ -1073,25 +1049,25 @@ export class Focusable implements Types.Focusable {
     private _acceptElement(
         element: HTMLElement,
         acceptCondition: (el: HTMLElement) => boolean,
-        ignoreLayer?: boolean,
-        ignoreGroup?: boolean
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
     ): number {
-        const layerInfo = ModalityLayer.getLayerFor(element);
-        const currentLayerId = layerInfo && layerInfo.root.getCurrentLayerId();
+        const modalizerInfo = ModalizerAPI.findModalizer(element);
+        const currentModalizerId = modalizerInfo && modalizerInfo.root.getCurrentModalizerId();
 
-        if (ignoreLayer || !layerInfo ||
-                (currentLayerId === undefined) ||
-                (currentLayerId === layerInfo.layer.userId) ||
-                layerInfo.layer.isAlwaysAccessible()) {
-
-            if (!ignoreGroup && !this._isInCurrentGroup(element, true)) {
+        if (ignoreModalizer || !modalizerInfo ||
+            (currentModalizerId === undefined) ||
+            (currentModalizerId === modalizerInfo.modalizer.userId) ||
+            modalizerInfo.modalizer.getBasicProps().isAlwaysAccessible
+        ) {
+            if (!ignoreGroupper && !this._isInCurrentGroupper(element, true)) {
                 return NodeFilter.FILTER_REJECT;
             }
 
             return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         }
 
-        return layerInfo ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+        return modalizerInfo ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
     }
 }
 

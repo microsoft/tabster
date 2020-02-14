@@ -13,6 +13,13 @@ ReactDOM.render(
 
         <button>Lalala</button>
 
+        <div
+            data-ah='{"nextItemDirection": 1, "isLimited": true}'
+            //onStateChange={() => {}}
+        >
+
+        </div>
+
         <ListItem
             label='Hello'
             onStateChange={ onStateChange }

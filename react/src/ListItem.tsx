@@ -8,9 +8,9 @@ import * as React from 'react';
 
 const ListItemContext = React.createContext<((group: HTMLElement, removed?: boolean) => void) | undefined>(undefined);
 
-export type ListItemState = Types.FocusableGroupState;
+export type ListItemState = Types.GroupperState;
 
-export import NextListItemDirection = Types.FocusableGroupNextDirection;
+export import NextListItemDirection = Types.GroupperNextDirection;
 
 type ListItemHTMLProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'aria-label'>;
 
@@ -29,7 +29,7 @@ export class ListItem extends React.Component<ListItemProps> {
     context: ((group: HTMLElement, removed?: boolean) => void) | undefined;
 
     private _div: HTMLDivElement | undefined;
-    private _childGroups: { [id: string]: Types.FocusableGroup } = {};
+    private _childGroups: { [id: string]: Types.Groupper } = {};
 
     render() {
         const {
@@ -59,13 +59,14 @@ export class ListItem extends React.Component<ListItemProps> {
 
     componentDidUpdate() {
         if (this._div) {
-            AbilityHelpers.focusable.setGroupProps(this._div, this._buildGroupProps());
+            const props = this._buildGroupperProps();
+            AbilityHelpers.focusable.setGroupperProps(this._div, props.basic, props.extended);
         }
     }
 
     private _onRef = (div: HTMLDivElement | null) => {
         if (div) {
-            this._addGroup(div);
+            this._addGroupper(div);
         } else if (this._div) {
             this._removeGroup();
         }
@@ -73,7 +74,7 @@ export class ListItem extends React.Component<ListItemProps> {
 
     private _addChildGroup = (group: HTMLElement, removed?: boolean) => {
         const ah = ((group as any).__abilityHelpers) as (Types.AbilityHelpersOnElement | undefined);
-        const g = ah && ah.focusableGroup;
+        const g = ah && ah.groupper;
 
         if (g) {
             if (removed) {
@@ -84,15 +85,19 @@ export class ListItem extends React.Component<ListItemProps> {
         }
     }
 
-    private _buildGroupProps(): Types.FocusableGroupProps {
+    private _buildGroupperProps(): { basic: Types.GroupperBasicProps, extended: Types.GroupperExtendedProps } {
         return {
-            onChange: this._onChange,
-            isLimited: this.props.isLimited ? Types.FocusableGroupFocusLimit.LimitedTrapFocus : undefined,
-            nextDirection: this.props.nextItemDirection
+            basic: {
+                isLimited: this.props.isLimited ? Types.GroupperFocusLimit.LimitedTrapFocus : undefined,
+                nextDirection: this.props.nextItemDirection
+            },
+            extended: {
+                onChange: this._onChange
+            }
         };
     }
 
-    private _addGroup(div: HTMLDivElement | null) {
+    private _addGroupper(div: HTMLDivElement | null) {
         if (this._div === div) {
             return;
         }
@@ -103,9 +108,10 @@ export class ListItem extends React.Component<ListItemProps> {
                     this.context(this._div, true);
                 }
 
-                AbilityHelpers.focusable.moveGroup(this._div, div);
+                AbilityHelpers.focusable.moveGroupper(this._div, div);
             } else {
-                AbilityHelpers.focusable.addGroup(div, this._buildGroupProps());
+                const props = this._buildGroupperProps();
+                AbilityHelpers.focusable.addGroupper(div, props.basic, props.extended);
             }
 
             if (this.context) {
@@ -126,7 +132,7 @@ export class ListItem extends React.Component<ListItemProps> {
                 this.context(this._div, true);
             }
 
-            AbilityHelpers.focusable.removeGroup(this._div);
+            AbilityHelpers.focusable.removeGroupper(this._div);
 
             this._div.removeAttribute('aria-label');
 
@@ -203,7 +209,7 @@ export class ListItem extends React.Component<ListItemProps> {
 
     private _getState(): ListItemState {
         const ah = ((this._div as any).__abilityHelpers) as (Types.AbilityHelpersOnElement | undefined);
-        const g = ah && ah.focusableGroup;
+        const g = ah && ah.groupper;
 
         if (g) {
             return g.getState();

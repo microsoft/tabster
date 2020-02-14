@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Announcer } from './Announcer';
-import { Focusable, setupFocusableInIFrame } from './Focusable';
-import { FocusDeloser } from './FocusDeloser';
+import { DeloserAPI } from './Deloser';
+import { FocusableAPI, setupFocusableInIFrame } from './Focusable';
 import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
 import { WindowWithAbilityHelpers } from './Instance';
 import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
-import { ModalityLayer, setupModalityLayerInIFrame } from './ModalityLayer';
+import { ModalizerAPI, setupModalizerInIFrame } from './Modalizer';
 import { observeMutations } from './MutationEvent';
-import { Outline, setupOutlineInIFrame } from './Outline';
+import { OutlineAPI, setupOutlineInIFrame } from './Outline';
 import * as Types from './Types';
 
 export { Types };
@@ -19,13 +18,12 @@ export { Types };
 let _mainWindow: Window | undefined;
 
 class AbilityHelpers implements Types.AbilityHelpers {
-    announcer: Announcer;
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
-    outline: Outline;
-    focusDeloser: FocusDeloser;
-    focusable: Focusable;
-    modalityLayer: ModalityLayer;
+    outline: OutlineAPI;
+    deloser: DeloserAPI;
+    focusable: FocusableAPI;
+    modalizer: ModalizerAPI;
 
     constructor(mainWindow?: Window) {
         // mainWindow === undefined means some testing environment.
@@ -35,13 +33,12 @@ class AbilityHelpers implements Types.AbilityHelpers {
             observeMutations(mainWindow.document);
         }
 
-        this.announcer = new Announcer(mainWindow);
         this.keyboardNavigation = new KeyboardNavigationState(this, mainWindow);
         this.focusedElement = new FocusedElementState(this, mainWindow);
-        this.outline = new Outline(this, mainWindow);
-        this.focusDeloser = new FocusDeloser(this, mainWindow);
-        this.focusable = new Focusable(this, mainWindow);
-        this.modalityLayer = new ModalityLayer(this, mainWindow);
+        this.outline = new OutlineAPI(this, mainWindow);
+        this.deloser = new DeloserAPI(this, mainWindow);
+        this.focusable = new FocusableAPI(this, mainWindow);
+        this.modalizer = new ModalizerAPI(this, mainWindow);
     }
 }
 
@@ -91,5 +88,5 @@ export function setupIFrame(iframeDocument: HTMLDocument) {
     setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
     setupOutlineInIFrame(iframeDocument, _mainWindow);
     setupFocusableInIFrame(iframeDocument, _mainWindow);
-    setupModalityLayerInIFrame(iframeDocument, _mainWindow);
+    setupModalizerInIFrame(iframeDocument, _mainWindow);
 }

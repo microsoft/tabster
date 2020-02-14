@@ -14,17 +14,13 @@ This project is framework-agnostic. It operates on the DOM level and has no exte
 
 ## Parts
 
-### Announcer
-
-An API for the accessibility announcements. To keep the screen reader users informed about the application state changes.
-
 ### Focusable
 
 An API for traversing focusable elements.
 
-### FocusDeloser
+### Deloser
 
-When you remove, for example, a button which has focus from the DOM, the focus gets lost which is confusing for the screen reader and keyboard navigation users. FocusDeloser is a concept which helps to automatically restore the focus when it gets lost without manually calling `.focus()` method from the application code.
+When you remove, for example, a button which has focus from the DOM, the focus gets lost which is confusing for the screen reader and keyboard navigation users. Deloser is a concept which helps to automatically restore the focus when it gets lost without manually calling `.focus()` method from the application code.
 
 ### FocusedElementState
 
@@ -34,13 +30,13 @@ An event and a couple of methods to track and change currently focused element.
 
 An event and a method to determine if the user is using keyboard to navigate through the application.
 
-### FocusableGroup
+### Groupper
 
 Keyboard navigation for the lists should allow to avoid going through every list item when the users use Tab key (only one item of the list should be tabbable), also the arrow keys and Home/End/PageUp/PageDown keys should be handled to move between the list items. This is an API to easily make properly behaving lists.
 
-### ModalityLayer
+### Modalizer
 
-When you show, for example, a modal dialog, the rest of the application might need to be excluded from the keyboard and screen reader navigation flow. ModalityLayer is a concept to conveniently make that possible.
+When you show, for example, a modal dialog, the rest of the application might need to be excluded from the keyboard and screen reader navigation flow. Modalizer is a concept to conveniently make that possible.
 
 ### Outline
 

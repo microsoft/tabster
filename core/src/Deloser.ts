@@ -4,47 +4,65 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { ModalityLayer } from './ModalityLayer';
+import { ModalizerAPI } from './Modalizer';
 import * as Types from './Types';
 
 const _containerHistoryLength = 10;
 
 let _lastInternalId = 0;
 
-interface FocusDeloserHistoryItem {
+interface DeloserHistoryItem {
     rootId: string;
-    history: Types.FocusDeloserContainer[];
+    history: Types.Deloser[];
 }
 
-export class FocusDeloserContainer implements Types.FocusDeloserContainer {
+export class Deloser implements Types.Deloser {
     static lastResetElement: HTMLElement | undefined;
 
     readonly id: string;
 
     private _ah: Types.AbilityHelpers;
-    private _props: Types.FocusDeloserProps;
+    private _basic: Types.DeloserBasicProps;
+    private _extended: Types.DeloserExtendedProps;
     private _isActive = false;
     private _history: HTMLElement[][] = [[]];
     private _snapshotIndex = 0;
     private _element: HTMLElement;
 
-    constructor(element: HTMLElement, props: Types.FocusDeloserProps, ah: Types.AbilityHelpers) {
+    constructor(element: HTMLElement, ah: Types.AbilityHelpers, basic?: Types.DeloserBasicProps, extended?: Types.DeloserExtendedProps) {
         this._ah = ah;
 
         this.id = 'fd' + ++_lastInternalId;
         this._element = element;
-        this._props = props;
-        this._setInformativeStyle();
+        this._basic = basic || {};
+        this._extended = extended || {};
+
+        if (__DEV__) {
+            this._setInformativeStyle();
+        }
     }
 
-    setup(props: Partial<Types.FocusDeloserProps>): void {
-        this._props = { ...this._props, ...props };
+    setProps(basic?: Partial<Types.DeloserBasicProps> | null, extended?: Partial<Types.DeloserExtendedProps> | null): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {};
+        }
+
+        if (extended) {
+            this._extended = { ...this._extended, ...extended };
+        } else if (extended === null) {
+            this._extended = {};
+        }
     }
 
     move(newContainer: HTMLElement): void {
         this._remove();
         this._element = newContainer;
-        this._setInformativeStyle();
+
+        if (__DEV__) {
+            this._setInformativeStyle();
+        }
     }
 
     dispose(): void {
@@ -60,10 +78,13 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
 
     setActive(active: boolean): void {
         this._isActive = active;
-        this._setInformativeStyle();
+
+        if (__DEV__) {
+            this._setInformativeStyle();
+        }
     }
 
-    getActions(): Types.FocusDeloserElementActions {
+    getActions(): Types.DeloserElementActions {
         return {
             focusDefault: this.focusDefault,
             focusFirst: this.focusFirst,
@@ -85,7 +106,9 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
             this._history[index] = [];
         }
 
-        this._setInformativeStyle();
+        if (__DEV__) {
+            this._setInformativeStyle();
+        }
     }
 
     focusFirst = (): boolean => {
@@ -146,7 +169,7 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
             this._element.tabIndex = -1;
             this._element.setAttribute('aria-hidden', 'true');
 
-            FocusDeloserContainer.lastResetElement = this._element;
+            Deloser.lastResetElement = this._element;
 
             this._ah.focusedElement.focus(this._element, true, true);
 
@@ -236,8 +259,8 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
     }
 
     customFocus(last: HTMLElement): boolean {
-        if (this._props.onFocusLost) {
-            return this._props.onFocusLost(last, this.getActions());
+        if (this._extended.onFocusLost) {
+            return this._extended.onFocusLost(last, this.getActions());
         }
 
         return false;
@@ -252,26 +275,30 @@ export class FocusDeloserContainer implements Types.FocusDeloserContainer {
     }
 
     private _setInformativeStyle(): void {
-        this._element.style.setProperty(
-            '--ah-focus-deloser',
-            (this._isActive ? 'active' : 'inactive') +
-                ',' +
-                    ('snapshot-' + this._snapshotIndex)
-        );
+        if (__DEV__) {
+            this._element.style.setProperty(
+                '--ah-deloser',
+                (this._isActive ? 'active' : 'inactive') +
+                    ',' +
+                        ('snapshot-' + this._snapshotIndex)
+            );
+        }
     }
 
     private _remove(): void {
-        this._element.style.removeProperty('--ah-focus-deloser');
+        if (__DEV__) {
+            this._element.style.removeProperty('--ah-deloser');
+        }
     }
 }
 
-export class FocusDeloser implements Types.FocusDeloser {
+export class DeloserAPI implements Types.DeloserAPI {
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
-    private _curDeloser: Types.FocusDeloserContainer | undefined;
-    private _history: FocusDeloserHistoryItem[] = [];
+    private _curDeloser: Types.Deloser | undefined;
+    private _history: DeloserHistoryItem[] = [];
     private _restoreFocusTimer: number | undefined;
     private _curFocusedElement: HTMLElement | undefined;
     private _lastFocusedElement: HTMLElement | undefined;
@@ -309,27 +336,27 @@ export class FocusDeloser implements Types.FocusDeloser {
         this._ah.focusedElement.unsubscribe(this._onElementFocused);
     }
 
-    getActions(element: HTMLElement): Types.FocusDeloserElementActions | undefined {
+    getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(e);
 
-            if (ah && ah.focusDeloser) {
-                return ah.focusDeloser.getActions();
+            if (ah && ah.deloser) {
+                return ah.deloser.getActions();
             }
         }
 
         return undefined;
     }
 
-    add(element: HTMLElement, props?: Types.FocusDeloserProps): void {
+    add(element: HTMLElement, basic?: Types.DeloserBasicProps, extended?: Types.DeloserExtendedProps): void {
         const ah = getAbilityHelpersOnElement(element);
 
-        if (ah && ah.focusDeloser) {
+        if (ah && ah.deloser) {
             return;
         }
 
         setAbilityHelpersOnElement(element, {
-            focusDeloser: new FocusDeloserContainer(element, props || {}, this._ah)
+            deloser: new Deloser(element, this._ah, basic, extended)
         });
     }
 
@@ -340,7 +367,7 @@ export class FocusDeloser implements Types.FocusDeloser {
             return;
         }
 
-        const deloser = ah.focusDeloser;
+        const deloser = ah.deloser;
 
         if (!deloser) {
             return;
@@ -359,22 +386,22 @@ export class FocusDeloser implements Types.FocusDeloser {
         deloser.dispose();
 
         setAbilityHelpersOnElement(element, {
-            focusDeloser: undefined
+            deloser: undefined
         });
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
         const ahFrom = getAbilityHelpersOnElement(from);
 
-        if (ahFrom && ahFrom.focusDeloser) {
-            ahFrom.focusDeloser.move(to);
+        if (ahFrom && ahFrom.deloser) {
+            ahFrom.deloser.move(to);
 
             setAbilityHelpersOnElement(to, {
-                focusDeloser: ahFrom.focusDeloser
+                deloser: ahFrom.deloser
             });
 
             setAbilityHelpersOnElement(from, {
-                focusDeloser: undefined
+                deloser: undefined
             });
         }
     }
@@ -400,12 +427,20 @@ export class FocusDeloser implements Types.FocusDeloser {
         }
     }
 
-    private _getFocusDeloser(element: HTMLElement): Types.FocusDeloserContainer | undefined {
+    setProps(element: HTMLElement, basic?: Partial<Types.DeloserBasicProps>, extended?: Partial<Types.DeloserExtendedProps>): void {
+        const ah = getAbilityHelpersOnElement(element);
+
+        if (ah && ah.deloser) {
+            ah.deloser.setProps(basic, extended);
+        }
+    }
+
+    private _getDeloser(element: HTMLElement): Types.Deloser | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(e);
 
-            if (ah && ah.focusDeloser) {
-                return ah.focusDeloser;
+            if (ah && ah.deloser) {
+                return ah.deloser;
             }
         }
 
@@ -431,22 +466,22 @@ export class FocusDeloser implements Types.FocusDeloser {
         }
 
         if (!e) {
-            if (!prev || (prev !== FocusDeloserContainer.lastResetElement)) {
+            if (!prev || (prev !== Deloser.lastResetElement)) {
                 // Avoiding infinite loop which might be caused by resetFocus().
                 this._scheduleRestoreFocus();
             }
 
-            FocusDeloserContainer.lastResetElement = undefined;
+            Deloser.lastResetElement = undefined;
 
             return;
         }
 
-        const deloser = this._getFocusDeloser(e);
+        const deloser = this._getDeloser(e);
 
         if (deloser) {
             this._isInSomeDeloser = true;
 
-            const rootId = ModalityLayer.getRootId(e);
+            const rootId = ModalizerAPI.getRootId(e);
 
             if (deloser !== this._curDeloser) {
                 if (this._curDeloser) {
@@ -458,7 +493,7 @@ export class FocusDeloser implements Types.FocusDeloser {
                 deloser.setActive(true);
             }
 
-            let historyItem: FocusDeloserHistoryItem | undefined;
+            let historyItem: DeloserHistoryItem | undefined;
             let historyItemIndex = -1;
 
             for (let i = 0; i < this._history.length; i++) {
@@ -489,9 +524,9 @@ export class FocusDeloser implements Types.FocusDeloser {
             historyItem.history.unshift(deloser);
             this._history.unshift(historyItem);
 
-            const ml = ModalityLayer.getLayerFor(e);
+            const ml = ModalizerAPI.findModalizer(e);
 
-            if (!ml || (ml.root.getCurrentLayerId() === ml.layer.userId)) {
+            if (!ml || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
                 deloser.unshift(e);
             }
 
@@ -552,7 +587,7 @@ export class FocusDeloser implements Types.FocusDeloser {
 
         for (let i = 0; i < this._history.length; i++) {
             const hi = this._history[i];
-            const resetQueue: { [id: string]: Types.FocusDeloserContainer } = {};
+            const resetQueue: { [id: string]: Types.Deloser } = {};
 
             for (let j = 0; j < hi.history.length; j++) {
                 if (checkDeloser(hi.history[j], resetQueue)) {
@@ -560,17 +595,17 @@ export class FocusDeloser implements Types.FocusDeloser {
                 }
             }
 
-            const root = ModalityLayer.getRootById(hi.rootId);
-            const layers = root && root.getLayers();
+            const root = ModalizerAPI.getRootById(hi.rootId);
+            const modalizers = root && root.getModalizers();
 
-            if (layers) {
-                // Nothing satisfactory in the focus history, each modality layer has FocusDeloser,
+            if (modalizers) {
+                // Nothing satisfactory in the focus history, each Modalizer has Deloser,
                 // let's try to find something under the same root.
-                for (let l of layers) {
-                    const e = l.getElement();
+                for (let m of modalizers) {
+                    const e = m.getElement();
 
                     const ah = getAbilityHelpersOnElement(e);
-                    const deloser = ah && ah.focusDeloser;
+                    const deloser = ah && ah.deloser;
 
                     if (deloser && checkDeloser(deloser, resetQueue)) {
                         return true;
@@ -588,7 +623,7 @@ export class FocusDeloser implements Types.FocusDeloser {
 
         return false;
 
-        function checkDeloser(deloser: Types.FocusDeloserContainer, resetQueue: { [id: string]: Types.FocusDeloserContainer }): boolean {
+        function checkDeloser(deloser: Types.Deloser, resetQueue: { [id: string]: Types.Deloser }): boolean {
             if (deloser) {
                 const available = deloser.findAvailable();
 

@@ -19,25 +19,84 @@ export interface HTMLElementWithAbilityHelpers extends HTMLElement {
     __abilityHelpers?: Types.AbilityHelpersOnElement;
 }
 
-export function setAbilityHelpersOnElement(element: HTMLElement, abilityHelpers: Partial<Types.AbilityHelpersOnElement>): void {
-    const cur = (element as HTMLElementWithAbilityHelpers).__abilityHelpers || {};
+export interface HTMLElementWithAbilityHelpersAttribute extends HTMLElementWithAbilityHelpers {
+    __ahAttr?: Types.AbilityHelpersAttributeOnElement;
+}
 
-    Object.keys(abilityHelpers).forEach((key: keyof Types.AbilityHelpersOnElement) => {
-        const h = abilityHelpers[key];
+export function setAbilityHelpersOnElement(
+    element: HTMLElementWithAbilityHelpersAttribute,
+    helpers: Partial<Types.AbilityHelpersOnElement>
+): void {
+    const cur = (element.__abilityHelpers || {}) as Types.AbilityHelpersOnElement;
+    const attr = element.__ahAttr;
+    let attrObject: Types.AbilityHelpersAttributeProps;
+
+    if (attr) {
+        attrObject = attr.object;
+    } else {
+        attrObject = {};
+    }
+
+    Object.keys(helpers).forEach((key: keyof Types.AbilityHelpersOnElement) => {
+        const h = helpers[key];
 
         if (h === undefined) {
             if (cur) {
                 delete cur[key];
+                delete attrObject[key];
             }
         } else {
-            cur[key] = h as any;
+            switch (key) {
+                case 'deloser':
+                    cur[key] = helpers.deloser;
+                    attrObject[key] = true;
+                    break;
+
+                case 'root':
+                    cur[key] = helpers.root;
+                    attrObject[key] = true;
+                    break;
+
+                case 'modalizer':
+                    cur[key] = helpers.modalizer;
+                    attrObject[key] = (h as Types.Modalizer).getBasicProps();
+                    break;
+
+                case 'focusable':
+                    cur[key] = attrObject[key] = helpers.focusable;
+                    break;
+
+                case 'groupper':
+                    cur[key] = helpers.groupper;
+                    attrObject[key] = (h as Types.Groupper).getBasicProps();
+                    break;
+
+                case 'groupperContainer':
+                    cur[key] = helpers.groupperContainer;
+                    attrObject[key] = true;
+                    break;
+
+                case 'outline':
+                    cur[key] = helpers.outline = attrObject[key] = helpers.outline;
+                    break;
+
+                default:
+                    throw new Error('Unknown helper.');
+            }
         }
     });
 
     if (Object.keys(cur).length === 0) {
-        delete (element as HTMLElementWithAbilityHelpers).__abilityHelpers;
+        delete element.__abilityHelpers;
+        delete element.__ahAttr;
+        element.removeAttribute(Types.AbilityHelpersAttributeName);
     } else {
-        (element as HTMLElementWithAbilityHelpers).__abilityHelpers = cur;
+        element.__abilityHelpers = cur;
+        element.__ahAttr = {
+            string: JSON.stringify(attrObject),
+            object: attrObject
+        };
+        element.setAttribute(Types.AbilityHelpersAttributeName, element.__ahAttr.string);
     }
 }
 

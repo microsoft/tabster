@@ -77,7 +77,7 @@ class OutlinePosition {
     }
 }
 
-export class Outline implements Types.Outline {
+export class OutlineAPI implements Types.OutlineAPI {
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
@@ -117,7 +117,7 @@ export class Outline implements Types.Outline {
         }
     }
 
-    setup(props: Partial<Types.OutlineProps>): void {
+    setProps(props: Partial<Types.OutlineProps>): void {
         if (!this._mainWindow) {
             return;
         }
@@ -136,7 +136,7 @@ export class Outline implements Types.Outline {
     }
 
     ignoreElement(element: HTMLElement, unignore?: boolean): void {
-        setAbilityHelpersOnElement(element, { outline: unignore ? undefined : { ignored: true } });
+        setAbilityHelpersOnElement(element, { outline: unignore ? undefined : { isIgnored: true } });
     }
 
     protected dispose(): void {
@@ -197,7 +197,7 @@ export class Outline implements Types.Outline {
     private _shouldShowCustomOutline(element: HTMLElement): boolean {
         const ah = getAbilityHelpersOnElement(element);
 
-        if (ah && ah.outline && ah.outline.ignored) {
+        if (ah && ah.outline && ah.outline.isIgnored) {
             return false;
         }
 
@@ -295,7 +295,7 @@ export class Outline implements Types.Outline {
 
     private _onScroll = (e: UIEvent): void => {
         if (!this._outlinedElement ||
-            !Outline._isParentChild(e.target as HTMLElement, this._outlinedElement)) {
+            !OutlineAPI._isParentChild(e.target as HTMLElement, this._outlinedElement)) {
 
             return;
         }

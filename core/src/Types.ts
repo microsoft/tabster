@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export const AbilityHelpersAttributeName = 'data-ah';
+
 export interface AbilityHelpers {
-    announcer: Announcer;
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
-    outline: Outline;
-    focusDeloser: FocusDeloser;
-    focusable: Focusable;
-    modalityLayer: ModalityLayer;
+    outline: OutlineAPI;
+    deloser: DeloserAPI;
+    focusable: FocusableAPI;
+    modalizer: ModalizerAPI;
 }
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -18,17 +19,6 @@ export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => voi
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
     unsubscribe(callback: SubscribableCallback<A, B>): void;
-}
-
-export interface AnnouncerProps {
-    title: string;
-    historyLength: number;
-    parent: HTMLElement | undefined;
-}
-
-export interface Announcer {
-    setup(props: Partial<AnnouncerProps>): void;
-    announce(text: string, assertive?: boolean): void;
 }
 
 export interface KeyboardNavigationState extends Subscribable<boolean> {
@@ -54,12 +44,16 @@ export interface OutlineProps {
     zIndex: number;
 }
 
-export interface Outline {
-    setup(props: Partial<OutlineProps>): void;
+export interface OutlinedElementProps {
+    isIgnored: boolean;
+}
+
+export interface OutlineAPI {
+    setProps(props: Partial<OutlineProps>): void;
     ignoreElement(element: HTMLElement, unignore?: boolean): void;
 }
 
-export interface FocusDeloserElementActions {
+export interface DeloserElementActions {
     focusDefault: () => boolean;
     focusFirst: () => boolean;
     resetFocus: () => boolean;
@@ -68,18 +62,21 @@ export interface FocusDeloserElementActions {
     isActive: () => boolean;
 }
 
-export interface FocusDeloserProps {
-    onFocusLost?(last: HTMLElement, actions: FocusDeloserElementActions): boolean;
+export interface DeloserBasicProps {
 }
 
-export interface FocusDeloserContainer {
+export interface DeloserExtendedProps {
+    onFocusLost?(last: HTMLElement, actions: DeloserElementActions): boolean;
+}
+
+export interface Deloser {
     readonly id: string;
-    setup(props: Partial<FocusDeloserProps>): void;
+    setProps(basic?: Partial<DeloserBasicProps> | null, extended?: Partial<DeloserExtendedProps> | null): void;
     move(newContainer: HTMLElement): void;
     dispose(): void;
     isActive(): boolean;
     setActive(active: boolean): void;
-    getActions(): FocusDeloserElementActions;
+    getActions(): DeloserElementActions;
     setSnapshot(index: number): void;
     focusFirst(): boolean;
     unshift(element: HTMLElement): void;
@@ -90,11 +87,12 @@ export interface FocusDeloserContainer {
     customFocus(last: HTMLElement): boolean;
 }
 
-export interface FocusDeloser {
-    getActions(element: HTMLElement): FocusDeloserElementActions | undefined;
-    add(element: HTMLElement, props?: FocusDeloserProps): void;
+export interface DeloserAPI {
+    getActions(element: HTMLElement): DeloserElementActions | undefined;
+    add(element: HTMLElement, basic?: DeloserBasicProps, props?: DeloserExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<DeloserBasicProps>, extended?: Partial<DeloserExtendedProps>): void;
     pause(): void;
     resume(restore?: boolean): void;
 }
@@ -104,13 +102,46 @@ export interface FocusableProps {
     isIgnored: boolean;
 }
 
+export interface FocusableAPI {
+    addGroupper(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
+    removeGroupper(element: HTMLElement): void;
+    moveGroupper(from: HTMLElement, to: HTMLElement): void;
+    setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
+        extended?: Partial<GroupperExtendedProps> | null): void;
+    setCurrentGroupper(element: HTMLElement): void;
+    isInCurrentGroupper(element: HTMLElement): boolean;
+    findGroupper(element: HTMLElement): HTMLElement | null;
+
+    findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
+    findLastGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
+    findNextGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
+    findPrevGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
+
+    getProps(element: HTMLElement): FocusableProps;
+    setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
+
+    isFocusable(element: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
+    isVisible(element: HTMLElement): boolean;
+    isAccessible(element: HTMLElement): boolean;
+    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+}
+
 export enum ElementVisibility {
     Invisible = 0,
     PartiallyVisible = 1,
     Visible = 2
 }
 
-export interface FocusableGroupState {
+export interface GroupperState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
     isPrevious: boolean;
     isNext: boolean;
@@ -123,179 +154,164 @@ export interface FocusableGroupState {
     isLimited: boolean;
 }
 
-export enum FocusableGroupFocusLimit {
+export enum GroupperFocusLimit {
     Unlimited = 0,
     Limited = 1, // The focus is limited to the container only and explicit Enter is needed to go inside.
     LimitedTrapFocus = 2 // The focus is limited as above, plus trapped when inside.
 }
 
-export enum FocusableGroupNextDirection {
+export enum GroupperNextDirection {
     Both = 0, // Default, both left/up keys move to the previous, right/down move to the next.
     Vertical = 1, // Only up/down arrows move to the next/previous.
     Horizontal = 2, // Only left/right arrows move to the next/previous.
     Grid = 3 // Two-dimentional movement depending on the visual placement.
 }
 
-export interface FocusableGroupProps {
-    isDefault?: boolean | (() => boolean);
-    isLimited?: FocusableGroupFocusLimit;
-    nextDirection?: FocusableGroupNextDirection;
+export interface GroupperBasicProps {
+    isDefault?: boolean;
+    isLimited?: GroupperFocusLimit;
+    nextDirection?: GroupperNextDirection;
     memorizeCurrent?: boolean;
     lookupVisibility?: ElementVisibility;
-    onChange?: (state: FocusableGroupState) => void;
 }
 
-export interface FocusableGroupContainerProps {
+export interface GroupperExtendedProps {
+    isDefault?: () => boolean;
+    onChange?: (state: GroupperState) => void;
 }
 
-export interface FocusableGroupContainer {
+export interface UberGroupper {
     readonly id: string;
     dispose(): void;
-    setProps(props: Partial<FocusableGroupContainerProps> | null): void;
-    getProps(): FocusableGroupContainerProps;
     getElement(): HTMLElement;
-    addGroup(group: FocusableGroup): void;
-    removeGroup(group: FocusableGroup): void;
-    setUnlimitedGroup(group: FocusableGroup | undefined): void;
-    setFocusedGroup(group: FocusableGroup | undefined): void;
-    setCurrentGroup(group: FocusableGroup): void;
-    getCurrentGroup(): FocusableGroup | null;
-    getGroupState(group: FocusableGroup): FocusableGroupState;
+    addGroupper(groupper: Groupper): void;
+    removeGroupper(groupper: Groupper): void;
+    setUnlimitedGroupper(groupper: Groupper | undefined): void;
+    setFocusedGroupper(groupper: Groupper | undefined): void;
+    setCurrentGroupper(groupper: Groupper): void;
+    getCurrentGroupper(): Groupper | null;
+    getGroupperState(groupper: Groupper): GroupperState;
     isEmpty(): boolean;
 }
 
-export interface FocusableGroup {
+export interface Groupper {
     readonly id: string;
     dispose(): void;
     getElement(): HTMLElement;
     moveTo(newElement: HTMLElement): void;
-    getState(): FocusableGroupState;
+    getState(): GroupperState;
     makeCurrent(): void;
     isDefault(): boolean;
-    getProps(): FocusableGroupProps;
-    setProps(props: FocusableGroupProps): void;
+    getBasicProps(): GroupperBasicProps;
+    getExtendedProps(): GroupperExtendedProps;
+    setProps(basic?: Partial<GroupperBasicProps> | null, extended?: Partial<GroupperExtendedProps> | null): void;
     setFocused(focused: boolean): void;
     setUnlimited(unlimited: boolean): void;
     setupContainer(remove?: boolean): void;
 }
 
-export interface Focusable {
-    addGroup(element: HTMLElement, props: FocusableGroupProps): void;
-    removeGroup(element: HTMLElement): void;
-    moveGroup(from: HTMLElement, to: HTMLElement): void;
-    setGroupProps(element: HTMLElement, props: FocusableGroupProps): void;
-    setCurrentGroup(element: HTMLElement): void;
-    isInCurrentGroup(element: HTMLElement): boolean;
-    findGroup(element: HTMLElement): HTMLElement | null;
-
-    findFirstGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
-    findLastGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
-    findNextGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
-    findPrevGroup(context: HTMLElement, ignoreLayer?: boolean): HTMLElement | null;
-
-    getGroupContainerProps(element: HTMLElement): FocusableGroupContainerProps | null;
-    setGroupContainerProps(element: HTMLElement, props: Partial<FocusableGroupContainerProps> | null): void;
-
-    getProps(element: HTMLElement): FocusableProps;
-    setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
-
-    isFocusable(element: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
-    isVisible(element: HTMLElement): boolean;
-    isAccessible(element: HTMLElement): boolean;
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
-    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
-    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreLayer?: boolean, ignoreGroup?: boolean): HTMLElement | null;
+export interface ModalizerBasicProps {
+    id: string;
+    isOthersAccessible?: boolean;
+    isAlwaysAccessible?: boolean;
+    isNoFocusFirst?: boolean;
+    isNoFocusDefault?: boolean;
 }
 
-export interface ModalityLayerProps extends FocusDeloserProps {
-    accessibilityLabel: string;
-    onFocusIn?: () => void;
-    onFocusOut?: (before: boolean) => boolean;
-    othersAccessible?: boolean;
-    alwaysAccessible?: boolean;
-    noFocusFirst?: boolean;
-    noFocusDefault?: boolean;
-}
+export type ModalizerExtendedProps =
+    DeloserExtendedProps &
+    {
+        onFocusIn?: () => void;
+        onFocusOut?: (before: boolean) => boolean;
+    };
 
-export interface ModalityLayerContainer {
+export interface Modalizer {
     readonly internalId: string;
     readonly userId: string;
-    setup(props: Partial<ModalityLayerProps>): void;
+    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
+    getBasicProps(): ModalizerBasicProps;
+    getExtendedProps(): ModalizerExtendedProps;
     dispose(): void;
     move(newElement: HTMLElement): void;
     setAccessible(accessible: boolean): void;
     setActive(active: boolean): void;
     isActive(): boolean;
-    isOthersAccessible(): boolean;
-    isAlwaysAccessible(): boolean;
-    isNoFocusFirst(): boolean;
-    isNoFocusDefault(): boolean;
     getElement(): HTMLElement;
     setFocused(focused: boolean): void;
     onBeforeFocusOut(): boolean;
 }
 
-export interface ModalityLayerRoot {
+export interface ModalizerRoot {
     readonly id: string;
     dispose(): void;
     move(newElement: HTMLElement): void;
     getElement(): HTMLElement;
-    getCurrentLayerId(): string | undefined;
-    setCurrentLayerId(id: string | undefined, noLayersUpdate?: boolean): void;
-    getLayers(): ModalityLayerContainer[];
-    updateLayers(): void;
+    getCurrentModalizerId(): string | undefined;
+    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
+    getModalizers(): Modalizer[];
+    updateModalizers(): void;
 }
 
-export interface ModalityLayer {
+export interface ModalizerAPI {
     addRoot(element: HTMLElement): void;
     removeRoot(element: HTMLElement): void;
     moveRoot(from: HTMLElement, to: HTMLElement): void;
-    addLayer(element: HTMLElement, id: string, props: ModalityLayerProps): void;
-    removeLayer(element: HTMLElement): void;
-    moveLayer(from: HTMLElement, to: HTMLElement): void;
-    focusLayer(elementFromLayer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
+    add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
+    remove(element: HTMLElement): void;
+    move(from: HTMLElement, to: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
+    focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
 }
 
-export interface FocusDeloserOnElement {
-    focusDeloser?: FocusDeloserContainer;
+export interface DeloserOnElement {
+    deloser: Deloser;
 }
 
-export interface ModalityLayerRootOnElement {
-    modalityRoot?: ModalityLayerRoot;
+export interface ModalizerRootOnElement {
+    root: ModalizerRoot;
 }
 
-export interface ModalityLayerOnElement {
-    modalityLayer?: ModalityLayerContainer;
+export interface ModalizerOnElement {
+    modalizer: Modalizer;
 }
 
 export interface FocusableOnElement {
-    focusable?: FocusableProps;
+    focusable: FocusableProps;
 }
 
-export interface FocusableGroupOnElement {
-    focusableGroup?: FocusableGroup;
+export interface GroupperOnElement {
+    groupper: Groupper;
 }
 
-export interface FocusableGroupContainerOnElement {
-    focusableGroupContainer?: FocusableGroupContainer;
+export interface GroupperContainerOnElement {
+    groupperContainer: UberGroupper;
 }
 
 export interface OutlineOnElement {
-    outline?: { ignored: boolean };
+    outline: OutlinedElementProps;
 }
 
-export type AbilityHelpersOnElement =
-    FocusDeloserOnElement &
-    ModalityLayerRootOnElement &
-    ModalityLayerOnElement &
+export type AbilityHelpersAttributeProps = Partial<{
+    deloser: true,
+    root: true,
+    modalizer: ModalizerBasicProps,
+    focusable: FocusableProps,
+    groupper: GroupperBasicProps,
+    groupperContainer: true,
+    outline: OutlinedElementProps
+}>;
+
+export interface AbilityHelpersAttributeOnElement {
+    string: string;
+    object: AbilityHelpersAttributeProps;
+}
+
+export type AbilityHelpersOnElement = Partial<
+    DeloserOnElement &
+    ModalizerRootOnElement &
+    ModalizerOnElement &
     FocusableOnElement &
-    FocusableGroupOnElement &
-    FocusableGroupContainerOnElement &
-    OutlineOnElement;
+    GroupperOnElement &
+    GroupperContainerOnElement &
+    OutlineOnElement
+>;

@@ -3,7 +3,7 @@
 
 // const ListItemContext = React.createContext<((group: HTMLElement, removed?: boolean) => void) | undefined>(undefined);
 
-// export interface AccessibilityStateState extends Types.FocusableGroupState {
+// export interface AccessibilityStateState extends Types.GroupperState {
 //     isNavigatingWithKeyboard
 // }
 

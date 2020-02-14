@@ -8,9 +8,9 @@ import * as Types from './Types';
 import { createElementTreeWalker } from './Utils';
 
 export interface MutationEventDetails {
-    root?: Types.ModalityLayerRoot;
-    layer?: Types.ModalityLayerContainer;
-    group?: Types.FocusableGroup;
+    root?: Types.ModalizerRoot;
+    modalizer?: Types.Modalizer;
+    groupper?: Types.Groupper;
     removed?: boolean;
 }
 
@@ -26,20 +26,27 @@ export function observeMutations(doc: HTMLDocument): void {
     }
 
     const observer = new MutationObserver(mutations => {
-        const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.ModalityLayerRoot; } } = {};
-        const changedLayers: { [id: string]: { removedFrom?: Node; addedTo?: Node; layer: Types.ModalityLayerContainer; } } = {};
-        const changedGroups: { [id: string]: { removedFrom?: Node; addedTo?: Node; group: Types.FocusableGroup } } = {};
+        const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.ModalizerRoot; } } = {};
+        const changedModalizers: { [id: string]: { removedFrom?: Node; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
+        const changedGrouppers: { [id: string]: { removedFrom?: Node; addedTo?: Node; groupper: Types.Groupper } } = {};
 
         for (let mutation of mutations) {
             const removed = mutation.removedNodes;
             const added = mutation.addedNodes;
 
-            for (let i = 0; i < removed.length; i++) {
-                findTargets(removed[i], mutation.target);
-            }
+            if (mutation.type === 'attributes') {
+                if (mutation.attributeName === Types.AbilityHelpersAttributeName) {
+                    acceptNode(mutation.target as HTMLElement);
+                    console.error(232323, mutation);
+                }
+            } else {
+                for (let i = 0; i < removed.length; i++) {
+                    findTargets(removed[i], mutation.target);
+                }
 
-            for (let i = 0; i < added.length; i++) {
-                findTargets(added[i], undefined, mutation.target);
+                for (let i = 0; i < added.length; i++) {
+                    findTargets(added[i], undefined, mutation.target);
+                }
             }
         }
 
@@ -55,27 +62,27 @@ export function observeMutations(doc: HTMLDocument): void {
             }
         }
 
-        for (let id of Object.keys(changedLayers)) {
-            const l = changedLayers[id];
+        for (let id of Object.keys(changedModalizers)) {
+            const l = changedModalizers[id];
 
             if (l.removedFrom) {
-                dispatchMutationEvent(l.removedFrom, { layer: l.layer, removed: true });
+                dispatchMutationEvent(l.removedFrom, { modalizer: l.modalizer, removed: true });
             }
 
             if (l.addedTo) {
-                dispatchMutationEvent(l.addedTo, { layer: l.layer, removed: false });
+                dispatchMutationEvent(l.addedTo, { modalizer: l.modalizer, removed: false });
             }
         }
 
-        for (let id of Object.keys(changedGroups)) {
-            const g = changedGroups[id];
+        for (let id of Object.keys(changedGrouppers)) {
+            const g = changedGrouppers[id];
 
             if (g.removedFrom && !g.addedTo) {
-                dispatchMutationEvent(g.removedFrom, { group: g.group, removed: true });
+                dispatchMutationEvent(g.removedFrom, { groupper: g.groupper, removed: true });
             }
 
             if (g.addedTo) {
-                dispatchMutationEvent(g.addedTo, { group: g.group, removed: false });
+                dispatchMutationEvent(g.addedTo, { groupper: g.groupper, removed: false });
             }
         }
 
@@ -83,7 +90,7 @@ export function observeMutations(doc: HTMLDocument): void {
             acceptNode(node as HTMLElement, removedFrom, addedTo);
 
             const walker = createElementTreeWalker(doc, node, (element: Node): number => {
-                return acceptNode(element, removedFrom, addedTo);
+                return acceptNode(element as HTMLElement, removedFrom, addedTo);
             });
 
             if (walker) {
@@ -91,27 +98,34 @@ export function observeMutations(doc: HTMLDocument): void {
             }
         }
 
-        function acceptNode(element: Node, removedFrom?: Node, addedTo?: Node): number {
+        function acceptNode(element: HTMLElement, removedFrom?: Node, addedTo?: Node): number {
+            if (!element.getAttribute) {
+                // It might actually be a text node.
+                return NodeFilter.FILTER_SKIP;
+            }
+
             const ah = getAbilityHelpersOnElement(element);
 
             if (ah) {
-                if (ah.modalityRoot) {
-                    addRootTarget(ah.modalityRoot, removedFrom, addedTo);
+                if (ah.root) {
+                    addRootTarget(ah.root, removedFrom, addedTo);
                 }
 
-                if (ah.modalityLayer) {
-                    addLayerTarget(ah.modalityLayer, removedFrom, addedTo);
+                if (ah.modalizer) {
+                    addModalizerTarget(ah.modalizer, removedFrom, addedTo);
                 }
 
-                if (ah.focusableGroup) {
-                    addGroupTarget(element, ah.focusableGroup, removedFrom, addedTo);
+                if (ah.groupper) {
+                    addGroupTarget(element, ah.groupper, removedFrom, addedTo);
                 }
+            } else if (element.getAttribute(Types.AbilityHelpersAttributeName)) {
+                console.error(8988888, element);
             }
 
             return NodeFilter.FILTER_SKIP;
         }
 
-        function addRootTarget(root: Types.ModalityLayerRoot, removedFrom?: Node, addedTo?: Node): void {
+        function addRootTarget(root: Types.ModalizerRoot, removedFrom?: Node, addedTo?: Node): void {
             let r = changedRoots[root.id];
 
             if (!r) {
@@ -127,27 +141,27 @@ export function observeMutations(doc: HTMLDocument): void {
             }
         }
 
-        function addLayerTarget(layer: Types.ModalityLayerContainer, removedFrom?: Node, addedTo?: Node): void {
-            let l = changedLayers[layer.internalId];
+        function addModalizerTarget(modalizer: Types.Modalizer, removedFrom?: Node, addedTo?: Node): void {
+            let m = changedModalizers[modalizer.internalId];
 
-            if (!l) {
-                l = changedLayers[layer.internalId] = { layer };
+            if (!m) {
+                m = changedModalizers[modalizer.internalId] = { modalizer };
             }
 
             if (removedFrom) {
-                l.removedFrom = removedFrom;
+                m.removedFrom = removedFrom;
             }
 
             if (addedTo) {
-                l.addedTo = addedTo;
+                m.addedTo = addedTo;
             }
         }
 
-        function addGroupTarget(el: Node, group: Types.FocusableGroup, removedFrom?: Node, addedTo?: Node): void {
-            let g = changedGroups[group.id];
+        function addGroupTarget(el: Node, groupper: Types.Groupper, removedFrom?: Node, addedTo?: Node): void {
+            let g = changedGrouppers[groupper.id];
 
             if (!g) {
-                g = changedGroups[group.id] = { group };
+                g = changedGrouppers[groupper.id] = { groupper };
             }
 
             if (removedFrom) {
@@ -160,7 +174,7 @@ export function observeMutations(doc: HTMLDocument): void {
         }
     });
 
-    observer.observe(doc, { childList: true, subtree: true });
+    observer.observe(doc, { childList: true, subtree: true, attributeFilter: [Types.AbilityHelpersAttributeName] });
 }
 
 export function dispatchMutationEvent(target: Node, details: MutationEventDetails): void {
