@@ -6,7 +6,7 @@
 import { DeloserAPI } from './Deloser';
 import { FocusableAPI, setupFocusableInIFrame } from './Focusable';
 import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
-import { WindowWithAbilityHelpers } from './Instance';
+import { updateAbilityHelpersByAttribute } from './Instance';
 import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
 import { ModalizerAPI, setupModalizerInIFrame } from './Modalizer';
 import { observeMutations } from './MutationEvent';
@@ -30,7 +30,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
         // All the componetnts will be no-op.
 
         if (mainWindow && mainWindow.document) {
-            observeMutations(mainWindow.document);
+            observeMutations(mainWindow.document, this, updateAbilityHelpersByAttribute);
         }
 
         this.keyboardNavigation = new KeyboardNavigationState(this, mainWindow);
@@ -40,15 +40,21 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
     }
+
+    getAttribute(props: Types.AbilityHelpersAttributeProps | null): Types.AbilityHelpersDOMAttribute {
+        return {
+            [Types.AbilityHelpersAttributeName]: props === null ? undefined : JSON.stringify(props)
+        };
+    }
 }
 
 function getAbilityHelpers() {
-    const win = typeof window !== 'undefined' ? (window as WindowWithAbilityHelpers) : undefined;
+    const win = typeof window !== 'undefined' ? (window as Types.WindowWithAbilityHelpers) : undefined;
 
     let helpers: Types.AbilityHelpers | undefined;
 
-    if (win && win.__abilityHelpers) {
-        helpers = win.__abilityHelpers.helpers;
+    if (win && win.__ah) {
+        helpers = win.__ah.helpers;
     }
 
     if (!helpers) {
@@ -57,7 +63,7 @@ function getAbilityHelpers() {
         if (win) {
             _mainWindow = win;
 
-            win.__abilityHelpers = {
+            win.__ah = {
                 helpers,
                 mainWindow: win
             };
@@ -72,18 +78,18 @@ const instance = getAbilityHelpers();
 export { instance as AbilityHelpers };
 
 export function setupIFrame(iframeDocument: HTMLDocument) {
-    const win = iframeDocument.defaultView as (WindowWithAbilityHelpers | null);
+    const win = iframeDocument.defaultView as (Types.WindowWithAbilityHelpers | null);
 
-    if (!win || (win.__abilityHelpers)) {
+    if (!win || (win.__ah)) {
         return;
     }
 
-    win.__abilityHelpers = {
+    win.__ah = {
         helpers: instance,
         mainWindow: _mainWindow || win
     };
 
-    observeMutations(iframeDocument);
+    observeMutations(iframeDocument, instance, updateAbilityHelpersByAttribute);
     setupFocusedElementStateInIFrame(iframeDocument, _mainWindow);
     setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
     setupOutlineInIFrame(iframeDocument, _mainWindow);

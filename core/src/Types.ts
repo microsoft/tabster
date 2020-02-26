@@ -5,6 +5,10 @@
 
 export const AbilityHelpersAttributeName = 'data-ah';
 
+export interface AbilityHelpersDOMAttribute {
+    [AbilityHelpersAttributeName]: string | undefined;
+}
+
 export interface AbilityHelpers {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
@@ -12,6 +16,7 @@ export interface AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
+    getAttribute: (props: AbilityHelpersAttributeProps | null) => AbilityHelpersDOMAttribute;
 }
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -33,7 +38,11 @@ export interface FocusedElementDetails {
 export interface FocusedElementState extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
+    getPrevFocusedElement(): HTMLElement | undefined;
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
+    focusDefault(container: HTMLElement): boolean;
+    focusFirst(container: HTMLElement): boolean;
+    resetFocus(container: HTMLElement): boolean;
 }
 
 export interface OutlineProps {
@@ -49,8 +58,8 @@ export interface OutlinedElementProps {
 }
 
 export interface OutlineAPI {
-    setProps(props: Partial<OutlineProps>): void;
-    ignoreElement(element: HTMLElement, unignore?: boolean): void;
+    setup(props?: Partial<OutlineProps>): void;
+    setProps(element: HTMLElement, props: Partial<OutlinedElementProps> | null): void;
 }
 
 export interface DeloserElementActions {
@@ -84,7 +93,7 @@ export interface Deloser {
     resetFocus(): boolean;
     findAvailable(): HTMLElement | null;
     clearHistory(preserveExisting?: boolean): void;
-    customFocus(last: HTMLElement): boolean;
+    customFocusLostHandler(element: HTMLElement): boolean;
 }
 
 export interface DeloserAPI {
@@ -218,12 +227,10 @@ export interface ModalizerBasicProps {
     isNoFocusDefault?: boolean;
 }
 
-export type ModalizerExtendedProps =
-    DeloserExtendedProps &
-    {
-        onFocusIn?: () => void;
-        onFocusOut?: (before: boolean) => boolean;
-    };
+export interface ModalizerExtendedProps {
+    onFocusIn?: () => void;
+    onFocusOut?: (before: boolean) => boolean;
+}
 
 export interface Modalizer {
     readonly internalId: string;
@@ -283,8 +290,8 @@ export interface GroupperOnElement {
     groupper: Groupper;
 }
 
-export interface GroupperContainerOnElement {
-    groupperContainer: UberGroupper;
+export interface UberGroupperOnElement {
+    uberGroupper: UberGroupper;
 }
 
 export interface OutlineOnElement {
@@ -297,13 +304,18 @@ export type AbilityHelpersAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
-    groupperContainer: true,
+    uberGroupper: true,
     outline: OutlinedElementProps
 }>;
 
 export interface AbilityHelpersAttributeOnElement {
     string: string;
     object: AbilityHelpersAttributeProps;
+    changing: boolean;
+}
+
+export interface AbilityHelpersAugmentedAttributes {
+    [name: string]: string | null;
 }
 
 export type AbilityHelpersOnElement = Partial<
@@ -312,6 +324,35 @@ export type AbilityHelpersOnElement = Partial<
     ModalizerOnElement &
     FocusableOnElement &
     GroupperOnElement &
-    GroupperContainerOnElement &
+    UberGroupperOnElement &
     OutlineOnElement
 >;
+
+export interface OutlineElements {
+    container: HTMLDivElement;
+    left: HTMLDivElement;
+    top: HTMLDivElement;
+    right: HTMLDivElement;
+    bottom: HTMLDivElement;
+}
+
+export interface WindowWithAbilityHelpers extends Window {
+    __ah?: {
+        helpers: AbilityHelpers,
+        mainWindow: Window,
+        outlineStyle?: HTMLStyleElement,
+        outline?: OutlineElements
+    };
+}
+
+export interface HTMLElementWithAbilityHelpers extends HTMLElement {
+    __ah?: AbilityHelpersOnElement;
+}
+
+export interface HTMLElementWithAbilityHelpersAttribute extends HTMLElementWithAbilityHelpers {
+    __ahAttr?: AbilityHelpersAttributeOnElement;
+}
+
+export interface HTMLElementWithAugmentedAttributes extends HTMLElement {
+    __ahAug?: AbilityHelpersAugmentedAttributes;
+}

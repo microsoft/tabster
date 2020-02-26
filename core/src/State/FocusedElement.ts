@@ -24,7 +24,7 @@ interface WindowWithHTMLElement extends Window {
 }
 
 interface CustomFocusFunctionWithOriginal {
-    __abilityHelpersFocus?: (options?: FocusOptions | undefined) => void;
+    __ahFocus?: (options?: FocusOptions | undefined) => void;
 }
 
 function canOverrideNativeFocus(): boolean {
@@ -58,6 +58,7 @@ export class FocusedElementState
         extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails> implements Types.FocusedElementState {
 
     private static _lastFocusedProgrammatically: HTMLElement | undefined;
+    private static _lastResetElement: HTMLElement | undefined;
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
@@ -65,6 +66,7 @@ export class FocusedElementState
     private _moveOutInput: HTMLInputElement | undefined;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
+    private _prevVal: HTMLElement | undefined;
 
     constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
         super();
@@ -124,6 +126,14 @@ export class FocusedElementState
         return this._lastVal;
     }
 
+    getPrevFocusedElement(): HTMLElement | undefined {
+        if (this._prevVal && (!this._prevVal.ownerDocument || !this._prevVal.ownerDocument.contains(this._prevVal))) {
+            this._prevVal = undefined;
+        }
+
+        return this._prevVal;
+    }
+
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
         if (!this._ah.focusable.isFocusable(element, noFocusedProgrammaticallyFlag, noAccessibleCheck)) {
             return false;
@@ -136,11 +146,68 @@ export class FocusedElementState
         return true;
     }
 
+    focusDefault(container: HTMLElement): boolean {
+        const el = this._ah.focusable.findDefault(container);
+
+        if (el) {
+            this._ah.focusedElement.focus(el);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    focusFirst(container: HTMLElement): boolean {
+        const first = this._ah.focusable.findFirst(container, false, true);
+
+        if (first) {
+            this.focus(first);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    resetFocus(container: HTMLElement): boolean {
+        if (!this._ah.focusable.isFocusable(container, true, true)) {
+            const prevTabIndex = container.getAttribute('tabindex');
+            const prevAriaHidden = container.getAttribute('aria-hidden');
+
+            container.tabIndex = -1;
+            container.setAttribute('aria-hidden', 'true');
+
+            FocusedElementState._lastResetElement = container;
+
+            this.focus(container, true, true);
+
+            this._setOrRemoveAttribute(container, 'tabindex', prevTabIndex);
+            this._setOrRemoveAttribute(container, 'aria-hidden', prevAriaHidden);
+
+        } else {
+            this.focus(container);
+        }
+
+        return true;
+    }
+
+    private _setOrRemoveAttribute(element: HTMLElement, name: string, value: string | null): void {
+        if (value === null) {
+            element.removeAttribute(name);
+        } else {
+            element.setAttribute(name, value);
+        }
+    }
+
     private _setFocusedElement(element?: HTMLElement, relatedTarget?: HTMLElement): void {
         const details: Types.FocusedElementDetails = { relatedTarget };
 
         if (element) {
-            if (shouldIgnoreFocus(element)) {
+            const lastResetElement = FocusedElementState._lastResetElement;
+            FocusedElementState._lastResetElement = undefined;
+
+            if ((lastResetElement === element) || shouldIgnoreFocus(element)) {
                 return;
             }
 
@@ -153,7 +220,7 @@ export class FocusedElementState
 
         const nextVal = this._nextVal = { element, details };
 
-        if (element !== this._val) {
+        if (element && (element !== this._val)) {
             this._validateFocusedElement(element, details);
         }
 
@@ -170,6 +237,7 @@ export class FocusedElementState
         super.setVal(val, details);
 
         if (val) {
+            this._prevVal = this._lastVal;
             this._lastVal = val;
         }
     }
@@ -221,7 +289,7 @@ export class FocusedElementState
 
         const origFocus =  win.HTMLElement.prototype.focus;
 
-        if ((origFocus as CustomFocusFunctionWithOriginal).__abilityHelpersFocus) {
+        if ((origFocus as CustomFocusFunctionWithOriginal).__ahFocus) {
             // Already set up.
             return;
         }
@@ -233,7 +301,7 @@ export class FocusedElementState
             return origFocus.apply(this, arguments);
         }
 
-        (focus as CustomFocusFunctionWithOriginal).__abilityHelpersFocus = origFocus;
+        (focus as CustomFocusFunctionWithOriginal).__ahFocus = origFocus;
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
@@ -605,49 +673,47 @@ export class FocusedElementState
         }
     }
 
-    private _validateFocusedElement = (e: HTMLElement | undefined, d: Types.FocusedElementDetails): void => {
-        if (e) {
-            const l = ModalizerAPI.findModalizer(e);
-            const curModalizerId = l ? l.root.getCurrentModalizerId() : undefined;
+    private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
+        const l = ModalizerAPI.findModalizer(element);
+        const curModalizerId = l ? l.root.getCurrentModalizerId() : undefined;
 
-            this._ah.focusable.setCurrentGroupper(e);
+        this._ah.focusable.setCurrentGroupper(element);
 
-            if (!l) {
-                return;
-            }
+        if (!l) {
+            return;
+        }
 
-            let eModalizer = l.modalizer;
+        let eModalizer = l.modalizer;
 
-            if (curModalizerId === eModalizer.userId) {
-                return;
-            }
+        if (curModalizerId === eModalizer.userId) {
+            return;
+        }
 
-            if ((curModalizerId === undefined) || d.isFocusedProgrammatically) {
-                l.root.setCurrentModalizerId(eModalizer.userId);
+        if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
+            l.root.setCurrentModalizerId(eModalizer.userId);
 
-                return;
-            }
+            return;
+        }
 
-            if (eModalizer && e.ownerDocument) {
-                let toFocus = this._ah.focusable.findFirst(l.root.getElement());
+        if (eModalizer && element.ownerDocument) {
+            let toFocus = this._ah.focusable.findFirst(l.root.getElement());
 
-                if (toFocus) {
-                    if (e.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                        toFocus = this._ah.focusable.findLast(e.ownerDocument.body);
+            if (toFocus) {
+                if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
+                    toFocus = this._ah.focusable.findLast(element.ownerDocument.body);
 
-                        if (!toFocus) {
-                            // This only might mean that findFirst/findLast are buggy and inconsistent.
-                            throw new Error('Something went wrong.');
-                        }
+                    if (!toFocus) {
+                        // This only might mean that findFirst/findLast are buggy and inconsistent.
+                        throw new Error('Something went wrong.');
                     }
-
-                    this._ah.focusedElement.focus(toFocus);
-                } else {
-                    // Current Modalizer doesn't seem to have focusable elements.
-                    // Blurring the currently focused element which is outside of the current Modalizer.
-                    e.blur();
                 }
-           }
+
+                this._ah.focusedElement.focus(toFocus);
+            } else {
+                // Current Modalizer doesn't seem to have focusable elements.
+                // Blurring the currently focused element which is outside of the current Modalizer.
+                element.blur();
+            }
         }
     }
 }
@@ -655,8 +721,8 @@ export class FocusedElementState
 function callOriginalFocusOnly(element: HTMLElement): void {
     const focus = element.focus as CustomFocusFunctionWithOriginal;
 
-    if (focus.__abilityHelpersFocus) {
-        focus.__abilityHelpersFocus.call(element);
+    if (focus.__ahFocus) {
+        focus.__ahFocus.call(element);
     } else {
         element.focus();
     }

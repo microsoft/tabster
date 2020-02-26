@@ -73,7 +73,7 @@ export class ListItem extends React.Component<ListItemProps> {
     }
 
     private _addChildGroup = (group: HTMLElement, removed?: boolean) => {
-        const ah = ((group as any).__abilityHelpers) as (Types.AbilityHelpersOnElement | undefined);
+        const ah = ((group as any).__ah) as (Types.AbilityHelpersOnElement | undefined);
         const g = ah && ah.groupper;
 
         if (g) {
@@ -208,7 +208,7 @@ export class ListItem extends React.Component<ListItemProps> {
     }
 
     private _getState(): ListItemState {
-        const ah = ((this._div as any).__abilityHelpers) as (Types.AbilityHelpersOnElement | undefined);
+        const ah = ((this._div as any).__ah) as (Types.AbilityHelpersOnElement | undefined);
         const g = ah && ah.groupper;
 
         if (g) {

@@ -3,31 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { OutlineElements } from './Outline';
 import * as Types from './Types';
 
-export interface WindowWithAbilityHelpers extends Window {
-    __abilityHelpers?: {
-        helpers: Types.AbilityHelpers,
-        mainWindow: Window,
-        outlineStyle?: HTMLStyleElement,
-        outline?: OutlineElements
-    };
-}
-
-export interface HTMLElementWithAbilityHelpers extends HTMLElement {
-    __abilityHelpers?: Types.AbilityHelpersOnElement;
-}
-
-export interface HTMLElementWithAbilityHelpersAttribute extends HTMLElementWithAbilityHelpers {
-    __ahAttr?: Types.AbilityHelpersAttributeOnElement;
-}
-
 export function setAbilityHelpersOnElement(
-    element: HTMLElementWithAbilityHelpersAttribute,
+    element: Types.HTMLElementWithAbilityHelpersAttribute,
     helpers: Partial<Types.AbilityHelpersOnElement>
 ): void {
-    const cur = (element.__abilityHelpers || {}) as Types.AbilityHelpersOnElement;
+    const cur = (element.__ah || {}) as Types.AbilityHelpersOnElement;
     const attr = element.__ahAttr;
     let attrObject: Types.AbilityHelpersAttributeProps;
 
@@ -71,8 +53,8 @@ export function setAbilityHelpersOnElement(
                     attrObject[key] = (h as Types.Groupper).getBasicProps();
                     break;
 
-                case 'groupperContainer':
-                    cur[key] = helpers.groupperContainer;
+                case 'uberGroupper':
+                    cur[key] = helpers.uberGroupper;
                     attrObject[key] = true;
                     break;
 
@@ -87,19 +69,199 @@ export function setAbilityHelpersOnElement(
     });
 
     if (Object.keys(cur).length === 0) {
-        delete element.__abilityHelpers;
+        delete element.__ah;
         delete element.__ahAttr;
+
         element.removeAttribute(Types.AbilityHelpersAttributeName);
     } else {
-        element.__abilityHelpers = cur;
+        element.__ah = cur;
         element.__ahAttr = {
             string: JSON.stringify(attrObject),
-            object: attrObject
+            object: attrObject,
+            changing: true
         };
+
         element.setAttribute(Types.AbilityHelpersAttributeName, element.__ahAttr.string);
+        element.__ahAttr.changing = false;
     }
 }
 
 export function getAbilityHelpersOnElement(element: Node): Types.AbilityHelpersOnElement | undefined {
-    return (element as HTMLElementWithAbilityHelpers).__abilityHelpers;
+    return (element as Types.HTMLElementWithAbilityHelpers).__ah;
+}
+
+export function updateAbilityHelpersByAttribute(
+    abilityHelpers: Types.AbilityHelpers,
+    element: Types.HTMLElementWithAbilityHelpersAttribute
+): void {
+    const newAttrValue = element.getAttribute(Types.AbilityHelpersAttributeName);
+
+    let newAttr = element.__ahAttr;
+
+    if (newAttrValue) {
+        if (newAttrValue !== (newAttr && newAttr.string)) {
+            try {
+                const newValue = JSON.parse(newAttrValue) as Types.AbilityHelpersAttributeProps;
+
+                if (typeof newValue !== 'object') {
+                    throw new Error(`Value is not a JSON object, got '${ newAttrValue }'.`);
+                }
+
+                newAttr = {
+                    string: newAttrValue,
+                    object: newValue,
+                    changing: false
+                };
+            } catch (e) {
+                if (__DEV__) {
+                    console.error(e);
+                }
+            }
+        }
+    } else if (element.__ah) {
+        newAttr = undefined;
+    }
+
+    const oldObject = (element.__ahAttr && element.__ahAttr.object) || {};
+    const newObject = (newAttr && newAttr.object) || {};
+
+    for (let key of Object.keys(oldObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
+        if (!newObject[key]) {
+            switch (key) {
+                case 'deloser':
+                    abilityHelpers.deloser.remove(element);
+                    break;
+
+                case 'root':
+                    abilityHelpers.modalizer.removeRoot(element);
+                    break;
+
+                case 'modalizer':
+                    abilityHelpers.modalizer.remove(element);
+                    break;
+
+                case 'focusable':
+                    abilityHelpers.focusable.setProps(element, null);
+                    break;
+
+                case 'groupper':
+                    abilityHelpers.focusable.removeGroupper(element);
+                    break;
+
+                case 'uberGroupper':
+                    break;
+
+                case 'outline':
+                    abilityHelpers.outline.setProps(element, null);
+                    break;
+            }
+        }
+    }
+
+    for (let key of Object.keys(newObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
+        switch (key) {
+            case 'deloser':
+                if (element.__ah && element.__ah.deloser) {
+                    element.__ah.deloser.setProps(newObject.deloser);
+                } else {
+                    abilityHelpers.deloser.add(element, newObject.deloser);
+                }
+                break;
+
+            case 'root':
+                if (element.__ah && element.__ah.root) {
+                    // No basic props for root.
+                } else {
+                    abilityHelpers.modalizer.addRoot(element);
+                }
+                break;
+
+            case 'modalizer':
+                if (element.__ah && element.__ah.modalizer) {
+                    element.__ah.modalizer.setProps(newObject.modalizer);
+                } else {
+                    abilityHelpers.modalizer.add(element, newObject.modalizer!!!);
+                }
+                break;
+
+            case 'focusable':
+                abilityHelpers.focusable.setProps(element, newObject.focusable || null);
+                break;
+
+            case 'groupper':
+                if (element.__ah && element.__ah.groupper) {
+                    element.__ah.groupper.setProps(newObject.groupper);
+                } else {
+                    abilityHelpers.focusable.addGroupper(element, newObject.groupper);
+                }
+                break;
+
+            case 'uberGroupper':
+                break;
+
+            case 'outline':
+                abilityHelpers.outline.setProps(element, newObject.outline || null);
+                break;
+
+            default:
+                delete newObject[key];
+                console.error(`Unknown key '${ key }' in data-ah attribute value.`);
+        }
+    }
+
+    if (newAttr) {
+        newAttr.object = newObject;
+        newAttr.string = JSON.stringify(newObject);
+        newAttr.changing = true;
+
+        element.__ahAttr = newAttr;
+
+        if (newAttr.string !== newAttrValue) {
+            element.setAttribute(Types.AbilityHelpersAttributeName, newAttr.string);
+        }
+
+        newAttr.changing = false;
+    }
+}
+
+export function augmentAttribute(
+    element: Types.HTMLElementWithAugmentedAttributes,
+    name: string,
+    value?: string | null // Restore original value when undefined.
+): void {
+    if (!element.__ahAug) {
+        if (value === undefined) {
+            return;
+        }
+
+        element.__ahAug = {};
+    }
+
+    if (value === undefined) {
+        if (name in element.__ahAug) {
+            const origVal = element.__ahAug[name];
+
+            delete element.__ahAug[name];
+
+            if (origVal === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, origVal);
+            }
+        }
+    } else {
+        if (!(name in element.__ahAug)) {
+            element.__ahAug[name] = element.getAttribute(name);
+        }
+
+        if (value === null) {
+            element.removeAttribute(name);
+        } else {
+            element.setAttribute(name, value);
+        }
+    }
+
+    if ((value === undefined) && (Object.keys(element.__ahAug).length === 0)) {
+        delete element.__ahAug;
+    }
 }

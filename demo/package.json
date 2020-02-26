@@ -29,7 +29,7 @@
   "dependencies": {
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
-    "ability-helpers-react": "^0.0.7",
+    "ability-helpers": "^0.0.7",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
   }

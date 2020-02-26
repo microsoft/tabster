@@ -1,5 +1,6 @@
 {
   "name": "ability-helpers-react",
+  "private": true,
   "version": "0.0.7",
   "description": "Web application accessibility components for React",
   "author": "Marat Abdullin <marata@microsoft.com>",

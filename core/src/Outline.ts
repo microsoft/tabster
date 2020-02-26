@@ -9,23 +9,15 @@ import {
     EventFromIFrameDescriptorType,
     setupIFrameToMainWindowEventsDispatcher
 } from './IFrameEvents';
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement, WindowWithAbilityHelpers } from './Instance';
+import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import * as Types from './Types';
 import { getBoundingRect } from './Utils';
 
 const _customEventName = 'ability-helpers:outline-related';
 
-export interface OutlineElements {
-    container: HTMLDivElement;
-    left: HTMLDivElement;
-    top: HTMLDivElement;
-    right: HTMLDivElement;
-    bottom: HTMLDivElement;
-}
-
 const defaultProps: Types.OutlineProps = {
-    areaClass: 'focus-outline-area',
-    outlineClass: 'focus-outline',
+    areaClass: 'ah-focus-outline-area',
+    outlineClass: 'ah-focus-outline',
     outlineColor: '#ff4500',
     outlineWidth: 2,
     zIndex: 2147483647
@@ -85,8 +77,8 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _outlinedElement: HTMLElement | undefined;
     private _curPos: OutlinePosition | undefined;
     private _isVisible = false;
-    private _curOutlineElements: OutlineElements | undefined;
-    private _allOutlineElements: OutlineElements[] = [];
+    private _curOutlineElements: Types.OutlineElements | undefined;
+    private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
     constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
@@ -117,26 +109,41 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
     }
 
-    setProps(props: Partial<Types.OutlineProps>): void {
+    setup(props?: Partial<Types.OutlineProps>): void {
         if (!this._mainWindow) {
             return;
         }
 
         _props = { ..._props, ...props };
 
-        const win = this._mainWindow as WindowWithAbilityHelpers;
+        const win = this._mainWindow as Types.WindowWithAbilityHelpers;
 
-        if (!win.__abilityHelpers) {
+        if (!win.__ah) {
             return;
         }
 
-        if (!win.__abilityHelpers.outlineStyle) {
-            win.__abilityHelpers.outlineStyle = appendStyles(this._mainWindow.document, _props);
+        if (!win.__ah.outlineStyle) {
+            win.__ah.outlineStyle = appendStyles(this._mainWindow.document, _props);
+        }
+
+        if (!props || !props.areaClass) {
+            win.document.body.classList.add(defaultProps.areaClass);
         }
     }
 
-    ignoreElement(element: HTMLElement, unignore?: boolean): void {
-        setAbilityHelpersOnElement(element, { outline: unignore ? undefined : { isIgnored: true } });
+    setProps(element: HTMLElement, props: Partial<Types.OutlinedElementProps> | null): void {
+        const ah = getAbilityHelpersOnElement(element);
+
+        let curProps = ah && ah.outline;
+        let newProps: Types.OutlinedElementProps | undefined;
+
+        if (props) {
+            newProps = {
+                isIgnored: ('isIgnored' in props) ? (!!props.isIgnored) : (curProps ? curProps.isIgnored : false)
+            };
+        }
+
+        setAbilityHelpersOnElement(element, { outline: newProps });
     }
 
     protected dispose(): void {
@@ -465,20 +472,20 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
     }
 
-    private _getOutlineDOM(contextElement: HTMLElement): OutlineElements | undefined {
+    private _getOutlineDOM(contextElement: HTMLElement): Types.OutlineElements | undefined {
         const doc = contextElement.ownerDocument;
-        const win = (doc && doc.defaultView) as WindowWithAbilityHelpers;
+        const win = (doc && doc.defaultView) as Types.WindowWithAbilityHelpers;
 
-        if (!doc || !win || !win.__abilityHelpers) {
+        if (!doc || !win || !win.__ah) {
             return undefined;
         }
 
-        if (!win.__abilityHelpers.outlineStyle) {
-            win.__abilityHelpers.outlineStyle = appendStyles(doc, _props);
+        if (!win.__ah.outlineStyle) {
+            win.__ah.outlineStyle = appendStyles(doc, _props);
         }
 
-        if (!win.__abilityHelpers.outline) {
-            const outlineElements: OutlineElements = {
+        if (!win.__ah.outline) {
+            const outlineElements: Types.OutlineElements = {
                 container: doc.createElement('div'),
                 left: doc.createElement('div'),
                 top: doc.createElement('div'),
@@ -499,19 +506,19 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             doc.body.appendChild(outlineElements.container);
 
-            win.__abilityHelpers.outline = outlineElements;
+            win.__ah.outline = outlineElements;
 
             // TODO: Make a garbage collector to remove the references
             // to the outlines which are nowhere in the DOM anymore.
             // this._allOutlineElements.push(outlineElements);
         }
 
-        return win.__abilityHelpers.outline;
+        return win.__ah.outline;
     }
 
     private _removeOutlineDOM(contextElement: HTMLElement): void {
-        const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as WindowWithAbilityHelpers;
-        const ah =  win && win.__abilityHelpers;
+        const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as Types.WindowWithAbilityHelpers;
+        const ah =  win && win.__ah;
         const outlineElements = ah && ah.outline;
 
         if (!ah) {
@@ -555,14 +562,14 @@ export function setupOutlineInIFrame(iframeDocument: HTMLDocument, mainWindow?: 
 
     setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, descriptors);
 
-    const win = iframeDocument.defaultView as (WindowWithAbilityHelpers | null);
+    const win = iframeDocument.defaultView as (Types.WindowWithAbilityHelpers | null);
 
-    if (!win || !win.__abilityHelpers) {
+    if (!win || !win.__ah) {
         throw new Error('Wrong document to set Outline up.');
     }
 
-    if (!win.__abilityHelpers.outlineStyle) {
-        win.__abilityHelpers.outlineStyle = appendStyles(iframeDocument, _props);
+    if (!win.__ah.outlineStyle) {
+        win.__ah.outlineStyle = appendStyles(iframeDocument, _props);
     }
 }
 

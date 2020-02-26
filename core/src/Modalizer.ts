@@ -4,7 +4,7 @@
  */
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
+import { augmentAttribute, getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
 import { createElementTreeWalker } from './Utils';
@@ -24,7 +24,7 @@ export class Modalizer implements Types.Modalizer {
     readonly internalId: string;
     userId: string;
 
-    private _ah: Types.AbilityHelpers;
+    /* private */ _ah: Types.AbilityHelpers;
     private _element: HTMLElement;
     private _basic: Types.ModalizerBasicProps;
     private _extended: Types.ModalizerExtendedProps;
@@ -106,12 +106,12 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (accessible) {
-            this._element.removeAttribute('aria-hidden');
+            augmentAttribute(this._element, 'aria-hidden');
         } else {
             this._setAccessibleTimer = window.setTimeout(() => {
                 this._setAccessibleTimer = undefined;
 
-                this._element.setAttribute('aria-hidden', 'true');
+                augmentAttribute(this._element, 'aria-hidden', 'true');
             }, 0);
         }
 
@@ -186,15 +186,9 @@ export class Modalizer implements Types.Modalizer {
 
     private _setAccessibilityProps(): void {
         if (__DEV__ && !this._element.getAttribute('aria-label')) {
-            throw new Error('Modalizer must have aria-label');
-        }
+            console.error('Modalizer must have aria-label', this._element);
 
-        if (!this._element.hasAttribute('tabindex')) {
-            this._element.tabIndex = -1;
-        }
-
-        if (this._element.tabIndex < 0) {
-            this._ah.outline.ignoreElement(this._element);
+            return;
         }
     }
 
@@ -385,7 +379,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window | undefined;
     private _initTimer: number | undefined;
-    private _curFocusInModalizer: Types.Modalizer | undefined;
+    private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
 
     constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
@@ -447,7 +441,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         setAbilityHelpersOnElement(element, { root });
 
         const n: HTMLElement[] = [];
-        for (let i: any = element; i; i = i.parentElement) {
+
+        for (let i: HTMLElement | null = element; i; i = i.parentElement) {
             n.push(i);
         }
 
@@ -488,8 +483,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const ah = getAbilityHelpersOnElement(element);
 
         if (ah && ah.modalizer) {
-            if (ah.modalizer.userId !== basic.id) {
-                throw new Error('The element already has a modalizer with different id.');
+            if (__DEV__ && (ah.modalizer.userId !== basic.id)) {
+                console.error('Element already has Modalizer with different id.', element);
             }
 
             return;
@@ -498,10 +493,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const modalizer = new Modalizer(element, this._ah, basic, extended);
 
         setAbilityHelpersOnElement(element, { modalizer });
-
-        if (extended) {
-            this._ah.deloser.add(element, undefined, { onFocusLost: extended.onFocusLost });
-        }
 
         dispatchMutationEvent(element, { modalizer });
     }
@@ -524,14 +515,16 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const modalizer = ah && ah.modalizer;
 
         if (!modalizer) {
+            if (__DEV__) {
+                console.error('No Modalizer to remove.', element);
+            }
+
             return;
         }
 
         setAbilityHelpersOnElement(element, {
             modalizer: undefined
         });
-
-        this._ah.deloser.remove(element);
 
         dispatchMutationEvent(element, { modalizer, removed: true });
 
@@ -549,8 +542,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             setAbilityHelpersOnElement(to, { modalizer: modalizer });
             setAbilityHelpersOnElement(from, { modalizer: undefined });
 
-            this._ah.deloser.move(from, to);
-
             dispatchMutationEvent(from, { modalizer, removed: true });
             dispatchMutationEvent(to, { modalizer });
         }
@@ -560,29 +551,32 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const m = ModalizerAPI.findModalizer(elementFromModalizer);
 
         if (m) {
-            const actions = this._ah.deloser.getActions(m.modalizer.getElement());
+            const basic = m.modalizer.getBasicProps();
+            const modalizerElement = m.modalizer.getElement();
 
-            if (actions) {
-                const basic = m.modalizer.getBasicProps();
-
-                if (noFocusFirst === undefined) {
-                    noFocusFirst = basic.isNoFocusFirst;
-                }
-
-                if (!noFocusFirst && this._ah.keyboardNavigation.isNavigatingWithKeyboard() && actions.focusFirst()) {
-                    return true;
-                }
-
-                if (noFocusDefault === undefined) {
-                    noFocusDefault = basic.isNoFocusDefault;
-                }
-
-                if (!noFocusDefault && actions.focusDefault()) {
-                    return true;
-                }
-
-                return actions.resetFocus();
+            if (noFocusFirst === undefined) {
+                noFocusFirst = basic.isNoFocusFirst;
             }
+
+            if (
+                !noFocusFirst &&
+                this._ah.keyboardNavigation.isNavigatingWithKeyboard() &&
+                this._ah.focusedElement.focusFirst(modalizerElement)
+            ) {
+                return true;
+            }
+
+            if (noFocusDefault === undefined) {
+                noFocusDefault = basic.isNoFocusDefault;
+            }
+
+            if (!noFocusDefault && this._ah.focusedElement.focusDefault(modalizerElement)) {
+                return true;
+            }
+
+            this._ah.focusedElement.resetFocus(modalizerElement);
+        } else if (__DEV__) {
+            console.error('Element is not in Modalizer.', elementFromModalizer);
         }
 
         return false;
@@ -633,21 +627,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         if (modalizer) {
-            if (this._curFocusInModalizer && (modalizer !== this._curFocusInModalizer)) {
-                this._curFocusInModalizer.setFocused(false);
+            if (this._curModalizer && (modalizer !== this._curModalizer)) {
+                this._curModalizer.setFocused(false);
             }
 
-            this._curFocusInModalizer = modalizer;
+            this._curModalizer = modalizer;
 
-            this._curFocusInModalizer.setFocused(true);
-        } else if (this._curFocusInModalizer) {
+            this._curModalizer.setFocused(true);
+        } else if (this._curModalizer) {
             this._focusOutTimer = this._mainWindow.setTimeout(() => {
                 this._focusOutTimer = undefined;
 
-                if (this._curFocusInModalizer) {
-                    this._curFocusInModalizer.setFocused(false);
+                if (this._curModalizer) {
+                    this._curModalizer.setFocused(false);
 
-                    this._curFocusInModalizer = undefined;
+                    this._curModalizer = undefined;
                 }
             }, 0);
         }

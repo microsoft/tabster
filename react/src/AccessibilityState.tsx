@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // import { AbilityHelpers, Types } from 'ability-helpers';
 // import * as React from 'react';
 

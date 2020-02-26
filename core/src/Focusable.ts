@@ -27,8 +27,8 @@ let _lastId = 0;
 
 let _focusedGrouppers: { [id: string]: Types.Groupper } = {};
 
-export class GroupperContainer implements Types.UberGroupper {
-    private static _containers: { [id: string]: GroupperContainer } = {};
+export class UberGroupper implements Types.UberGroupper {
+    private static _containers: { [id: string]: UberGroupper } = {};
 
     private _element: HTMLElement;
 
@@ -63,10 +63,10 @@ export class GroupperContainer implements Types.UberGroupper {
         this.id = 'fgc' + ++_lastId;
 
         setAbilityHelpersOnElement(element, {
-            groupperContainer: this
+            uberGroupper: this
         });
 
-        GroupperContainer._containers[this.id] = this;
+        UberGroupper._containers[this.id] = this;
     }
 
     dispose(): void {
@@ -78,10 +78,10 @@ export class GroupperContainer implements Types.UberGroupper {
         }
 
         setAbilityHelpersOnElement(this._element, {
-            groupperContainer: undefined
+            uberGroupper: undefined
         });
 
-        delete GroupperContainer._containers[this.id];
+        delete UberGroupper._containers[this.id];
     }
 
     getElement(): HTMLElement {
@@ -330,8 +330,8 @@ export class GroupperContainer implements Types.UberGroupper {
             for (let e = this._element.parentElement; e; e = e.parentElement) {
                 const ah = getAbilityHelpersOnElement(e);
 
-                if (ah && ah.groupperContainer) {
-                    (ah.groupperContainer as GroupperContainer)._updateVisible(false);
+                if (ah && ah.uberGroupper) {
+                    (ah.uberGroupper as UberGroupper)._updateVisible(false);
                 }
             }
         }
@@ -364,11 +364,11 @@ export class GroupperContainer implements Types.UberGroupper {
     }
 
     static updateVisible(scrolled: Node[]): void {
-        const containers: { [id: string]: GroupperContainer } = {};
+        const containers: { [id: string]: UberGroupper } = {};
 
         for (let s of scrolled) {
-            for (let id of Object.keys(GroupperContainer._containers)) {
-                const container = GroupperContainer._containers[id];
+            for (let id of Object.keys(UberGroupper._containers)) {
+                const container = UberGroupper._containers[id];
 
                 if (s.contains(container.getElement())) {
                     containers[container.id] = container;
@@ -502,10 +502,10 @@ export class Groupper implements Types.Groupper {
         if (containerElement) {
             const cAh = getAbilityHelpersOnElement(containerElement);
 
-            container = cAh && cAh.groupperContainer;
+            container = cAh && cAh.uberGroupper;
 
             if (!container && !remove) {
-                container = new GroupperContainer(containerElement);
+                container = new UberGroupper(containerElement);
             }
         }
 
@@ -662,7 +662,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         this._scrollTimer = this._mainWindow.setTimeout(() => {
             this._scrollTimer = undefined;
 
-            GroupperContainer.updateVisible(this._scrollTargets);
+            UberGroupper.updateVisible(this._scrollTargets);
 
             this._scrollTargets = [];
         }, _isVisibleTimeout);
@@ -804,7 +804,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         if (cur && containerElement) {
             const ah = getAbilityHelpersOnElement(containerElement);
-            const container = ah && ah.groupperContainer;
+            const container = ah && ah.uberGroupper;
 
             if (container) {
                 for (let el = next(container, cur); el; el = next(container, cur, el)) {

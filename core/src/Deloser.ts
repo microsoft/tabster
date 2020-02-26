@@ -17,8 +17,6 @@ interface DeloserHistoryItem {
 }
 
 export class Deloser implements Types.Deloser {
-    static lastResetElement: HTMLElement | undefined;
-
     readonly id: string;
 
     private _ah: Types.AbilityHelpers;
@@ -112,21 +110,7 @@ export class Deloser implements Types.Deloser {
     }
 
     focusFirst = (): boolean => {
-        if (!this._element) {
-            return false;
-        }
-
-        const first = this._ah.focusable.findFirst(this._element, false, true);
-
-        if (first) {
-            this.clearHistory(true);
-
-            this._ah.focusedElement.focus(first);
-
-            return true;
-        }
-
-        return false;
+        return this._ah.focusedElement.focusFirst(this._element);
     }
 
     unshift(element: HTMLElement): void {
@@ -142,44 +126,11 @@ export class Deloser implements Types.Deloser {
     }
 
     focusDefault = (): boolean => {
-        if (!this._element) {
-            return false;
-        }
-
-        const el = this._ah.focusable.findDefault(this._element);
-
-        if (el) {
-            this._ah.focusedElement.focus(el);
-
-            return true;
-        }
-
-        return false;
+        return this._ah.focusedElement.focusDefault(this._element);
     }
 
     resetFocus = (): boolean => {
-        if (!this._ah.focusable.isVisible(this._element)) {
-            return false;
-        }
-
-        if (!this._ah.focusable.isFocusable(this._element, true, true)) {
-            const prevTabIndex = this._element.getAttribute('tabindex');
-            const prevAriaHidden = this._element.getAttribute('aria-hidden');
-
-            this._element.tabIndex = -1;
-            this._element.setAttribute('aria-hidden', 'true');
-
-            Deloser.lastResetElement = this._element;
-
-            this._ah.focusedElement.focus(this._element, true, true);
-
-            this._setOrRemoveAttribute(this._element, 'tabindex', prevTabIndex);
-            this._setOrRemoveAttribute(this._element, 'aria-hidden', prevAriaHidden);
-        } else {
-            this._ah.focusedElement.focus(this._element, true);
-        }
-
-        return true;
+        return this._ah.focusedElement.resetFocus(this._element);
     }
 
     findAvailable(): HTMLElement | null {
@@ -258,20 +209,12 @@ export class Deloser implements Types.Deloser {
             this._history[this._snapshotIndex].filter(e => preserveExisting ? element.contains(e) : false);
     }
 
-    customFocus(last: HTMLElement): boolean {
+    customFocusLostHandler(element: HTMLElement): boolean {
         if (this._extended.onFocusLost) {
-            return this._extended.onFocusLost(last, this.getActions());
+            return this._extended.onFocusLost(element, this.getActions());
         }
 
         return false;
-    }
-
-    private _setOrRemoveAttribute(element: HTMLElement, name: string, value: string | null): void {
-        if (value === null) {
-            element.removeAttribute(name);
-        } else {
-            element.setAttribute(name, value);
-        }
     }
 
     private _setInformativeStyle(): void {
@@ -300,8 +243,6 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _curDeloser: Types.Deloser | undefined;
     private _history: DeloserHistoryItem[] = [];
     private _restoreFocusTimer: number | undefined;
-    private _curFocusedElement: HTMLElement | undefined;
-    private _lastFocusedElement: HTMLElement | undefined;
     private _isPaused = false;
 
     constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
@@ -457,21 +398,8 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._restoreFocusTimer = undefined;
         }
 
-        const prev = this._curFocusedElement;
-
-        this._curFocusedElement = e;
-
-        if (e) {
-            this._lastFocusedElement = e;
-        }
-
         if (!e) {
-            if (!prev || (prev !== Deloser.lastResetElement)) {
-                // Avoiding infinite loop which might be caused by resetFocus().
-                this._scheduleRestoreFocus();
-            }
-
-            Deloser.lastResetElement = undefined;
+            this._scheduleRestoreFocus();
 
             return;
         }
@@ -540,7 +468,9 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     private _isLastFocusedAvailable(): boolean {
-        return !!(this._lastFocusedElement && this._lastFocusedElement.offsetParent);
+        const last = this._ah.focusedElement.getLastFocusedElement();
+
+        return !!(last && last.offsetParent);
     }
 
     private _scheduleRestoreFocus(): void {
@@ -560,7 +490,9 @@ export class DeloserAPI implements Types.DeloserAPI {
             }
 
             if (this._curDeloser) {
-                if (this._lastFocusedElement && this._curDeloser.customFocus(this._lastFocusedElement)) {
+                const last = this._ah.focusedElement.getLastFocusedElement();
+
+                if (last && this._curDeloser.customFocusLostHandler(last)) {
                     return;
                 }
 

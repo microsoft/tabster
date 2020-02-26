@@ -3,9 +3,94 @@
     <head>
         <meta charset="UTF-8" />
         <title>Be Able!</title>
+        <style>
+* {
+    box-sizing: border-box;
+}
+
+button {
+    font-size: 20px;
+}
+
+#demo {
+    width: 60%;
+}
+
+.li {
+  margin: 10px;
+  padding: 10px;
+  border: 15px solid #aaa;
+}
+
+.legend {
+    position: absolute;
+    width: 40%;
+    right: 0;
+    top: 0;
+    padding: 10px;
+}
+
+.legend-item {
+    font-size: 26px;
+    float: left;
+    width: 42%;
+}
+
+.visible {
+    background-color: rgba(0,255,0,.2);
+}
+
+.invisible {
+    background-color: rgba(255,0,0,.2);
+}
+
+.partially {
+    background-color: rgba(0,0,255,.2);
+}
+
+.first {
+    border-left-color: red;
+}
+
+.last {
+    border-left-color: orange;
+}
+
+.current {
+    border-top-color: black;
+}
+
+.prev {
+    border-top-color: maroon;
+}
+
+.next {
+    border-top-color: green;
+}
+
+.focus {
+    border-right-color: yellow;
+}
+
+.sibling {
+    border-right-color: blue;
+}
+        </style>
     </head>
     <body>
         <div id="demo"></div>
+        <div class="legend">
+            <div class="li legend-item invisible">Inisible</div>
+            <div class="li legend-item visible">Visible</div>
+            <div class="li legend-item partially">Partially visible</div>
+            <div class="li legend-item first">First item</div>
+            <div class="li legend-item last">Last item</div>
+            <div class="li legend-item next">Next item</div>
+            <div class="li legend-item current">Current item</div>
+            <div class="li legend-item prev">Previous item</div>
+            <div class="li legend-item focus">Has focus</div>
+            <div class="li legend-item sibling">Sibling has focus</div>
+        </div>
         <script src="./node_modules/react/umd/react.development.js"></script>
         <script src="./node_modules/react-dom/umd/react-dom.development.js"></script>
         <script src="./dist/bundle.js"></script>

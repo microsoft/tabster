@@ -20,7 +20,11 @@ export interface MutationEvent extends Event {
 
 export const MUTATION_EVENT_NAME = 'ability-helpers:mutation-event';
 
-export function observeMutations(doc: HTMLDocument): void {
+export function observeMutations(
+    doc: HTMLDocument,
+    abilityHelpers: Types.AbilityHelpers,
+    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpers, element: Types.HTMLElementWithAbilityHelpersAttribute) => void
+): void {
     if (typeof MutationObserver === 'undefined') {
         return;
     }
@@ -36,8 +40,11 @@ export function observeMutations(doc: HTMLDocument): void {
 
             if (mutation.type === 'attributes') {
                 if (mutation.attributeName === Types.AbilityHelpersAttributeName) {
-                    acceptNode(mutation.target as HTMLElement);
-                    console.error(232323, mutation);
+                    const ahAttr = (mutation.target as Types.HTMLElementWithAbilityHelpersAttribute).__ahAttr;
+
+                    if (!ahAttr || !ahAttr.changing) {
+                        updateAbilityHelpersByAttribute(abilityHelpers, mutation.target as HTMLElement);
+                    }
                 }
             } else {
                 for (let i = 0; i < removed.length; i++) {
@@ -119,7 +126,7 @@ export function observeMutations(doc: HTMLDocument): void {
                     addGroupTarget(element, ah.groupper, removedFrom, addedTo);
                 }
             } else if (element.getAttribute(Types.AbilityHelpersAttributeName)) {
-                console.error(8988888, element);
+                updateAbilityHelpersByAttribute(abilityHelpers, element);
             }
 
             return NodeFilter.FILTER_SKIP;
