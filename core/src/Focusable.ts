@@ -897,7 +897,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         setAbilityHelpersOnElement(element, { focusable: newProps });
     }
 
-    isFocusable(el: HTMLElement, includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean {
+    isFocusable(
+        el: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        noVisibleCheck?: boolean,
+        noAccessibleCheck?: boolean
+    ): boolean {
         if (el.matches && el.matches(_focusableSelector) && (includeProgrammaticallyFocusable || (el.tabIndex !== -1))) {
             return (noVisibleCheck || this.isVisible(el)) && (noAccessibleCheck || this.isAccessible(el));
         }
