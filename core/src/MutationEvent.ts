@@ -8,7 +8,7 @@ import * as Types from './Types';
 import { createElementTreeWalker } from './Utils';
 
 export interface MutationEventDetails {
-    root?: Types.ModalizerRoot;
+    root?: Types.Root;
     modalizer?: Types.Modalizer;
     groupper?: Types.Groupper;
     removed?: boolean;
@@ -30,7 +30,7 @@ export function observeMutations(
     }
 
     const observer = new MutationObserver(mutations => {
-        const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.ModalizerRoot; } } = {};
+        const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.Root; } } = {};
         const changedModalizers: { [id: string]: { removedFrom?: Node; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
         const changedGrouppers: { [id: string]: { removedFrom?: Node; addedTo?: Node; groupper: Types.Groupper } } = {};
 
@@ -132,7 +132,7 @@ export function observeMutations(
             return NodeFilter.FILTER_SKIP;
         }
 
-        function addRootTarget(root: Types.ModalizerRoot, removedFrom?: Node, addedTo?: Node): void {
+        function addRootTarget(root: Types.Root, removedFrom?: Node, addedTo?: Node): void {
             let r = changedRoots[root.id];
 
             if (!r) {

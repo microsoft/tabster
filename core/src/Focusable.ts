@@ -5,8 +5,8 @@
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { ModalizerAPI } from './Modalizer';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer } from './Utils';
 
@@ -525,25 +525,18 @@ export class Groupper implements Types.Groupper {
 
 export class FocusableAPI implements Types.FocusableAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window | undefined;
+    private _mainWindow: Window;
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
 
-    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-
-        if (mainWindow) {
-            this._mainWindow = mainWindow;
-            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
-        }
+        this._mainWindow = mainWindow;
+        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._initTimer = undefined;
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
@@ -554,10 +547,6 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     protected dispose(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -581,11 +570,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return last.ownerDocument.body;
         }
 
-        if (this._mainWindow) {
-            return this._mainWindow.document.body;
-        }
-
-        return undefined;
+        return this._mainWindow.document.body;
     }
 
     private _onFocus = (element: HTMLElement | undefined): void => {
@@ -650,10 +635,6 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _onScroll = (e: UIEvent) => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         let isKnownTarget = false;
 
         for (let t of this._scrollTargets) {
@@ -1108,13 +1089,13 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): number {
-        const modalizerInfo = ModalizerAPI.findModalizer(element);
-        const currentModalizerId = modalizerInfo && modalizerInfo.root.getCurrentModalizerId();
+        const rootAndModalizer = RootAPI.findRootAndModalizer(element);
+        const currentModalizerId = rootAndModalizer && rootAndModalizer.root.getCurrentModalizerId();
 
-        if (ignoreModalizer || !modalizerInfo ||
+        if (ignoreModalizer || (!rootAndModalizer || !rootAndModalizer.modalizer) ||
             (currentModalizerId === undefined) ||
-            (currentModalizerId === modalizerInfo.modalizer.userId) ||
-            modalizerInfo.modalizer.getBasicProps().isAlwaysAccessible
+            (currentModalizerId === rootAndModalizer.modalizer.userId) ||
+            rootAndModalizer.modalizer.getBasicProps().isAlwaysAccessible
         ) {
             if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
                 return NodeFilter.FILTER_REJECT;
@@ -1123,7 +1104,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         }
 
-        return modalizerInfo ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+        return rootAndModalizer ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
     }
 }
 

@@ -133,7 +133,7 @@ export function updateAbilityHelpersByAttribute(
                     break;
 
                 case 'root':
-                    abilityHelpers.modalizer.removeRoot(element);
+                    abilityHelpers.root.remove(element);
                     break;
 
                 case 'modalizer':
@@ -172,7 +172,7 @@ export function updateAbilityHelpersByAttribute(
                 if (element.__ah && element.__ah.root) {
                     // No basic props for root.
                 } else {
-                    abilityHelpers.modalizer.addRoot(element);
+                    abilityHelpers.root.add(element);
                 }
                 break;
 

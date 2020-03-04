@@ -4,7 +4,7 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { ModalizerAPI } from './Modalizer';
+import { RootAPI } from './Root';
 import * as Types from './Types';
 
 const _containerHistoryLength = 10;
@@ -14,6 +14,19 @@ let _lastInternalId = 0;
 interface DeloserHistoryItem {
     rootId: string;
     history: Types.Deloser[];
+}
+
+function _setInformativeStyle(element: HTMLElement, remove: boolean, isActive?: boolean, snapshotIndex?: number): void {
+    if (__DEV__) {
+        if (remove) {
+            element.style.removeProperty('--ah-deloser');
+        } else {
+            element.style.setProperty(
+                '--ah-deloser',
+                (isActive ? 'active' : 'inactive') + ',' + ('snapshot-' + snapshotIndex)
+            );
+        }
+    }
 }
 
 export class Deloser implements Types.Deloser {
@@ -36,7 +49,7 @@ export class Deloser implements Types.Deloser {
         this._extended = extended || {};
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
         }
     }
 
@@ -59,7 +72,7 @@ export class Deloser implements Types.Deloser {
         this._element = newContainer;
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
         }
     }
 
@@ -78,7 +91,7 @@ export class Deloser implements Types.Deloser {
         this._isActive = active;
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
         }
     }
 
@@ -105,7 +118,7 @@ export class Deloser implements Types.Deloser {
         }
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
         }
     }
 
@@ -217,27 +230,16 @@ export class Deloser implements Types.Deloser {
         return false;
     }
 
-    private _setInformativeStyle(): void {
-        if (__DEV__) {
-            this._element.style.setProperty(
-                '--ah-deloser',
-                (this._isActive ? 'active' : 'inactive') +
-                    ',' +
-                        ('snapshot-' + this._snapshotIndex)
-            );
-        }
-    }
-
     private _remove(): void {
         if (__DEV__) {
-            this._element.style.removeProperty('--ah-deloser');
+            _setInformativeStyle(this._element, true);
         }
     }
 }
 
 export class DeloserAPI implements Types.DeloserAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window | undefined;
+    private _mainWindow: Window;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
@@ -245,30 +247,19 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _restoreFocusTimer: number | undefined;
     private _isPaused = false;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-
-        if (mainWindow) {
-            this._mainWindow = mainWindow;
-            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
-        }
+        this._mainWindow = mainWindow;
+        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._initTimer = undefined;
 
         this._ah.focusedElement.subscribe(this._onElementFocused);
     }
 
     protected dispose(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -348,10 +339,6 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     pause(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._isPaused = true;
 
         if (this._restoreFocusTimer) {
@@ -389,10 +376,6 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     private _onElementFocused = (e: HTMLElement | undefined): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._restoreFocusTimer) {
             this._mainWindow.clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
@@ -409,7 +392,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         if (deloser) {
             this._isInSomeDeloser = true;
 
-            const rootId = ModalizerAPI.getRootId(e);
+            const rootId = RootAPI.getRootId(e);
 
             if (deloser !== this._curDeloser) {
                 if (this._curDeloser) {
@@ -452,9 +435,9 @@ export class DeloserAPI implements Types.DeloserAPI {
             historyItem.history.unshift(deloser);
             this._history.unshift(historyItem);
 
-            const ml = ModalizerAPI.findModalizer(e);
+            const ml = RootAPI.findRootAndModalizer(e);
 
-            if (!ml || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
+            if (!ml || !ml.modalizer || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
                 deloser.unshift(e);
             }
 
@@ -474,10 +457,6 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     private _scheduleRestoreFocus(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._isPaused) {
             return;
         }
@@ -527,7 +506,7 @@ export class DeloserAPI implements Types.DeloserAPI {
                 }
             }
 
-            const root = ModalizerAPI.getRootById(hi.rootId);
+            const root = RootAPI.getRootById(hi.rootId);
             const modalizers = root && root.getModalizers();
 
             if (modalizers) {

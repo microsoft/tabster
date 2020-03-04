@@ -8,9 +8,10 @@ import { FocusableAPI, setupFocusableInIFrame } from './Focusable';
 import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
 import { updateAbilityHelpersByAttribute } from './Instance';
 import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
-import { ModalizerAPI, setupModalizerInIFrame } from './Modalizer';
+import { ModalizerAPI } from './Modalizer';
 import { observeMutations } from './MutationEvent';
 import { OutlineAPI, setupOutlineInIFrame } from './Outline';
+import { RootAPI, setupRootInIFrame } from './Root';
 import * as Types from './Types';
 
 export { Types };
@@ -22,11 +23,12 @@ class AbilityHelpers implements Types.AbilityHelpers {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     outline: OutlineAPI;
+    root: RootAPI;
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
 
-    constructor(mainWindow?: Window) {
+    constructor(mainWindow: Window) {
         // mainWindow === undefined means some testing environment.
         // All the componetnts will be no-op.
 
@@ -37,6 +39,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.keyboardNavigation = new KeyboardNavigationState(this, mainWindow);
         this.focusedElement = new FocusedElementState(this, mainWindow);
         this.outline = new OutlineAPI(this, mainWindow);
+        this.root = new RootAPI(this, mainWindow);
         this.deloser = new DeloserAPI(this, mainWindow);
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
@@ -109,5 +112,5 @@ export function setupAbilityHelpersIFrame(iframeDocument: HTMLDocument): void {
     setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
     setupOutlineInIFrame(iframeDocument, _mainWindow);
     setupFocusableInIFrame(iframeDocument, _mainWindow);
-    setupModalizerInIFrame(iframeDocument, _mainWindow);
+    setupRootInIFrame(iframeDocument, _mainWindow);
 }

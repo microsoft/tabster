@@ -72,7 +72,7 @@ class OutlinePosition {
 
 export class OutlineAPI implements Types.OutlineAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window | undefined;
+    private _mainWindow: Window;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
     private _outlinedElement: HTMLElement | undefined;
@@ -82,20 +82,13 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-
-        if (mainWindow) {
-            this._mainWindow = mainWindow;
-            this._mainWindow.setTimeout(this._init, 0);
-        }
+        this._mainWindow = mainWindow;
+        this._mainWindow.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._initTimer = undefined;
 
         this._ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
@@ -111,10 +104,6 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     setup(props?: Partial<Types.OutlineProps>): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         _props = { ..._props, ...props };
 
         const win = this._mainWindow as Types.WindowWithAbilityHelpers;
@@ -151,10 +140,6 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     protected dispose(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -228,10 +213,6 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _updateOutlinedElement(e: HTMLElement | undefined): boolean {
-        if (!this._mainWindow) {
-            return false;
-        }
-
         this._outlinedElement = undefined;
 
         if (this._updateTimer) {
@@ -317,10 +298,6 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _updateOutline(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._setOutlinePosition();
 
         if (this._updateTimer) {

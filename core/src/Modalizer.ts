@@ -3,21 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { augmentAttribute, getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { dispatchMutationEvent } from './MutationEvent';
+import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker } from './Utils';
-
-const _customEventName = 'ability-helpers:modalizer-related';
-const _noRootId = 'no-root';
 
 let _lastInternalId = 0;
-let _rootById: { [id: string]: Types.ModalizerRoot } = {};
 
-export interface ModalizerFor {
-    root: Types.ModalizerRoot;
-    modalizer: Types.Modalizer;
+function _setInformativeStyle(
+    element: HTMLElement,
+    remove: boolean,
+    internalId?: string,
+    userId?: string,
+    isActive?: boolean,
+    isAccessible?: boolean,
+    isFocused?: boolean
+): void {
+    if (__DEV__) {
+        if (remove) {
+            element.style.removeProperty('--ah-modalizer');
+        } else {
+            element.style.setProperty(
+                '--ah-modalizer',
+                internalId + ',' + userId +
+                    ',' +
+                        (isActive ? 'active' : 'inactive') +
+                            ',' +
+                                (isAccessible ? 'accessible' : 'inaccessible') +
+                                    ',' +
+                                        (isFocused ? 'focused' : 'not-focused')
+            );
+        }
+    }
 }
 
 export class Modalizer implements Types.Modalizer {
@@ -50,7 +67,7 @@ export class Modalizer implements Types.Modalizer {
         this._setAccessibilityProps();
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
         }
     }
 
@@ -116,7 +133,7 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
         }
     }
 
@@ -128,7 +145,7 @@ export class Modalizer implements Types.Modalizer {
         this._isActive = active;
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
         }
     }
 
@@ -158,7 +175,7 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (__DEV__) {
-            this._setInformativeStyle();
+            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
         }
     }
 
@@ -180,7 +197,7 @@ export class Modalizer implements Types.Modalizer {
 
     private _remove(): void {
         if (__DEV__) {
-            this._element.style.removeProperty('--ah-modalizer');
+            _setInformativeStyle(this._element, true);
         }
     }
 
@@ -191,226 +208,28 @@ export class Modalizer implements Types.Modalizer {
             return;
         }
     }
-
-    private _setInformativeStyle(): void {
-        if (__DEV__) {
-            this._element.style.setProperty(
-                '--ah-modalizer',
-                this.internalId + ',' + this.userId +
-                    ',' +
-                        (this._isActive ? 'active' : 'inactive') +
-                            ',' +
-                                (this._isAccessible ? 'accessible' : 'inaccessible') +
-                                    ',' +
-                                        (this._isFocused ? 'focused' : 'not-focused')
-            );
-        }
-    }
-}
-
-export class ModalizerRoot implements Types.ModalizerRoot {
-    readonly id: string;
-
-    private _element: HTMLElement;
-    private _curModalizerId: string | undefined;
-    private _knownModalizers: { [id: string]: Types.Modalizer } = {};
-    private _updateModalizersTimer: number | undefined;
-
-    constructor(element: HTMLElement) {
-        this.id = 'root' + ++_lastInternalId;
-        this._element = element;
-        this._add();
-    }
-
-    dispose(): void {
-        if (this._updateModalizersTimer) {
-            window.clearTimeout(this._updateModalizersTimer);
-            this._updateModalizersTimer = undefined;
-        }
-
-        this._remove();
-    }
-
-    move(newElement: HTMLElement): void {
-        this._remove();
-        this._element = newElement;
-        this._add();
-        this.updateModalizers();
-    }
-
-    getElement(): HTMLElement {
-        return this._element;
-    }
-
-    getCurrentModalizerId(): string | undefined {
-        return this._curModalizerId;
-    }
-
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void {
-        this._curModalizerId = id;
-
-        if (__DEV__) {
-            this._setInformativeStyle();
-        }
-
-        if (!noModalizersUpdate) {
-            this.updateModalizers();
-        }
-    }
-
-    getModalizers(): Types.Modalizer[] {
-        const modalizers: Types.Modalizer[] = [];
-
-        for (let id of Object.keys(this._knownModalizers)) {
-            modalizers.push(this._knownModalizers[id]);
-        }
-
-        return modalizers;
-    }
-
-    updateModalizers(): void {
-        if (this._updateModalizersTimer) {
-            return;
-        }
-
-        this._updateModalizersTimer = window.setTimeout(() => {
-            this._updateModalizersTimer = undefined;
-            this._reallyUpdateModalizers();
-        }, 0);
-    }
-
-    private _add(): void {
-        if (__DEV__) {
-            this._setInformativeStyle();
-        }
-    }
-
-    private _remove(): void {
-        if (__DEV__) {
-            this._element.style.removeProperty('--ah-modalizer-root');
-        }
-    }
-
-    private _reallyUpdateModalizers(): void {
-        if (!this._element.ownerDocument) {
-            return;
-        }
-
-        const modalizersToUpdate: Types.Modalizer[] = [];
-
-        const walker = createElementTreeWalker(this._element.ownerDocument, this._element, (element: HTMLElement) => {
-            const ah = getAbilityHelpersOnElement(element);
-
-            if (ah && ah.modalizer) {
-                modalizersToUpdate.push(ah.modalizer);
-
-                return NodeFilter.FILTER_ACCEPT;
-            }
-
-            return NodeFilter.FILTER_SKIP;
-        });
-
-        if (walker) {
-            while (walker.nextNode()) { /* Iterating for the sake of calling acceptNode callback. */ }
-        }
-
-        let isOthersAccessible = (this._curModalizerId === undefined);
-        let currentIsPresent = false;
-
-        const prevKnownModalizers = this._knownModalizers;
-        const newKnownModalizers: { [id: string]: Types.Modalizer } = {};
-        const addedModalizers: { [id: string]: Types.Modalizer } = {};
-        const removedModalizers: { [id: string]: Types.Modalizer } = {};
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-            const isCurrent = modalizerId === this._curModalizerId;
-
-            if (!isOthersAccessible && isCurrent) {
-                isOthersAccessible = !!modalizer.getBasicProps().isOthersAccessible;
-            }
-
-            if (isCurrent) {
-                currentIsPresent = true;
-            }
-
-            newKnownModalizers[modalizerId] = modalizer;
-
-            if (!(modalizerId in prevKnownModalizers)) {
-                addedModalizers[modalizerId] = modalizer;
-            }
-        }
-
-        for (let id of Object.keys(prevKnownModalizers)) {
-            if (!(id in newKnownModalizers)) {
-                removedModalizers[id] = prevKnownModalizers[id];
-            }
-        }
-
-        if (!currentIsPresent) {
-            this.setCurrentModalizerId(undefined, true);
-        }
-
-        this._knownModalizers = newKnownModalizers;
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-
-            const active = (this._curModalizerId === undefined) || (modalizerId === this._curModalizerId);
-
-            modalizer.setActive(active);
-            modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
-        }
-    }
-
-    private _setInformativeStyle(): void {
-        if (__DEV__) {
-            this._element.style.setProperty(
-                '--ah-modalizer-root',
-                this.id + ',' + (this._curModalizerId || 'undefined')
-            );
-        }
-    }
 }
 
 export class ModalizerAPI implements Types.ModalizerAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window | undefined;
+    private _mainWindow: Window;
     private _initTimer: number | undefined;
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-
-        if (mainWindow) {
-            this._mainWindow = mainWindow;
-            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
-        }
+        this._mainWindow = mainWindow;
+        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._initTimer = undefined;
 
         this._ah.focusedElement.subscribe(this._onElementFocused);
-
-        this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent);
-
-        observeMutationEvents(this._mainWindow.document);
     }
 
     protected dispose(): void {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -422,61 +241,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         this._ah.focusedElement.unsubscribe(this._onElementFocused);
-
-        this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent);
-
-        // TODO: Stop the observer.
-    }
-
-    addRoot(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
-
-        if (ah && ah.root) {
-            return;
-        }
-
-        const root = new ModalizerRoot(element);
-
-        setAbilityHelpersOnElement(element, { root });
-
-        const n: HTMLElement[] = [];
-
-        for (let i: HTMLElement | null = element; i; i = i.parentElement) {
-            n.push(i);
-        }
-
-        dispatchMutationEvent(element, { root: root });
-    }
-
-    removeRoot(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
-        const root = ah && ah.root;
-
-        if (!root) {
-            return;
-        }
-
-        dispatchMutationEvent(element, { root, removed: true });
-
-        setAbilityHelpersOnElement(element, { root: undefined });
-
-        root.dispose();
-    }
-
-    moveRoot(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(from);
-        const root = ahFrom && ahFrom.root;
-
-        if (root) {
-            root.move(to);
-
-            setAbilityHelpersOnElement(to, { root: root });
-            setAbilityHelpersOnElement(from, { root: undefined });
-
-            dispatchMutationEvent(from, { root, removed: true });
-            dispatchMutationEvent(to, { root });
-        }
     }
 
     add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
@@ -548,9 +312,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean {
-        const m = ModalizerAPI.findModalizer(elementFromModalizer);
+        const m = RootAPI.findRootAndModalizer(elementFromModalizer);
 
-        if (m) {
+        if (m && m.modalizer) {
             const basic = m.modalizer.getBasicProps();
             const modalizerElement = m.modalizer.getElement();
 
@@ -582,35 +346,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         return false;
     }
 
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case MUTATION_EVENT_NAME:
-                this._onMutation(e.originalEvent as MutationEvent);
-                break;
-        }
-    }
-
-    private _onMutation = (e: MutationEvent): void => {
-        if (!e.target || !e.details.modalizer) {
-            return;
-        }
-
-        const root = ModalizerAPI._getRootOnly(e.target as Node);
-
-        if (root) {
-            root.updateModalizers();
-        }
-    }
-
     private _onElementFocused = (e: HTMLElement): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         if (this._focusOutTimer) {
             this._mainWindow.clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
@@ -619,7 +355,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         let modalizer: Types.Modalizer | undefined;
 
         if (e) {
-            const l = ModalizerAPI.findModalizer(e);
+            const l = RootAPI.findRootAndModalizer(e);
 
             if (l) {
                 modalizer = l.modalizer;
@@ -646,88 +382,4 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }, 0);
         }
     }
-
-    private static _getRootOnly(element: Node): Types.ModalizerRoot | undefined {
-        for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
-
-            if (ah && ah.root) {
-                return ah.root;
-            }
-        }
-
-        return undefined;
-    }
-
-    static findModalizer(element: Node): ModalizerFor | undefined {
-        if (!element.ownerDocument) {
-            return undefined;
-        }
-
-        let root: Types.ModalizerRoot | undefined;
-        let modalizer: Types.Modalizer | undefined;
-
-        for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
-
-            if (!ah) {
-                continue;
-            }
-
-            if (!modalizer && ah.modalizer) {
-                modalizer = ah.modalizer;
-            }
-
-            if (modalizer && ah.root) {
-                root = ah.root;
-
-                break;
-            }
-        }
-
-        if (!modalizer || !root) {
-            return undefined;
-        }
-
-        return { modalizer, root };
-    }
-
-    static getRootId(element: HTMLElement): string {
-        const l = ModalizerAPI.findModalizer(element);
-        return (l && l.root.id) || _noRootId;
-    }
-
-    static getRootById(id: string): Types.ModalizerRoot | undefined {
-        if (id === _noRootId) {
-            return undefined;
-        }
-
-        return _rootById[id];
-    }
-}
-
-export function setupModalizerInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    if (!mainWindow) {
-        return;
-    }
-
-    observeMutationEvents(iframeDocument);
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: false }
-    ]);
-}
-
-function observeMutationEvents(doc: HTMLDocument): void {
-    doc.addEventListener(MUTATION_EVENT_NAME, (e: MutationEvent) => {
-        const root = e.details.root;
-
-        if (root) {
-            if (e.details.removed) {
-                delete _rootById[root.id];
-            } else {
-                _rootById[root.id] = root;
-            }
-        }
-    });
 }

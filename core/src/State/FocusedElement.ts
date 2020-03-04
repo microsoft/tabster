@@ -7,7 +7,7 @@ import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindow
 import { getAbilityHelpersOnElement } from '../Instance';
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Keys } from '../Keys';
-import { ModalizerAPI } from '../Modalizer';
+import { RootAPI } from '../Root';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { isElementVerticallyVisibleInContainer, scrollIntoView } from '../Utils';
@@ -62,28 +62,21 @@ export class FocusedElementState
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
-    private _mainWindow: Window | undefined;
+    private _mainWindow: Window;
     private _moveOutInput: HTMLInputElement | undefined;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
     private _prevVal: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow?: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         super();
 
         this._ah = ah;
-
-        if (mainWindow) {
-            this._mainWindow = mainWindow;
-            this._initTimer = this._mainWindow.setTimeout(this._init, 0);
-        }
+        this._mainWindow = mainWindow;
+        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
-        if (!this._mainWindow) {
-            return;
-        }
-
         this._initTimer = undefined;
 
         FocusedElementState.replaceFocus(this._mainWindow.document);
@@ -97,10 +90,6 @@ export class FocusedElementState
 
     protected dispose(): void {
         super.dispose();
-
-        if (!this._mainWindow) {
-            return;
-        }
 
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
@@ -341,9 +330,9 @@ export class FocusedElementState
         }
 
         if (e.keyCode === Keys.Tab) {
-            let m = ModalizerAPI.findModalizer(curElement);
+            let rootAndModalizer = RootAPI.findRootAndModalizer(curElement);
 
-            if (!m) {
+            if (!rootAndModalizer) {
                 if (!this._ah.focusable.isInCurrentGroupper(curElement)) {
                     // We're not in a Modalizer and not in a current Groupper,
                     // do not custom-handle the Tab press.
@@ -381,11 +370,16 @@ export class FocusedElementState
                 }
             }
 
-            if (m && m.modalizer) {
-                const nml = next && ModalizerAPI.findModalizer(next);
+            if (rootAndModalizer && rootAndModalizer.modalizer) {
+                const nml = next && RootAPI.findRootAndModalizer(next);
 
-                if (!nml || (m.root.id !== nml.root.id) || (nml.root.getCurrentModalizerId() !== nml.modalizer.userId)) {
-                    if (m.modalizer.onBeforeFocusOut()) {
+                if (
+                    !nml ||
+                    (rootAndModalizer.root.id !== nml.root.id) ||
+                    !nml.modalizer ||
+                    (nml.root.getCurrentModalizerId() !== nml.modalizer.userId)
+                ) {
+                    if (rootAndModalizer.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
 
                         return;
@@ -398,7 +392,11 @@ export class FocusedElementState
 
                 callOriginalFocusOnly(next);
             } else {
-                this._moveOutWithDefaultAction(m ? m.root.getElement() : curElement.ownerDocument.body, e.shiftKey);
+                this._moveOutWithDefaultAction(
+                    rootAndModalizer
+                        ? rootAndModalizer.root.getElement()
+                        : curElement.ownerDocument.body, e.shiftKey
+                );
             }
         } else {
             let groupper = this._getGroupper(curElement);
@@ -677,29 +675,29 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
-        const l = ModalizerAPI.findModalizer(element);
-        const curModalizerId = l ? l.root.getCurrentModalizerId() : undefined;
+        const rootAndModalizer = RootAPI.findRootAndModalizer(element);
+        const curModalizerId = rootAndModalizer ? rootAndModalizer.root.getCurrentModalizerId() : undefined;
 
         this._ah.focusable.setCurrentGroupper(element);
 
-        if (!l) {
+        if (!rootAndModalizer || !rootAndModalizer.modalizer) {
             return;
         }
 
-        let eModalizer = l.modalizer;
+        let eModalizer = rootAndModalizer.modalizer;
 
         if (curModalizerId === eModalizer.userId) {
             return;
         }
 
         if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
-            l.root.setCurrentModalizerId(eModalizer.userId);
+            rootAndModalizer.root.setCurrentModalizerId(eModalizer.userId);
 
             return;
         }
 
         if (eModalizer && element.ownerDocument) {
-            let toFocus = this._ah.focusable.findFirst(l.root.getElement());
+            let toFocus = this._ah.focusable.findFirst(rootAndModalizer.root.getElement());
 
             if (toFocus) {
                 if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {

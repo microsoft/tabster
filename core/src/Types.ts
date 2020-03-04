@@ -13,6 +13,7 @@ export interface AbilityHelpers {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     outline: OutlineAPI;
+    root: RootAPI;
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
@@ -249,7 +250,7 @@ export interface Modalizer {
     onBeforeFocusOut(): boolean;
 }
 
-export interface ModalizerRoot {
+export interface Root {
     readonly id: string;
     dispose(): void;
     move(newElement: HTMLElement): void;
@@ -260,10 +261,18 @@ export interface ModalizerRoot {
     updateModalizers(): void;
 }
 
+export interface RootAndModalizer {
+    root: Root;
+    modalizer?: Modalizer;
+}
+
+export interface RootAPI {
+    add(element: HTMLElement): void;
+    remove(element: HTMLElement): void;
+    move(from: HTMLElement, to: HTMLElement): void;
+}
+
 export interface ModalizerAPI {
-    addRoot(element: HTMLElement): void;
-    removeRoot(element: HTMLElement): void;
-    moveRoot(from: HTMLElement, to: HTMLElement): void;
     add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
@@ -275,8 +284,8 @@ export interface DeloserOnElement {
     deloser: Deloser;
 }
 
-export interface ModalizerRootOnElement {
-    root: ModalizerRoot;
+export interface RootOnElement {
+    root: Root;
 }
 
 export interface ModalizerOnElement {
@@ -320,8 +329,8 @@ export interface AbilityHelpersAugmentedAttributes {
 }
 
 export type AbilityHelpersOnElement = Partial<
+    RootOnElement &
     DeloserOnElement &
-    ModalizerRootOnElement &
     ModalizerOnElement &
     FocusableOnElement &
     GroupperOnElement &
