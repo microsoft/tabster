@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AbilityHelpers } from 'ability-helpers';
+export * from 'ability-helpers';
+
 import { ListItem, ListItemProps, ListItemState, NextListItemDirection as _NextListItemDirection } from './ListItem';
 
 export {
-    AbilityHelpers,
     ListItem,
     ListItemState,
     ListItemProps
