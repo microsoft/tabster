@@ -24,6 +24,7 @@ const defaultProps: Types.OutlineProps = {
 };
 
 let _props: Types.OutlineProps = defaultProps;
+let _hasOutlineClass = false;
 
 let _fullScreenEventName: string | undefined;
 let _fullScreenElementName: string | undefined;
@@ -128,6 +129,9 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         if (!props || !props.areaClass) {
             win.document.body.classList.add(defaultProps.areaClass);
+            _hasOutlineClass = false;
+        } else {
+            _hasOutlineClass = true;
         }
     }
 
@@ -261,7 +265,7 @@ export class OutlineAPI implements Types.OutlineAPI {
                 if (!(inputType in outlinedInputTypes)) {
                     return false;
                 }
-            } else if (e.tagName === 'TEXTAREA') {
+            } else if ((e.tagName === 'TEXTAREA') || (e.contentEditable === 'true')) {
                 return false;
             }
 
@@ -570,6 +574,10 @@ export function setupOutlineInIFrame(iframeDocument: HTMLDocument, mainWindow?: 
 
     if (!win.__ah.outlineStyle) {
         win.__ah.outlineStyle = appendStyles(iframeDocument, _props);
+    }
+
+    if (!_hasOutlineClass) {
+        win.document.body.classList.add(defaultProps.areaClass);
     }
 }
 

@@ -118,7 +118,7 @@ export interface FocusableAPI {
     setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
         extended?: Partial<GroupperExtendedProps> | null): void;
     setCurrentGroupper(element: HTMLElement): void;
-    isInCurrentGroupper(element: HTMLElement): boolean;
+    isInCurrentGroupper(element: HTMLElement): boolean | undefined;
     findGroupper(element: HTMLElement): HTMLElement | null;
 
     findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
@@ -129,7 +129,8 @@ export interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
     setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
 
-    isFocusable(element: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean;
+    isFocusable(element: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
     findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,

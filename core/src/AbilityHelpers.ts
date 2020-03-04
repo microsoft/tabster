@@ -15,7 +15,8 @@ import * as Types from './Types';
 
 export { Types };
 
-let _mainWindow: Window | undefined;
+let _mainWindow: Types.WindowWithAbilityHelpers | undefined;
+let _instance: Types.AbilityHelpers | undefined;
 
 class AbilityHelpers implements Types.AbilityHelpers {
     keyboardNavigation: KeyboardNavigationState;
@@ -48,9 +49,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
     }
 }
 
-function getAbilityHelpers() {
-    const win = typeof window !== 'undefined' ? (window as Types.WindowWithAbilityHelpers) : undefined;
-
+function createAbilityHelpers(win: Types.WindowWithAbilityHelpers) {
     let helpers: Types.AbilityHelpers | undefined;
 
     if (win && win.__ah) {
@@ -73,11 +72,27 @@ function getAbilityHelpers() {
     return helpers;
 }
 
-const instance = getAbilityHelpers();
+export function setupAbilityHelpers(mainWindow: Window): Types.AbilityHelpers {
+    if (!_instance) {
+        _instance = createAbilityHelpers(mainWindow);
+    }
 
-export { instance as AbilityHelpers };
+    return _instance;
+}
 
-export function setupIFrame(iframeDocument: HTMLDocument) {
+export function getAbilityHelpers(): Types.AbilityHelpers {
+    if (!_instance) {
+        throw new Error('setupAbilityHelpers() is not called.');
+    }
+
+    return _instance;
+}
+
+export function setupAbilityHelpersIFrame(iframeDocument: HTMLDocument): void {
+    if (!_instance) {
+        throw new Error('setupAbilityHelpers() is not called.');
+    }
+
     const win = iframeDocument.defaultView as (Types.WindowWithAbilityHelpers | null);
 
     if (!win || (win.__ah)) {
@@ -85,11 +100,11 @@ export function setupIFrame(iframeDocument: HTMLDocument) {
     }
 
     win.__ah = {
-        helpers: instance,
+        helpers: _instance,
         mainWindow: _mainWindow || win
     };
 
-    observeMutations(iframeDocument, instance, updateAbilityHelpersByAttribute);
+    observeMutations(iframeDocument, _instance, updateAbilityHelpersByAttribute);
     setupFocusedElementStateInIFrame(iframeDocument, _mainWindow);
     setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
     setupOutlineInIFrame(iframeDocument, _mainWindow);

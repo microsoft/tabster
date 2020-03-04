@@ -86,7 +86,7 @@ export class FocusedElementState
 
         this._initTimer = undefined;
 
-        FocusedElementState._replaceFocus(this._mainWindow.document);
+        FocusedElementState.replaceFocus(this._mainWindow.document);
 
         this._mainWindow.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
         this._mainWindow.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
@@ -135,7 +135,7 @@ export class FocusedElementState
     }
 
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
-        if (!this._ah.focusable.isFocusable(element, noFocusedProgrammaticallyFlag, noAccessibleCheck)) {
+        if (!this._ah.focusable.isFocusable(element, noFocusedProgrammaticallyFlag, false, noAccessibleCheck)) {
             return false;
         }
 
@@ -171,7 +171,11 @@ export class FocusedElementState
     }
 
     resetFocus(container: HTMLElement): boolean {
-        if (!this._ah.focusable.isFocusable(container, true, true)) {
+        if (!this._ah.focusable.isVisible(container)) {
+            return false;
+        }
+
+        if (!this._ah.focusable.isFocusable(container, true, true, true)) {
             const prevTabIndex = container.getAttribute('tabindex');
             const prevAriaHidden = container.getAttribute('aria-hidden');
 
@@ -184,7 +188,6 @@ export class FocusedElementState
 
             this._setOrRemoveAttribute(container, 'tabindex', prevTabIndex);
             this._setOrRemoveAttribute(container, 'aria-hidden', prevAriaHidden);
-
         } else {
             this.focus(container);
         }
@@ -280,7 +283,7 @@ export class FocusedElementState
         }
     }
 
-    private static _replaceFocus(doc: HTMLDocument): void {
+    static replaceFocus(doc: HTMLDocument): void {
         const win = doc.defaultView as (WindowWithHTMLElement | null);
 
         if (!win) {
@@ -729,7 +732,7 @@ function callOriginalFocusOnly(element: HTMLElement): void {
 }
 
 export function setupFocusedElementStateInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    (FocusedElementState as any).replaceFocus(iframeDocument);
+    FocusedElementState.replaceFocus(iframeDocument);
 
     if (!mainWindow) {
         return;

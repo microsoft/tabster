@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { AbilityHelpers as AH, Types as AHTypes } from 'ability-helpers';
+import { getAbilityHelpers, setupAbilityHelpers, Types as AHTypes } from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
+setupAbilityHelpers(window);
+
+const AH = getAbilityHelpers();
 AH.outline.setup();
 
 function getAH() {

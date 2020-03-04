@@ -526,7 +526,6 @@ export class Groupper implements Types.Groupper {
 export class FocusableAPI implements Types.FocusableAPI {
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window | undefined;
-    private _body: HTMLElement | undefined;
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
@@ -536,7 +535,6 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         if (mainWindow) {
             this._mainWindow = mainWindow;
-            this._body = mainWindow.document.body;
             this._initTimer = this._mainWindow.setTimeout(this._init, 0);
         }
     }
@@ -574,6 +572,20 @@ export class FocusableAPI implements Types.FocusableAPI {
         this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
+    }
+
+    private _getBody(): HTMLElement | undefined {
+        const last = this._ah.focusedElement.getLastFocusedElement();
+
+        if (last && last.ownerDocument) {
+            return last.ownerDocument.body;
+        }
+
+        if (this._mainWindow) {
+            return this._mainWindow.document.body;
+        }
+
+        return undefined;
     }
 
     private _onFocus = (element: HTMLElement | undefined): void => {
@@ -735,15 +747,15 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
     }
 
-    isInCurrentGroupper(element: HTMLElement): boolean {
+    isInCurrentGroupper(element: HTMLElement): boolean | undefined {
         return this._isInCurrentGroupper(element, false);
     }
 
-    private _isInCurrentGroupper(element: HTMLElement, unlimitedOnly: boolean): boolean {
+    private _isInCurrentGroupper(element: HTMLElement, unlimitedOnly: boolean): boolean | undefined {
         let groupper = this._findGroupper(element);
 
         if (!groupper) {
-            return true;
+            return undefined;
         }
 
         let groupElement = groupper.getElement();
@@ -885,22 +897,33 @@ export class FocusableAPI implements Types.FocusableAPI {
         setAbilityHelpersOnElement(element, { focusable: newProps });
     }
 
-    isFocusable(el: HTMLElement, includeProgrammaticallyFocusable?: boolean, noAccessibleCheck?: boolean): boolean {
+    isFocusable(el: HTMLElement, includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean {
         if (el.matches && el.matches(_focusableSelector) && (includeProgrammaticallyFocusable || (el.tabIndex !== -1))) {
-            return this.isVisible(el) && (noAccessibleCheck ? true : this.isAccessible(el));
+            return (noVisibleCheck || this.isVisible(el)) && (noAccessibleCheck || this.isAccessible(el));
         }
 
         return false;
     }
 
     isVisible(el: HTMLElement): boolean {
-        if (el.offsetParent === null) {
+        if (!el.ownerDocument) {
             return false;
         }
 
-        const win = el.ownerDocument && el.ownerDocument.defaultView;
+        if ((el.offsetParent === null) && (el.ownerDocument.body !== el)) {
+            return false;
+        }
+
+        const win = el.ownerDocument.defaultView;
 
         if (!win) {
+            return false;
+        }
+
+        const rect = el.ownerDocument.body.getBoundingClientRect();
+
+        if ((rect.width === 0) && (rect.height === 0)) {
+            // This might happen, for example, if our <body> is in hidden <iframe>.
             return false;
         }
 
@@ -943,7 +966,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, false);
+        return this._findElement(
+            context || this._getBody(),
+            null,
+            includeProgrammaticallyFocusable,
+            ignoreModalizer,
+            ignoreGroupper,
+            false
+        );
     }
 
     findLast(
@@ -952,7 +982,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, null, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, true);
+        return this._findElement(
+            context || this._getBody(),
+            null,
+            includeProgrammaticallyFocusable,
+            ignoreModalizer,
+            ignoreGroupper,
+            true
+        );
     }
 
     findNext(
@@ -962,7 +999,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, false);
+        return this._findElement(
+            context || this._getBody(),
+            current,
+            includeProgrammaticallyFocusable,
+            ignoreModalizer,
+            ignoreGroupper,
+            false
+        );
     }
 
     findPrev(
@@ -972,7 +1016,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
-        return this._findElement(context || this._body, current, includeProgrammaticallyFocusable, ignoreModalizer, ignoreGroupper, true);
+        return this._findElement(
+            context || this._getBody(),
+            current,
+            includeProgrammaticallyFocusable,
+            ignoreModalizer,
+            ignoreGroupper,
+            true
+        );
     }
 
     findDefault(
@@ -982,7 +1033,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this._findElement(
-            context || this._body,
+            context || this._getBody(),
             null,
             includeProgrammaticallyFocusable,
             ignoreModalizer,
@@ -1060,7 +1111,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             (currentModalizerId === modalizerInfo.modalizer.userId) ||
             modalizerInfo.modalizer.getBasicProps().isAlwaysAccessible
         ) {
-            if (!ignoreGroupper && !this._isInCurrentGroupper(element, true)) {
+            if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
                 return NodeFilter.FILTER_REJECT;
             }
 

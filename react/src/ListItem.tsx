@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AbilityHelpers, Types } from 'ability-helpers';
+import { getAbilityHelpers, setupAbilityHelpers, Types } from 'ability-helpers';
 import * as React from 'react';
+
+setupAbilityHelpers(window);
+const AbilityHelpers = getAbilityHelpers();
 
 const ListItemContext = React.createContext<((group: HTMLElement, removed?: boolean) => void) | undefined>(undefined);
 
