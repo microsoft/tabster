@@ -254,14 +254,10 @@ export class OutlineAPI implements Types.OutlineAPI {
                 return false;
             }
 
-            this._updateTimer = this._mainWindow.setTimeout(() => {
-                this._updateTimer = undefined;
-
-                if (this._ah.keyboardNavigation.isNavigatingWithKeyboard()) {
-                    this._outlinedElement = e;
-                    this._updateOutline();
-                }
-            }, 0);
+            if (this._ah.keyboardNavigation.isNavigatingWithKeyboard()) {
+                this._outlinedElement = e;
+                this._updateOutline();
+            }
 
             return true;
         }
