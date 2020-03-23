@@ -17,7 +17,6 @@ export interface AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
-    getAttribute: (props: AbilityHelpersAttributeProps | null) => AbilityHelpersDOMAttribute;
 }
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;

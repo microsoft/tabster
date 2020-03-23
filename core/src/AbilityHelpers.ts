@@ -44,12 +44,6 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
     }
-
-    getAttribute(props: Types.AbilityHelpersAttributeProps | null): Types.AbilityHelpersDOMAttribute {
-        return {
-            [Types.AbilityHelpersAttributeName]: props === null ? undefined : JSON.stringify(props)
-        };
-    }
 }
 
 function createAbilityHelpers(win: Types.WindowWithAbilityHelpers) {
@@ -113,4 +107,10 @@ export function setupAbilityHelpersIFrame(iframeDocument: HTMLDocument): void {
     setupOutlineInIFrame(iframeDocument, _mainWindow);
     setupFocusableInIFrame(iframeDocument, _mainWindow);
     setupRootInIFrame(iframeDocument, _mainWindow);
+}
+
+export function getAbilityHelpersAttribute(props: Types.AbilityHelpersAttributeProps | null): Types.AbilityHelpersDOMAttribute {
+    return {
+        [Types.AbilityHelpersAttributeName]: props === null ? undefined : JSON.stringify(props)
+    };
 }
