@@ -5,7 +5,14 @@
 
 import { ElementVisibility } from './Types';
 
+interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
+    __ahCacheId?: string;
+}
+
 let _isBrokenIE11: boolean;
+let _containerBoundingRectCache: { [id: string]: { rect: DOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
+let _lastContainerBoundingRectCacheId = 0;
+let _containerBoundingRectCacheTimer: number | undefined;
 
 try {
     // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
@@ -29,27 +36,65 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
 
-export function getBoundingRect(element: HTMLElement): DOMRect {
+export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): DOMRect {
+    let cacheId = element.__ahCacheId;
+    let cached = cacheId ? _containerBoundingRectCache[cacheId] : undefined;
+
+    if (cached) {
+        return cached.rect;
+    }
+
     const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
 
     if (!scrollingElement) {
         return new DOMRect();
     }
 
-    if (element === scrollingElement) {
-        // A bounding rect of the top-level element contains the whole page regardless of the
-        // scrollbar. So, we improvise a little...
-        return new DOMRect(0, 0, scrollingElement.clientWidth, scrollingElement.clientHeight);
+    // A bounding rect of the top-level element contains the whole page regardless of the
+    // scrollbar. So, we improvise a little and limiting the final result...
+    let left = 0;
+    let top = 0;
+    let right = scrollingElement.clientWidth;
+    let bottom = scrollingElement.clientHeight;
+
+    if (element !== scrollingElement) {
+        const r = element.getBoundingClientRect();
+        left = Math.max(left, r.left);
+        top = Math.max(top, r.top);
+        right = Math.min(right, r.right);
+        bottom = Math.min(bottom, r.bottom);
     }
 
-    const rect = element.getBoundingClientRect();
+    const rect = new DOMRect(
+        left < right ? left : -1,
+        top < bottom ? top : -1,
+        left < right ? right - left : 0,
+        top < bottom ? bottom - top : 0
+    );
 
-    const left = Math.max(0, rect.left);
-    const right = Math.min(scrollingElement.clientWidth, rect.right);
-    const top = Math.max(0, rect.top);
-    const bottom = Math.min(scrollingElement.clientHeight, rect.bottom);
+    if (!cacheId) {
+        cacheId = 'r-' + ++_lastContainerBoundingRectCacheId;
+        element.__ahCacheId = cacheId;
+    }
 
-    return new DOMRect(left < right ? left : -1, top < bottom ? top : -1, left < right ? right - left : 0, top < bottom ? bottom - top : 0);
+    _containerBoundingRectCache[cacheId] = {
+        rect,
+        element
+    };
+
+    if (!_containerBoundingRectCacheTimer) {
+        _containerBoundingRectCacheTimer = window.setTimeout(() => {
+            _containerBoundingRectCacheTimer = undefined;
+
+            for (let cId of Object.keys(_containerBoundingRectCache)) {
+                delete _containerBoundingRectCache[cId].element.__ahCacheId;
+            }
+
+            _containerBoundingRectCache = {};
+        }, 50);
+    }
+
+    return rect;
 }
 
 export function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
@@ -117,7 +162,7 @@ export function getScrollableContainer(element: HTMLElement): HTMLElement | null
 
     if (doc) {
         for (let el: HTMLElement | null = element.parentElement; el; el = el.parentElement) {
-            if (el.scrollHeight > el.clientHeight) {
+            if ((el.scrollWidth > el.clientWidth) || (el.scrollHeight > el.clientHeight)) {
                 return el;
             }
         }
