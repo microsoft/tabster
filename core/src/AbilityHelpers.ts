@@ -39,10 +39,10 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.keyboardNavigation = new KeyboardNavigationState(this, mainWindow);
         this.focusedElement = new FocusedElementState(this, mainWindow);
         this.outline = new OutlineAPI(this, mainWindow);
-        this.root = new RootAPI(this, mainWindow);
         this.deloser = new DeloserAPI(this, mainWindow);
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
+        this.root = new RootAPI(this, mainWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
     }
 }
 

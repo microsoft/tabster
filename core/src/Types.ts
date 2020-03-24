@@ -202,6 +202,7 @@ export interface UberGroupper {
     getCurrentGroupper(): Groupper | null;
     getGroupperState(groupper: Groupper): GroupperState;
     isEmpty(): boolean;
+    forceUpdate(): void;
 }
 
 export interface Groupper {
@@ -217,6 +218,7 @@ export interface Groupper {
     setProps(basic?: Partial<GroupperBasicProps> | null, extended?: Partial<GroupperExtendedProps> | null): void;
     setFocused(focused: boolean): void;
     setUnlimited(unlimited: boolean): void;
+    forceUpdate(): void;
     setupContainer(remove?: boolean): void;
 }
 
@@ -258,6 +260,8 @@ export interface Root {
     setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
     getModalizers(): Modalizer[];
     updateModalizers(): void;
+    updateDummyInputs(): void;
+    moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export interface RootAndModalizer {

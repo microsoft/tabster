@@ -10,21 +10,19 @@ import { Keys } from '../Keys';
 import { RootAPI } from '../Root';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
-import { isElementVerticallyVisibleInContainer, scrollIntoView } from '../Utils';
-
-interface FocusedElementWithIgnoreFlag extends HTMLElement {
-    __shouldIgnoreFocus: boolean;
-}
+import {
+    callOriginalFocusOnly,
+    CustomFocusFunctionWithOriginal,
+    isElementVerticallyVisibleInContainer,
+    scrollIntoView,
+    shouldIgnoreFocus
+} from '../Utils';
 
 const _customEventName = 'ability-helpers:focused-element-related';
 const _canOverrideNativeFocus = canOverrideNativeFocus();
 
 interface WindowWithHTMLElement extends Window {
     HTMLElement: typeof HTMLElement;
-}
-
-interface CustomFocusFunctionWithOriginal {
-    __ahFocus?: (options?: FocusOptions | undefined) => void;
 }
 
 function canOverrideNativeFocus(): boolean {
@@ -46,14 +44,6 @@ function canOverrideNativeFocus(): boolean {
     return isCustomFocusCalled;
 }
 
-export function ignoreFocus(element: HTMLElement): void {
-    (element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus = true;
-}
-
-export function shouldIgnoreFocus(element: HTMLElement): boolean {
-    return !!(element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus;
-}
-
 export class FocusedElementState
         extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails> implements Types.FocusedElementState {
 
@@ -63,7 +53,6 @@ export class FocusedElementState
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
     private _mainWindow: Window;
-    private _moveOutInput: HTMLInputElement | undefined;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
     private _prevVal: HTMLElement | undefined;
@@ -391,12 +380,8 @@ export class FocusedElementState
                 e.preventDefault();
 
                 callOriginalFocusOnly(next);
-            } else {
-                this._moveOutWithDefaultAction(
-                    rootAndModalizer
-                        ? rootAndModalizer.root.getElement()
-                        : curElement.ownerDocument.body, e.shiftKey
-                );
+            } else if (rootAndModalizer) {
+                rootAndModalizer.root.moveOutWithDefaultAction(e.shiftKey);
             }
         } else {
             let groupper = this._getGroupper(curElement);
@@ -629,51 +614,6 @@ export class FocusedElementState
         return pde;
     }
 
-    private _moveOutWithDefaultAction(element: HTMLElement, prev?: boolean): void {
-        const win = element.ownerDocument && element.ownerDocument.defaultView;
-
-        if (!win) {
-            return;
-        }
-
-        this._removeMoveOutInput();
-
-        this._moveOutInput = win.document.createElement('input');
-
-        ignoreFocus(this._moveOutInput);
-
-        const style = this._moveOutInput.style;
-
-        style.position = 'absolute';
-        style.opacity = '0';
-        style.zIndex = '-1';
-        style.left = style.top = '-100500px';
-
-        this._moveOutInput.setAttribute('aria-hidden', 'true');
-
-        this._moveOutInput.addEventListener('focusout', () => {
-            this._removeMoveOutInput();
-        });
-
-        if (!prev || !element.firstChild) {
-            element.appendChild(this._moveOutInput);
-        } else {
-            element.insertBefore(this._moveOutInput, element.firstChild);
-        }
-
-        callOriginalFocusOnly(this._moveOutInput);
-    }
-
-    private _removeMoveOutInput(): void {
-        if (this._moveOutInput) {
-            if (this._moveOutInput.parentElement) {
-                this._moveOutInput.parentElement.removeChild(this._moveOutInput);
-            }
-
-            this._moveOutInput = undefined;
-        }
-    }
-
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
         const rootAndModalizer = RootAPI.findRootAndModalizer(element);
         const curModalizerId = rootAndModalizer ? rootAndModalizer.root.getCurrentModalizerId() : undefined;
@@ -716,16 +656,6 @@ export class FocusedElementState
                 element.blur();
             }
         }
-    }
-}
-
-function callOriginalFocusOnly(element: HTMLElement): void {
-    const focus = element.focus as CustomFocusFunctionWithOriginal;
-
-    if (focus.__ahFocus) {
-        focus.__ahFocus.call(element);
-    } else {
-        element.focus();
     }
 }
 

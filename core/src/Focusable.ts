@@ -120,12 +120,16 @@ export class UberGroupper implements Types.UberGroupper {
         }
     }
 
-    private _processOnChange(): void {
-        if (this._onChangeTimer) {
+    forceUpdate(): void {
+        this._processOnChange(true);
+    }
+
+    private _processOnChange(force?: boolean): void {
+        if (this._onChangeTimer && !force) {
             return;
         }
 
-        this._onChangeTimer = window.setTimeout(() => {
+        const reallyProcessOnChange = () => {
             this._onChangeTimer = undefined;
 
             let changed: (Types.Groupper | undefined)[] = [];
@@ -217,7 +221,17 @@ export class UberGroupper implements Types.UberGroupper {
                     }
                 }
             }
-        }, 0);
+        };
+
+        if (this._onChangeTimer) {
+            window.clearTimeout(this._onChangeTimer);
+        }
+
+        if (force) {
+            reallyProcessOnChange();
+        } else {
+            this._onChangeTimer = window.setTimeout(reallyProcessOnChange, 0);
+        }
     }
 
     private _setFirstLast(): void {
@@ -494,6 +508,12 @@ export class Groupper implements Types.Groupper {
         }
     }
 
+    forceUpdate(): void {
+        if (this._container) {
+            this._container.forceUpdate();
+        }
+    }
+
     setupContainer(remove?: boolean): void {
         const containerElement = this._element.parentElement;
         const curContainer = this._container;
@@ -573,41 +593,54 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._mainWindow.document.body;
     }
 
+    static forgetFocusedGrouppers(instance: FocusableAPI): void {
+        instance._updateFocusedGrouppers(null, true);
+    }
+
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
-            const newFocusedGrouppers: typeof _focusedGrouppers = {};
-
-            for (let el = element as HTMLElement | null; el; el = el.parentElement) {
-                const ah = getAbilityHelpersOnElement(el);
-
-                if (ah && ah.groupper) {
-                    newFocusedGrouppers[ah.groupper.id] = ah.groupper;
-                }
-            }
-
-            for (let gid of Object.keys(_focusedGrouppers)) {
-                if (!newFocusedGrouppers[gid]) {
-                    const g = _focusedGrouppers[gid];
-                    g.setFocused(false);
-                    g.setUnlimited(false);
-                }
-            }
-
-            for (let gid of Object.keys(newFocusedGrouppers)) {
-                if (!_focusedGrouppers[gid]) {
-                    const g = newFocusedGrouppers[gid];
-                    const groupElement = g.getElement();
-
-                    g.setFocused(true);
-
-                    if (element !== this._getGroupFirst(groupElement, false)) {
-                        g.setUnlimited(true);
-                    }
-                }
-            }
-
-            _focusedGrouppers = newFocusedGrouppers;
+            this._updateFocusedGrouppers(element);
         }
+    }
+
+    private _updateFocusedGrouppers = (element: HTMLElement | null, force?: boolean): void => {
+        const newFocusedGrouppers: typeof _focusedGrouppers = {};
+
+        for (let el = element; el; el = el.parentElement) {
+            const ah = getAbilityHelpersOnElement(el);
+
+            if (ah && ah.groupper) {
+                newFocusedGrouppers[ah.groupper.id] = ah.groupper;
+            }
+        }
+
+        for (let gid of Object.keys(_focusedGrouppers)) {
+            if (!newFocusedGrouppers[gid]) {
+                const g = _focusedGrouppers[gid];
+
+                g.setFocused(false);
+                g.setUnlimited(false);
+
+                if (force) {
+                    g.forceUpdate();
+                }
+            }
+        }
+
+        for (let gid of Object.keys(newFocusedGrouppers)) {
+            if (!_focusedGrouppers[gid]) {
+                const g = newFocusedGrouppers[gid];
+                const groupElement = g.getElement();
+
+                g.setFocused(true);
+
+                if (element !== this._getGroupFirst(groupElement, false)) {
+                    g.setUnlimited(true);
+                }
+            }
+        }
+
+        _focusedGrouppers = newFocusedGrouppers;
     }
 
     private _onIFrameEvent = (e: EventFromIFrame): void => {

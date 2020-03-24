@@ -35,24 +35,32 @@ export function observeMutations(
         const changedGrouppers: { [id: string]: { removedFrom?: Node; addedTo?: Node; groupper: Types.Groupper } } = {};
 
         for (let mutation of mutations) {
+            const target = mutation.target;
             const removed = mutation.removedNodes;
             const added = mutation.addedNodes;
 
             if (mutation.type === 'attributes') {
                 if (mutation.attributeName === Types.AbilityHelpersAttributeName) {
-                    const ahAttr = (mutation.target as Types.HTMLElementWithAbilityHelpersAttribute).__ahAttr;
+                    const ahAttr = (target as Types.HTMLElementWithAbilityHelpersAttribute).__ahAttr;
 
                     if (!ahAttr || !ahAttr.changing) {
-                        updateAbilityHelpersByAttribute(abilityHelpers, mutation.target as HTMLElement);
+                        updateAbilityHelpersByAttribute(abilityHelpers, target as HTMLElement);
                     }
                 }
             } else {
+                const ah = getAbilityHelpersOnElement(target);
+                const root = ah && ah.root;
+
+                if (root) {
+                    changedRoots[root.id] = { root, addedTo: target };
+                }
+
                 for (let i = 0; i < removed.length; i++) {
-                    findTargets(removed[i], mutation.target);
+                    findTargets(removed[i], target);
                 }
 
                 for (let i = 0; i < added.length; i++) {
-                    findTargets(added[i], undefined, mutation.target);
+                    findTargets(added[i], undefined, target);
                 }
             }
         }

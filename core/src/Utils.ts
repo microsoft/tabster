@@ -9,6 +9,14 @@ interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __ahCacheId?: string;
 }
 
+interface FocusedElementWithIgnoreFlag extends HTMLElement {
+    __shouldIgnoreFocus: boolean;
+}
+
+export interface CustomFocusFunctionWithOriginal {
+    __ahFocus?: (options?: FocusOptions | undefined) => void;
+}
+
 let _isBrokenIE11: boolean;
 let _containerBoundingRectCache: { [id: string]: { rect: DOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
@@ -171,4 +179,22 @@ export function getScrollableContainer(element: HTMLElement): HTMLElement | null
     }
 
     return null;
+}
+
+export function makeFocusIgnored(element: HTMLElement): void {
+    (element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus = true;
+}
+
+export function shouldIgnoreFocus(element: HTMLElement): boolean {
+    return !!(element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus;
+}
+
+export function callOriginalFocusOnly(element: HTMLElement): void {
+    const focus = element.focus as CustomFocusFunctionWithOriginal;
+
+    if (focus.__ahFocus) {
+        focus.__ahFocus.call(element);
+    } else {
+        element.focus();
+    }
 }

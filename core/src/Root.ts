@@ -7,7 +7,12 @@ import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindow
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
-import { createElementTreeWalker } from './Utils';
+import { callOriginalFocusOnly, createElementTreeWalker, makeFocusIgnored } from './Utils';
+
+interface DummyInput {
+    isFirst: boolean;
+    shouldMoveOut?: boolean;
+}
 
 const _customEventName = 'ability-helpers:root-related';
 const _noRootId = 'no-root';
@@ -29,19 +34,36 @@ export class Root implements Types.Root {
     readonly id: string;
 
     private _element: HTMLElement;
+    private _ah: Types.AbilityHelpers;
+    private _mainWindow: Window;
     private _curModalizerId: string | undefined;
     private _knownModalizers: { [id: string]: Types.Modalizer } = {};
     private _updateModalizersTimer: number | undefined;
+    private _dummyInputFirstProps: DummyInput;
+    private _dummyInputLastProps: DummyInput;
+    private _dummyInputFirst: HTMLInputElement;
+    private _dummyInputLast: HTMLInputElement;
+    private _forgetFocusedGrouppers: () => void;
 
-    constructor(element: HTMLElement) {
+    constructor(element: HTMLElement, ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
         this.id = 'root' + ++_lastInternalId;
         this._element = element;
+        this._ah = ah;
+        this._mainWindow = mainWindow;
+        this._forgetFocusedGrouppers = forgetFocusedGrouppers;
+
+        this._dummyInputFirstProps = { isFirst: true };
+        this._dummyInputLastProps = { isFirst: false };
+        this._dummyInputFirst = this._createDummyInput(this._dummyInputFirstProps);
+        this._dummyInputLast = this._createDummyInput(this._dummyInputLastProps);
+
         this._add();
+        this._addDummyInputs();
     }
 
     dispose(): void {
         if (this._updateModalizersTimer) {
-            window.clearTimeout(this._updateModalizersTimer);
+            this._mainWindow.clearTimeout(this._updateModalizersTimer);
             this._updateModalizersTimer = undefined;
         }
 
@@ -90,10 +112,26 @@ export class Root implements Types.Root {
             return;
         }
 
-        this._updateModalizersTimer = window.setTimeout(() => {
+        this.updateDummyInputs();
+
+        this._updateModalizersTimer = this._mainWindow.setTimeout(() => {
             this._updateModalizersTimer = undefined;
             this._reallyUpdateModalizers();
         }, 0);
+    }
+
+    updateDummyInputs(): void {
+        this._addDummyInputs();
+    }
+
+    moveOutWithDefaultAction(backwards: boolean): void {
+        if (backwards) {
+            this._dummyInputFirstProps.shouldMoveOut = true;
+            callOriginalFocusOnly(this._dummyInputFirst);
+        } else {
+            this._dummyInputLastProps.shouldMoveOut = true;
+            callOriginalFocusOnly(this._dummyInputLast);
+        }
     }
 
     private _add(): void {
@@ -103,6 +141,8 @@ export class Root implements Types.Root {
     }
 
     private _remove(): void {
+        this._removeDummyInputs();
+
         if (__DEV__) {
             _setInformativeStyle(this._element, true);
         }
@@ -181,14 +221,92 @@ export class Root implements Types.Root {
             modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
         }
     }
+
+    private _createDummyInput(props: DummyInput): HTMLInputElement {
+        const input = this._mainWindow.document.createElement('input');
+
+        input.type = 'button';
+        input.setAttribute('aria-hidden', 'true');
+
+        const style = input.style;
+        style.position = 'absolute';
+        style.width = style.height = '1px';
+        style.left = style.top = '-100500px';
+        style.opacity = '0';
+        style.zIndex = '-1';
+
+        if (__DEV__) {
+            style.setProperty('--ah-dummy-input', props.isFirst ? 'first' : 'last');
+        }
+
+        makeFocusIgnored(input);
+
+        input.addEventListener('focusin', e => {
+            if (props.shouldMoveOut) {
+                // When we've reached the last focusable element, we want to let the browser
+                // to move the focus outside of the page. In order to do that we're synchronously
+                // calling focus() of the dummy input from the Tab key handler and allowing
+                // the default action to move the focus out.
+            } else {
+                this._forgetFocusedGrouppers();
+
+                let toFocus = props.isFirst
+                    ? this._ah.focusable.findFirst(this._element)
+                    : this._ah.focusable.findLast(this._element);
+
+                if (toFocus) {
+                    this._ah.focusedElement.focus(toFocus);
+                } else {
+                    input.blur();
+                }
+            }
+        });
+
+        input.addEventListener('focusout', e => {
+            props.shouldMoveOut = false;
+        });
+
+        return input;
+    }
+
+    private _addDummyInputs(): void {
+        const element = this._element;
+
+        if (element.lastElementChild !== this._dummyInputLast) {
+            element.appendChild(this._dummyInputLast);
+        }
+
+        const firstElementChild = element.firstElementChild;
+
+        if (firstElementChild && (firstElementChild !== this._dummyInputFirst)) {
+            element.insertBefore(this._dummyInputFirst, firstElementChild);
+        }
+    }
+
+    private _removeDummyInputs(): void {
+        const dif = this._dummyInputFirst;
+        const dil = this._dummyInputLast;
+
+        if (dif.parentElement) {
+            dif.parentElement.removeChild(dif);
+        }
+
+        if (dil.parentElement) {
+            dil.parentElement.removeChild(dil);
+        }
+    }
 }
 
 export class RootAPI implements Types.RootAPI {
+    private _ah: Types.AbilityHelpers;
     private _mainWindow: Window;
     private _initTimer: number | undefined;
+    private _forgetFocusedGrouppers: () => void;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
+        this._ah = ah;
         this._mainWindow = mainWindow;
+        this._forgetFocusedGrouppers = forgetFocusedGrouppers;
         this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
@@ -220,7 +338,7 @@ export class RootAPI implements Types.RootAPI {
             return;
         }
 
-        const root = new Root(element);
+        const root = new Root(element, this._ah, this._mainWindow, this._forgetFocusedGrouppers);
 
         setAbilityHelpersOnElement(element, { root });
 
@@ -276,7 +394,13 @@ export class RootAPI implements Types.RootAPI {
     }
 
     private _onMutation = (e: MutationEvent): void => {
-        if (!e.target || !e.details.modalizer) {
+        const details = e.details;
+
+        if (details.root && !details.removed && (details.root.getElement() === e.target)) {
+            details.root.updateDummyInputs();
+        }
+
+        if (!e.target || !details.modalizer) {
             return;
         }
 
