@@ -26,6 +26,7 @@ const _isVisibleTimeout = 200;
 let _lastId = 0;
 
 let _focusedGrouppers: { [id: string]: Types.Groupper } = {};
+let _currentGrouppers: typeof _focusedGrouppers = {};
 
 export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
@@ -101,6 +102,10 @@ export class UberGroupper implements Types.UberGroupper {
         delete this._visibleGrouppers[groupper.id];
         delete this._prevVisibleGrouppers[groupper.id];
 
+        if (this._current === groupper) {
+            this._setCurrent(undefined);
+        }
+
         this._setFirstLast();
 
         this._updateVisible(true);
@@ -139,8 +144,8 @@ export class UberGroupper implements Types.UberGroupper {
                     changed.push(this._grouppers[id]);
                 }
 
-                if (!this._focused && this._prevFocused && !this._prevFocused.getBasicProps().memorizeCurrent) {
-                    this._current = undefined;
+                if (!this._focused && (!this._prevFocused || !this._prevFocused.getBasicProps().memorizeCurrent)) {
+                    this._setCurrent(undefined);
                     this._prev = undefined;
                     this._next = undefined;
                 }
@@ -259,8 +264,8 @@ export class UberGroupper implements Types.UberGroupper {
         this._processOnChange();
     }
 
-    setCurrentGroupper(groupper: Types.Groupper): void {
-        this._current = (groupper.id in this._grouppers) ? groupper : undefined;
+    setCurrentGroupper(groupper: Types.Groupper | undefined): void {
+        this._setCurrent((groupper && (groupper.id in this._grouppers)) ? groupper : undefined);
         this._prev = undefined;
         this._next = undefined;
 
@@ -294,7 +299,7 @@ export class UberGroupper implements Types.UberGroupper {
             return this._current;
         }
 
-        this._current = undefined;
+        this._setCurrent(undefined);
 
         return this._current || null;
     }
@@ -333,6 +338,22 @@ export class UberGroupper implements Types.UberGroupper {
 
     isEmpty(): boolean {
         return Object.keys(this._grouppers).length === 0;
+    }
+
+    private _setCurrent(groupper: Types.Groupper | undefined): void {
+        const cur = this._current;
+
+        if (cur !== groupper) {
+            if (cur && _currentGrouppers[cur.id]) {
+                delete _currentGrouppers[cur.id];
+            }
+
+            if (groupper) {
+                _currentGrouppers[groupper.id] = groupper;
+            }
+
+            this._current = groupper;
+        }
     }
 
     private _updateVisible(updateParents: boolean): void {
@@ -482,9 +503,9 @@ export class Groupper implements Types.Groupper {
             };
     }
 
-    makeCurrent(): void {
+    setCurrent(current: boolean): void {
         if (this._container) {
-            this._container.setCurrentGroupper(this);
+            this._container.setCurrentGroupper(current ? this : undefined);
         }
     }
 
@@ -529,16 +550,14 @@ export class Groupper implements Types.Groupper {
             }
         }
 
-        if (curContainer !== container) {
-            if (curContainer) {
-                curContainer.removeGroupper(this);
-            }
+        if (curContainer && (remove || (curContainer !== container))) {
+            curContainer.removeGroupper(this);
+        }
 
-            this._container = container;
+        this._container = container;
 
-            if (!remove && container) {
-                container.addGroupper(this);
-            }
+        if (container && !remove) {
+            container.addGroupper(this);
         }
     }
 }
@@ -603,7 +622,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
     }
 
-    private _updateFocusedGrouppers = (element: HTMLElement | null, force?: boolean): void => {
+    private _updateFocusedGrouppers(element: HTMLElement | null, forceUpdate?: boolean): void {
         const newFocusedGrouppers: typeof _focusedGrouppers = {};
 
         for (let el = element; el; el = el.parentElement) {
@@ -621,7 +640,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 g.setFocused(false);
                 g.setUnlimited(false);
 
-                if (force) {
+                if (forceUpdate) {
                     g.forceUpdate();
                 }
             }
@@ -749,15 +768,31 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
     }
 
-    setCurrentGroupper(element: HTMLElement): void {
-        let groupper = this._findGroupper(element);
+    setCurrentGroupper(element: HTMLElement | null, forceUpdate?: boolean): void {
+        let groupper = element ? this._findGroupper(element) : null;
 
-        while (groupper) {
-            groupper.makeCurrent();
+        if (element === null) {
+            for (let gid of Object.keys(_currentGrouppers)) {
+                const g = _currentGrouppers[gid];
 
-            const parentEl = groupper.getElement().parentElement;
+                g.setCurrent(false);
 
-            groupper = parentEl ? this._findGroupper(parentEl) : null;
+                if (forceUpdate) {
+                    g.forceUpdate();
+                }
+            }
+        } else {
+            while (groupper) {
+                groupper.setCurrent(true);
+
+                if (forceUpdate) {
+                    groupper.forceUpdate();
+                }
+
+                const parentEl = groupper.getElement().parentElement;
+
+                groupper = parentEl ? this._findGroupper(parentEl) : null;
+            }
         }
     }
 

@@ -117,7 +117,7 @@ export interface FocusableAPI {
     moveGroupper(from: HTMLElement, to: HTMLElement): void;
     setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
         extended?: Partial<GroupperExtendedProps> | null): void;
-    setCurrentGroupper(element: HTMLElement): void;
+    setCurrentGroupper(element: HTMLElement | null, forceUpdate?: boolean): void;
     isInCurrentGroupper(element: HTMLElement): boolean | undefined;
     findGroupper(element: HTMLElement): HTMLElement | null;
 
@@ -198,7 +198,7 @@ export interface UberGroupper {
     removeGroupper(groupper: Groupper): void;
     setUnlimitedGroupper(groupper: Groupper | undefined): void;
     setFocusedGroupper(groupper: Groupper | undefined): void;
-    setCurrentGroupper(groupper: Groupper): void;
+    setCurrentGroupper(groupper: Groupper | undefined): void;
     getCurrentGroupper(): Groupper | null;
     getGroupperState(groupper: Groupper): GroupperState;
     isEmpty(): boolean;
@@ -211,13 +211,13 @@ export interface Groupper {
     getElement(): HTMLElement;
     moveTo(newElement: HTMLElement): void;
     getState(): GroupperState;
-    makeCurrent(): void;
     isDefault(): boolean;
     getBasicProps(): GroupperBasicProps;
     getExtendedProps(): GroupperExtendedProps;
     setProps(basic?: Partial<GroupperBasicProps> | null, extended?: Partial<GroupperExtendedProps> | null): void;
     setFocused(focused: boolean): void;
     setUnlimited(unlimited: boolean): void;
+    setCurrent(current: boolean): void;
     forceUpdate(): void;
     setupContainer(remove?: boolean): void;
 }

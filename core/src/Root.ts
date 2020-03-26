@@ -5,6 +5,7 @@
 
 import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
 import { callOriginalFocusOnly, createElementTreeWalker, makeFocusIgnored } from './Utils';
@@ -248,6 +249,9 @@ export class Root implements Types.Root {
                 // calling focus() of the dummy input from the Tab key handler and allowing
                 // the default action to move the focus out.
             } else {
+                // The only way a dummy input gets focused is during the keyboard navigation.
+                KeyboardNavigationState.setVal(this._ah.keyboardNavigation, true);
+
                 this._forgetFocusedGrouppers();
 
                 let toFocus = props.isFirst
