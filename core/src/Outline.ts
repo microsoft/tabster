@@ -127,16 +127,23 @@ export class OutlineAPI implements Types.OutlineAPI {
     setProps(element: HTMLElement, props: Partial<Types.OutlinedElementProps> | null): void {
         const ah = getAbilityHelpersOnElement(element);
 
-        let curProps = ah && ah.outline;
-        let newProps: Types.OutlinedElementProps | undefined;
+        let curProps: Types.OutlinedElementProps = (ah && ah.outline) || {};
+        let newProps: Types.OutlinedElementProps = {};
 
         if (props) {
-            newProps = {
-                isIgnored: ('isIgnored' in props) ? (!!props.isIgnored) : (curProps ? curProps.isIgnored : false)
-            };
+            for (let key of Object.keys(props) as (keyof Types.OutlinedElementProps)[]) {
+                const prop = props[key];
+                if (prop) {
+                    newProps[key] = prop;
+                } else if ((prop === undefined) && curProps[key]) {
+                    newProps[key] = curProps[key];
+                }
+            }
         }
 
-        setAbilityHelpersOnElement(element, { outline: newProps });
+        if (newProps.isIgnored !== curProps.isIgnored) {
+            setAbilityHelpersOnElement(element, { outline: newProps });
+        }
     }
 
     protected dispose(): void {

@@ -42,8 +42,8 @@ export class Root implements Types.Root {
     private _updateModalizersTimer: number | undefined;
     private _dummyInputFirstProps: DummyInput;
     private _dummyInputLastProps: DummyInput;
-    private _dummyInputFirst: HTMLInputElement;
-    private _dummyInputLast: HTMLInputElement;
+    private _dummyInputFirst: HTMLDivElement;
+    private _dummyInputLast: HTMLDivElement;
     private _forgetFocusedGrouppers: () => void;
 
     constructor(element: HTMLElement, ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
@@ -223,10 +223,11 @@ export class Root implements Types.Root {
         }
     }
 
-    private _createDummyInput(props: DummyInput): HTMLInputElement {
-        const input = this._mainWindow.document.createElement('input');
+    private _createDummyInput(props: DummyInput): HTMLDivElement {
+        const input = this._mainWindow.document.createElement('div');
 
-        input.type = 'button';
+        input.tabIndex = 0;
+        input.setAttribute('role', 'none');
         input.setAttribute('aria-hidden', 'true');
 
         const style = input.style;

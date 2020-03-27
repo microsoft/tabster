@@ -923,27 +923,28 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     getProps(element: HTMLElement): Types.FocusableProps {
         const ah = getAbilityHelpersOnElement(element);
-        const props = ah && ah.focusable;
-
-        return {
-            isDefault: !!(props && props.isDefault),
-            isIgnored: !!(props && props.isIgnored)
-        };
+        return (ah && ah.focusable) || {};
     }
 
     setProps(element: HTMLElement, props: Partial<Types.FocusableProps> | null): void {
         const ah = getAbilityHelpersOnElement(element);
-        let curProps = ah && ah.focusable;
-        let newProps: Types.FocusableProps | undefined;
+        let curProps: Types.FocusableProps = (ah && ah.focusable) || {};
+        let newProps: Types.FocusableProps = {};
 
         if (props) {
-            newProps = {
-                isDefault: ('isDefault' in props) ? (!!props.isDefault) : (curProps ? curProps.isDefault : false),
-                isIgnored: ('isIgnored' in props) ? (!!props.isIgnored) : (curProps ? curProps.isIgnored : false)
-            };
+            for (let key of Object.keys(props) as (keyof Types.FocusableProps)[]) {
+                const prop = props[key];
+                if (prop) {
+                    newProps[key] = prop;
+                } else if ((prop === undefined) && curProps[key]) {
+                    newProps[key] = curProps[key];
+                }
+            }
         }
 
-        setAbilityHelpersOnElement(element, { focusable: newProps });
+        if ((curProps.isDefault !== newProps.isDefault) || (curProps.isIgnored !== newProps.isIgnored)) {
+            setAbilityHelpersOnElement(element, { focusable: newProps });
+        }
     }
 
     isFocusable(
@@ -1093,7 +1094,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreModalizer,
             ignoreGroupper,
             false,
-            el => (this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable) && this.getProps(el).isDefault)
+            el => (this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable) && !!this.getProps(el).isDefault)
         );
     }
 

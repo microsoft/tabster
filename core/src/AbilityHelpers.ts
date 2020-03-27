@@ -109,8 +109,24 @@ export function setupAbilityHelpersIFrame(iframeDocument: HTMLDocument): void {
     setupRootInIFrame(iframeDocument, _mainWindow);
 }
 
-export function getAbilityHelpersAttribute(props: Types.AbilityHelpersAttributeProps | null): Types.AbilityHelpersDOMAttribute {
+export function getAbilityHelpersAttribute(
+    props: Types.AbilityHelpersAttributeProps | null,
+    plain: true
+): string | undefined;
+export function getAbilityHelpersAttribute(
+    props: Types.AbilityHelpersAttributeProps | null, plain?: false
+): Types.AbilityHelpersDOMAttribute;
+export function getAbilityHelpersAttribute(
+    props: Types.AbilityHelpersAttributeProps | null,
+    plain?: boolean
+): Types.AbilityHelpersDOMAttribute | string | undefined {
+    const attr = props === null ? undefined : JSON.stringify(props);
+
+    if (plain === true) {
+        return attr;
+    }
+
     return {
-        [Types.AbilityHelpersAttributeName]: props === null ? undefined : JSON.stringify(props)
+        [Types.AbilityHelpersAttributeName]: attr
     };
 }

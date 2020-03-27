@@ -54,7 +54,7 @@ export interface OutlineProps {
 }
 
 export interface OutlinedElementProps {
-    isIgnored: boolean;
+    isIgnored?: boolean;
 }
 
 export interface OutlineAPI {
@@ -107,8 +107,8 @@ export interface DeloserAPI {
 }
 
 export interface FocusableProps {
-    isDefault: boolean;
-    isIgnored: boolean;
+    isDefault?: boolean;
+    isIgnored?: boolean;
 }
 
 export interface FocusableAPI {
