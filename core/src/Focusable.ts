@@ -378,7 +378,7 @@ export class UberGroupper implements Types.UberGroupper {
             const visibleGrouppers: { [id: string]: Types.ElementVisibility } = {};
 
             for (let id of Object.keys(this._grouppers)) {
-                const isVisible = isElementVisibleInContainer(this._grouppers[id].getElement());
+                const isVisible = isElementVisibleInContainer(this._grouppers[id].getElement(), 10);
                 const curIsVisible = this._visibleGrouppers[id] || Types.ElementVisibility.Invisible;
 
                 if (isVisible !== Types.ElementVisibility.Invisible) {

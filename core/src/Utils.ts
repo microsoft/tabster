@@ -119,7 +119,7 @@ export function isElementVerticallyVisibleInContainer(element: HTMLElement): boo
     return false;
 }
 
-export function isElementVisibleInContainer(element: HTMLElement): ElementVisibility {
+export function isElementVisibleInContainer(element: HTMLElement, gap = 0): ElementVisibility {
     const container = getScrollableContainer(element);
 
     if (container) {
@@ -134,10 +134,10 @@ export function isElementVisibleInContainer(element: HTMLElement): ElementVisibi
         }
 
         if (
-            ((elementRect.top >= containerRect.top) && (elementRect.top <= containerRect.bottom)) &&
-            ((elementRect.bottom >= containerRect.top) && (elementRect.bottom <= containerRect.bottom)) &&
-            ((elementRect.left >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
-            ((elementRect.right >= containerRect.left) && (elementRect.right <= containerRect.right))
+            ((elementRect.top + gap >= containerRect.top) && (elementRect.top <= containerRect.bottom)) &&
+            ((elementRect.bottom >= containerRect.top) && (elementRect.bottom - gap <= containerRect.bottom)) &&
+            ((elementRect.left + gap >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
+            ((elementRect.right >= containerRect.left) && (elementRect.right - gap <= containerRect.right))
         ) {
             return ElementVisibility.Visible;
         }
