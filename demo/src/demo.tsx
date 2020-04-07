@@ -21,12 +21,12 @@ function getAH() {
 }
 
 ReactDOM.render(
-    <div { ...getAbilityHelpersAttribute({ root: true }) }>
-        <div aria-label='Modal 1' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo1'}, deloser: true }) }>
+    <div { ...getAbilityHelpersAttribute({ root: {} }) }>
+        <div aria-label='Modal 1' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo1'}, deloser: {} }) }>
             <button>Hello</button>
             <button>Hello</button>
         </div>
-        <div aria-label='Modal 2' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo2'}, deloser: true }) }>
+        <div aria-label='Modal 2' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo2'}, deloser: {} }) }>
             <h1>Hello world</h1>
 
             <p><button>Hello</button></p>

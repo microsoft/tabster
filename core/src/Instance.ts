@@ -31,12 +31,12 @@ export function setAbilityHelpersOnElement(
             switch (key) {
                 case 'deloser':
                     cur[key] = helpers.deloser;
-                    attrObject[key] = true;
+                    attrObject[key] = (h as Types.Deloser).getBasicProps();
                     break;
 
                 case 'root':
                     cur[key] = helpers.root;
-                    attrObject[key] = true;
+                    attrObject[key] = (h as Types.Root).getBasicProps();
                     break;
 
                 case 'modalizer':
@@ -170,7 +170,7 @@ export function updateAbilityHelpersByAttribute(
 
             case 'root':
                 if (element.__ah && element.__ah.root) {
-                    // No basic props for root.
+                    element.__ah.root.setProps(newObject.root);
                 } else {
                     abilityHelpers.root.add(element);
                 }

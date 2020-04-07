@@ -67,6 +67,10 @@ export class Deloser implements Types.Deloser {
         }
     }
 
+    getBasicProps(): Types.RootBasicProps {
+        return this._basic;
+    }
+
     move(newContainer: HTMLElement): void {
         this._remove();
         this._element = newContainer;
@@ -151,6 +155,74 @@ export class Deloser implements Types.Deloser {
             return null;
         }
 
+        let restoreFocusOrder = this._basic.restoreFocusOrder;
+        let available: HTMLElement | null = null;
+
+        const rootAndModalizer = RootAPI.findRootAndModalizer(this._element);
+
+        if (!rootAndModalizer) {
+            return null;
+        }
+
+        const root = rootAndModalizer.root;
+
+        if (restoreFocusOrder === undefined) {
+            restoreFocusOrder = root.getBasicProps().restoreFocusOrder;
+        }
+
+        if (restoreFocusOrder === Types.RestoreFocusOrder.RootDefault) {
+            available = this._ah.focusable.findDefault(root.getElement());
+        }
+
+        if (!available && (restoreFocusOrder === Types.RestoreFocusOrder.RootFirst)) {
+            available = this._findFirst(root.getElement());
+        }
+
+        if (available) {
+            return available;
+        }
+
+        const availableInHistory = this._findInHistory();
+        const availableDefault = this._ah.focusable.findDefault(this._element);
+        const availableFirst = this._findFirst(this._element);
+
+        if (availableInHistory && (restoreFocusOrder === Types.RestoreFocusOrder.History)) {
+            return availableInHistory;
+        }
+
+        if (availableDefault && (restoreFocusOrder === Types.RestoreFocusOrder.DeloserDefault)) {
+            return availableDefault;
+        }
+
+        if (availableFirst && (restoreFocusOrder === Types.RestoreFocusOrder.DeloserFirst)) {
+            return availableFirst;
+        }
+
+        return availableDefault || availableInHistory || availableFirst || null;
+    }
+
+    clearHistory = (preserveExisting?: boolean): void => {
+        const element = this._element;
+
+        if (!element) {
+            this._history[this._snapshotIndex] = [];
+
+            return;
+        }
+
+        this._history[this._snapshotIndex] =
+            this._history[this._snapshotIndex].filter(e => preserveExisting ? element.contains(e) : false);
+    }
+
+    customFocusLostHandler(element: HTMLElement): boolean {
+        if (this._extended.onFocusLost) {
+            return this._extended.onFocusLost(element, this.getActions());
+        }
+
+        return false;
+    }
+
+    private _findInHistory(): HTMLElement | null {
         const cur = this._history[this._snapshotIndex].slice(0);
 
         this.clearHistory(true);
@@ -162,7 +234,7 @@ export class Deloser implements Types.Deloser {
                 if (this._ah.focusable.isFocusable(e)) {
                     return e;
                 }
-            } else {
+            } else if (!this._basic.noSelectorCheck) {
                 // Element is not in the DOM, try to locate the node by it's
                 // selector. This might return not exactly the right node,
                 // but it would be easily fixable by having more detailed selectors.
@@ -198,36 +270,19 @@ export class Deloser implements Types.Deloser {
             }
         }
 
+        return null;
+    }
+
+    private _findFirst(element: HTMLElement): HTMLElement | null {
         if (this._ah.keyboardNavigation.isNavigatingWithKeyboard()) {
-            const first = this._ah.focusable.findFirst(this._element, false, true);
+            const first = this._ah.focusable.findFirst(element);
 
             if (first) {
                 return first;
             }
         }
 
-        return this._ah.focusable.findDefault(this._element);
-    }
-
-    clearHistory = (preserveExisting?: boolean): void => {
-        const element = this._element;
-
-        if (!element) {
-            this._history[this._snapshotIndex] = [];
-
-            return;
-        }
-
-        this._history[this._snapshotIndex] =
-            this._history[this._snapshotIndex].filter(e => preserveExisting ? element.contains(e) : false);
-    }
-
-    customFocusLostHandler(element: HTMLElement): boolean {
-        if (this._extended.onFocusLost) {
-            return this._extended.onFocusLost(element, this.getActions());
-        }
-
-        return false;
+        return null;
     }
 
     private _remove(): void {

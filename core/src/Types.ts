@@ -71,7 +71,17 @@ export interface DeloserElementActions {
     isActive: () => boolean;
 }
 
+export enum RestoreFocusOrder {
+    History = 0,
+    DeloserDefault = 1,
+    RootDefault = 2,
+    DeloserFirst = 3,
+    RootFirst = 4
+}
+
 export interface DeloserBasicProps {
+    restoreFocusOrder?: RestoreFocusOrder;
+    noSelectorCheck?: boolean;
 }
 
 export interface DeloserExtendedProps {
@@ -81,6 +91,7 @@ export interface DeloserExtendedProps {
 export interface Deloser {
     readonly id: string;
     setProps(basic?: Partial<DeloserBasicProps> | null, extended?: Partial<DeloserExtendedProps> | null): void;
+    getBasicProps(): DeloserBasicProps;
     move(newContainer: HTMLElement): void;
     dispose(): void;
     isActive(): boolean;
@@ -251,9 +262,15 @@ export interface Modalizer {
     onBeforeFocusOut(): boolean;
 }
 
+export interface RootBasicProps {
+    restoreFocusOrder?: RestoreFocusOrder;
+}
+
 export interface Root {
     readonly id: string;
     dispose(): void;
+    setProps(basic?: Partial<RootBasicProps> | null): void;
+    getBasicProps(): RootBasicProps;
     move(newElement: HTMLElement): void;
     getElement(): HTMLElement;
     getCurrentModalizerId(): string | undefined;
@@ -270,9 +287,10 @@ export interface RootAndModalizer {
 }
 
 export interface RootAPI {
-    add(element: HTMLElement): void;
+    add(element: HTMLElement, basic?: RootBasicProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
 export interface ModalizerAPI {
@@ -312,8 +330,8 @@ export interface OutlineOnElement {
 }
 
 export type AbilityHelpersAttributeProps = Partial<{
-    deloser: true,
-    root: true,
+    deloser: DeloserBasicProps,
+    root: RootBasicProps,
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,

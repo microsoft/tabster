@@ -37,6 +37,7 @@ export class Root implements Types.Root {
     private _element: HTMLElement;
     private _ah: Types.AbilityHelpers;
     private _mainWindow: Window;
+    private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
     private _knownModalizers: { [id: string]: Types.Modalizer } = {};
     private _updateModalizersTimer: number | undefined;
@@ -46,11 +47,18 @@ export class Root implements Types.Root {
     private _dummyInputLast: HTMLDivElement;
     private _forgetFocusedGrouppers: () => void;
 
-    constructor(element: HTMLElement, ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
+    constructor(
+        element: HTMLElement,
+        ah: Types.AbilityHelpers,
+        mainWindow: Window,
+        forgetFocusedGrouppers: () => void,
+        basic?: Types.RootBasicProps
+    ) {
         this.id = 'root' + ++_lastInternalId;
         this._element = element;
         this._ah = ah;
         this._mainWindow = mainWindow;
+        this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
         this._dummyInputFirstProps = { isFirst: true };
@@ -69,6 +77,18 @@ export class Root implements Types.Root {
         }
 
         this._remove();
+    }
+
+    setProps(basic?: Partial<Types.RootBasicProps> | null): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {};
+        }
+    }
+
+    getBasicProps(): Types.RootBasicProps {
+        return this._basic;
     }
 
     move(newElement: HTMLElement): void {
@@ -336,14 +356,14 @@ export class RootAPI implements Types.RootAPI {
         // TODO: Stop the observer.
     }
 
-    add(element: HTMLElement): void {
+    add(element: HTMLElement, basic?: Types.RootBasicProps): void {
         const ah = getAbilityHelpersOnElement(element);
 
         if (ah && ah.root) {
             return;
         }
 
-        const root = new Root(element, this._ah, this._mainWindow, this._forgetFocusedGrouppers);
+        const root = new Root(element, this._ah, this._mainWindow, this._forgetFocusedGrouppers, basic);
 
         setAbilityHelpersOnElement(element, { root });
 
@@ -383,6 +403,14 @@ export class RootAPI implements Types.RootAPI {
 
             dispatchMutationEvent(from, { root, removed: true });
             dispatchMutationEvent(to, { root });
+        }
+    }
+
+    setProps(element: HTMLElement, basic?: Partial<Types.RootBasicProps> | null): void {
+        const ah = getAbilityHelpersOnElement(element);
+
+        if (ah && ah.root) {
+            ah.root.setProps(basic);
         }
     }
 
