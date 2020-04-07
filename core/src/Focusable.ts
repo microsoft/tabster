@@ -696,8 +696,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        if (!isKnownTarget && (e.target instanceof Node)) {
-            this._scrollTargets.push(e.target);
+        // Cannot simply use (e.target instanceof Node) as it might
+        // originate from another window.
+        if (!isKnownTarget && (e.target as Node).contains) {
+            this._scrollTargets.push(e.target as Node);
         }
 
         if (this._scrollTimer) {
