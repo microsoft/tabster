@@ -12,106 +12,67 @@ setupAbilityHelpers(window);
 const AH = getAbilityHelpers();
 AH.outline.setup();
 
-function getAH() {
-    return getAbilityHelpersAttribute({
-        groupper: {
-            isLimited: AHTypes.GroupperFocusLimit.LimitedTrapFocus
-        }
-    });
+function Item(props: React.Props<{}>) {
+    return (
+        <div
+            tabIndex={0}
+            className='item'
+            { ...getAbilityHelpersAttribute({ groupper: {
+                isLimited: AHTypes.GroupperFocusLimit.LimitedTrapFocus
+            }})}
+        >
+            { props.children
+                ? props.children
+                : ([
+                    <button onClick={() => { alert('Ololo'); }}>Hello</button>,
+                    <button onClick={() => { alert('Piupiu'); }}>World</button>
+                ])
+            }
+        </div>
+    );
 }
 
 ReactDOM.render(
-    <div { ...getAbilityHelpersAttribute({ root: {} }) }>
-        <div aria-label='Modal 1' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo1'}, deloser: {} }) }>
-            <button>Hello</button>
-            <button>Hello</button>
-        </div>
-        <div aria-label='Modal 2' { ...getAbilityHelpersAttribute({ modalizer: { id: 'momo2'}, deloser: {} }) }>
-            <h1>Hello world</h1>
+    <div { ...getAbilityHelpersAttribute({ root: {}, deloser: {} }) }>
+        <h1>Hello world</h1>
 
-            <p><button>Hello</button></p>
+        <p><button>Hello</button></p>
 
-            <div style={ { overflow: 'scroll', height: '600px' } }>
-                <div tabIndex={0} className='li' { ...getAH() }>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                </div>
+        <div style={ { overflow: 'scroll', height: '600px' } }>
+            <Item />
+            <Item />
 
-                <div tabIndex={0} className='li' { ...getAH() }>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                </div>
+            <Item>
+                <div>
+                    <Item />
 
-                <div tabIndex={0} className='li' { ...getAH() }>
-                    <div>
-                        <div tabIndex={0} className='li' { ...getAH() }>
-                            <button onClick={() => { alert(3737); }}>Hello</button>
-                            <button onClick={() => { alert(3737); }}>Hello</button>
-                        </div>
+                    <Item>
+                        <div>
+                            <Item />
+                            <Item />
 
-                        <div tabIndex={0} className='li' { ...getAH() }>
-                            <div>
-                            <div tabIndex={0} className='li' { ...getAH() }>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                            </div>
-
-                            <div tabIndex={0} className='li' { ...getAH() }>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                            </div>
-
-                            <div tabIndex={0} className='li' { ...getAH() }>
+                            <Item>
                                 <div>
-                                <div tabIndex={0} className='li' { ...getAH() }>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
+                                    <Item />
+                                    <Item />
+                                    <Item />
                                 </div>
+                            </Item>
 
-                                <div tabIndex={0} className='li' { ...getAH() }>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
-                                </div>
-
-                                <div tabIndex={0} className='li' { ...getAH() }>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
-                                    <button onClick={() => { alert(3737); }}>Hello</button>
-                                </div>
-                                </div>
-                            </div>
-
-                            <div tabIndex={0} className='li' { ...getAH() }>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                            </div>
-
-                            <div tabIndex={0} className='li' { ...getAH() }>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                                <button onClick={() => { alert(3737); }}>Hello</button>
-                            </div>
-                            </div>
+                            <Item />
+                            <Item />
                         </div>
+                    </Item>
 
-                        <div tabIndex={0} className='li' { ...getAH() }>
-                            <button onClick={() => { alert(3737); }}>Hello</button>
-                            <button onClick={() => { alert(3737); }}>Hello</button>
-                        </div>
-                    </div>
+                    <Item />
                 </div>
+            </Item>
 
-                <div tabIndex={0} className='li' { ...getAH() }>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                </div>
-
-                <div tabIndex={0} className='li' { ...getAH() }>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                    <button onClick={() => { alert(3737); }}>Hello</button>
-                </div>
-            </div>
-
-            <p><button>Hello</button></p>
+            <Item />
+            <Item />
         </div>
+
+        <p><button>Hello</button></p>
     </div>,
 
     document.getElementById('demo')
