@@ -84,10 +84,10 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
             >
                 { this.props.children
                     ? this.props.children
-                    : ([
-                        <button onClick={ this.props.onClick }>Hello</button>,
+                    : (<>
+                        <button onClick={ this.props.onClick }>Hello</button>
                         <button onClick={ this.props.onClick }>World</button>
-                    ])
+                    </>)
                 }
             </div>
         );
