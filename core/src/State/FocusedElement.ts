@@ -294,7 +294,7 @@ export class FocusedElementState
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
-        const curElement = this.getVal();
+        let curElement = this.getVal();
 
         if (!curElement || !curElement.ownerDocument) {
             return;
@@ -326,6 +326,18 @@ export class FocusedElementState
                     // We're not in a Modalizer and not in a current Groupper,
                     // do not custom-handle the Tab press.
                     return;
+                }
+            }
+
+            if (rootAndModalizer && rootAndModalizer.modalizer) {
+                const curModalizerId = rootAndModalizer.root.getCurrentModalizerId();
+
+                if (curModalizerId && (curModalizerId !== rootAndModalizer.modalizer.userId)) {
+                    rootAndModalizer.modalizer = rootAndModalizer.root.getModalizerById(curModalizerId);
+
+                    if (rootAndModalizer.modalizer) {
+                        curElement = rootAndModalizer.modalizer.getElement();
+                    }
                 }
             }
 

@@ -315,6 +315,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const m = RootAPI.findRootAndModalizer(elementFromModalizer);
 
         if (m && m.modalizer) {
+            m.root.setCurrentModalizerId(m.modalizer.userId);
+
             const basic = m.modalizer.getBasicProps();
             const modalizerElement = m.modalizer.getElement();
 

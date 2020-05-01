@@ -128,6 +128,10 @@ export class Root implements Types.Root {
         return modalizers;
     }
 
+    getModalizerById(id: string): Types.Modalizer | undefined {
+        return this._knownModalizers[id];
+    }
+
     updateModalizers(): void {
         if (this._updateModalizersTimer) {
             return;
@@ -251,7 +255,7 @@ export class Root implements Types.Root {
         input.setAttribute('aria-hidden', 'true');
 
         const style = input.style;
-        style.position = 'absolute';
+        style.position = 'fixed';
         style.width = style.height = '1px';
         style.left = style.top = '-100500px';
         style.opacity = '0';

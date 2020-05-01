@@ -276,6 +276,7 @@ export interface Root {
     getCurrentModalizerId(): string | undefined;
     setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
     getModalizers(): Modalizer[];
+    getModalizerById(id: string): Modalizer | undefined;
     updateModalizers(): void;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
