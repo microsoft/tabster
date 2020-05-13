@@ -434,6 +434,13 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             container.style.position = hasFixedPositionedParent ? 'fixed' : 'absolute';
 
+            container.style.background = _props.outlineColor;
+
+            leftBorderNode.style.width =
+            rightBorderNode.style.width =
+            topBorderNode.style.height =
+            bottomBorderNode.style.height = _props.outlineWidth + 'px';
+
             leftBorderNode.style.left =
             topBorderNode.style.left =
             bottomBorderNode.style.left = p.left + sx + 'px';
@@ -578,7 +585,6 @@ function getOutlineStyles(props: Types.OutlineProps): string {
         .${ props.outlineClass } {
             display: none;
             position: absolute;
-            background: ${ props.outlineColor };
             width: 0;
             height: 0;
             left: 0;
@@ -593,36 +599,20 @@ function getOutlineStyles(props: Types.OutlineProps): string {
         .${ props.outlineClass }__left {
             position: absolute;
             background: inherit;
-            width: ${ props.outlineWidth }px;
-            height: ${ props.outlineWidth }px;
-            border-top-left-radius: ${ props.outlineWidth }px;
-            border-bottom-left-radius: ${ props.outlineWidth }px;
         }
 
         .${ props.outlineClass }__top {
             position: absolute;
             background: inherit;
-            width: ${ props.outlineWidth }px;
-            height: ${ props.outlineWidth }px;
-            border-top-left-radius: ${ props.outlineWidth }px;
-            border-top-right-radius: ${ props.outlineWidth }px;
         }
 
         .${ props.outlineClass }__right {
             position: absolute;
             background: inherit;
-            width: ${ props.outlineWidth }px;
-            height: ${ props.outlineWidth }px;
-            border-top-right-radius: ${ props.outlineWidth }px;
-            border-bottom-right-radius: ${ props.outlineWidth }px;
         }
 
         .${ props.outlineClass }__bottom {
             position: absolute;
             background: inherit;
-            width: ${ props.outlineWidth }px;
-            height: ${ props.outlineWidth }px;
-            border-bottom-left-radius: ${ props.outlineWidth }px;
-            border-bottom-right-radius: ${ props.outlineWidth }px;
         }`;
 }
