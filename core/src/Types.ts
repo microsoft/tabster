@@ -17,7 +17,7 @@ export interface AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
-    crossOriginElement: CrossOriginElementAPI;
+    crossOrigin: CrossOriginAPI;
 }
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -53,18 +53,20 @@ export interface ObservedElementAPI extends Subscribable<HTMLElement, boolean> {
 
 export interface CrossOriginElement {
     readonly uid: string;
+    readonly ownerId: string;
     readonly id?: string;
     readonly rootId?: string;
     focus(): Promise<boolean>;
     getHTMLElement(): HTMLElement | null;
 }
 
-export interface CrossOriginElementAPI extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
+export interface CrossOriginAPI extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
     findElement(id: string, rootId?: string): Promise<CrossOriginElement | null>;
     getFocusedElement(): CrossOriginElement | undefined;
     getLastFocusedElement(): CrossOriginElement | undefined;
     getPrevFocusedElement(): CrossOriginElement | undefined;
     focus(element: CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
+    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
     focusDefault(container: CrossOriginElement): Promise<boolean>;
     focusFirst(container: CrossOriginElement): Promise<boolean>;
     resetFocus(container: CrossOriginElement): Promise<boolean>;

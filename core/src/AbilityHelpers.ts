@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginElementAPI } from './CrossOrigin';
+import { CrossOriginAPI } from './CrossOrigin';
 import { DeloserAPI } from './Deloser';
 import { FocusableAPI, setupFocusableInIFrame } from './Focusable';
 import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
@@ -28,7 +28,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
-    crossOriginElement: CrossOriginElementAPI;
+    crossOrigin: CrossOriginAPI;
 
     constructor(mainWindow: Window) {
         // mainWindow === undefined means some testing environment.
@@ -45,7 +45,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
         this.root = new RootAPI(this, mainWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
-        this.crossOriginElement = new CrossOriginElementAPI(this, mainWindow);
+        this.crossOrigin = new CrossOriginAPI(this, mainWindow);
     }
 }
 
