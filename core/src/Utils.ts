@@ -13,6 +13,14 @@ interface FocusedElementWithIgnoreFlag extends HTMLElement {
     __shouldIgnoreFocus: boolean;
 }
 
+export interface WindowWithUID extends Window {
+    __ahCrossOriginWindowUID?: string;
+}
+
+export interface HTMLElementWithUID extends HTMLElement {
+    __ahCrossOriginElementUID?: string;
+}
+
 export interface CustomFocusFunctionWithOriginal {
     __ahFocus?: (options?: FocusOptions | undefined) => void;
 }
@@ -21,6 +29,8 @@ let _isBrokenIE11: boolean;
 let _containerBoundingRectCache: { [id: string]: { rect: DOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
 let _containerBoundingRectCacheTimer: number | undefined;
+
+let _uidCounter = 0;
 
 try {
     // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
@@ -197,4 +207,51 @@ export function callOriginalFocusOnly(element: HTMLElement): void {
     } else {
         element.focus();
     }
+}
+
+export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
+    const rnd = new Uint32Array(4);
+
+    if (wnd.crypto && wnd.crypto.getRandomValues) {
+        wnd.crypto.getRandomValues(rnd);
+    } else if (wnd.msCrypto && wnd.msCrypto.getRandomValues) {
+        wnd.msCrypto.getRandomValues(rnd);
+    } else {
+        for (let i = 0; i < rnd.length; i++) {
+            rnd[i] = 0xffffffff * Math.random();
+        }
+    }
+
+    const srnd: string[] = [];
+
+    for (let i = 0; i < rnd.length; i++) {
+        srnd.push(rnd[i].toString(36));
+    }
+
+    srnd.push('|');
+    srnd.push((++_uidCounter).toString(36));
+    srnd.push('|');
+    srnd.push(Date.now().toString(36));
+
+    return srnd.join('');
+}
+
+export function getElementUId(element: HTMLElementWithUID, window: Window): string {
+    let uid = element.__ahCrossOriginElementUID;
+
+    if (!uid) {
+        uid = element.__ahCrossOriginElementUID = getUId(window);
+    }
+
+    return uid;
+}
+
+export function getWindowUId(window: WindowWithUID): string {
+    let uid = window.__ahCrossOriginWindowUID;
+
+    if (!uid) {
+        uid = window.__ahCrossOriginWindowUID = getUId(window);
+    }
+
+    return uid;
 }

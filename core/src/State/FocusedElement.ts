@@ -376,7 +376,7 @@ export class FocusedElementState
 
                 if (
                     !nml ||
-                    (rootAndModalizer.root.id !== nml.root.id) ||
+                    (rootAndModalizer.root.uid !== nml.root.uid) ||
                     !nml.modalizer ||
                     (nml.root.getCurrentModalizerId() !== nml.modalizer.userId)
                 ) {

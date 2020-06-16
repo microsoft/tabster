@@ -8,7 +8,7 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instan
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import * as Types from './Types';
-import { callOriginalFocusOnly, createElementTreeWalker, makeFocusIgnored } from './Utils';
+import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored } from './Utils';
 
 interface DummyInput {
     isFirst: boolean;
@@ -16,9 +16,7 @@ interface DummyInput {
 }
 
 const _customEventName = 'ability-helpers:root-related';
-const _noRootId = 'no-root';
 
-let _lastInternalId = 0;
 let _rootById: { [id: string]: Types.Root } = {};
 
 function _setInformativeStyle(element: HTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
@@ -32,7 +30,7 @@ function _setInformativeStyle(element: HTMLElement, remove: boolean, id?: string
 }
 
 export class Root implements Types.Root {
-    readonly id: string;
+    readonly uid: string;
 
     private _element: HTMLElement;
     private _ah: Types.AbilityHelpers;
@@ -54,7 +52,7 @@ export class Root implements Types.Root {
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
     ) {
-        this.id = 'root' + ++_lastInternalId;
+        this.uid = getElementUId(element, mainWindow);
         this._element = element;
         this._ah = ah;
         this._mainWindow = mainWindow;
@@ -110,7 +108,7 @@ export class Root implements Types.Root {
         this._curModalizerId = id;
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.id, this._curModalizerId);
+            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
         }
 
         if (!noModalizersUpdate) {
@@ -161,7 +159,7 @@ export class Root implements Types.Root {
 
     private _add(): void {
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.id, this._curModalizerId);
+            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
         }
     }
 
@@ -460,16 +458,7 @@ export class RootAPI implements Types.RootAPI {
         return undefined;
     }
 
-    static getRootId(element: HTMLElement): string {
-        const l = RootAPI.findRootAndModalizer(element);
-        return (l && l.root.id) || _noRootId;
-    }
-
-    static getRootById(id: string): Types.Root | undefined {
-        if (id === _noRootId) {
-            return undefined;
-        }
-
+    static getRootByUId(id: string): Types.Root | undefined {
         return _rootById[id];
     }
 
@@ -520,9 +509,9 @@ function observeMutationEvents(doc: HTMLDocument): void {
 
         if (root) {
             if (e.details.removed) {
-                delete _rootById[root.id];
+                delete _rootById[root.uid];
             } else {
-                _rootById[root.id] = root;
+                _rootById[root.uid] = root;
             }
         }
     });

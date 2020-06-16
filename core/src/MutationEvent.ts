@@ -52,7 +52,7 @@ export function observeMutations(
                 const root = ah && ah.root;
 
                 if (root) {
-                    changedRoots[root.id] = { root, addedTo: target };
+                    changedRoots[root.uid] = { root, addedTo: target };
                 }
 
                 for (let i = 0; i < removed.length; i++) {
@@ -141,10 +141,10 @@ export function observeMutations(
         }
 
         function addRootTarget(root: Types.Root, removedFrom?: Node, addedTo?: Node): void {
-            let r = changedRoots[root.id];
+            let r = changedRoots[root.uid];
 
             if (!r) {
-                r = changedRoots[root.id] = { root };
+                r = changedRoots[root.uid] = { root };
             }
 
             if (removedFrom) {

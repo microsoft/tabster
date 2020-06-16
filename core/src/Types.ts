@@ -120,7 +120,7 @@ export interface DeloserExtendedProps {
 }
 
 export interface Deloser {
-    readonly id: string;
+    readonly uid: string;
     setProps(basic?: Partial<DeloserBasicProps> | null, extended?: Partial<DeloserExtendedProps> | null): void;
     getBasicProps(): DeloserBasicProps;
     move(newContainer: HTMLElement): void;
@@ -136,6 +136,7 @@ export interface Deloser {
     findAvailable(): HTMLElement | null;
     clearHistory(preserveExisting?: boolean): void;
     customFocusLostHandler(element: HTMLElement): boolean;
+    getElement(): HTMLElement;
 }
 
 export interface DeloserAPI {
@@ -298,7 +299,7 @@ export interface RootBasicProps {
 }
 
 export interface Root {
-    readonly id: string;
+    readonly uid: string;
     dispose(): void;
     setProps(basic?: Partial<RootBasicProps> | null): void;
     getBasicProps(): RootBasicProps;

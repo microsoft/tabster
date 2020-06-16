@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { DeloserAPI, DeloserHistoryByRootBase, DeloserItemBase } from './Deloser';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
+import { RootAPI } from './Root';
 import { Subscribable } from './State/Subscribable';
 import * as Types from './Types';
+import { getElementUId as getElementUIDBase, getUId, getWindowUId, HTMLElementWithUID, WindowWithUID } from './Utils';
 
 const _transactionTimeout = 1000;
 const _postMessageTimeout = 500;
 
-let _uidCounter = 0;
-
 let _ignoreKeyboardNavigationStateUpdate = false;
 let _focusOwner: string | undefined;
 let _focusOwnerTimestamp: number | undefined;
+const _crossOriginDeloserMap: { [uid: string]: Types.Deloser } = {};
+const _crossOriginElementMap: { [uid: string]: HTMLElementWithUID } = {};
 
 interface KnownWindows {
     [id: string]: {
@@ -27,21 +30,15 @@ interface SentTo {
     [id: string]: true;
 }
 
-interface WindowWithUID extends Window {
-    __ahCrossOriginWindowUID?: string;
-}
-
-interface HTMLElementWithUID extends HTMLElement {
-    __ahCrossOriginElementUID?: string;
-}
-
 enum CrossOriginTransactionType {
     Bootstrap = 1,
     KeyboardNavigationState = 2,
     FocusElement = 3,
     FocusedElementState = 4,
     BlurredElementState = 5,
-    GetFocusedElement = 6
+    GetFocusedElement = 6,
+    RestoreFocusInDeloser = 7,
+    Ping = 8
 }
 
 interface CrossOriginTransactionData<I, O> {
@@ -55,10 +52,97 @@ interface CrossOriginTransactionData<I, O> {
     ['ah-end-data']?: O;
 }
 
+class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
+    private _deloser: CrossOriginDeloser;
+    private _transactions: CrossOriginTransactions;
+
+    constructor(ah: Types.AbilityHelpers, deloser: CrossOriginDeloser, trasactions: CrossOriginTransactions) {
+        super();
+        this._deloser = deloser;
+        this._transactions = trasactions;
+    }
+
+    belongsTo(deloser: CrossOriginDeloser): boolean {
+        return deloser.deloserUId === this._deloser.deloserUId;
+    }
+
+    async focusAvailable(): Promise<boolean> {
+        const data: RestoreFocusInDeloserTransactionData = {
+            ...this._deloser,
+            reset: false
+        };
+
+        return this._transactions.beginTransaction(RestoreFocusInDeloserTransaction, data).then(value => !!value);
+    }
+
+    async resetFocus(): Promise<boolean> {
+        const data: RestoreFocusInDeloserTransactionData = {
+            ...this._deloser,
+            reset: true
+        };
+
+        return this._transactions.beginTransaction(RestoreFocusInDeloserTransaction, data).then(value => !!value);
+    }
+}
+
+class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<CrossOriginDeloser, CrossOriginDeloserItem> {
+    private _transactions: CrossOriginTransactions;
+
+    constructor(
+        ah: Types.AbilityHelpers,
+        rootUId: string,
+        transactions: CrossOriginTransactions
+    ) {
+        super(ah, rootUId);
+        this._transactions = transactions;
+    }
+
+    unshift(deloser: CrossOriginDeloser): void {
+        let item: CrossOriginDeloserItem | undefined;
+
+        for (let i = 0; i < this._history.length; i++) {
+            if (this._history[i].belongsTo(deloser)) {
+                item = this._history[i];
+                this._history.splice(i, 1);
+                break;
+            }
+        }
+
+        if (!item) {
+            item = new CrossOriginDeloserItem(this._ah, deloser, this._transactions);
+        }
+
+        this._history.unshift(item);
+
+        this._history.splice(10, this._history.length - 10);
+    }
+
+    async focusAvailable(): Promise<boolean> {
+        for (const i of this._history) {
+            if (await i.focusAvailable()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    async resetFocus(): Promise<boolean> {
+        for (const i of this._history) {
+            if (await i.resetFocus()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 abstract class CrossOriginTransaction<I, O> {
     abstract type: CrossOriginTransactionType;
     readonly id: string;
     readonly beginData: I;
+    protected ah: Types.AbilityHelpers;
     protected endData: O | undefined;
     protected owner: Window;
     protected ownerId: string;
@@ -67,18 +151,19 @@ abstract class CrossOriginTransaction<I, O> {
     private _reject: ((reason: string) => void) | undefined;
     private _knownWindows: KnownWindows;
     private _sentTo: SentTo;
-    private _targetId: string | undefined;
+    protected targetId: string | undefined;
     private _inProgress: { [id: string]: number } = {};
     private _isDone = false;
 
-    constructor(owner: WindowWithUID, knownWindows: KnownWindows, value: I, sentTo?: SentTo, targetId?: string) {
+    constructor(ah: Types.AbilityHelpers, owner: WindowWithUID, knownWindows: KnownWindows, value: I, sentTo?: SentTo, targetId?: string) {
+        this.ah = ah;
         this.owner = owner;
-        this.ownerId = getWindowUID(owner);
-        this.id = getUID(owner);
+        this.ownerId = getWindowUId(owner);
+        this.id = getUId(owner);
         this.beginData = value;
         this._knownWindows = knownWindows;
         this._sentTo = sentTo || { [this.ownerId]: true };
-        this._targetId = targetId;
+        this.targetId = targetId;
         this._promise = new Promise<O>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
@@ -89,7 +174,7 @@ abstract class CrossOriginTransaction<I, O> {
         return knownWindows;
     }
 
-    begin(before?: (data: CrossOriginTransactionData<I, O>) => void): Promise<O | undefined> {
+    begin(before?: (data: CrossOriginTransactionData<I, O>) => Promise<any>): Promise<O | undefined> {
         const windows = this.getWindows(this._knownWindows);
 
         if (!windows) {
@@ -112,28 +197,32 @@ abstract class CrossOriginTransaction<I, O> {
             ['ah-begin-data']: this.beginData
         };
 
-        if (this._targetId) {
-            data['ah-target'] = this._targetId;
+        if (this.targetId) {
+            data['ah-target'] = this.targetId;
         }
 
         let message: string | undefined;
 
-        if (before) {
-            before(data);
-        }
+        const post = () => {
+            for (let id of Object.keys(windows)) {
+                if (!(id in this._sentTo)) {
+                    if (!message) {
+                        message  = JSON.stringify(data);
+                    }
 
-        for (let id of Object.keys(windows)) {
-            if (!(id in this._sentTo)) {
-                if (!message) {
-                    message  = JSON.stringify(data);
+                    this._postMessage(windows[id].window, id, message);
                 }
-
-                this._postMessage(windows[id].window, id, message);
             }
-        }
 
-        if (!message) {
-            this.end();
+            if (!message) {
+                this.end();
+            }
+        };
+
+        if (before) {
+            before(data).then(() => post());
+        } else {
+            post();
         }
 
         return this._promise;
@@ -147,6 +236,8 @@ abstract class CrossOriginTransaction<I, O> {
 
             this._inProgress[targetId] = this.owner.setTimeout(() => {
                 delete this._inProgress[targetId];
+
+                console.error(84848, 'timeout', targetId);
 
                 if (!this._isDone && (Object.keys(this._inProgress).length === 0)) {
                     this.end();
@@ -204,6 +295,7 @@ abstract class CrossOriginTransaction<I, O> {
 
 interface CrossOriginTransactionClass<I, O> {
     new (
+        ah: Types.AbilityHelpers,
         owner: WindowWithUID,
         knownWindows: KnownWindows,
         value: I,
@@ -211,7 +303,15 @@ interface CrossOriginTransactionClass<I, O> {
         targetId?: string
     ): CrossOriginTransaction<I, O>;
     shouldForward?(ah: Types.AbilityHelpers, data: CrossOriginTransactionData<I, O>, owner: Window, ownerId: string): boolean;
-    makeResponse(ah: Types.AbilityHelpers, data: CrossOriginTransactionData<I, O>, owner: Window, ownerId: string, forwardResponse?: O): O;
+    makeResponse(
+        ah: Types.AbilityHelpers,
+        data: CrossOriginTransactionData<I, O>,
+        owner: Window,
+        ownerId: string,
+        transactions: CrossOriginTransactions,
+        forwardResponse?: O,
+        isSelfResponse?: boolean
+    ): Promise<O>;
     makeSelfResponse?: boolean;
 }
 
@@ -232,7 +332,7 @@ class BootstrapTransaction extends CrossOriginTransaction<undefined, BootstrapTr
             : {};
     }
 
-    static makeResponse(ah: Types.AbilityHelpers): BootstrapTransactionContents {
+    static async makeResponse(ah: Types.AbilityHelpers): Promise<BootstrapTransactionContents> {
         return { isNavigatingWithKeyboard: ah.keyboardNavigation.isNavigatingWithKeyboard() };
     }
 }
@@ -240,7 +340,7 @@ class BootstrapTransaction extends CrossOriginTransaction<undefined, BootstrapTr
 class KeyboardNavigationStateTransaction extends CrossOriginTransaction<boolean, true> {
     type = CrossOriginTransactionType.KeyboardNavigationState;
 
-    static makeResponse(ah: Types.AbilityHelpers, data: CrossOriginTransactionData<boolean, true>): true {
+    static async makeResponse(ah: Types.AbilityHelpers, data: CrossOriginTransactionData<boolean, true>): Promise<true> {
         if (ah.keyboardNavigation.isNavigatingWithKeyboard() !== data['ah-begin-data']) {
             _ignoreKeyboardNavigationStateUpdate = true;
             KeyboardNavigationState.setVal(ah.keyboardNavigation, !!data['ah-begin-data']);
@@ -254,10 +354,44 @@ interface FocusElementData {
     uid?: string;
     id?: string;
     rootId?: string;
+    ownerId?: string;
 }
 
 class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, true> {
     type = CrossOriginTransactionType.FocusElement;
+
+    begin(before?: (data: CrossOriginTransactionData<FocusElementData, true>) => Promise<any>): Promise<true | undefined> {
+        const el = FocusElementTransaction.findElement(this.ah, this.owner, this.beginData);
+
+        if (el && this.ah.focusedElement.focus(el)) {
+            this.end();
+            return Promise.resolve(true);
+        }
+
+        return super.begin(before);
+    }
+
+    static findElement(ah: Types.AbilityHelpers, owner: Window, data?: FocusElementData): HTMLElement | null {
+        let element: HTMLElement | null | undefined;
+
+        if (data && (!data.ownerId || (data.ownerId === getWindowUId(owner)))) {
+            if (data.id) {
+                element = owner.document.getElementById(data.id);
+
+                if (element && data.rootId) {
+                    const ram = RootAPI.findRootAndModalizer(element);
+
+                    if (!ram || (ram.root.uid !== data.rootId)) {
+                        return null;
+                    }
+                }
+            } else if (data.uid) {
+                element = _crossOriginElementMap[data.uid];
+            }
+        }
+
+        return element || null;
+    }
 
     static shouldForward(
         ah: Types.AbilityHelpers,
@@ -265,30 +399,22 @@ class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, t
         owner: Window,
         ownerId: string
     ): boolean {
-        const fd = data['ah-begin-data'];
-        let el: HTMLElement | null | undefined;
-
-        if (fd && fd.id && ((el = owner.document.getElementById(fd.id)))) {
-            if (ah.focusedElement.focus(el)) {
-                return false;
-            }
-        }
-
-        return true;
+        const el = FocusElementTransaction.findElement(ah, owner, data['ah-begin-data']);
+        return (el && ah.focusedElement.focus(el)) ? false : true;
     }
 
-    static makeResponse(): true {
+    static async makeResponse(): Promise<true> {
         return true;
     }
 }
 
 interface FocusedElementStateData {
     uid: string;
-    ownerId: string;
+    ownerUId: string;
     timestamp: number;
     id?: string;
-    rootId?: string;
-    deloserId?: string;
+    rootUId?: string;
+    deloserUId?: string;
     isFocusedProgrammatically?: boolean;
 }
 
@@ -297,16 +423,72 @@ class FocusedElementStateTransaction extends CrossOriginTransaction<FocusedEleme
 
     static makeSelfResponse = true;
 
-    static makeResponse(ah: Types.AbilityHelpers, data: CrossOriginTransactionData<FocusedElementStateData, true>): true {
+    static async makeResponse(
+        ah: Types.AbilityHelpers,
+        data: CrossOriginTransactionData<FocusedElementStateData, true>,
+        owner: Window,
+        ownerId: string,
+        transactions: CrossOriginTransactions,
+        forwardResponse?: true,
+        isSelfResponse?: boolean
+    ): Promise<true> {
         const beginData = data['ah-begin-data'];
 
-        if (beginData && (beginData.ownerId)) {
-            _focusOwner = beginData.ownerId;
+        if (beginData && (beginData.ownerUId)) {
+            _focusOwner = beginData.ownerUId;
             _focusOwnerTimestamp = beginData.timestamp;
 
-            const element = new CrossOriginElement(ah, null, beginData.uid, beginData.ownerId, beginData.id, beginData.rootId);
+            const element = new CrossOriginElement(ah, null, beginData.uid, beginData.ownerUId, beginData.id, beginData.rootUId);
+
+            if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
+                const history = DeloserAPI.getHistory(ah.deloser);
+
+                const deloser: CrossOriginDeloser = {
+                    ownerUId: beginData.ownerUId,
+                    deloserUId: beginData.deloserUId,
+                    rootUId: beginData.rootUId
+                };
+
+                const historyItem = history.make(
+                    beginData.rootUId,
+                    () => new CrossOriginDeloserHistoryByRoot(ah, deloser.rootUId, transactions)
+                );
+
+                historyItem.unshift(deloser);
+
+                console.error(77778, owner.document, history);
+            }
 
             CrossOriginAPI.setVal(ah.crossOrigin, element, { isFocusedProgrammatically: beginData.isFocusedProgrammatically });
+        }
+
+        return true;
+    }
+}
+
+interface BlurredElementStateData {
+    ownerId: string;
+    timestamp: number;
+    force: boolean;
+}
+
+class BlurredElementStateTransaction extends CrossOriginTransaction<BlurredElementStateData, true> {
+    type = CrossOriginTransactionType.BlurredElementState;
+
+    static makeSelfResponse = true;
+
+    static async makeResponse(
+        ah: Types.AbilityHelpers,
+        data: CrossOriginTransactionData<BlurredElementStateData, true>
+    ): Promise<true> {
+        const beginData = data['ah-begin-data'];
+
+        if (
+            beginData &&
+            ((beginData.ownerId === _focusOwner) || beginData.force) &&
+            (!_focusOwnerTimestamp || (_focusOwnerTimestamp < beginData.timestamp))
+        ) {
+            CrossOriginAPI.setVal(ah.crossOrigin, undefined, {});
         }
 
         return true;
@@ -316,23 +498,27 @@ class FocusedElementStateTransaction extends CrossOriginTransaction<FocusedEleme
 class GetFocusedElementTransaction extends CrossOriginTransaction<undefined, FocusedElementStateData> {
     type = CrossOriginTransactionType.GetFocusedElement;
 
-    static makeResponse(
+    static async makeResponse(
         ah: Types.AbilityHelpers,
         data: CrossOriginTransactionData<undefined, FocusedElementStateData>,
         owner: Window,
         ownerId: string,
+        transactions: CrossOriginTransactions,
         forwarded: FocusedElementStateData | undefined
-    ): FocusedElementStateData | undefined {
+    ): Promise<FocusedElementStateData | undefined> {
         const focused = ah.focusedElement.getFocusedElement();
 
         if (focused) {
+            const deloser = DeloserAPI.getDeloser(focused);
+            const ram = RootAPI.findRootAndModalizer(focused);
+
             return {
                 uid: getElementUID(focused, owner),
-                ownerId,
+                ownerUId: ownerId,
                 timestamp: Date.now(),
                 id: focused.id,
-                rootId: undefined, // TODO
-                deloserId: undefined, // TODO
+                rootUId: ram ? ram.root.uid : undefined,
+                deloserUId: deloser ? getDeloserUID(deloser, owner) : undefined,
             };
         }
 
@@ -340,30 +526,55 @@ class GetFocusedElementTransaction extends CrossOriginTransaction<undefined, Foc
     }
 }
 
-interface BlurredElementStateData {
-    ownerId: string;
-    timestamp: number;
+interface CrossOriginDeloser {
+    ownerUId: string;
+    deloserUId: string;
+    rootUId: string;
 }
 
-class BlurredElementStateTransaction extends CrossOriginTransaction<BlurredElementStateData, true> {
-    type = CrossOriginTransactionType.BlurredElementState;
+interface RestoreFocusInDeloserTransactionData extends CrossOriginDeloser {
+    reset: boolean;
+}
 
-    static makeSelfResponse = true;
+class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFocusInDeloserTransactionData, boolean> {
+    type = CrossOriginTransactionType.RestoreFocusInDeloser;
 
-    static makeResponse(
+    static async makeResponse(
         ah: Types.AbilityHelpers,
-        data: CrossOriginTransactionData<BlurredElementStateData, true>
-    ): true {
-        const beginData = data['ah-begin-data'];
+        data: CrossOriginTransactionData<RestoreFocusInDeloserTransactionData, boolean>,
+        owner: Window,
+        ownerId: string,
+        transactions: CrossOriginTransactions,
+        forwarded: boolean | undefined
+    ): Promise<boolean> {
+        const begin = !forwarded && data['ah-begin-data'];
+        const uid = begin && begin.deloserUId;
+        const deloser = uid && _crossOriginDeloserMap[uid];
 
-        if (
-            beginData &&
-            (beginData.ownerId === _focusOwner) &&
-            (!_focusOwnerTimestamp || (_focusOwnerTimestamp < beginData.timestamp))
-        ) {
-            CrossOriginAPI.setVal(ah.crossOrigin, undefined, {});
+        if (begin && deloser) {
+            const history = DeloserAPI.getHistory(ah.deloser);
+
+            return begin.reset ? history.resetFocus(deloser) : history.focusAvailable(deloser);
         }
 
+        return !!forwarded;
+    }
+}
+
+class PingTransaction extends CrossOriginTransaction<undefined, true> {
+    type = CrossOriginTransactionType.Ping;
+
+    protected getWindows(knownWindows: KnownWindows): KnownWindows {
+        return (this.targetId && knownWindows[this.targetId])
+            ? { [this.targetId]: { window: knownWindows[this.targetId].window } }
+            : {};
+    }
+
+    static shouldForward() {
+        return false;
+    }
+
+    static async makeResponse(): Promise<true> {
         return true;
     }
 }
@@ -375,21 +586,25 @@ interface CrossOriginTransactionWrapper<I, O> {
 
 class CrossOriginTransactions {
     private _owner: WindowWithUID;
-    private _ownerId: string;
+    private _ownerUId: string;
     private _knownWindows: KnownWindows = {};
     private _transactions: { [id: string]: CrossOriginTransactionWrapper<any, any> } = {};
     private _ah: Types.AbilityHelpers;
+    private _pingTimer: number | undefined;
+    private _isPinging = false;
 
     constructor(ah: Types.AbilityHelpers, owner: WindowWithUID) {
         this._ah = ah;
         this._owner = owner;
-        this._ownerId = getWindowUID(owner);
+        this._ownerUId = getWindowUId(owner);
     }
 
     init(): void {
         if (this._owner.document) {
             this._owner.addEventListener('message', this._onMessage);
         }
+
+        this._ping();
     }
 
     dispose(): void {
@@ -402,12 +617,12 @@ class CrossOriginTransactions {
         sentTo?: SentTo,
         targetId?: string
     ): Promise<O | undefined> {
-        const transaction = new Transaction(this._owner, this._knownWindows, value, sentTo, targetId);
-        let before: ((data: CrossOriginTransactionData<I, O>) => void) | undefined;
+        const transaction = new Transaction(this._ah, this._owner, this._knownWindows, value, sentTo, targetId);
+        let before: ((data: CrossOriginTransactionData<I, O>) => Promise<any>) | undefined;
 
         if (Transaction.makeSelfResponse) {
             before = (data: CrossOriginTransactionData<I, O>) => {
-                Transaction.makeResponse(this._ah, data, this._owner, this._ownerId);
+                return Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, data['ah-end-data'], true);
             };
         }
 
@@ -416,7 +631,7 @@ class CrossOriginTransactions {
 
     private _beginTransaction<I, O>(
         transaction: CrossOriginTransaction<I, O>,
-        before?: (data: CrossOriginTransactionData<I, O>) => void
+        before?: (data: CrossOriginTransactionData<I, O>) => Promise<any>
     ): Promise<O | undefined> {
         const wrapper: CrossOriginTransactionWrapper<I, O> = {
             transaction,
@@ -435,12 +650,17 @@ class CrossOriginTransactions {
     }
 
     forwardTransaction(data: CrossOriginTransactionData<any, any>): Promise<any> {
+        if (data['ah-target'] === this._ownerUId) {
+            return Promise.resolve();
+        }
+
         const Transaction = this._getTransactionClass(data['ah-type']);
 
         if (Transaction) {
-            return ((Transaction.shouldForward === undefined) || (Transaction.shouldForward(this._ah, data, this._owner, this._ownerId)))
+            return ((Transaction.shouldForward === undefined) || (Transaction.shouldForward(this._ah, data, this._owner, this._ownerUId)))
                 ? this._beginTransaction(
                     new Transaction(
+                        this._ah,
                         this._owner,
                         this._knownWindows,
                         data['ah-begin-data'],
@@ -468,6 +688,10 @@ class CrossOriginTransactions {
                 return BlurredElementStateTransaction;
             case CrossOriginTransactionType.GetFocusedElement:
                 return GetFocusedElementTransaction;
+            case CrossOriginTransactionType.RestoreFocusInDeloser:
+                return RestoreFocusInDeloserTransaction;
+            case CrossOriginTransactionType.Ping:
+                return PingTransaction;
             default:
                 return null;
         }
@@ -475,7 +699,6 @@ class CrossOriginTransactions {
 
     private _onMessage = (e: MessageEvent) => {
         if (e.source === this._owner) {
-            console.error('Self messaging!');
             return;
         }
 
@@ -499,7 +722,7 @@ class CrossOriginTransactions {
         }
 
         if (data['ah-sentto'].parent) {
-            data['ah-sentto'] = { [this._ownerId]: true };
+            data['ah-sentto'] = { [this._ownerUId]: true };
         }
 
         if (!(data['ah-owner'] in this._knownWindows) && e.source && (e.source !== this._owner) && e.source.postMessage) {
@@ -512,25 +735,71 @@ class CrossOriginTransactions {
             if (t.transaction.type === data['ah-type']) {
                 t.transaction.onMessage(data);
             }
-        } else if (data['ah-target'] !== this._ownerId) {
+        } else {
             const Transaction = this._getTransactionClass(data['ah-type']);
 
             this.forwardTransaction(data).then(value => {
-                if (Transaction && e.source && e.source.postMessage) {
-                    const response: CrossOriginTransactionData<any, any> = {
-                        ['ah-transaction']: data['ah-transaction'],
-                        ['ah-type']: data['ah-type'],
-                        ['ah-timestamp']: Date.now(),
-                        ['ah-owner']: this._ownerId,
-                        ['ah-sentto']: {},
-                        ['ah-target']: data['ah-owner'],
-                        ['ah-end-data']: Transaction.makeResponse(this._ah, data, this._owner, this._ownerId, value)
-                    };
+                const src = e.source;
 
-                    (e.source.postMessage as Function)(JSON.stringify(response), '*');
+                if (Transaction && src && src.postMessage) {
+                    Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, value, false).then(r => {
+                        const response: CrossOriginTransactionData<any, any> = {
+                            ['ah-transaction']: data['ah-transaction'],
+                            ['ah-type']: data['ah-type'],
+                            ['ah-timestamp']: Date.now(),
+                            ['ah-owner']: this._ownerUId,
+                            ['ah-sentto']: {},
+                            ['ah-target']: data['ah-owner'],
+                            ['ah-end-data']: r
+                        };
+
+                        (src.postMessage as Function)(JSON.stringify(response), '*');
+                    });
                 }
             });
         }
+    }
+
+    private async _ping(): Promise<void> {
+        if (this._pingTimer || this._isPinging) {
+            return;
+        }
+
+        this._isPinging = true;
+        let hasDeadWindow = false;
+
+        for (let uid of Object.keys(this._knownWindows)) {
+            const ret = await this.beginTransaction(PingTransaction, undefined, undefined, uid);
+
+            if (!ret) {
+                console.error(88711114, 'window timed out', uid);
+                hasDeadWindow = true;
+                delete this._knownWindows[uid];
+            }
+        }
+
+        if (hasDeadWindow) {
+            const focused = await this.beginTransaction(GetFocusedElementTransaction, undefined);
+
+            if (!focused) {
+                console.error(88711114, 'dead window had focus!');
+
+                await this.beginTransaction(BlurredElementStateTransaction, {
+                    ownerId: this._ownerUId,
+                    timestamp: Date.now(),
+                    force: true
+                });
+
+                DeloserAPI.forceRestoreFocus(this._ah.deloser);
+            }
+        }
+
+        this._isPinging = false;
+
+        this._pingTimer = this._owner.setTimeout(() => {
+            this._pingTimer = undefined;
+            this._ping();
+        }, 2000);
     }
 }
 
@@ -617,7 +886,7 @@ export class CrossOriginAPI
     }
 
     private _onElementFocused = (value: HTMLElementWithUID | undefined, details: Types.FocusedElementDetails): void => {
-        let ownerId = getWindowUID(this._mainWindow);
+        let ownerId = getWindowUId(this._mainWindow);
 
         if (this._blurTimer) {
             this._mainWindow.clearTimeout(this._blurTimer);
@@ -625,13 +894,16 @@ export class CrossOriginAPI
         }
 
         if (value) {
+            const deloser = DeloserAPI.getDeloser(value);
+            const ram = RootAPI.findRootAndModalizer(value);
+
             const fed: FocusedElementStateData = {
                 uid: getElementUID(value, this._mainWindow),
-                ownerId,
+                ownerUId: ownerId,
                 timestamp: Date.now(),
                 id: value.id || undefined,
-                rootId: undefined, // TODO
-                deloserId: undefined, // TODO
+                rootUId: ram ? ram.root.uid : undefined,
+                deloserUId: deloser ? getDeloserUID(deloser, this._mainWindow) : undefined,
                 isFocusedProgrammatically: details.isFocusedProgrammatically
             };
 
@@ -644,7 +916,8 @@ export class CrossOriginAPI
                     if (!value) {
                         this._transactions.beginTransaction(BlurredElementStateTransaction, {
                             ownerId,
-                            timestamp: Date.now()
+                            timestamp: Date.now(),
+                            force: false
                         });
                     }
                 });
@@ -728,48 +1001,21 @@ export class CrossOriginAPI
     }
 }
 
-function getUID(wnd: Window & { msCrypto?: Crypto }): string {
-    const rnd = new Uint32Array(4);
+function getDeloserUID(deloser: Types.Deloser, window: Window): string {
+    const uid = getElementUIDBase(deloser.getElement(), window);
 
-    if (wnd.crypto && wnd.crypto.getRandomValues) {
-        wnd.crypto.getRandomValues(rnd);
-    } else if (wnd.msCrypto && wnd.msCrypto.getRandomValues) {
-        wnd.msCrypto.getRandomValues(rnd);
-    } else {
-        for (let i = 0; i < rnd.length; i++) {
-            rnd[i] = 0xffffffff * Math.random();
-        }
-    }
-
-    const srnd: string[] = [];
-
-    for (let i = 0; i < rnd.length; i++) {
-        srnd.push(rnd[i].toString(36));
-    }
-
-    srnd.push('|');
-    srnd.push((++_uidCounter).toString(36));
-    srnd.push('|');
-    srnd.push(Date.now().toString(36));
-
-    return srnd.join('');
-}
-
-function getElementUID(element: HTMLElementWithUID, window: Window): string {
-    let uid = element.__ahCrossOriginElementUID;
-
-    if (!uid) {
-        uid = element.__ahCrossOriginElementUID = getUID(window);
+    if (!_crossOriginDeloserMap[uid]) {
+        _crossOriginDeloserMap[uid] = deloser;
     }
 
     return uid;
 }
 
-function getWindowUID(window: WindowWithUID): string {
-    let uid = window.__ahCrossOriginWindowUID;
+function getElementUID(element: HTMLElementWithUID, window: Window): string {
+    const uid = getElementUIDBase(element, window);
 
-    if (!uid) {
-        uid = window.__ahCrossOriginWindowUID = getUID(window);
+    if (!_crossOriginElementMap[uid]) {
+        _crossOriginElementMap[uid] = element;
     }
 
     return uid;

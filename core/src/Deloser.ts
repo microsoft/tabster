@@ -6,14 +6,262 @@
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
+import { getElementUId } from './Utils';
 
 const _containerHistoryLength = 10;
 
-let _lastInternalId = 0;
+export abstract class DeloserItemBase<C> {
+    abstract resetFocus(): Promise<boolean>;
+    abstract belongsTo(deloser: C): boolean;
+}
 
-interface DeloserHistoryItem {
-    rootId: string;
-    history: Types.Deloser[];
+export class DeloserItem extends DeloserItemBase<Types.Deloser> {
+    readonly uid: string;
+    private _ah: Types.AbilityHelpers;
+    private _deloser: Types.Deloser;
+
+    constructor(ah: Types.AbilityHelpers, deloser: Types.Deloser) {
+        super();
+        this.uid = deloser.uid;
+        this._ah = ah;
+        this._deloser = deloser;
+    }
+
+    belongsTo(deloser: Types.Deloser): boolean {
+        return deloser === this._deloser;
+    }
+
+    unshift(element: HTMLElement): void {
+        this._deloser.unshift(element);
+    }
+
+    async focusAvailable(): Promise<boolean> {
+        const available = this._deloser.findAvailable();
+        return available ? this._ah.focusedElement.focus(available) : false;
+    }
+
+    async resetFocus(): Promise<boolean> {
+        return Promise.resolve(this._deloser.resetFocus());
+    }
+}
+
+export abstract class DeloserHistoryByRootBase<I, D extends DeloserItemBase<I>> {
+    protected _ah: Types.AbilityHelpers;
+    protected _history: D[] = [];
+    readonly rootUId: string;
+
+    constructor(ah: Types.AbilityHelpers, rootUId: string) {
+        this._ah = ah;
+        this.rootUId = rootUId;
+    }
+
+    getLength(): number {
+        return this._history.length;
+    }
+
+    removeDeloser(deloser: I): void {
+        this._history = this._history.filter(c => !c.belongsTo(deloser));
+    }
+
+    hasDeloser(deloser: I): boolean {
+        return this._history.some(d => d.belongsTo(deloser));
+    }
+
+    abstract async focusAvailable(from: I | null): Promise<boolean>;
+    abstract async resetFocus(from: I | null): Promise<boolean>;
+}
+
+class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, DeloserItem> {
+    unshiftToDeloser(deloser: Types.Deloser, element: HTMLElement): void {
+        let item: DeloserItem | undefined;
+
+        for (let i = 0; i < this._history.length; i++) {
+            if (this._history[i].belongsTo(deloser)) {
+                item = this._history[i];
+                this._history.splice(i, 1);
+                break;
+            }
+        }
+
+        if (!item) {
+            item = new DeloserItem(this._ah, deloser);
+        }
+
+        item.unshift(element);
+
+        this._history.unshift(item);
+
+        this._history.splice(_containerHistoryLength, this._history.length - _containerHistoryLength);
+    }
+
+    async focusAvailable(from: Types.Deloser | null): Promise<boolean> {
+        let skip = !!from;
+
+        for (const i of this._history) {
+            if (from && i.belongsTo(from)) {
+                skip = false;
+            }
+
+            if (!skip && await i.focusAvailable()) {
+                return true;
+            }
+        }
+
+        const root = RootAPI.getRootByUId(this.rootUId);
+        const modalizers = root && root.getModalizers();
+
+        if (modalizers) {
+            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
+            // let's try to find something under the same root.
+            for (let m of modalizers) {
+                const e = m.getElement();
+                const ah = getAbilityHelpersOnElement(e);
+                const deloser = ah && ah.deloser;
+                const deloserItem = deloser && new DeloserItem(this._ah, deloser);
+
+                if (deloserItem && await deloserItem.focusAvailable()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    async resetFocus(from: Types.Deloser | null): Promise<boolean> {
+        let skip = !!from;
+        const resetQueue: { [id: string]: DeloserItem } = {};
+
+        for (const i of this._history) {
+            if (from && i.belongsTo(from)) {
+                skip = false;
+            }
+
+            if (!skip && !resetQueue[i.uid]) {
+                resetQueue[i.uid] = i;
+            }
+        }
+
+        const root = RootAPI.getRootByUId(this.rootUId);
+        const modalizers = root && root.getModalizers();
+
+        if (modalizers) {
+            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
+            // let's try to find something under the same root.
+            for (let m of modalizers) {
+                const e = m.getElement();
+                const ah = getAbilityHelpersOnElement(e);
+                const deloser = ah && ah.deloser;
+
+                if (deloser && !(deloser.uid in resetQueue)) {
+                    resetQueue[deloser.uid] = new DeloserItem(this._ah, deloser);
+                }
+            }
+        }
+
+        // Nothing is found, at least try to reset.
+        for (let id of Object.keys(resetQueue)) {
+            if (await resetQueue[id].resetFocus()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+export class DeloserHistory {
+    private _ah: Types.AbilityHelpers;
+    private _history: DeloserHistoryByRootBase<{}, DeloserItemBase<{}>>[] = [];
+
+    constructor(ah: Types.AbilityHelpers) {
+        this._ah = ah;
+    }
+
+    process(element: HTMLElement): Types.Deloser | undefined {
+        const ml = RootAPI.findRootAndModalizer(element);
+        const rootUId = ml && ml.root.uid;
+        const deloser = DeloserAPI.getDeloser(element);
+
+        if (!rootUId || !deloser) {
+            return undefined;
+        }
+
+        const historyByRoot = this.make(rootUId, () => new DeloserHistoryByRoot(this._ah, rootUId));
+
+        if (!ml || !ml.modalizer || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
+            historyByRoot.unshiftToDeloser(deloser, element);
+        }
+
+        return deloser;
+    }
+
+    make<I, D extends DeloserItemBase<I>, C extends DeloserHistoryByRootBase<I, D>>(
+        rootUId: string,
+        createInstance: () => C
+    ): C {
+        let historyByRoot: C | undefined;
+
+        for (let i = 0; i < this._history.length; i++) {
+            const hbr = this._history[i] as C;
+
+            if (hbr.rootUId === rootUId) {
+                historyByRoot = hbr;
+                this._history.splice(i, 1);
+                break;
+            }
+        }
+
+        if (!historyByRoot) {
+            historyByRoot = createInstance();
+        }
+
+        this._history.unshift(historyByRoot);
+
+        this._history.splice(_containerHistoryLength, this._history.length - _containerHistoryLength);
+
+        return historyByRoot;
+    }
+
+    removeDeloser(deloser: Types.Deloser): void {
+        this._history.forEach(i => {
+            i.removeDeloser(deloser);
+        });
+
+        this._history = this._history.filter(i => i.getLength() > 0);
+    }
+
+    async focusAvailable(from: Types.Deloser | null): Promise<boolean> {
+        let skip = !!from;
+
+        for (const h of this._history) {
+            if (from && h.hasDeloser(from)) {
+                skip = false;
+            }
+
+            if (!skip && await h.focusAvailable(from)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    async resetFocus(from: Types.Deloser | null): Promise<boolean> {
+        let skip = !!from;
+
+        for (const h of this._history) {
+            if (from && h.hasDeloser(from)) {
+                skip = false;
+            }
+
+            if (!skip && await h.resetFocus(from)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 function _setInformativeStyle(element: HTMLElement, remove: boolean, isActive?: boolean, snapshotIndex?: number): void {
@@ -30,8 +278,7 @@ function _setInformativeStyle(element: HTMLElement, remove: boolean, isActive?: 
 }
 
 export class Deloser implements Types.Deloser {
-    readonly id: string;
-
+    readonly uid: string;
     private _ah: Types.AbilityHelpers;
     private _basic: Types.DeloserBasicProps;
     private _extended: Types.DeloserExtendedProps;
@@ -40,10 +287,15 @@ export class Deloser implements Types.Deloser {
     private _snapshotIndex = 0;
     private _element: HTMLElement;
 
-    constructor(element: HTMLElement, ah: Types.AbilityHelpers, basic?: Types.DeloserBasicProps, extended?: Types.DeloserExtendedProps) {
+    constructor(
+        element: HTMLElement,
+        ah: Types.AbilityHelpers,
+        window: Window,
+        basic?: Types.DeloserBasicProps,
+        extended?: Types.DeloserExtendedProps
+    ) {
+        this.uid = getElementUId(element, window);
         this._ah = ah;
-
-        this.id = 'fd' + ++_lastInternalId;
         this._element = element;
         this._basic = basic || {};
         this._extended = extended || {};
@@ -222,6 +474,10 @@ export class Deloser implements Types.Deloser {
         return false;
     }
 
+    getElement(): HTMLElement {
+        return this._element;
+    }
+
     private _findInHistory(): HTMLElement | null {
         const cur = this._history[this._snapshotIndex].slice(0);
 
@@ -298,13 +554,15 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
-    private _history: DeloserHistoryItem[] = [];
+    private _history: DeloserHistory;
     private _restoreFocusTimer: number | undefined;
+    private _isRestoringFocus = false;
     private _isPaused = false;
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
         this._mainWindow = mainWindow;
+        this._history = new DeloserHistory(ah);
         this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
 
@@ -343,7 +601,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         setAbilityHelpersOnElement(element, {
-            deloser: new Deloser(element, this._ah, basic, extended)
+            deloser: new Deloser(element, this._ah, this._mainWindow, basic, extended)
         });
     }
 
@@ -360,11 +618,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        this._history.forEach(i => {
-            i.history = i.history.filter(c => c !== deloser);
-        });
-
-        this._history = this._history.filter(i => i.history.length > 0);
+        this._history.removeDeloser(deloser);
 
         if (deloser.isActive()) {
             this._scheduleRestoreFocus();
@@ -418,18 +672,6 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
-    private _getDeloser(element: HTMLElement): Types.Deloser | undefined {
-        for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
-
-            if (ah && ah.deloser) {
-                return ah.deloser;
-            }
-        }
-
-        return undefined;
-    }
-
     private _onElementFocused = (e: HTMLElement | undefined): void => {
         if (this._restoreFocusTimer) {
             this._mainWindow.clearTimeout(this._restoreFocusTimer);
@@ -442,12 +684,10 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        const deloser = this._getDeloser(e);
+        const deloser = this._history.process(e);
 
         if (deloser) {
             this._isInSomeDeloser = true;
-
-            const rootId = RootAPI.getRootId(e);
 
             if (deloser !== this._curDeloser) {
                 if (this._curDeloser) {
@@ -455,49 +695,9 @@ export class DeloserAPI implements Types.DeloserAPI {
                 }
 
                 this._curDeloser = deloser;
-
-                deloser.setActive(true);
             }
 
-            let historyItem: DeloserHistoryItem | undefined;
-            let historyItemIndex = -1;
-
-            for (let i = 0; i < this._history.length; i++) {
-                const hi = this._history[i];
-
-                if (hi.rootId === rootId) {
-                    historyItem = hi;
-                    historyItemIndex = i;
-                    break;
-                }
-            }
-
-            if (historyItem) {
-                this._history.splice(historyItemIndex, 1);
-
-                const deloserIndex = historyItem.history.indexOf(deloser);
-
-                if (deloserIndex > -1) {
-                    historyItem.history.splice(deloserIndex, 1);
-                }
-            } else {
-                historyItem = {
-                    rootId,
-                    history: []
-                };
-            }
-
-            historyItem.history.unshift(deloser);
-            this._history.unshift(historyItem);
-
-            const ml = RootAPI.findRootAndModalizer(e);
-
-            if (!ml || !ml.modalizer || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
-                deloser.unshift(e);
-            }
-
-            historyItem.history.splice(_containerHistoryLength, this._history.length - _containerHistoryLength);
-            this._history.splice(_containerHistoryLength, this._history.length - _containerHistoryLength);
+            deloser.setActive(true);
         } else {
             this._isInSomeDeloser = false;
 
@@ -511,15 +711,16 @@ export class DeloserAPI implements Types.DeloserAPI {
         return !!(last && last.offsetParent);
     }
 
-    private _scheduleRestoreFocus(): void {
-        if (this._isPaused) {
+    private _scheduleRestoreFocus(force?: boolean): void {
+        console.error('chesujsusj', this._isPaused, this._isRestoringFocus);
+        if (this._isPaused || this._isRestoringFocus) {
             return;
         }
 
         this._restoreFocusTimer = this._mainWindow.setTimeout(() => {
             this._restoreFocusTimer = undefined;
 
-            if (!this._isInSomeDeloser || this._isLastFocusedAvailable()) {
+            if (!force && (this._isRestoringFocus || !this._isInSomeDeloser || this._isLastFocusedAvailable())) {
                 return;
             }
 
@@ -537,74 +738,42 @@ export class DeloserAPI implements Types.DeloserAPI {
                 }
             }
 
-            if (!this._focusAvailable()) {
-                this._isInSomeDeloser = false;
+            this._isInSomeDeloser = false;
 
-                if (this._curDeloser) {
-                    this._curDeloser.setActive(false);
-                    this._curDeloser = undefined;
-                }
+            if (this._curDeloser) {
+                this._curDeloser.setActive(false);
+                this._curDeloser = undefined;
             }
+
+            this._isRestoringFocus = true;
+
+            this._history.focusAvailable(null).then(focused => {
+                if (!focused) {
+                    this._history.resetFocus(null).then(() => {
+                        this._isRestoringFocus = false;
+                    });
+                }
+            });
         }, 100);
     }
 
-    private _focusAvailable(): boolean {
-        const ah = this._ah;
+    static getDeloser(element: HTMLElement): Types.Deloser | undefined {
+        for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
+            const ah = getAbilityHelpersOnElement(e);
 
-        for (let i = 0; i < this._history.length; i++) {
-            const hi = this._history[i];
-            const resetQueue: { [id: string]: Types.Deloser } = {};
-
-            for (let j = 0; j < hi.history.length; j++) {
-                if (checkDeloser(hi.history[j], resetQueue)) {
-                    return true;
-                }
-            }
-
-            const root = RootAPI.getRootById(hi.rootId);
-            const modalizers = root && root.getModalizers();
-
-            if (modalizers) {
-                // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-                // let's try to find something under the same root.
-                for (let m of modalizers) {
-                    const e = m.getElement();
-
-                    const ah = getAbilityHelpersOnElement(e);
-                    const deloser = ah && ah.deloser;
-
-                    if (deloser && checkDeloser(deloser, resetQueue)) {
-                        return true;
-                    }
-                }
-            }
-
-            // Nothing is found, at least try to reset.
-            for (let id of Object.keys(resetQueue)) {
-                if (resetQueue[id].resetFocus()) {
-                    return true;
-                }
+            if (ah && ah.deloser) {
+                return ah.deloser;
             }
         }
 
-        return false;
+        return undefined;
+    }
 
-        function checkDeloser(deloser: Types.Deloser, resetQueue: { [id: string]: Types.Deloser }): boolean {
-            if (deloser) {
-                const available = deloser.findAvailable();
+    static getHistory(instance: Types.DeloserAPI): DeloserHistory {
+        return (instance as DeloserAPI)._history;
+    }
 
-                if (available) {
-                    ah.focusedElement.focus(available);
-
-                    return true;
-                }
-
-                if (!(deloser.id in resetQueue)) {
-                    resetQueue[deloser.id] = deloser;
-                }
-            }
-
-            return false;
-        }
+    static forceRestoreFocus(instance: Types.DeloserAPI): void {
+        (instance as DeloserAPI)._scheduleRestoreFocus(true);
     }
 }
