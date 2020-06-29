@@ -60,7 +60,42 @@ export interface CrossOriginElement {
     getHTMLElement(): HTMLElement | null;
 }
 
+export interface CrossOriginSentTo {
+    [id: string]: true;
+}
+
+export enum CrossOriginTransactionType {
+    Bootstrap = 1,
+    KeyboardNavigationState = 2,
+    FocusElement = 3,
+    FocusedElementState = 4,
+    BlurredElementState = 5,
+    GetFocusedElement = 6,
+    RestoreFocusInDeloser = 7,
+    Ping = 8
+}
+
+export interface CrossOriginTransactionData<I, O> {
+    ['ah-transaction']: string;
+    ['ah-type']: CrossOriginTransactionType;
+    ['ah-is-response']: boolean;
+    ['ah-timestamp']: number;
+    ['ah-owner']: string;
+    ['ah-sentto']: CrossOriginSentTo;
+    ['ah-target']?: string;
+    ['ah-begin-data']?: I;
+    ['ah-end-data']?: O;
+}
+
+export type CrossOriginTransactionSend = (data: CrossOriginTransactionData<any, any>) => void;
+
+export interface CrossOriginMessage {
+    data: CrossOriginTransactionData<any, any>;
+    send: CrossOriginTransactionSend;
+}
+
 export interface CrossOriginAPI extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
+    setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
     findElement(id: string, rootId?: string): Promise<CrossOriginElement | null>;
     getFocusedElement(): CrossOriginElement | undefined;
     getLastFocusedElement(): CrossOriginElement | undefined;

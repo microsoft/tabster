@@ -712,7 +712,6 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     private _scheduleRestoreFocus(force?: boolean): void {
-        console.error('chesujsusj', this._isPaused, this._isRestoringFocus);
         if (this._isPaused || this._isRestoringFocus) {
             return;
         }
