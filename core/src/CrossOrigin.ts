@@ -450,7 +450,11 @@ class FocusedElementStateTransaction extends CrossOriginTransaction<FocusedEleme
                 historyItem.unshift(deloser);
             }
 
-            CrossOriginAPI.setVal(ah.crossOrigin, element, { isFocusedProgrammatically: beginData.isFocusedProgrammatically });
+            CrossOriginFocusedElementState.setVal(
+                ah.crossOrigin.focusedElement,
+                element,
+                { isFocusedProgrammatically: beginData.isFocusedProgrammatically }
+            );
         }
 
         return true;
@@ -479,7 +483,7 @@ class BlurredElementStateTransaction extends CrossOriginTransaction<BlurredEleme
             ((beginData.ownerId === _focusOwner) || beginData.force) &&
             (!_focusOwnerTimestamp || (_focusOwnerTimestamp < beginData.timestamp))
         ) {
-            CrossOriginAPI.setVal(ah.crossOrigin, undefined, {});
+            CrossOriginFocusedElementState.setVal(ah.crossOrigin.focusedElement, undefined, {});
         }
 
         return true;
@@ -854,7 +858,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 
     focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return this._ah.crossOrigin.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
+        return this._ah.crossOrigin.focusedElement.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
     }
 
     getHTMLElement(): HTMLElement | null {
@@ -862,21 +866,105 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 }
 
-export class CrossOriginAPI
-        extends Subscribable<Types.CrossOriginElement | undefined, Types.FocusedElementDetails> implements Types.CrossOriginAPI {
+export class CrossOriginFocusedElementState
+        extends Subscribable<CrossOriginElement | undefined, Types.FocusedElementDetails>
+        implements Types.CrossOriginFocusedElementState {
 
+    private _transactions: CrossOriginTransactions;
+
+    constructor(transactions: CrossOriginTransactions) {
+        super();
+        this._transactions = transactions;
+    }
+
+    focus(element: Types.CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            resolve(false);
+        });
+    }
+
+    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
+        return this._transactions.beginTransaction(FocusElementTransaction, { id: elementId, rootId }).then(value => {
+            return !!value;
+        });
+    }
+
+        // getFocusedElement(): Types.CrossOriginElement | undefined {
+    //     return undefined;
+    // }
+
+    // getLastFocusedElement(): Types.CrossOriginElement | undefined {
+    //     return undefined;
+    // }
+
+    // getPrevFocusedElement(): Types.CrossOriginElement | undefined {
+    //     return undefined;
+    // }
+
+    // focusDefault(container: Types.CrossOriginElement): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    // focusFirst(container: Types.CrossOriginElement): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    // resetFocus(container: Types.CrossOriginElement): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    // isFocusable(
+    //     element: Types.CrossOriginElement,
+    //     includeProgrammaticallyFocusable?: boolean,
+    //     noVisibleCheck?: boolean,
+    //     noAccessibleCheck?: boolean
+    // ): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    // isVisible(element: Types.CrossOriginElement): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    // isAccessible(element: Types.CrossOriginElement): Promise<boolean> {
+    //     return new Promise<boolean>((resolve, reject) => {
+    //         resolve(false);
+    //     });
+    // }
+
+    static setVal(
+        instance: Types.CrossOriginFocusedElementState,
+        val: CrossOriginElement | undefined,
+        details: Types.FocusedElementDetails
+    ): void {
+        (instance as CrossOriginFocusedElementState).setVal(val, details);
+    }
+}
+
+export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
     private _mainWindow: WindowWithUID;
     private _transactions: CrossOriginTransactions;
     private _blurTimer: number | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
-        super();
+    focusedElement: Types.CrossOriginFocusedElementState;
 
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
         this._mainWindow = mainWindow;
         this._transactions = new CrossOriginTransactions(ah, mainWindow);
+        this.focusedElement = new CrossOriginFocusedElementState(this._transactions);
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
@@ -900,8 +988,6 @@ export class CrossOriginAPI
     }
 
     protected dispose(): void {
-        super.dispose();
-
         if (this._initTimer) {
             this._mainWindow.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -958,79 +1044,10 @@ export class CrossOriginAPI
         }
     }
 
-    findElement(id: string, rootId?: string): Promise<Types.CrossOriginElement | null> {
+    findElement(locator: Types.CrossOriginElementLocator): Promise<Types.CrossOriginElement | null> {
         return new Promise<Types.CrossOriginElement | null>((resolve, reject) => {
             resolve(null);
         });
-    }
-
-    getFocusedElement(): Types.CrossOriginElement | undefined {
-        return undefined;
-    }
-
-    getLastFocusedElement(): Types.CrossOriginElement | undefined {
-        return undefined;
-    }
-
-    getPrevFocusedElement(): Types.CrossOriginElement | undefined {
-        return undefined;
-    }
-
-    focus(element: Types.CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return this._transactions.beginTransaction(FocusElementTransaction, { id: elementId, rootId }).then(value => {
-            return !!value;
-        });
-    }
-
-    focusDefault(container: Types.CrossOriginElement): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    focusFirst(container: Types.CrossOriginElement): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    resetFocus(container: Types.CrossOriginElement): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    isFocusable(
-        element: Types.CrossOriginElement,
-        includeProgrammaticallyFocusable?: boolean,
-        noVisibleCheck?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    isVisible(element: Types.CrossOriginElement): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    isAccessible(element: Types.CrossOriginElement): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(false);
-        });
-    }
-
-    static setVal(instance: Types.CrossOriginAPI, val: CrossOriginElement | undefined, details: Types.FocusedElementDetails): void {
-        (instance as CrossOriginAPI).setVal(val, details);
     }
 }
 

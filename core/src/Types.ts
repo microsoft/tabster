@@ -47,7 +47,7 @@ export interface FocusedElementState extends Subscribable<HTMLElement | undefine
 }
 
 export interface ObservedElementAPI extends Subscribable<HTMLElement, boolean> {
-    setObserved(element: HTMLElement, id: string | null): void;
+    setObserved(element: HTMLElement, name: string | null): void;
     getAvailable(): { [id: string]: HTMLElement };
 }
 
@@ -94,21 +94,33 @@ export interface CrossOriginMessage {
     send: CrossOriginTransactionSend;
 }
 
-export interface CrossOriginAPI extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
-    setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
-    findElement(id: string, rootId?: string): Promise<CrossOriginElement | null>;
-    getFocusedElement(): CrossOriginElement | undefined;
-    getLastFocusedElement(): CrossOriginElement | undefined;
-    getPrevFocusedElement(): CrossOriginElement | undefined;
+export interface CrossOriginFocusedElementState extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
+    // getFocusedElement(): CrossOriginElement | undefined;
+    // getLastFocusedElement(): CrossOriginElement | undefined;
+    // getPrevFocusedElement(): CrossOriginElement | undefined;
     focus(element: CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
     focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
-    focusDefault(container: CrossOriginElement): Promise<boolean>;
-    focusFirst(container: CrossOriginElement): Promise<boolean>;
-    resetFocus(container: CrossOriginElement): Promise<boolean>;
-    isFocusable(element: CrossOriginElement,
-        includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
-    isVisible(element: CrossOriginElement): Promise<boolean>;
-    isAccessible(element: CrossOriginElement): Promise<boolean>;
+    // focusDefault(container: CrossOriginElement): Promise<boolean>;
+    // focusFirst(container: CrossOriginElement): Promise<boolean>;
+    // resetFocus(container: CrossOriginElement): Promise<boolean>;
+}
+
+export interface CrossOriginElementLocator {
+    id?: string;
+    observed?: string;
+    rootId?: string;
+    timeout?: number;
+}
+
+export interface CrossOriginAPI {
+    focusedElement: CrossOriginFocusedElementState;
+
+    setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
+    findElement(locator: CrossOriginElementLocator): Promise<CrossOriginElement | null>;
+    // isFocusable(element: CrossOriginElement,
+    //     includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
+    // isVisible(element: CrossOriginElement): Promise<boolean>;
+    // isAccessible(element: CrossOriginElement): Promise<boolean>;
 }
 
 export interface OutlineProps {
