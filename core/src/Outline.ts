@@ -253,7 +253,7 @@ export class OutlineAPI implements Types.OutlineAPI {
                 if (!(inputType in outlinedInputTypes)) {
                     return false;
                 }
-            } else if ((e.tagName === 'TEXTAREA') || (e.contentEditable === 'true')) {
+            } else if ((e.tagName === 'TEXTAREA') || (e.contentEditable === 'true') || (e.tagName === 'IFRAME')) {
                 return false;
             }
 

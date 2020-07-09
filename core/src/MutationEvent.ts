@@ -5,12 +5,13 @@
 
 import { getAbilityHelpersOnElement } from './Instance';
 import * as Types from './Types';
-import { createElementTreeWalker } from './Utils';
+import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID } from './Utils';
 
 export interface MutationEventDetails {
     root?: Types.Root;
     modalizer?: Types.Modalizer;
     groupper?: Types.Groupper;
+    observed?: HTMLElement;
     removed?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function observeMutations(
         const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.Root; } } = {};
         const changedModalizers: { [id: string]: { removedFrom?: Node; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
         const changedGrouppers: { [id: string]: { removedFrom?: Node; addedTo?: Node; groupper: Types.Groupper } } = {};
+        const changedObservedElements: { [id: string]: { removedFrom?: Node; addedTo?: Node; element: HTMLElement } } = {};
 
         for (let mutation of mutations) {
             const target = mutation.target;
@@ -101,6 +103,18 @@ export function observeMutations(
             }
         }
 
+        for (let id of Object.keys(changedObservedElements)) {
+            const e = changedObservedElements[id];
+
+            if (e.removedFrom && !e.addedTo) {
+                dispatchMutationEvent(e.removedFrom, { observed: e.element, removed: true });
+            }
+
+            if (e.addedTo) {
+                dispatchMutationEvent(e.addedTo, { observed: e.element, removed: false });
+            }
+        }
+
         function findTargets(node: Node, removedFrom?: Node, addedTo?: Node): void {
             acceptNode(node as HTMLElement, removedFrom, addedTo);
 
@@ -119,6 +133,16 @@ export function observeMutations(
                 return NodeFilter.FILTER_SKIP;
             }
 
+            const uid = (element as HTMLElementWithUID).__ahElementUID;
+
+            if (uid) {
+                if (removedFrom) {
+                    delete elementByUId[uid];
+                } else if (addedTo) {
+                    elementByUId[uid] = element;
+                }
+            }
+
             const ah = getAbilityHelpersOnElement(element);
 
             if (ah) {
@@ -132,6 +156,10 @@ export function observeMutations(
 
                 if (ah.groupper) {
                     addGroupTarget(element, ah.groupper, removedFrom, addedTo);
+                }
+
+                if (ah.observed) {
+                    addObservedElementTarget(element, removedFrom, addedTo);
                 }
             } else if (element.getAttribute(Types.AbilityHelpersAttributeName)) {
                 updateAbilityHelpersByAttribute(abilityHelpers, element);
@@ -185,6 +213,27 @@ export function observeMutations(
 
             if (addedTo) {
                 g.addedTo = addedTo;
+            }
+        }
+
+        function addObservedElementTarget(element: HTMLElement, removedFrom?: Node, addedTo?: Node): void {
+            if (!doc.defaultView) {
+                return;
+            }
+
+            const uid = getElementUId(element, doc.defaultView);
+            let e = changedObservedElements[uid];
+
+            if (!e) {
+                e = changedObservedElements[uid] = { element };
+            }
+
+            if (removedFrom) {
+                e.removedFrom = removedFrom;
+            }
+
+            if (addedTo) {
+                e.addedTo = addedTo;
             }
         }
     });

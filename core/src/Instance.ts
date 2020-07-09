@@ -58,8 +58,12 @@ export function setAbilityHelpersOnElement(
                     attrObject[key] = true;
                     break;
 
+                case 'observed':
+                    cur[key] = attrObject[key] = helpers.observed;
+                    break;
+
                 case 'outline':
-                    cur[key] = helpers.outline = attrObject[key] = helpers.outline;
+                    cur[key] = attrObject[key] = helpers.outline;
                     break;
 
                 default:
@@ -74,14 +78,19 @@ export function setAbilityHelpersOnElement(
 
         element.removeAttribute(Types.AbilityHelpersAttributeName);
     } else {
+        const attrStr = JSON.stringify(attrObject);
+
         element.__ah = cur;
         element.__ahAttr = {
-            string: JSON.stringify(attrObject),
+            string: attrStr,
             object: attrObject,
             changing: true
         };
 
-        element.setAttribute(Types.AbilityHelpersAttributeName, element.__ahAttr.string);
+        if (!attr || (attr.string !== attrStr)) {
+            element.setAttribute(Types.AbilityHelpersAttributeName, element.__ahAttr.string);
+        }
+
         element.__ahAttr.changing = false;
     }
 }
@@ -97,6 +106,7 @@ export function updateAbilityHelpersByAttribute(
     const newAttrValue = element.getAttribute(Types.AbilityHelpersAttributeName);
 
     let newAttr = element.__ahAttr;
+    const elementAH = element.__ah;
 
     if (newAttrValue) {
         if (newAttrValue !== (newAttr && newAttr.string)) {
@@ -118,7 +128,7 @@ export function updateAbilityHelpersByAttribute(
                 }
             }
         }
-    } else if (element.__ah) {
+    } else if (elementAH) {
         newAttr = undefined;
     }
 
@@ -151,6 +161,10 @@ export function updateAbilityHelpersByAttribute(
                 case 'uberGroupper':
                     break;
 
+                case 'observed':
+                    abilityHelpers.observed.remove(element);
+                    break;
+
                 case 'outline':
                     abilityHelpers.outline.setProps(element, null);
                     break;
@@ -161,24 +175,24 @@ export function updateAbilityHelpersByAttribute(
     for (let key of Object.keys(newObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
         switch (key) {
             case 'deloser':
-                if (element.__ah && element.__ah.deloser) {
-                    element.__ah.deloser.setProps(newObject.deloser);
+                if (elementAH && elementAH.deloser) {
+                    elementAH.deloser.setProps(newObject.deloser);
                 } else {
                     abilityHelpers.deloser.add(element, newObject.deloser);
                 }
                 break;
 
             case 'root':
-                if (element.__ah && element.__ah.root) {
-                    element.__ah.root.setProps(newObject.root);
+                if (elementAH && elementAH.root) {
+                    elementAH.root.setProps(newObject.root);
                 } else {
                     abilityHelpers.root.add(element);
                 }
                 break;
 
             case 'modalizer':
-                if (element.__ah && element.__ah.modalizer) {
-                    element.__ah.modalizer.setProps(newObject.modalizer);
+                if (elementAH && elementAH.modalizer) {
+                    elementAH.modalizer.setProps(newObject.modalizer);
                 } else {
                     abilityHelpers.modalizer.add(element, newObject.modalizer!!!);
                 }
@@ -189,14 +203,22 @@ export function updateAbilityHelpersByAttribute(
                 break;
 
             case 'groupper':
-                if (element.__ah && element.__ah.groupper) {
-                    element.__ah.groupper.setProps(newObject.groupper);
+                if (elementAH && elementAH.groupper) {
+                    elementAH.groupper.setProps(newObject.groupper);
                 } else {
                     abilityHelpers.focusable.addGroupper(element, newObject.groupper);
                 }
                 break;
 
             case 'uberGroupper':
+                break;
+
+            case 'observed':
+                if (elementAH && elementAH.observed) {
+                    abilityHelpers.observed.setProps(element, newObject.observed);
+                } else {
+                    abilityHelpers.observed.add(element, newObject.observed);
+                }
                 break;
 
             case 'outline':

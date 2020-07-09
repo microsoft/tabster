@@ -18,7 +18,7 @@ export interface WindowWithUID extends Window {
 }
 
 export interface HTMLElementWithUID extends HTMLElement {
-    __ahCrossOriginElementUID?: string;
+    __ahElementUID?: string;
 }
 
 export interface CustomFocusFunctionWithOriginal {
@@ -31,6 +31,8 @@ let _lastContainerBoundingRectCacheId = 0;
 let _containerBoundingRectCacheTimer: number | undefined;
 
 let _uidCounter = 0;
+
+export const elementByUId: { [uid: string]: HTMLElementWithUID } = {};
 
 try {
     // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
@@ -237,10 +239,14 @@ export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
 }
 
 export function getElementUId(element: HTMLElementWithUID, window: Window): string {
-    let uid = element.__ahCrossOriginElementUID;
+    let uid = element.__ahElementUID;
 
     if (!uid) {
-        uid = element.__ahCrossOriginElementUID = getUId(window);
+        uid = element.__ahElementUID = getUId(window);
+    }
+
+    if (!elementByUId[uid] && element.ownerDocument && element.ownerDocument.contains(element)) {
+        elementByUId[uid] = element;
     }
 
     return uid;

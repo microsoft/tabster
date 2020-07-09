@@ -17,6 +17,7 @@ export interface AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
+    observed: ObservedElementAPI;
     crossOrigin: CrossOriginAPI;
 }
 
@@ -46,9 +47,21 @@ export interface FocusedElementState extends Subscribable<HTMLElement | undefine
     resetFocus(container: HTMLElement): boolean;
 }
 
-export interface ObservedElementAPI extends Subscribable<HTMLElement, boolean> {
-    setObserved(element: HTMLElement, name: string | null): void;
-    getAvailable(): { [id: string]: HTMLElement };
+export interface ObservedElementBasicProps {
+    name?: string;
+    details?: any;
+}
+
+export interface ObservedElementExtendedProps {
+}
+
+export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
+    add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
+    remove(element: HTMLElement): void;
+    move(from: HTMLElement, to: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
+    getElementByName(name: string): HTMLElement | null;
+    waitElementByName(name: string, timeout: number): Promise<HTMLElement | null>;
 }
 
 export interface CrossOriginElement {
@@ -56,8 +69,9 @@ export interface CrossOriginElement {
     readonly ownerId: string;
     readonly id?: string;
     readonly rootId?: string;
-    focus(): Promise<boolean>;
-    getHTMLElement(): HTMLElement | null;
+    readonly observedName?: string;
+    readonly observedDetails?: string;
+    focus(timeout?: number, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
 }
 
 export interface CrossOriginSentTo {
@@ -95,14 +109,15 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
-    // getFocusedElement(): CrossOriginElement | undefined;
-    // getLastFocusedElement(): CrossOriginElement | undefined;
-    // getPrevFocusedElement(): CrossOriginElement | undefined;
-    focus(element: CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
-    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
-    // focusDefault(container: CrossOriginElement): Promise<boolean>;
-    // focusFirst(container: CrossOriginElement): Promise<boolean>;
-    // resetFocus(container: CrossOriginElement): Promise<boolean>;
+    focus(element: CrossOriginElement, timeout?: number, noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean): Promise<boolean>;
+    focusById(elementId: string, timeout?: number, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean): Promise<boolean>;
+    focusByObservedName(observedName: string, timeout?: number, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean): Promise<boolean>;
+}
+
+export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
 }
 
 export interface CrossOriginElementLocator {
@@ -114,13 +129,10 @@ export interface CrossOriginElementLocator {
 
 export interface CrossOriginAPI {
     focusedElement: CrossOriginFocusedElementState;
+    observedElement: CrossOriginObservedElementState;
 
     setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
     findElement(locator: CrossOriginElementLocator): Promise<CrossOriginElement | null>;
-    // isFocusable(element: CrossOriginElement,
-    //     includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
-    // isVisible(element: CrossOriginElement): Promise<boolean>;
-    // isAccessible(element: CrossOriginElement): Promise<boolean>;
 }
 
 export interface OutlineProps {
@@ -405,6 +417,10 @@ export interface UberGroupperOnElement {
     uberGroupper: UberGroupper;
 }
 
+export interface ObservedOnElement {
+    observed: ObservedElementBasicProps & ObservedElementExtendedProps;
+}
+
 export interface OutlineOnElement {
     outline: OutlinedElementProps;
 }
@@ -416,6 +432,7 @@ export type AbilityHelpersAttributeProps = Partial<{
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
     uberGroupper: true,
+    observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
 }>;
 
@@ -436,6 +453,7 @@ export type AbilityHelpersOnElement = Partial<
     FocusableOnElement &
     GroupperOnElement &
     UberGroupperOnElement &
+    ObservedOnElement &
     OutlineOnElement
 >;
 
