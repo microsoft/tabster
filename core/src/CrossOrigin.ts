@@ -4,6 +4,7 @@
  */
 
 import { DeloserAPI, DeloserHistoryByRootBase, DeloserItemBase } from './Deloser';
+import { getAbilityHelpersOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { RootAPI } from './Root';
 import { Subscribable } from './State/Subscribable';
@@ -116,6 +117,7 @@ abstract class CrossOriginTransaction<I, O> {
     abstract type: Types.CrossOriginTransactionType;
     readonly id: string;
     readonly beginData: I;
+    readonly timeout?: number;
     protected ah: Types.AbilityHelpers;
     protected endData: O | undefined;
     protected owner: Window;
@@ -129,14 +131,15 @@ abstract class CrossOriginTransaction<I, O> {
     protected targetId: string | undefined;
     private _inProgress: { [id: string]: boolean } = {};
     private _isDone = false;
-    private _sent = 0;
-    private _deliveded = 0;
+    private _isSelfResponding = false;
+    private _sentCount = 0;
 
     constructor(
         ah: Types.AbilityHelpers,
         owner: WindowWithUID,
         knownTargets: KnownTargets,
         value: I,
+        timeout?: number,
         sentTo?: Types.CrossOriginSentTo,
         targetId?: string,
         sendUp?: Types.CrossOriginTransactionSend
@@ -150,6 +153,7 @@ abstract class CrossOriginTransaction<I, O> {
         this._sentTo = sentTo || { [this.ownerId]: true };
         this.targetId = targetId;
         this.sendUp = sendUp;
+        this.timeout = timeout;
         this._promise = new Promise<O>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
@@ -173,18 +177,14 @@ abstract class CrossOriginTransaction<I, O> {
             );
     }
 
-    begin(before?: (data: Types.CrossOriginTransactionData<I, O>) => Promise<any>): Promise<O | undefined> {
+    begin(selfResponse?: (data: Types.CrossOriginTransactionData<I, O>) => Promise<O | undefined>): Promise<O | undefined> {
         const targets = this.getTargets(this._knownTargets);
-
-        if (!targets) {
-            this.end();
-            return this._promise;
-        }
-
         const sentTo: Types.CrossOriginSentTo = { ...this._sentTo };
 
-        for (let id of Object.keys(targets)) {
-            sentTo[id] = true;
+        if (targets) {
+            for (let id of Object.keys(targets)) {
+                sentTo[id] = true;
+            }
         }
 
         const data: Types.CrossOriginTransactionData<I, O> = {
@@ -194,6 +194,7 @@ abstract class CrossOriginTransaction<I, O> {
             ['ah-timestamp']: Date.now(),
             ['ah-owner']: this.ownerId,
             ['ah-sentto']: sentTo,
+            ['ah-timeout']: this.timeout,
             ['ah-begin-data']: this.beginData
         };
 
@@ -201,25 +202,34 @@ abstract class CrossOriginTransaction<I, O> {
             data['ah-target'] = this.targetId;
         }
 
-        const send = () => {
-            let isSent = false;
+        if (selfResponse) {
+            this._isSelfResponding = true;
 
+            selfResponse(data).then(value => {
+                this._isSelfResponding = false;
+
+                if (value !== undefined) {
+                    if (!this.endData) {
+                        this.endData = value;
+                    }
+                }
+
+                if (this.endData || (this._sentCount === 0)) {
+                    this.end();
+                }
+            });
+        }
+
+        if (targets) {
             for (let id of Object.keys(targets)) {
                 if (!(id in this._sentTo)) {
-                    isSent = true;
                     this._send(targets[id].send, id, data);
                 }
             }
+        }
 
-            if (!isSent) {
-                this.end();
-            }
-        };
-
-        if (before) {
-            before(data).then(send);
-        } else {
-            send();
+        if ((this._sentCount === 0) && !this._isSelfResponding) {
+            this.end();
         }
 
         return this._promise;
@@ -231,62 +241,45 @@ abstract class CrossOriginTransaction<I, O> {
         data: Types.CrossOriginTransactionData<I, O>
     ) {
         if (this._inProgress[targetId] === undefined) {
-            this._sent++;
             this._inProgress[targetId] = true;
-
+            this._sentCount++;
             send(data);
         }
     }
 
-    protected end(): void {
-        if (this._isDone) {
-            return;
-        }
-
-        if (!this.isSuccessful()) {
-            this.reject('No successful targets.');
-        } else if (this._resolve) {
-            this._isDone = true;
-            this._resolve(this.endData);
-        }
-    }
-
-    reject(reason: string) {
+    end(error?: string): void {
         if (this._isDone) {
             return;
         }
 
         this._isDone = true;
 
-        if (this._reject) {
-            this._reject(reason);
+        if ((this.endData === undefined) && error) {
+            if (this._reject) {
+                this._reject(error);
+            }
+        } else if (this._resolve) {
+            this._resolve(this.endData);
         }
     }
 
     onResponse(data: Types.CrossOriginTransactionData<I, O>): void {
-        if (data['ah-end-data'] !== undefined) {
-            this.endData = data['ah-end-data'];
+        const endData = data['ah-end-data'];
+
+        if ((endData !== undefined) && !this.endData) {
+            this.endData = endData;
         }
 
         const inProgressId = (data['ah-target'] === _targetIdUp) ? _targetIdUp : data['ah-owner'];
 
         if (this._inProgress[inProgressId]) {
             this._inProgress[inProgressId] = false;
+            this._sentCount--;
 
-            this._deliveded++;
-
-            if (this.isSuccessful()) {
+            if (this.endData || ((this._sentCount === 0) && !this._isSelfResponding)) {
                 this.end();
             }
         }
-    }
-
-    isDone(): boolean {
-        return this._isDone;
-    }
-
-    isSuccessful(): boolean {
-        return (this._sent === 0) || (this._deliveded > 0);
     }
 }
 
@@ -296,6 +289,7 @@ interface CrossOriginTransactionClass<I, O> {
         owner: WindowWithUID,
         knownTargets: KnownTargets,
         value: I,
+        timeout?: number,
         sentTo?: Types.CrossOriginSentTo,
         targetId?: string,
         sendUp?: Types.CrossOriginTransactionSend
@@ -307,7 +301,7 @@ interface CrossOriginTransactionClass<I, O> {
         owner: Window,
         ownerId: string,
         transactions: CrossOriginTransactions,
-        forwardResponse?: O,
+        forwardResult: Promise<O | undefined>,
         isSelfResponse?: boolean
     ): Promise<O>;
     shouldSelfRespond?: boolean;
@@ -342,70 +336,47 @@ class KeyboardNavigationStateTransaction extends CrossOriginTransaction<boolean,
     }
 }
 
-interface FocusElementData {
+interface CrossOriginElementDataIn {
     uid?: string;
     id?: string;
     rootId?: string;
     ownerId?: string;
     observedName?: string;
+}
+
+interface FocusElementData extends CrossOriginElementDataIn {
     noFocusedProgrammaticallyFlag?: boolean;
     noAccessibleCheck?: boolean;
 }
 
-class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, true> {
+class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, boolean> {
     type = Types.CrossOriginTransactionType.FocusElement;
 
-    begin(before?: (data: Types.CrossOriginTransactionData<FocusElementData, true>) => Promise<any>): Promise<true | undefined> {
-        const el = FocusElementTransaction.findElement(this.ah, this.owner, this.beginData);
-
-        if (el && this.ah.focusedElement.focus(el, this.beginData.noFocusedProgrammaticallyFlag, this.beginData.noAccessibleCheck)) {
-            this.end();
-            return Promise.resolve(true);
-        }
-
-        return super.begin(before);
-    }
-
-    static findElement(ah: Types.AbilityHelpers, owner: Window, data?: FocusElementData): HTMLElement | null {
-        let element: HTMLElement | null | undefined;
-
-        if (data && (!data.ownerId || (data.ownerId === getWindowUId(owner)))) {
-            if (data.id) {
-                element = owner.document.getElementById(data.id);
-
-                if (element && data.rootId) {
-                    const ram = RootAPI.findRootAndModalizer(element);
-
-                    if (!ram || (ram.root.uid !== data.rootId)) {
-                        return null;
-                    }
-                }
-            } else if (data.uid) {
-                element = elementByUId[data.uid];
-            } else if (data.observedName) {
-                element = ah.observed.getElementByName(data.observedName);
-            }
-        }
-
-        return element || null;
-    }
+    static shouldSelfRespond = true;
 
     static shouldForward(
         ah: Types.AbilityHelpers,
-        data: Types.CrossOriginTransactionData<FocusElementData, true>,
-        owner: Window,
-        ownerId: string
+        data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
+        owner: Window
     ): boolean {
-        const el = FocusElementTransaction.findElement(ah, owner, data['ah-begin-data']);
-        return (el && ah.focusedElement.focus(el)) ? false : true;
+        const el = GetElementTransaction.findElement(ah, owner, data['ah-begin-data']);
+        return !el || !ah.focusable.isFocusable(el);
     }
 
-    static async makeResponse(): Promise<true> {
-        return true;
+    static async makeResponse(
+        ah: Types.AbilityHelpers,
+        data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
+        owner: Window,
+        ownerId: string,
+        transactions: CrossOriginTransactions,
+        forwardResult: Promise<boolean | undefined>
+    ): Promise<boolean> {
+        const el = GetElementTransaction.findElement(ah, owner, data['ah-begin-data']);
+        return (!!el && ah.focusedElement.focus(el)) || !!(await forwardResult);
     }
 }
 
-interface FocusedElementStateData {
+interface CrossOriginElementDataOut {
     uid: string;
     ownerUId: string;
     timestamp: number;
@@ -417,18 +388,18 @@ interface FocusedElementStateData {
     isFocusedProgrammatically?: boolean;
 }
 
-class FocusedElementStateTransaction extends CrossOriginTransaction<FocusedElementStateData, true> {
+class FocusedElementStateTransaction extends CrossOriginTransaction<CrossOriginElementDataOut, true> {
     type = Types.CrossOriginTransactionType.FocusedElementState;
 
     static shouldSelfRespond = true;
 
     static async makeResponse(
         ah: Types.AbilityHelpers,
-        data: Types.CrossOriginTransactionData<FocusedElementStateData, true>,
+        data: Types.CrossOriginTransactionData<CrossOriginElementDataOut, true>,
         owner: Window,
         ownerId: string,
         transactions: CrossOriginTransactions,
-        forwardResponse?: true,
+        forwardResult: Promise<true | undefined>,
         isSelfResponse?: boolean
     ): Promise<true> {
         const beginData = data['ah-begin-data'];
@@ -504,34 +475,112 @@ class BlurredElementStateTransaction extends CrossOriginTransaction<BlurredEleme
     }
 }
 
-class GetFocusedElementTransaction extends CrossOriginTransaction<undefined, FocusedElementStateData> {
-    type = Types.CrossOriginTransactionType.GetFocusedElement;
+class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDataIn | undefined, CrossOriginElementDataOut> {
+    type = Types.CrossOriginTransactionType.GetElement;
+
+    static shouldSelfRespond = true;
+
+    static findElement(ah: Types.AbilityHelpers, owner: Window, data?: CrossOriginElementDataIn): HTMLElement | null {
+        let element: HTMLElement | null | undefined;
+
+        if (data && (!data.ownerId || (data.ownerId === getWindowUId(owner)))) {
+            if (data.id) {
+                element = owner.document.getElementById(data.id);
+
+                if (element && data.rootId) {
+                    const ram = RootAPI.findRootAndModalizer(element);
+
+                    if (!ram || (ram.root.uid !== data.rootId)) {
+                        return null;
+                    }
+                }
+            } else if (data.uid) {
+                element = elementByUId[data.uid];
+            } else if (data.observedName) {
+                element = ah.observed.getElementByName(data.observedName);
+            }
+        }
+
+        return element || null;
+    }
 
     static async makeResponse(
         ah: Types.AbilityHelpers,
-        data: Types.CrossOriginTransactionData<undefined, FocusedElementStateData>,
+        data: Types.CrossOriginTransactionData<CrossOriginElementDataIn | undefined, CrossOriginElementDataOut>,
         owner: Window,
         ownerId: string,
         transactions: CrossOriginTransactions,
-        forwarded: FocusedElementStateData | undefined
-    ): Promise<FocusedElementStateData | undefined> {
-        const focused = ah.focusedElement.getFocusedElement();
+        forwardResult: Promise<CrossOriginElementDataOut | undefined>
+    ): Promise<CrossOriginElementDataOut | undefined> {
+        const beginData = data['ah-begin-data'];
+        let element: HTMLElement | undefined;
+        let dataOut: CrossOriginElementDataOut | undefined;
 
-        if (focused) {
-            const deloser = DeloserAPI.getDeloser(focused);
-            const ram = RootAPI.findRootAndModalizer(focused);
-
-            return {
-                uid: getElementUId(focused, owner),
-                ownerUId: ownerId,
-                timestamp: Date.now(),
-                id: focused.id,
-                rootUId: ram ? ram.root.uid : undefined,
-                deloserUId: deloser ? getDeloserUID(deloser, owner) : undefined,
-            };
+        if (beginData === undefined) {
+            element = ah.focusedElement.getFocusedElement();
+        } else if (beginData) {
+            element = GetElementTransaction.findElement(ah, owner, beginData) || undefined;
         }
 
-        return forwarded;
+        if (!element && beginData) {
+            const name = beginData.observedName;
+            const timeout = data['ah-timeout'];
+
+            if (name && timeout) {
+                const e: {
+                    element?: HTMLElement | null,
+                    crossOrigin?: CrossOriginElementDataOut
+                } = await (new Promise((resolve, reject) => {
+                    let isWaitElementResolved = false;
+                    let isForwardResolved = false;
+                    let isResolved = false;
+
+                    ah.observed.waitElementByName(name, timeout).then(value => {
+                        isWaitElementResolved = true;
+
+                        if (!isResolved && (value || isForwardResolved)) {
+                            isResolved = true;
+                            resolve({ element: value });
+                        }
+                    });
+
+                    forwardResult.then(value => {
+                        isForwardResolved = true;
+
+                        if (!isResolved && (value || isWaitElementResolved)) {
+                            isResolved = true;
+                            resolve({ crossOrigin: value });
+                        }
+                    });
+                }));
+
+                if (e.element) {
+                    element = e.element;
+                } else if (e.crossOrigin) {
+                    dataOut = e.crossOrigin;
+                }
+            }
+        }
+
+        if (element) {
+            const deloser = DeloserAPI.getDeloser(element);
+            const ram = RootAPI.findRootAndModalizer(element);
+            const ah = getAbilityHelpersOnElement(element);
+            const observed = ah && ah.observed;
+
+            return {
+                uid: getElementUId(element, owner),
+                ownerUId: ownerId,
+                timestamp: Date.now(),
+                id: element.id || undefined,
+                rootUId: ram ? ram.root.uid : undefined,
+                deloserUId: deloser ? getDeloserUID(deloser, owner) : undefined,
+                observedName: observed && observed.name,
+                observedDetails: observed && observed.details
+            };
+        } else {
+            return dataOut;
+        }
     }
 }
 
@@ -554,9 +603,10 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
         owner: Window,
         ownerId: string,
         transactions: CrossOriginTransactions,
-        forwarded: boolean | undefined
+        forwardResult: Promise<boolean | undefined>
     ): Promise<boolean> {
-        const begin = !forwarded && data['ah-begin-data'];
+        const forwardRet = await forwardResult;
+        const begin = !forwardRet && data['ah-begin-data'];
         const uid = begin && begin.deloserUId;
         const deloser = uid && _deloserByUId[uid];
 
@@ -566,7 +616,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
             return begin.reset ? history.resetFocus(deloser) : history.focusAvailable(deloser);
         }
 
-        return !!forwarded;
+        return !!forwardRet;
     }
 }
 
@@ -584,7 +634,7 @@ class PingTransaction extends CrossOriginTransaction<undefined, true> {
 
 interface CrossOriginTransactionWrapper<I, O> {
     transaction: CrossOriginTransaction<I, O>;
-    timeout: number;
+    timer: number;
 }
 
 class CrossOriginTransactions {
@@ -643,38 +693,44 @@ class CrossOriginTransactions {
         sentTo?: Types.CrossOriginSentTo,
         targetId?: string
     ): Promise<O | undefined> {
-        const transaction = new Transaction(this._ah, this._owner, this._knownTargets, value, sentTo, targetId, this.sendUp);
-        let before: ((data: Types.CrossOriginTransactionData<I, O>) => Promise<any>) | undefined;
+        const transaction = new Transaction(this._ah, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
+        let selfResponse: ((data: Types.CrossOriginTransactionData<I, O>) => Promise<O | undefined>) | undefined;
 
         if (Transaction.shouldSelfRespond) {
-            before = (data: Types.CrossOriginTransactionData<I, O>) => {
-                return Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, data['ah-end-data'], true);
+            selfResponse = (data: Types.CrossOriginTransactionData<I, O>) => {
+                return Transaction.makeResponse(
+                    this._ah,
+                    data,
+                    this._owner,
+                    this._ownerUId,
+                    this,
+                    Promise.resolve(undefined),
+                    true
+                );
             };
         }
 
-        return this._beginTransaction(transaction, before);
+        return this._beginTransaction(transaction, timeout, selfResponse);
     }
 
     private _beginTransaction<I, O>(
         transaction: CrossOriginTransaction<I, O>,
-        before?: (data: Types.CrossOriginTransactionData<I, O>) => Promise<any>
+        timeout?: number,
+        selfResponse?: (data: Types.CrossOriginTransactionData<I, O>) => Promise<O | undefined>
     ): Promise<O | undefined> {
         const wrapper: CrossOriginTransactionWrapper<I, O> = {
             transaction,
-            timeout: this._owner.setTimeout(() => {
-                delete wrapper.timeout;
+            timer: this._owner.setTimeout(() => {
+                delete wrapper.timer;
                 delete this._transactions[transaction.id];
-
-                if (!transaction.isDone() && !transaction.isSuccessful()) {
-                    transaction.reject('Cross origin transaction timed out.');
-                }
-            }, _transactionTimeout)
+                transaction.end('Cross origin transaction timed out.');
+            }, _transactionTimeout + (timeout || 0))
         };
 
         this._transactions[transaction.id] = wrapper;
 
-        return transaction.begin(before).finally(() => {
-            this._owner.clearTimeout(wrapper.timeout);
+        return transaction.begin(selfResponse).finally(() => {
+            this._owner.clearTimeout(wrapper.timer);
             delete this._transactions[transaction.id];
         });
     }
@@ -705,10 +761,12 @@ class CrossOriginTransactions {
                         this._owner,
                         this._knownTargets,
                         data['ah-begin-data'],
+                        data['ah-timeout'],
                         sentTo,
                         targetId,
                         this.sendUp
-                    )
+                    ),
+                    data['ah-timeout']
                 );
             } else {
                 return Promise.resolve();
@@ -730,8 +788,8 @@ class CrossOriginTransactions {
                 return FocusedElementStateTransaction;
             case Types.CrossOriginTransactionType.BlurredElementState:
                 return BlurredElementStateTransaction;
-            case Types.CrossOriginTransactionType.GetFocusedElement:
-                return GetFocusedElementTransaction;
+            case Types.CrossOriginTransactionType.GetElement:
+                return GetElementTransaction;
             case Types.CrossOriginTransactionType.RestoreFocusInDeloser:
                 return RestoreFocusInDeloserTransaction;
             case Types.CrossOriginTransactionType.Ping:
@@ -773,24 +831,25 @@ class CrossOriginTransactions {
         } else {
             const Transaction = this._getTransactionClass(data['ah-type']);
 
-            this.forwardTransaction(data).then(value => {
-                if (Transaction && e.send) {
-                    Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, value, false).then(r => {
-                        const response: Types.CrossOriginTransactionData<any, any> = {
-                            ['ah-transaction']: data['ah-transaction'],
-                            ['ah-type']: data['ah-type'],
-                            ['ah-is-response']: true,
-                            ['ah-timestamp']: Date.now(),
-                            ['ah-owner']: this._ownerUId,
-                            ['ah-sentto']: {},
-                            ['ah-target']: (data['ah-target'] === _targetIdUp) ? _targetIdUp : data['ah-owner'],
-                            ['ah-end-data']: r
-                        };
+            const forwardResult = this.forwardTransaction(data);
 
-                        e.send(response);
-                    });
-                }
-            });
+            if (Transaction && e.send) {
+                Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, forwardResult, false).then(r => {
+                    const response: Types.CrossOriginTransactionData<any, any> = {
+                        ['ah-transaction']: data['ah-transaction'],
+                        ['ah-type']: data['ah-type'],
+                        ['ah-is-response']: true,
+                        ['ah-timestamp']: Date.now(),
+                        ['ah-owner']: this._ownerUId,
+                        ['ah-timeout']: data['ah-timeout'],
+                        ['ah-sentto']: {},
+                        ['ah-target']: (data['ah-target'] === _targetIdUp) ? _targetIdUp : data['ah-owner'],
+                        ['ah-end-data']: r
+                    };
+
+                    e.send(response);
+                });
+            }
         }
     }
 
@@ -814,7 +873,7 @@ class CrossOriginTransactions {
         }
 
         if (hasDeadWindow) {
-            const focused = await this.beginTransaction(GetFocusedElementTransaction, undefined);
+            const focused = await this.beginTransaction(GetElementTransaction, undefined);
 
             if (!focused) {
                 await this.beginTransaction(BlurredElementStateTransaction, {
@@ -882,8 +941,8 @@ export class CrossOriginElement implements Types.CrossOriginElement {
         this.observedDetails = observedDetails;
     }
 
-    focus(timeout?: number, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return this._ah.crossOrigin.focusedElement.focus(this, timeout, noFocusedProgrammaticallyFlag, noAccessibleCheck);
+    focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
+        return this._ah.crossOrigin.focusedElement.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
     }
 }
 
@@ -900,7 +959,6 @@ export class CrossOriginFocusedElementState
 
     async focus(
         element: Types.CrossOriginElement,
-        timeout?: number,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
@@ -912,12 +970,11 @@ export class CrossOriginFocusedElementState
             observedName: element.observedName,
             noFocusedProgrammaticallyFlag,
             noAccessibleCheck
-        }, timeout).then(value => !!value);
+        }).then(value => !!value);
     }
 
     async focusById(
         elementId: string,
-        timeout?: number,
         rootId?: string,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
@@ -927,7 +984,7 @@ export class CrossOriginFocusedElementState
             rootId,
             noFocusedProgrammaticallyFlag,
             noAccessibleCheck
-        }, timeout).then(value => !!value);
+        }).then(value => !!value);
     }
 
     async focusByObservedName(
@@ -957,6 +1014,39 @@ export class CrossOriginFocusedElementState
 export class CrossOriginObservedElementState
         extends Subscribable<CrossOriginElement, Types.ObservedElementBasicProps>
         implements Types.CrossOriginObservedElementState {
+
+    private _ah: Types.AbilityHelpers;
+    private _transactions: CrossOriginTransactions;
+
+    constructor(ah: Types.AbilityHelpers, transactions: CrossOriginTransactions) {
+        super();
+        this._ah = ah;
+        this._transactions = transactions;
+    }
+
+    async getElementByName(name: string): Promise<CrossOriginElement | null> {
+        return this.waitElementByName(name, 0);
+    }
+
+    async waitElementByName(name: string, timeout: number): Promise<CrossOriginElement | null> {
+        return this._transactions.beginTransaction(GetElementTransaction, {
+            observedName: name
+        }, timeout).then(value => {
+            if (!value) {
+                return null;
+            }
+
+            return new CrossOriginElement(
+                this._ah,
+                value.uid,
+                value.ownerUId,
+                value.id,
+                value.rootUId,
+                value.observedName,
+                value.observedDetails
+            );
+        });
+    }
 }
 
 export class CrossOriginAPI implements Types.CrossOriginAPI {
@@ -974,7 +1064,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         this._mainWindow = mainWindow;
         this._transactions = new CrossOriginTransactions(ah, mainWindow);
         this.focusedElement = new CrossOriginFocusedElementState(this._transactions);
-        this.observedElement = new CrossOriginObservedElementState();
+        this.observedElement = new CrossOriginObservedElementState(ah, this._transactions);
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
@@ -1025,14 +1115,18 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (value) {
             const deloser = DeloserAPI.getDeloser(value);
             const ram = RootAPI.findRootAndModalizer(value);
+            const ah = getAbilityHelpersOnElement(value);
+            const observed = ah && ah.observed;
 
-            const fed: FocusedElementStateData = {
+            const fed: CrossOriginElementDataOut = {
                 uid: getElementUId(value, this._mainWindow),
                 ownerUId: ownerId,
                 timestamp: Date.now(),
                 id: value.id || undefined,
                 rootUId: ram ? ram.root.uid : undefined,
                 deloserUId: deloser ? getDeloserUID(deloser, this._mainWindow) : undefined,
+                observedName: observed && observed.name,
+                observedDetails: observed && observed.details,
                 isFocusedProgrammatically: details.isFocusedProgrammatically
             };
 
@@ -1041,7 +1135,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._blurTimer = this._mainWindow.setTimeout(() => {
                 this._blurTimer = undefined;
 
-                this._transactions.beginTransaction(GetFocusedElementTransaction, undefined).then(value => {
+                this._transactions.beginTransaction(GetElementTransaction, undefined).then(value => {
                     if (!value) {
                         this._transactions.beginTransaction(BlurredElementStateTransaction, {
                             ownerId,
@@ -1052,12 +1146,6 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
                 });
             }, 0);
         }
-    }
-
-    findElement(locator: Types.CrossOriginElementLocator): Promise<Types.CrossOriginElement | null> {
-        return new Promise<Types.CrossOriginElement | null>((resolve, reject) => {
-            resolve(null);
-        });
     }
 }
 

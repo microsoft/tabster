@@ -71,7 +71,7 @@ export interface CrossOriginElement {
     readonly rootId?: string;
     readonly observedName?: string;
     readonly observedDetails?: string;
-    focus(timeout?: number, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
+    focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
 }
 
 export interface CrossOriginSentTo {
@@ -84,7 +84,7 @@ export enum CrossOriginTransactionType {
     FocusElement = 3,
     FocusedElementState = 4,
     BlurredElementState = 5,
-    GetFocusedElement = 6,
+    GetElement = 6,
     RestoreFocusInDeloser = 7,
     Ping = 8
 }
@@ -96,6 +96,7 @@ export interface CrossOriginTransactionData<I, O> {
     ['ah-timestamp']: number;
     ['ah-owner']: string;
     ['ah-sentto']: CrossOriginSentTo;
+    ['ah-timeout']?: number;
     ['ah-target']?: string;
     ['ah-begin-data']?: I;
     ['ah-end-data']?: O;
@@ -109,22 +110,17 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
-    focus(element: CrossOriginElement, timeout?: number, noFocusedProgrammaticallyFlag?: boolean,
+    focus(element: CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean): Promise<boolean>;
-    focusById(elementId: string, timeout?: number, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
+    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean): Promise<boolean>;
     focusByObservedName(observedName: string, timeout?: number, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean): Promise<boolean>;
 }
 
 export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
-}
-
-export interface CrossOriginElementLocator {
-    id?: string;
-    observed?: string;
-    rootId?: string;
-    timeout?: number;
+    getElementByName(name: string): Promise<CrossOriginElement | null>;
+    waitElementByName(name: string, timeout: number): Promise<CrossOriginElement | null>;
 }
 
 export interface CrossOriginAPI {
@@ -132,7 +128,6 @@ export interface CrossOriginAPI {
     observedElement: CrossOriginObservedElementState;
 
     setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
-    findElement(locator: CrossOriginElementLocator): Promise<CrossOriginElement | null>;
 }
 
 export interface OutlineProps {
