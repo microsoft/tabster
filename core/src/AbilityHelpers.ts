@@ -11,7 +11,7 @@ import { updateAbilityHelpersByAttribute } from './Instance';
 import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
 import { observeMutations } from './MutationEvent';
-import { ObservedElementAPI } from './Observed';
+import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI, setupOutlineInIFrame } from './Outline';
 import { RootAPI, setupRootInIFrame } from './Root';
 import * as Types from './Types';
@@ -29,7 +29,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
-    observed: ObservedElementAPI;
+    observedElement: ObservedElementAPI;
     crossOrigin: CrossOriginAPI;
 
     constructor(mainWindow: Window) {
@@ -47,7 +47,7 @@ class AbilityHelpers implements Types.AbilityHelpers {
         this.focusable = new FocusableAPI(this, mainWindow);
         this.modalizer = new ModalizerAPI(this, mainWindow);
         this.root = new RootAPI(this, mainWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
-        this.observed = new ObservedElementAPI(mainWindow);
+        this.observedElement = new ObservedElementAPI(this, mainWindow);
         this.crossOrigin = new CrossOriginAPI(this, mainWindow);
     }
 }

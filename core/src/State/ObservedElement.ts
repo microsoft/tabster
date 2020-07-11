@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
-import { Subscribable } from './State/Subscribable';
-import * as Types from './Types';
-import { getElementUId } from './Utils';
+import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Instance';
+import { MUTATION_EVENT_NAME, MutationEvent } from '../MutationEvent';
+import { Subscribable } from './Subscribable';
+import * as Types from '../Types';
+import { getElementUId } from '../Utils';
 
 interface ObservedElementInfo {
     element: HTMLElement;
@@ -21,6 +21,7 @@ export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
 
     private _mainWindow: Window;
+    private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
     private _waiting: {
         [name: string]: {
@@ -29,9 +30,11 @@ export class ObservedElementAPI
             resolve?: (value: HTMLElement | null) => void,
             reject?: () => void }
     } = {};
+    private _lastRequestFocusId = 0;
 
-    constructor(mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         super();
+        this._ah = ah;
         this._mainWindow = mainWindow;
         this._initTimer = this._mainWindow.setTimeout(this._init, 0);
     }
@@ -134,8 +137,8 @@ export class ObservedElementAPI
         this._onObservedElementUpdate(element);
     }
 
-    getElementByName(name: string): HTMLElement | null {
-        const o = observedByName[name];
+    getElement(observedName: string): HTMLElement | null {
+        const o = observedByName[observedName];
 
         if (o) {
             for (let uid of Object.keys(o)) {
@@ -146,24 +149,24 @@ export class ObservedElementAPI
         return null;
     }
 
-    waitElementByName(name: string, timeout: number): Promise<HTMLElement | null> {
-        const el = this.getElementByName(name);
+    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null> {
+        const el = this.getElement(observedName);
 
         if (el) {
             return Promise.resolve(el);
         }
 
-        let w = this._waiting[name];
+        let w = this._waiting[observedName];
 
         if (w && w.promise) {
             return w.promise;
         }
 
-        w = this._waiting[name] = {
+        w = this._waiting[observedName] = {
             timer: this._mainWindow.setTimeout(() => {
                 w.timer = undefined;
 
-                delete this._waiting[name];
+                delete this._waiting[observedName];
 
                 if (w.resolve) {
                     w.resolve(null);
@@ -179,6 +182,14 @@ export class ObservedElementAPI
         w.promise = promise;
 
         return promise;
+    }
+
+    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
+        let requestId = ++this._lastRequestFocusId;
+        return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
+            ? this._ah.focusedElement.focus(element)
+            : false
+        );
     }
 
     private _onObservedElementUpdate(element: HTMLElement): void {

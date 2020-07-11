@@ -17,7 +17,7 @@ export interface AbilityHelpers {
     deloser: DeloserAPI;
     focusable: FocusableAPI;
     modalizer: ModalizerAPI;
-    observed: ObservedElementAPI;
+    observedElement: ObservedElementAPI;
     crossOrigin: CrossOriginAPI;
 }
 
@@ -60,8 +60,9 @@ export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedEl
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
-    getElementByName(name: string): HTMLElement | null;
-    waitElementByName(name: string, timeout: number): Promise<HTMLElement | null>;
+    getElement(observedName: string): HTMLElement | null;
+    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null>;
+    requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
 export interface CrossOriginElement {
@@ -82,11 +83,10 @@ export enum CrossOriginTransactionType {
     Bootstrap = 1,
     KeyboardNavigationState = 2,
     FocusElement = 3,
-    FocusedElementState = 4,
-    BlurredElementState = 5,
-    GetElement = 6,
-    RestoreFocusInDeloser = 7,
-    Ping = 8
+    ElementState = 4,
+    GetElement = 5,
+    RestoreFocusInDeloser = 6,
+    Ping = 7
 }
 
 export interface CrossOriginTransactionData<I, O> {
@@ -119,8 +119,9 @@ export interface CrossOriginFocusedElementState extends Subscribable<CrossOrigin
 }
 
 export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
-    getElementByName(name: string): Promise<CrossOriginElement | null>;
-    waitElementByName(name: string, timeout: number): Promise<CrossOriginElement | null>;
+    getElement(observedName: string): Promise<CrossOriginElement | null>;
+    waitElement(observedName: string, timeout: number): Promise<CrossOriginElement | null>;
+    requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
 export interface CrossOriginAPI {

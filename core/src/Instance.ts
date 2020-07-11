@@ -162,7 +162,7 @@ export function updateAbilityHelpersByAttribute(
                     break;
 
                 case 'observed':
-                    abilityHelpers.observed.remove(element);
+                    abilityHelpers.observedElement.remove(element);
                     break;
 
                 case 'outline':
@@ -215,9 +215,9 @@ export function updateAbilityHelpersByAttribute(
 
             case 'observed':
                 if (elementAH && elementAH.observed) {
-                    abilityHelpers.observed.setProps(element, newObject.observed);
+                    abilityHelpers.observedElement.setProps(element, newObject.observed);
                 } else {
-                    abilityHelpers.observed.add(element, newObject.observed);
+                    abilityHelpers.observedElement.add(element, newObject.observed);
                 }
                 break;
 
