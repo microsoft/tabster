@@ -5,20 +5,19 @@
 
 import { CrossOriginAPI } from './CrossOrigin';
 import { DeloserAPI } from './Deloser';
-import { FocusableAPI, setupFocusableInIFrame } from './Focusable';
-import { FocusedElementState, setupFocusedElementStateInIFrame } from './State/FocusedElement';
+import { FocusableAPI } from './Focusable';
+import { FocusedElementState } from './State/FocusedElement';
 import { updateAbilityHelpersByAttribute } from './Instance';
-import { KeyboardNavigationState, setupKeyboardNavigationStateInIFrame } from './State/KeyboardNavigation';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
 import { observeMutations } from './MutationEvent';
 import { ObservedElementAPI } from './State/ObservedElement';
-import { OutlineAPI, setupOutlineInIFrame } from './Outline';
-import { RootAPI, setupRootInIFrame } from './Root';
+import { OutlineAPI } from './Outline';
+import { RootAPI } from './Root';
 import * as Types from './Types';
 
 export { Types };
 
-let _mainWindow: Types.WindowWithAbilityHelpers | undefined;
 let _instance: Types.AbilityHelpers | undefined;
 
 class AbilityHelpers implements Types.AbilityHelpers {
@@ -63,8 +62,6 @@ function createAbilityHelpers(win: Types.WindowWithAbilityHelpers) {
         helpers = new AbilityHelpers(win);
 
         if (win) {
-            _mainWindow = win;
-
             win.__ah = {
                 helpers,
                 mainWindow: win
@@ -89,30 +86,6 @@ export function getAbilityHelpers(): Types.AbilityHelpers {
     }
 
     return _instance;
-}
-
-export function setupAbilityHelpersIFrame(iframeDocument: HTMLDocument): void {
-    if (!_instance) {
-        throw new Error('setupAbilityHelpers() is not called.');
-    }
-
-    const win = iframeDocument.defaultView as (Types.WindowWithAbilityHelpers | null);
-
-    if (!win || (win.__ah)) {
-        return;
-    }
-
-    win.__ah = {
-        helpers: _instance,
-        mainWindow: _mainWindow || win
-    };
-
-    observeMutations(iframeDocument, _instance, updateAbilityHelpersByAttribute);
-    setupFocusedElementStateInIFrame(iframeDocument, _mainWindow);
-    setupKeyboardNavigationStateInIFrame(iframeDocument, _mainWindow);
-    setupOutlineInIFrame(iframeDocument, _mainWindow);
-    setupFocusableInIFrame(iframeDocument, _mainWindow);
-    setupRootInIFrame(iframeDocument, _mainWindow);
 }
 
 export function getAbilityHelpersAttribute(

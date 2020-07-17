@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import { RootAPI } from './Root';
@@ -20,7 +19,6 @@ const _focusableSelector = [
     '*[contenteditable]'
 ].join(', ');
 
-const _customEventName = 'ability-helpers:focusable-related';
 const _isVisibleTimeout = 200;
 
 let _lastId = 0;
@@ -579,7 +577,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         this._initTimer = undefined;
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
         this._mainWindow.addEventListener('scroll', this._onScroll, true);
 
         this._ah.focusedElement.subscribe(this._onFocus);
@@ -597,7 +594,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
     }
@@ -660,22 +656,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         _focusedGrouppers = newFocusedGrouppers;
-    }
-
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case 'scroll':
-                this._onScroll(e.originalEvent as UIEvent);
-                break;
-
-            case MUTATION_EVENT_NAME:
-                this._onMutation(e.originalEvent as MutationEvent);
-                break;
-        }
     }
 
     private _onMutation = (e: MutationEvent): void => {
@@ -1177,15 +1157,4 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         return rootAndModalizer ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
     }
-}
-
-export function setupFocusableInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    if (!mainWindow) {
-        return;
-    }
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: true },
-        { type: EventFromIFrameDescriptorType.Window, name: 'scroll', capture: true }
-    ]);
 }

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from '../IFrameEvents';
 import { getAbilityHelpersOnElement } from '../Instance';
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Keys } from '../Keys';
@@ -18,7 +17,6 @@ import {
     shouldIgnoreFocus
 } from '../Utils';
 
-const _customEventName = 'ability-helpers:focused-element-related';
 const _canOverrideNativeFocus = canOverrideNativeFocus();
 
 interface WindowWithHTMLElement extends Window {
@@ -74,7 +72,6 @@ export class FocusedElementState
         this._mainWindow.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
         this._mainWindow.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._mainWindow.addEventListener('keydown', this._onKeyDown);
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
     protected dispose(): void {
@@ -89,7 +86,6 @@ export class FocusedElementState
         this._mainWindow.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
         this._mainWindow.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._mainWindow.removeEventListener('keydown', this._onKeyDown);
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
     }
 
     getFocusedElement(): HTMLElement | undefined {
@@ -229,36 +225,6 @@ export class FocusedElementState
 
     private _onFocusOut = (e: FocusEvent): void => {
         this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
-    }
-
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case 'mousedown':
-                this._onMouseDown(e.originalEvent as MouseEvent);
-                break;
-
-            case 'focusin':
-                this._setFocusedElement(
-                    e.targetDetails.target,
-                    ((e.originalEvent as FocusEvent).relatedTarget as HTMLElement) || undefined
-                );
-                break;
-
-            case 'focusout':
-                this._setFocusedElement(
-                    undefined,
-                    ((e.originalEvent as FocusEvent).relatedTarget as HTMLElement) || undefined
-                );
-                break;
-
-            case 'keydown':
-                this._onKeyDown(e.originalEvent as KeyboardEvent);
-                break;
-        }
     }
 
     static replaceFocus(doc: HTMLDocument): void {
@@ -669,19 +635,4 @@ export class FocusedElementState
             }
         }
     }
-}
-
-export function setupFocusedElementStateInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    FocusedElementState.replaceFocus(iframeDocument);
-
-    if (!mainWindow) {
-        return;
-    }
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: 'focusin', capture: true },
-        { type: EventFromIFrameDescriptorType.Document, name: 'focusout', capture: true },
-        { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
-        { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: false }
-    ]);
 }

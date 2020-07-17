@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    EventFromIFrame,
-    EventFromIFrameDescriptor,
-    EventFromIFrameDescriptorType,
-    setupIFrameToMainWindowEventsDispatcher
-} from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import * as Types from './Types';
 import { getBoundingRect } from './Utils';
-
-const _customEventName = 'ability-helpers:outline-related';
 
 const defaultProps: Types.OutlineProps = {
     areaClass: 'ah-focus-outline-area',
@@ -24,7 +16,6 @@ const defaultProps: Types.OutlineProps = {
 };
 
 let _props: Types.OutlineProps = defaultProps;
-let _hasOutlineClass = false;
 
 let _fullScreenEventName: string | undefined;
 let _fullScreenElementName: string | undefined;
@@ -96,8 +87,6 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         this._mainWindow.addEventListener('scroll', this._onScroll, true); // Capture!
 
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
-
         if (_fullScreenEventName) {
             this._mainWindow.document.addEventListener(_fullScreenEventName, this._onFullScreenChanged);
         }
@@ -118,9 +107,8 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         if (!props || !props.areaClass) {
             win.document.body.classList.add(defaultProps.areaClass);
-            _hasOutlineClass = false;
         } else {
-            _hasOutlineClass = true;
+            win.document.body.classList.remove(defaultProps.areaClass);
         }
     }
 
@@ -161,8 +149,6 @@ export class OutlineAPI implements Types.OutlineAPI {
         this._ah.focusedElement.unsubscribe(this._onElementFocused);
 
         this._mainWindow.removeEventListener('scroll', this._onScroll, true);
-
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true);
 
         if (_fullScreenEventName) {
             this._mainWindow.document.removeEventListener(_fullScreenEventName, this._onFullScreenChanged);
@@ -270,22 +256,6 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         return false;
-    }
-
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case 'scroll':
-                this._onScroll(e.originalEvent as UIEvent);
-                break;
-
-            case _fullScreenEventName:
-                this._onFullScreenChanged(e.originalEvent);
-                break;
-        }
     }
 
     private _onScroll = (e: UIEvent): void => {
@@ -535,36 +505,6 @@ export class OutlineAPI implements Types.OutlineAPI {
         return (child === parent) ||
             // tslint:disable-next-line:no-bitwise
             !!(parent.compareDocumentPosition(child) & document.DOCUMENT_POSITION_CONTAINED_BY);
-    }
-}
-
-export function setupOutlineInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    if (!mainWindow) {
-        return;
-    }
-
-    const descriptors: EventFromIFrameDescriptor[] = [
-        { type: EventFromIFrameDescriptorType.Window, name: 'scroll', capture: true }
-    ];
-
-    if (_fullScreenEventName) {
-        descriptors.push({ type: EventFromIFrameDescriptorType.Document, name: _fullScreenEventName, capture: false });
-    }
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, descriptors);
-
-    const win = iframeDocument.defaultView as (Types.WindowWithAbilityHelpers | null);
-
-    if (!win || !win.__ah) {
-        throw new Error('Wrong document to set Outline up.');
-    }
-
-    if (!win.__ah.outlineStyle) {
-        win.__ah.outlineStyle = appendStyles(iframeDocument, _props);
-    }
-
-    if (!_hasOutlineClass) {
-        win.document.body.classList.add(defaultProps.areaClass);
     }
 }
 

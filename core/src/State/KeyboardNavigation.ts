@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from '../IFrameEvents';
 import { Keys } from '../Keys';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 
-const _customEventName = 'ability-helpers:keyboard-navigation-related';
 const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
                              // during _dismissTimeout time, dismiss the keyboard
                              // navigation mode.
@@ -34,8 +32,6 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
         this._mainWindow.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._mainWindow.addEventListener('keydown', this._onKeyDown, true); // Capture!
 
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent, true); // Capture!
-
         this._ah.focusedElement.subscribe(this._onElementFocused);
     }
 
@@ -54,8 +50,6 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
 
         this._mainWindow.document.body.removeEventListener('mousedown', this._onMouseDown, true);
         this._mainWindow.removeEventListener('keydown', this._onKeyDown, true);
-
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent, true);
 
         this._ah.focusedElement.unsubscribe(this._onElementFocused);
     }
@@ -85,22 +79,6 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
             this.setVal(true, undefined);
         } else if (isNavigatingWithKeyboard && (e.keyCode === Keys.Esc)) {
             this._scheduleDismiss();
-        }
-    }
-
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case 'mousedown':
-                this._onMouseDown(e.originalEvent as MouseEvent);
-                break;
-
-            case 'keydown':
-                this._onKeyDown(e.originalEvent as KeyboardEvent);
-                break;
         }
     }
 
@@ -156,15 +134,4 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     static setVal(instance: Types.KeyboardNavigationState, val: boolean): void {
         (instance as KeyboardNavigationState).setVal(val, undefined);
     }
-}
-
-export function setupKeyboardNavigationStateInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    if (!mainWindow) {
-        return;
-    }
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: 'mousedown', capture: true },
-        { type: EventFromIFrameDescriptorType.Window, name: 'keydown', capture: true }
-    ]);
 }

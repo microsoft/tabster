@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventFromIFrame, EventFromIFrameDescriptorType, setupIFrameToMainWindowEventsDispatcher } from './IFrameEvents';
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
@@ -14,8 +13,6 @@ interface DummyInput {
     isFirst: boolean;
     shouldMoveOut?: boolean;
 }
-
-const _customEventName = 'ability-helpers:root-related';
 
 let _rootById: { [id: string]: Types.Root } = {};
 
@@ -341,7 +338,6 @@ export class RootAPI implements Types.RootAPI {
         this._initTimer = undefined;
 
         this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
-        this._mainWindow.addEventListener(_customEventName, this._onIFrameEvent);
 
         observeMutationEvents(this._mainWindow.document);
     }
@@ -353,7 +349,6 @@ export class RootAPI implements Types.RootAPI {
         }
 
         this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
-        this._mainWindow.removeEventListener(_customEventName, this._onIFrameEvent);
 
         // TODO: Stop the observer.
     }
@@ -413,18 +408,6 @@ export class RootAPI implements Types.RootAPI {
 
         if (ah && ah.root) {
             ah.root.setProps(basic);
-        }
-    }
-
-    private _onIFrameEvent = (e: EventFromIFrame): void => {
-        if (!e.targetDetails) {
-            return;
-        }
-
-        switch (e.targetDetails.descriptor.name) {
-            case MUTATION_EVENT_NAME:
-                this._onMutation(e.originalEvent as MutationEvent);
-                break;
         }
     }
 
@@ -489,18 +472,6 @@ export class RootAPI implements Types.RootAPI {
 
         return root ? { root, modalizer } : undefined;
     }
-}
-
-export function setupRootInIFrame(iframeDocument: HTMLDocument, mainWindow?: Window): void {
-    if (!mainWindow) {
-        return;
-    }
-
-    observeMutationEvents(iframeDocument);
-
-    setupIFrameToMainWindowEventsDispatcher(mainWindow, iframeDocument, _customEventName, [
-        { type: EventFromIFrameDescriptorType.Document, name: MUTATION_EVENT_NAME, capture: false }
-    ]);
 }
 
 function observeMutationEvents(doc: HTMLDocument): void {
