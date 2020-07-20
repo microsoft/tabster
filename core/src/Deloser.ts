@@ -550,7 +550,7 @@ export class Deloser implements Types.Deloser {
 
 export class DeloserAPI implements Types.DeloserAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _win: Window;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
@@ -561,24 +561,24 @@ export class DeloserAPI implements Types.DeloserAPI {
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-        this._mainWindow = mainWindow;
+        this._win = mainWindow;
         this._history = new DeloserHistory(ah);
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        this._initTimer = this._win.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._ah.focusedElement.subscribe(this._onElementFocused);
+        this._ah.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
         if (this._initTimer) {
-            this._mainWindow.clearTimeout(this._initTimer);
+            this._win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._ah.focusedElement.unsubscribe(this._onElementFocused);
+        this._ah.focusedElement.unsubscribe(this._onFocus);
     }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
@@ -601,7 +601,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         setAbilityHelpersOnElement(element, {
-            deloser: new Deloser(element, this._ah, this._mainWindow, basic, extended)
+            deloser: new Deloser(element, this._ah, this._win, basic, extended)
         });
     }
 
@@ -651,7 +651,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         this._isPaused = true;
 
         if (this._restoreFocusTimer) {
-            this._mainWindow.clearTimeout(this._restoreFocusTimer);
+            this._win.clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
         }
     }
@@ -672,9 +672,9 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
-    private _onElementFocused = (e: HTMLElement | undefined): void => {
+    private _onFocus = (e: HTMLElement | undefined): void => {
         if (this._restoreFocusTimer) {
-            this._mainWindow.clearTimeout(this._restoreFocusTimer);
+            this._win.clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
         }
 
@@ -716,7 +716,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        this._restoreFocusTimer = this._mainWindow.setTimeout(() => {
+        this._restoreFocusTimer = this._win.setTimeout(() => {
             this._restoreFocusTimer = undefined;
 
             if (!force && (this._isRestoringFocus || !this._isInSomeDeloser || this._isLastFocusedAvailable())) {

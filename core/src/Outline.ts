@@ -63,7 +63,7 @@ class OutlinePosition {
 
 export class OutlineAPI implements Types.OutlineAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _win: Window;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
     private _outlinedElement: HTMLElement | undefined;
@@ -75,34 +75,34 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-        this._mainWindow = mainWindow;
-        this._mainWindow.setTimeout(this._init, 0);
+        this._win = mainWindow;
+        this._win.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
         this._ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
-        this._ah.focusedElement.subscribe(this._onElementFocused);
+        this._ah.focusedElement.subscribe(this._onFocus);
 
-        this._mainWindow.addEventListener('scroll', this._onScroll, true); // Capture!
+        this._win.addEventListener('scroll', this._onScroll, true); // Capture!
 
         if (_fullScreenEventName) {
-            this._mainWindow.document.addEventListener(_fullScreenEventName, this._onFullScreenChanged);
+            this._win.document.addEventListener(_fullScreenEventName, this._onFullScreenChanged);
         }
     }
 
     setup(props?: Partial<Types.OutlineProps>): void {
         _props = { ..._props, ...props };
 
-        const win = this._mainWindow as Types.WindowWithAbilityHelpers;
+        const win = this._win as Types.WindowWithAbilityHelpers;
 
         if (!win.__ah) {
             return;
         }
 
         if (!win.__ah.outlineStyle) {
-            win.__ah.outlineStyle = appendStyles(this._mainWindow.document, _props);
+            win.__ah.outlineStyle = appendStyles(this._win.document, _props);
         }
 
         if (!props || !props.areaClass) {
@@ -136,25 +136,25 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     protected dispose(): void {
         if (this._initTimer) {
-            this._mainWindow.clearTimeout(this._initTimer);
+            this._win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._updateTimer) {
-            this._mainWindow.clearTimeout(this._updateTimer);
+            this._win.clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
         this._ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
-        this._ah.focusedElement.unsubscribe(this._onElementFocused);
+        this._ah.focusedElement.unsubscribe(this._onFocus);
 
-        this._mainWindow.removeEventListener('scroll', this._onScroll, true);
+        this._win.removeEventListener('scroll', this._onScroll, true);
 
         if (_fullScreenEventName) {
-            this._mainWindow.document.removeEventListener(_fullScreenEventName, this._onFullScreenChanged);
+            this._win.document.removeEventListener(_fullScreenEventName, this._onFullScreenChanged);
         }
 
-        this._allOutlineElements.forEach(outlineElements => this._removeOutlineDOM(outlineElements.container));
+        this._allOutlineElements.forEach(outlineElements => this._removeDOM(outlineElements.container));
         this._allOutlineElements = [];
     }
 
@@ -164,7 +164,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         const target = (e.target as Document).body || (e.target as HTMLElement);
-        const outlineElements = this._getOutlineDOM(target);
+        const outlineElements = this._getDOM(target);
 
         if (target.ownerDocument && outlineElements) {
             const fsElement: HTMLElement | null = (target.ownerDocument as any)[_fullScreenElementName];
@@ -180,7 +180,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _onKeyboardNavigationStateChanged = (): void => {
-        this._onElementFocused(this._ah.focusedElement.getFocusedElement());
+        this._onFocus(this._ah.focusedElement.getFocusedElement());
     }
 
     private _shouldShowCustomOutline(element: HTMLElement): boolean {
@@ -199,17 +199,17 @@ export class OutlineAPI implements Types.OutlineAPI {
         return false;
     }
 
-    private _onElementFocused = (e: HTMLElement | undefined): void => {
-        if (!this._updateOutlinedElement(e) && this._isVisible) {
-            this._setOutlineVisibility(false);
+    private _onFocus = (e: HTMLElement | undefined): void => {
+        if (!this._updateElement(e) && this._isVisible) {
+            this._setVisibility(false);
         }
     }
 
-    private _updateOutlinedElement(e: HTMLElement | undefined): boolean {
+    private _updateElement(e: HTMLElement | undefined): boolean {
         this._outlinedElement = undefined;
 
         if (this._updateTimer) {
-            this._mainWindow.clearTimeout(this._updateTimer);
+            this._win.clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
@@ -274,7 +274,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         this._setOutlinePosition();
 
         if (this._updateTimer) {
-            this._mainWindow.clearTimeout(this._updateTimer);
+            this._win.clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
@@ -282,13 +282,13 @@ export class OutlineAPI implements Types.OutlineAPI {
             return;
         }
 
-        this._updateTimer = this._mainWindow.setTimeout(() => {
+        this._updateTimer = this._win.setTimeout(() => {
             this._updateTimer = undefined;
             this._updateOutline();
         }, 30);
     }
 
-    private _setOutlineVisibility(visible: boolean): void {
+    private _setVisibility(visible: boolean): void {
         this._isVisible = visible;
 
         if (this._curOutlineElements) {
@@ -319,7 +319,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             return;
         }
 
-        const outlineElements = this._getOutlineDOM(this._outlinedElement);
+        const outlineElements = this._getDOM(this._outlinedElement);
         const win = this._outlinedElement.ownerDocument && this._outlinedElement.ownerDocument.defaultView;
 
         if (!outlineElements || !win) {
@@ -327,7 +327,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         if (this._curOutlineElements !== outlineElements) {
-            this._setOutlineVisibility(false);
+            this._setVisibility(false);
             this._curOutlineElements = outlineElements;
         }
 
@@ -427,13 +427,13 @@ export class OutlineAPI implements Types.OutlineAPI {
             topBorderNode.style.width =
             bottomBorderNode.style.width = width + 'px';
 
-            this._setOutlineVisibility(true);
+            this._setVisibility(true);
         } else {
-            this._setOutlineVisibility(false);
+            this._setVisibility(false);
         }
     }
 
-    private _getOutlineDOM(contextElement: HTMLElement): Types.OutlineElements | undefined {
+    private _getDOM(contextElement: HTMLElement): Types.OutlineElements | undefined {
         const doc = contextElement.ownerDocument;
         const win = (doc && doc.defaultView) as Types.WindowWithAbilityHelpers;
 
@@ -477,7 +477,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         return win.__ah.outline;
     }
 
-    private _removeOutlineDOM(contextElement: HTMLElement): void {
+    private _removeDOM(contextElement: HTMLElement): void {
         const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as Types.WindowWithAbilityHelpers;
         const ah =  win && win.__ah;
         const outlineElements = ah && ah.outline;
@@ -518,41 +518,29 @@ function appendStyles(document: HTMLDocument, props: Types.OutlineProps): HTMLSt
 
 function getOutlineStyles(props: Types.OutlineProps): string {
     return `
-        .${ props.areaClass } *, .${ props.areaClass } *:focus {
-            outline: none !important;
-        }
+.${ props.areaClass } *, .${ props.areaClass } *:focus {
+outline: none !important;
+}
 
-        .${ props.outlineClass } {
-            display: none;
-            position: absolute;
-            width: 0;
-            height: 0;
-            left: 0;
-            top: 0;
-            z-index: ${ props.zIndex };
-        }
+.${ props.outlineClass } {
+display: none;
+position: absolute;
+width: 0;
+height: 0;
+left: 0;
+top: 0;
+z-index: ${ props.zIndex };
+}
 
-        .${ props.outlineClass }.${ props.outlineClass }_visible {
-            display: block;
-        }
+.${ props.outlineClass }.${ props.outlineClass }_visible {
+display: block;
+}
 
-        .${ props.outlineClass }__left {
-            position: absolute;
-            background: inherit;
-        }
-
-        .${ props.outlineClass }__top {
-            position: absolute;
-            background: inherit;
-        }
-
-        .${ props.outlineClass }__right {
-            position: absolute;
-            background: inherit;
-        }
-
-        .${ props.outlineClass }__bottom {
-            position: absolute;
-            background: inherit;
-        }`;
+.${ props.outlineClass }__left,
+.${ props.outlineClass }__top,
+.${ props.outlineClass }__right,
+.${ props.outlineClass }__bottom {
+position: absolute;
+background: inherit;
+}`;
 }

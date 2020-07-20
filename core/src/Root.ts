@@ -31,7 +31,7 @@ export class Root implements Types.Root {
 
     private _element: HTMLElement;
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _win: Window;
     private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
     private _knownModalizers: { [id: string]: Types.Modalizer } = {};
@@ -52,7 +52,7 @@ export class Root implements Types.Root {
         this.uid = getElementUId(element, mainWindow);
         this._element = element;
         this._ah = ah;
-        this._mainWindow = mainWindow;
+        this._win = mainWindow;
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
@@ -67,7 +67,7 @@ export class Root implements Types.Root {
 
     dispose(): void {
         if (this._updateModalizersTimer) {
-            this._mainWindow.clearTimeout(this._updateModalizersTimer);
+            this._win.clearTimeout(this._updateModalizersTimer);
             this._updateModalizersTimer = undefined;
         }
 
@@ -134,7 +134,7 @@ export class Root implements Types.Root {
 
         this.updateDummyInputs();
 
-        this._updateModalizersTimer = this._mainWindow.setTimeout(() => {
+        this._updateModalizersTimer = this._win.setTimeout(() => {
             this._updateModalizersTimer = undefined;
             this._reallyUpdateModalizers();
         }, 0);
@@ -243,7 +243,7 @@ export class Root implements Types.Root {
     }
 
     private _createDummyInput(props: DummyInput): HTMLDivElement {
-        const input = this._mainWindow.document.createElement('div');
+        const input = this._win.document.createElement('div');
 
         input.tabIndex = 0;
         input.setAttribute('role', 'none');
@@ -323,32 +323,32 @@ export class Root implements Types.Root {
 
 export class RootAPI implements Types.RootAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _win: Window;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
         this._ah = ah;
-        this._mainWindow = mainWindow;
+        this._win = mainWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        this._initTimer = this._win.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._mainWindow.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
+        this._win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
-        observeMutationEvents(this._mainWindow.document);
+        observeMutationEvents(this._win.document);
     }
 
     protected dispose(): void {
         if (this._initTimer) {
-            this._mainWindow.clearTimeout(this._initTimer);
+            this._win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._mainWindow.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
+        this._win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
         // TODO: Stop the observer.
     }
@@ -360,7 +360,7 @@ export class RootAPI implements Types.RootAPI {
             return;
         }
 
-        const root = new Root(element, this._ah, this._mainWindow, this._forgetFocusedGrouppers, basic);
+        const root = new Root(element, this._ah, this._win, this._forgetFocusedGrouppers, basic);
 
         setAbilityHelpersOnElement(element, { root });
 

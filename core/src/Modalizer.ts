@@ -212,35 +212,35 @@ export class Modalizer implements Types.Modalizer {
 
 export class ModalizerAPI implements Types.ModalizerAPI {
     private _ah: Types.AbilityHelpers;
-    private _mainWindow: Window;
+    private _win: Window;
     private _initTimer: number | undefined;
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
         this._ah = ah;
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        this._win = mainWindow;
+        this._initTimer = this._win.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._ah.focusedElement.subscribe(this._onElementFocused);
+        this._ah.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
         if (this._initTimer) {
-            this._mainWindow.clearTimeout(this._initTimer);
+            this._win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._focusOutTimer) {
-            this._mainWindow.clearTimeout(this._focusOutTimer);
+            this._win.clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
         }
 
-        this._ah.focusedElement.unsubscribe(this._onElementFocused);
+        this._ah.focusedElement.unsubscribe(this._onFocus);
     }
 
     add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
@@ -348,9 +348,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         return false;
     }
 
-    private _onElementFocused = (e: HTMLElement): void => {
+    private _onFocus = (e: HTMLElement): void => {
         if (this._focusOutTimer) {
-            this._mainWindow.clearTimeout(this._focusOutTimer);
+            this._win.clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
         }
 
@@ -373,7 +373,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
             this._curModalizer.setFocused(true);
         } else if (this._curModalizer) {
-            this._focusOutTimer = this._mainWindow.setTimeout(() => {
+            this._focusOutTimer = this._win.setTimeout(() => {
                 this._focusOutTimer = undefined;
 
                 if (this._curModalizer) {

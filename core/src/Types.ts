@@ -90,16 +90,16 @@ export enum CrossOriginTransactionType {
 }
 
 export interface CrossOriginTransactionData<I, O> {
-    ['ah-transaction']: string;
-    ['ah-type']: CrossOriginTransactionType;
-    ['ah-is-response']: boolean;
-    ['ah-timestamp']: number;
-    ['ah-owner']: string;
-    ['ah-sentto']: CrossOriginSentTo;
-    ['ah-timeout']?: number;
-    ['ah-target']?: string;
-    ['ah-begin-data']?: I;
-    ['ah-end-data']?: O;
+    transaction: string;
+    type: CrossOriginTransactionType;
+    isResponse: boolean;
+    timestamp: number;
+    owner: string;
+    sentto: CrossOriginSentTo;
+    timeout?: number;
+    target?: string;
+    beginData?: I;
+    endData?: O;
 }
 
 export type CrossOriginTransactionSend = (data: CrossOriginTransactionData<any, any>) => void;

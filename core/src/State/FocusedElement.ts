@@ -50,7 +50,7 @@ export class FocusedElementState
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
-    private _mainWindow: Window;
+    private _win: Window;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
     private _prevVal: HTMLElement | undefined;
@@ -59,33 +59,33 @@ export class FocusedElementState
         super();
 
         this._ah = ah;
-        this._mainWindow = mainWindow;
-        this._initTimer = this._mainWindow.setTimeout(this._init, 0);
+        this._win = mainWindow;
+        this._initTimer = this._win.setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        FocusedElementState.replaceFocus(this._mainWindow.document);
+        FocusedElementState.replaceFocus(this._win.document);
 
-        this._mainWindow.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
-        this._mainWindow.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
-        this._mainWindow.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._mainWindow.addEventListener('keydown', this._onKeyDown);
+        this._win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
+        this._win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
+        this._win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
+        this._win.addEventListener('keydown', this._onKeyDown);
     }
 
     protected dispose(): void {
         super.dispose();
 
         if (this._initTimer) {
-            this._mainWindow.clearTimeout(this._initTimer);
+            this._win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._mainWindow.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        this._mainWindow.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        this._mainWindow.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._mainWindow.removeEventListener('keydown', this._onKeyDown);
+        this._win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
+        this._win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
+        this._win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
+        this._win.removeEventListener('keydown', this._onKeyDown);
     }
 
     getFocusedElement(): HTMLElement | undefined {

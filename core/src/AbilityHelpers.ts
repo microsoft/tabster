@@ -18,8 +18,6 @@ import * as Types from './Types';
 
 export { Types };
 
-let _instance: Types.AbilityHelpers | undefined;
-
 class AbilityHelpers implements Types.AbilityHelpers {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
@@ -51,20 +49,21 @@ class AbilityHelpers implements Types.AbilityHelpers {
     }
 }
 
-function createAbilityHelpers(win: Types.WindowWithAbilityHelpers) {
+export function setupAbilityHelpers(win: Window): Types.AbilityHelpers {
+    const wnd = win as Types.WindowWithAbilityHelpers;
     let helpers: Types.AbilityHelpers | undefined;
 
-    if (win && win.__ah) {
-        helpers = win.__ah.helpers;
+    if (wnd && wnd.__ah) {
+        helpers = wnd.__ah.helpers;
     }
 
     if (!helpers) {
         helpers = new AbilityHelpers(win);
 
-        if (win) {
-            win.__ah = {
+        if (wnd) {
+            wnd.__ah = {
                 helpers,
-                mainWindow: win
+                mainWindow: wnd
             };
         }
     }
@@ -72,20 +71,14 @@ function createAbilityHelpers(win: Types.WindowWithAbilityHelpers) {
     return helpers;
 }
 
-export function setupAbilityHelpers(mainWindow: Window): Types.AbilityHelpers {
-    if (!_instance) {
-        _instance = createAbilityHelpers(mainWindow);
-    }
+export function getAbilityHelpers(win: Window): Types.AbilityHelpers {
+    const wnd = win as Types.WindowWithAbilityHelpers;
 
-    return _instance;
-}
-
-export function getAbilityHelpers(): Types.AbilityHelpers {
-    if (!_instance) {
+    if (!wnd || !wnd.__ah) {
         throw new Error('setupAbilityHelpers() is not called.');
     }
 
-    return _instance;
+    return wnd.__ah.helpers;
 }
 
 export function getAbilityHelpersAttribute(
