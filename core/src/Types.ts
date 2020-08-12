@@ -81,12 +81,11 @@ export interface CrossOriginSentTo {
 
 export enum CrossOriginTransactionType {
     Bootstrap = 1,
-    KeyboardNavigationState = 2,
-    FocusElement = 3,
-    ElementState = 4,
-    GetElement = 5,
-    RestoreFocusInDeloser = 6,
-    Ping = 7
+    FocusElement = 2,
+    State = 3,
+    GetElement = 4,
+    RestoreFocusInDeloser = 5,
+    Ping = 6
 }
 
 export interface CrossOriginTransactionData<I, O> {

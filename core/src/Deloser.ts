@@ -716,7 +716,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        this._restoreFocusTimer = this._win.setTimeout(() => {
+        const reallySchedule = async () => {
             this._restoreFocusTimer = undefined;
 
             if (!force && (this._isRestoringFocus || !this._isInSomeDeloser || this._isLastFocusedAvailable())) {
@@ -746,14 +746,18 @@ export class DeloserAPI implements Types.DeloserAPI {
 
             this._isRestoringFocus = true;
 
-            this._history.focusAvailable(null).then(focused => {
-                if (!focused) {
-                    this._history.resetFocus(null).then(() => {
-                        this._isRestoringFocus = false;
-                    });
-                }
-            });
-        }, 100);
+            if (!(await this._history.focusAvailable(null))) {
+                await this._history.resetFocus(null);
+
+                this._isRestoringFocus = false;
+            }
+        };
+
+        if (force) {
+            reallySchedule();
+        } else {
+            this._restoreFocusTimer = this._win.setTimeout(reallySchedule, 100);
+        }
     }
 
     static getDeloser(element: HTMLElement): Types.Deloser | undefined {
