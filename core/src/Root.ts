@@ -5,7 +5,7 @@
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
-import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
 import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored } from './Utils';
 

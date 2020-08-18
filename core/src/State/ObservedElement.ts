@@ -4,7 +4,7 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Instance';
-import { MUTATION_EVENT_NAME, MutationEvent } from '../MutationEvent';
+import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { getElementUId } from '../Utils';

@@ -4,7 +4,7 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer } from './Utils';
