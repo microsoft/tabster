@@ -726,7 +726,7 @@ class CrossOriginTransactions {
     private _transactions: { [id: string]: CrossOriginTransactionWrapper<any, any> } = {};
     private _ah: Types.AbilityHelpers;
     private _pingTimer: number | undefined;
-    private _isSetUp = false;
+    isSetUp = false;
     sendUp: Types.CrossOriginTransactionSend | undefined;
 
     constructor(ah: Types.AbilityHelpers, owner: WindowWithUID) {
@@ -736,12 +736,12 @@ class CrossOriginTransactions {
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
-        if (this._isSetUp) {
+        if (this.isSetUp) {
             if (__DEV__) {
                 console.error('CrossOrigin is already set up.');
             }
         } else {
-            this._isSetUp = true;
+            this.isSetUp = true;
 
             this.sendUp = sendUp || undefined;
 
@@ -1074,15 +1074,17 @@ export class CrossOriginFocusedElementState
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
-        return this._transactions.beginTransaction(FocusElementTransaction, {
-            uid: element.uid,
-            id: element.id,
-            rootId: element.rootId,
-            ownerId: element.ownerId,
-            observedName: element.observedName,
+        return this._focus(
+            {
+                uid: element.uid,
+                id: element.id,
+                rootId: element.rootId,
+                ownerId: element.ownerId,
+                observedName: element.observedName
+            },
             noFocusedProgrammaticallyFlag,
             noAccessibleCheck
-        }).then(value => !!value);
+        );
     }
 
     async focusById(
@@ -1091,12 +1093,7 @@ export class CrossOriginFocusedElementState
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
-        return this._transactions.beginTransaction(FocusElementTransaction, {
-            id: elementId,
-            rootId,
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck
-        }).then(value => !!value);
+        return this._focus({ id: elementId, rootId }, noFocusedProgrammaticallyFlag, noAccessibleCheck);
     }
 
     async focusByObservedName(
@@ -1106,9 +1103,17 @@ export class CrossOriginFocusedElementState
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
+        return this._focus({ observedName, rootId }, noFocusedProgrammaticallyFlag, noAccessibleCheck, timeout);
+    }
+
+    private async _focus(
+        elementData: CrossOriginElementDataIn,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean,
+        timeout?: number
+    ): Promise<boolean> {
         return this._transactions.beginTransaction(FocusElementTransaction, {
-            observedName,
-            rootId,
+            ...elementData,
             noFocusedProgrammaticallyFlag,
             noAccessibleCheck
         }, timeout).then(value => !!value);
@@ -1185,6 +1190,10 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
         this._initTimer = this._win.setTimeout(this._init, 0);
         return this._transactions.setup(sendUp);
+    }
+
+    isSetUp(): boolean {
+        return this._transactions.isSetUp;
     }
 
     private _init = (): void => {

@@ -128,6 +128,7 @@ export interface CrossOriginAPI {
     observedElement: CrossOriginObservedElementState;
 
     setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
+    isSetUp(): boolean;
 }
 
 export interface OutlineProps {
