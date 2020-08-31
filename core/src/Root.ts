@@ -45,14 +45,14 @@ export class Root implements Types.Root {
     constructor(
         element: HTMLElement,
         ah: Types.AbilityHelpers,
-        mainWindow: Window,
+        win: Window,
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
     ) {
-        this.uid = getElementUId(element, mainWindow);
+        this.uid = getElementUId(element, win);
         this._element = element;
         this._ah = ah;
-        this._win = mainWindow;
+        this._win = win;
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
@@ -72,6 +72,17 @@ export class Root implements Types.Root {
         }
 
         this._remove();
+
+        delete this._element;
+        delete this._ah;
+        delete this._win;
+        delete this._basic;
+        delete this._knownModalizers;
+        delete this._dummyInputFirstProps;
+        delete this._dummyInputLastProps;
+        delete this._dummyInputFirst;
+        delete this._dummyInputLast;
+        delete this._forgetFocusedGrouppers;
     }
 
     setProps(basic?: Partial<Types.RootBasicProps> | null): void {
@@ -176,7 +187,7 @@ export class Root implements Types.Root {
         const modalizersToUpdate: Types.Modalizer[] = [];
 
         const walker = createElementTreeWalker(this._element.ownerDocument, this._element, (element: HTMLElement) => {
-            const ah = getAbilityHelpersOnElement(element);
+            const ah = getAbilityHelpersOnElement(this._ah, element);
 
             if (ah && ah.modalizer) {
                 modalizersToUpdate.push(ah.modalizer);
@@ -326,6 +337,7 @@ export class RootAPI implements Types.RootAPI {
     private _win: Window;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
+    private _unobserve: (() => void) | undefined;
 
     constructor(ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
         this._ah = ah;
@@ -339,7 +351,7 @@ export class RootAPI implements Types.RootAPI {
 
         this._win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
-        observeMutationEvents(this._win.document);
+        this._unobserve = observeMutationEvents(this._win.document);
     }
 
     protected dispose(): void {
@@ -350,11 +362,22 @@ export class RootAPI implements Types.RootAPI {
 
         this._win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
-        // TODO: Stop the observer.
+        if (this._unobserve) {
+            this._unobserve();
+        }
+
+        delete this._ah;
+        delete this._win;
+        delete this._forgetFocusedGrouppers;
+        delete this._unobserve;
+    }
+
+    static dispose(instance: Types.RootAPI): void {
+        (instance as RootAPI).dispose();
     }
 
     add(element: HTMLElement, basic?: Types.RootBasicProps): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.root) {
             return;
@@ -362,7 +385,7 @@ export class RootAPI implements Types.RootAPI {
 
         const root = new Root(element, this._ah, this._win, this._forgetFocusedGrouppers, basic);
 
-        setAbilityHelpersOnElement(element, { root });
+        setAbilityHelpersOnElement(this._ah, element, { root });
 
         const n: HTMLElement[] = [];
 
@@ -374,7 +397,7 @@ export class RootAPI implements Types.RootAPI {
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
         const root = ah && ah.root;
 
         if (!root) {
@@ -383,20 +406,20 @@ export class RootAPI implements Types.RootAPI {
 
         dispatchMutationEvent(element, { root, removed: true });
 
-        setAbilityHelpersOnElement(element, { root: undefined });
+        setAbilityHelpersOnElement(this._ah, element, { root: undefined });
 
         root.dispose();
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(from);
+        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
         const root = ahFrom && ahFrom.root;
 
         if (root) {
             root.move(to);
 
-            setAbilityHelpersOnElement(to, { root: root });
-            setAbilityHelpersOnElement(from, { root: undefined });
+            setAbilityHelpersOnElement(this._ah, to, { root: root });
+            setAbilityHelpersOnElement(this._ah, from, { root: undefined });
 
             dispatchMutationEvent(from, { root, removed: true });
             dispatchMutationEvent(to, { root });
@@ -404,7 +427,7 @@ export class RootAPI implements Types.RootAPI {
     }
 
     setProps(element: HTMLElement, basic?: Partial<Types.RootBasicProps> | null): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.root) {
             ah.root.setProps(basic);
@@ -422,16 +445,16 @@ export class RootAPI implements Types.RootAPI {
             return;
         }
 
-        const root = RootAPI._getRootOnly(e.target as Node);
+        const root = RootAPI._getRootOnly(this._ah, e.target as Node);
 
         if (root) {
             root.updateModalizers();
         }
     }
 
-    private static _getRootOnly(element: Node): Types.Root | undefined {
+    private static _getRootOnly(abilityHelpers: Types.AbilityHelpers, element: Node): Types.Root | undefined {
         for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
+            const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 
             if (ah && ah.root) {
                 return ah.root;
@@ -445,7 +468,7 @@ export class RootAPI implements Types.RootAPI {
         return _rootById[id];
     }
 
-    static findRootAndModalizer(element: Node): Types.RootAndModalizer | undefined {
+    static findRootAndModalizer(abilityHelpers: Types.AbilityHelpers, element: Node): Types.RootAndModalizer | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }
@@ -454,7 +477,7 @@ export class RootAPI implements Types.RootAPI {
         let modalizer: Types.Modalizer | undefined;
 
         for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
+            const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 
             if (!ah) {
                 continue;
@@ -474,8 +497,8 @@ export class RootAPI implements Types.RootAPI {
     }
 }
 
-function observeMutationEvents(doc: HTMLDocument): void {
-    doc.addEventListener(MUTATION_EVENT_NAME, (e: MutationEvent) => {
+function observeMutationEvents(doc: HTMLDocument): () => void {
+    const handler = (e: MutationEvent) => {
         const root = e.details.root;
 
         if (root) {
@@ -485,5 +508,11 @@ function observeMutationEvents(doc: HTMLDocument): void {
                 _rootById[root.uid] = root;
             }
         }
-    });
+    };
+
+    doc.addEventListener(MUTATION_EVENT_NAME, handler);
+
+    return () => {
+        doc.removeEventListener(MUTATION_EVENT_NAME, handler);
+    };
 }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersAttribute, setupAbilityHelpers, Types as AHTypes } from 'ability-helpers';
+import { createAbilityHelpers, getAbilityHelpersAttribute, Types as AHTypes } from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-const AH = setupAbilityHelpers(window);
+const AH = createAbilityHelpers(window);
 AH.outline.setup();
 
 class App extends React.PureComponent {

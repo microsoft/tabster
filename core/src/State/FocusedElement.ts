@@ -86,6 +86,19 @@ export class FocusedElementState
         this._win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
         this._win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
         this._win.removeEventListener('keydown', this._onKeyDown);
+
+        delete FocusedElementState._lastFocusedProgrammatically;
+        delete FocusedElementState._lastResetElement;
+
+        delete this._ah;
+        delete this._win;
+        delete this._nextVal;
+        delete this._lastVal;
+        delete this._prevVal;
+    }
+
+    static dispose(instance: Types.FocusedElementState): void {
+        (instance as FocusedElementState).dispose();
     }
 
     getFocusedElement(): HTMLElement | undefined {
@@ -234,7 +247,7 @@ export class FocusedElementState
             throw new Error('Wrong document for replaceFocus().');
         }
 
-        const origFocus =  win.HTMLElement.prototype.focus;
+        const origFocus = win.HTMLElement.prototype.focus;
 
         if ((origFocus as CustomFocusFunctionWithOriginal).__ahFocus) {
             // Already set up.
@@ -285,7 +298,7 @@ export class FocusedElementState
         }
 
         if (e.keyCode === Keys.Tab) {
-            let rootAndModalizer = RootAPI.findRootAndModalizer(curElement);
+            let rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, curElement);
 
             if (!rootAndModalizer) {
                 if (!this._ah.focusable.isInCurrentGroupper(curElement)) {
@@ -338,7 +351,7 @@ export class FocusedElementState
             }
 
             if (rootAndModalizer && rootAndModalizer.modalizer) {
-                const nml = next && RootAPI.findRootAndModalizer(next);
+                const nml = next && RootAPI.findRootAndModalizer(this._ah, next);
 
                 if (
                     !nml ||
@@ -482,7 +495,7 @@ export class FocusedElementState
             return;
         }
 
-        let ah = getAbilityHelpersOnElement(groupperElement);
+        let ah = getAbilityHelpersOnElement(this._ah, groupperElement);
 
         return ah && ah.groupper;
     }
@@ -593,7 +606,7 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
-        const rootAndModalizer = RootAPI.findRootAndModalizer(element);
+        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, element);
         const curModalizerId = rootAndModalizer ? rootAndModalizer.root.getCurrentModalizerId() : undefined;
 
         this._ah.focusable.setCurrentGroupper(element);

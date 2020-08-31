@@ -461,23 +461,17 @@ export interface OutlineElements {
     bottom: HTMLDivElement;
 }
 
-export interface WindowWithAbilityHelpers extends Window {
-    __ah?: {
-        helpers: AbilityHelpers,
-        mainWindow: Window,
-        outlineStyle?: HTMLStyleElement,
-        outline?: OutlineElements
-    };
+export interface AbilityHelpersElementStorageEntry {
+    ah?: AbilityHelpersOnElement;
+    attr?: AbilityHelpersAttributeOnElement;
+    aug?: AbilityHelpersAugmentedAttributes;
 }
 
-export interface HTMLElementWithAbilityHelpers extends HTMLElement {
-    __ah?: AbilityHelpersOnElement;
+export interface AbilityHelpersElementStorage {
+    [uid: string]: AbilityHelpersElementStorageEntry;
 }
 
-export interface HTMLElementWithAbilityHelpersAttribute extends HTMLElementWithAbilityHelpers {
-    __ahAttr?: AbilityHelpersAttributeOnElement;
-}
-
-export interface HTMLElementWithAugmentedAttributes extends HTMLElement {
-    __ahAug?: AbilityHelpersAugmentedAttributes;
+export interface AbilityHelpersInternal {
+    storageEntry(uid: string, addremove?: boolean): AbilityHelpersElementStorageEntry | undefined;
+    getWindow(): Window;
 }

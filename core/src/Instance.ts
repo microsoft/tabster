@@ -4,13 +4,17 @@
  */
 
 import * as Types from './Types';
+import { getElementUId, HTMLElementWithUID } from './Utils';
 
 export function setAbilityHelpersOnElement(
-    element: Types.HTMLElementWithAbilityHelpersAttribute,
+    abilityHelpers: Types.AbilityHelpers,
+    element: HTMLElementWithUID,
     helpers: Partial<Types.AbilityHelpersOnElement>
 ): void {
-    const cur = (element.__ah || {}) as Types.AbilityHelpersOnElement;
-    const attr = element.__ahAttr;
+    let uid = element.__ahElementUID;
+    let entry = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid) : undefined;
+    const cur = (entry?.ah || {}) as Types.AbilityHelpersOnElement;
+    const attr = entry?.attr;
     let attrObject: Types.AbilityHelpersAttributeProps;
 
     if (attr) {
@@ -73,40 +77,55 @@ export function setAbilityHelpersOnElement(
     });
 
     if (Object.keys(cur).length === 0) {
-        delete element.__ah;
-        delete element.__ahAttr;
+        if (uid && entry) {
+            delete entry.ah;
+            delete entry.attr;
+            (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, false);
+        }
 
         element.removeAttribute(Types.AbilityHelpersAttributeName);
     } else {
         const attrStr = JSON.stringify(attrObject);
 
-        element.__ah = cur;
-        element.__ahAttr = {
+        if (!entry) {
+            if (!uid) {
+                uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
+            }
+
+            entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+        }
+
+        entry.ah = cur;
+        entry.attr = {
             string: attrStr,
             object: attrObject,
             changing: true
         };
 
         if (!attr || (attr.string !== attrStr)) {
-            element.setAttribute(Types.AbilityHelpersAttributeName, element.__ahAttr.string);
+            element.setAttribute(Types.AbilityHelpersAttributeName, entry.attr.string);
         }
 
-        element.__ahAttr.changing = false;
+        entry.attr.changing = false;
     }
 }
 
-export function getAbilityHelpersOnElement(element: Node): Types.AbilityHelpersOnElement | undefined {
-    return (element as Types.HTMLElementWithAbilityHelpers).__ah;
+export function getAbilityHelpersOnElement(abilityHelpers: Types.AbilityHelpers, element: Node): Types.AbilityHelpersOnElement | undefined {
+    const uid = (element as HTMLElementWithUID).__ahElementUID;
+    return uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid)?.ah : undefined;
 }
 
 export function updateAbilityHelpersByAttribute(
     abilityHelpers: Types.AbilityHelpers,
-    element: Types.HTMLElementWithAbilityHelpersAttribute
+    element: HTMLElementWithUID
 ): void {
     const newAttrValue = element.getAttribute(Types.AbilityHelpersAttributeName);
 
-    let newAttr = element.__ahAttr;
-    const elementAH = element.__ah;
+    let uid = element.__ahElementUID;
+    let entry = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid) : undefined;
+
+    let newAttr = entry?.attr;
+    const elementAH = entry?.ah;
 
     if (newAttrValue) {
         if (newAttrValue !== (newAttr && newAttr.string)) {
@@ -132,7 +151,7 @@ export function updateAbilityHelpersByAttribute(
         newAttr = undefined;
     }
 
-    const oldObject = (element.__ahAttr && element.__ahAttr.object) || {};
+    const oldObject = entry?.attr?.object || {};
     const newObject = (newAttr && newAttr.object) || {};
 
     for (let key of Object.keys(oldObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
@@ -236,7 +255,15 @@ export function updateAbilityHelpersByAttribute(
         newAttr.string = JSON.stringify(newObject);
         newAttr.changing = true;
 
-        element.__ahAttr = newAttr;
+        if (!entry) {
+            if (!uid) {
+                uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
+            }
+
+            entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+        }
+
+        entry.attr = newAttr;
 
         if (newAttr.string !== newAttrValue) {
             element.setAttribute(Types.AbilityHelpersAttributeName, newAttr.string);
@@ -247,23 +274,27 @@ export function updateAbilityHelpersByAttribute(
 }
 
 export function augmentAttribute(
-    element: Types.HTMLElementWithAugmentedAttributes,
+    abilityHelpers: Types.AbilityHelpers,
+    element: HTMLElementWithUID,
     name: string,
     value?: string | null // Restore original value when undefined.
 ): void {
-    if (!element.__ahAug) {
+    const uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
+    let entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+
+    if (!entry.aug) {
         if (value === undefined) {
             return;
         }
 
-        element.__ahAug = {};
+        entry.aug = {};
     }
 
     if (value === undefined) {
-        if (name in element.__ahAug) {
-            const origVal = element.__ahAug[name];
+        if (name in entry.aug) {
+            const origVal = entry.aug[name];
 
-            delete element.__ahAug[name];
+            delete entry.aug[name];
 
             if (origVal === null) {
                 element.removeAttribute(name);
@@ -272,8 +303,8 @@ export function augmentAttribute(
             }
         }
     } else {
-        if (!(name in element.__ahAug)) {
-            element.__ahAug[name] = element.getAttribute(name);
+        if (!(name in entry.aug)) {
+            entry.aug[name] = element.getAttribute(name);
         }
 
         if (value === null) {
@@ -283,7 +314,8 @@ export function augmentAttribute(
         }
     }
 
-    if ((value === undefined) && (Object.keys(element.__ahAug).length === 0)) {
-        delete element.__ahAug;
+    if ((value === undefined) && (Object.keys(entry.aug).length === 0)) {
+        delete entry.aug;
+        (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, false);
     }
 }

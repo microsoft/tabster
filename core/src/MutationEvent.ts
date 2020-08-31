@@ -24,10 +24,10 @@ export const MUTATION_EVENT_NAME = 'ability-helpers:mutation-event';
 export function observeMutations(
     doc: HTMLDocument,
     abilityHelpers: Types.AbilityHelpers,
-    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpers, element: Types.HTMLElementWithAbilityHelpersAttribute) => void
-): void {
+    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpers, element: HTMLElementWithUID) => void
+): () => void {
     if (typeof MutationObserver === 'undefined') {
-        return;
+        return () => { /* Noop */ };
     }
 
     const observer = new MutationObserver(mutations => {
@@ -43,14 +43,16 @@ export function observeMutations(
 
             if (mutation.type === 'attributes') {
                 if (mutation.attributeName === Types.AbilityHelpersAttributeName) {
-                    const ahAttr = (target as Types.HTMLElementWithAbilityHelpersAttribute).__ahAttr;
+                    const uid = (target as HTMLElementWithUID).__ahElementUID;
+
+                    const ahAttr = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid)?.attr : undefined;
 
                     if (!ahAttr || !ahAttr.changing) {
                         updateAbilityHelpersByAttribute(abilityHelpers, target as HTMLElement);
                     }
                 }
             } else {
-                const ah = getAbilityHelpersOnElement(target);
+                const ah = getAbilityHelpersOnElement(abilityHelpers, target);
                 const root = ah && ah.root;
 
                 if (root) {
@@ -143,7 +145,7 @@ export function observeMutations(
                 }
             }
 
-            const ah = getAbilityHelpersOnElement(element);
+            const ah = getAbilityHelpersOnElement(abilityHelpers, element);
 
             if (ah) {
                 if (ah.root) {
@@ -239,6 +241,10 @@ export function observeMutations(
     });
 
     observer.observe(doc, { childList: true, subtree: true, attributeFilter: [Types.AbilityHelpersAttributeName] });
+
+    return () => {
+        observer.disconnect();
+    };
 }
 
 export function dispatchMutationEvent(target: Node, details: MutationEventDetails): void {

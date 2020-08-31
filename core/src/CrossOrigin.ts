@@ -569,7 +569,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 element = owner.document.getElementById(data.id);
 
                 if (element && data.rootId) {
-                    const ram = RootAPI.findRootAndModalizer(element);
+                    const ram = RootAPI.findRootAndModalizer(ah, element);
 
                     if (!ram || (ram.root.uid !== data.rootId)) {
                         return null;
@@ -585,10 +585,15 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         return element || null;
     }
 
-    static getElementData(element: HTMLElement, owner: Window, ownerUId: string): CrossOriginElementDataOut {
-        const deloser = DeloserAPI.getDeloser(element);
-        const ram = RootAPI.findRootAndModalizer(element);
-        const ah = getAbilityHelpersOnElement(element);
+    static getElementData(
+        abilityHelpers: Types.AbilityHelpers,
+        element: HTMLElement,
+        owner: Window,
+        ownerUId: string
+    ): CrossOriginElementDataOut {
+        const deloser = DeloserAPI.getDeloser(abilityHelpers, element);
+        const ram = RootAPI.findRootAndModalizer(abilityHelpers, element);
+        const ah = getAbilityHelpersOnElement(abilityHelpers, element);
         const observed = ah && ah.observed;
 
         return {
@@ -661,7 +666,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         }
 
         return element
-            ? GetElementTransaction.getElementData(element, owner, ownerUId)
+            ? GetElementTransaction.getElementData(ah, element, owner, ownerUId)
             : dataOut;
     }
 }
@@ -773,7 +778,27 @@ class CrossOriginTransactions {
     }
 
     dispose(): void {
+        if (this._pingTimer) {
+            this._owner.clearTimeout(this._pingTimer);
+            this._pingTimer = undefined;
+        }
+
         this._owner.removeEventListener('message', this._onBrowserMessage);
+
+        for (let id of Object.keys(this._transactions)) {
+            const t = this._transactions[id];
+
+            if (t.timer) {
+                this._owner.clearTimeout(t.timer);
+            }
+
+            t.transaction.end();
+        }
+
+        delete this._owner;
+        delete this._ah;
+        delete this._knownTargets;
+        delete this._transactions;
     }
 
     beginTransaction<I, O>(
@@ -897,7 +922,7 @@ class CrossOriginTransactions {
     }
 
     private _onMessage = (e: Types.CrossOriginMessage) => {
-        if (e.data.owner === this._ownerUId) {
+        if ((e.data.owner === this._ownerUId) || !this._ah) {
             return;
         }
 
@@ -1069,6 +1094,15 @@ export class CrossOriginFocusedElementState
         this._transactions = transactions;
     }
 
+    protected dispose() {
+        super.dispose();
+        delete this._transactions;
+    }
+
+    static dispose(instance: Types.CrossOriginFocusedElementState) {
+        (instance as CrossOriginFocusedElementState).dispose();
+    }
+
     async focus(
         element: Types.CrossOriginElement,
         noFocusedProgrammaticallyFlag?: boolean,
@@ -1140,6 +1174,16 @@ export class CrossOriginObservedElementState
         super();
         this._ah = ah;
         this._transactions = transactions;
+    }
+
+    protected dispose() {
+        super.dispose();
+        delete this._ah;
+        delete this._transactions;
+    }
+
+    static dispose(instance: Types.CrossOriginObservedElementState) {
+        (instance as CrossOriginObservedElementState).dispose();
     }
 
     async getElement(observedName: string): Promise<CrossOriginElement | null> {
@@ -1225,9 +1269,25 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._initTimer = undefined;
         }
 
-        this._ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
+        const ah = this._ah;
+
+        ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
+        ah.focusedElement.unsubscribe(this._onFocus);
+        ah.observedElement.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
+        CrossOriginFocusedElementState.dispose(this.focusedElement);
+        CrossOriginObservedElementState.dispose(this.observedElement);
+
+        delete this._transactions;
+        delete this.focusedElement;
+        delete this.observedElement;
+        delete this._ah;
+        delete this._win;
+    }
+
+    static dispose(instance: Types.CrossOriginAPI) {
+        (instance as CrossOriginAPI).dispose();
     }
 
     private _onKeyboardNavigationStateChanged = (value: boolean): void => {
@@ -1251,7 +1311,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (element) {
             this._transactions.beginTransaction(
                 StateTransaction,
-                { ...GetElementTransaction.getElementData(element, this._win, ownerUId), state: CrossOriginState.Focused }
+                { ...GetElementTransaction.getElementData(this._ah, element, this._win, ownerUId), state: CrossOriginState.Focused }
             );
         } else {
             this._blurTimer = this._win.setTimeout(() => {
@@ -1274,6 +1334,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
     private _onObserved = (element: HTMLElement, details: Types.ObservedElementBasicProps): void => {
         const d = GetElementTransaction.getElementData(
+            this._ah,
             element,
             this._win,
             getWindowUId(this._win)

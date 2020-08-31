@@ -18,11 +18,11 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     private _initTimer: number | undefined;
     private _isMouseUsed = false;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, win: Window) {
         super();
 
         this._ah = ah;
-        this._win = mainWindow;
+        this._win = win;
         this._initTimer = this._win.setTimeout(this._init, 0);
     }
 
@@ -52,6 +52,10 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
         this._win.removeEventListener('keydown', this._onKeyDown, true);
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
+    }
+
+    static dispose(instance: Types.KeyboardNavigationState): void {
+        (instance as KeyboardNavigationState).dispose();
     }
 
     isNavigatingWithKeyboard(): boolean {

@@ -115,7 +115,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // let's try to find something under the same root.
             for (let m of modalizers) {
                 const e = m.getElement();
-                const ah = getAbilityHelpersOnElement(e);
+                const ah = getAbilityHelpersOnElement(this._ah, e);
                 const deloser = ah && ah.deloser;
                 const deloserItem = deloser && new DeloserItem(this._ah, deloser);
 
@@ -150,7 +150,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // let's try to find something under the same root.
             for (let m of modalizers) {
                 const e = m.getElement();
-                const ah = getAbilityHelpersOnElement(e);
+                const ah = getAbilityHelpersOnElement(this._ah, e);
                 const deloser = ah && ah.deloser;
 
                 if (deloser && !(deloser.uid in resetQueue)) {
@@ -179,9 +179,9 @@ export class DeloserHistory {
     }
 
     process(element: HTMLElement): Types.Deloser | undefined {
-        const ml = RootAPI.findRootAndModalizer(element);
+        const ml = RootAPI.findRootAndModalizer(this._ah, element);
         const rootUId = ml && ml.root.uid;
-        const deloser = DeloserAPI.getDeloser(element);
+        const deloser = DeloserAPI.getDeloser(this._ah, element);
 
         if (!rootUId || !deloser) {
             return undefined;
@@ -333,10 +333,16 @@ export class Deloser implements Types.Deloser {
     }
 
     dispose(): void {
-        this._isActive = false;
-        this._history = [[]];
-        this._snapshotIndex = 0;
         this._remove();
+
+        this._isActive = false;
+        this._snapshotIndex = 0;
+
+        delete this._ah;
+        delete this._basic;
+        delete this._extended;
+        delete this._history;
+        delete this._element;
     }
 
     isActive = (): boolean => {
@@ -410,7 +416,7 @@ export class Deloser implements Types.Deloser {
         let restoreFocusOrder = this._basic.restoreFocusOrder;
         let available: HTMLElement | null = null;
 
-        const rootAndModalizer = RootAPI.findRootAndModalizer(this._element);
+        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, this._element);
 
         if (!rootAndModalizer) {
             return null;
@@ -578,12 +584,26 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._initTimer = undefined;
         }
 
+        if (this._restoreFocusTimer) {
+            this._win.clearTimeout(this._restoreFocusTimer);
+            this._restoreFocusTimer = undefined;
+        }
+
         this._ah.focusedElement.unsubscribe(this._onFocus);
+
+        delete this._ah;
+        delete this._win;
+        delete this._curDeloser;
+        delete this._history;
+    }
+
+    static dispose(instance: Types.DeloserAPI): void {
+        (instance as DeloserAPI).dispose();
     }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
+            const ah = getAbilityHelpersOnElement(this._ah, e);
 
             if (ah && ah.deloser) {
                 return ah.deloser.getActions();
@@ -594,19 +614,19 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     add(element: HTMLElement, basic?: Types.DeloserBasicProps, extended?: Types.DeloserExtendedProps): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.deloser) {
             return;
         }
 
-        setAbilityHelpersOnElement(element, {
+        setAbilityHelpersOnElement(this._ah, element, {
             deloser: new Deloser(element, this._ah, this._win, basic, extended)
         });
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (!ah) {
             return;
@@ -626,22 +646,22 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         deloser.dispose();
 
-        setAbilityHelpersOnElement(element, {
+        setAbilityHelpersOnElement(this._ah, element, {
             deloser: undefined
         });
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(from);
+        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
 
         if (ahFrom && ahFrom.deloser) {
             ahFrom.deloser.move(to);
 
-            setAbilityHelpersOnElement(to, {
+            setAbilityHelpersOnElement(this._ah, to, {
                 deloser: ahFrom.deloser
             });
 
-            setAbilityHelpersOnElement(from, {
+            setAbilityHelpersOnElement(this._ah, from, {
                 deloser: undefined
             });
         }
@@ -665,7 +685,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     setProps(element: HTMLElement, basic?: Partial<Types.DeloserBasicProps>, extended?: Partial<Types.DeloserExtendedProps>): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.deloser) {
             ah.deloser.setProps(basic, extended);
@@ -760,9 +780,9 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
-    static getDeloser(element: HTMLElement): Types.Deloser | undefined {
+    static getDeloser(abilityHelpers: Types.AbilityHelpers, element: HTMLElement): Types.Deloser | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(e);
+            const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 
             if (ah && ah.deloser) {
                 return ah.deloser;

@@ -65,10 +65,18 @@ export class ObservedElementAPI
 
             delete this._waiting[name];
         }
+
+        delete this._ah;
+        delete this._win;
+        delete this._waiting;
+    }
+
+    static dispose(instance: Types.ObservedElementAPI): void {
+        (instance as ObservedElementAPI).dispose();
     }
 
     add(element: HTMLElement, basic?: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.observed) {
             if (__DEV__) {
@@ -77,12 +85,12 @@ export class ObservedElementAPI
             return;
         }
 
-        setAbilityHelpersOnElement(element, { observed: { ...basic, ...extended } });
+        setAbilityHelpersOnElement(this._ah, element, { observed: { ...basic, ...extended } });
         this._onObservedElementUpdate(element);
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (!ah || !ah.observed) {
             if (__DEV__) {
@@ -91,17 +99,17 @@ export class ObservedElementAPI
             return;
         }
 
-        setAbilityHelpersOnElement(element, { observed: undefined });
+        setAbilityHelpersOnElement(this._ah, element, { observed: undefined });
         this._onObservedElementUpdate(element);
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(from);
-        const ahTo = getAbilityHelpersOnElement(to);
+        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
+        const ahTo = getAbilityHelpersOnElement(this._ah, to);
         const observed = ahFrom && ahFrom.observed;
 
         if (observed) {
-            setAbilityHelpersOnElement(from, { observed: undefined });
+            setAbilityHelpersOnElement(this._ah, from, { observed: undefined });
             this._onObservedElementUpdate(from);
 
             if (ahTo && ahTo.observed) {
@@ -111,7 +119,7 @@ export class ObservedElementAPI
                 return;
             }
 
-            setAbilityHelpersOnElement(to, { observed });
+            setAbilityHelpersOnElement(this._ah, to, { observed });
             this._onObservedElementUpdate(to);
         } else if (__DEV__) {
             console.error('Element is not observed.', from);
@@ -123,7 +131,7 @@ export class ObservedElementAPI
         basic?: Partial<Types.ObservedElementBasicProps>,
         extended?: Partial<Types.ObservedElementExtendedProps>
     ): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
         const observed = ah && ah.observed;
 
         if (!observed) {
@@ -133,7 +141,7 @@ export class ObservedElementAPI
             return;
         }
 
-        setAbilityHelpersOnElement(element, { observed: { ...observed, ...basic, ...extended } });
+        setAbilityHelpersOnElement(this._ah, element, { observed: { ...observed, ...basic, ...extended } });
         this._onObservedElementUpdate(element);
     }
 
@@ -193,7 +201,7 @@ export class ObservedElementAPI
     }
 
     private _onObservedElementUpdate(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
         const observed = ah && ah.observed;
         const uid = getElementUId(element, this._win);
         const isInDocument = element.ownerDocument && element.ownerDocument.contains(element);

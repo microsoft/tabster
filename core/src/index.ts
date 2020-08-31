@@ -4,8 +4,8 @@
  */
 
 export {
-    getAbilityHelpers,
+    createAbilityHelpers,
+    disposeAbilityHelpers,
     getAbilityHelpersAttribute,
-    setupAbilityHelpers,
     Types
 } from './AbilityHelpers';

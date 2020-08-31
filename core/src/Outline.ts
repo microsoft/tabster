@@ -7,6 +7,13 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instan
 import * as Types from './Types';
 import { getBoundingRect } from './Utils';
 
+interface WindowWithOutlineStyle extends Window {
+    __ahOutline?: {
+        style?: HTMLStyleElement;
+        elements?: Types.OutlineElements;
+    };
+}
+
 const defaultProps: Types.OutlineProps = {
     areaClass: 'ah-focus-outline-area',
     outlineClass: 'ah-focus-outline',
@@ -95,14 +102,14 @@ export class OutlineAPI implements Types.OutlineAPI {
     setup(props?: Partial<Types.OutlineProps>): void {
         _props = { ..._props, ...props };
 
-        const win = this._win as Types.WindowWithAbilityHelpers;
+        const win = this._win as WindowWithOutlineStyle;
 
-        if (!win.__ah) {
-            return;
+        if (!win.__ahOutline) {
+            win.__ahOutline = {};
         }
 
-        if (!win.__ah.outlineStyle) {
-            win.__ah.outlineStyle = appendStyles(this._win.document, _props);
+        if (!win.__ahOutline.style) {
+            win.__ahOutline.style = appendStyles(this._win.document, _props);
         }
 
         if (!props || !props.areaClass) {
@@ -113,7 +120,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     setProps(element: HTMLElement, props: Partial<Types.OutlinedElementProps> | null): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         let curProps: Types.OutlinedElementProps = (ah && ah.outline) || {};
         let newProps: Types.OutlinedElementProps = {};
@@ -130,7 +137,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         if (newProps.isIgnored !== curProps.isIgnored) {
-            setAbilityHelpersOnElement(element, { outline: newProps });
+            setAbilityHelpersOnElement(this._ah, element, { outline: newProps });
         }
     }
 
@@ -155,7 +162,18 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         this._allOutlineElements.forEach(outlineElements => this._removeDOM(outlineElements.container));
-        this._allOutlineElements = [];
+        delete this._allOutlineElements;
+
+        delete this._ah;
+        delete this._win;
+        delete this._outlinedElement;
+        delete this._curPos;
+        delete this._curOutlineElements;
+        delete this._fullScreenElement;
+    }
+
+    static dispose(instance: Types.OutlineAPI): void {
+        (instance as OutlineAPI).dispose();
     }
 
     private _onFullScreenChanged = (e: Event): void => {
@@ -184,7 +202,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _shouldShowCustomOutline(element: HTMLElement): boolean {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.outline && ah.outline.isIgnored) {
             return false;
@@ -435,17 +453,17 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     private _getDOM(contextElement: HTMLElement): Types.OutlineElements | undefined {
         const doc = contextElement.ownerDocument;
-        const win = (doc && doc.defaultView) as Types.WindowWithAbilityHelpers;
+        const win = (doc && doc.defaultView) as WindowWithOutlineStyle;
 
-        if (!doc || !win || !win.__ah) {
+        if (!doc || !win || !win.__ahOutline) {
             return undefined;
         }
 
-        if (!win.__ah.outlineStyle) {
-            win.__ah.outlineStyle = appendStyles(doc, _props);
+        if (!win.__ahOutline.style) {
+            win.__ahOutline.style = appendStyles(doc, _props);
         }
 
-        if (!win.__ah.outline) {
+        if (!win.__ahOutline.elements) {
             const outlineElements: Types.OutlineElements = {
                 container: doc.createElement('div'),
                 left: doc.createElement('div'),
@@ -467,37 +485,38 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             doc.body.appendChild(outlineElements.container);
 
-            win.__ah.outline = outlineElements;
+            win.__ahOutline.elements = outlineElements;
 
             // TODO: Make a garbage collector to remove the references
             // to the outlines which are nowhere in the DOM anymore.
             // this._allOutlineElements.push(outlineElements);
         }
 
-        return win.__ah.outline;
+        return win.__ahOutline.elements;
     }
 
     private _removeDOM(contextElement: HTMLElement): void {
-        const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as Types.WindowWithAbilityHelpers;
-        const ah =  win && win.__ah;
-        const outlineElements = ah && ah.outline;
+        const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as WindowWithOutlineStyle;
+        const outline = win && win.__ahOutline;
 
-        if (!ah) {
+        if (!outline) {
             return;
         }
 
-        if (ah.outlineStyle && ah.outlineStyle.parentNode) {
-            ah.outlineStyle.parentNode.removeChild(ah.outlineStyle);
+        if (outline.style && outline.style.parentNode) {
+            outline.style.parentNode.removeChild(outline.style);
 
-            delete ah.outlineStyle;
+            delete outline.style;
         }
+
+        const outlineElements = outline && outline.elements;
 
         if (outlineElements) {
             if (outlineElements.container.parentNode) {
                 outlineElements.container.parentNode.removeChild(outlineElements.container);
             }
 
-            delete ah.outline;
+            delete outline.elements;
         }
     }
 

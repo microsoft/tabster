@@ -42,6 +42,7 @@ export class Modalizer implements Types.Modalizer {
     userId: string;
 
     /* private */ _ah: Types.AbilityHelpers;
+    private _win: Window;
     private _element: HTMLElement;
     private _basic: Types.ModalizerBasicProps;
     private _extended: Types.ModalizerExtendedProps;
@@ -53,10 +54,12 @@ export class Modalizer implements Types.Modalizer {
     constructor(
         element: HTMLElement,
         ah: Types.AbilityHelpers,
+        win: Window,
         basic: Types.ModalizerBasicProps,
         extended?: Types.ModalizerExtendedProps
     ) {
         this._ah = ah;
+        this._win = win;
 
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
@@ -92,7 +95,18 @@ export class Modalizer implements Types.Modalizer {
     }
 
     dispose(): void {
+        if (this._setAccessibleTimer) {
+            this._win.clearTimeout(this._setAccessibleTimer);
+            this._setAccessibleTimer = undefined;
+        }
+
         this._remove();
+
+        delete this._ah;
+        delete this._win;
+        delete this._element;
+        delete this._basic;
+        delete this._extended;
     }
 
     move(newElement: HTMLElement): void {
@@ -117,18 +131,18 @@ export class Modalizer implements Types.Modalizer {
         this._isAccessible = accessible;
 
         if (this._setAccessibleTimer) {
-            window.clearTimeout(this._setAccessibleTimer);
+            this._win.clearTimeout(this._setAccessibleTimer);
 
             this._setAccessibleTimer = undefined;
         }
 
         if (accessible) {
-            augmentAttribute(this._element, 'aria-hidden');
+            augmentAttribute(this._ah, this._element, 'aria-hidden');
         } else {
-            this._setAccessibleTimer = window.setTimeout(() => {
+            this._setAccessibleTimer = this._win.setTimeout(() => {
                 this._setAccessibleTimer = undefined;
 
-                augmentAttribute(this._element, 'aria-hidden', 'true');
+                augmentAttribute(this._ah, this._element, 'aria-hidden', 'true');
             }, 0);
         }
 
@@ -241,10 +255,18 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
+
+        delete this._ah;
+        delete this._win;
+        delete this._curModalizer;
+    }
+
+    static dispose(instance: Types.ModalizerAPI): void {
+        (instance as ModalizerAPI).dispose();
     }
 
     add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.modalizer) {
             if (__DEV__ && (ah.modalizer.userId !== basic.id)) {
@@ -254,9 +276,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        const modalizer = new Modalizer(element, this._ah, basic, extended);
+        const modalizer = new Modalizer(element, this._ah, this._win, basic, extended);
 
-        setAbilityHelpersOnElement(element, { modalizer });
+        setAbilityHelpersOnElement(this._ah, element, { modalizer });
 
         dispatchMutationEvent(element, { modalizer });
     }
@@ -266,7 +288,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         basic?: Partial<Types.ModalizerBasicProps> | null,
         extended?: Partial<Types.ModalizerExtendedProps> | null
     ): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.modalizer) {
             ah.modalizer.setProps(basic, extended);
@@ -274,7 +296,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(element);
+        const ah = getAbilityHelpersOnElement(this._ah, element);
 
         const modalizer = ah && ah.modalizer;
 
@@ -286,7 +308,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        setAbilityHelpersOnElement(element, {
+        setAbilityHelpersOnElement(this._ah, element, {
             modalizer: undefined
         });
 
@@ -296,15 +318,15 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(from);
+        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
 
         const modalizer = ahFrom && ahFrom.modalizer;
 
         if (modalizer) {
             modalizer.move(to);
 
-            setAbilityHelpersOnElement(to, { modalizer: modalizer });
-            setAbilityHelpersOnElement(from, { modalizer: undefined });
+            setAbilityHelpersOnElement(this._ah, to, { modalizer: modalizer });
+            setAbilityHelpersOnElement(this._ah, from, { modalizer: undefined });
 
             dispatchMutationEvent(from, { modalizer, removed: true });
             dispatchMutationEvent(to, { modalizer });
@@ -312,7 +334,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean {
-        const m = RootAPI.findRootAndModalizer(elementFromModalizer);
+        const m = RootAPI.findRootAndModalizer(this._ah, elementFromModalizer);
 
         if (m && m.modalizer) {
             m.root.setCurrentModalizerId(m.modalizer.userId);
@@ -357,7 +379,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         let modalizer: Types.Modalizer | undefined;
 
         if (e) {
-            const l = RootAPI.findRootAndModalizer(e);
+            const l = RootAPI.findRootAndModalizer(this._ah, e);
 
             if (l) {
                 modalizer = l.modalizer;

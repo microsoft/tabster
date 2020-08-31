@@ -10,7 +10,8 @@ export abstract class Subscribable<A, B = undefined> implements Types.Subscribab
     private _callbacks: (Types.SubscribableCallback<A, B>)[] = [];
 
     protected dispose(): void {
-        this._callbacks = [];
+        delete this._callbacks;
+        delete this._val;
     }
 
     subscribe(callback: Types.SubscribableCallback<A, B>): void {
