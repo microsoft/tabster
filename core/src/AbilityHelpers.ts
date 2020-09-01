@@ -58,8 +58,6 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
             delete this._unobserve;
         }
 
-        KeyboardNavigationState.dispose(this.keyboardNavigation);
-        FocusedElementState.dispose(this.focusedElement);
         OutlineAPI.dispose(this.outline);
         DeloserAPI.dispose(this.deloser);
         FocusableAPI.dispose(this.focusable);
@@ -67,6 +65,8 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         RootAPI.dispose(this.root);
         ObservedElementAPI.dispose(this.observedElement);
         CrossOriginAPI.dispose(this.crossOrigin);
+        KeyboardNavigationState.dispose(this.keyboardNavigation);
+        FocusedElementState.dispose(this.focusedElement);
 
         delete this._win;
         delete this.keyboardNavigation;
