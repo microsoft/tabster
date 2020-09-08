@@ -731,6 +731,8 @@ class CrossOriginTransactions {
     private _transactions: { [id: string]: CrossOriginTransactionWrapper<any, any> } = {};
     private _ah: Types.AbilityHelpers;
     private _pingTimer: number | undefined;
+    private _disposeTimer: number | undefined;
+    private _isDefaultSendUp = false;
     isSetUp = false;
     sendUp: Types.CrossOriginTransactionSend | undefined;
 
@@ -748,19 +750,7 @@ class CrossOriginTransactions {
         } else {
             this.isSetUp = true;
 
-            this.sendUp = sendUp || undefined;
-
-            if (sendUp === undefined) {
-                if (this._owner.document) {
-                    if (this._owner.parent && (this._owner.parent !== this._owner) && this._owner.parent.postMessage) {
-                        this.sendUp = (data: Types.CrossOriginTransactionData<any, any>) => {
-                            this._owner.parent.postMessage(JSON.stringify(data), '*');
-                        };
-                    }
-
-                    this._owner.addEventListener('message', this._onBrowserMessage);
-                }
-            }
+            this.setSendUp(sendUp);
 
             this._owner.addEventListener('pagehide', async () => {
                 if (_focusOwner === this._ownerUId) {
@@ -777,6 +767,35 @@ class CrossOriginTransactions {
         return this._onMessage;
     }
 
+    setSendUp(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
+        if (!this.isSetUp) {
+            throw new Error('CrossOrigin is not set up.');
+        }
+
+        this.sendUp = sendUp || undefined;
+
+        if (sendUp === undefined) {
+            if (!this._isDefaultSendUp) {
+                if (this._owner.document) {
+                    this._isDefaultSendUp = true;
+
+                    if (this._owner.parent && (this._owner.parent !== this._owner) && this._owner.parent.postMessage) {
+                        this.sendUp = (data: Types.CrossOriginTransactionData<any, any>) => {
+                            this._owner.parent.postMessage(JSON.stringify(data), '*');
+                        };
+                    }
+
+                    this._owner.addEventListener('message', this._onBrowserMessage);
+                }
+            }
+        } else if (this._isDefaultSendUp) {
+            this._owner.removeEventListener('message', this._onBrowserMessage);
+            this._isDefaultSendUp = false;
+        }
+
+        return this._onMessage;
+    }
+
     dispose(): void {
         if (this._pingTimer) {
             this._owner.clearTimeout(this._pingTimer);
@@ -785,20 +804,29 @@ class CrossOriginTransactions {
 
         this._owner.removeEventListener('message', this._onBrowserMessage);
 
-        for (let id of Object.keys(this._transactions)) {
-            const t = this._transactions[id];
+        if (!this._disposeTimer) {
+            // Giving a bit to send DeadWindow transaction before actually
+            // killing all references.
+            this._disposeTimer = this._owner.setTimeout(() => {
+                this._disposeTimer = undefined;
 
-            if (t.timer) {
-                this._owner.clearTimeout(t.timer);
-            }
+                for (let id of Object.keys(this._transactions)) {
+                    const t = this._transactions[id];
 
-            t.transaction.end();
+                    if (t.timer) {
+                        this._owner.clearTimeout(t.timer);
+                        delete t.timer;
+                    }
+
+                    t.transaction.end();
+                }
+
+                delete this._owner;
+                delete this._ah;
+                delete this._knownTargets;
+                delete this._transactions;
+            }, 1000);
         }
-
-        delete this._owner;
-        delete this._ah;
-        delete this._knownTargets;
-        delete this._transactions;
     }
 
     beginTransaction<I, O>(
@@ -809,6 +837,10 @@ class CrossOriginTransactions {
         targetId?: string,
         withReject?: boolean
     ): Promise<O | undefined> {
+        if (!this._owner) {
+            return Promise.reject();
+        }
+
         const transaction = new Transaction(this._ah, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
         let selfResponse: ((data: Types.CrossOriginTransactionData<I, O>) => Promise<O | undefined>) | undefined;
 
@@ -852,10 +884,12 @@ class CrossOriginTransactions {
         const ret = transaction.begin(selfResponse);
 
         ret.finally(() => {
-            if (wrapper.timer) {
-                this._owner.clearTimeout(wrapper.timer);
+            if (this._transactions) { // Making sure we're not accessing it after dispose().
+                if (wrapper.timer) {
+                    this._owner.clearTimeout(wrapper.timer);
+                }
+                delete this._transactions[transaction.id];
             }
-            delete this._transactions[transaction.id];
         });
 
         return ret.then(value => value, withReject ? undefined : () => undefined);
@@ -1232,8 +1266,12 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
-        this._initTimer = this._win.setTimeout(this._init, 0);
-        return this._transactions.setup(sendUp);
+        if (this.isSetUp()) {
+            return this._transactions.setSendUp(sendUp);
+        } else {
+            this._initTimer = this._win.setTimeout(this._init, 0);
+            return this._transactions.setup(sendUp);
+        }
     }
 
     isSetUp(): boolean {
