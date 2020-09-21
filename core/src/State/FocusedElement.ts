@@ -19,6 +19,12 @@ import {
 
 const _canOverrideNativeFocus = canOverrideNativeFocus();
 
+const _inputSelector = [
+    'input',
+    'textarea',
+    '*[contenteditable]'
+].join(', ');
+
 interface WindowWithHTMLElement extends Window {
     HTMLElement: typeof HTMLElement;
 }
@@ -375,6 +381,10 @@ export class FocusedElementState
                 rootAndModalizer.root.moveOutWithDefaultAction(e.shiftKey);
             }
         } else {
+            if ((e.keyCode === Keys.Left || e.keyCode === Keys.Right) && this._isInput(curElement)) {
+                return;
+            }
+
             let groupper = this._getGroupper(curElement);
 
             if (!groupper) {
@@ -647,5 +657,9 @@ export class FocusedElementState
                 element.blur();
             }
         }
+    }
+
+    private _isInput(element: HTMLElement): boolean {
+        return element.matches && element.matches(_inputSelector);
     }
 }
