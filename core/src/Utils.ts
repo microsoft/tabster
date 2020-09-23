@@ -261,3 +261,9 @@ export function getWindowUId(window: WindowWithUID): string {
 
     return uid;
 }
+
+export function clearElementCache(): void {
+    for (let key of Object.keys(elementByUId)) {
+        delete elementByUId[key];
+    }
+}

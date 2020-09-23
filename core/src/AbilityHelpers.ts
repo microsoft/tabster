@@ -15,6 +15,7 @@ import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
 import { RootAPI } from './Root';
 import * as Types from './Types';
+import { clearElementCache } from './Utils';
 
 export { Types };
 
@@ -67,6 +68,8 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         CrossOriginAPI.dispose(this.crossOrigin);
         KeyboardNavigationState.dispose(this.keyboardNavigation);
         FocusedElementState.dispose(this.focusedElement);
+
+        clearElementCache();
 
         delete this._win;
         delete this.keyboardNavigation;

@@ -72,7 +72,7 @@ export class FocusedElementState
     private _init = (): void => {
         this._initTimer = undefined;
 
-        FocusedElementState.replaceFocus(this._win.document);
+        FocusedElementState.replaceFocus(this._win);
 
         this._win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
         this._win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
@@ -82,6 +82,8 @@ export class FocusedElementState
 
     protected dispose(): void {
         super.dispose();
+
+        FocusedElementState.restoreFocus(this._win);
 
         if (this._initTimer) {
             this._win.clearTimeout(this._initTimer);
@@ -246,21 +248,15 @@ export class FocusedElementState
         this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
     }
 
-    static replaceFocus(doc: HTMLDocument): void {
-        const win = doc.defaultView as (WindowWithHTMLElement | null);
-
-        if (!win) {
-            throw new Error('Wrong document for replaceFocus().');
-        }
-
-        const origFocus = win.HTMLElement.prototype.focus;
+    static replaceFocus(win: Window): void {
+        const origFocus = (win as WindowWithHTMLElement).HTMLElement.prototype.focus;
 
         if ((origFocus as CustomFocusFunctionWithOriginal).__ahFocus) {
             // Already set up.
             return;
         }
 
-        win.HTMLElement.prototype.focus = focus;
+        (win as WindowWithHTMLElement).HTMLElement.prototype.focus = focus;
 
         function focus(this: HTMLElement) {
             FocusedElementState._lastFocusedProgrammatically = this;
@@ -268,6 +264,15 @@ export class FocusedElementState
         }
 
         (focus as CustomFocusFunctionWithOriginal).__ahFocus = origFocus;
+    }
+
+    static restoreFocus(win: Window): void {
+        const proto = (win as WindowWithHTMLElement).HTMLElement.prototype;
+        const origFocus = (proto.focus as CustomFocusFunctionWithOriginal).__ahFocus;
+
+        if (origFocus) {
+            proto.focus = origFocus;
+        }
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
