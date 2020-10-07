@@ -4,10 +4,10 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
+import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, isElementVisibleInContainer } from './Utils';
+import { createElementTreeWalker, isElementVisibleInContainer, matchesSelector } from './Utils';
 
 const _focusableSelector = [
     'a[href]',
@@ -959,7 +959,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         noVisibleCheck?: boolean,
         noAccessibleCheck?: boolean
     ): boolean {
-        if (el.matches && el.matches(_focusableSelector) && (includeProgrammaticallyFocusable || (el.tabIndex !== -1))) {
+        if (matchesSelector(el, _focusableSelector) && (includeProgrammaticallyFocusable || (el.tabIndex !== -1))) {
             return (noVisibleCheck || this.isVisible(el)) && (noAccessibleCheck || this.isAccessible(el));
         }
 

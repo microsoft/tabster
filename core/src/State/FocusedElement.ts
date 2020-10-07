@@ -12,7 +12,9 @@ import * as Types from '../Types';
 import {
     callOriginalFocusOnly,
     CustomFocusFunctionWithOriginal,
+    documentContains,
     isElementVerticallyVisibleInContainer,
+    matchesSelector,
     scrollIntoView,
     shouldIgnoreFocus
 } from '../Utils';
@@ -114,7 +116,7 @@ export class FocusedElementState
     }
 
     getLastFocusedElement(): HTMLElement | undefined {
-        if (this._lastVal && (!this._lastVal.ownerDocument || !this._lastVal.ownerDocument.contains(this._lastVal))) {
+        if (this._lastVal && !documentContains(this._lastVal.ownerDocument, this._lastVal)) {
             this._lastVal = undefined;
         }
 
@@ -122,7 +124,7 @@ export class FocusedElementState
     }
 
     getPrevFocusedElement(): HTMLElement | undefined {
-        if (this._prevVal && (!this._prevVal.ownerDocument || !this._prevVal.ownerDocument.contains(this._prevVal))) {
+        if (this._prevVal && !documentContains(this._prevVal.ownerDocument, this._prevVal)) {
             this._prevVal = undefined;
         }
 
@@ -665,6 +667,6 @@ export class FocusedElementState
     }
 
     private _isInput(element: HTMLElement): boolean {
-        return element.matches && element.matches(_inputSelector);
+        return matchesSelector(element, _inputSelector);
     }
 }

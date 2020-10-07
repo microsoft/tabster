@@ -240,7 +240,7 @@ export function observeMutations(
         }
     });
 
-    observer.observe(doc, { childList: true, subtree: true, attributeFilter: [Types.AbilityHelpersAttributeName] });
+    observer.observe(doc, { childList: true, subtree: true, attributes: true, attributeFilter: [Types.AbilityHelpersAttributeName] });
 
     return () => {
         observer.disconnect();

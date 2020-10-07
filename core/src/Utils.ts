@@ -25,10 +25,31 @@ export interface CustomFocusFunctionWithOriginal {
     __ahFocus?: (options?: FocusOptions | undefined) => void;
 }
 
+export interface AHDOMRect {
+    bottom: number;
+    left: number;
+    right: number;
+    top: number;
+}
+
 let _isBrokenIE11: boolean;
-let _containerBoundingRectCache: { [id: string]: { rect: DOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
+let _containerBoundingRectCache: { [id: string]: { rect: AHDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
 let _containerBoundingRectCacheTimer: number | undefined;
+
+const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
+    readonly bottom: number;
+    readonly left: number;
+    readonly right: number;
+    readonly top: number;
+
+    constructor(x?: number, y?: number, width?: number, height?: number) {
+        this.left = x || 0;
+        this.top = y || 0;
+        this.right = (x || 0) + (width || 0);
+        this.bottom = (y || 0) + (height || 0);
+    }
+};
 
 let _uidCounter = 0;
 
@@ -56,7 +77,7 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
 
-export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): DOMRect {
+export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): AHDOMRect {
     let cacheId = element.__ahCacheId;
     let cached = cacheId ? _containerBoundingRectCache[cacheId] : undefined;
 
@@ -64,10 +85,10 @@ export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): DO
         return cached.rect;
     }
 
-    const scrollingElement = element.ownerDocument && element.ownerDocument.scrollingElement;
+    const scrollingElement = element.ownerDocument && element.ownerDocument.documentElement;
 
     if (!scrollingElement) {
-        return new DOMRect();
+        return new _DOMRect();
     }
 
     // A bounding rect of the top-level element contains the whole page regardless of the
@@ -85,7 +106,7 @@ export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): DO
         bottom = Math.min(bottom, r.bottom);
     }
 
-    const rect = new DOMRect(
+    const rect = new _DOMRect(
         left < right ? left : -1,
         top < bottom ? top : -1,
         left < right ? right - left : 0,
@@ -187,7 +208,7 @@ export function getScrollableContainer(element: HTMLElement): HTMLElement | null
             }
         }
 
-        return doc.body;
+        return doc.documentElement;
     }
 
     return null;
@@ -245,7 +266,7 @@ export function getElementUId(element: HTMLElementWithUID, window: Window): stri
         uid = element.__ahElementUID = getUId(window);
     }
 
-    if (!elementByUId[uid] && element.ownerDocument && element.ownerDocument.contains(element)) {
+    if (!elementByUId[uid] && documentContains(element.ownerDocument, element)) {
         elementByUId[uid] = element;
     }
 
@@ -266,4 +287,23 @@ export function clearElementCache(): void {
     for (let key of Object.keys(elementByUId)) {
         delete elementByUId[key];
     }
+}
+
+// IE11 doesn't have document.contains()...
+export function documentContains(doc: HTMLDocument | null | undefined, element: HTMLElement): boolean {
+    return !!(doc?.body?.contains(element));
+}
+
+export function matchesSelector(element: HTMLElement, selector: string): boolean {
+    interface HTMLElementWithMatches extends HTMLElement {
+        matchesSelector?: typeof HTMLElement.prototype.matches;
+        msMatchesSelector?: typeof HTMLElement.prototype.matches;
+    }
+
+    const matches = element.matches ||
+        (element as HTMLElementWithMatches).matchesSelector ||
+        (element as HTMLElementWithMatches).msMatchesSelector ||
+        element.webkitMatchesSelector;
+
+    return matches && matches.call(element, selector);
 }

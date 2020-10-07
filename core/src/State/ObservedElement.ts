@@ -4,10 +4,10 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Instance';
-import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
+import { MUTATION_EVENT_NAME, MutationEvent } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
-import { getElementUId } from '../Utils';
+import { documentContains, getElementUId } from '../Utils';
 
 interface ObservedElementInfo {
     element: HTMLElement;
@@ -204,7 +204,7 @@ export class ObservedElementAPI
         const ah = getAbilityHelpersOnElement(this._ah, element);
         const observed = ah && ah.observed;
         const uid = getElementUId(element, this._win);
-        const isInDocument = element.ownerDocument && element.ownerDocument.contains(element);
+        const isInDocument = documentContains(element.ownerDocument, element);
         let info: ObservedElementInfo | undefined = _observedById[uid];
 
         if (observed && isInDocument) {
