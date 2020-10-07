@@ -4,7 +4,7 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
-import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer, matchesSelector } from './Utils';
@@ -90,9 +90,6 @@ export class UberGroupper implements Types.UberGroupper {
         });
 
         delete UberGroupper._containers[this.id];
-        delete this._ah;
-        delete this._win;
-        delete this._element;
     }
 
     getElement(): HTMLElement {
@@ -460,8 +457,6 @@ export class Groupper implements Types.Groupper {
         setAbilityHelpersOnElement(this._ah, this._element, {
             groupper: undefined
         });
-
-        delete this._ah;
     }
 
     getBasicProps(): Types.GroupperBasicProps {
@@ -613,9 +608,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
-        delete this._ah;
-        delete this._win;
-        delete this._scrollTargets;
+        this._scrollTargets = [];
     }
 
     static dispose(instance: Types.FocusableAPI): void {

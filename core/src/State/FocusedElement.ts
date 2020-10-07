@@ -100,8 +100,6 @@ export class FocusedElementState
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
 
-        delete this._ah;
-        delete this._win;
         delete this._nextVal;
         delete this._lastVal;
         delete this._prevVal;

@@ -100,13 +100,13 @@ export class Modalizer implements Types.Modalizer {
             this._setAccessibleTimer = undefined;
         }
 
+        if (this._isFocused) {
+            this.setFocused(false);
+        }
+
         this._remove();
 
-        delete this._ah;
-        delete this._win;
-        delete this._element;
-        delete this._basic;
-        delete this._extended;
+        this._extended = {};
     }
 
     move(newElement: HTMLElement): void {
@@ -256,8 +256,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
-        delete this._ah;
-        delete this._win;
         delete this._curModalizer;
     }
 

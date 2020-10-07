@@ -4,7 +4,7 @@
  */
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Instance';
-import { MUTATION_EVENT_NAME, MutationEvent } from '../MutationEvent';
+import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { documentContains, getElementUId } from '../Utils';
@@ -65,10 +65,6 @@ export class ObservedElementAPI
 
             delete this._waiting[name];
         }
-
-        delete this._ah;
-        delete this._win;
-        delete this._waiting;
     }
 
     static dispose(instance: Types.ObservedElementAPI): void {

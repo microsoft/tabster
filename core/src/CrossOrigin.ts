@@ -721,7 +721,7 @@ class PingTransaction extends CrossOriginTransaction<undefined, true> {
 
 interface CrossOriginTransactionWrapper<I, O> {
     transaction: CrossOriginTransaction<I, O>;
-    timer: number;
+    timer?: number;
 }
 
 class CrossOriginTransactions {
@@ -821,10 +821,7 @@ class CrossOriginTransactions {
                     t.transaction.end();
                 }
 
-                delete this._owner;
-                delete this._ah;
-                delete this._knownTargets;
-                delete this._transactions;
+                this._knownTargets = {};
             }, 1000);
         }
     }
@@ -1130,7 +1127,6 @@ export class CrossOriginFocusedElementState
 
     protected dispose() {
         super.dispose();
-        delete this._transactions;
     }
 
     static dispose(instance: Types.CrossOriginFocusedElementState) {
@@ -1212,8 +1208,6 @@ export class CrossOriginObservedElementState
 
     protected dispose() {
         super.dispose();
-        delete this._ah;
-        delete this._transactions;
     }
 
     static dispose(instance: Types.CrossOriginObservedElementState) {
@@ -1316,12 +1310,6 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);
         CrossOriginObservedElementState.dispose(this.observedElement);
-
-        delete this._transactions;
-        delete this.focusedElement;
-        delete this.observedElement;
-        delete this._ah;
-        delete this._win;
     }
 
     static dispose(instance: Types.CrossOriginAPI) {

@@ -5,7 +5,7 @@
 
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
-import { dispatchMutationEvent, MUTATION_EVENT_NAME, MutationEvent } from './MutationEvent';
+import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
 import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored } from './Utils';
 
@@ -73,16 +73,8 @@ export class Root implements Types.Root {
 
         this._remove();
 
-        delete this._element;
-        delete this._ah;
-        delete this._win;
-        delete this._basic;
-        delete this._knownModalizers;
-        delete this._dummyInputFirstProps;
-        delete this._dummyInputLastProps;
-        delete this._dummyInputFirst;
-        delete this._dummyInputLast;
-        delete this._forgetFocusedGrouppers;
+        this._knownModalizers = {};
+        this._forgetFocusedGrouppers = () => {/**/};
     }
 
     setProps(basic?: Partial<Types.RootBasicProps> | null): void {
@@ -366,9 +358,7 @@ export class RootAPI implements Types.RootAPI {
             this._unobserve();
         }
 
-        delete this._ah;
-        delete this._win;
-        delete this._forgetFocusedGrouppers;
+        this._forgetFocusedGrouppers = () => {/**/};
         delete this._unobserve;
     }
 

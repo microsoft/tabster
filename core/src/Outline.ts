@@ -162,10 +162,8 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         this._allOutlineElements.forEach(outlineElements => this._removeDOM(outlineElements.container));
-        delete this._allOutlineElements;
+        this._allOutlineElements = [];
 
-        delete this._ah;
-        delete this._win;
         delete this._outlinedElement;
         delete this._curPos;
         delete this._curOutlineElements;
@@ -489,7 +487,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             // TODO: Make a garbage collector to remove the references
             // to the outlines which are nowhere in the DOM anymore.
-            // this._allOutlineElements.push(outlineElements);
+            this._allOutlineElements.push(outlineElements);
         }
 
         return win.__ahOutline.elements;

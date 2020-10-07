@@ -338,11 +338,9 @@ export class Deloser implements Types.Deloser {
         this._isActive = false;
         this._snapshotIndex = 0;
 
-        delete this._ah;
-        delete this._basic;
-        delete this._extended;
-        delete this._history;
-        delete this._element;
+        this._basic = {};
+        this._extended = {};
+        this._history = [];
     }
 
     isActive = (): boolean => {
@@ -591,10 +589,7 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
-        delete this._ah;
-        delete this._win;
         delete this._curDeloser;
-        delete this._history;
     }
 
     static dispose(instance: Types.DeloserAPI): void {
@@ -768,9 +763,9 @@ export class DeloserAPI implements Types.DeloserAPI {
 
             if (!(await this._history.focusAvailable(null))) {
                 await this._history.resetFocus(null);
-
-                this._isRestoringFocus = false;
             }
+
+            this._isRestoringFocus = false;
         };
 
         if (force) {

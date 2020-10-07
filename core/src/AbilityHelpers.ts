@@ -71,17 +71,7 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
 
         clearElementCache();
 
-        delete this._win;
-        delete this.keyboardNavigation;
-        delete this.focusedElement;
-        delete this.outline;
-        delete this.deloser;
-        delete this.focusable;
-        delete this.modalizer;
-        delete this.root;
-        delete this.observedElement;
-        delete this.crossOrigin;
-        delete this._storage;
+        this._storage = {};
     }
 
     static dispose(instance: Types.AbilityHelpers): void {
