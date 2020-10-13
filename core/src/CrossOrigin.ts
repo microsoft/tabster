@@ -752,14 +752,7 @@ class CrossOriginTransactions {
 
             this.setSendUp(sendUp);
 
-            this._owner.addEventListener('pagehide', async () => {
-                if (_focusOwner === this._ownerUId) {
-                    await this.beginTransaction(StateTransaction, {
-                        ownerUId: this._ownerUId,
-                        state: CrossOriginState.DeadWindow
-                    });
-                }
-            });
+            this._owner.addEventListener('pagehide', this._onPageHide);
 
             this._ping();
         }
@@ -803,6 +796,7 @@ class CrossOriginTransactions {
         }
 
         this._owner.removeEventListener('message', this._onBrowserMessage);
+        this._owner.removeEventListener('pagehide', this._onPageHide);
 
         if (!this._disposeTimer) {
             // Giving a bit to send DeadWindow transaction before actually
@@ -822,7 +816,9 @@ class CrossOriginTransactions {
                 }
 
                 this._knownTargets = {};
-            }, 1000);
+
+                delete this.sendUp;
+            }, 500);
         }
     }
 
@@ -1009,6 +1005,15 @@ class CrossOriginTransactions {
                     e.send(response);
                 });
             }
+        }
+    }
+
+    private _onPageHide = async () => {
+        if (_focusOwner === this._ownerUId) {
+            await this.beginTransaction(StateTransaction, {
+                ownerUId: this._ownerUId,
+                state: CrossOriginState.DeadWindow
+            });
         }
     }
 

@@ -216,6 +216,7 @@ export interface FocusableAPI {
     setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
         extended?: Partial<GroupperExtendedProps> | null): void;
     setCurrentGroupper(element: HTMLElement | null, forceUpdate?: boolean): void;
+    // isInCurrentGroupper is a tri-state boolean, undefined when no groupper.
     isInCurrentGroupper(element: HTMLElement): boolean | undefined;
     findGroupper(element: HTMLElement): HTMLElement | null;
 
