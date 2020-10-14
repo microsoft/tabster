@@ -13,24 +13,26 @@ const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
 
 export class KeyboardNavigationState extends Subscribable<boolean> implements Types.KeyboardNavigationState {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _dismissTimer: number | undefined;
     private _initTimer: number | undefined;
     private _isMouseUsed = false;
 
-    constructor(ah: Types.AbilityHelpers, win: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         super();
 
         this._ah = ah;
-        this._win = win;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._win.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._win.addEventListener('keydown', this._onKeyDown, true); // Capture!
+        const win = this._win();
+
+        win.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
+        win.addEventListener('keydown', this._onKeyDown, true); // Capture!
 
         this._ah.focusedElement.subscribe(this._onFocus);
     }
@@ -38,18 +40,20 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     protected dispose(): void {
         super.dispose();
 
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._dismissTimer) {
-            this._win.clearTimeout(this._dismissTimer);
+            win.clearTimeout(this._dismissTimer);
             this._dismissTimer = undefined;
         }
 
-        this._win.document.body.removeEventListener('mousedown', this._onMouseDown, true);
-        this._win.removeEventListener('keydown', this._onKeyDown, true);
+        win.document.body.removeEventListener('mousedown', this._onMouseDown, true);
+        win.removeEventListener('keydown', this._onKeyDown, true);
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
     }
@@ -115,14 +119,16 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     }
 
     private _scheduleDismiss(): void {
+        const win = this._win();
+
         if (this._dismissTimer) {
-            this._win.clearTimeout(this._dismissTimer);
+            win.clearTimeout(this._dismissTimer);
             this._dismissTimer = undefined;
         }
 
         const was = this._ah.focusedElement.getFocusedElement();
 
-        this._dismissTimer = this._win.setTimeout(() => {
+        this._dismissTimer = win.setTimeout(() => {
             this._dismissTimer = undefined;
 
             const cur = this._ah.focusedElement.getFocusedElement();

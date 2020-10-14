@@ -22,7 +22,7 @@ export { Types };
 class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersInternal {
     private _storage: Types.AbilityHelpersElementStorage;
     private _unobserve: (() => void) | undefined;
-    private _win: Window;
+    private _win: Window | undefined;
 
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
@@ -42,15 +42,17 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
             this._unobserve = observeMutations(win.document, this, updateAbilityHelpersByAttribute);
         }
 
-        this.keyboardNavigation = new KeyboardNavigationState(this, win);
-        this.focusedElement = new FocusedElementState(this, win);
-        this.outline = new OutlineAPI(this, win);
-        this.deloser = new DeloserAPI(this, win);
-        this.focusable = new FocusableAPI(this, win);
-        this.modalizer = new ModalizerAPI(this, win);
-        this.root = new RootAPI(this, win, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
-        this.observedElement = new ObservedElementAPI(this, win);
-        this.crossOrigin = new CrossOriginAPI(this, win);
+        const getWindow = this.getWindow;
+
+        this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
+        this.focusedElement = new FocusedElementState(this, getWindow);
+        this.outline = new OutlineAPI(this, getWindow);
+        this.deloser = new DeloserAPI(this, getWindow);
+        this.focusable = new FocusableAPI(this, getWindow);
+        this.modalizer = new ModalizerAPI(this, getWindow);
+        this.root = new RootAPI(this, getWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
+        this.observedElement = new ObservedElementAPI(this, getWindow);
+        this.crossOrigin = new CrossOriginAPI(this, getWindow);
     }
 
     protected dispose(): void {
@@ -70,8 +72,8 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         FocusedElementState.dispose(this.focusedElement);
 
         clearElementCache();
-
         this._storage = {};
+        delete this._win;
     }
 
     static dispose(instance: Types.AbilityHelpers): void {
@@ -92,7 +94,11 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         return entry;
     }
 
-    getWindow(): Window {
+    getWindow = () => {
+        if (!this._win) {
+            throw new Error('Using disposed AbilityHelpers.');
+        }
+
         return this._win;
     }
 }

@@ -42,7 +42,7 @@ export class Modalizer implements Types.Modalizer {
     userId: string;
 
     /* private */ _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _element: HTMLElement;
     private _basic: Types.ModalizerBasicProps;
     private _extended: Types.ModalizerExtendedProps;
@@ -54,7 +54,7 @@ export class Modalizer implements Types.Modalizer {
     constructor(
         element: HTMLElement,
         ah: Types.AbilityHelpers,
-        win: Window,
+        win: Types.GetWindow,
         basic: Types.ModalizerBasicProps,
         extended?: Types.ModalizerExtendedProps
     ) {
@@ -96,7 +96,7 @@ export class Modalizer implements Types.Modalizer {
 
     dispose(): void {
         if (this._setAccessibleTimer) {
-            this._win.clearTimeout(this._setAccessibleTimer);
+            this._win().clearTimeout(this._setAccessibleTimer);
             this._setAccessibleTimer = undefined;
         }
 
@@ -131,7 +131,7 @@ export class Modalizer implements Types.Modalizer {
         this._isAccessible = accessible;
 
         if (this._setAccessibleTimer) {
-            this._win.clearTimeout(this._setAccessibleTimer);
+            this._win().clearTimeout(this._setAccessibleTimer);
 
             this._setAccessibleTimer = undefined;
         }
@@ -139,7 +139,7 @@ export class Modalizer implements Types.Modalizer {
         if (accessible) {
             augmentAttribute(this._ah, this._element, 'aria-hidden');
         } else {
-            this._setAccessibleTimer = this._win.setTimeout(() => {
+            this._setAccessibleTimer = this._win().setTimeout(() => {
                 this._setAccessibleTimer = undefined;
 
                 augmentAttribute(this._ah, this._element, 'aria-hidden', 'true');
@@ -226,15 +226,15 @@ export class Modalizer implements Types.Modalizer {
 
 export class ModalizerAPI implements Types.ModalizerAPI {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         this._ah = ah;
-        this._win = mainWindow;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
@@ -244,13 +244,15 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._focusOutTimer) {
-            this._win.clearTimeout(this._focusOutTimer);
+            win.clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
         }
 
@@ -370,7 +372,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     private _onFocus = (e: HTMLElement): void => {
         if (this._focusOutTimer) {
-            this._win.clearTimeout(this._focusOutTimer);
+            this._win().clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
         }
 
@@ -393,7 +395,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
             this._curModalizer.setFocused(true);
         } else if (this._curModalizer) {
-            this._focusOutTimer = this._win.setTimeout(() => {
+            this._focusOutTimer = this._win().setTimeout(() => {
                 this._focusOutTimer = undefined;
 
                 if (this._curModalizer) {

@@ -70,7 +70,7 @@ class OutlinePosition {
 
 export class OutlineAPI implements Types.OutlineAPI {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
     private _outlinedElement: HTMLElement | undefined;
@@ -80,10 +80,10 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         this._ah = ah;
-        this._win = mainWindow;
-        this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
@@ -92,24 +92,26 @@ export class OutlineAPI implements Types.OutlineAPI {
         this._ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
         this._ah.focusedElement.subscribe(this._onFocus);
 
-        this._win.addEventListener('scroll', this._onScroll, true); // Capture!
+        const win = this._win();
+
+        win.addEventListener('scroll', this._onScroll, true); // Capture!
 
         if (_fullScreenEventName) {
-            this._win.document.addEventListener(_fullScreenEventName, this._onFullScreenChanged);
+            win.document.addEventListener(_fullScreenEventName, this._onFullScreenChanged);
         }
     }
 
     setup(props?: Partial<Types.OutlineProps>): void {
         _props = { ..._props, ...props };
 
-        const win = this._win as WindowWithOutlineStyle;
+        const win = this._win() as WindowWithOutlineStyle;
 
         if (!win.__ahOutline) {
             win.__ahOutline = {};
         }
 
         if (!win.__ahOutline.style) {
-            win.__ahOutline.style = appendStyles(this._win.document, _props);
+            win.__ahOutline.style = appendStyles(win.document, _props);
         }
 
         if (!props || !props.areaClass) {
@@ -142,23 +144,25 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._updateTimer) {
-            this._win.clearTimeout(this._updateTimer);
+            win.clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
         this._ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
-        this._win.removeEventListener('scroll', this._onScroll, true);
+        win.removeEventListener('scroll', this._onScroll, true);
 
         if (_fullScreenEventName) {
-            this._win.document.removeEventListener(_fullScreenEventName, this._onFullScreenChanged);
+            win.document.removeEventListener(_fullScreenEventName, this._onFullScreenChanged);
         }
 
         this._allOutlineElements.forEach(outlineElements => this._removeDOM(outlineElements.container));
@@ -225,7 +229,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         this._outlinedElement = undefined;
 
         if (this._updateTimer) {
-            this._win.clearTimeout(this._updateTimer);
+            this._win().clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
@@ -290,7 +294,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         this._setOutlinePosition();
 
         if (this._updateTimer) {
-            this._win.clearTimeout(this._updateTimer);
+            this._win().clearTimeout(this._updateTimer);
             this._updateTimer = undefined;
         }
 
@@ -298,7 +302,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             return;
         }
 
-        this._updateTimer = this._win.setTimeout(() => {
+        this._updateTimer = this._win().setTimeout(() => {
             this._updateTimer = undefined;
             this._updateOutline();
         }, 30);

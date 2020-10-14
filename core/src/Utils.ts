@@ -259,11 +259,11 @@ export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
     return srnd.join('');
 }
 
-export function getElementUId(element: HTMLElementWithUID, window: Window): string {
+export function getElementUId(element: HTMLElementWithUID, win: Window): string {
     let uid = element.__ahElementUID;
 
     if (!uid) {
-        uid = element.__ahElementUID = getUId(window);
+        uid = element.__ahElementUID = getUId(win);
     }
 
     if (!elementByUId[uid] && documentContains(element.ownerDocument, element)) {
@@ -273,11 +273,11 @@ export function getElementUId(element: HTMLElementWithUID, window: Window): stri
     return uid;
 }
 
-export function getWindowUId(window: WindowWithUID): string {
-    let uid = window.__ahCrossOriginWindowUID;
+export function getWindowUId(win: WindowWithUID): string {
+    let uid = win.__ahCrossOriginWindowUID;
 
     if (!uid) {
-        uid = window.__ahCrossOriginWindowUID = getUId(window);
+        uid = win.__ahCrossOriginWindowUID = getUId(win);
     }
 
     return uid;

@@ -30,7 +30,7 @@ export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
 
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _element: HTMLElement;
 
     private _current: Types.Groupper | undefined;
@@ -59,9 +59,9 @@ export class UberGroupper implements Types.UberGroupper {
 
     readonly id: string;
 
-    constructor(ah: Types.AbilityHelpers, element: HTMLElement) {
+    constructor(ah: Types.AbilityHelpers, element: HTMLElement, getWindow: Types.GetWindow) {
         this._ah = ah;
-        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow();
+        this._win = getWindow;
         this._element = element;
         this.id = 'fgc' + ++_lastId;
 
@@ -75,13 +75,15 @@ export class UberGroupper implements Types.UberGroupper {
     dispose(): void {
         this._grouppers = {};
 
+        const win = this._win();
+
         if (this._updateVisibleTimer) {
-            this._win.clearTimeout(this._updateVisibleTimer);
+            win.clearTimeout(this._updateVisibleTimer);
             this._updateVisibleTimer = undefined;
         }
 
         if (this._onChangeTimer) {
-            this._win.clearTimeout(this._onChangeTimer);
+            win.clearTimeout(this._onChangeTimer);
             this._onChangeTimer = undefined;
         }
 
@@ -236,13 +238,13 @@ export class UberGroupper implements Types.UberGroupper {
         };
 
         if (this._onChangeTimer) {
-            this._win.clearTimeout(this._onChangeTimer);
+            this._win().clearTimeout(this._onChangeTimer);
         }
 
         if (force) {
             reallyProcessOnChange();
         } else {
-            this._onChangeTimer = this._win.setTimeout(reallyProcessOnChange, 0);
+            this._onChangeTimer = this._win().setTimeout(reallyProcessOnChange, 0);
         }
     }
 
@@ -378,7 +380,7 @@ export class UberGroupper implements Types.UberGroupper {
             }
         }
 
-        this._updateVisibleTimer = this._win.setTimeout(() => {
+        this._updateVisibleTimer = this._win().setTimeout(() => {
             this._updateVisibleTimer = undefined;
 
             let isChanged = false;
@@ -426,6 +428,7 @@ export class UberGroupper implements Types.UberGroupper {
 
 export class Groupper implements Types.Groupper {
     private _ah: Types.AbilityHelpers;
+    private _win: Types.GetWindow;
     private _element: HTMLElement;
     private _container: Types.UberGroupper | undefined;
     private _basic: Types.GroupperBasicProps;
@@ -433,8 +436,15 @@ export class Groupper implements Types.Groupper {
 
     readonly id: string;
 
-    constructor(ah: Types.AbilityHelpers, element: HTMLElement, basic?: Types.GroupperBasicProps, extended?: Types.GroupperExtendedProps) {
+    constructor(
+        ah: Types.AbilityHelpers,
+        element: HTMLElement,
+        getWindow: Types.GetWindow,
+        basic?: Types.GroupperBasicProps,
+        extended?: Types.GroupperExtendedProps
+    ) {
         this._ah = ah;
+        this._win = getWindow;
         this._element = element;
         this._basic = basic || {};
         this._extended = extended || {};
@@ -555,7 +565,7 @@ export class Groupper implements Types.Groupper {
             container = cAh && cAh.uberGroupper;
 
             if (!container && !remove) {
-                container = new UberGroupper(this._ah, containerElement);
+                container = new UberGroupper(this._ah, containerElement, this._win);
             }
         }
 
@@ -573,38 +583,42 @@ export class Groupper implements Types.Groupper {
 
 export class FocusableAPI implements Types.FocusableAPI {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         this._ah = ah;
-        this._win = mainWindow;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
-        this._win.addEventListener('scroll', this._onScroll, true);
+        const win = this._win();
+
+        win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        win.addEventListener('scroll', this._onScroll, true);
 
         this._ah.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._scrollTimer) {
-            this._win.clearTimeout(this._scrollTimer);
+            win.clearTimeout(this._scrollTimer);
             this._scrollTimer = undefined;
         }
 
-        this._win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
@@ -622,7 +636,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return last.ownerDocument.body;
         }
 
-        return this._win.document.body;
+        return this._win().document.body;
     }
 
     static forgetFocusedGrouppers(instance: FocusableAPI): void {
@@ -699,11 +713,13 @@ export class FocusableAPI implements Types.FocusableAPI {
             this._scrollTargets.push(e.target as Node);
         }
 
+        const win = this._win();
+
         if (this._scrollTimer) {
-            this._win.clearTimeout(this._scrollTimer);
+            win.clearTimeout(this._scrollTimer);
         }
 
-        this._scrollTimer = this._win.setTimeout(() => {
+        this._scrollTimer = win.setTimeout(() => {
             this._scrollTimer = undefined;
 
             UberGroupper.updateVisible(this._scrollTargets);
@@ -725,7 +741,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             throw new Error('The element already has a focus group');
         }
 
-        const groupper = new Groupper(this._ah, element, basic, extended);
+        const groupper = new Groupper(this._ah, element, this._win, basic, extended);
 
         dispatchMutationEvent(element, { groupper });
     }

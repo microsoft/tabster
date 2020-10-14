@@ -290,11 +290,11 @@ export class Deloser implements Types.Deloser {
     constructor(
         element: HTMLElement,
         ah: Types.AbilityHelpers,
-        window: Window,
+        getWindow: Types.GetWindow,
         basic?: Types.DeloserBasicProps,
         extended?: Types.DeloserExtendedProps
     ) {
-        this.uid = getElementUId(element, window);
+        this.uid = getElementUId(element, getWindow());
         this._ah = ah;
         this._element = element;
         this._basic = basic || {};
@@ -554,7 +554,7 @@ export class Deloser implements Types.Deloser {
 
 export class DeloserAPI implements Types.DeloserAPI {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
@@ -563,11 +563,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _isRestoringFocus = false;
     private _isPaused = false;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         this._ah = ah;
-        this._win = mainWindow;
+        this._win = getWindow;
         this._history = new DeloserHistory(ah);
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
@@ -577,13 +577,15 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
         if (this._restoreFocusTimer) {
-            this._win.clearTimeout(this._restoreFocusTimer);
+            win.clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
         }
 
@@ -666,7 +668,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         this._isPaused = true;
 
         if (this._restoreFocusTimer) {
-            this._win.clearTimeout(this._restoreFocusTimer);
+            this._win().clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
         }
     }
@@ -689,7 +691,7 @@ export class DeloserAPI implements Types.DeloserAPI {
 
     private _onFocus = (e: HTMLElement | undefined): void => {
         if (this._restoreFocusTimer) {
-            this._win.clearTimeout(this._restoreFocusTimer);
+            this._win().clearTimeout(this._restoreFocusTimer);
             this._restoreFocusTimer = undefined;
         }
 
@@ -771,7 +773,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         if (force) {
             reallySchedule();
         } else {
-            this._restoreFocusTimer = this._win.setTimeout(reallySchedule, 100);
+            this._restoreFocusTimer = this._win().setTimeout(reallySchedule, 100);
         }
     }
 

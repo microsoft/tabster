@@ -31,7 +31,7 @@ export class Root implements Types.Root {
 
     private _element: HTMLElement;
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
     private _knownModalizers: { [id: string]: Types.Modalizer } = {};
@@ -45,11 +45,11 @@ export class Root implements Types.Root {
     constructor(
         element: HTMLElement,
         ah: Types.AbilityHelpers,
-        win: Window,
+        win: Types.GetWindow,
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
     ) {
-        this.uid = getElementUId(element, win);
+        this.uid = getElementUId(element, win());
         this._element = element;
         this._ah = ah;
         this._win = win;
@@ -67,7 +67,7 @@ export class Root implements Types.Root {
 
     dispose(): void {
         if (this._updateModalizersTimer) {
-            this._win.clearTimeout(this._updateModalizersTimer);
+            this._win().clearTimeout(this._updateModalizersTimer);
             this._updateModalizersTimer = undefined;
         }
 
@@ -137,7 +137,7 @@ export class Root implements Types.Root {
 
         this.updateDummyInputs();
 
-        this._updateModalizersTimer = this._win.setTimeout(() => {
+        this._updateModalizersTimer = this._win().setTimeout(() => {
             this._updateModalizersTimer = undefined;
             this._reallyUpdateModalizers();
         }, 0);
@@ -246,7 +246,7 @@ export class Root implements Types.Root {
     }
 
     private _createDummyInput(props: DummyInput): HTMLDivElement {
-        const input = this._win.document.createElement('div');
+        const input = this._win().document.createElement('div');
 
         input.tabIndex = 0;
         input.setAttribute('role', 'none');
@@ -326,33 +326,37 @@ export class Root implements Types.Root {
 
 export class RootAPI implements Types.RootAPI {
     private _ah: Types.AbilityHelpers;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
     private _unobserve: (() => void) | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window, forgetFocusedGrouppers: () => void) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow, forgetFocusedGrouppers: () => void) {
         this._ah = ah;
-        this._win = mainWindow;
+        this._win = getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
+        const win = this._win();
 
-        this._unobserve = observeMutationEvents(this._win.document);
+        win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
+
+        this._unobserve = observeMutationEvents(win.document);
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
+        win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
         if (this._unobserve) {
             this._unobserve();

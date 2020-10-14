@@ -21,6 +21,9 @@ export interface AbilityHelpers {
     crossOrigin: CrossOriginAPI;
 }
 
+export type GetAbilityHelpers = () => AbilityHelpers;
+export type GetWindow = () => Window;
+
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
 
 export interface Subscribable<A, B = undefined> {
@@ -474,5 +477,5 @@ export interface AbilityHelpersElementStorage {
 
 export interface AbilityHelpersInternal {
     storageEntry(uid: string, addremove?: boolean): AbilityHelpersElementStorageEntry | undefined;
-    getWindow(): Window;
+    getWindow: GetWindow;
 }

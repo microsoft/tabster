@@ -20,7 +20,7 @@ export const observedByName: { [name: string]: { [uid: string]: ObservedElementI
 export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
 
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
     private _waiting: {
@@ -32,31 +32,33 @@ export class ObservedElementAPI
     } = {};
     private _lastRequestFocusId = 0;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         super();
         this._ah = ah;
-        this._win = mainWindow;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
-        this._win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
     }
 
     protected dispose(): void {
+        const win = this._win();
+
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
 
         for (let name of Object.keys(this._waiting)) {
             const w = this._waiting[name];
 
             if (w.timer) {
-                this._win.clearTimeout(w.timer);
+                win.clearTimeout(w.timer);
             }
 
             if (w.reject) {
@@ -167,7 +169,7 @@ export class ObservedElementAPI
         }
 
         w = this._waiting[observedName] = {
-            timer: this._win.setTimeout(() => {
+            timer: this._win().setTimeout(() => {
                 w.timer = undefined;
 
                 delete this._waiting[observedName];
@@ -199,7 +201,7 @@ export class ObservedElementAPI
     private _onObservedElementUpdate(element: HTMLElement): void {
         const ah = getAbilityHelpersOnElement(this._ah, element);
         const observed = ah && ah.observed;
-        const uid = getElementUId(element, this._win);
+        const uid = getElementUId(element, this._win());
         const isInDocument = documentContains(element.ownerDocument, element);
         let info: ObservedElementInfo | undefined = _observedById[uid];
 
@@ -263,7 +265,7 @@ export class ObservedElementAPI
 
         if (w) {
             if (w.timer) {
-                this._win.clearTimeout(w.timer);
+                this._win().clearTimeout(w.timer);
             }
 
             delete this._waiting[name!!!];

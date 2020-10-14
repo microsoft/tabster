@@ -58,44 +58,48 @@ export class FocusedElementState
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
-    private _win: Window;
+    private _win: Types.GetWindow;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
     private _prevVal: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, mainWindow: Window) {
+    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         super();
 
         this._ah = ah;
-        this._win = mainWindow;
-        this._initTimer = this._win.setTimeout(this._init, 0);
+        this._win = getWindow;
+        this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        FocusedElementState.replaceFocus(this._win);
+        const win = this._win();
 
-        this._win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
-        this._win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
-        this._win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._win.addEventListener('keydown', this._onKeyDown);
+        FocusedElementState.replaceFocus(win);
+
+        win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
+        win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
+        win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
+        win.addEventListener('keydown', this._onKeyDown);
     }
 
     protected dispose(): void {
         super.dispose();
 
-        FocusedElementState.restoreFocus(this._win);
+        const win = this._win();
+
+        FocusedElementState.restoreFocus(win);
 
         if (this._initTimer) {
-            this._win.clearTimeout(this._initTimer);
+            win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        this._win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        this._win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        this._win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        this._win.removeEventListener('keydown', this._onKeyDown);
+        win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
+        win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
+        win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
+        win.removeEventListener('keydown', this._onKeyDown);
 
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
