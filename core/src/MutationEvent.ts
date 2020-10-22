@@ -31,10 +31,10 @@ export function observeMutations(
     }
 
     const observer = new MutationObserver(mutations => {
-        const changedRoots: { [id: string]: { removedFrom?: Node; addedTo?: Node; root: Types.Root; } } = {};
-        const changedModalizers: { [id: string]: { removedFrom?: Node; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
-        const changedGrouppers: { [id: string]: { removedFrom?: Node; addedTo?: Node; groupper: Types.Groupper } } = {};
-        const changedObservedElements: { [id: string]: { removedFrom?: Node; addedTo?: Node; element: HTMLElement } } = {};
+        const changedRoots: { [id: string]: { removedFrom?: Document; addedTo?: Node; root: Types.Root; } } = {};
+        const changedModalizers: { [id: string]: { removedFrom?: Document; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
+        const changedGrouppers: { [id: string]: { removedFrom?: Document; addedTo?: Node; groupper: Types.Groupper } } = {};
+        const changedObservedElements: { [id: string]: { removedFrom?: Document; addedTo?: Node; element: HTMLElement } } = {};
 
         for (let mutation of mutations) {
             const target = mutation.target;
@@ -60,7 +60,7 @@ export function observeMutations(
                 }
 
                 for (let i = 0; i < removed.length; i++) {
-                    findTargets(removed[i], target);
+                    findTargets(removed[i], target.ownerDocument || doc);
                 }
 
                 for (let i = 0; i < added.length; i++) {
@@ -117,7 +117,7 @@ export function observeMutations(
             }
         }
 
-        function findTargets(node: Node, removedFrom?: Node, addedTo?: Node): void {
+        function findTargets(node: Node, removedFrom?: Document, addedTo?: Node): void {
             acceptNode(node as HTMLElement, removedFrom, addedTo);
 
             const walker = createElementTreeWalker(doc, node, (element: Node): number => {
@@ -129,7 +129,7 @@ export function observeMutations(
             }
         }
 
-        function acceptNode(element: HTMLElement, removedFrom?: Node, addedTo?: Node): number {
+        function acceptNode(element: HTMLElement, removedFrom?: Document, addedTo?: Node): number {
             if (!element.getAttribute) {
                 // It might actually be a text node.
                 return NodeFilter.FILTER_SKIP;
@@ -170,7 +170,7 @@ export function observeMutations(
             return NodeFilter.FILTER_SKIP;
         }
 
-        function addRootTarget(root: Types.Root, removedFrom?: Node, addedTo?: Node): void {
+        function addRootTarget(root: Types.Root, removedFrom?: Document, addedTo?: Node): void {
             let r = changedRoots[root.uid];
 
             if (!r) {
@@ -186,7 +186,7 @@ export function observeMutations(
             }
         }
 
-        function addModalizerTarget(modalizer: Types.Modalizer, removedFrom?: Node, addedTo?: Node): void {
+        function addModalizerTarget(modalizer: Types.Modalizer, removedFrom?: Document, addedTo?: Node): void {
             let m = changedModalizers[modalizer.internalId];
 
             if (!m) {
@@ -202,7 +202,7 @@ export function observeMutations(
             }
         }
 
-        function addGroupTarget(el: Node, groupper: Types.Groupper, removedFrom?: Node, addedTo?: Node): void {
+        function addGroupTarget(el: Node, groupper: Types.Groupper, removedFrom?: Document, addedTo?: Node): void {
             let g = changedGrouppers[groupper.id];
 
             if (!g) {
@@ -218,7 +218,7 @@ export function observeMutations(
             }
         }
 
-        function addObservedElementTarget(element: HTMLElement, removedFrom?: Node, addedTo?: Node): void {
+        function addObservedElementTarget(element: HTMLElement, removedFrom?: Document, addedTo?: Node): void {
             if (!doc.defaultView) {
                 return;
             }
