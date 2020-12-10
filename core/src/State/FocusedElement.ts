@@ -60,7 +60,6 @@ export class FocusedElementState
     private _win: Types.GetWindow;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
-    private _prevVal: HTMLElement | undefined;
 
     constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         super();
@@ -107,7 +106,6 @@ export class FocusedElementState
 
         delete this._nextVal;
         delete this._lastVal;
-        delete this._prevVal;
     }
 
     static dispose(instance: Types.FocusedElementState): void {
@@ -124,14 +122,6 @@ export class FocusedElementState
         }
 
         return this._lastVal;
-    }
-
-    getPrevFocusedElement(): HTMLElement | undefined {
-        if (this._prevVal && !documentContains(this._prevVal.ownerDocument, this._prevVal)) {
-            this._prevVal = undefined;
-        }
-
-        return this._prevVal;
     }
 
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
@@ -240,7 +230,6 @@ export class FocusedElementState
         super.setVal(val, details);
 
         if (val) {
-            this._prevVal = this._lastVal;
             this._lastVal = val;
         }
     }

@@ -43,7 +43,6 @@ export interface FocusedElementDetails {
 export interface FocusedElementState extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
-    getPrevFocusedElement(): HTMLElement | undefined;
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
     focusDefault(container: HTMLElement): boolean;
     focusFirst(container: HTMLElement): boolean;
