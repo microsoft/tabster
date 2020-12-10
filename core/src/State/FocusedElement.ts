@@ -19,8 +19,6 @@ import {
     shouldIgnoreFocus
 } from '../Utils';
 
-const _canOverrideNativeFocus = canOverrideNativeFocus();
-
 const _inputSelector = [
     'input',
     'textarea',
@@ -31,13 +29,13 @@ interface WindowWithHTMLElement extends Window {
     HTMLElement: typeof HTMLElement;
 }
 
-function canOverrideNativeFocus(): boolean {
-    const win = (window as WindowWithHTMLElement);
-    const origFocus = win.HTMLElement.prototype.focus;
+function canOverrideNativeFocus(win: Window): boolean {
+    const HTMLElement = (win as WindowWithHTMLElement).HTMLElement;
+    const origFocus = HTMLElement.prototype.focus;
 
     let isCustomFocusCalled = false;
 
-    win.HTMLElement.prototype.focus = function focus(): void {
+    HTMLElement.prototype.focus = function focus(): void {
         isCustomFocusCalled = true;
     };
 
@@ -45,7 +43,7 @@ function canOverrideNativeFocus(): boolean {
 
     btn.focus();
 
-    win.HTMLElement.prototype.focus = origFocus;
+    HTMLElement.prototype.focus = origFocus;
 
     return isCustomFocusCalled;
 }
@@ -58,6 +56,7 @@ export class FocusedElementState
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
+    private _canOverrideNativeFocus = false;
     private _win: Types.GetWindow;
     private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: HTMLElement | undefined;
@@ -75,6 +74,8 @@ export class FocusedElementState
         this._initTimer = undefined;
 
         const win = this._win();
+
+        this._canOverrideNativeFocus = canOverrideNativeFocus(win);
 
         FocusedElementState.replaceFocus(win);
 
@@ -213,7 +214,7 @@ export class FocusedElementState
                 return;
             }
 
-            if (_canOverrideNativeFocus || FocusedElementState._lastFocusedProgrammatically) {
+            if (this._canOverrideNativeFocus || FocusedElementState._lastFocusedProgrammatically) {
                 details.isFocusedProgrammatically = (element === FocusedElementState._lastFocusedProgrammatically);
 
                 FocusedElementState._lastFocusedProgrammatically = undefined;
