@@ -283,8 +283,16 @@ export function getWindowUId(win: WindowWithUID): string {
     return uid;
 }
 
-export function clearElementCache(): void {
+export function clearElementCache(parent?: HTMLElement): void {
     for (let key of Object.keys(elementByUId)) {
+        if (parent) {
+            const el = elementByUId[key];
+
+            if (!parent.contains(el)) {
+                continue;
+            }
+        }
+
         delete elementByUId[key];
     }
 }

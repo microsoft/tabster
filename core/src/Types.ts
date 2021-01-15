@@ -19,6 +19,7 @@ export interface AbilityHelpers {
     modalizer: ModalizerAPI;
     observedElement: ObservedElementAPI;
     crossOrigin: CrossOriginAPI;
+    gc: GarbageCollectionAPI;
 }
 
 export type GetAbilityHelpers = () => AbilityHelpers;
@@ -477,4 +478,8 @@ export interface AbilityHelpersElementStorage {
 export interface AbilityHelpersInternal {
     storageEntry(uid: string, addremove?: boolean): AbilityHelpersElementStorageEntry | undefined;
     getWindow: GetWindow;
+}
+
+export interface GarbageCollectionAPI {
+    forgetMemorized(parent: HTMLElement): void;
 }

@@ -112,6 +112,28 @@ export class FocusedElementState
         (instance as FocusedElementState).dispose();
     }
 
+    static forgetMemorized(instance: Types.FocusedElementState, parent: HTMLElement): void {
+        let el = FocusedElementState._lastFocusedProgrammatically;
+        if (el && parent.contains(el)) {
+            delete FocusedElementState._lastFocusedProgrammatically;
+        }
+
+        el = FocusedElementState._lastResetElement;
+        if (el && parent.contains(el)) {
+            delete FocusedElementState._lastResetElement;
+        }
+
+        const n = (instance as FocusedElementState)._nextVal;
+        if (n && n.element && parent.contains(n.element)) {
+            delete (instance as FocusedElementState)._nextVal;
+        }
+
+        el = (instance as FocusedElementState)._lastVal;
+        if (el && parent.contains(el)) {
+            delete (instance as FocusedElementState)._lastVal;
+        }
+    }
+
     getFocusedElement(): HTMLElement | undefined {
         return this.getVal();
     }

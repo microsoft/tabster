@@ -15,7 +15,7 @@ interface ObservedElementInfo {
 }
 
 const _observedById: { [uid: string]: ObservedElementInfo } = {};
-export const observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
+const _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
 
 export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
@@ -144,7 +144,7 @@ export class ObservedElementAPI
     }
 
     getElement(observedName: string): HTMLElement | null {
-        const o = observedByName[observedName];
+        const o = _observedByName[observedName];
 
         if (o) {
             for (let uid of Object.keys(o)) {
@@ -214,23 +214,23 @@ export class ObservedElementAPI
 
             if (observed.name && (observed.name !== info.triggeredName)) {
                 if (info.triggeredName) {
-                    const obn = observedByName[info.triggeredName];
+                    const obn = _observedByName[info.triggeredName];
 
                     if (obn && obn[uid]) {
                         if (Object.keys(obn).length > 1) {
                             delete obn[uid];
                         } else {
-                            delete observedByName[info.triggeredName];
+                            delete _observedByName[info.triggeredName];
                         }
                     }
                 }
 
                 info.triggeredName = observed.name;
 
-                let obn = observedByName[info.triggeredName];
+                let obn = _observedByName[info.triggeredName];
 
                 if (!obn) {
-                    obn = observedByName[info.triggeredName] = {};
+                    obn = _observedByName[info.triggeredName] = {};
                 }
 
                 obn[uid] = info;
@@ -242,13 +242,13 @@ export class ObservedElementAPI
             }
         } else if (info) {
             if (info.triggeredName) {
-                const obn = observedByName[info.triggeredName];
+                const obn = _observedByName[info.triggeredName];
 
                 if (obn && obn[uid]) {
                     if (Object.keys(obn).length > 1) {
                         delete obn[uid];
                     } else {
-                        delete observedByName[info.triggeredName];
+                        delete _observedByName[info.triggeredName];
                     }
                 }
             }

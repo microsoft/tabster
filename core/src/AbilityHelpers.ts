@@ -23,6 +23,8 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
     private _storage: Types.AbilityHelpersElementStorage;
     private _unobserve: (() => void) | undefined;
     private _win: Window | undefined;
+    private _forgetMemorizedTimer: number | undefined;
+    private _forgetMemorizedElements: HTMLElement[] = [];
 
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
@@ -33,6 +35,7 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
     modalizer: ModalizerAPI;
     observedElement: ObservedElementAPI;
     crossOrigin: CrossOriginAPI;
+    gc: Types.GarbageCollectionAPI;
 
     constructor(win: Window) {
         this._storage = {};
@@ -53,12 +56,22 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         this.root = new RootAPI(this, getWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
         this.observedElement = new ObservedElementAPI(this, getWindow);
         this.crossOrigin = new CrossOriginAPI(this, getWindow);
+        this.gc = {
+            forgetMemorized: this._forgetMemorized
+        };
     }
 
     protected dispose(): void {
         if (this._unobserve) {
             this._unobserve();
             delete this._unobserve;
+        }
+
+        this._forgetMemorizedElements = [];
+
+        if (this._win && this._forgetMemorizedTimer) {
+            this._win.clearTimeout(this._forgetMemorizedTimer);
+            delete this._forgetMemorizedTimer;
         }
 
         OutlineAPI.dispose(this.outline);
@@ -100,6 +113,27 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         }
 
         return this._win;
+    }
+
+    private _forgetMemorized = (parent: HTMLElement): void => {
+        if (!this._win) {
+            return;
+        }
+
+        this._forgetMemorizedElements.push(parent);
+
+        if (this._forgetMemorizedTimer) {
+            return;
+        }
+
+        this._forgetMemorizedTimer = this._win.setTimeout(() => {
+            delete this._forgetMemorizedTimer;
+
+            for (let el: HTMLElement | undefined = this._forgetMemorizedElements.shift(); el; el = this._forgetMemorizedElements.shift()) {
+                clearElementCache(el);
+                FocusedElementState.forgetMemorized(this.focusedElement, el);
+            }
+        }, 0);
     }
 }
 
