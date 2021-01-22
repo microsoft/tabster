@@ -7,11 +7,12 @@ import { augmentAttribute, getAbilityHelpersOnElement, setAbilityHelpersOnElemen
 import { dispatchMutationEvent } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
+import { WeakHTMLElement } from './Utils';
 
 let _lastInternalId = 0;
 
 function _setInformativeStyle(
-    element: HTMLElement,
+    weakElement: WeakHTMLElement,
     remove: boolean,
     internalId?: string,
     userId?: string,
@@ -20,19 +21,23 @@ function _setInformativeStyle(
     isFocused?: boolean
 ): void {
     if (__DEV__) {
-        if (remove) {
-            element.style.removeProperty('--ah-modalizer');
-        } else {
-            element.style.setProperty(
-                '--ah-modalizer',
-                internalId + ',' + userId +
-                    ',' +
-                        (isActive ? 'active' : 'inactive') +
-                            ',' +
-                                (isAccessible ? 'accessible' : 'inaccessible') +
-                                    ',' +
-                                        (isFocused ? 'focused' : 'not-focused')
-            );
+        const element = weakElement.get();
+
+        if (element) {
+            if (remove) {
+                element.style.removeProperty('--ah-modalizer');
+            } else {
+                element.style.setProperty(
+                    '--ah-modalizer',
+                    internalId + ',' + userId +
+                        ',' +
+                            (isActive ? 'active' : 'inactive') +
+                                ',' +
+                                    (isAccessible ? 'accessible' : 'inaccessible') +
+                                        ',' +
+                                            (isFocused ? 'focused' : 'not-focused')
+                );
+            }
         }
     }
 }
@@ -43,7 +48,7 @@ export class Modalizer implements Types.Modalizer {
 
     /* private */ _ah: Types.AbilityHelpers;
     private _win: Types.GetWindow;
-    private _element: HTMLElement;
+    private _element: WeakHTMLElement;
     private _basic: Types.ModalizerBasicProps;
     private _extended: Types.ModalizerExtendedProps;
     private _isActive: boolean | undefined;
@@ -64,7 +69,7 @@ export class Modalizer implements Types.Modalizer {
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
 
-        this._element = element;
+        this._element = new WeakHTMLElement(element);
         this._basic = basic;
         this._extended = extended || {};
         this._setAccessibilityProps();
@@ -112,7 +117,7 @@ export class Modalizer implements Types.Modalizer {
     move(newElement: HTMLElement): void {
         this._remove();
 
-        this._element = newElement;
+        this._element = new WeakHTMLElement(newElement);
 
         this._setAccessibilityProps();
 
@@ -136,14 +141,18 @@ export class Modalizer implements Types.Modalizer {
             this._setAccessibleTimer = undefined;
         }
 
-        if (accessible) {
-            augmentAttribute(this._ah, this._element, 'aria-hidden');
-        } else {
-            this._setAccessibleTimer = this._win().setTimeout(() => {
-                this._setAccessibleTimer = undefined;
+        const element = this._element.get();
 
-                augmentAttribute(this._ah, this._element, 'aria-hidden', 'true');
-            }, 0);
+        if (element) {
+            if (accessible) {
+                augmentAttribute(this._ah, element, 'aria-hidden');
+            } else {
+                this._setAccessibleTimer = this._win().setTimeout(() => {
+                    this._setAccessibleTimer = undefined;
+
+                    augmentAttribute(this._ah, element, 'aria-hidden', 'true');
+                }, 0);
+            }
         }
 
         if (__DEV__) {
@@ -167,8 +176,8 @@ export class Modalizer implements Types.Modalizer {
         return !!this._isActive;
     }
 
-    getElement(): HTMLElement {
-        return this._element;
+    getElement(): HTMLElement | undefined {
+        return this._element.get();
     }
 
     setFocused(focused: boolean): void {
@@ -216,7 +225,7 @@ export class Modalizer implements Types.Modalizer {
     }
 
     private _setAccessibilityProps(): void {
-        if (__DEV__ && !this._element.getAttribute('aria-label')) {
+        if (__DEV__ && !this._element.get()?.getAttribute('aria-label')) {
             console.error('Modalizer must have aria-label', this._element);
 
             return;
@@ -342,27 +351,29 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             const basic = m.modalizer.getBasicProps();
             const modalizerElement = m.modalizer.getElement();
 
-            if (noFocusFirst === undefined) {
-                noFocusFirst = basic.isNoFocusFirst;
-            }
+            if (modalizerElement) {
+                if (noFocusFirst === undefined) {
+                    noFocusFirst = basic.isNoFocusFirst;
+                }
 
-            if (
-                !noFocusFirst &&
-                this._ah.keyboardNavigation.isNavigatingWithKeyboard() &&
-                this._ah.focusedElement.focusFirst(modalizerElement)
-            ) {
-                return true;
-            }
+                if (
+                    !noFocusFirst &&
+                    this._ah.keyboardNavigation.isNavigatingWithKeyboard() &&
+                    this._ah.focusedElement.focusFirst(modalizerElement)
+                ) {
+                    return true;
+                }
 
-            if (noFocusDefault === undefined) {
-                noFocusDefault = basic.isNoFocusDefault;
-            }
+                if (noFocusDefault === undefined) {
+                    noFocusDefault = basic.isNoFocusDefault;
+                }
 
-            if (!noFocusDefault && this._ah.focusedElement.focusDefault(modalizerElement)) {
-                return true;
-            }
+                if (!noFocusDefault && this._ah.focusedElement.focusDefault(modalizerElement)) {
+                    return true;
+                }
 
-            this._ah.focusedElement.resetFocus(modalizerElement);
+                this._ah.focusedElement.resetFocus(modalizerElement);
+            }
         } else if (__DEV__) {
             console.error('Element is not in Modalizer.', elementFromModalizer);
         }

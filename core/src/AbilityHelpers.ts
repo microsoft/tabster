@@ -15,7 +15,7 @@ import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { clearElementCache } from './Utils';
+import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndClearStorage } from './Utils';
 
 export { Types };
 
@@ -59,6 +59,8 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         this.gc = {
             forgetMemorized: this._forgetMemorized
         };
+
+        startWeakStorageCleanup(getWindow);
     }
 
     protected dispose(): void {
@@ -84,6 +86,7 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         KeyboardNavigationState.dispose(this.keyboardNavigation);
         FocusedElementState.dispose(this.focusedElement);
 
+        stopWeakStorageCleanupAndClearStorage(this.getWindow);
         clearElementCache();
         this._storage = {};
         delete this._win;

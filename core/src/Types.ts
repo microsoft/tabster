@@ -194,7 +194,7 @@ export interface Deloser {
     findAvailable(): HTMLElement | null;
     clearHistory(preserveExisting?: boolean): void;
     customFocusLostHandler(element: HTMLElement): boolean;
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
 }
 
 export interface DeloserAPI {
@@ -295,7 +295,7 @@ export interface GroupperExtendedProps {
 export interface UberGroupper {
     readonly id: string;
     dispose(): void;
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
     addGroupper(groupper: Groupper): void;
     removeGroupper(groupper: Groupper): void;
     setUnlimitedGroupper(groupper: Groupper | undefined): void;
@@ -310,7 +310,7 @@ export interface UberGroupper {
 export interface Groupper {
     readonly id: string;
     dispose(): void;
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
     moveTo(newElement: HTMLElement): void;
     getState(): GroupperState;
     isDefault(): boolean;
@@ -348,7 +348,7 @@ export interface Modalizer {
     setAccessible(accessible: boolean): void;
     setActive(active: boolean): void;
     isActive(): boolean;
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
     setFocused(focused: boolean): void;
     onBeforeFocusOut(): boolean;
 }
@@ -363,7 +363,7 @@ export interface Root {
     setProps(basic?: Partial<RootBasicProps> | null): void;
     getBasicProps(): RootBasicProps;
     move(newElement: HTMLElement): void;
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
     getCurrentModalizerId(): string | undefined;
     setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
     getModalizers(): Modalizer[];

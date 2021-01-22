@@ -16,7 +16,8 @@
         "lib": [
             "es5",
             "es2015.iterable",
-            "dom"
+            "dom",
+            "esnext"
         ]
     },
 

@@ -127,7 +127,7 @@ abstract class CrossOriginTransaction<I, O> {
     protected ownerId: string;
     protected sendUp: Types.CrossOriginTransactionSend | undefined;
     private _promise: Promise<O>;
-    protected _resolve: ((endData?: O) => void) | undefined;
+    protected _resolve: ((endData?: O | PromiseLike<O>) => void) | undefined;
     private _reject: ((reason: string) => void) | undefined;
     private _knownTargets: KnownTargets;
     private _sentTo: Types.CrossOriginSentTo;
@@ -581,7 +581,8 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                     }
                 }
             } else if (data.uid) {
-                element = elementByUId[data.uid];
+                const ref = elementByUId[data.uid];
+                element = ref && ref.get();
             } else if (data.observedName) {
                 element = ah.observedElement.getElement(data.observedName);
             }
@@ -1403,12 +1404,18 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     }
 }
 
-function getDeloserUID(deloser: Types.Deloser, window: Window): string {
-    const uid = getElementUId(deloser.getElement(), window);
+function getDeloserUID(deloser: Types.Deloser, window: Window): string | undefined {
+    const deloserElement = deloser.getElement();
 
-    if (!_deloserByUId[uid]) {
-        _deloserByUId[uid] = deloser;
+    if (deloserElement) {
+        const uid = getElementUId(deloserElement, window);
+
+        if (!_deloserByUId[uid]) {
+            _deloserByUId[uid] = deloser;
+        }
+
+        return uid;
     }
 
-    return uid;
+    return undefined;
 }

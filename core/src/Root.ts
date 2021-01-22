@@ -7,7 +7,7 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instan
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
-import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored } from './Utils';
+import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored, WeakHTMLElement } from './Utils';
 
 interface DummyInput {
     isFirst: boolean;
@@ -16,12 +16,16 @@ interface DummyInput {
 
 let _rootById: { [id: string]: Types.Root } = {};
 
-function _setInformativeStyle(element: HTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
+function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
     if (__DEV__) {
-        if (remove) {
-            element.style.removeProperty('--ah-root');
-        } else {
-            element.style.setProperty('--ah-root', id + ',' + currentModalizerId);
+        const element = weakElement.get();
+
+        if (element) {
+            if (remove) {
+                element.style.removeProperty('--ah-root');
+            } else {
+                element.style.setProperty('--ah-root', id + ',' + currentModalizerId);
+            }
         }
     }
 }
@@ -29,7 +33,7 @@ function _setInformativeStyle(element: HTMLElement, remove: boolean, id?: string
 export class Root implements Types.Root {
     readonly uid: string;
 
-    private _element: HTMLElement;
+    private _element: WeakHTMLElement;
     private _ah: Types.AbilityHelpers;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
@@ -38,8 +42,8 @@ export class Root implements Types.Root {
     private _updateModalizersTimer: number | undefined;
     private _dummyInputFirstProps: DummyInput;
     private _dummyInputLastProps: DummyInput;
-    private _dummyInputFirst: HTMLDivElement;
-    private _dummyInputLast: HTMLDivElement;
+    private _dummyInputFirst: HTMLDivElement | undefined;
+    private _dummyInputLast: HTMLDivElement | undefined;
     private _forgetFocusedGrouppers: () => void;
 
     constructor(
@@ -50,7 +54,7 @@ export class Root implements Types.Root {
         basic?: Types.RootBasicProps
     ) {
         this.uid = getElementUId(element, win());
-        this._element = element;
+        this._element = new WeakHTMLElement(element);
         this._ah = ah;
         this._win = win;
         this._basic = basic || {};
@@ -73,6 +77,9 @@ export class Root implements Types.Root {
 
         this._remove();
 
+        delete this._dummyInputFirst;
+        delete this._dummyInputLast;
+
         this._knownModalizers = {};
         this._forgetFocusedGrouppers = () => {/**/};
     }
@@ -91,13 +98,13 @@ export class Root implements Types.Root {
 
     move(newElement: HTMLElement): void {
         this._remove();
-        this._element = newElement;
+        this._element = new WeakHTMLElement(newElement);
         this._add();
         this.updateModalizers();
     }
 
-    getElement(): HTMLElement {
-        return this._element;
+    getElement(): HTMLElement | undefined {
+        return this._element.get();
     }
 
     getCurrentModalizerId(): string | undefined {
@@ -148,12 +155,14 @@ export class Root implements Types.Root {
     }
 
     moveOutWithDefaultAction(backwards: boolean): void {
-        if (backwards) {
-            this._dummyInputFirstProps.shouldMoveOut = true;
-            callOriginalFocusOnly(this._dummyInputFirst);
-        } else {
-            this._dummyInputLastProps.shouldMoveOut = true;
-            callOriginalFocusOnly(this._dummyInputLast);
+        if (this._dummyInputFirst && this._dummyInputLast) {
+            if (backwards) {
+                this._dummyInputFirstProps.shouldMoveOut = true;
+                callOriginalFocusOnly(this._dummyInputFirst);
+            } else {
+                this._dummyInputLastProps.shouldMoveOut = true;
+                callOriginalFocusOnly(this._dummyInputLast);
+            }
         }
     }
 
@@ -172,14 +181,17 @@ export class Root implements Types.Root {
     }
 
     private _reallyUpdateModalizers(): void {
-        if (!this._element.ownerDocument) {
+        const element = this._element.get();
+        const ownerDocument = element?.ownerDocument;
+
+        if (!element || !ownerDocument) {
             return;
         }
 
         const modalizersToUpdate: Types.Modalizer[] = [];
 
-        const walker = createElementTreeWalker(this._element.ownerDocument, this._element, (element: HTMLElement) => {
-            const ah = getAbilityHelpersOnElement(this._ah, element);
+        const walker = createElementTreeWalker(ownerDocument, element, (el: HTMLElement) => {
+            const ah = getAbilityHelpersOnElement(this._ah, el);
 
             if (ah && ah.modalizer) {
                 modalizersToUpdate.push(ah.modalizer);
@@ -277,9 +289,17 @@ export class Root implements Types.Root {
 
                 this._forgetFocusedGrouppers();
 
-                let toFocus = props.isFirst
-                    ? this._ah.focusable.findFirst(this._element)
-                    : this._ah.focusable.findLast(this._element);
+                const element = this._element.get();
+
+                let toFocus: HTMLElement | null;
+
+                if (element) {
+                    toFocus = props.isFirst
+                        ? this._ah.focusable.findFirst(element)
+                        : this._ah.focusable.findLast(element);
+                } else {
+                    toFocus = null;
+                }
 
                 if (toFocus) {
                     this._ah.focusedElement.focus(toFocus);
@@ -297,7 +317,11 @@ export class Root implements Types.Root {
     }
 
     private _addDummyInputs(): void {
-        const element = this._element;
+        const element = this._element.get();
+
+        if (!element || !this._dummyInputFirst || !this._dummyInputLast) {
+            return;
+        }
 
         if (element.lastElementChild !== this._dummyInputLast) {
             element.appendChild(this._dummyInputLast);
@@ -314,11 +338,11 @@ export class Root implements Types.Root {
         const dif = this._dummyInputFirst;
         const dil = this._dummyInputLast;
 
-        if (dif.parentElement) {
+        if (dif?.parentElement) {
             dif.parentElement.removeChild(dif);
         }
 
-        if (dil.parentElement) {
+        if (dil?.parentElement) {
             dil.parentElement.removeChild(dil);
         }
     }

@@ -16,7 +16,8 @@ import {
     isElementVerticallyVisibleInContainer,
     matchesSelector,
     scrollIntoView,
-    shouldIgnoreFocus
+    shouldIgnoreFocus,
+    WeakHTMLElement
 } from '../Utils';
 
 const _inputSelector = [
@@ -51,15 +52,15 @@ function canOverrideNativeFocus(win: Window): boolean {
 export class FocusedElementState
         extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails> implements Types.FocusedElementState {
 
-    private static _lastFocusedProgrammatically: HTMLElement | undefined;
-    private static _lastResetElement: HTMLElement | undefined;
+    private static _lastFocusedProgrammatically: WeakHTMLElement | undefined;
+    private static _lastResetElement: WeakHTMLElement | undefined;
 
     private _ah: Types.AbilityHelpers;
     private _initTimer: number | undefined;
     private _canOverrideNativeFocus = false;
     private _win: Types.GetWindow;
-    private _nextVal: { element: HTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
-    private _lastVal: HTMLElement | undefined;
+    private _nextVal: { element: WeakHTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
+    private _lastVal: WeakHTMLElement | undefined;
 
     constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
         super();
@@ -113,22 +114,25 @@ export class FocusedElementState
     }
 
     static forgetMemorized(instance: Types.FocusedElementState, parent: HTMLElement): void {
-        let el = FocusedElementState._lastFocusedProgrammatically;
+        let wel = FocusedElementState._lastFocusedProgrammatically;
+        let el = wel && wel.get();
         if (el && parent.contains(el)) {
             delete FocusedElementState._lastFocusedProgrammatically;
         }
 
-        el = FocusedElementState._lastResetElement;
+        wel = FocusedElementState._lastResetElement;
+        el = wel && wel.get();
         if (el && parent.contains(el)) {
             delete FocusedElementState._lastResetElement;
         }
 
-        const n = (instance as FocusedElementState)._nextVal;
-        if (n && n.element && parent.contains(n.element)) {
+        el = (instance as FocusedElementState)._nextVal?.element?.get();
+        if (el && parent.contains(el)) {
             delete (instance as FocusedElementState)._nextVal;
         }
 
-        el = (instance as FocusedElementState)._lastVal;
+        wel = (instance as FocusedElementState)._lastVal;
+        el = wel && wel.get();
         if (el && parent.contains(el)) {
             delete (instance as FocusedElementState)._lastVal;
         }
@@ -139,11 +143,13 @@ export class FocusedElementState
     }
 
     getLastFocusedElement(): HTMLElement | undefined {
-        if (this._lastVal && !documentContains(this._lastVal.ownerDocument, this._lastVal)) {
-            this._lastVal = undefined;
+        let el = this._lastVal?.get();
+
+        if (!el || (el && !documentContains(el.ownerDocument, el))) {
+            this._lastVal = el = undefined;
         }
 
-        return this._lastVal;
+        return el;
     }
 
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
@@ -151,7 +157,7 @@ export class FocusedElementState
             return false;
         }
 
-        FocusedElementState._lastFocusedProgrammatically = element;
+        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(element);
 
         element.focus();
 
@@ -194,7 +200,7 @@ export class FocusedElementState
             container.tabIndex = -1;
             container.setAttribute('aria-hidden', 'true');
 
-            FocusedElementState._lastResetElement = container;
+            FocusedElementState._lastResetElement = new WeakHTMLElement(container);
 
             this.focus(container, true, true);
 
@@ -219,7 +225,7 @@ export class FocusedElementState
         const details: Types.FocusedElementDetails = { relatedTarget };
 
         if (element) {
-            const lastResetElement = FocusedElementState._lastResetElement;
+            const lastResetElement = FocusedElementState._lastResetElement?.get();
             FocusedElementState._lastResetElement = undefined;
 
             if ((lastResetElement === element) || shouldIgnoreFocus(element)) {
@@ -227,13 +233,13 @@ export class FocusedElementState
             }
 
             if (this._canOverrideNativeFocus || FocusedElementState._lastFocusedProgrammatically) {
-                details.isFocusedProgrammatically = (element === FocusedElementState._lastFocusedProgrammatically);
+                details.isFocusedProgrammatically = (element === FocusedElementState._lastFocusedProgrammatically?.get());
 
                 FocusedElementState._lastFocusedProgrammatically = undefined;
             }
         }
 
-        const nextVal = this._nextVal = { element, details };
+        const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(element) : undefined, details };
 
         if (element && (element !== this._val)) {
             this._validateFocusedElement(element, details);
@@ -252,7 +258,7 @@ export class FocusedElementState
         super.setVal(val, details);
 
         if (val) {
-            this._lastVal = val;
+            this._lastVal = new WeakHTMLElement(val);
         }
     }
 
@@ -275,7 +281,7 @@ export class FocusedElementState
         (win as WindowWithHTMLElement).HTMLElement.prototype.focus = focus;
 
         function focus(this: HTMLElement) {
-            FocusedElementState._lastFocusedProgrammatically = this;
+            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(this);
             return origFocus.apply(this, arguments);
         }
 
@@ -343,6 +349,10 @@ export class FocusedElementState
 
                     if (rootAndModalizer.modalizer) {
                         curElement = rootAndModalizer.modalizer.getElement();
+
+                        if (!curElement) {
+                            return;
+                        }
                     }
                 }
             }
@@ -352,9 +362,9 @@ export class FocusedElementState
                 : this._ah.focusable.findNext(curElement);
 
             const groupper = this._getGroupper(curElement);
+            const groupperElement = groupper?.getElement();
 
-            if (groupper) {
-                const groupperElement = groupper.getElement();
+            if (groupper && groupperElement) {
                 const first = this._getFirstInGroupper(groupperElement, false);
 
                 if (first && (curElement !== first) &&
@@ -366,10 +376,12 @@ export class FocusedElementState
                         : this._ah.focusable.findNext(first, groupperElement);
                 } else if ((curElement === first) && groupperElement.parentElement) {
                     const parentGroupper = this._getGroupper(groupperElement.parentElement);
+                    const parentGroupperElement = parentGroupper?.getElement();
 
                     if (
                         parentGroupper &&
-                        !parentGroupper.getElement().contains(next) &&
+                        parentGroupperElement &&
+                        !parentGroupperElement.contains(next) &&
                         parentGroupper.getBasicProps().isLimited === Types.GroupperFocusLimit.LimitedTrapFocus
                     ) {
                         next = curElement;
@@ -407,12 +419,12 @@ export class FocusedElementState
             }
 
             let groupper = this._getGroupper(curElement);
+            let groupperElement = groupper?.getElement();
 
-            if (!groupper) {
+            if (!groupper || !groupperElement) {
                 return;
             }
 
-            let groupperElement = groupper.getElement();
             let shouldStopPropagation = true;
 
             let next: HTMLElement | null = null;
@@ -453,7 +465,7 @@ export class FocusedElementState
 
                         if (!state.isLimited) {
                             groupper.setUnlimited(false);
-                            next = groupperElement;
+                            next = groupperElement || null;
                         }
                     }
                     break;

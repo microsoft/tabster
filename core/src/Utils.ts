@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ElementVisibility } from './Types';
+import { ElementVisibility, GetWindow } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __ahCacheId?: string;
@@ -33,9 +33,15 @@ export interface AHDOMRect {
 }
 
 let _isBrokenIE11: boolean;
+let _hasWeakRef = typeof WeakRef !== 'undefined';
+
 let _containerBoundingRectCache: { [id: string]: { rect: AHDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
 let _containerBoundingRectCacheTimer: number | undefined;
+
+let _weakElementStorage: { [id: string]: AHWeakRef; } = {};
+let _lastWeakElementId = 0;
+let _weakCleanupTimer: number | undefined;
 
 const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
     readonly bottom: number;
@@ -53,7 +59,7 @@ const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
 
 let _uidCounter = 0;
 
-export const elementByUId: { [uid: string]: HTMLElementWithUID } = {};
+export const elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> } = {};
 
 try {
     // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
@@ -63,6 +69,92 @@ try {
     _isBrokenIE11 = false;
 } catch (e) {
     _isBrokenIE11 = true;
+}
+
+interface AHWeakRef {
+    deref(): HTMLElement | undefined;
+}
+
+class FakeWeakRef implements AHWeakRef {
+    private _target: HTMLElement | undefined;
+
+    constructor(target: HTMLElement) {
+        this._target = target;
+    }
+
+    deref(): HTMLElement | undefined {
+        return this._target;
+    }
+
+    static tryCleanup(fwr: FakeWeakRef): boolean {
+        if (!fwr._target) {
+            return true;
+        }
+
+        if (!documentContains(fwr._target.ownerDocument, fwr._target)) {
+            delete fwr._target;
+            return true;
+        }
+
+        return false;
+    }
+}
+
+export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> {
+    private _id: string;
+    private _data: D | undefined;
+
+    constructor(element: T, data?: D) {
+        this._id = 'we' + ++_lastWeakElementId;
+
+        _weakElementStorage[this._id] = _hasWeakRef ? new WeakRef(element) : new FakeWeakRef(element);
+
+        if (data !== undefined) {
+            this._data = data;
+        }
+    }
+
+    get(): T | undefined {
+        const ref = _weakElementStorage[this._id];
+        const el = (ref && ref.deref()) as (T | undefined);
+        if (ref && !el) {
+            delete _weakElementStorage[this._id];
+        }
+        return el;
+    }
+
+    getData(): D | undefined {
+        return this._data;
+    }
+}
+
+export function startWeakStorageCleanup(win: GetWindow): void {
+    if (!_weakCleanupTimer) {
+        _weakCleanupTimer = win().setTimeout(() => {
+            for (let id of Object.keys(_weakElementStorage)) {
+                const we = _weakElementStorage[id];
+                if (_hasWeakRef) {
+                    if (!we.deref()) {
+                        delete _weakElementStorage[id];
+                    }
+                } else {
+                    if (FakeWeakRef.tryCleanup(we as FakeWeakRef)) {
+                        delete _weakElementStorage[id];
+                    }
+                }
+            }
+            _weakCleanupTimer = undefined;
+            startWeakStorageCleanup(win);
+        }, 2 * 60 * 1000); // 2 minutes.
+    }
+}
+
+export function stopWeakStorageCleanupAndClearStorage(win: GetWindow): void {
+    if (_weakCleanupTimer) {
+        win().clearTimeout(_weakCleanupTimer);
+        _weakCleanupTimer = undefined;
+        _weakElementStorage = {};
+    }
 }
 
 export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (node: Node) => number): TreeWalker | undefined {
@@ -267,7 +359,7 @@ export function getElementUId(element: HTMLElementWithUID, win: Window): string 
     }
 
     if (!elementByUId[uid] && documentContains(element.ownerDocument, element)) {
-        elementByUId[uid] = element;
+        elementByUId[uid] = new WeakHTMLElement(element) ;
     }
 
     return uid;
@@ -285,9 +377,10 @@ export function getWindowUId(win: WindowWithUID): string {
 
 export function clearElementCache(parent?: HTMLElement): void {
     for (let key of Object.keys(elementByUId)) {
-        if (parent) {
-            const el = elementByUId[key];
+        const wel = elementByUId[key];
+        const el = wel && wel.get();
 
+        if (el && parent) {
             if (!parent.contains(el)) {
                 continue;
             }

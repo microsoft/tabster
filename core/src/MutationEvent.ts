@@ -5,7 +5,7 @@
 
 import { getAbilityHelpersOnElement } from './Instance';
 import * as Types from './Types';
-import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID } from './Utils';
+import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID, WeakHTMLElement } from './Utils';
 
 export interface MutationEventDetails {
     root?: Types.Root;
@@ -30,7 +30,7 @@ export function observeMutations(
         return () => { /* Noop */ };
     }
 
-    const observer = new MutationObserver(mutations => {
+    let observer = new MutationObserver(mutations => {
         const changedRoots: { [id: string]: { removedFrom?: Document; addedTo?: Node; root: Types.Root; } } = {};
         const changedModalizers: { [id: string]: { removedFrom?: Document; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
         const changedGrouppers: { [id: string]: { removedFrom?: Document; addedTo?: Node; groupper: Types.Groupper } } = {};
@@ -141,7 +141,7 @@ export function observeMutations(
                 if (removedFrom) {
                     delete elementByUId[uid];
                 } else if (addedTo) {
-                    elementByUId[uid] = element;
+                    elementByUId[uid] = new WeakHTMLElement(element);
                 }
             }
 

@@ -6,7 +6,7 @@
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { getElementUId } from './Utils';
+import { documentContains, getElementUId, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
@@ -67,8 +67,8 @@ export abstract class DeloserHistoryByRootBase<I, D extends DeloserItemBase<I>> 
         return this._history.some(d => d.belongsTo(deloser));
     }
 
-    abstract async focusAvailable(from: I | null): Promise<boolean>;
-    abstract async resetFocus(from: I | null): Promise<boolean>;
+    abstract focusAvailable(from: I | null): Promise<boolean>;
+    abstract resetFocus(from: I | null): Promise<boolean>;
 }
 
 class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, DeloserItem> {
@@ -115,7 +115,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // let's try to find something under the same root.
             for (let m of modalizers) {
                 const e = m.getElement();
-                const ah = getAbilityHelpersOnElement(this._ah, e);
+                const ah = e && getAbilityHelpersOnElement(this._ah, e);
                 const deloser = ah && ah.deloser;
                 const deloserItem = deloser && new DeloserItem(this._ah, deloser);
 
@@ -150,7 +150,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // let's try to find something under the same root.
             for (let m of modalizers) {
                 const e = m.getElement();
-                const ah = getAbilityHelpersOnElement(this._ah, e);
+                const ah = e && getAbilityHelpersOnElement(this._ah, e);
                 const deloser = ah && ah.deloser;
 
                 if (deloser && !(deloser.uid in resetQueue)) {
@@ -264,17 +264,78 @@ export class DeloserHistory {
     }
 }
 
-function _setInformativeStyle(element: HTMLElement, remove: boolean, isActive?: boolean, snapshotIndex?: number): void {
+function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, isActive?: boolean, snapshotIndex?: number): void {
     if (__DEV__) {
-        if (remove) {
-            element.style.removeProperty('--ah-deloser');
-        } else {
-            element.style.setProperty(
-                '--ah-deloser',
-                (isActive ? 'active' : 'inactive') + ',' + ('snapshot-' + snapshotIndex)
-            );
+        const element = weakElement.get();
+
+        if (element) {
+            if (remove) {
+                element.style.removeProperty('--ah-deloser');
+            } else {
+                element.style.setProperty(
+                    '--ah-deloser',
+                    (isActive ? 'active' : 'inactive') + ',' + ('snapshot-' + snapshotIndex)
+                );
+            }
         }
     }
+}
+
+function buildElementSelector(element: HTMLElement, withClass?: boolean, withIndex?: boolean): string {
+    const selector: string[] = [];
+
+    if (element.id) {
+        selector.push('#' + element.id);
+    }
+
+    if ((withClass !== false) && element.className) {
+        element.className.split(' ').forEach(cls => {
+            cls = cls.trim();
+
+            if (cls) {
+                selector.push('.' + cls);
+            }
+        });
+    }
+
+    let index = 0;
+    let el: Element | null;
+
+    if ((withIndex !== false) && (selector.length === 0)) {
+        el = element;
+        while (el) {
+            index++;
+            el = el.previousElementSibling;
+        }
+        selector.unshift(':nth-child(' + index + ')');
+    }
+
+    selector.unshift(element.tagName.toLowerCase());
+
+    return selector.join('');
+}
+
+function buildSelector(element: HTMLElement): string | undefined {
+    if (!documentContains(element.ownerDocument, element)) {
+        return undefined;
+    }
+
+    const selector: string[] = [buildElementSelector(element)];
+
+    let el = element.parentElement;
+
+    while (el) {
+        const isBody = el.tagName === 'BODY';
+        selector.unshift(buildElementSelector(el, false, !isBody));
+
+        if (isBody) {
+            break;
+        }
+
+        el = el.parentElement;
+    }
+
+    return selector.join(' ');
 }
 
 export class Deloser implements Types.Deloser {
@@ -283,9 +344,9 @@ export class Deloser implements Types.Deloser {
     private _basic: Types.DeloserBasicProps;
     private _extended: Types.DeloserExtendedProps;
     private _isActive = false;
-    private _history: HTMLElement[][] = [[]];
+    private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
     private _snapshotIndex = 0;
-    private _element: HTMLElement;
+    private _element: WeakHTMLElement;
 
     constructor(
         element: HTMLElement,
@@ -296,7 +357,7 @@ export class Deloser implements Types.Deloser {
     ) {
         this.uid = getElementUId(element, getWindow());
         this._ah = ah;
-        this._element = element;
+        this._element = new WeakHTMLElement(element);
         this._basic = basic || {};
         this._extended = extended || {};
 
@@ -325,7 +386,7 @@ export class Deloser implements Types.Deloser {
 
     move(newContainer: HTMLElement): void {
         this._remove();
-        this._element = newContainer;
+        this._element = new WeakHTMLElement(newContainer);
 
         if (__DEV__) {
             _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
@@ -383,15 +444,19 @@ export class Deloser implements Types.Deloser {
     }
 
     focusFirst = (): boolean => {
-        return this._ah.focusedElement.focusFirst(this._element);
+        const e = this._element.get();
+        return !!e && this._ah.focusedElement.focusFirst(e);
     }
 
     unshift(element: HTMLElement): void {
         let cur = this._history[this._snapshotIndex];
 
-        cur = this._history[this._snapshotIndex] = cur.filter(e => e !== element);
+        cur = this._history[this._snapshotIndex] = cur.filter(we => {
+            const e = we.get();
+            return e && (e !== element);
+        });
 
-        cur.unshift(element);
+        cur.unshift(new WeakHTMLElement(element, buildSelector(element)));
 
         while (cur.length > _containerHistoryLength) {
             cur.pop();
@@ -399,39 +464,48 @@ export class Deloser implements Types.Deloser {
     }
 
     focusDefault = (): boolean => {
-        return this._ah.focusedElement.focusDefault(this._element);
+        const e = this._element.get();
+        return !!e && this._ah.focusedElement.focusDefault(e);
     }
 
     resetFocus = (): boolean => {
-        return this._ah.focusedElement.resetFocus(this._element);
+        const e = this._element.get();
+        return !!e && this._ah.focusedElement.resetFocus(e);
     }
 
     findAvailable(): HTMLElement | null {
-        if (!this._ah.focusable.isVisible(this._element)) {
+        const element = this._element.get();
+
+        if (!element || !this._ah.focusable.isVisible(element)) {
             return null;
         }
 
         let restoreFocusOrder = this._basic.restoreFocusOrder;
         let available: HTMLElement | null = null;
 
-        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, this._element);
+        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, element);
 
         if (!rootAndModalizer) {
             return null;
         }
 
         const root = rootAndModalizer.root;
+        const rootElement = root.getElement();
+
+        if (!rootElement) {
+            return null;
+        }
 
         if (restoreFocusOrder === undefined) {
             restoreFocusOrder = root.getBasicProps().restoreFocusOrder;
         }
 
         if (restoreFocusOrder === Types.RestoreFocusOrder.RootDefault) {
-            available = this._ah.focusable.findDefault(root.getElement());
+            available = this._ah.focusable.findDefault(rootElement);
         }
 
         if (!available && (restoreFocusOrder === Types.RestoreFocusOrder.RootFirst)) {
-            available = this._findFirst(root.getElement());
+            available = this._findFirst(rootElement);
         }
 
         if (available) {
@@ -439,8 +513,8 @@ export class Deloser implements Types.Deloser {
         }
 
         const availableInHistory = this._findInHistory();
-        const availableDefault = this._ah.focusable.findDefault(this._element);
-        const availableFirst = this._findFirst(this._element);
+        const availableDefault = this._ah.focusable.findDefault(element);
+        const availableFirst = this._findFirst(element);
 
         if (availableInHistory && (restoreFocusOrder === Types.RestoreFocusOrder.History)) {
             return availableInHistory;
@@ -458,7 +532,7 @@ export class Deloser implements Types.Deloser {
     }
 
     clearHistory = (preserveExisting?: boolean): void => {
-        const element = this._element;
+        const element = this._element.get();
 
         if (!element) {
             this._history[this._snapshotIndex] = [];
@@ -467,7 +541,10 @@ export class Deloser implements Types.Deloser {
         }
 
         this._history[this._snapshotIndex] =
-            this._history[this._snapshotIndex].filter(e => preserveExisting ? element.contains(e) : false);
+            this._history[this._snapshotIndex].filter(we => {
+                const e = we.get();
+                return (e && preserveExisting) ? element.contains(e) : false;
+            });
     }
 
     customFocusLostHandler(element: HTMLElement): boolean {
@@ -478,8 +555,8 @@ export class Deloser implements Types.Deloser {
         return false;
     }
 
-    getElement(): HTMLElement {
-        return this._element;
+    getElement(): HTMLElement | undefined {
+        return this._element.get();
     }
 
     private _findInHistory(): HTMLElement | null {
@@ -488,9 +565,11 @@ export class Deloser implements Types.Deloser {
         this.clearHistory(true);
 
         for (let i = 0; i < cur.length; i++) {
-            const e = cur[i];
+            const we = cur[i];
+            const e = we.get();
+            const element = this._element.get();
 
-            if (this._element.contains(e)) {
+            if (e && element && element.contains(e)) {
                 if (this._ah.focusable.isFocusable(e)) {
                     return e;
                 }
@@ -498,26 +577,10 @@ export class Deloser implements Types.Deloser {
                 // Element is not in the DOM, try to locate the node by it's
                 // selector. This might return not exactly the right node,
                 // but it would be easily fixable by having more detailed selectors.
-                const selector: string[] = [];
+                const selector = we.getData();
 
-                if (e.id) {
-                    selector.push('#' + e.id);
-                }
-
-                if (e.className) {
-                    e.className.split(' ').forEach(cls => {
-                        cls = cls.trim();
-
-                        if (cls) {
-                            selector.push('.' + cls);
-                        }
-                    });
-                }
-
-                if (selector.length) {
-                    selector.unshift(e.tagName.toLowerCase());
-
-                    const els = this._element.querySelectorAll(selector.join(''));
+                if (selector && element) {
+                    const els = element.ownerDocument.querySelectorAll(selector);
 
                     for (let i = 0; i < els.length; i++) {
                         const el = els[i] as HTMLElement;
