@@ -10,6 +10,14 @@ import { documentContains, getElementUId, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
+const RestoreFocusOrders: Types.RestoreFocusOrders = {
+    History: 0,
+    DeloserDefault: 1,
+    RootDefault: 2,
+    DeloserFirst: 3,
+    RootFirst: 4
+};
+
 export abstract class DeloserItemBase<C> {
     abstract resetFocus(): Promise<boolean>;
     abstract belongsTo(deloser: C): boolean;
@@ -17,10 +25,10 @@ export abstract class DeloserItemBase<C> {
 
 export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     readonly uid: string;
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _deloser: Types.Deloser;
 
-    constructor(ah: Types.AbilityHelpers, deloser: Types.Deloser) {
+    constructor(ah: Types.AbilityHelpersCore, deloser: Types.Deloser) {
         super();
         this.uid = deloser.uid;
         this._ah = ah;
@@ -46,11 +54,11 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
 }
 
 export abstract class DeloserHistoryByRootBase<I, D extends DeloserItemBase<I>> {
-    protected _ah: Types.AbilityHelpers;
+    protected _ah: Types.AbilityHelpersCore;
     protected _history: D[] = [];
     readonly rootUId: string;
 
-    constructor(ah: Types.AbilityHelpers, rootUId: string) {
+    constructor(ah: Types.AbilityHelpersCore, rootUId: string) {
         this._ah = ah;
         this.rootUId = rootUId;
     }
@@ -171,10 +179,10 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
 }
 
 export class DeloserHistory {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _history: DeloserHistoryByRootBase<{}, DeloserItemBase<{}>>[] = [];
 
-    constructor(ah: Types.AbilityHelpers) {
+    constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
     }
 
@@ -340,7 +348,7 @@ function buildSelector(element: HTMLElement): string | undefined {
 
 export class Deloser implements Types.Deloser {
     readonly uid: string;
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _basic: Types.DeloserBasicProps;
     private _extended: Types.DeloserExtendedProps;
     private _isActive = false;
@@ -350,7 +358,7 @@ export class Deloser implements Types.Deloser {
 
     constructor(
         element: HTMLElement,
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         getWindow: Types.GetWindow,
         basic?: Types.DeloserBasicProps,
         extended?: Types.DeloserExtendedProps
@@ -500,11 +508,11 @@ export class Deloser implements Types.Deloser {
             restoreFocusOrder = root.getBasicProps().restoreFocusOrder;
         }
 
-        if (restoreFocusOrder === Types.RestoreFocusOrder.RootDefault) {
+        if (restoreFocusOrder === RestoreFocusOrders.RootDefault) {
             available = this._ah.focusable.findDefault(rootElement);
         }
 
-        if (!available && (restoreFocusOrder === Types.RestoreFocusOrder.RootFirst)) {
+        if (!available && (restoreFocusOrder === RestoreFocusOrders.RootFirst)) {
             available = this._findFirst(rootElement);
         }
 
@@ -516,15 +524,15 @@ export class Deloser implements Types.Deloser {
         const availableDefault = this._ah.focusable.findDefault(element);
         const availableFirst = this._findFirst(element);
 
-        if (availableInHistory && (restoreFocusOrder === Types.RestoreFocusOrder.History)) {
+        if (availableInHistory && (restoreFocusOrder === RestoreFocusOrders.History)) {
             return availableInHistory;
         }
 
-        if (availableDefault && (restoreFocusOrder === Types.RestoreFocusOrder.DeloserDefault)) {
+        if (availableDefault && (restoreFocusOrder === RestoreFocusOrders.DeloserDefault)) {
             return availableDefault;
         }
 
-        if (availableFirst && (restoreFocusOrder === Types.RestoreFocusOrder.DeloserFirst)) {
+        if (availableFirst && (restoreFocusOrder === RestoreFocusOrders.DeloserFirst)) {
             return availableFirst;
         }
 
@@ -616,7 +624,7 @@ export class Deloser implements Types.Deloser {
 }
 
 export class DeloserAPI implements Types.DeloserAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _isInSomeDeloser = false;
@@ -626,11 +634,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _isRestoringFocus = false;
     private _isPaused = false;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
-        this._win = getWindow;
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
         this._history = new DeloserHistory(ah);
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
@@ -840,7 +848,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
-    static getDeloser(abilityHelpers: Types.AbilityHelpers, element: HTMLElement): Types.Deloser | undefined {
+    static getDeloser(abilityHelpers: Types.AbilityHelpersCore, element: HTMLElement): Types.Deloser | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 

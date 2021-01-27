@@ -9,20 +9,15 @@ export interface AbilityHelpersDOMAttribute {
     [AbilityHelpersAttributeName]: string | undefined;
 }
 
-export interface AbilityHelpers {
+export interface AbilityHelpersCore {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
-    outline: OutlineAPI;
-    root: RootAPI;
-    deloser: DeloserAPI;
     focusable: FocusableAPI;
-    modalizer: ModalizerAPI;
-    observedElement: ObservedElementAPI;
-    crossOrigin: CrossOriginAPI;
+    root: RootAPI;
     gc: GarbageCollectionAPI;
 }
 
-export type GetAbilityHelpers = () => AbilityHelpers;
+export type GetAbilityHelpers = () => AbilityHelpersCore;
 export type GetWindow = () => Window;
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -82,14 +77,15 @@ export interface CrossOriginSentTo {
     [id: string]: true;
 }
 
-export enum CrossOriginTransactionType {
-    Bootstrap = 1,
-    FocusElement = 2,
-    State = 3,
-    GetElement = 4,
-    RestoreFocusInDeloser = 5,
-    Ping = 6
+export interface CrossOriginTransactionTypes {
+    Bootstrap: 1;
+    FocusElement: 2;
+    State: 3;
+    GetElement: 4;
+    RestoreFocusInDeloser: 5;
+    Ping: 6;
 }
+export type CrossOriginTransactionType = CrossOriginTransactionTypes[keyof CrossOriginTransactionTypes];
 
 export interface CrossOriginTransactionData<I, O> {
     transaction: string;
@@ -160,13 +156,14 @@ export interface DeloserElementActions {
     isActive: () => boolean;
 }
 
-export enum RestoreFocusOrder {
-    History = 0,
-    DeloserDefault = 1,
-    RootDefault = 2,
-    DeloserFirst = 3,
-    RootFirst = 4
+export interface RestoreFocusOrders {
+    History: 0;
+    DeloserDefault: 1;
+    RootDefault: 2;
+    DeloserFirst: 3;
+    RootFirst: 4;
 }
+export type RestoreFocusOrder = RestoreFocusOrders[keyof RestoreFocusOrders];
 
 export interface DeloserBasicProps {
     restoreFocusOrder?: RestoreFocusOrder;
@@ -247,11 +244,17 @@ export interface FocusableAPI {
         ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
 }
 
-export enum ElementVisibility {
-    Invisible = 0,
-    PartiallyVisible = 1,
-    Visible = 2
+export interface ElementVisibilities {
+    Invisible: 0;
+    PartiallyVisible: 1;
+    Visible: 2;
 }
+export const ElementVisibilities: ElementVisibilities = {
+    Invisible: 0,
+    PartiallyVisible: 1,
+    Visible: 2
+};
+export type ElementVisibility = ElementVisibilities[keyof ElementVisibilities];
 
 export interface GroupperState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
@@ -266,18 +269,31 @@ export interface GroupperState {
     isLimited: boolean;
 }
 
-export enum GroupperFocusLimit {
-    Unlimited = 0,
-    Limited = 1, // The focus is limited to the container only and explicit Enter is needed to go inside.
-    LimitedTrapFocus = 2 // The focus is limited as above, plus trapped when inside.
+export interface GroupperFocusLimits {
+    Unlimited: 0;
+    Limited: 1; // The focus is limited to the container only and explicit Enter is needed to go inside.
+    LimitedTrapFocus: 2; // The focus is limited as above, plus trapped when inside.
 }
+export const GroupperFocusLimits: GroupperFocusLimits = {
+    Unlimited: 0,
+    Limited: 1,
+    LimitedTrapFocus: 2
+};
+export type GroupperFocusLimit = GroupperFocusLimits[keyof GroupperFocusLimits];
 
-export enum GroupperNextDirection {
-    Both = 0, // Default, both left/up keys move to the previous, right/down move to the next.
-    Vertical = 1, // Only up/down arrows move to the next/previous.
-    Horizontal = 2, // Only left/right arrows move to the next/previous.
-    Grid = 3 // Two-dimentional movement depending on the visual placement.
+export interface GroupperNextDirections {
+    Both: 0; // Default, both left/up keys move to the previous, right/down move to the next.
+    Vertical: 1; // Only up/down arrows move to the next/previous.
+    Horizontal: 2; // Only left/right arrows move to the next/previous.
+    Grid: 3; // Two-dimentional movement depending on the visual placement.
 }
+export const GroupperNextDirections: GroupperNextDirections = {
+    Both: 0,
+    Vertical: 1,
+    Horizontal: 2,
+    Grid: 3
+};
+export type GroupperNextDirection = GroupperNextDirections[keyof GroupperNextDirections];
 
 export interface GroupperBasicProps {
     isDefault?: boolean;
@@ -475,9 +491,24 @@ export interface AbilityHelpersElementStorage {
     [uid: string]: AbilityHelpersElementStorageEntry;
 }
 
+export type DisposeFunc = () => void;
+
 export interface AbilityHelpersInternal {
     storageEntry(uid: string, addremove?: boolean): AbilityHelpersElementStorageEntry | undefined;
     getWindow: GetWindow;
+
+    outline?: OutlineAPI;
+    deloser?: DeloserAPI;
+    modalizer?: ModalizerAPI;
+    observedElement?: ObservedElementAPI;
+    crossOrigin?: CrossOriginAPI;
+
+    outlineDispose?: DisposeFunc;
+    rootDispose?: DisposeFunc;
+    deloserDispose?: DisposeFunc;
+    modalizerDispose?: DisposeFunc;
+    observedElementDispose?: DisposeFunc;
+    crossOriginDispose?: DisposeFunc;
 }
 
 export interface GarbageCollectionAPI {

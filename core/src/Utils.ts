@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ElementVisibility, GetWindow } from './Types';
+import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __ahCacheId?: string;
@@ -255,7 +255,7 @@ export function isElementVisibleInContainer(element: HTMLElement, gap = 0): Elem
             ((elementRect.left > containerRect.right) || (elementRect.top > containerRect.bottom)) ||
             ((elementRect.bottom < containerRect.top) || (elementRect.right < containerRect.left))
         ) {
-            return ElementVisibility.Invisible;
+            return ElementVisibilities.Invisible;
         }
 
         if (
@@ -264,13 +264,13 @@ export function isElementVisibleInContainer(element: HTMLElement, gap = 0): Elem
             ((elementRect.left + gap >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
             ((elementRect.right >= containerRect.left) && (elementRect.right - gap <= containerRect.right))
         ) {
-            return ElementVisibility.Visible;
+            return ElementVisibilities.Visible;
         }
 
-        return ElementVisibility.PartiallyVisible;
+        return ElementVisibilities.PartiallyVisible;
     }
 
-    return ElementVisibility.Invisible;
+    return ElementVisibilities.Invisible;
 }
 
 export function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {

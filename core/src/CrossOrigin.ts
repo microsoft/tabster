@@ -16,6 +16,15 @@ const _pingTimeout = 3000;
 
 const _targetIdUp = 'up';
 
+const CrossOriginTransactionTypes: Types.CrossOriginTransactionTypes = {
+    Bootstrap: 1,
+    FocusElement: 2,
+    State: 3,
+    GetElement: 4,
+    RestoreFocusInDeloser: 5,
+    Ping: 6
+};
+
 let _ignoreKeyboardNavigationStateUpdate = false;
 let _focusOwner: string | undefined;
 let _focusOwnerTimestamp: number | undefined;
@@ -34,7 +43,7 @@ class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
     private _deloser: CrossOriginDeloser;
     private _transactions: CrossOriginTransactions;
 
-    constructor(ah: Types.AbilityHelpers, deloser: CrossOriginDeloser, trasactions: CrossOriginTransactions) {
+    constructor(ah: Types.AbilityHelpersCore, deloser: CrossOriginDeloser, trasactions: CrossOriginTransactions) {
         super();
         this._deloser = deloser;
         this._transactions = trasactions;
@@ -67,7 +76,7 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<CrossOrig
     private _transactions: CrossOriginTransactions;
 
     constructor(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         rootUId: string,
         transactions: CrossOriginTransactions
     ) {
@@ -121,7 +130,7 @@ abstract class CrossOriginTransaction<I, O> {
     readonly id: string;
     readonly beginData: I;
     readonly timeout?: number;
-    protected ah: Types.AbilityHelpers;
+    protected ah: Types.AbilityHelpersCore;
     protected endData: O | undefined;
     protected owner: Types.GetWindow;
     protected ownerId: string;
@@ -138,7 +147,7 @@ abstract class CrossOriginTransaction<I, O> {
     private _sentCount = 0;
 
     constructor(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         getOwner: Types.GetWindow,
         knownTargets: KnownTargets,
         value: I,
@@ -288,7 +297,7 @@ abstract class CrossOriginTransaction<I, O> {
 
 interface CrossOriginTransactionClass<I, O> {
     new (
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         getOwner: Types.GetWindow,
         knownTargets: KnownTargets,
         value: I,
@@ -298,13 +307,13 @@ interface CrossOriginTransactionClass<I, O> {
         sendUp?: Types.CrossOriginTransactionSend
     ): CrossOriginTransaction<I, O>;
     shouldForward?(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<I, O>,
         getOwner: Types.GetWindow,
         ownerId: string
     ): boolean;
     makeResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<I, O>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -312,7 +321,7 @@ interface CrossOriginTransactionClass<I, O> {
         forwardResult: Promise<O | undefined>,
         isSelfResponse?: boolean
     ): Promise<O>;
-    shouldSelfRespond?(ah: Types.AbilityHelpers, data: I, getOwner: Types.GetWindow, ownerId: string): boolean;
+    shouldSelfRespond?(ah: Types.AbilityHelpersCore, data: I, getOwner: Types.GetWindow, ownerId: string): boolean;
 }
 
 interface BootstrapTransactionContents {
@@ -320,13 +329,13 @@ interface BootstrapTransactionContents {
 }
 
 class BootstrapTransaction extends CrossOriginTransaction<undefined, BootstrapTransactionContents> {
-    type = Types.CrossOriginTransactionType.Bootstrap;
+    type = CrossOriginTransactionTypes.Bootstrap;
 
     static shouldForward() {
         return false;
     }
 
-    static async makeResponse(ah: Types.AbilityHelpers): Promise<BootstrapTransactionContents> {
+    static async makeResponse(ah: Types.AbilityHelpersCore): Promise<BootstrapTransactionContents> {
         return { isNavigatingWithKeyboard: ah.keyboardNavigation.isNavigatingWithKeyboard() };
     }
 }
@@ -345,12 +354,12 @@ interface FocusElementData extends CrossOriginElementDataIn {
 }
 
 class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, boolean> {
-    type = Types.CrossOriginTransactionType.FocusElement;
+    type = CrossOriginTransactionTypes.FocusElement;
 
     static shouldSelfRespond = () => true;
 
     static shouldForward(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
         getOwner: Types.GetWindow
     ): boolean {
@@ -359,7 +368,7 @@ class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, b
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -371,14 +380,22 @@ class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, b
     }
 }
 
-enum CrossOriginState {
-    Focused = 1,
-    Blurred = 2,
-    Observed = 3,
-    DeadWindow = 4,
-    KeyboardNavigation = 5,
-    Outline = 6
-}
+const CrossOriginStates: {
+    Focused: 1,
+    Blurred: 2,
+    Observed: 3,
+    DeadWindow: 4,
+    KeyboardNavigation: 5,
+    Outline: 6
+} = {
+    Focused: 1,
+    Blurred: 2,
+    Observed: 3,
+    DeadWindow: 4,
+    KeyboardNavigation: 5,
+    Outline: 6
+};
+type CrossOriginState = typeof CrossOriginStates[keyof typeof CrossOriginStates];
 
 interface CrossOriginElementDataOut {
     ownerUId: string;
@@ -399,14 +416,14 @@ interface CrossOriginStateData extends CrossOriginElementDataOut {
 }
 
 class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true> {
-    type = Types.CrossOriginTransactionType.State;
+    type = CrossOriginTransactionTypes.State;
 
-    static shouldSelfRespond(ah: Types.AbilityHelpers, data: CrossOriginStateData): boolean {
-        return (data.state !== CrossOriginState.DeadWindow) && (data.state !== CrossOriginState.KeyboardNavigation);
+    static shouldSelfRespond(ah: Types.AbilityHelpersCore, data: CrossOriginStateData): boolean {
+        return (data.state !== CrossOriginStates.DeadWindow) && (data.state !== CrossOriginStates.KeyboardNavigation);
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<CrossOriginStateData, true>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -419,17 +436,17 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
         if (timestamp && beginData) {
             switch (beginData.state) {
-                case CrossOriginState.Focused:
+                case CrossOriginStates.Focused:
                     return StateTransaction._makeFocusedResponse(ah, timestamp, beginData, transactions, isSelfResponse);
-                case CrossOriginState.Blurred:
+                case CrossOriginStates.Blurred:
                     return StateTransaction._makeBlurredResponse(ah, timestamp, beginData);
-                case CrossOriginState.Observed:
+                case CrossOriginStates.Observed:
                     return StateTransaction._makeObservedResponse(ah, beginData);
-                case CrossOriginState.DeadWindow:
+                case CrossOriginStates.DeadWindow:
                     return StateTransaction._makeDeadWindowResponse(ah, beginData, transactions, forwardResult);
-                case CrossOriginState.KeyboardNavigation:
+                case CrossOriginStates.KeyboardNavigation:
                     return StateTransaction._makeKeyboardNavigationResponse(ah, beginData.isNavigatingWithKeyboard);
-                case CrossOriginState.Outline:
+                case CrossOriginStates.Outline:
                     return StateTransaction._makeOutlineResponse(ah, beginData.outline);
             }
         }
@@ -437,7 +454,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
         return true;
     }
 
-    static createElement(ah: Types.AbilityHelpers, beginData: CrossOriginElementDataOut): CrossOriginElement | null {
+    static createElement(ah: Types.AbilityHelpersCore, beginData: CrossOriginElementDataOut): CrossOriginElement | null {
         return beginData.uid
             ? new CrossOriginElement(
                 ah,
@@ -451,7 +468,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeFocusedResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         timestamp: number,
         beginData: CrossOriginStateData,
         transactions: CrossOriginTransactions,
@@ -464,7 +481,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
             _focusOwnerTimestamp = timestamp;
 
             if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
-                const history = DeloserAPI.getHistory(ah.deloser);
+                const history = DeloserAPI.getHistory((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
 
                 const deloser: CrossOriginDeloser = {
                     ownerUId: beginData.ownerUId,
@@ -481,7 +498,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
             }
 
             CrossOriginFocusedElementState.setVal(
-                ah.crossOrigin.focusedElement,
+                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement,
                 element,
                 { isFocusedProgrammatically: beginData.isFocusedProgrammatically }
             );
@@ -491,7 +508,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeBlurredResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         timestamp: number,
         beginData: CrossOriginStateData
     ): Promise<true> {
@@ -500,14 +517,18 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
             ((beginData.ownerUId === _focusOwner) || beginData.force) &&
             (!_focusOwnerTimestamp || (_focusOwnerTimestamp < timestamp))
         ) {
-            CrossOriginFocusedElementState.setVal(ah.crossOrigin.focusedElement, undefined, {});
+            CrossOriginFocusedElementState.setVal(
+                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement,
+                undefined,
+                {}
+            );
         }
 
         return true;
     }
 
     private static async _makeObservedResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         beginData: CrossOriginStateData
     ): Promise<true> {
         const name = beginData.observedName;
@@ -515,7 +536,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
         if (name && element) {
             CrossOriginObservedElementState.trigger(
-                ah.crossOrigin.observedElement,
+                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.observedElement,
                 element,
                 { name, details: beginData.observedDetails }
             );
@@ -525,7 +546,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeDeadWindowResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         beginData: CrossOriginStateData,
         transactions: CrossOriginTransactions,
         forwardResult: Promise<true | undefined>
@@ -538,13 +559,13 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
         return forwardResult.then(() => {
             if (deadUId === _focusOwner) {
-                DeloserAPI.forceRestoreFocus(ah.deloser);
+                DeloserAPI.forceRestoreFocus((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
             }
             return true;
         });
     }
 
-    private static async _makeKeyboardNavigationResponse(ah: Types.AbilityHelpers, isNavigatingWithKeyboard?: boolean): Promise<true> {
+    private static async _makeKeyboardNavigationResponse(ah: Types.AbilityHelpersCore, isNavigatingWithKeyboard?: boolean): Promise<true> {
         if ((isNavigatingWithKeyboard !== undefined) && (ah.keyboardNavigation.isNavigatingWithKeyboard() !== isNavigatingWithKeyboard)) {
             _ignoreKeyboardNavigationStateUpdate = true;
             KeyboardNavigationState.setVal(ah.keyboardNavigation, isNavigatingWithKeyboard);
@@ -553,20 +574,20 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
         return true;
     }
 
-    private static async _makeOutlineResponse(ah: Types.AbilityHelpers, props?: Partial<Types.OutlineProps>): Promise<true> {
+    private static async _makeOutlineResponse(ah: Types.AbilityHelpersCore, props?: Partial<Types.OutlineProps>): Promise<true> {
         if (_origOutlineSetup) {
-            _origOutlineSetup.call(ah.outline, props);
+            _origOutlineSetup.call((ah as unknown as Types.AbilityHelpersInternal).outline!!!, props);
         }
         return true;
     }
 }
 
 class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDataIn | undefined, CrossOriginElementDataOut> {
-    type = Types.CrossOriginTransactionType.GetElement;
+    type = CrossOriginTransactionTypes.GetElement;
 
     static shouldSelfRespond = () => true;
 
-    static findElement(ah: Types.AbilityHelpers, getOwner: Types.GetWindow, data?: CrossOriginElementDataIn): HTMLElement | null {
+    static findElement(ah: Types.AbilityHelpersCore, getOwner: Types.GetWindow, data?: CrossOriginElementDataIn): HTMLElement | null {
         let element: HTMLElement | null | undefined;
 
         if (data && (!data.ownerId || (data.ownerId === getWindowUId(getOwner())))) {
@@ -584,7 +605,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 const ref = elementByUId[data.uid];
                 element = ref && ref.get();
             } else if (data.observedName) {
-                element = ah.observedElement.getElement(data.observedName);
+                element = (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.getElement(data.observedName);
             }
         }
 
@@ -592,7 +613,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
     }
 
     static getElementData(
-        abilityHelpers: Types.AbilityHelpers,
+        abilityHelpers: Types.AbilityHelpersCore,
         element: HTMLElement,
         getOwner: Types.GetWindow,
         ownerUId: string
@@ -614,7 +635,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<CrossOriginElementDataIn | undefined, CrossOriginElementDataOut>,
         getOwner: Types.GetWindow,
         ownerUId: string,
@@ -644,7 +665,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                     let isForwardResolved = false;
                     let isResolved = false;
 
-                    ah.observedElement.waitElement(name, timeout).then(value => {
+                    (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.waitElement(name, timeout).then(value => {
                         isWaitElementResolved = true;
 
                         if (!isResolved && (value || isForwardResolved)) {
@@ -688,10 +709,10 @@ interface RestoreFocusInDeloserTransactionData extends CrossOriginDeloser {
 }
 
 class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFocusInDeloserTransactionData, boolean> {
-    type = Types.CrossOriginTransactionType.RestoreFocusInDeloser;
+    type = CrossOriginTransactionTypes.RestoreFocusInDeloser;
 
     static async makeResponse(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         data: Types.CrossOriginTransactionData<RestoreFocusInDeloserTransactionData, boolean>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -704,7 +725,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
         const deloser = uid && _deloserByUId[uid];
 
         if (begin && deloser) {
-            const history = DeloserAPI.getHistory(ah.deloser);
+            const history = DeloserAPI.getHistory((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
 
             return begin.reset ? history.resetFocus(deloser) : history.focusAvailable(deloser);
         }
@@ -714,7 +735,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
 }
 
 class PingTransaction extends CrossOriginTransaction<undefined, true> {
-    type = Types.CrossOriginTransactionType.Ping;
+    type = CrossOriginTransactionTypes.Ping;
 
     static shouldForward() {
         return false;
@@ -735,14 +756,14 @@ class CrossOriginTransactions {
     private _ownerUId: string;
     private _knownTargets: KnownTargets = {};
     private _transactions: { [id: string]: CrossOriginTransactionWrapper<any, any> } = {};
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _pingTimer: number | undefined;
     private _isDefaultSendUp = false;
     private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
     sendUp: Types.CrossOriginTransactionSend | undefined;
 
-    constructor(ah: Types.AbilityHelpers, getOwner: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore, getOwner: Types.GetWindow) {
         this._ah = ah;
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
@@ -938,17 +959,17 @@ class CrossOriginTransactions {
 
     private _getTransactionClass(type: Types.CrossOriginTransactionType): CrossOriginTransactionClass<any, any> | null {
         switch (type) {
-            case Types.CrossOriginTransactionType.Bootstrap:
+            case CrossOriginTransactionTypes.Bootstrap:
                 return BootstrapTransaction;
-            case Types.CrossOriginTransactionType.FocusElement:
+            case CrossOriginTransactionTypes.FocusElement:
                 return FocusElementTransaction;
-            case Types.CrossOriginTransactionType.State:
+            case CrossOriginTransactionTypes.State:
                 return StateTransaction;
-            case Types.CrossOriginTransactionType.GetElement:
+            case CrossOriginTransactionTypes.GetElement:
                 return GetElementTransaction;
-            case Types.CrossOriginTransactionType.RestoreFocusInDeloser:
+            case CrossOriginTransactionTypes.RestoreFocusInDeloser:
                 return RestoreFocusInDeloserTransaction;
-            case Types.CrossOriginTransactionType.Ping:
+            case CrossOriginTransactionTypes.Ping:
                 return PingTransaction;
             default:
                 return null;
@@ -1023,7 +1044,7 @@ class CrossOriginTransactions {
         if (!this._deadPromise && (_focusOwner === this._ownerUId)) {
             this._deadPromise = this.beginTransaction(StateTransaction, {
                 ownerUId: this._ownerUId,
-                state: CrossOriginState.DeadWindow
+                state: CrossOriginStates.DeadWindow
             });
         }
 
@@ -1068,11 +1089,11 @@ class CrossOriginTransactions {
             if (!focused && _focusOwner && (_focusOwner in deadWindows)) {
                 await this.beginTransaction(StateTransaction, {
                     ownerUId: this._ownerUId,
-                    state: CrossOriginState.Blurred,
+                    state: CrossOriginStates.Blurred,
                     force: true
                 });
 
-                DeloserAPI.forceRestoreFocus(this._ah.deloser);
+                DeloserAPI.forceRestoreFocus((this._ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
             }
         }
 
@@ -1103,7 +1124,7 @@ class CrossOriginTransactions {
 }
 
 export class CrossOriginElement implements Types.CrossOriginElement {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     readonly uid: string;
     readonly ownerId: string;
     readonly id?: string;
@@ -1112,7 +1133,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     readonly observedDetails?: string;
 
     constructor(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         uid: string,
         ownerId: string,
         id?: string,
@@ -1130,7 +1151,8 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 
     focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return this._ah.crossOrigin.focusedElement.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
+        return (this._ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!
+            .focusedElement.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
     }
 }
 
@@ -1216,11 +1238,11 @@ export class CrossOriginObservedElementState
         extends Subscribable<CrossOriginElement, Types.ObservedElementBasicProps>
         implements Types.CrossOriginObservedElementState {
 
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _transactions: CrossOriginTransactions;
     private _lastRequestFocusId = 0;
 
-    constructor(ah: Types.AbilityHelpers, transactions: CrossOriginTransactions) {
+    constructor(ah: Types.AbilityHelpersCore, transactions: CrossOriginTransactions) {
         super();
         this._ah = ah;
         this._transactions = transactions;
@@ -1247,7 +1269,7 @@ export class CrossOriginObservedElementState
     async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._ah.crossOrigin.focusedElement.focus(element)
+            ? (this._ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement.focus(element)
             : false
         );
     }
@@ -1262,7 +1284,7 @@ export class CrossOriginObservedElementState
 }
 
 export class CrossOriginAPI implements Types.CrossOriginAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _transactions: CrossOriginTransactions;
@@ -1271,10 +1293,10 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     focusedElement: Types.CrossOriginFocusedElementState;
     observedElement: Types.CrossOriginObservedElementState;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
-        this._win = getWindow;
-        this._transactions = new CrossOriginTransactions(ah, getWindow);
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+        this._transactions = new CrossOriginTransactions(ah, this._win);
         this.focusedElement = new CrossOriginFocusedElementState(this._transactions);
         this.observedElement = new CrossOriginObservedElementState(ah, this._transactions);
     }
@@ -1299,11 +1321,11 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
         ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
         ah.focusedElement.subscribe(this._onFocus);
-        ah.observedElement.subscribe(this._onObserved);
+        (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.subscribe(this._onObserved);
 
         if (!_origOutlineSetup) {
-            _origOutlineSetup = ah.outline.setup;
-            ah.outline.setup = this._outlineSetup;
+            _origOutlineSetup = (ah as unknown as Types.AbilityHelpersInternal).outline!!!.setup;
+            (ah as unknown as Types.AbilityHelpersInternal).outline!!!.setup = this._outlineSetup;
         }
 
         this._transactions.beginTransaction(BootstrapTransaction, undefined, undefined, undefined, _targetIdUp).then(data => {
@@ -1325,7 +1347,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
         ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
         ah.focusedElement.unsubscribe(this._onFocus);
-        ah.observedElement.unsubscribe(this._onObserved);
+        (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);
@@ -1339,7 +1361,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _onKeyboardNavigationStateChanged = (value: boolean): void => {
         if (!_ignoreKeyboardNavigationStateUpdate) {
             this._transactions.beginTransaction(StateTransaction, {
-                state: CrossOriginState.KeyboardNavigation,
+                state: CrossOriginStates.KeyboardNavigation,
                 ownerUId: getWindowUId(this._win()),
                 isNavigatingWithKeyboard: value
             });
@@ -1359,7 +1381,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (element) {
             this._transactions.beginTransaction(
                 StateTransaction,
-                { ...GetElementTransaction.getElementData(this._ah, element, this._win, ownerUId), state: CrossOriginState.Focused }
+                { ...GetElementTransaction.getElementData(this._ah, element, this._win, ownerUId), state: CrossOriginStates.Focused }
             );
         } else {
             this._blurTimer = win.setTimeout(() => {
@@ -1370,7 +1392,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
                         if (!value && (_focusOwner === ownerUId)) {
                             this._transactions.beginTransaction(StateTransaction, {
                                 ownerUId,
-                                state: CrossOriginState.Blurred,
+                                state: CrossOriginStates.Blurred,
                                 force: false
                             });
                         }
@@ -1388,7 +1410,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             getWindowUId(this._win())
         ) as CrossOriginStateData;
 
-        d.state = CrossOriginState.Observed;
+        d.state = CrossOriginStates.Observed;
         d.observedName = details.name;
         d.observedDetails = details.details;
 
@@ -1397,7 +1419,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
     private _outlineSetup = (props?: Partial<Types.OutlineProps>): void => {
         this._transactions.beginTransaction(StateTransaction, {
-            state: CrossOriginState.Outline,
+            state: CrossOriginStates.Outline,
             ownerUId: getWindowUId(this._win()),
             outline: props
         });

@@ -7,7 +7,7 @@ import * as Types from './Types';
 import { getElementUId, HTMLElementWithUID } from './Utils';
 
 export function setAbilityHelpersOnElement(
-    abilityHelpers: Types.AbilityHelpers,
+    abilityHelpers: Types.AbilityHelpersCore,
     element: HTMLElementWithUID,
     helpers: Partial<Types.AbilityHelpersOnElement>
 ): void {
@@ -110,19 +110,23 @@ export function setAbilityHelpersOnElement(
     }
 }
 
-export function getAbilityHelpersOnElement(abilityHelpers: Types.AbilityHelpers, element: Node): Types.AbilityHelpersOnElement | undefined {
+export function getAbilityHelpersOnElement(
+    abilityHelpers: Types.AbilityHelpersCore,
+    element: Node
+): Types.AbilityHelpersOnElement | undefined {
     const uid = (element as HTMLElementWithUID).__ahElementUID;
     return uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid)?.ah : undefined;
 }
 
 export function updateAbilityHelpersByAttribute(
-    abilityHelpers: Types.AbilityHelpers,
+    abilityHelpers: Types.AbilityHelpersCore,
     element: HTMLElementWithUID
 ): void {
     const newAttrValue = element.getAttribute(Types.AbilityHelpersAttributeName);
+    const ahi = (abilityHelpers as unknown as Types.AbilityHelpersInternal);
 
     let uid = element.__ahElementUID;
-    let entry = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid) : undefined;
+    let entry = uid ? ahi.storageEntry(uid) : undefined;
 
     let newAttr = entry?.attr;
     const elementAH = entry?.ah;
@@ -158,7 +162,9 @@ export function updateAbilityHelpersByAttribute(
         if (!newObject[key]) {
             switch (key) {
                 case 'deloser':
-                    abilityHelpers.deloser.remove(element);
+                    if (ahi.deloser) {
+                        ahi.deloser.remove(element);
+                    }
                     break;
 
                 case 'root':
@@ -166,7 +172,9 @@ export function updateAbilityHelpersByAttribute(
                     break;
 
                 case 'modalizer':
-                    abilityHelpers.modalizer.remove(element);
+                    if (ahi.modalizer) {
+                        ahi.modalizer.remove(element);
+                    }
                     break;
 
                 case 'focusable':
@@ -181,11 +189,15 @@ export function updateAbilityHelpersByAttribute(
                     break;
 
                 case 'observed':
-                    abilityHelpers.observedElement.remove(element);
+                    if (ahi.observedElement) {
+                        ahi.observedElement.remove(element);
+                    }
                     break;
 
                 case 'outline':
-                    abilityHelpers.outline.setProps(element, null);
+                    if (ahi.outline) {
+                        ahi.outline.setProps(element, null);
+                    }
                     break;
             }
         }
@@ -197,7 +209,9 @@ export function updateAbilityHelpersByAttribute(
                 if (elementAH && elementAH.deloser) {
                     elementAH.deloser.setProps(newObject.deloser);
                 } else {
-                    abilityHelpers.deloser.add(element, newObject.deloser);
+                    if (ahi.deloser) {
+                        ahi.deloser.add(element, newObject.deloser);
+                    }
                 }
                 break;
 
@@ -213,7 +227,9 @@ export function updateAbilityHelpersByAttribute(
                 if (elementAH && elementAH.modalizer) {
                     elementAH.modalizer.setProps(newObject.modalizer);
                 } else {
-                    abilityHelpers.modalizer.add(element, newObject.modalizer!!!);
+                    if (ahi.modalizer) {
+                        ahi.modalizer.add(element, newObject.modalizer!!!);
+                    }
                 }
                 break;
 
@@ -233,15 +249,19 @@ export function updateAbilityHelpersByAttribute(
                 break;
 
             case 'observed':
-                if (elementAH && elementAH.observed) {
-                    abilityHelpers.observedElement.setProps(element, newObject.observed);
-                } else {
-                    abilityHelpers.observedElement.add(element, newObject.observed);
+                if (ahi.observedElement) {
+                    if (elementAH && elementAH.observed) {
+                        ahi.observedElement.setProps(element, newObject.observed);
+                    } else {
+                        ahi.observedElement.add(element, newObject.observed);
+                    }
                 }
                 break;
 
             case 'outline':
-                abilityHelpers.outline.setProps(element, newObject.outline || null);
+                if (ahi.outline) {
+                    ahi.outline.setProps(element, newObject.outline || null);
+                }
                 break;
 
             default:
@@ -274,7 +294,7 @@ export function updateAbilityHelpersByAttribute(
 }
 
 export function augmentAttribute(
-    abilityHelpers: Types.AbilityHelpers,
+    abilityHelpers: Types.AbilityHelpersCore,
     element: HTMLElementWithUID,
     name: string,
     value?: string | null // Restore original value when undefined.

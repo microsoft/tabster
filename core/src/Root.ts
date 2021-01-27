@@ -34,7 +34,7 @@ export class Root implements Types.Root {
     readonly uid: string;
 
     private _element: WeakHTMLElement;
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
@@ -48,7 +48,7 @@ export class Root implements Types.Root {
 
     constructor(
         element: HTMLElement,
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         win: Types.GetWindow,
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
@@ -349,17 +349,17 @@ export class Root implements Types.Root {
 }
 
 export class RootAPI implements Types.RootAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
     private _unobserve: (() => void) | undefined;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow, forgetFocusedGrouppers: () => void) {
+    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void) {
         this._ah = ah;
-        this._win = getWindow;
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
@@ -470,7 +470,7 @@ export class RootAPI implements Types.RootAPI {
         }
     }
 
-    private static _getRootOnly(abilityHelpers: Types.AbilityHelpers, element: Node): Types.Root | undefined {
+    private static _getRootOnly(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.Root | undefined {
         for (let e: (Node | null) = element; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 
@@ -486,7 +486,7 @@ export class RootAPI implements Types.RootAPI {
         return _rootById[id];
     }
 
-    static findRootAndModalizer(abilityHelpers: Types.AbilityHelpers, element: Node): Types.RootAndModalizer | undefined {
+    static findRootAndModalizer(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.RootAndModalizer | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }

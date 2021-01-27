@@ -2,9 +2,8 @@
     "compilerOptions": {
         "declaration": true,
         "noResolve": false,
-        "module": "commonjs",
-        "target": "es5",
-        "moduleResolution": "Node",
+        "module": "es6",
+        "moduleResolution": "node",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,

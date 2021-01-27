@@ -12,13 +12,13 @@ const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
                              // navigation mode.
 
 export class KeyboardNavigationState extends Subscribable<boolean> implements Types.KeyboardNavigationState {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _dismissTimer: number | undefined;
     private _initTimer: number | undefined;
     private _isMouseUsed = false;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore, getWindow: Types.GetWindow) {
         super();
 
         this._ah = ah;

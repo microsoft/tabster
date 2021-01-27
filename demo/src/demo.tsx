@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { createAbilityHelpers, getAbilityHelpersAttribute, Types as AHTypes } from 'ability-helpers';
+import { createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes } from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-const AH = createAbilityHelpers(window);
-AH.outline.setup();
+const ah = createAbilityHelpers(window);
+const ahModalizer = getModalizer(ah);
+const ahDeloser = getDeloser(ah);
+const ahOutline = getOutline(ah);
+ahOutline.setup();
 
 class App extends React.PureComponent {
     private _modal: Modal | undefined;
@@ -77,7 +80,7 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
                 tabIndex={0}
                 className='item'
                 { ...getAbilityHelpersAttribute({ groupper: {
-                    isLimited: AHTypes.GroupperFocusLimit.LimitedTrapFocus
+                    isLimited: AHTypes.GroupperFocusLimits.LimitedTrapFocus
                 }})}
             >
                 { this.props.children
@@ -125,12 +128,12 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _onRef = (el: HTMLDivElement | null) => {
         if (el) {
             this._div = el;
-            AH.modalizer.add(el, { id: 'modal' });
-            AH.deloser.add(el);
-            AH.modalizer.focus(el);
+            ahModalizer.add(el, { id: 'modal' });
+            ahDeloser.add(el);
+            ahModalizer.focus(el);
         } else if (this._div) {
-            AH.modalizer.remove(this._div);
-            AH.deloser.remove(this._div);
+            ahModalizer.remove(this._div);
+            ahDeloser.remove(this._div);
             this._div = undefined;
         }
     }

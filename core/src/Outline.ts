@@ -69,7 +69,7 @@ class OutlinePosition {
 }
 
 export class OutlineAPI implements Types.OutlineAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
@@ -80,10 +80,10 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
-        this._win = getWindow;
-        getWindow().setTimeout(this._init, 0);
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+        this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {

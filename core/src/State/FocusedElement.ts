@@ -5,7 +5,7 @@
 
 import { getAbilityHelpersOnElement } from '../Instance';
 import { KeyboardNavigationState } from './KeyboardNavigation';
-import { Keys } from '../Keys';
+import { Key, Keys } from '../Keys';
 import { RootAPI } from '../Root';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
@@ -55,14 +55,14 @@ export class FocusedElementState
     private static _lastFocusedProgrammatically: WeakHTMLElement | undefined;
     private static _lastResetElement: WeakHTMLElement | undefined;
 
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _initTimer: number | undefined;
     private _canOverrideNativeFocus = false;
     private _win: Types.GetWindow;
     private _nextVal: { element: WeakHTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: WeakHTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore, getWindow: Types.GetWindow) {
         super();
 
         this._ah = ah;
@@ -368,7 +368,7 @@ export class FocusedElementState
                 const first = this._getFirstInGroupper(groupperElement, false);
 
                 if (first && (curElement !== first) &&
-                    (groupper.getBasicProps().isLimited === Types.GroupperFocusLimit.LimitedTrapFocus) &&
+                    (groupper.getBasicProps().isLimited === Types.GroupperFocusLimits.LimitedTrapFocus) &&
                     (!next || (next === first) || !groupperElement.contains(next))
                 ) {
                     next = e.shiftKey
@@ -382,7 +382,7 @@ export class FocusedElementState
                         parentGroupper &&
                         parentGroupperElement &&
                         !parentGroupperElement.contains(next) &&
-                        parentGroupper.getBasicProps().isLimited === Types.GroupperFocusLimit.LimitedTrapFocus
+                        parentGroupper.getBasicProps().isLimited === Types.GroupperFocusLimits.LimitedTrapFocus
                     ) {
                         next = curElement;
                     }
@@ -543,16 +543,16 @@ export class FocusedElementState
         return ah && ah.groupper;
     }
 
-    private _findNextGroupper(from: HTMLElement, key: Keys, direction?: Types.GroupperNextDirection): HTMLElement | null {
-        if ((direction === Types.GroupperNextDirection.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
+    private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection): HTMLElement | null {
+        if ((direction === Types.GroupperNextDirections.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
             return null;
         }
 
-        if ((direction === Types.GroupperNextDirection.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
+        if ((direction === Types.GroupperNextDirections.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
             return null;
         }
 
-        if ((direction === undefined) || (direction === Types.GroupperNextDirection.Both)) {
+        if ((direction === undefined) || (direction === Types.GroupperNextDirections.Both)) {
             if ((key === Keys.Left) || (key === Keys.Up)) {
                 return this._ah.focusable.findPrevGroupper(from);
             } else {

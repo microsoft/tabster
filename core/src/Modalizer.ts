@@ -46,7 +46,7 @@ export class Modalizer implements Types.Modalizer {
     readonly internalId: string;
     userId: string;
 
-    /* private */ _ah: Types.AbilityHelpers;
+    /* private */ _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
     private _basic: Types.ModalizerBasicProps;
@@ -58,7 +58,7 @@ export class Modalizer implements Types.Modalizer {
 
     constructor(
         element: HTMLElement,
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         win: Types.GetWindow,
         basic: Types.ModalizerBasicProps,
         extended?: Types.ModalizerExtendedProps
@@ -234,16 +234,16 @@ export class Modalizer implements Types.Modalizer {
 }
 
 export class ModalizerAPI implements Types.ModalizerAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
-        this._win = getWindow;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+        this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {

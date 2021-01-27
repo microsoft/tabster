@@ -19,23 +19,31 @@ import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndCl
 
 export { Types };
 
-class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersInternal {
+class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersInternal {
     private _storage: Types.AbilityHelpersElementStorage;
     private _unobserve: (() => void) | undefined;
     private _win: Window | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
 
-    keyboardNavigation: KeyboardNavigationState;
-    focusedElement: FocusedElementState;
-    outline: OutlineAPI;
-    root: RootAPI;
-    deloser: DeloserAPI;
-    focusable: FocusableAPI;
-    modalizer: ModalizerAPI;
-    observedElement: ObservedElementAPI;
-    crossOrigin: CrossOriginAPI;
+    keyboardNavigation: Types.KeyboardNavigationState;
+    focusedElement: Types.FocusedElementState;
+    focusable: Types.FocusableAPI;
+    root: Types.RootAPI;
     gc: Types.GarbageCollectionAPI;
+
+    outline?: Types.OutlineAPI;
+    deloser?: Types.DeloserAPI;
+    modalizer?: Types.ModalizerAPI;
+    observedElement?: Types.ObservedElementAPI;
+    crossOrigin?: Types.CrossOriginAPI;
+
+    outlineDispose?: Types.DisposeFunc;
+    rootDispose?: Types.DisposeFunc;
+    deloserDispose?: Types.DisposeFunc;
+    modalizerDispose?: Types.DisposeFunc;
+    observedElementDispose?: Types.DisposeFunc;
+    crossOriginDispose?: Types.DisposeFunc;
 
     constructor(win: Window) {
         this._storage = {};
@@ -49,13 +57,9 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
 
         this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
-        this.outline = new OutlineAPI(this, getWindow);
-        this.deloser = new DeloserAPI(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
-        this.modalizer = new ModalizerAPI(this, getWindow);
-        this.root = new RootAPI(this, getWindow, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
-        this.observedElement = new ObservedElementAPI(this, getWindow);
-        this.crossOrigin = new CrossOriginAPI(this, getWindow);
+        this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
+
         this.gc = {
             forgetMemorized: this._forgetMemorized
         };
@@ -76,15 +80,40 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
             delete this._forgetMemorizedTimer;
         }
 
-        OutlineAPI.dispose(this.outline);
-        DeloserAPI.dispose(this.deloser);
-        FocusableAPI.dispose(this.focusable);
-        ModalizerAPI.dispose(this.modalizer);
-        RootAPI.dispose(this.root);
-        ObservedElementAPI.dispose(this.observedElement);
-        CrossOriginAPI.dispose(this.crossOrigin);
+        if (this.outlineDispose) {
+            this.outlineDispose();
+            delete this.outline;
+            delete this.outlineDispose;
+        }
+
+        if (this.deloserDispose) {
+            this.deloserDispose();
+            delete this.deloser;
+            delete this.deloserDispose;
+        }
+
+        if (this.modalizerDispose) {
+            this.modalizerDispose();
+            delete this.modalizer;
+            delete this.modalizerDispose;
+        }
+
+        if (this.observedElementDispose) {
+            this.observedElementDispose();
+            delete this.observedElement;
+            delete this.observedElementDispose;
+        }
+
+        if (this.crossOriginDispose) {
+            this.crossOriginDispose();
+            delete this.crossOrigin;
+            delete this.crossOriginDispose;
+        }
+
         KeyboardNavigationState.dispose(this.keyboardNavigation);
+        FocusableAPI.dispose(this.focusable);
         FocusedElementState.dispose(this.focusedElement);
+        RootAPI.dispose(this.root);
 
         stopWeakStorageCleanupAndClearStorage(this.getWindow);
         clearElementCache();
@@ -92,7 +121,7 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
         delete this._win;
     }
 
-    static dispose(instance: Types.AbilityHelpers): void {
+    static dispose(instance: Types.AbilityHelpersCore): void {
         (instance as AbilityHelpers).dispose();
     }
 
@@ -140,11 +169,74 @@ class AbilityHelpers implements Types.AbilityHelpers, Types.AbilityHelpersIntern
     }
 }
 
-export function createAbilityHelpers(win: Window): Types.AbilityHelpers {
+export function createAbilityHelpers(win: Window): Types.AbilityHelpersCore {
     return new AbilityHelpers(win);
 }
 
-export function disposeAbilityHelpers(ah: Types.AbilityHelpers): void {
+export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
+    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+
+    if (!ahInternal.outline) {
+        const outline = new OutlineAPI(ah);
+        ahInternal.outline = outline;
+        ahInternal.outlineDispose = () => { OutlineAPI.dispose(outline); };
+    }
+
+    return ahInternal.outline;
+}
+
+export function getDeloser(ah: Types.AbilityHelpersCore): Types.DeloserAPI {
+    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+
+    if (!ahInternal.deloser) {
+        const deloser = new DeloserAPI(ah);
+        ahInternal.deloser = deloser;
+        ahInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
+    }
+
+    return ahInternal.deloser;
+}
+
+export function getModalizer(ah: Types.AbilityHelpersCore): Types.ModalizerAPI {
+    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+
+    if (!ahInternal.modalizer) {
+        const modalizer = new ModalizerAPI(ah);
+        ahInternal.modalizer = modalizer;
+        ahInternal.modalizerDispose = () => { ModalizerAPI.dispose(modalizer); };
+    }
+
+    return ahInternal.modalizer;
+}
+
+export function getObservedElement(ah: Types.AbilityHelpersCore): Types.ObservedElementAPI {
+    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+
+    if (!ahInternal.observedElement) {
+        const observedElement = new ObservedElementAPI(ah);
+        ahInternal.observedElement = observedElement;
+        ahInternal.observedElementDispose = () => { ObservedElementAPI.dispose(observedElement); };
+    }
+
+    return ahInternal.observedElement;
+}
+
+export function getCrossOrigin(ah: Types.AbilityHelpersCore): Types.CrossOriginAPI {
+    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+
+    if (!ahInternal.crossOrigin) {
+        getDeloser(ah);
+        getOutline(ah);
+        getObservedElement(ah);
+        const crossOrigin = new CrossOriginAPI(ah);
+        ahInternal.crossOrigin = crossOrigin;
+        ahInternal.crossOriginDispose = () => { CrossOriginAPI.dispose(crossOrigin); };
+    }
+
+    return ahInternal.crossOrigin;
+}
+
+export function disposeAbilityHelpers(ah: Types.AbilityHelpersCore): void {
     AbilityHelpers.dispose(ah);
 }
 

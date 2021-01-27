@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const TerserPlugin = require("terser-webpack-plugin");
 
 const isDev = (process.env.NODE_ENV !== 'production');
 
@@ -20,7 +21,6 @@ module.exports = {
 
     module: {
         rules: [
-
             { test: /\.tsx?$/, loader: 'awesome-typescript-loader' },
             { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
         ]
@@ -36,9 +36,25 @@ module.exports = {
     ],
 
     optimization: {
-        // minimize: false,
-        // removeEmptyChunks: true,
-        // usedExports: true
+        minimize: true,
+        minimizer: [
+            new TerserPlugin({
+                parallel: true,
+                terserOptions: {
+                    compress: {
+                        passes: 2,
+                        pure_getters: true,
+                    },
+                    mangle: !isDev,
+                    output: {
+                        beautify: isDev,
+                        comments: isDev,
+                        preserve_annotations: isDev,
+                    }
+                }
+            })
+        ],
+        usedExports: true
     },
 
     externals: {

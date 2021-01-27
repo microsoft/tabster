@@ -23,8 +23,8 @@ export const MUTATION_EVENT_NAME = 'ability-helpers:mutation-event';
 
 export function observeMutations(
     doc: HTMLDocument,
-    abilityHelpers: Types.AbilityHelpers,
-    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpers, element: HTMLElementWithUID) => void
+    abilityHelpers: Types.AbilityHelpersCore,
+    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpersCore, element: HTMLElementWithUID) => void
 ): () => void {
     if (typeof MutationObserver === 'undefined') {
         return () => { /* Noop */ };

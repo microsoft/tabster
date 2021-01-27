@@ -7,5 +7,10 @@ export {
     createAbilityHelpers,
     disposeAbilityHelpers,
     getAbilityHelpersAttribute,
+    getCrossOrigin,
+    getDeloser,
+    getModalizer,
+    getObservedElement,
+    getOutline,
     Types
 } from './AbilityHelpers';

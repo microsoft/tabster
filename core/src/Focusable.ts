@@ -29,7 +29,7 @@ let _currentGrouppers: typeof _focusedGrouppers = {};
 export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
 
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
 
@@ -59,7 +59,7 @@ export class UberGroupper implements Types.UberGroupper {
 
     readonly id: string;
 
-    constructor(ah: Types.AbilityHelpers, element: HTMLElement, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore, element: HTMLElement, getWindow: Types.GetWindow) {
         this._ah = ah;
         this._win = getWindow;
         this._element = new WeakHTMLElement(element);
@@ -210,7 +210,7 @@ export class UberGroupper implements Types.UberGroupper {
                         changed.push(this._grouppers[id]);
                     }
 
-                    if (isVisible === Types.ElementVisibility.Visible) {
+                    if (isVisible === Types.ElementVisibilities.Visible) {
                         this._hasFullyVisibleGroupper = true;
                     }
                 }
@@ -323,13 +323,13 @@ export class UberGroupper implements Types.UberGroupper {
     getGroupperState(groupper: Types.Groupper): Types.GroupperState {
         const props = groupper.getBasicProps();
         const isLimited = props.isLimited;
-        const isVisible = this._visibleGrouppers[groupper.id] || Types.ElementVisibility.Invisible;
+        const isVisible = this._visibleGrouppers[groupper.id] || Types.ElementVisibilities.Invisible;
         let isCurrent = this._current ? (this._current === groupper) : undefined;
 
-        if ((isCurrent === undefined) && (props.lookupVisibility !== Types.ElementVisibility.Invisible)) {
+        if ((isCurrent === undefined) && (props.lookupVisibility !== Types.ElementVisibilities.Invisible)) {
             if (
-                (isVisible === Types.ElementVisibility.Invisible) ||
-                (this._hasFullyVisibleGroupper && (isVisible === Types.ElementVisibility.PartiallyVisible))
+                (isVisible === Types.ElementVisibilities.Invisible) ||
+                (this._hasFullyVisibleGroupper && (isVisible === Types.ElementVisibilities.PartiallyVisible))
             ) {
                 isCurrent = false;
             }
@@ -346,8 +346,8 @@ export class UberGroupper implements Types.UberGroupper {
             siblingHasFocus: !!this._focused && (this._focused !== groupper),
             siblingIsVisible: this._hasFullyVisibleGroupper,
             isLimited: (
-                (isLimited === Types.GroupperFocusLimit.Limited) ||
-                (isLimited === Types.GroupperFocusLimit.LimitedTrapFocus)
+                (isLimited === Types.GroupperFocusLimits.Limited) ||
+                (isLimited === Types.GroupperFocusLimits.LimitedTrapFocus)
             ) ? this._unlimited !== groupper : false
         };
     }
@@ -397,10 +397,10 @@ export class UberGroupper implements Types.UberGroupper {
 
             for (let id of Object.keys(this._grouppers)) {
                 const groupperElement = this._grouppers[id].getElement();
-                const isVisible = groupperElement ? isElementVisibleInContainer(groupperElement, 10) : Types.ElementVisibility.Invisible;
-                const curIsVisible = this._visibleGrouppers[id] || Types.ElementVisibility.Invisible;
+                const isVisible = groupperElement ? isElementVisibleInContainer(groupperElement, 10) : Types.ElementVisibilities.Invisible;
+                const curIsVisible = this._visibleGrouppers[id] || Types.ElementVisibilities.Invisible;
 
-                if (isVisible !== Types.ElementVisibility.Invisible) {
+                if (isVisible !== Types.ElementVisibilities.Invisible) {
                     visibleGrouppers[id] = isVisible;
                 }
 
@@ -438,7 +438,7 @@ export class UberGroupper implements Types.UberGroupper {
 }
 
 export class Groupper implements Types.Groupper {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
     private _container: Types.UberGroupper | undefined;
@@ -448,7 +448,7 @@ export class Groupper implements Types.Groupper {
     readonly id: string;
 
     constructor(
-        ah: Types.AbilityHelpers,
+        ah: Types.AbilityHelpersCore,
         element: HTMLElement,
         getWindow: Types.GetWindow,
         basic?: Types.GroupperBasicProps,
@@ -529,7 +529,7 @@ export class Groupper implements Types.Groupper {
                 isNext: false,
                 isFirst: false,
                 isLast: false,
-                isVisible: Types.ElementVisibility.Invisible,
+                isVisible: Types.ElementVisibilities.Invisible,
                 hasFocus: false,
                 siblingIsVisible: false,
                 siblingHasFocus: false,
@@ -556,8 +556,8 @@ export class Groupper implements Types.Groupper {
 
     setUnlimited(unlimited: boolean): void {
         if (this._container && (
-                (this._basic.isLimited === Types.GroupperFocusLimit.Limited) ||
-                (this._basic.isLimited === Types.GroupperFocusLimit.LimitedTrapFocus))
+                (this._basic.isLimited === Types.GroupperFocusLimits.Limited) ||
+                (this._basic.isLimited === Types.GroupperFocusLimits.LimitedTrapFocus))
         ) {
             this._container.setUnlimitedGroupper(unlimited ? this : undefined);
         }
@@ -598,13 +598,13 @@ export class Groupper implements Types.Groupper {
 }
 
 export class FocusableAPI implements Types.FocusableAPI {
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore, getWindow: Types.GetWindow) {
         this._ah = ah;
         this._win = getWindow;
         this._initTimer = getWindow().setTimeout(this._init, 0);
@@ -655,8 +655,8 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._win().document.body;
     }
 
-    static forgetFocusedGrouppers(instance: FocusableAPI): void {
-        instance._updateFocusedGrouppers(null, true);
+    static forgetFocusedGrouppers(instance: Types.FocusableAPI): void {
+        (instance as FocusableAPI)._updateFocusedGrouppers(null, true);
     }
 
     private _onFocus = (element: HTMLElement | undefined): void => {

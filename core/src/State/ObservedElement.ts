@@ -21,7 +21,7 @@ export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
 
     private _win: Types.GetWindow;
-    private _ah: Types.AbilityHelpers;
+    private _ah: Types.AbilityHelpersCore;
     private _initTimer: number | undefined;
     private _waiting: {
         [name: string]: {
@@ -32,11 +32,11 @@ export class ObservedElementAPI
     } = {};
     private _lastRequestFocusId = 0;
 
-    constructor(ah: Types.AbilityHelpers, getWindow: Types.GetWindow) {
+    constructor(ah: Types.AbilityHelpersCore) {
         super();
         this._ah = ah;
-        this._win = getWindow;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+        this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
