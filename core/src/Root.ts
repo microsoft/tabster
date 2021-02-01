@@ -354,12 +354,15 @@ export class RootAPI implements Types.RootAPI {
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
     private _unobserve: (() => void) | undefined;
+    private _autoRoot: boolean;
+    private _autoRootInstance: Root | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void) {
+    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void, autoRoot?: boolean) {
         this._ah = ah;
         this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
         this._initTimer = this._win().setTimeout(this._init, 0);
+        this._autoRoot = !!autoRoot;
     }
 
     private _init = (): void => {
@@ -375,6 +378,11 @@ export class RootAPI implements Types.RootAPI {
     protected dispose(): void {
         const win = this._win();
 
+        if (this._autoRootInstance) {
+            this._autoRootInstance.dispose();
+            delete this._autoRootInstance;
+        }
+
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -384,10 +392,10 @@ export class RootAPI implements Types.RootAPI {
 
         if (this._unobserve) {
             this._unobserve();
+            delete this._unobserve;
         }
 
         this._forgetFocusedGrouppers = () => {/**/};
-        delete this._unobserve;
     }
 
     static dispose(instance: Types.RootAPI): void {
@@ -454,19 +462,26 @@ export class RootAPI implements Types.RootAPI {
 
     private _onMutation = (e: MutationEvent): void => {
         const details = e.details;
+        const root = details.root;
 
-        if (details.root && !details.removed && (details.root.getElement() === e.target)) {
-            details.root.updateDummyInputs();
+        if (root) {
+            if (details.removed) {
+                if (details.isMutation) {
+                    root.dispose();
+                }
+            } else if (root.getElement() === e.target) {
+                root.updateDummyInputs();
+            }
         }
 
         if (!e.target || !details.modalizer) {
             return;
         }
 
-        const root = RootAPI._getRootOnly(this._ah, e.target as Node);
+        const modalizerRoot = RootAPI._getRootOnly(this._ah, e.target as Node);
 
-        if (root) {
-            root.updateModalizers();
+        if (modalizerRoot) {
+            modalizerRoot.updateModalizers();
         }
     }
 
@@ -509,6 +524,20 @@ export class RootAPI implements Types.RootAPI {
                 root = ah.root;
                 break;
             }
+        }
+
+        if (!root && (abilityHelpers.root as RootAPI)._autoRoot) {
+            const rootAPI = abilityHelpers.root as RootAPI;
+
+            if (!rootAPI._autoRootInstance) {
+                const body = element.ownerDocument?.body;
+
+                if (body) {
+                    rootAPI._autoRootInstance = new Root(body, rootAPI._ah, rootAPI._win, rootAPI._forgetFocusedGrouppers);
+                }
+            }
+
+            root = rootAPI._autoRootInstance;
         }
 
         return root ? { root, modalizer } : undefined;

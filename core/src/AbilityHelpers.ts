@@ -45,7 +45,7 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     observedElementDispose?: Types.DisposeFunc;
     crossOriginDispose?: Types.DisposeFunc;
 
-    constructor(win: Window) {
+    constructor(win: Window, props?: Types.AbilityHelpersCoreProps) {
         this._storage = {};
         this._win = win;
 
@@ -58,7 +58,7 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
-        this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); });
+        this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
 
         this.gc = {
             forgetMemorized: this._forgetMemorized
@@ -169,8 +169,8 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     }
 }
 
-export function createAbilityHelpers(win: Window): Types.AbilityHelpersCore {
-    return new AbilityHelpers(win);
+export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
+    return new AbilityHelpers(win, props);
 }
 
 export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {

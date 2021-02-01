@@ -13,6 +13,7 @@ export interface MutationEventDetails {
     groupper?: Types.Groupper;
     observed?: HTMLElement;
     removed?: boolean;
+    isMutation?: boolean;
 }
 
 export interface MutationEvent extends Event {
@@ -73,11 +74,11 @@ export function observeMutations(
             const r = changedRoots[id];
 
             if (r.removedFrom) {
-                dispatchMutationEvent(r.removedFrom, { root: r.root, removed: true });
+                dispatchMutationEvent(r.removedFrom, { root: r.root, removed: true, isMutation: true });
             }
 
             if (r.addedTo) {
-                dispatchMutationEvent(r.addedTo, { root: r.root, removed: false });
+                dispatchMutationEvent(r.addedTo, { root: r.root, removed: false, isMutation: true });
             }
         }
 
@@ -85,11 +86,11 @@ export function observeMutations(
             const l = changedModalizers[id];
 
             if (l.removedFrom) {
-                dispatchMutationEvent(l.removedFrom, { modalizer: l.modalizer, removed: true });
+                dispatchMutationEvent(l.removedFrom, { modalizer: l.modalizer, removed: true, isMutation: true });
             }
 
             if (l.addedTo) {
-                dispatchMutationEvent(l.addedTo, { modalizer: l.modalizer, removed: false });
+                dispatchMutationEvent(l.addedTo, { modalizer: l.modalizer, removed: false, isMutation: true });
             }
         }
 
@@ -97,11 +98,11 @@ export function observeMutations(
             const g = changedGrouppers[id];
 
             if (g.removedFrom && !g.addedTo) {
-                dispatchMutationEvent(g.removedFrom, { groupper: g.groupper, removed: true });
+                dispatchMutationEvent(g.removedFrom, { groupper: g.groupper, removed: true, isMutation: true });
             }
 
             if (g.addedTo) {
-                dispatchMutationEvent(g.addedTo, { groupper: g.groupper, removed: false });
+                dispatchMutationEvent(g.addedTo, { groupper: g.groupper, removed: false, isMutation: true });
             }
         }
 
@@ -109,11 +110,11 @@ export function observeMutations(
             const e = changedObservedElements[id];
 
             if (e.removedFrom && !e.addedTo) {
-                dispatchMutationEvent(e.removedFrom, { observed: e.element, removed: true });
+                dispatchMutationEvent(e.removedFrom, { observed: e.element, removed: true, isMutation: true });
             }
 
             if (e.addedTo) {
-                dispatchMutationEvent(e.addedTo, { observed: e.element, removed: false });
+                dispatchMutationEvent(e.addedTo, { observed: e.element, removed: false, isMutation: true });
             }
         }
 

@@ -9,6 +9,10 @@ export interface AbilityHelpersDOMAttribute {
     [AbilityHelpersAttributeName]: string | undefined;
 }
 
+export interface AbilityHelpersCoreProps {
+    autoRoot?: boolean;
+}
+
 export interface AbilityHelpersCore {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
