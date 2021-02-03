@@ -595,9 +595,9 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 element = getOwner().document.getElementById(data.id);
 
                 if (element && data.rootId) {
-                    const ram = RootAPI.findRootAndModalizer(ah, element);
+                    const ctx = RootAPI.getAbilityHelpersContext(ah, element);
 
-                    if (!ram || (ram.root.uid !== data.rootId)) {
+                    if (!ctx || (ctx.root.uid !== data.rootId)) {
                         return null;
                     }
                 }
@@ -619,7 +619,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         ownerUId: string
     ): CrossOriginElementDataOut {
         const deloser = DeloserAPI.getDeloser(abilityHelpers, element);
-        const ram = RootAPI.findRootAndModalizer(abilityHelpers, element);
+        const ctx = RootAPI.getAbilityHelpersContext(abilityHelpers, element);
         const ah = getAbilityHelpersOnElement(abilityHelpers, element);
         const observed = ah && ah.observed;
 
@@ -627,7 +627,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
             uid: getElementUId(element, getOwner()),
             ownerUId,
             id: element.id || undefined,
-            rootUId: ram ? ram.root.uid : undefined,
+            rootUId: ctx ? ctx.root.uid : undefined,
             deloserUId: deloser ? getDeloserUID(deloser, getOwner()) : undefined,
             observedName: observed && observed.name,
             observedDetails: observed && observed.details

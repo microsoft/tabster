@@ -208,9 +208,22 @@ export interface DeloserAPI {
     resume(restore?: boolean): void;
 }
 
+export interface MoverKeys {
+    Tab: 0;
+    Arrows: 1;
+    Both: 2;
+}
+export type MoverKey = MoverKeys[keyof MoverKeys];
+export const MoverKeys: MoverKeys = {
+    Tab: 0,
+    Arrows: 1,
+    Both: 2
+};
+
 export interface FocusableProps {
     isDefault?: boolean;
     isIgnored?: boolean;
+    mover?: MoverKey;
 }
 
 export interface FocusableAPI {
@@ -393,9 +406,13 @@ export interface Root {
     moveOutWithDefaultAction(backwards: boolean): void;
 }
 
-export interface RootAndModalizer {
+export interface AbilityHelpersContext {
     root: Root;
     modalizer?: Modalizer;
+    groupper?: Groupper;
+    mover?: HTMLElement;
+    moverArrowsOnly?: boolean;
+    isGroupperFirst?: boolean;
 }
 
 export interface RootAPI {

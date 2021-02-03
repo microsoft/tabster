@@ -961,21 +961,20 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     setProps(element: HTMLElement, props: Partial<Types.FocusableProps> | null): void {
         const ah = getAbilityHelpersOnElement(this._ah, element);
-        let curProps: Types.FocusableProps = (ah && ah.focusable) || {};
-        let newProps: Types.FocusableProps = {};
+        const curProps: Types.FocusableProps = (ah && ah.focusable) || {};
+        const newProps: Types.FocusableProps = {};
 
         if (props) {
-            for (let key of Object.keys(props) as (keyof Types.FocusableProps)[]) {
-                const prop = props[key];
-                if (prop) {
-                    newProps[key] = prop;
-                } else if ((prop === undefined) && curProps[key]) {
-                    newProps[key] = curProps[key];
-                }
-            }
+            newProps.isDefault = props.isDefault;
+            newProps.isIgnored = props.isIgnored;
+            newProps.mover = props.mover;
         }
 
-        if ((curProps.isDefault !== newProps.isDefault) || (curProps.isIgnored !== newProps.isIgnored)) {
+        if (
+            (curProps.isDefault !== newProps.isDefault) ||
+            (curProps.isIgnored !== newProps.isIgnored) ||
+            (curProps.mover !== newProps.mover)
+        ) {
             setAbilityHelpersOnElement(this._ah, element, { focusable: newProps });
         }
     }
@@ -1191,13 +1190,13 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): number {
-        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, element);
-        const currentModalizerId = rootAndModalizer && rootAndModalizer.root.getCurrentModalizerId();
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, element);
+        const currentModalizerId = ctx && ctx.root.getCurrentModalizerId();
 
-        if (ignoreModalizer || (!rootAndModalizer || !rootAndModalizer.modalizer) ||
+        if (ignoreModalizer || (!ctx || !ctx.modalizer) ||
             (currentModalizerId === undefined) ||
-            (currentModalizerId === rootAndModalizer.modalizer.userId) ||
-            rootAndModalizer.modalizer.getBasicProps().isAlwaysAccessible
+            (currentModalizerId === ctx.modalizer.userId) ||
+            ctx.modalizer.getBasicProps().isAlwaysAccessible
         ) {
             if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
                 return NodeFilter.FILTER_REJECT;
@@ -1206,6 +1205,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         }
 
-        return rootAndModalizer ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+        return ctx ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
     }
 }

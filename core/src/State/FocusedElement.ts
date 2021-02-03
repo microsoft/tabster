@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement } from '../Instance';
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Key, Keys } from '../Keys';
 import { RootAPI } from '../Root';
@@ -330,25 +329,44 @@ export class FocusedElementState
                 return;
         }
 
-        if (e.keyCode === Keys.Tab) {
-            let rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, curElement);
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, curElement);
 
-            if (!rootAndModalizer) {
-                if (!this._ah.focusable.isInCurrentGroupper(curElement)) {
-                    // We're not in a Modalizer and not in a current Groupper,
-                    // do not custom-handle the Tab press.
-                    return;
-                }
+        const keyCode = e.keyCode;
+        const isTab = keyCode === Keys.Tab;
+        const isNotGroupperCase = (
+            isTab ||
+            (
+                ctx &&
+                ctx.mover &&
+                !ctx.isGroupperFirst
+            )
+        );
+
+        if (isNotGroupperCase) {
+            if (!ctx || (!ctx.groupper && !ctx.modalizer && !ctx.mover) || (keyCode === Keys.Enter) || (keyCode === Keys.Esc)) {
+                // Do not custom-handle the Tab press when nothing is to custom-handle.
+                return;
             }
 
-            if (rootAndModalizer && rootAndModalizer.modalizer) {
-                const curModalizerId = rootAndModalizer.root.getCurrentModalizerId();
+            const isPrev = (isTab && e.shiftKey) ||
+                (
+                    !isTab &&
+                    (
+                        (keyCode === Keys.Left) ||
+                        (keyCode === Keys.Up) ||
+                        (keyCode === Keys.PageUp) ||
+                        (keyCode === Keys.Home)
+                    )
+                );
 
-                if (curModalizerId && (curModalizerId !== rootAndModalizer.modalizer.userId)) {
-                    rootAndModalizer.modalizer = rootAndModalizer.root.getModalizerById(curModalizerId);
+            if (ctx && ctx.modalizer) {
+                const curModalizerId = ctx.root.getCurrentModalizerId();
 
-                    if (rootAndModalizer.modalizer) {
-                        curElement = rootAndModalizer.modalizer.getElement();
+                if (curModalizerId && (curModalizerId !== ctx.modalizer.userId)) {
+                    ctx.modalizer = ctx.root.getModalizerById(curModalizerId);
+
+                    if (ctx.modalizer) {
+                        curElement = ctx.modalizer.getElement();
 
                         if (!curElement) {
                             return;
@@ -357,11 +375,45 @@ export class FocusedElementState
                 }
             }
 
-            let next = e.shiftKey
-                ? this._ah.focusable.findPrev(curElement)
-                : this._ah.focusable.findNext(curElement);
+            let fromElement = (isTab && ctx.mover && ctx.moverArrowsOnly)
+                ? (isPrev // Find next focusable outside of the Mover container.
+                    ? this._ah.focusable.findFirst(ctx.mover)
+                    : this._ah.focusable.findLast(ctx.mover)
+                )
+                : curElement;
 
-            const groupper = this._getGroupper(curElement);
+            if (!fromElement) {
+                return;
+            }
+
+            let next: HTMLElement | null;
+
+            switch (keyCode) {
+                case Keys.Tab:
+                case Keys.Down:
+                case Keys.Right:
+                case Keys.Up:
+                case Keys.Left:
+                    next = isPrev
+                        ? this._ah.focusable.findPrev(fromElement)
+                        : this._ah.focusable.findNext(fromElement);
+                    break;
+                case Keys.PageDown:
+                case Keys.PageUp:
+                case Keys.Home:
+                case Keys.End:
+                    // TODO.
+                    return;
+            }
+
+            if (!isTab && ctx.mover && (!next || (next && !ctx.mover.contains(next)))) {
+                // Nowhere to move inside the current Mover.
+                e.preventDefault(); // We don't need the page to scroll when we're custom-handling
+                                    // the arrows.
+                return;
+            }
+
+            const groupper = ctx?.groupper;
             const groupperElement = groupper?.getElement();
 
             if (groupper && groupperElement) {
@@ -371,11 +423,11 @@ export class FocusedElementState
                     (groupper.getBasicProps().isLimited === Types.GroupperFocusLimits.LimitedTrapFocus) &&
                     (!next || (next === first) || !groupperElement.contains(next))
                 ) {
-                    next = e.shiftKey
+                    next = isPrev
                         ? this._ah.focusable.findLast(groupperElement)
                         : this._ah.focusable.findNext(first, groupperElement);
                 } else if ((curElement === first) && groupperElement.parentElement) {
-                    const parentGroupper = this._getGroupper(groupperElement.parentElement);
+                    const parentGroupper = RootAPI.getAbilityHelpersContext(this._ah, groupperElement.parentElement)?.groupper;
                     const parentGroupperElement = parentGroupper?.getElement();
 
                     if (
@@ -389,16 +441,16 @@ export class FocusedElementState
                 }
             }
 
-            if (rootAndModalizer && rootAndModalizer.modalizer) {
-                const nml = next && RootAPI.findRootAndModalizer(this._ah, next);
+            if (ctx && ctx.modalizer) {
+                const nctx = next && RootAPI.getAbilityHelpersContext(this._ah, next);
 
                 if (
-                    !nml ||
-                    (rootAndModalizer.root.uid !== nml.root.uid) ||
-                    !nml.modalizer ||
-                    (nml.root.getCurrentModalizerId() !== nml.modalizer.userId)
+                    !nctx ||
+                    (ctx.root.uid !== nctx.root.uid) ||
+                    !nctx.modalizer ||
+                    (nctx.root.getCurrentModalizerId() !== nctx.modalizer.userId)
                 ) {
-                    if (rootAndModalizer.modalizer.onBeforeFocusOut()) {
+                    if (ctx.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
 
                         return;
@@ -410,15 +462,15 @@ export class FocusedElementState
                 e.preventDefault();
 
                 callOriginalFocusOnly(next);
-            } else if (rootAndModalizer) {
-                rootAndModalizer.root.moveOutWithDefaultAction(e.shiftKey);
+            } else if (ctx) {
+                ctx.root.moveOutWithDefaultAction(isPrev);
             }
         } else {
-            if ((e.keyCode === Keys.Left || e.keyCode === Keys.Right) && this._isInput(curElement)) {
+            if ((keyCode === Keys.Left || keyCode === Keys.Right) && this._isInput(curElement)) {
                 return;
             }
 
-            let groupper = this._getGroupper(curElement);
+            let groupper = ctx?.groupper;
             let groupperElement = groupper?.getElement();
 
             if (!groupper || !groupperElement) {
@@ -429,7 +481,7 @@ export class FocusedElementState
 
             let next: HTMLElement | null = null;
 
-            switch (e.keyCode) {
+            switch (keyCode) {
                 case Keys.Enter:
                 case Keys.Esc:
                     let state = groupper.getState();
@@ -453,7 +505,7 @@ export class FocusedElementState
                     } else { // Esc
                         if (state.isLimited) {
                             if (groupperElement.parentElement) {
-                                const parentGroupper = this._getGroupper(groupperElement.parentElement);
+                                const parentGroupper = RootAPI.getAbilityHelpersContext(this._ah, groupperElement.parentElement)?.groupper;
 
                                 if (parentGroupper) {
                                     groupperElement = parentGroupper.getElement();
@@ -529,18 +581,6 @@ export class FocusedElementState
         return this._ah.focusable.isFocusable(groupperElement)
             ? groupperElement
             : this._ah.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
-    }
-
-    private _getGroupper(element: HTMLElement): Types.Groupper | undefined {
-        let groupperElement = this._ah.focusable.findGroupper(element);
-
-        if (!groupperElement) {
-            return;
-        }
-
-        let ah = getAbilityHelpersOnElement(this._ah, groupperElement);
-
-        return ah && ah.groupper;
     }
 
     private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection): HTMLElement | null {
@@ -649,29 +689,29 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
-        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, element);
-        const curModalizerId = rootAndModalizer ? rootAndModalizer.root.getCurrentModalizerId() : undefined;
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, element);
+        const curModalizerId = ctx ? ctx.root.getCurrentModalizerId() : undefined;
 
         this._ah.focusable.setCurrentGroupper(element);
 
-        if (!rootAndModalizer || !rootAndModalizer.modalizer) {
+        if (!ctx || !ctx.modalizer) {
             return;
         }
 
-        let eModalizer = rootAndModalizer.modalizer;
+        let eModalizer = ctx.modalizer;
 
         if (curModalizerId === eModalizer.userId) {
             return;
         }
 
         if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
-            rootAndModalizer.root.setCurrentModalizerId(eModalizer.userId);
+            ctx.root.setCurrentModalizerId(eModalizer.userId);
 
             return;
         }
 
         if (eModalizer && element.ownerDocument) {
-            let toFocus = this._ah.focusable.findFirst(rootAndModalizer.root.getElement());
+            let toFocus = this._ah.focusable.findFirst(ctx.root.getElement());
 
             if (toFocus) {
                 if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {

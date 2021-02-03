@@ -343,13 +343,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean {
-        const m = RootAPI.findRootAndModalizer(this._ah, elementFromModalizer);
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, elementFromModalizer);
 
-        if (m && m.modalizer) {
-            m.root.setCurrentModalizerId(m.modalizer.userId);
+        if (ctx && ctx.modalizer) {
+            ctx.root.setCurrentModalizerId(ctx.modalizer.userId);
 
-            const basic = m.modalizer.getBasicProps();
-            const modalizerElement = m.modalizer.getElement();
+            const basic = ctx.modalizer.getBasicProps();
+            const modalizerElement = ctx.modalizer.getElement();
 
             if (modalizerElement) {
                 if (noFocusFirst === undefined) {
@@ -390,10 +390,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         let modalizer: Types.Modalizer | undefined;
 
         if (e) {
-            const l = RootAPI.findRootAndModalizer(this._ah, e);
+            const ctx = RootAPI.getAbilityHelpersContext(this._ah, e);
 
-            if (l) {
-                modalizer = l.modalizer;
+            if (ctx) {
+                modalizer = ctx.modalizer;
             }
         }
 

@@ -187,8 +187,8 @@ export class DeloserHistory {
     }
 
     process(element: HTMLElement): Types.Deloser | undefined {
-        const ml = RootAPI.findRootAndModalizer(this._ah, element);
-        const rootUId = ml && ml.root.uid;
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, element);
+        const rootUId = ctx && ctx.root.uid;
         const deloser = DeloserAPI.getDeloser(this._ah, element);
 
         if (!rootUId || !deloser) {
@@ -197,7 +197,7 @@ export class DeloserHistory {
 
         const historyByRoot = this.make(rootUId, () => new DeloserHistoryByRoot(this._ah, rootUId));
 
-        if (!ml || !ml.modalizer || (ml.root.getCurrentModalizerId() === ml.modalizer.userId)) {
+        if (!ctx || !ctx.modalizer || (ctx.root.getCurrentModalizerId() === ctx.modalizer.userId)) {
             historyByRoot.unshiftToDeloser(deloser, element);
         }
 
@@ -491,13 +491,13 @@ export class Deloser implements Types.Deloser {
         let restoreFocusOrder = this._basic.restoreFocusOrder;
         let available: HTMLElement | null = null;
 
-        const rootAndModalizer = RootAPI.findRootAndModalizer(this._ah, element);
+        const ctx = RootAPI.getAbilityHelpersContext(this._ah, element);
 
-        if (!rootAndModalizer) {
+        if (!ctx) {
             return null;
         }
 
-        const root = rootAndModalizer.root;
+        const root = ctx.root;
         const rootElement = root.getElement();
 
         if (!rootElement) {

@@ -501,19 +501,39 @@ export class RootAPI implements Types.RootAPI {
         return _rootById[id];
     }
 
-    static findRootAndModalizer(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.RootAndModalizer | undefined {
+    static getAbilityHelpersContext(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.AbilityHelpersContext | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }
 
         let root: Types.Root | undefined;
         let modalizer: Types.Modalizer | undefined;
+        let groupper: Types.Groupper | undefined;
+        let mover: HTMLElement | undefined;
+        let moverKey: Types.MoverKey | undefined;
+        let moverArrowsOnly: boolean | undefined;
+        let isGroupperFirst: boolean | undefined;
 
         for (let e: (Node | null) = element; e; e = e.parentElement) {
             const ah = getAbilityHelpersOnElement(abilityHelpers, e);
 
             if (!ah) {
                 continue;
+            }
+
+            if (!groupper && ah.groupper) {
+                groupper = ah.groupper;
+            }
+
+            const cfk = ah.focusable?.mover;
+            if ((cfk !== undefined) && (moverKey === undefined)) {
+                moverKey = cfk;
+
+                if ((cfk === Types.MoverKeys.Arrows) || (cfk === Types.MoverKeys.Both)) {
+                    mover = e as HTMLElement;
+                    moverArrowsOnly = cfk === Types.MoverKeys.Arrows;
+                    isGroupperFirst = !!groupper;
+                }
             }
 
             if (!modalizer && ah.modalizer) {
@@ -540,7 +560,7 @@ export class RootAPI implements Types.RootAPI {
             root = rootAPI._autoRootInstance;
         }
 
-        return root ? { root, modalizer } : undefined;
+        return root ? { root, modalizer, groupper, mover, moverArrowsOnly, isGroupperFirst } : undefined;
     }
 }
 
