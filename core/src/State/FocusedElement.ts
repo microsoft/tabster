@@ -340,10 +340,10 @@ export class FocusedElementState
                 ctx.mover &&
                 !ctx.isGroupperFirst
             )
-        );
+        ) && (keyCode !== Keys.Enter) && (keyCode !== Keys.Esc);
 
         if (isNotGroupperCase) {
-            if (!ctx || (!ctx.groupper && !ctx.modalizer && !ctx.mover) || (keyCode === Keys.Enter) || (keyCode === Keys.Esc)) {
+            if (!ctx || (!ctx.groupper && !ctx.modalizer && !ctx.mover)) {
                 // Do not custom-handle the Tab press when nothing is to custom-handle.
                 return;
             }
@@ -386,7 +386,7 @@ export class FocusedElementState
                 return;
             }
 
-            let next: HTMLElement | null;
+            let next: HTMLElement | null = null;
 
             switch (keyCode) {
                 case Keys.Tab:
