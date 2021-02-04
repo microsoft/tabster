@@ -22,6 +22,21 @@ class App extends React.PureComponent {
                 <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
                     <h1>Hello world</h1>
 
+                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: AHTypes.MoverKeys.Arrows } }) }>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>instead</button>
+                        <button>of</button>
+                        <button>tabs</button>
+                    </div>
+
                     <div>
                         <Item onClick={ this._onClick } />
                         <Item onClick={ this._onClick } />
