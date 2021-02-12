@@ -354,15 +354,15 @@ export class RootAPI implements Types.RootAPI {
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
     private _unobserve: (() => void) | undefined;
-    private _autoRoot: boolean;
+    private _autoRoot: Types.RootBasicProps | undefined;
     private _autoRootInstance: Root | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void, autoRoot?: boolean) {
+    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootBasicProps) {
         this._ah = ah;
         this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
         this._initTimer = this._win().setTimeout(this._init, 0);
-        this._autoRoot = !!autoRoot;
+        this._autoRoot = autoRoot;
     }
 
     private _init = (): void => {
@@ -381,6 +381,7 @@ export class RootAPI implements Types.RootAPI {
         if (this._autoRootInstance) {
             this._autoRootInstance.dispose();
             delete this._autoRootInstance;
+            delete this._autoRoot;
         }
 
         if (this._initTimer) {
@@ -553,7 +554,13 @@ export class RootAPI implements Types.RootAPI {
                 const body = element.ownerDocument?.body;
 
                 if (body) {
-                    rootAPI._autoRootInstance = new Root(body, rootAPI._ah, rootAPI._win, rootAPI._forgetFocusedGrouppers);
+                    rootAPI._autoRootInstance = new Root(
+                        body,
+                        rootAPI._ah,
+                        rootAPI._win,
+                        rootAPI._forgetFocusedGrouppers,
+                        rootAPI._autoRoot
+                    );
                 }
             }
 

@@ -185,11 +185,14 @@ export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
     return ahInternal.outline;
 }
 
-export function getDeloser(ah: Types.AbilityHelpersCore): Types.DeloserAPI {
+export function getDeloser(
+    ah: Types.AbilityHelpersCore,
+    props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
+): Types.DeloserAPI {
     const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
 
     if (!ahInternal.deloser) {
-        const deloser = new DeloserAPI(ah);
+        const deloser = new DeloserAPI(ah, props);
         ahInternal.deloser = deloser;
         ahInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
     }

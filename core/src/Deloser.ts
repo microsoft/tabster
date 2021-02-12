@@ -10,14 +10,6 @@ import { documentContains, getElementUId, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
-const RestoreFocusOrders: Types.RestoreFocusOrders = {
-    History: 0,
-    DeloserDefault: 1,
-    RootDefault: 2,
-    DeloserFirst: 3,
-    RootFirst: 4
-};
-
 export abstract class DeloserItemBase<C> {
     abstract resetFocus(): Promise<boolean>;
     abstract belongsTo(deloser: C): boolean;
@@ -184,6 +176,10 @@ export class DeloserHistory {
 
     constructor(ah: Types.AbilityHelpersCore) {
         this._ah = ah;
+    }
+
+    dispose(): void {
+        this._history = [];
     }
 
     process(element: HTMLElement): Types.Deloser | undefined {
@@ -508,11 +504,11 @@ export class Deloser implements Types.Deloser {
             restoreFocusOrder = root.getBasicProps().restoreFocusOrder;
         }
 
-        if (restoreFocusOrder === RestoreFocusOrders.RootDefault) {
+        if (restoreFocusOrder === Types.RestoreFocusOrders.RootDefault) {
             available = this._ah.focusable.findDefault(rootElement);
         }
 
-        if (!available && (restoreFocusOrder === RestoreFocusOrders.RootFirst)) {
+        if (!available && (restoreFocusOrder === Types.RestoreFocusOrders.RootFirst)) {
             available = this._findFirst(rootElement);
         }
 
@@ -524,15 +520,15 @@ export class Deloser implements Types.Deloser {
         const availableDefault = this._ah.focusable.findDefault(element);
         const availableFirst = this._findFirst(element);
 
-        if (availableInHistory && (restoreFocusOrder === RestoreFocusOrders.History)) {
+        if (availableInHistory && (restoreFocusOrder === Types.RestoreFocusOrders.History)) {
             return availableInHistory;
         }
 
-        if (availableDefault && (restoreFocusOrder === RestoreFocusOrders.DeloserDefault)) {
+        if (availableDefault && (restoreFocusOrder === Types.RestoreFocusOrders.DeloserDefault)) {
             return availableDefault;
         }
 
-        if (availableFirst && (restoreFocusOrder === RestoreFocusOrders.DeloserFirst)) {
+        if (availableFirst && (restoreFocusOrder === Types.RestoreFocusOrders.DeloserFirst)) {
             return availableFirst;
         }
 
@@ -633,12 +629,22 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _restoreFocusTimer: number | undefined;
     private _isRestoringFocus = false;
     private _isPaused = false;
+    private _autoDeloser: (Types.DeloserBasicProps & Types.DeloserExtendedProps) | undefined;
+    private _autoDeloserInstance: Deloser | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore) {
+    constructor(
+        ah: Types.AbilityHelpersCore,
+        props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
+    ) {
         this._ah = ah;
         this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
         this._history = new DeloserHistory(ah);
         this._initTimer = this._win().setTimeout(this._init, 0);
+
+        const autoDeloser = props?.autoDeloser;
+        if (autoDeloser) {
+            this._autoDeloser = autoDeloser;
+        }
     }
 
     private _init = (): void => {
@@ -660,7 +666,15 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._restoreFocusTimer = undefined;
         }
 
+        if (this._autoDeloserInstance) {
+            this._autoDeloserInstance.dispose();
+            delete this._autoDeloserInstance;
+            delete this._autoDeloser;
+        }
+
         this._ah.focusedElement.unsubscribe(this._onFocus);
+
+        this._history.dispose();
 
         delete this._curDeloser;
     }
@@ -855,6 +869,33 @@ export class DeloserAPI implements Types.DeloserAPI {
             if (ah && ah.deloser) {
                 return ah.deloser;
             }
+        }
+
+        const ahi = abilityHelpers as unknown as Types.AbilityHelpersInternal;
+        const deloserAPI = ahi.deloser && (ahi.deloser as DeloserAPI);
+
+        if (deloserAPI) {
+            if (deloserAPI._autoDeloserInstance) {
+                return deloserAPI._autoDeloserInstance;
+            }
+
+            const autoDeloserProps = deloserAPI._autoDeloser;
+
+            if (!deloserAPI._autoDeloserInstance && autoDeloserProps) {
+                const body = element.ownerDocument?.body;
+
+                if (body) {
+                    deloserAPI._autoDeloserInstance = new Deloser(
+                        body,
+                        abilityHelpers,
+                        deloserAPI._win,
+                        autoDeloserProps,
+                        autoDeloserProps
+                    );
+                }
+            }
+
+            return deloserAPI._autoDeloserInstance;
         }
 
         return undefined;

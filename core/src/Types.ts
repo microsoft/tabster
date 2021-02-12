@@ -10,7 +10,7 @@ export interface AbilityHelpersDOMAttribute {
 }
 
 export interface AbilityHelpersCoreProps {
-    autoRoot?: boolean;
+    autoRoot?: RootBasicProps;
 }
 
 export interface AbilityHelpersCore {
@@ -168,6 +168,13 @@ export interface RestoreFocusOrders {
     RootFirst: 4;
 }
 export type RestoreFocusOrder = RestoreFocusOrders[keyof RestoreFocusOrders];
+export const RestoreFocusOrders: RestoreFocusOrders = {
+    History: 0,
+    DeloserDefault: 1,
+    RootDefault: 2,
+    DeloserFirst: 3,
+    RootFirst: 4
+};
 
 export interface DeloserBasicProps {
     restoreFocusOrder?: RestoreFocusOrder;
@@ -200,7 +207,7 @@ export interface Deloser {
 
 export interface DeloserAPI {
     getActions(element: HTMLElement): DeloserElementActions | undefined;
-    add(element: HTMLElement, basic?: DeloserBasicProps, props?: DeloserExtendedProps): void;
+    add(element: HTMLElement, basic?: DeloserBasicProps, extended?: DeloserExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<DeloserBasicProps>, extended?: Partial<DeloserExtendedProps>): void;

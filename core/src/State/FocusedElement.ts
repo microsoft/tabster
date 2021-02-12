@@ -343,7 +343,7 @@ export class FocusedElementState
         ) && (keyCode !== Keys.Enter) && (keyCode !== Keys.Esc);
 
         if (isNotGroupperCase) {
-            if (!ctx || (!ctx.groupper && !ctx.modalizer && !ctx.mover)) {
+            if (!ctx) {
                 // Do not custom-handle the Tab press when nothing is to custom-handle.
                 return;
             }
