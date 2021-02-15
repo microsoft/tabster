@@ -215,22 +215,50 @@ export interface DeloserAPI {
     resume(restore?: boolean): void;
 }
 
-export interface MoverKeys {
-    Tab: 0;
-    Arrows: 1;
-    Both: 2;
+/**
+ * Declare the kinds of keyboard movers
+ */
+export enum MoverKeys {
+    /**
+     * Move within a mover block using only tab key
+     */
+    Tab,
+    /**
+     * Move within a mover block using up/left and down/right arrows
+     * 
+     * This is the only mover kind that supports cyclic navigation
+     */
+    Arrows,
+    /**
+     * Use both tab and arrow keys to move
+     */
+    Both
 }
-export type MoverKey = MoverKeys[keyof MoverKeys];
-export const MoverKeys: MoverKeys = {
-    Tab: 0,
-    Arrows: 1,
-    Both: 2
+
+/**
+ * Options to configure keyboard navigation mover API
+ */
+export type MoverOptions = {
+    /**
+     * The types of navigation required
+     * 
+     * @defaultValue MoverKey.Arrows
+     */
+    navigationType: MoverKeys;
+
+    /**
+     * Whether to allow cyclic navigation in the mover
+     * Can only be applied if navigationType is MoverKeys.Arrows
+     * 
+     * @defaultValue false
+     */
+    cyclic?: boolean;
 };
 
 export interface FocusableProps {
     isDefault?: boolean;
     isIgnored?: boolean;
-    mover?: MoverKey;
+    mover?: MoverOptions;
 }
 
 export interface FocusableAPI {
@@ -418,7 +446,7 @@ export interface AbilityHelpersContext {
     modalizer?: Modalizer;
     groupper?: Groupper;
     mover?: HTMLElement;
-    moverArrowsOnly?: boolean;
+    moverOptions?: MoverOptions;
     isGroupperFirst?: boolean;
 }
 

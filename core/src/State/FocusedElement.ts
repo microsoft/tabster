@@ -375,7 +375,7 @@ export class FocusedElementState
                 }
             }
 
-            let fromElement = (isTab && ctx.mover && ctx.moverArrowsOnly)
+            let fromElement = (isTab && ctx.mover && ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows)
                 ? (isPrev // Find next focusable outside of the Mover container.
                     ? this._ah.focusable.findFirst(ctx.mover)
                     : this._ah.focusable.findLast(ctx.mover)
@@ -410,7 +410,17 @@ export class FocusedElementState
                 // Nowhere to move inside the current Mover.
                 e.preventDefault(); // We don't need the page to scroll when we're custom-handling
                                     // the arrows.
-                return;
+
+                if (!ctx.moverOptions?.cyclic) {
+                    return;
+                }
+
+                // cyclic navigation, focus first or last elements in the mover container respectively
+                if (isPrev) {
+                    next = this._ah.focusable.findLast(ctx.mover);
+                } else {
+                    next = this._ah.focusable.findFirst(ctx.mover);
+                }
             }
 
             const groupper = ctx?.groupper;

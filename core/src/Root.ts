@@ -511,8 +511,7 @@ export class RootAPI implements Types.RootAPI {
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
         let mover: HTMLElement | undefined;
-        let moverKey: Types.MoverKey | undefined;
-        let moverArrowsOnly: boolean | undefined;
+        let moverOptions: Types.MoverOptions | undefined;
         let isGroupperFirst: boolean | undefined;
 
         for (let e: (Node | null) = element; e; e = e.parentElement) {
@@ -527,12 +526,11 @@ export class RootAPI implements Types.RootAPI {
             }
 
             const cfk = ah.focusable?.mover;
-            if ((cfk !== undefined) && (moverKey === undefined)) {
-                moverKey = cfk;
+            if ((cfk !== undefined) && (moverOptions === undefined)) {
+                moverOptions = cfk;
 
-                if ((cfk === Types.MoverKeys.Arrows) || (cfk === Types.MoverKeys.Both)) {
+                if ((moverOptions.navigationType === Types.MoverKeys.Arrows) || (moverOptions.navigationType === Types.MoverKeys.Both)) {
                     mover = e as HTMLElement;
-                    moverArrowsOnly = cfk === Types.MoverKeys.Arrows;
                     isGroupperFirst = !!groupper;
                 }
             }
@@ -567,7 +565,7 @@ export class RootAPI implements Types.RootAPI {
             root = rootAPI._autoRootInstance;
         }
 
-        return root ? { root, modalizer, groupper, mover, moverArrowsOnly, isGroupperFirst } : undefined;
+        return root ? { root, modalizer, groupper, mover, moverOptions, isGroupperFirst } : undefined;
     }
 }
 

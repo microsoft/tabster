@@ -22,7 +22,7 @@ class App extends React.PureComponent {
                 <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
                     <h1>Hello world</h1>
 
-                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: AHTypes.MoverKeys.Arrows } }) }>
+                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows } } }) }>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -35,6 +35,16 @@ class App extends React.PureComponent {
                         <button>instead</button>
                         <button>of</button>
                         <button>tabs</button>
+                    </div>
+
+                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows, cyclic: true } } }) }>
+                        <button>The</button>
+                        <button>same</button>
+                        <button>arrow</button>
+                        <button>navigation</button>
+                        <button>but</button>
+                        <button>is</button>
+                        <button>cyclic</button>
                     </div>
 
                     <div>
