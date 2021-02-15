@@ -417,9 +417,9 @@ export class FocusedElementState
 
                 // cyclic navigation, focus first or last elements in the mover container respectively
                 if (isPrev) {
-                    next = ctx.mover.lastElementChild as HTMLElement;
+                    next = this._ah.focusable.findLast(ctx.mover);
                 } else {
-                    next = ctx.mover.firstElementChild as HTMLElement;
+                    next = this._ah.focusable.findFirst(ctx.mover);
                 }
             }
 
