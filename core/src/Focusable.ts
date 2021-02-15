@@ -1134,18 +1134,18 @@ export class FocusableAPI implements Types.FocusableAPI {
      * Finds all focusables in a given context that satisfy an given condition
      *
      * @param context @see {@link _findElement}
+     * @param customFilter A callback that checks whether an element should be added to results
      * @param ignoreProgrammaticallyFocusable @see {@link _findElement}
      * @param ignoreModalizer @see {@link _findElement}
      * @param ignoreGroupper @see {@link _findElement}
-     * @param customFilter A callback that checks whether an element should be added to results
      * @param skipDefaultCondition skips the default condition that leverages @see {@link isFocusable}, be careful using this
      */
     findAll(
         context: HTMLElement,
+        customFilter: (el: HTMLElement) => boolean,
         includeProgrammaticallyFocusable?: boolean,
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean,
-        customFilter?: (el: HTMLElement) => boolean,
         skipDefaultCondition?: boolean
     ): HTMLElement[] {
         const acceptCondition = (el: HTMLElement): boolean => {
@@ -1153,7 +1153,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 el,
                 includeProgrammaticallyFocusable
             );
-            const customCheck = customFilter && customFilter(el);
+            const customCheck = customFilter(el);
 
             if (skipDefaultCondition) {
                 return !!customCheck;
@@ -1182,7 +1182,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const foundNodes: HTMLElement[] = [];
         let node: Node | null;
-        while((node = walker.nextNode())) {
+        while ((node = walker.nextNode())) {
             foundNodes.push(node as HTMLElement);
         }
 
