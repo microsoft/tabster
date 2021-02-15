@@ -1130,6 +1130,65 @@ export class FocusableAPI implements Types.FocusableAPI {
         );
     }
 
+    /**
+     * Finds all focusables in a given context that satisfy an given condition
+     *
+     * @param context @see {@link _findElement}
+     * @param ignoreProgrammaticallyFocusable @see {@link _findElement}
+     * @param ignoreModalizer @see {@link _findElement}
+     * @param ignoreGroupper @see {@link _findElement}
+     * @param customFilter A callback that checks whether an element should be added to results
+     * @param skipDefaultCondition skips the default condition that leverages @see {@link isFocusable}, be careful using this
+     */
+    findAll(
+        context: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean,
+        customFilter?: (el: HTMLElement) => boolean,
+        skipDefaultCondition?: boolean
+    ): HTMLElement[] {
+        const acceptCondition = (el: HTMLElement): boolean => {
+            const defaultCheck = this._ah.focusable.isFocusable(
+                el,
+                includeProgrammaticallyFocusable
+            );
+            const customCheck = customFilter && customFilter(el);
+
+            if (skipDefaultCondition) {
+                return !!customCheck;
+            }
+
+            return defaultCheck && !!customCheck;
+        };
+
+        const walker = createElementTreeWalker(
+            context.ownerDocument,
+            context,
+            node =>
+                this._acceptElement(
+                    node as HTMLElement,
+                    acceptCondition,
+                    ignoreModalizer,
+                    ignoreGroupper
+                )
+        );
+
+        const nodeFilter = walker?.filter;
+
+        if (!walker || !context || !nodeFilter) {
+            return [];
+        }
+
+        const foundNodes: HTMLElement[] = [];
+        let node: Node | null;
+        while((node = walker.nextNode())) {
+            foundNodes.push(node as HTMLElement);
+        }
+
+        return foundNodes;
+    }
+
     private _findElement(
         container: HTMLElement | undefined,
         currentElement: HTMLElement | null,
