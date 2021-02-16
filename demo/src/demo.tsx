@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes } from 'ability-helpers';
+import { abilityHelpersExists, createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes } from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -19,6 +19,7 @@ class App extends React.PureComponent {
     render() {
         return (
             <div { ...getAbilityHelpersAttribute({ root: {} }) }>
+                <AHExistsExample />
                 <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
                     <h1>Hello world</h1>
 
@@ -119,6 +120,8 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
         );
     }
 }
+
+const AHExistsExample: React.FC = () => (<div>Ability Helpers instance exists on window: {abilityHelpersExists(window).toString()}</div>);
 
 class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;

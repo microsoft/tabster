@@ -12,5 +12,6 @@ export {
     getModalizer,
     getObservedElement,
     getOutline,
+    abilityHelpersExists,
     Types
 } from './AbilityHelpers';

@@ -49,6 +49,11 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         this._storage = {};
         this._win = win;
 
+        // @ts-ignore
+        if (win && win.BE_ABLE_INSTANCE) {
+            throw new Error('Ability helpers already exists on this window');
+        }
+
         if (win && win.document) {
             this._unobserve = observeMutations(win.document, this, updateAbilityHelpersByAttribute);
         }
@@ -65,6 +70,8 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         };
 
         startWeakStorageCleanup(getWindow);
+        // @ts-ignore
+        this._win.BE_ABLE_INSTANCE = this;
     }
 
     protected dispose(): void {
@@ -263,4 +270,13 @@ export function getAbilityHelpersAttribute(
     return {
         [Types.AbilityHelpersAttributeName]: attr
     };
+}
+export function abilityHelpersExists(win: Window): boolean {
+    if (!window) {
+        // be safe and encourage user to not create an instance
+        return true;
+    }
+
+    // @ts-ignore
+    return !!win.BE_ABLE_INSTANCE;
 }
