@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { abilityHelpersExists, createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes } from 'ability-helpers';
+import { abilityHelpersExists, createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes, Types } from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 

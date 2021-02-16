@@ -49,11 +49,6 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         this._storage = {};
         this._win = win;
 
-        // @ts-ignore
-        if (win && win.BE_ABLE_INSTANCE) {
-            throw new Error('Ability helpers already exists on this window');
-        }
-
         if (win && win.document) {
             this._unobserve = observeMutations(win.document, this, updateAbilityHelpersByAttribute);
         }
@@ -70,8 +65,6 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         };
 
         startWeakStorageCleanup(getWindow);
-        // @ts-ignore
-        this._win.BE_ABLE_INSTANCE = this;
     }
 
     protected dispose(): void {
@@ -177,7 +170,14 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
 }
 
 export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
-    return new AbilityHelpers(win, props);
+    if (abilityHelpersExists(win)) {
+        throw new Error(' An Ability helpers instance already exists on this window, you might use `abilityHelpersExists` to validate creation');
+    }
+
+    const ah = new AbilityHelpers(win, props);
+    // @ts-ignore
+    win.BE_ABLE_INSTANCE = ah;
+    return ah
 }
 
 export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
