@@ -177,7 +177,7 @@ export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCo
     const ah = new AbilityHelpers(win, props);
     // @ts-ignore
     win.BE_ABLE_INSTANCE = ah;
-    return ah
+    return ah;
 }
 
 export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
@@ -279,4 +279,13 @@ export function abilityHelpersExists(win: Window): boolean {
 
     // @ts-ignore
     return !!win.BE_ABLE_INSTANCE;
+}
+
+export function getWindowInstance(win: Window): Types.AbilityHelpersCore | null {
+    if (abilityHelpersExists(win)) {
+        // @ts-ignore
+        return win.BE_ABLE_INSTANCE;
+    }
+
+    return null;
 }
