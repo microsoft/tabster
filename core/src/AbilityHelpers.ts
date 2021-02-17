@@ -20,7 +20,7 @@ import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndCl
 export { Types };
 
 /**
- * Extends Window to include an internal ability helpers instance
+ * Extends Window to include an internal ability helpers instance.
  */
 interface WindowWithAHInstance extends Window {
     __ahInstance?: Types.AbilityHelpersCore;
@@ -180,7 +180,7 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
 }
 
 /**
- * Creates an instance of ability helpers, returns the current window instance if it already exists
+ * Creates an instance of ability helpers, returns the current window instance if it already exists.
  */
 export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
     const existingAh = getCurrentAbilityHelpers(win as WindowWithAHInstance);
@@ -289,8 +289,8 @@ export function getAbilityHelpersAttribute(
 }
 
 /**
- * Returns an instance of ability helpers if it already exists on the window 
- * @param win window instance that could contain an AH instance
+ * Returns an instance of ability helpers if it already exists on the window .
+ * @param win window instance that could contain an AH instance.
  */
 export function getCurrentAbilityHelpers(win: Window): Types.AbilityHelpersCore | undefined {
     return (win as WindowWithAHInstance).__ahInstance;
