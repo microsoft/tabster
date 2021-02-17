@@ -293,9 +293,5 @@ export function getAbilityHelpersAttribute(
  * @param win window instance that could contain an AH instance
  */
 export function getCurrentAbilityHelpers(win: Window): Types.AbilityHelpersCore | undefined {
-    if ((win as WindowWithAHInstance)?.__ahInstance) {
-        return (win as WindowWithAHInstance).__ahInstance;
-    }
-
-    return undefined;
+    return (win as WindowWithAHInstance).__ahInstance;
 }
