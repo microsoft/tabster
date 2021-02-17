@@ -292,10 +292,10 @@ export function getAbilityHelpersAttribute(
  * Returns an instance of ability helpers if it already exists on the window 
  * @param win window instance that could contain an AH instance
  */
-export function getCurrentAbilityHelpers(win: WindowWithAHInstance): Types.AbilityHelpersCore | null {
-    if (win?.__ahInstance) {
-        return win.__ahInstance;
+export function getCurrentAbilityHelpers(win: Window): Types.AbilityHelpersCore | undefined {
+    if ((win as WindowWithAHInstance)?.__ahInstance) {
+        return (win as WindowWithAHInstance).__ahInstance;
     }
 
-    return null;
+    return undefined;
 }
