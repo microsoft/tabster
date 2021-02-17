@@ -19,10 +19,16 @@ import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndCl
 
 export { Types };
 
+/**
+ * Extends Window to include an internal ability helpers instance.
+ */
+interface WindowWithAHInstance extends Window {
+    __ahInstance?: Types.AbilityHelpersCore;
+}
 class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersInternal {
     private _storage: Types.AbilityHelpersElementStorage;
     private _unobserve: (() => void) | undefined;
-    private _win: Window | undefined;
+    private _win: WindowWithAHInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
 
@@ -118,6 +124,10 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         stopWeakStorageCleanupAndClearStorage(this.getWindow);
         clearElementCache();
         this._storage = {};
+
+        if (this._win?.__ahInstance) {
+            delete this._win?.__ahInstance;
+        }
         delete this._win;
     }
 
@@ -169,8 +179,21 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     }
 }
 
+/**
+ * Creates an instance of ability helpers, returns the current window instance if it already exists.
+ */
 export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
-    return new AbilityHelpers(win, props);
+    const existingAh = getCurrentAbilityHelpers(win as WindowWithAHInstance);
+    if (existingAh) {
+        if (__DEV__) {
+            console.warn('Attempted to create a duplicate ability helpers instance on the window');
+        }
+        return existingAh;
+    }
+
+    const ah = new AbilityHelpers(win, props);
+    (win as WindowWithAHInstance).__ahInstance = ah;
+    return ah;
 }
 
 export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
@@ -263,4 +286,12 @@ export function getAbilityHelpersAttribute(
     return {
         [Types.AbilityHelpersAttributeName]: attr
     };
+}
+
+/**
+ * Returns an instance of ability helpers if it already exists on the window .
+ * @param win window instance that could contain an AH instance.
+ */
+export function getCurrentAbilityHelpers(win: Window): Types.AbilityHelpersCore | undefined {
+    return (win as WindowWithAHInstance).__ahInstance;
 }
