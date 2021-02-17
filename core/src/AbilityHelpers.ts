@@ -179,6 +179,9 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     }
 }
 
+/**
+ * Creates an instance of ability helpers, returns the current window instance if it already exists
+ */
 export function createAbilityHelpers(win: WindowWithAHInstance, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
     const existingAh = getCurrentAbilityHelpers(win);
     if (existingAh) {
@@ -284,6 +287,10 @@ export function getAbilityHelpersAttribute(
 }
 
 
+/**
+ * Returns an instance of ability helpers if it already exists on the window 
+ * @param win window instance that could contain an AH instance
+ */
 export function getCurrentAbilityHelpers(win: WindowWithAHInstance): Types.AbilityHelpersCore | null {
     if (win && win.__ahInstance) {
         return win.__ahInstance;
