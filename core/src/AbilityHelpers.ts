@@ -19,10 +19,16 @@ import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndCl
 
 export { Types };
 
+/**
+ * Extends Window to include an internal ability helpers instance
+ */
+interface WindowWithAHInstance extends Window {
+    __ahInstance?: Types.AbilityHelpersCore;
+}
 class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersInternal {
     private _storage: Types.AbilityHelpersElementStorage;
     private _unobserve: (() => void) | undefined;
-    private _win: Window | undefined;
+    private _win: WindowWithAHInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
 
@@ -118,6 +124,10 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         stopWeakStorageCleanupAndClearStorage(this.getWindow);
         clearElementCache();
         this._storage = {};
+
+        if (this._win?.__ahInstance) {
+            delete this._win?.__ahInstance;
+        }
         delete this._win;
     }
 
@@ -169,14 +179,15 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     }
 }
 
-export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
-    if (abilityHelpersExists(win)) {
-        throw new Error(' An Ability helpers instance already exists on this window, you might use `abilityHelpersExists` to validate creation');
+export function createAbilityHelpers(win: WindowWithAHInstance, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
+    const existingAh = getCurrentAbilityHelpers(win);
+    if (existingAh) {
+        console.warn('Attempted to create a duplicate ability helpers instance on the window');
+        return existingAh;
     }
 
     const ah = new AbilityHelpers(win, props);
-    // @ts-ignore
-    win.BE_ABLE_INSTANCE = ah;
+    win.__ahInstance= ah;
     return ah;
 }
 
@@ -271,20 +282,11 @@ export function getAbilityHelpersAttribute(
         [Types.AbilityHelpersAttributeName]: attr
     };
 }
-export function abilityHelpersExists(win: Window): boolean {
-    if (!window) {
-        // be safe and encourage user to not create an instance
-        return true;
-    }
 
-    // @ts-ignore
-    return !!win.BE_ABLE_INSTANCE;
-}
 
-export function getWindowInstance(win: Window): Types.AbilityHelpersCore | null {
-    if (abilityHelpersExists(win)) {
-        // @ts-ignore
-        return win.BE_ABLE_INSTANCE;
+export function getCurrentAbilityHelpers(win: WindowWithAHInstance): Types.AbilityHelpersCore | null {
+    if (win && win.__ahInstance) {
+        return win.__ahInstance;
     }
 
     return null;
