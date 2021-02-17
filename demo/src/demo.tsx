@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { abilityHelpersExists, createAbilityHelpers, getAbilityHelpersAttribute, getDeloser, getModalizer, getOutline, Types as AHTypes} from 'ability-helpers';
+import { createAbilityHelpers, getAbilityHelpersAttribute, getCurrentAbilityHelpers, getDeloser, getModalizer, getOutline, Types as AHTypes} from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -121,7 +121,7 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
     }
 }
 
-const AHExistsExample: React.FC = () => (<div>Ability Helpers instance exists on window: {abilityHelpersExists(window).toString()}</div>);
+const AHExistsExample: React.FC = () => (<div>Ability Helpers instance exists on window: {getCurrentAbilityHelpers(window) ? 'true' : 'false'}</div>);
 
 class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;
