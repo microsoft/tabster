@@ -398,10 +398,14 @@ export class FocusedElementState
                         ? this._ah.focusable.findPrev(fromElement)
                         : this._ah.focusable.findNext(fromElement);
                     break;
+                case Keys.Home:
+                    next = ctx.mover?.contains(fromElement)  ? this._ah.focusable.findFirst(ctx.mover) : next;
+                    break;
+                case Keys.End:
+                    next = ctx.mover?.contains(fromElement)  ? this._ah.focusable.findLast(ctx.mover) : next;
+                    break;
                 case Keys.PageDown:
                 case Keys.PageUp:
-                case Keys.Home:
-                case Keys.End:
                     // TODO.
                     return;
             }
