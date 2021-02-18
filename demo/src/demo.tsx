@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { createAbilityHelpers, getAbilityHelpersAttribute, getCurrentAbilityHelpers, getDeloser, getModalizer, getOutline, Types as AHTypes} from 'ability-helpers';
+import {
+    createAbilityHelpers,
+    getAbilityHelpersAttribute,
+    getCurrentAbilityHelpers,
+    getDeloser,
+    getModalizer,
+    getOutline,
+    Types as AHTypes
+} from 'ability-helpers';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -38,7 +46,11 @@ class App extends React.PureComponent {
                         <button>tabs</button>
                     </div>
 
-                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows, cyclic: true } } }) }>
+                    <div { ...getAbilityHelpersAttribute({
+                        focusable: {
+                            mover: { navigationType: AHTypes.MoverKeys.Arrows, cyclic: true }
+                        }
+                    }) }>
                         <button>The</button>
                         <button>same</button>
                         <button>arrow</button>
@@ -195,7 +207,7 @@ const FindAllExample: React.FC = () => {
                 <button>Goose 3</button>
             </div>
         </div>
-    );    
+    );
 };
 
 ReactDOM.render(<App />, document.getElementById('demo'));
