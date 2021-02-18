@@ -84,6 +84,8 @@ class App extends React.PureComponent {
                 </div>
 
                 <Modal ref={ this._onModalRef } />
+
+                <FindAllExample />
             </div>
         );
     }
@@ -170,5 +172,30 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
         this.setState({ isVisible: false });
     }
 }
+
+const FindAllExample: React.FC = () => {
+    const ref = React.useRef<HTMLDivElement>(null);
+    const [filtered, setFiltered] = React.useState<HTMLElement[]>([]);
+    React.useEffect(() => {
+        if (ref.current) {
+            const ducks = ah.focusable.findAll(ref?.current, (el: HTMLElement) => !!el.textContent?.includes('Duck'));
+            setFiltered(ducks);
+        }
+    }, []);
+
+    return (
+        <div>
+            <div>Filtered ducks: {filtered.map(item => item.textContent + ', ')} </div>
+            <div ref={ref} { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+                <button>Duck 1</button>
+                <button>Goose 1</button>
+                <button>Goose 2</button>
+                <button>Duck 2</button>
+                <button>Duck 3</button>
+                <button>Goose 3</button>
+            </div>
+        </div>
+    );    
+};
 
 ReactDOM.render(<App />, document.getElementById('demo'));

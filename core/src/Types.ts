@@ -294,6 +294,14 @@ export interface FocusableAPI {
         ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
     findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
         ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findAll(
+        context: HTMLElement,
+        customFilter: (el: HTMLElement) => boolean,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean,
+        skipDefaultCondition?: boolean
+    ): HTMLElement[];
 }
 
 export interface ElementVisibilities {
