@@ -1,7 +1,8 @@
 {
     "packages": [
         "core",
-        "demo"
+        "demo",
+        "examples"
     ],
     "version": "0.4.3",
     "npmClient": "npm"
