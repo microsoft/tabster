@@ -13,5 +13,6 @@ export {
     getObservedElement,
     getOutline,
     getCurrentAbilityHelpers,
+    overrideBasics,
     Types
 } from './AbilityHelpers';

@@ -7,7 +7,7 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Insta
 import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
-import { documentContains, getElementUId } from '../Utils';
+import { documentContains, getElementUId, getPromise } from '../Utils';
 
 interface ObservedElementInfo {
     element: HTMLElement;
@@ -159,7 +159,7 @@ export class ObservedElementAPI
         const el = this.getElement(observedName);
 
         if (el) {
-            return Promise.resolve(el);
+            return getPromise().resolve(el);
         }
 
         let w = this._waiting[observedName];
@@ -180,7 +180,7 @@ export class ObservedElementAPI
             }, timeout)
         };
 
-        const promise = new Promise<HTMLElement | null>((resolve, reject) => {
+        const promise = new (getPromise())<HTMLElement | null>((resolve, reject) => {
             w.resolve = resolve;
             w.reject = reject;
         });

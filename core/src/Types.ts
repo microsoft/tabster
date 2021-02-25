@@ -5,6 +5,11 @@
 
 export const AbilityHelpersAttributeName = 'data-ah';
 
+export interface InternalBasics {
+    Promise?: PromiseConstructor;
+    WeakRef?: WeakRefConstructor;
+}
+
 export interface AbilityHelpersDOMAttribute {
     [AbilityHelpersAttributeName]: string | undefined;
 }
@@ -225,7 +230,7 @@ export enum MoverKeys {
     Tab,
     /**
      * Move within a mover block using up/left and down/right arrows
-     * 
+     *
      * This is the only mover kind that supports cyclic navigation
      */
     Arrows,
@@ -241,7 +246,7 @@ export enum MoverKeys {
 export type MoverOptions = {
     /**
      * The types of navigation required
-     * 
+     *
      * @defaultValue MoverKey.Arrows
      */
     navigationType: MoverKeys;
@@ -249,7 +254,7 @@ export type MoverOptions = {
     /**
      * Whether to allow cyclic navigation in the mover
      * Can only be applied if navigationType is MoverKeys.Arrows
-     * 
+     *
      * @defaultValue false
      */
     cyclic?: boolean;

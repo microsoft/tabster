@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Types } from './AbilityHelpers';
 import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
@@ -12,6 +13,11 @@ interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
 interface FocusedElementWithIgnoreFlag extends HTMLElement {
     __shouldIgnoreFocus: boolean;
 }
+
+const _basics: Types.InternalBasics = {
+    Promise: typeof Promise !== 'undefined' ? Promise : undefined,
+    WeakRef: typeof WeakRef !== 'undefined' ? WeakRef : undefined
+};
 
 export interface WindowWithUID extends Window {
     __ahCrossOriginWindowUID?: string;
@@ -33,7 +39,7 @@ export interface AHDOMRect {
 }
 
 let _isBrokenIE11: boolean;
-let _hasWeakRef = typeof WeakRef !== 'undefined';
+let _WeakRef: WeakRefConstructor | undefined;
 
 let _containerBoundingRectCache: { [id: string]: { rect: AHDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
@@ -42,6 +48,7 @@ let _containerBoundingRectCacheTimer: number | undefined;
 let _weakElementStorage: { [id: string]: AHWeakRef; } = {};
 let _lastWeakElementId = 0;
 let _weakCleanupTimer: number | undefined;
+let _weakCleanupStarted = false;
 
 const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
     readonly bottom: number;
@@ -86,7 +93,7 @@ class FakeWeakRef implements AHWeakRef {
         return this._target;
     }
 
-    static tryCleanup(fwr: FakeWeakRef): boolean {
+    static cleanup(fwr: FakeWeakRef): boolean {
         if (!fwr._target) {
             return true;
         }
@@ -107,7 +114,7 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     constructor(element: T, data?: D) {
         this._id = 'we' + ++_lastWeakElementId;
 
-        _weakElementStorage[this._id] = _hasWeakRef ? new WeakRef(element) : new FakeWeakRef(element);
+        _weakElementStorage[this._id] = _WeakRef ? new _WeakRef(element) : new FakeWeakRef(element);
 
         if (data !== undefined) {
             this._data = data;
@@ -128,28 +135,39 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     }
 }
 
-export function startWeakStorageCleanup(win: GetWindow): void {
+export function cleanupWeakRefStorage(): void {
+    for (let id of Object.keys(_weakElementStorage)) {
+        const we = _weakElementStorage[id];
+        if (_WeakRef) {
+            if (!we.deref()) {
+                delete _weakElementStorage[id];
+            }
+        } else {
+            if (FakeWeakRef.cleanup(we as FakeWeakRef)) {
+                delete _weakElementStorage[id];
+            }
+        }
+    }
+}
+
+export function startWeakRefStorageCleanup(win: GetWindow): void {
+    if (!_weakCleanupStarted) {
+        _weakCleanupStarted = true;
+        _WeakRef = getWeakRef();
+    }
+
     if (!_weakCleanupTimer) {
         _weakCleanupTimer = win().setTimeout(() => {
-            for (let id of Object.keys(_weakElementStorage)) {
-                const we = _weakElementStorage[id];
-                if (_hasWeakRef) {
-                    if (!we.deref()) {
-                        delete _weakElementStorage[id];
-                    }
-                } else {
-                    if (FakeWeakRef.tryCleanup(we as FakeWeakRef)) {
-                        delete _weakElementStorage[id];
-                    }
-                }
-            }
             _weakCleanupTimer = undefined;
-            startWeakStorageCleanup(win);
+            cleanupWeakRefStorage();
+            startWeakRefStorageCleanup(win);
         }, 2 * 60 * 1000); // 2 minutes.
     }
 }
 
-export function stopWeakStorageCleanupAndClearStorage(win: GetWindow): void {
+export function stopWeakRefStorageCleanupAndClearStorage(win: GetWindow): void {
+    _weakCleanupStarted = false;
+
     if (_weakCleanupTimer) {
         win().clearTimeout(_weakCleanupTimer);
         _weakCleanupTimer = undefined;
@@ -407,4 +425,30 @@ export function matchesSelector(element: HTMLElement, selector: string): boolean
         element.webkitMatchesSelector;
 
     return matches && matches.call(element, selector);
+}
+
+export function getPromise(): PromiseConstructor {
+    if (_basics.Promise) {
+        return _basics.Promise;
+    }
+
+    throw new Error('No Promise defined.');
+}
+
+export function getWeakRef<T>(): WeakRefConstructor | undefined {
+    return _basics.WeakRef;
+}
+
+export function setBasics(basics: Types.InternalBasics): void {
+    let key: keyof Types.InternalBasics;
+
+    key = 'Promise';
+    if (key in basics) {
+        _basics[key] = basics[key];
+    }
+
+    key = 'WeakRef';
+    if (key in basics) {
+        _basics[key] = basics[key];
+    }
 }

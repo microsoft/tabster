@@ -9,7 +9,7 @@ import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { RootAPI } from './Root';
 import { Subscribable } from './State/Subscribable';
 import * as Types from './Types';
-import { elementByUId, getElementUId, getUId, getWindowUId, HTMLElementWithUID } from './Utils';
+import { elementByUId, getElementUId, getPromise, getUId, getWindowUId, HTMLElementWithUID } from './Utils';
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;
@@ -166,7 +166,7 @@ abstract class CrossOriginTransaction<I, O> {
         this.targetId = targetId;
         this.sendUp = sendUp;
         this.timeout = timeout;
-        this._promise = new Promise<O>((resolve, reject) => {
+        this._promise = new (getPromise())<O>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
         });
@@ -660,7 +660,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 const e: {
                     element?: HTMLElement | null,
                     crossOrigin?: CrossOriginElementDataOut
-                } = await (new Promise((resolve, reject) => {
+                } = await (new (getPromise())((resolve, reject) => {
                     let isWaitElementResolved = false;
                     let isForwardResolved = false;
                     let isResolved = false;
@@ -859,7 +859,7 @@ class CrossOriginTransactions {
         withReject?: boolean
     ): Promise<O | undefined> {
         if (!this._owner) {
-            return Promise.reject();
+            return getPromise().reject();
         }
 
         const transaction = new Transaction(this._ah, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
@@ -873,7 +873,7 @@ class CrossOriginTransactions {
                     this._owner,
                     this._ownerUId,
                     this,
-                    Promise.resolve(undefined),
+                    getPromise().resolve(undefined),
                     true
                 );
             };
@@ -920,7 +920,7 @@ class CrossOriginTransactions {
         let targetId = data.target;
 
         if (targetId === this._ownerUId) {
-            return Promise.resolve();
+            return getPromise().resolve();
         }
 
         const Transaction = this._getTransactionClass(data.type);
@@ -950,11 +950,11 @@ class CrossOriginTransactions {
                     data.timeout
                 );
             } else {
-                return Promise.resolve();
+                return getPromise().resolve();
             }
         }
 
-        return Promise.reject(`Unknown transaction type ${ data.type }`);
+        return getPromise().reject(`Unknown transaction type ${ data.type }`);
     }
 
     private _getTransactionClass(type: Types.CrossOriginTransactionType): CrossOriginTransactionClass<any, any> | null {
@@ -1067,7 +1067,7 @@ class CrossOriginTransactions {
         }
 
         if (targets.length) {
-            await Promise.all(
+            await getPromise().all(
                 targets.map(
                     uid => this.beginTransaction(PingTransaction, undefined, undefined, undefined, uid, true).then(() => true, () => {
                         if (uid !== _targetIdUp) {

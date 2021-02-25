@@ -15,7 +15,12 @@ import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { clearElementCache, startWeakStorageCleanup, stopWeakStorageCleanupAndClearStorage } from './Utils';
+import {
+    clearElementCache,
+    setBasics as overrideBasics,
+    startWeakRefStorageCleanup,
+    stopWeakRefStorageCleanupAndClearStorage
+} from './Utils';
 
 export { Types };
 
@@ -70,7 +75,7 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
             forgetMemorized: this._forgetMemorized
         };
 
-        startWeakStorageCleanup(getWindow);
+        startWeakRefStorageCleanup(getWindow);
     }
 
     protected dispose(): void {
@@ -121,7 +126,7 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         FocusedElementState.dispose(this.focusedElement);
         RootAPI.dispose(this.root);
 
-        stopWeakStorageCleanupAndClearStorage(this.getWindow);
+        stopWeakRefStorageCleanupAndClearStorage(this.getWindow);
         clearElementCache();
         this._storage = {};
 
@@ -178,6 +183,8 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         }, 0);
     }
 }
+
+export { overrideBasics };
 
 /**
  * Creates an instance of ability helpers, returns the current window instance if it already exists.

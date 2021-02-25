@@ -6,7 +6,7 @@
 import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { documentContains, getElementUId, WeakHTMLElement } from './Utils';
+import { documentContains, getElementUId, getPromise, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
@@ -41,7 +41,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        return Promise.resolve(this._deloser.resetFocus());
+        return getPromise().resolve(this._deloser.resetFocus());
     }
 }
 
