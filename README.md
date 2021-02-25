@@ -46,5 +46,7 @@ When people navigate with the keyboard, the currently focused element should be 
 
 Contributions are welcome (see the [CONTRIBUTING](./CONTRIBUTING.md) file), though please keep in mind the work-in-progress proof-of-concept state. Might make sense to just observe/discuss until the thing gets stable and well-documented.
 
+The repo now has an examples project powered by Storybook. Just run `npm start`
+
 ## License
 This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.
