@@ -23,7 +23,6 @@ export interface AbilityHelpersCore {
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
     root: RootAPI;
-    gc: GarbageCollectionAPI;
 }
 
 export type GetAbilityHelpers = () => AbilityHelpersCore;
@@ -578,8 +577,4 @@ export interface AbilityHelpersInternal {
     modalizerDispose?: DisposeFunc;
     observedElementDispose?: DisposeFunc;
     crossOriginDispose?: DisposeFunc;
-}
-
-export interface GarbageCollectionAPI {
-    forgetMemorized(parent: HTMLElement): void;
 }

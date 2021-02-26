@@ -135,16 +135,20 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     }
 }
 
-export function cleanupWeakRefStorage(): void {
-    for (let id of Object.keys(_weakElementStorage)) {
-        const we = _weakElementStorage[id];
-        if (_WeakRef) {
-            if (!we.deref()) {
-                delete _weakElementStorage[id];
-            }
-        } else {
-            if (FakeWeakRef.cleanup(we as FakeWeakRef)) {
-                delete _weakElementStorage[id];
+export function cleanupWeakRefStorage(forceRemove?: boolean): void {
+    if (forceRemove) {
+        _weakElementStorage = {};
+    } else {
+        for (let id of Object.keys(_weakElementStorage)) {
+            const we = _weakElementStorage[id];
+            if (_WeakRef) {
+                if (!we.deref()) {
+                    delete _weakElementStorage[id];
+                }
+            } else {
+                if (FakeWeakRef.cleanup(we as FakeWeakRef)) {
+                    delete _weakElementStorage[id];
+                }
             }
         }
     }

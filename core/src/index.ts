@@ -6,6 +6,7 @@
 export {
     createAbilityHelpers,
     disposeAbilityHelpers,
+    forceCleanup,
     getAbilityHelpersAttribute,
     getCrossOrigin,
     getDeloser,

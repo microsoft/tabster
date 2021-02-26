@@ -16,6 +16,7 @@ import { OutlineAPI } from './Outline';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import {
+    cleanupWeakRefStorage,
     clearElementCache,
     setBasics as overrideBasics,
     startWeakRefStorageCleanup,
@@ -41,7 +42,6 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     focusedElement: Types.FocusedElementState;
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
-    gc: Types.GarbageCollectionAPI;
 
     outline?: Types.OutlineAPI;
     deloser?: Types.DeloserAPI;
@@ -70,10 +70,6 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
         this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
-
-        this.gc = {
-            forgetMemorized: this._forgetMemorized
-        };
 
         startWeakRefStorageCleanup(getWindow);
     }
@@ -162,29 +158,37 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         return this._win;
     }
 
-    private _forgetMemorized = (parent: HTMLElement): void => {
-        if (!this._win) {
+    static forceCleanup(ah: AbilityHelpers): void {
+        if (!ah._win) {
             return;
         }
 
-        this._forgetMemorizedElements.push(parent);
+        ah._forgetMemorizedElements.push(ah._win.document.body);
 
-        if (this._forgetMemorizedTimer) {
+        if (ah._forgetMemorizedTimer) {
             return;
         }
 
-        this._forgetMemorizedTimer = this._win.setTimeout(() => {
-            delete this._forgetMemorizedTimer;
+        ah._forgetMemorizedTimer = ah._win.setTimeout(() => {
+            delete ah._forgetMemorizedTimer;
 
-            for (let el: HTMLElement | undefined = this._forgetMemorizedElements.shift(); el; el = this._forgetMemorizedElements.shift()) {
+            for (let el: HTMLElement | undefined = ah._forgetMemorizedElements.shift(); el; el = ah._forgetMemorizedElements.shift()) {
                 clearElementCache(el);
-                FocusedElementState.forgetMemorized(this.focusedElement, el);
+                FocusedElementState.forgetMemorized(ah.focusedElement, el);
             }
         }, 0);
+
+        cleanupWeakRefStorage(true);
     }
 }
 
 export { overrideBasics };
+
+export function forceCleanup(ah: AbilityHelpers): void {
+    // The only legit case for calling this method is when you've completely removed
+    // the application DOM and not going to add the new one for a while.
+    AbilityHelpers.forceCleanup(ah);
+}
 
 /**
  * Creates an instance of ability helpers, returns the current window instance if it already exists.
