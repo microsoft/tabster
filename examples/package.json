@@ -16,7 +16,7 @@
     "eject": "react-scripts eject",
     "start": "start-storybook -p 6006 -s public",
     "start:prod": "NODE_ENV=production npm run start",
-    "build": "NODE_END=production build-storybook"
+    "build": "NODE_ENV=production build-storybook"
   },
   "eslintConfig": {
     "extends": [

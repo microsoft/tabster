@@ -11,9 +11,9 @@ module.exports = {
   webpackFinal: async (config, type) => {
     config.resolve.plugins.push(new TsconfigPathsPlugin({ extensions: config.resolve.extensions }));
 
-    const isDev = type === 'DEVELOPMENT';
+    const isProd = type === 'production';
     config.plugins.push(new webpack.DefinePlugin({
-      __DEV__: JSON.stringify(isDev),
+      __DEV__: JSON.stringify(!isProd),
     }));
     return config
   }
