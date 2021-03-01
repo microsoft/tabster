@@ -16,7 +16,7 @@
     "eject": "react-scripts eject",
     "start": "start-storybook -p 6006 -s public",
     "start:prod": "NODE_ENV=production npm run start",
-    "build": "build-storybook",
+    "build": "NODE_ENV=development build-storybook",
     "build:prod": "NODE_ENV=production build-storybook",
     "clean": "rimraf storybook-static"
   },
