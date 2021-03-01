@@ -11,10 +11,12 @@ module.exports = {
   webpackFinal: async (config, type) => {
     config.resolve.plugins.push(new TsconfigPathsPlugin({ extensions: config.resolve.extensions }));
 
-    const isDev = type === 'DEVELOPMENT';
+    const isDev = (process.env.NODE_ENV !== 'production');
+
     config.plugins.push(new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
     }));
-    return config
+
+    return config;
   }
 }
