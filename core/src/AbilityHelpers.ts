@@ -219,6 +219,11 @@ export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
     return ahInternal.outline;
 }
 
+/**
+ * Creates a new new deloser instance or returns an existing one
+ * @param ah Ability helpers instance
+ * @param props Deloser props
+ */
 export function getDeloser(
     ah: Types.AbilityHelpersCore,
     props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
@@ -234,6 +239,10 @@ export function getDeloser(
     return ahInternal.deloser;
 }
 
+/**
+ * Creates a new modalizer instance or returns an existing one
+ * @param ah Ability helpers instance
+ */
 export function getModalizer(ah: Types.AbilityHelpersCore): Types.ModalizerAPI {
     const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
 
