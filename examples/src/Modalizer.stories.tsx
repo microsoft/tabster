@@ -6,18 +6,6 @@ import { Modal } from './components/Modal';
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
   title: 'Modalizer',
-  decorators: [
-      (Story) => {
-          const ah = getCurrentAbilityHelpers(window);
-          if (ah) {
-            // APIs need to be initialized before the story is rendered
-            // No reason yet to do it for all types of stories
-            getModalizer(ah);
-            getDeloser(ah);
-          }
-          return <Story />
-      }
-  ]
 } as Meta;
 
 export const ModalDialog = () => {
