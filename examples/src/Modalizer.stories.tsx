@@ -20,7 +20,7 @@ export const ModalDialog = () => {
     )
 }
 
-export const PopupMenu = () => {
+export const PopupContent = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
     const modalizerRef = React.useCallback(node => {
         const ah = getCurrentAbilityHelpers(window);
@@ -47,7 +47,7 @@ export const PopupMenu = () => {
     return (
         <>
             <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
-                <button onClick={onClick}>Toggle menu</button>
+                <button onClick={onClick}>Toggle popup</button>
             </div>
             <div>
                 {open && <div ref={modalizerRef} style={popupStyles}>
