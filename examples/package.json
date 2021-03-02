@@ -1,12 +1,12 @@
 {
   "name": "examples",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "private": true,
   "dependencies": {
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "ability-helpers": "^0.4.3",
+    "ability-helpers": "^0.5.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.3",
@@ -16,7 +16,9 @@
     "eject": "react-scripts eject",
     "start": "start-storybook -p 6006 -s public",
     "start:prod": "NODE_ENV=production npm run start",
-    "build": "NODE_ENV=production build-storybook"
+    "build": "NODE_ENV=development build-storybook",
+    "build:prod": "NODE_ENV=production build-storybook",
+    "clean": "rimraf storybook-static"
   },
   "eslintConfig": {
     "extends": [
@@ -42,6 +44,7 @@
     "@storybook/node-logger": "^6.1.20",
     "@storybook/preset-create-react-app": "^3.1.6",
     "@storybook/react": "^6.1.20",
+    "rimraf": "^3.0.2",
     "tsconfig-paths-webpack-plugin": "^3.3.0"
   }
 }
