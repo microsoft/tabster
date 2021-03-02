@@ -5,7 +5,7 @@ import { Modal } from './components/Modal';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-  title: 'Modalizer',
+    title: 'Modalizer',
 } as Meta;
 
 export const ModalDialog = () => {

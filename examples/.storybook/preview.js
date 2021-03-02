@@ -4,6 +4,8 @@ import {
     disposeAbilityHelpers,
     getAbilityHelpersAttribute,
     getCurrentAbilityHelpers,
+    getDeloser,
+    getModalizer,
 } from "ability-helpers";
 
 export const parameters = {
@@ -13,7 +15,13 @@ export const parameters = {
 export const decorators = [
     (Story) => {
         // ensures AH is only created once
-        React.useState(() => createAbilityHelpers(window));
+        React.useState(() => { 
+            const ah = createAbilityHelpers(window)
+
+            // initialize AH API instances
+            getModalizer(ah);
+            getDeloser(ah);
+        });
         React.useEffect(() => {
             return () => {
                 if (getCurrentAbilityHelpers(window)) {

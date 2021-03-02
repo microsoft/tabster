@@ -213,6 +213,10 @@ export function updateAbilityHelpersByAttribute(
                     if (ahi.deloser) {
                         ahi.deloser.add(element, newObject.deloser);
                     }
+
+                    if (!ahi.deloser && __DEV__) {
+                        console.error('Deloser API used before initializing, please call `getDeloser`')
+                    }
                 }
                 break;
 
@@ -230,6 +234,10 @@ export function updateAbilityHelpersByAttribute(
                 } else {
                     if (ahi.modalizer) {
                         ahi.modalizer.add(element, newObject.modalizer!!!);
+                    }
+
+                    if (!ahi.modalizer && __DEV__) {
+                        console.error('Modalizer API used before initializing, please call `getDeloser`')
                     }
                 }
                 break;
