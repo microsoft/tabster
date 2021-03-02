@@ -98,8 +98,6 @@ class App extends React.PureComponent {
                 <Modal ref={ this._onModalRef } />
 
                 <FindAllExample />
-
-                <PopupMenu />
             </div>
         );
     }
@@ -209,49 +207,6 @@ const FindAllExample: React.FC = () => {
                 <button>Goose 3</button>
             </div>
         </div>
-    );
-};
-
-export const PopupMenu = () => {
-    const [open, setOpen ] = React.useState<boolean>(false);
-    const modalizerRef = React.useCallback(node => {
-        const ah = getCurrentAbilityHelpers(window);
-        if (ah && node !== null) {
-            const modalizer = getModalizer(ah);
-            const deloser = getDeloser(ah);
-            modalizer.add(node, {id: 'popup'});
-            deloser.add(node);
-            modalizer.focus(node);
-        }
-    }, []);
-
-    const onClick = () => setOpen(s => !s);
-
-    const popupStyles = {
-        maxWidth: 400,
-        maxHeight: 400,
-        border: '1px solid',
-        padding: 5
-    };
-
-    return (
-        <>
-            <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'bla' }, deloser: {} })}>
-                <button onClick={onClick}>Toggle menu</button>
-            </div>
-            <div>
-                {open && <div ref={modalizerRef} style={popupStyles}>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <button onClick={onClick}>Dismiss</button>
-                </div>}
-            </div>
-            <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'bla' }, deloser: {} })}>
-                <button>Do not focus</button>
-            </div>
-        </>
     );
 };
 
