@@ -203,7 +203,6 @@ export function updateAbilityHelpersByAttribute(
         }
     }
 
-    debugger;
     for (let key of Object.keys(newObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
         switch (key) {
             case 'deloser':
