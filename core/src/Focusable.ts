@@ -109,9 +109,11 @@ export class UberGroupper implements Types.UberGroupper {
     }
 
     removeGroupper(groupper: Types.Groupper): void {
-        delete this._grouppers[groupper.id];
-        delete this._visibleGrouppers[groupper.id];
-        delete this._prevVisibleGrouppers[groupper.id];
+        const id = groupper.id;
+        delete this._grouppers[id];
+        delete this._visibleGrouppers[id];
+        delete this._prevVisibleGrouppers[id];
+        delete _focusedGrouppers[id];
 
         if (this._current === groupper) {
             this._setCurrent(undefined);
