@@ -7,7 +7,7 @@ export default {
 };
 
 export const NestedGrouppers = () => (
-    <div { ...getAbilityHelpersAttribute({ root: {} }) }>
+    <>
         <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
             <div>
                 <Item />
@@ -44,5 +44,5 @@ export const NestedGrouppers = () => (
             </div>
         </div>
 
-    </div>
+    </>
 )

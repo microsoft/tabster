@@ -13,10 +13,12 @@ export const ModalDialog = () => {
 
     const onClick = () => ref.current?.show();
     return (
-        <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
-            <button onClick={onClick}>Open modal</button>
+        <>
+            <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
+                <button onClick={onClick}>Open modal</button>
+            </div>
             <Modal ref={ref} />
-        </div>
+        </>
     )
 }
 
