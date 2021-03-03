@@ -15,7 +15,7 @@ export const parameters = {
 export const decorators = [
     (Story) => {
         // ensures AH is only created once
-        React.useState(() => { 
+        React.useState(() => {
             const ah = createAbilityHelpers(window)
 
             // initialize AH API instances
