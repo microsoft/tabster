@@ -1347,7 +1347,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
         ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
         ah.focusedElement.unsubscribe(this._onFocus);
-        (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.unsubscribe(this._onObserved);
+        (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!?.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);

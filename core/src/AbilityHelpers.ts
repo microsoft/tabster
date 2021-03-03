@@ -93,6 +93,12 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
             delete this.outlineDispose;
         }
 
+        if (this.crossOriginDispose) {
+            this.crossOriginDispose();
+            delete this.crossOrigin;
+            delete this.crossOriginDispose;
+        }
+
         if (this.deloserDispose) {
             this.deloserDispose();
             delete this.deloser;
@@ -109,12 +115,6 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
             this.observedElementDispose();
             delete this.observedElement;
             delete this.observedElementDispose;
-        }
-
-        if (this.crossOriginDispose) {
-            this.crossOriginDispose();
-            delete this.crossOrigin;
-            delete this.crossOriginDispose;
         }
 
         KeyboardNavigationState.dispose(this.keyboardNavigation);
