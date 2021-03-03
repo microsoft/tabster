@@ -93,11 +93,11 @@ class App extends React.PureComponent {
                         <Item onClick={ this._onClick } />
                         <Item onClick={ this._onClick } />
                     </div>
+
+                    <FindAllExample />
                 </div>
 
                 <Modal ref={ this._onModalRef } />
-
-                <FindAllExample />
             </div>
         );
     }
