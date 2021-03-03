@@ -214,7 +214,7 @@ export function updateAbilityHelpersByAttribute(
                     }
 
                     if (!ahi.deloser && __DEV__) {
-                        console.error('Deloser API used before initializing, please call `getDeloser`')
+                        console.error('Deloser API used before initializing, please call `getDeloser`');
                     }
                 }
                 break;
@@ -236,7 +236,7 @@ export function updateAbilityHelpersByAttribute(
                     }
 
                     if (!ahi.modalizer && __DEV__) {
-                        console.error('Modalizer API used before initializing, please call `getDeloser`')
+                        console.error('Modalizer API used before initializing, please call `getDeloser`');
                     }
                 }
                 break;
