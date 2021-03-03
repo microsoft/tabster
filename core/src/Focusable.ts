@@ -635,6 +635,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        win.removeEventListener('scroll', this._onScroll, true);
 
         this._ah.focusedElement.unsubscribe(this._onFocus);
 
