@@ -1,7 +1,7 @@
 {
   "name": "ability-helpers-react-demo",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A demo React project",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -30,7 +30,7 @@
   "dependencies": {
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
-    "ability-helpers": "^0.5.0",
+    "ability-helpers": "^0.5.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
   }
