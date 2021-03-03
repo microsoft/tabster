@@ -287,9 +287,11 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, isA
 
 function buildElementSelector(element: HTMLElement, withClass?: boolean, withIndex?: boolean): string {
     const selector: string[] = [];
+    const escapeRegExp = /(:|\.|\[|\]|,|=|@)/g;
+    const escapeReplaceValue = '\\$1';
 
     if (element.id) {
-        selector.push('#' + element.id);
+        selector.push('#' + element.id.replace(escapeRegExp, escapeReplaceValue));
     }
 
     if ((withClass !== false) && element.className) {
@@ -297,7 +299,7 @@ function buildElementSelector(element: HTMLElement, withClass?: boolean, withInd
             cls = cls.trim();
 
             if (cls) {
-                selector.push('.' + cls);
+                selector.push('.' + cls.replace(escapeRegExp, escapeReplaceValue));
             }
         });
     }
@@ -584,7 +586,17 @@ export class Deloser implements Types.Deloser {
                 const selector = we.getData();
 
                 if (selector && element) {
-                    const els = element.ownerDocument.querySelectorAll(selector);
+                    let els: NodeListOf<Element>;
+
+                    try {
+                        els = element.ownerDocument.querySelectorAll(selector);
+                    } catch (e) {
+                        if (__DEV__) {
+                            // This should never happen, unless there is some bug in buildElementSelector().
+                            console.error(`Failed to querySelectorAll('${ selector }')`);
+                        }
+                        continue;
+                    }
 
                     for (let i = 0; i < els.length; i++) {
                         const el = els[i] as HTMLElement;
