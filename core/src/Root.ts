@@ -12,6 +12,9 @@ import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocu
 interface DummyInput {
     isFirst: boolean;
     shouldMoveOut?: boolean;
+    input?: HTMLDivElement;
+    focusin?: (e: FocusEvent) => void;
+    focusout?: (e: FocusEvent) => void;
 }
 
 let _rootById: { [id: string]: Types.Root } = {};
@@ -40,10 +43,8 @@ export class Root implements Types.Root {
     private _curModalizerId: string | undefined;
     private _knownModalizers: { [id: string]: Types.Modalizer } = {};
     private _updateModalizersTimer: number | undefined;
-    private _dummyInputFirstProps: DummyInput;
-    private _dummyInputLastProps: DummyInput;
-    private _dummyInputFirst: HTMLDivElement | undefined;
-    private _dummyInputLast: HTMLDivElement | undefined;
+    private _dummyInputFirst: DummyInput | undefined;
+    private _dummyInputLast: DummyInput | undefined;
     private _forgetFocusedGrouppers: () => void;
 
     constructor(
@@ -60,10 +61,10 @@ export class Root implements Types.Root {
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
-        this._dummyInputFirstProps = { isFirst: true };
-        this._dummyInputLastProps = { isFirst: false };
-        this._dummyInputFirst = this._createDummyInput(this._dummyInputFirstProps);
-        this._dummyInputLast = this._createDummyInput(this._dummyInputLastProps);
+        this._dummyInputFirst = { isFirst: true };
+        this._dummyInputLast = { isFirst: false };
+        this._createDummyInput(this._dummyInputFirst);
+        this._createDummyInput(this._dummyInputLast);
 
         this._add();
         this._addDummyInputs();
@@ -77,8 +78,17 @@ export class Root implements Types.Root {
 
         this._remove();
 
-        delete this._dummyInputFirst;
-        delete this._dummyInputLast;
+        const dif = this._dummyInputFirst;
+        if (dif) {
+            this._disposeDummyInput(dif);
+            delete this._dummyInputFirst;
+        }
+
+        const dil = this._dummyInputLast;
+        if (dil) {
+            this._disposeDummyInput(dil);
+            delete this._dummyInputLast;
+        }
 
         this._knownModalizers = {};
         this._forgetFocusedGrouppers = () => {/**/};
@@ -155,13 +165,13 @@ export class Root implements Types.Root {
     }
 
     moveOutWithDefaultAction(backwards: boolean): void {
-        if (this._dummyInputFirst && this._dummyInputLast) {
+        if (this._dummyInputFirst?.input && this._dummyInputLast?.input) {
             if (backwards) {
-                this._dummyInputFirstProps.shouldMoveOut = true;
-                callOriginalFocusOnly(this._dummyInputFirst);
+                this._dummyInputFirst.shouldMoveOut = true;
+                callOriginalFocusOnly(this._dummyInputFirst.input);
             } else {
-                this._dummyInputLastProps.shouldMoveOut = true;
-                callOriginalFocusOnly(this._dummyInputLast);
+                this._dummyInputLast.shouldMoveOut = true;
+                callOriginalFocusOnly(this._dummyInputLast.input);
             }
         }
     }
@@ -257,7 +267,11 @@ export class Root implements Types.Root {
         }
     }
 
-    private _createDummyInput(props: DummyInput): HTMLDivElement {
+    private _createDummyInput(props: DummyInput): void {
+        if (props.input) {
+            return;
+        }
+
         const input = this._win().document.createElement('div');
 
         input.tabIndex = 0;
@@ -277,7 +291,8 @@ export class Root implements Types.Root {
 
         makeFocusIgnored(input);
 
-        input.addEventListener('focusin', e => {
+        props.input = input;
+        props.focusin = e => {
             if (props.shouldMoveOut) {
                 // When we've reached the last focusable element, we want to let the browser
                 // to move the focus outside of the page. In order to do that we're synchronously
@@ -304,39 +319,64 @@ export class Root implements Types.Root {
                 if (toFocus) {
                     this._ah.focusedElement.focus(toFocus);
                 } else {
-                    input.blur();
+                    props.input?.blur();
                 }
             }
-        });
+        };
 
-        input.addEventListener('focusout', e => {
+        props.focusout = e => {
             props.shouldMoveOut = false;
-        });
+        };
 
-        return input;
+        input.addEventListener('focusin', props.focusin);
+        input.addEventListener('focusout', props.focusout);
+    }
+
+    private _disposeDummyInput(props: DummyInput): void {
+        const input = props.input;
+
+        if (!input) {
+            return;
+        }
+
+        delete props.input;
+
+        const fi = props.focusin;
+        if (fi) {
+            input.removeEventListener('focusin', fi);
+            delete props.focusin;
+        }
+
+        const fo = props.focusout;
+        if (fo) {
+            input.removeEventListener('focusout', fo);
+            delete props.focusout;
+        }
     }
 
     private _addDummyInputs(): void {
         const element = this._element.get();
+        const dif = this._dummyInputFirst?.input;
+        const dil = this._dummyInputLast?.input;
 
-        if (!element || !this._dummyInputFirst || !this._dummyInputLast) {
+        if (!element || !dif || !dil) {
             return;
         }
 
-        if (element.lastElementChild !== this._dummyInputLast) {
-            element.appendChild(this._dummyInputLast);
+        if (element.lastElementChild !== dil) {
+            element.appendChild(dil);
         }
 
         const firstElementChild = element.firstElementChild;
 
-        if (firstElementChild && (firstElementChild !== this._dummyInputFirst)) {
-            element.insertBefore(this._dummyInputFirst, firstElementChild);
+        if (firstElementChild && (firstElementChild !== dif)) {
+            element.insertBefore(dif, firstElementChild);
         }
     }
 
     private _removeDummyInputs(): void {
-        const dif = this._dummyInputFirst;
-        const dil = this._dummyInputLast;
+        const dif = this._dummyInputFirst?.input;
+        const dil = this._dummyInputLast?.input;
 
         if (dif?.parentElement) {
             dif.parentElement.removeChild(dif);
