@@ -6,7 +6,7 @@ export default {
   title: 'KeyboardNavigationState',
 };
 
-export const IsFocusingWithKeyboard = () => {
+export const KeyboardNavigationState = () => {
     const [message, setMessage] = React.useState('undetermined');
     const onFocus = () => {
         const ah = getCurrentAbilityHelpers(window);
@@ -21,6 +21,9 @@ export const IsFocusingWithKeyboard = () => {
     return (
         <>
             <div>Focused with: <strong>{message}</strong></div>
+            <button onFocus={onFocus}>Click or use keyboard</button>
+            <button onFocus={onFocus}>Click or use keyboard</button>
+            <button onFocus={onFocus}>Click or use keyboard</button>
             <button onFocus={onFocus}>Click or use keyboard</button>
         </>
     )
