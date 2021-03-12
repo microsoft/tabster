@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getCurrentAbilityHelpers} from 'ability-helpers';
+import { getCurrentAbilityHelpers } from 'ability-helpers';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
