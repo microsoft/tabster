@@ -7,15 +7,15 @@ import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Insta
 import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
-import { documentContains, getElementUId, getPromise } from '../Utils';
+import { documentContains, getElementUId, getPromise, WeakHTMLElement } from '../Utils';
 
 interface ObservedElementInfo {
-    element: HTMLElement;
+    element: WeakHTMLElement;
     triggeredName?: string;
 }
 
-const _observedById: { [uid: string]: ObservedElementInfo } = {};
-const _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
+let _observedById: { [uid: string]: ObservedElementInfo } = {};
+let _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
 
 export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
@@ -67,13 +67,16 @@ export class ObservedElementAPI
 
             delete this._waiting[name];
         }
+
+        _observedById = {};
+        _observedByName = {};
     }
 
     static dispose(instance: Types.ObservedElementAPI): void {
         (instance as ObservedElementAPI).dispose();
     }
 
-    add(element: HTMLElement, basic?: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
+    add(element: HTMLElement, basic: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
         const ah = getAbilityHelpersOnElement(this._ah, element);
 
         if (ah && ah.observed) {
@@ -148,7 +151,14 @@ export class ObservedElementAPI
 
         if (o) {
             for (let uid of Object.keys(o)) {
-                return o[uid].element;
+                const el = o[uid].element.get() || null;
+
+                if (!el) {
+                    delete o[uid];
+                    delete _observedById[uid];
+                }
+
+                return el;
             }
         }
 
@@ -208,7 +218,7 @@ export class ObservedElementAPI
         if (observed && isInDocument) {
             if (!info) {
                 info = _observedById[uid] = {
-                    element
+                    element: new WeakHTMLElement(element)
                 };
             }
 

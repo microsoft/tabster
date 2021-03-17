@@ -54,7 +54,7 @@ export interface FocusedElementState extends Subscribable<HTMLElement | undefine
 }
 
 export interface ObservedElementBasicProps {
-    name?: string;
+    name: string;
     details?: any;
 }
 
