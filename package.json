@@ -7,6 +7,6 @@
     "start": "lerna exec --scope examples -- npm run start"
   },
   "devDependencies": {
-    "lerna": "^3.22.1"
+    "lerna": "^4.0.0"
   }
 }
