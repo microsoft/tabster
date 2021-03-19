@@ -4,7 +4,7 @@
  */
 
 import { DeloserAPI, DeloserHistoryByRootBase, DeloserItemBase } from './Deloser';
-import { getAbilityHelpersOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { RootAPI } from './Root';
 import { Subscribable } from './State/Subscribable';
@@ -43,7 +43,7 @@ class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
     private _deloser: CrossOriginDeloser;
     private _transactions: CrossOriginTransactions;
 
-    constructor(ah: Types.AbilityHelpersCore, deloser: CrossOriginDeloser, trasactions: CrossOriginTransactions) {
+    constructor(tabster: Types.TabsterCore, deloser: CrossOriginDeloser, trasactions: CrossOriginTransactions) {
         super();
         this._deloser = deloser;
         this._transactions = trasactions;
@@ -76,11 +76,11 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<CrossOrig
     private _transactions: CrossOriginTransactions;
 
     constructor(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         rootUId: string,
         transactions: CrossOriginTransactions
     ) {
-        super(ah, rootUId);
+        super(tabster, rootUId);
         this._transactions = transactions;
     }
 
@@ -96,7 +96,7 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<CrossOrig
         }
 
         if (!item) {
-            item = new CrossOriginDeloserItem(this._ah, deloser, this._transactions);
+            item = new CrossOriginDeloserItem(this._tabster, deloser, this._transactions);
         }
 
         this._history.unshift(item);
@@ -130,7 +130,7 @@ abstract class CrossOriginTransaction<I, O> {
     readonly id: string;
     readonly beginData: I;
     readonly timeout?: number;
-    protected ah: Types.AbilityHelpersCore;
+    protected tabster: Types.TabsterCore;
     protected endData: O | undefined;
     protected owner: Types.GetWindow;
     protected ownerId: string;
@@ -147,7 +147,7 @@ abstract class CrossOriginTransaction<I, O> {
     private _sentCount = 0;
 
     constructor(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         getOwner: Types.GetWindow,
         knownTargets: KnownTargets,
         value: I,
@@ -156,7 +156,7 @@ abstract class CrossOriginTransaction<I, O> {
         targetId?: string,
         sendUp?: Types.CrossOriginTransactionSend
     ) {
-        this.ah = ah;
+        this.tabster = tabster;
         this.owner = getOwner;
         this.ownerId = getWindowUId(getOwner());
         this.id = getUId(getOwner());
@@ -297,7 +297,7 @@ abstract class CrossOriginTransaction<I, O> {
 
 interface CrossOriginTransactionClass<I, O> {
     new (
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         getOwner: Types.GetWindow,
         knownTargets: KnownTargets,
         value: I,
@@ -307,13 +307,13 @@ interface CrossOriginTransactionClass<I, O> {
         sendUp?: Types.CrossOriginTransactionSend
     ): CrossOriginTransaction<I, O>;
     shouldForward?(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<I, O>,
         getOwner: Types.GetWindow,
         ownerId: string
     ): boolean;
     makeResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<I, O>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -321,7 +321,7 @@ interface CrossOriginTransactionClass<I, O> {
         forwardResult: Promise<O | undefined>,
         isSelfResponse?: boolean
     ): Promise<O>;
-    shouldSelfRespond?(ah: Types.AbilityHelpersCore, data: I, getOwner: Types.GetWindow, ownerId: string): boolean;
+    shouldSelfRespond?(tabster: Types.TabsterCore, data: I, getOwner: Types.GetWindow, ownerId: string): boolean;
 }
 
 interface BootstrapTransactionContents {
@@ -335,8 +335,8 @@ class BootstrapTransaction extends CrossOriginTransaction<undefined, BootstrapTr
         return false;
     }
 
-    static async makeResponse(ah: Types.AbilityHelpersCore): Promise<BootstrapTransactionContents> {
-        return { isNavigatingWithKeyboard: ah.keyboardNavigation.isNavigatingWithKeyboard() };
+    static async makeResponse(tabster: Types.TabsterCore): Promise<BootstrapTransactionContents> {
+        return { isNavigatingWithKeyboard: tabster.keyboardNavigation.isNavigatingWithKeyboard() };
     }
 }
 
@@ -359,24 +359,24 @@ class FocusElementTransaction extends CrossOriginTransaction<FocusElementData, b
     static shouldSelfRespond = () => true;
 
     static shouldForward(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
         getOwner: Types.GetWindow
     ): boolean {
-        const el = GetElementTransaction.findElement(ah, getOwner, data.beginData);
-        return !el || !ah.focusable.isFocusable(el);
+        const el = GetElementTransaction.findElement(tabster, getOwner, data.beginData);
+        return !el || !tabster.focusable.isFocusable(el);
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<FocusElementData, boolean>,
         getOwner: Types.GetWindow,
         ownerId: string,
         transactions: CrossOriginTransactions,
         forwardResult: Promise<boolean | undefined>
     ): Promise<boolean> {
-        const el = GetElementTransaction.findElement(ah, getOwner, data.beginData);
-        return (!!el && ah.focusedElement.focus(el)) || !!(await forwardResult);
+        const el = GetElementTransaction.findElement(tabster, getOwner, data.beginData);
+        return (!!el && tabster.focusedElement.focus(el)) || !!(await forwardResult);
     }
 }
 
@@ -418,12 +418,12 @@ interface CrossOriginStateData extends CrossOriginElementDataOut {
 class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true> {
     type = CrossOriginTransactionTypes.State;
 
-    static shouldSelfRespond(ah: Types.AbilityHelpersCore, data: CrossOriginStateData): boolean {
+    static shouldSelfRespond(tabster: Types.TabsterCore, data: CrossOriginStateData): boolean {
         return (data.state !== CrossOriginStates.DeadWindow) && (data.state !== CrossOriginStates.KeyboardNavigation);
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<CrossOriginStateData, true>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -437,27 +437,27 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
         if (timestamp && beginData) {
             switch (beginData.state) {
                 case CrossOriginStates.Focused:
-                    return StateTransaction._makeFocusedResponse(ah, timestamp, beginData, transactions, isSelfResponse);
+                    return StateTransaction._makeFocusedResponse(tabster, timestamp, beginData, transactions, isSelfResponse);
                 case CrossOriginStates.Blurred:
-                    return StateTransaction._makeBlurredResponse(ah, timestamp, beginData);
+                    return StateTransaction._makeBlurredResponse(tabster, timestamp, beginData);
                 case CrossOriginStates.Observed:
-                    return StateTransaction._makeObservedResponse(ah, beginData);
+                    return StateTransaction._makeObservedResponse(tabster, beginData);
                 case CrossOriginStates.DeadWindow:
-                    return StateTransaction._makeDeadWindowResponse(ah, beginData, transactions, forwardResult);
+                    return StateTransaction._makeDeadWindowResponse(tabster, beginData, transactions, forwardResult);
                 case CrossOriginStates.KeyboardNavigation:
-                    return StateTransaction._makeKeyboardNavigationResponse(ah, beginData.isNavigatingWithKeyboard);
+                    return StateTransaction._makeKeyboardNavigationResponse(tabster, beginData.isNavigatingWithKeyboard);
                 case CrossOriginStates.Outline:
-                    return StateTransaction._makeOutlineResponse(ah, beginData.outline);
+                    return StateTransaction._makeOutlineResponse(tabster, beginData.outline);
             }
         }
 
         return true;
     }
 
-    static createElement(ah: Types.AbilityHelpersCore, beginData: CrossOriginElementDataOut): CrossOriginElement | null {
+    static createElement(tabster: Types.TabsterCore, beginData: CrossOriginElementDataOut): CrossOriginElement | null {
         return beginData.uid
             ? new CrossOriginElement(
-                ah,
+                tabster,
                 beginData.uid,
                 beginData.ownerUId,
                 beginData.id,
@@ -468,20 +468,20 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeFocusedResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         timestamp: number,
         beginData: CrossOriginStateData,
         transactions: CrossOriginTransactions,
         isSelfResponse?: boolean
     ): Promise<true> {
-        const element = StateTransaction.createElement(ah, beginData);
+        const element = StateTransaction.createElement(tabster, beginData);
 
         if (beginData && (beginData.ownerUId) && element) {
             _focusOwner = beginData.ownerUId;
             _focusOwnerTimestamp = timestamp;
 
             if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
-                const history = DeloserAPI.getHistory((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
+                const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
 
                 const deloser: CrossOriginDeloser = {
                     ownerUId: beginData.ownerUId,
@@ -491,14 +491,14 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
                 const historyItem = history.make(
                     beginData.rootUId,
-                    () => new CrossOriginDeloserHistoryByRoot(ah, deloser.rootUId, transactions)
+                    () => new CrossOriginDeloserHistoryByRoot(tabster, deloser.rootUId, transactions)
                 );
 
                 historyItem.unshift(deloser);
             }
 
             CrossOriginFocusedElementState.setVal(
-                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement,
+                (tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement,
                 element,
                 { isFocusedProgrammatically: beginData.isFocusedProgrammatically }
             );
@@ -508,7 +508,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeBlurredResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         timestamp: number,
         beginData: CrossOriginStateData
     ): Promise<true> {
@@ -518,7 +518,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
             (!_focusOwnerTimestamp || (_focusOwnerTimestamp < timestamp))
         ) {
             CrossOriginFocusedElementState.setVal(
-                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement,
+                (tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement,
                 undefined,
                 {}
             );
@@ -528,15 +528,15 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeObservedResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         beginData: CrossOriginStateData
     ): Promise<true> {
         const name = beginData.observedName;
-        const element = StateTransaction.createElement(ah, beginData);
+        const element = StateTransaction.createElement(tabster, beginData);
 
         if (name && element) {
             CrossOriginObservedElementState.trigger(
-                (ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.observedElement,
+                (tabster as unknown as Types.TabsterInternal).crossOrigin!!!.observedElement,
                 element,
                 { name, details: beginData.observedDetails }
             );
@@ -546,7 +546,7 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     }
 
     private static async _makeDeadWindowResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         beginData: CrossOriginStateData,
         transactions: CrossOriginTransactions,
         forwardResult: Promise<true | undefined>
@@ -559,24 +559,27 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
         return forwardResult.then(() => {
             if (deadUId === _focusOwner) {
-                DeloserAPI.forceRestoreFocus((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
+                DeloserAPI.forceRestoreFocus((tabster as unknown as Types.TabsterInternal).deloser!!!);
             }
             return true;
         });
     }
 
-    private static async _makeKeyboardNavigationResponse(ah: Types.AbilityHelpersCore, isNavigatingWithKeyboard?: boolean): Promise<true> {
-        if ((isNavigatingWithKeyboard !== undefined) && (ah.keyboardNavigation.isNavigatingWithKeyboard() !== isNavigatingWithKeyboard)) {
+    private static async _makeKeyboardNavigationResponse(tabster: Types.TabsterCore, isNavigatingWithKeyboard?: boolean): Promise<true> {
+        if (
+            (isNavigatingWithKeyboard !== undefined) &&
+            (tabster.keyboardNavigation.isNavigatingWithKeyboard() !== isNavigatingWithKeyboard)
+        ) {
             _ignoreKeyboardNavigationStateUpdate = true;
-            KeyboardNavigationState.setVal(ah.keyboardNavigation, isNavigatingWithKeyboard);
+            KeyboardNavigationState.setVal(tabster.keyboardNavigation, isNavigatingWithKeyboard);
             _ignoreKeyboardNavigationStateUpdate = false;
         }
         return true;
     }
 
-    private static async _makeOutlineResponse(ah: Types.AbilityHelpersCore, props?: Partial<Types.OutlineProps>): Promise<true> {
+    private static async _makeOutlineResponse(tabster: Types.TabsterCore, props?: Partial<Types.OutlineProps>): Promise<true> {
         if (_origOutlineSetup) {
-            _origOutlineSetup.call((ah as unknown as Types.AbilityHelpersInternal).outline!!!, props);
+            _origOutlineSetup.call((tabster as unknown as Types.TabsterInternal).outline!!!, props);
         }
         return true;
     }
@@ -587,7 +590,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
 
     static shouldSelfRespond = () => true;
 
-    static findElement(ah: Types.AbilityHelpersCore, getOwner: Types.GetWindow, data?: CrossOriginElementDataIn): HTMLElement | null {
+    static findElement(tabster: Types.TabsterCore, getOwner: Types.GetWindow, data?: CrossOriginElementDataIn): HTMLElement | null {
         let element: HTMLElement | null | undefined;
 
         if (data && (!data.ownerId || (data.ownerId === getWindowUId(getOwner())))) {
@@ -595,7 +598,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 element = getOwner().document.getElementById(data.id);
 
                 if (element && data.rootId) {
-                    const ctx = RootAPI.getAbilityHelpersContext(ah, element);
+                    const ctx = RootAPI.getTabsterContext(tabster, element);
 
                     if (!ctx || (ctx.root.uid !== data.rootId)) {
                         return null;
@@ -605,7 +608,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 const ref = elementByUId[data.uid];
                 element = ref && ref.get();
             } else if (data.observedName) {
-                element = (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.getElement(data.observedName);
+                element = (tabster as unknown as Types.TabsterInternal).observedElement!!!.getElement(data.observedName);
             }
         }
 
@@ -613,15 +616,15 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
     }
 
     static getElementData(
-        abilityHelpers: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         getOwner: Types.GetWindow,
         ownerUId: string
     ): CrossOriginElementDataOut {
-        const deloser = DeloserAPI.getDeloser(abilityHelpers, element);
-        const ctx = RootAPI.getAbilityHelpersContext(abilityHelpers, element);
-        const ah = getAbilityHelpersOnElement(abilityHelpers, element);
-        const observed = ah && ah.observed;
+        const deloser = DeloserAPI.getDeloser(tabster, element);
+        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const tabsterOnElement = getTabsterOnElement(tabster, element);
+        const observed = tabsterOnElement && tabsterOnElement.observed;
 
         return {
             uid: getElementUId(element, getOwner()),
@@ -635,7 +638,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
     }
 
     static async makeResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<CrossOriginElementDataIn | undefined, CrossOriginElementDataOut>,
         getOwner: Types.GetWindow,
         ownerUId: string,
@@ -647,9 +650,9 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         let dataOut: CrossOriginElementDataOut | undefined;
 
         if (beginData === undefined) {
-            element = ah.focusedElement.getFocusedElement();
+            element = tabster.focusedElement.getFocusedElement();
         } else if (beginData) {
-            element = GetElementTransaction.findElement(ah, getOwner, beginData) || undefined;
+            element = GetElementTransaction.findElement(tabster, getOwner, beginData) || undefined;
         }
 
         if (!element && beginData) {
@@ -665,7 +668,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                     let isForwardResolved = false;
                     let isResolved = false;
 
-                    (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.waitElement(name, timeout).then(value => {
+                    (tabster as unknown as Types.TabsterInternal).observedElement!!!.waitElement(name, timeout).then(value => {
                         isWaitElementResolved = true;
 
                         if (!isResolved && (value || isForwardResolved)) {
@@ -693,7 +696,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         }
 
         return element
-            ? GetElementTransaction.getElementData(ah, element, getOwner, ownerUId)
+            ? GetElementTransaction.getElementData(tabster, element, getOwner, ownerUId)
             : dataOut;
     }
 }
@@ -712,7 +715,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
     type = CrossOriginTransactionTypes.RestoreFocusInDeloser;
 
     static async makeResponse(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         data: Types.CrossOriginTransactionData<RestoreFocusInDeloserTransactionData, boolean>,
         getOwner: Types.GetWindow,
         ownerId: string,
@@ -725,7 +728,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
         const deloser = uid && _deloserByUId[uid];
 
         if (begin && deloser) {
-            const history = DeloserAPI.getHistory((ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
+            const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
 
             return begin.reset ? history.resetFocus(deloser) : history.focusAvailable(deloser);
         }
@@ -756,15 +759,15 @@ class CrossOriginTransactions {
     private _ownerUId: string;
     private _knownTargets: KnownTargets = {};
     private _transactions: { [id: string]: CrossOriginTransactionWrapper<any, any> } = {};
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _pingTimer: number | undefined;
     private _isDefaultSendUp = false;
     private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
     sendUp: Types.CrossOriginTransactionSend | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore, getOwner: Types.GetWindow) {
-        this._ah = ah;
+    constructor(tabster: Types.TabsterCore, getOwner: Types.GetWindow) {
+        this._tabster = tabster;
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
     }
@@ -862,13 +865,13 @@ class CrossOriginTransactions {
             return getPromise().reject();
         }
 
-        const transaction = new Transaction(this._ah, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
+        const transaction = new Transaction(this._tabster, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
         let selfResponse: ((data: Types.CrossOriginTransactionData<I, O>) => Promise<O | undefined>) | undefined;
 
-        if (Transaction.shouldSelfRespond && Transaction.shouldSelfRespond(this._ah, value, this._owner, this._ownerUId)) {
+        if (Transaction.shouldSelfRespond && Transaction.shouldSelfRespond(this._tabster, value, this._owner, this._ownerUId)) {
             selfResponse = (data: Types.CrossOriginTransactionData<I, O>) => {
                 return Transaction.makeResponse(
-                    this._ah,
+                    this._tabster,
                     data,
                     this._owner,
                     this._ownerUId,
@@ -926,7 +929,10 @@ class CrossOriginTransactions {
         const Transaction = this._getTransactionClass(data.type);
 
         if (Transaction) {
-            if ((Transaction.shouldForward === undefined) || (Transaction.shouldForward(this._ah, data, this._owner, this._ownerUId))) {
+            if (
+                (Transaction.shouldForward === undefined) ||
+                (Transaction.shouldForward(this._tabster, data, this._owner, this._ownerUId))
+            ) {
                 const sentTo = data.sentto;
 
                 if (targetId === _targetIdUp) {
@@ -938,7 +944,7 @@ class CrossOriginTransactions {
 
                 return this._beginTransaction(
                     new Transaction(
-                        this._ah,
+                        this._tabster,
                         this._owner,
                         this._knownTargets,
                         data.beginData,
@@ -977,7 +983,7 @@ class CrossOriginTransactions {
     }
 
     private _onMessage = (e: Types.CrossOriginMessage) => {
-        if ((e.data.owner === this._ownerUId) || !this._ah) {
+        if ((e.data.owner === this._ownerUId) || !this._tabster) {
             return;
         }
 
@@ -1017,7 +1023,7 @@ class CrossOriginTransactions {
             const forwardResult = this.forwardTransaction(data);
 
             if (Transaction && e.send) {
-                Transaction.makeResponse(this._ah, data, this._owner, this._ownerUId, this, forwardResult, false).then(r => {
+                Transaction.makeResponse(this._tabster, data, this._owner, this._ownerUId, this, forwardResult, false).then(r => {
                     const response: Types.CrossOriginTransactionData<any, any> = {
                         transaction: data.transaction,
                         type: data.type,
@@ -1093,7 +1099,7 @@ class CrossOriginTransactions {
                     force: true
                 });
 
-                DeloserAPI.forceRestoreFocus((this._ah as unknown as Types.AbilityHelpersInternal).deloser!!!);
+                DeloserAPI.forceRestoreFocus((this._tabster as unknown as Types.TabsterInternal).deloser!!!);
             }
         }
 
@@ -1124,7 +1130,7 @@ class CrossOriginTransactions {
 }
 
 export class CrossOriginElement implements Types.CrossOriginElement {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     readonly uid: string;
     readonly ownerId: string;
     readonly id?: string;
@@ -1133,7 +1139,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     readonly observedDetails?: string;
 
     constructor(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         uid: string,
         ownerId: string,
         id?: string,
@@ -1141,7 +1147,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
         observedName?: string,
         observedDetails?: string
     ) {
-        this._ah = ah;
+        this._tabster = tabster;
         this.uid = uid;
         this.ownerId = ownerId;
         this.id = id;
@@ -1151,7 +1157,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 
     focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean> {
-        return (this._ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!
+        return (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!
             .focusedElement.focus(this, noFocusedProgrammaticallyFlag, noAccessibleCheck);
     }
 }
@@ -1238,13 +1244,13 @@ export class CrossOriginObservedElementState
         extends Subscribable<CrossOriginElement, Types.ObservedElementBasicProps>
         implements Types.CrossOriginObservedElementState {
 
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _transactions: CrossOriginTransactions;
     private _lastRequestFocusId = 0;
 
-    constructor(ah: Types.AbilityHelpersCore, transactions: CrossOriginTransactions) {
+    constructor(tabster: Types.TabsterCore, transactions: CrossOriginTransactions) {
         super();
-        this._ah = ah;
+        this._tabster = tabster;
         this._transactions = transactions;
     }
 
@@ -1263,13 +1269,13 @@ export class CrossOriginObservedElementState
     async waitElement(observedName: string, timeout: number): Promise<CrossOriginElement | null> {
         return this._transactions.beginTransaction(GetElementTransaction, {
             observedName: observedName
-        }, timeout).then(value => value ? StateTransaction.createElement(this._ah, value) : null);
+        }, timeout).then(value => value ? StateTransaction.createElement(this._tabster, value) : null);
     }
 
     async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? (this._ah as unknown as Types.AbilityHelpersInternal).crossOrigin!!!.focusedElement.focus(element)
+            ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element)
             : false
         );
     }
@@ -1284,7 +1290,7 @@ export class CrossOriginObservedElementState
 }
 
 export class CrossOriginAPI implements Types.CrossOriginAPI {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _transactions: CrossOriginTransactions;
@@ -1293,12 +1299,12 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     focusedElement: Types.CrossOriginFocusedElementState;
     observedElement: Types.CrossOriginObservedElementState;
 
-    constructor(ah: Types.AbilityHelpersCore) {
-        this._ah = ah;
-        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
-        this._transactions = new CrossOriginTransactions(ah, this._win);
+    constructor(tabster: Types.TabsterCore) {
+        this._tabster = tabster;
+        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._transactions = new CrossOriginTransactions(tabster, this._win);
         this.focusedElement = new CrossOriginFocusedElementState(this._transactions);
-        this.observedElement = new CrossOriginObservedElementState(ah, this._transactions);
+        this.observedElement = new CrossOriginObservedElementState(tabster, this._transactions);
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
@@ -1317,21 +1323,21 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _init = (): void => {
         this._initTimer = undefined;
 
-        const ah = this._ah;
+        const tabster = this._tabster;
 
-        ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
-        ah.focusedElement.subscribe(this._onFocus);
-        (ah as unknown as Types.AbilityHelpersInternal).observedElement!!!.subscribe(this._onObserved);
+        tabster.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
+        tabster.focusedElement.subscribe(this._onFocus);
+        (tabster as unknown as Types.TabsterInternal).observedElement!!!.subscribe(this._onObserved);
 
         if (!_origOutlineSetup) {
-            _origOutlineSetup = (ah as unknown as Types.AbilityHelpersInternal).outline!!!.setup;
-            (ah as unknown as Types.AbilityHelpersInternal).outline!!!.setup = this._outlineSetup;
+            _origOutlineSetup = (tabster as unknown as Types.TabsterInternal).outline!!!.setup;
+            (tabster as unknown as Types.TabsterInternal).outline!!!.setup = this._outlineSetup;
         }
 
         this._transactions.beginTransaction(BootstrapTransaction, undefined, undefined, undefined, _targetIdUp).then(data => {
-            if (data && (this._ah.keyboardNavigation.isNavigatingWithKeyboard() !== data.isNavigatingWithKeyboard)) {
+            if (data && (this._tabster.keyboardNavigation.isNavigatingWithKeyboard() !== data.isNavigatingWithKeyboard)) {
                 _ignoreKeyboardNavigationStateUpdate = true;
-                KeyboardNavigationState.setVal(this._ah.keyboardNavigation, data.isNavigatingWithKeyboard);
+                KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, data.isNavigatingWithKeyboard);
                 _ignoreKeyboardNavigationStateUpdate = false;
             }
         });
@@ -1343,11 +1349,11 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._initTimer = undefined;
         }
 
-        const ah = this._ah;
+        const tabster = this._tabster;
 
-        ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
-        ah.focusedElement.unsubscribe(this._onFocus);
-        (ah as unknown as Types.AbilityHelpersInternal).observedElement?.unsubscribe(this._onObserved);
+        tabster.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
+        tabster.focusedElement.unsubscribe(this._onFocus);
+        (tabster as unknown as Types.TabsterInternal).observedElement?.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);
@@ -1381,7 +1387,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (element) {
             this._transactions.beginTransaction(
                 StateTransaction,
-                { ...GetElementTransaction.getElementData(this._ah, element, this._win, ownerUId), state: CrossOriginStates.Focused }
+                { ...GetElementTransaction.getElementData(this._tabster, element, this._win, ownerUId), state: CrossOriginStates.Focused }
             );
         } else {
             this._blurTimer = win.setTimeout(() => {
@@ -1404,7 +1410,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
     private _onObserved = (element: HTMLElement, details: Types.ObservedElementBasicProps): void => {
         const d = GetElementTransaction.getElementData(
-            this._ah,
+            this._tabster,
             element,
             this._win,
             getWindowUId(this._win())

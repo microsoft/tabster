@@ -1,4 +1,4 @@
-import { getCurrentAbilityHelpers, Types as AHTypes } from 'ability-helpers';
+import { getCurrentTabster, Types as TabsterTypes } from 'tabster';
 import * as React from 'react';
 
 const AccordionContext = React.createContext<Accordion | undefined>(undefined);
@@ -87,19 +87,19 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
     }
 
     private _onRef = (div: HTMLDivElement | null) => {
-        const ah = getCurrentAbilityHelpers(window);
+        const tabster = getCurrentTabster(window);
 
         if (div) {
             this._div = div;
 
-            ah?.focusable.addGroupper(div, undefined, { onChange: this._onChange });
+            tabster?.focusable.addGroupper(div, undefined, { onChange: this._onChange });
 
             if (this._accordion && !this._accordion.expandedSection) {
                 this._accordion.expandedSection = this;
                 this.setState({ isExpanded: true });
             }
         } else if (this._div) {
-            ah?.focusable.removeGroupper(this._div);
+            tabster?.focusable.removeGroupper(this._div);
 
             if (this._accordion?.expandedSection === this) {
                 this._accordion.expandedSection = undefined;
@@ -121,7 +121,7 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
         }
     }
 
-    private _onChange = (state: AHTypes.GroupperState) => {
+    private _onChange = (state: TabsterTypes.GroupperState) => {
         if (this._div && this._accordion) {
             const hasFocus = state.hasFocus || state.siblingHasFocus;
             if (this._accordion.state.hasFocus !== hasFocus) {

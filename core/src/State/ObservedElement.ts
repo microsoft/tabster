@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from '../Instance';
+import { getTabsterOnElement, setTabsterOnElement } from '../Instance';
 import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
@@ -21,7 +21,7 @@ export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
 
     private _win: Types.GetWindow;
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _waiting: {
         [name: string]: {
@@ -32,10 +32,10 @@ export class ObservedElementAPI
     } = {};
     private _lastRequestFocusId = 0;
 
-    constructor(ah: Types.AbilityHelpersCore) {
+    constructor(tabster: Types.TabsterCore) {
         super();
-        this._ah = ah;
-        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+        this._tabster = tabster;
+        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
@@ -77,50 +77,50 @@ export class ObservedElementAPI
     }
 
     add(element: HTMLElement, basic: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (ah && ah.observed) {
+        if (tabsterOnElement && tabsterOnElement.observed) {
             if (__DEV__) {
                 console.error('Element is already observed.', element);
             }
             return;
         }
 
-        setAbilityHelpersOnElement(this._ah, element, { observed: { ...basic, ...extended } });
+        setTabsterOnElement(this._tabster, element, { observed: { ...basic, ...extended } });
         this._onObservedElementUpdate(element);
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (!ah || !ah.observed) {
+        if (!tabsterOnElement || !tabsterOnElement.observed) {
             if (__DEV__) {
                 console.error('Element is not observed.', element);
             }
             return;
         }
 
-        setAbilityHelpersOnElement(this._ah, element, { observed: undefined });
+        setTabsterOnElement(this._tabster, element, { observed: undefined });
         this._onObservedElementUpdate(element);
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
-        const ahTo = getAbilityHelpersOnElement(this._ah, to);
-        const observed = ahFrom && ahFrom.observed;
+        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
+        const tabsterOnElementTo = getTabsterOnElement(this._tabster, to);
+        const observed = tabsterOnElementFrom && tabsterOnElementFrom.observed;
 
         if (observed) {
-            setAbilityHelpersOnElement(this._ah, from, { observed: undefined });
+            setTabsterOnElement(this._tabster, from, { observed: undefined });
             this._onObservedElementUpdate(from);
 
-            if (ahTo && ahTo.observed) {
+            if (tabsterOnElementTo && tabsterOnElementTo.observed) {
                 if (__DEV__) {
                     console.error('Element is already observed', to);
                 }
                 return;
             }
 
-            setAbilityHelpersOnElement(this._ah, to, { observed });
+            setTabsterOnElement(this._tabster, to, { observed });
             this._onObservedElementUpdate(to);
         } else if (__DEV__) {
             console.error('Element is not observed.', from);
@@ -132,8 +132,8 @@ export class ObservedElementAPI
         basic?: Partial<Types.ObservedElementBasicProps>,
         extended?: Partial<Types.ObservedElementExtendedProps>
     ): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        const observed = ah && ah.observed;
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const observed = tabsterOnElement && tabsterOnElement.observed;
 
         if (!observed) {
             if (__DEV__) {
@@ -142,7 +142,7 @@ export class ObservedElementAPI
             return;
         }
 
-        setAbilityHelpersOnElement(this._ah, element, { observed: { ...observed, ...basic, ...extended } });
+        setTabsterOnElement(this._tabster, element, { observed: { ...observed, ...basic, ...extended } });
         this._onObservedElementUpdate(element);
     }
 
@@ -203,14 +203,14 @@ export class ObservedElementAPI
     async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._ah.focusedElement.focus(element)
+            ? this._tabster.focusedElement.focus(element)
             : false
         );
     }
 
     private _onObservedElementUpdate(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        const observed = ah && ah.observed;
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const observed = tabsterOnElement && tabsterOnElement.observed;
         const uid = getElementUId(element, this._win());
         const isInDocument = documentContains(element.ownerDocument, element);
         let info: ObservedElementInfo | undefined = _observedById[uid];

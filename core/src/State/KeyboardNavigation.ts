@@ -12,16 +12,16 @@ const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
                              // navigation mode.
 
 export class KeyboardNavigationState extends Subscribable<boolean> implements Types.KeyboardNavigationState {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _dismissTimer: number | undefined;
     private _initTimer: number | undefined;
     private _isMouseUsed = false;
 
-    constructor(ah: Types.AbilityHelpersCore, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
 
-        this._ah = ah;
+        this._tabster = tabster;
         this._win = getWindow;
         this._initTimer = getWindow().setTimeout(this._init, 0);
     }
@@ -34,7 +34,7 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
         win.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
         win.addEventListener('keydown', this._onKeyDown, true); // Capture!
 
-        this._ah.focusedElement.subscribe(this._onFocus);
+        this._tabster.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
@@ -55,7 +55,7 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
         win.document.body.removeEventListener('mousedown', this._onMouseDown, true);
         win.removeEventListener('keydown', this._onKeyDown, true);
 
-        this._ah.focusedElement.unsubscribe(this._onFocus);
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
     }
 
     static dispose(instance: Types.KeyboardNavigationState): void {
@@ -126,12 +126,12 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
             this._dismissTimer = undefined;
         }
 
-        const was = this._ah.focusedElement.getFocusedElement();
+        const was = this._tabster.focusedElement.getFocusedElement();
 
         this._dismissTimer = win.setTimeout(() => {
             this._dismissTimer = undefined;
 
-            const cur = this._ah.focusedElement.getFocusedElement();
+            const cur = this._tabster.focusedElement.getFocusedElement();
 
             if (was && cur && (was === cur)) {
                 // Esc was pressed, currently focused element hasn't changed.

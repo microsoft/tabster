@@ -18,6 +18,9 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.json']
     },
+    stats: {
+        errorDetails:true
+    },
 
     module: {
         rules: [
@@ -29,7 +32,7 @@ module.exports = {
     plugins: [
         new webpack.DefinePlugin({
             'process.env': {
-                NODE_ENV: isDev ? "'development'" : "'production'"
+                NODE_ENV: isDev ? '"development"' : '"production"'
             },
             '__DEV__': isDev
         })

@@ -1,4 +1,4 @@
-# Ability Helpers
+# Tabster
 
 A set of tools and concepts for making a dynamic web application properly accessible and keyboard-navigable.
 

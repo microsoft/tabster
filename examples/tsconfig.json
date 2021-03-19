@@ -20,7 +20,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "ability-helpers": ["../core/src/index.ts"]
+      "tabster": ["../core/src/index.ts"]
     },
     "baseUrl": "."
   },

@@ -3,35 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import {
-    createAbilityHelpers,
-    getAbilityHelpersAttribute,
-    getCurrentAbilityHelpers,
+    createTabster,
+    getCurrentTabster,
     getDeloser,
     getModalizer,
     getOutline,
-    Types as AHTypes
-} from 'ability-helpers';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+    getTabsterAttribute,
+    Types as TabsterTypes
+} from 'tabster';
 
-const ah = createAbilityHelpers(window);
-const ahModalizer = getModalizer(ah);
-const ahDeloser = getDeloser(ah);
-const ahOutline = getOutline(ah);
-ahOutline.setup();
+const tabster = createTabster(window);
+const tabsterModalizer = getModalizer(tabster);
+const tabsterDeloser = getDeloser(tabster);
+const tabsterOutline = getOutline(tabster);
+tabsterOutline.setup();
 
 class App extends React.PureComponent {
     private _modal: Modal | undefined;
 
     render() {
         return (
-            <div { ...getAbilityHelpersAttribute({ root: {} }) }>
-                <AHExistsExample />
-                <div aria-label='Main' { ...getAbilityHelpersAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
+            <div { ...getTabsterAttribute({ root: {} }) }>
+                <TabsterExistsExample />
+                <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
                     <h1>Hello world</h1>
 
-                    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+                    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -46,9 +46,9 @@ class App extends React.PureComponent {
                         <button>tabs</button>
                     </div>
 
-                    <div { ...getAbilityHelpersAttribute({
+                    <div { ...getTabsterAttribute({
                         focusable: {
-                            mover: { navigationType: AHTypes.MoverKeys.Arrows, cyclic: true }
+                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true }
                         }
                     }) }>
                         <button>The</button>
@@ -119,8 +119,8 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
             <div
                 tabIndex={0}
                 className='item'
-                { ...getAbilityHelpersAttribute({ groupper: {
-                    isLimited: AHTypes.GroupperFocusLimits.LimitedTrapFocus
+                { ...getTabsterAttribute({ groupper: {
+                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
                 }})}
             >
                 { this.props.children
@@ -135,7 +135,7 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
     }
 }
 
-const AHExistsExample: React.FC = () => (<div>Ability Helpers instance exists on window: {getCurrentAbilityHelpers(window) ? 'true' : 'false'}</div>);
+const TabsterExistsExample: React.FC = () => (<div>Tabster instance exists on window: {getCurrentTabster(window) ? 'true' : 'false'}</div>);
 
 class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;
@@ -170,12 +170,12 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _onRef = (el: HTMLDivElement | null) => {
         if (el) {
             this._div = el;
-            ahModalizer.add(el, { id: 'modal' });
-            ahDeloser.add(el);
-            ahModalizer.focus(el);
+            tabsterModalizer.add(el, { id: 'modal' });
+            tabsterDeloser.add(el);
+            tabsterModalizer.focus(el);
         } else if (this._div) {
-            ahModalizer.remove(this._div);
-            ahDeloser.remove(this._div);
+            tabsterModalizer.remove(this._div);
+            tabsterDeloser.remove(this._div);
             this._div = undefined;
         }
     }
@@ -190,7 +190,7 @@ const FindAllExample: React.FC = () => {
     const [filtered, setFiltered] = React.useState<HTMLElement[]>([]);
     React.useEffect(() => {
         if (ref.current) {
-            const ducks = ah.focusable.findAll(ref?.current, (el: HTMLElement) => !!el.textContent?.includes('Duck'));
+            const ducks = tabster.focusable.findAll(ref?.current, (el: HTMLElement) => !!el.textContent?.includes('Duck'));
             setFiltered(ducks);
         }
     }, []);
@@ -198,7 +198,7 @@ const FindAllExample: React.FC = () => {
     return (
         <div>
             <div>Filtered ducks: {filtered.map(item => item.textContent + ', ')} </div>
-            <div ref={ref} { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+            <div ref={ref} { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
                 <button>Duck 1</button>
                 <button>Goose 1</button>
                 <button>Goose 2</button>

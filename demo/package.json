@@ -1,5 +1,5 @@
 {
-  "name": "ability-helpers-react-demo",
+  "name": "tabster-react-demo",
   "private": true,
   "version": "0.5.4",
   "description": "A demo React project",
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/ability-helpers"
+    "url": "git+https://github.com/microsoft/tabster"
   },
   "scripts": {
     "build": "npm run clean && npm run tslint && webpack",
@@ -30,7 +30,7 @@
   "dependencies": {
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
-    "ability-helpers": "^0.5.4",
+    "tabster": "^0.5.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
   }

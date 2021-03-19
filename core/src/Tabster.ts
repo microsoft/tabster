@@ -7,7 +7,7 @@ import { CrossOriginAPI } from './CrossOrigin';
 import { DeloserAPI } from './Deloser';
 import { FocusableAPI } from './Focusable';
 import { FocusedElementState } from './State/FocusedElement';
-import { updateAbilityHelpersByAttribute } from './Instance';
+import { updateTabsterByAttribute } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
 import { observeMutations } from './MutationEvent';
@@ -26,15 +26,15 @@ import {
 export { Types };
 
 /**
- * Extends Window to include an internal ability helpers instance.
+ * Extends Window to include an internal Tabster instance.
  */
-interface WindowWithAHInstance extends Window {
-    __ahInstance?: Types.AbilityHelpersCore;
+interface WindowWithTabsterInstance extends Window {
+    __tabsterInstance?: Types.TabsterCore;
 }
-class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersInternal {
-    private _storage: Types.AbilityHelpersElementStorage;
+class Tabster implements Types.TabsterCore, Types.TabsterInternal {
+    private _storage: Types.TabsterElementStorage;
     private _unobserve: (() => void) | undefined;
-    private _win: WindowWithAHInstance | undefined;
+    private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
 
@@ -56,12 +56,12 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
     observedElementDispose?: Types.DisposeFunc;
     crossOriginDispose?: Types.DisposeFunc;
 
-    constructor(win: Window, props?: Types.AbilityHelpersCoreProps) {
+    constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = {};
         this._win = win;
 
         if (win && win.document) {
-            this._unobserve = observeMutations(win.document, this, updateAbilityHelpersByAttribute);
+            this._unobserve = observeMutations(win.document, this, updateTabsterByAttribute);
         }
 
         const getWindow = this.getWindow;
@@ -126,17 +126,17 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
         clearElementCache();
         this._storage = {};
 
-        if (this._win?.__ahInstance) {
-            delete this._win?.__ahInstance;
+        if (this._win?.__tabsterInstance) {
+            delete this._win?.__tabsterInstance;
         }
         delete this._win;
     }
 
-    static dispose(instance: Types.AbilityHelpersCore): void {
-        (instance as AbilityHelpers).dispose();
+    static dispose(instance: Types.TabsterCore): void {
+        (instance as Tabster).dispose();
     }
 
-    storageEntry(uid: string, addremove?: boolean): Types.AbilityHelpersElementStorageEntry | undefined {
+    storageEntry(uid: string, addremove?: boolean): Types.TabsterElementStorageEntry | undefined {
         let entry = this._storage[uid];
 
         if (entry) {
@@ -152,29 +152,33 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
 
     getWindow = () => {
         if (!this._win) {
-            throw new Error('Using disposed AbilityHelpers.');
+            throw new Error('Using disposed Tabster.');
         }
 
         return this._win;
     }
 
-    static forceCleanup(ah: AbilityHelpers): void {
-        if (!ah._win) {
+    static forceCleanup(tabster: Tabster): void {
+        if (!tabster._win) {
             return;
         }
 
-        ah._forgetMemorizedElements.push(ah._win.document.body);
+        tabster._forgetMemorizedElements.push(tabster._win.document.body);
 
-        if (ah._forgetMemorizedTimer) {
+        if (tabster._forgetMemorizedTimer) {
             return;
         }
 
-        ah._forgetMemorizedTimer = ah._win.setTimeout(() => {
-            delete ah._forgetMemorizedTimer;
+        tabster._forgetMemorizedTimer = tabster._win.setTimeout(() => {
+            delete tabster._forgetMemorizedTimer;
 
-            for (let el: HTMLElement | undefined = ah._forgetMemorizedElements.shift(); el; el = ah._forgetMemorizedElements.shift()) {
+            for (
+                let el: HTMLElement | undefined = tabster._forgetMemorizedElements.shift();
+                el;
+                el = tabster._forgetMemorizedElements.shift()
+            ) {
                 clearElementCache(el);
-                FocusedElementState.forgetMemorized(ah.focusedElement, el);
+                FocusedElementState.forgetMemorized(tabster.focusedElement, el);
             }
         }, 0);
 
@@ -184,119 +188,119 @@ class AbilityHelpers implements Types.AbilityHelpersCore, Types.AbilityHelpersIn
 
 export { overrideBasics };
 
-export function forceCleanup(ah: AbilityHelpers): void {
+export function forceCleanup(tabster: Tabster): void {
     // The only legit case for calling this method is when you've completely removed
     // the application DOM and not going to add the new one for a while.
-    AbilityHelpers.forceCleanup(ah);
+    Tabster.forceCleanup(tabster);
 }
 
 /**
- * Creates an instance of ability helpers, returns the current window instance if it already exists.
+ * Creates an instance of Tabster, returns the current window instance if it already exists.
  */
-export function createAbilityHelpers(win: Window, props?: Types.AbilityHelpersCoreProps): Types.AbilityHelpersCore {
-    const existingAh = getCurrentAbilityHelpers(win as WindowWithAHInstance);
+export function createTabster(win: Window, props?: Types.TabsterCoreProps): Types.TabsterCore {
+    const existingAh = getCurrentTabster(win as WindowWithTabsterInstance);
     if (existingAh) {
         if (__DEV__) {
-            console.warn('Attempted to create a duplicate ability helpers instance on the window');
+            console.warn('Attempted to create a duplicate Tabster instance on the window');
         }
         return existingAh;
     }
 
-    const ah = new AbilityHelpers(win, props);
-    (win as WindowWithAHInstance).__ahInstance = ah;
-    return ah;
+    const tabster = new Tabster(win, props);
+    (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
+    return tabster;
 }
 
-export function getOutline(ah: Types.AbilityHelpersCore): Types.OutlineAPI {
-    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
 
-    if (!ahInternal.outline) {
-        const outline = new OutlineAPI(ah);
-        ahInternal.outline = outline;
-        ahInternal.outlineDispose = () => { OutlineAPI.dispose(outline); };
+    if (!tabsterInternal.outline) {
+        const outline = new OutlineAPI(tabster);
+        tabsterInternal.outline = outline;
+        tabsterInternal.outlineDispose = () => { OutlineAPI.dispose(outline); };
     }
 
-    return ahInternal.outline;
+    return tabsterInternal.outline;
 }
 
 /**
  * Creates a new new deloser instance or returns an existing one
- * @param ah Ability helpers instance
+ * @param tabster Tabster instance
  * @param props Deloser props
  */
 export function getDeloser(
-    ah: Types.AbilityHelpersCore,
+    tabster: Types.TabsterCore,
     props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
 ): Types.DeloserAPI {
-    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
 
-    if (!ahInternal.deloser) {
-        const deloser = new DeloserAPI(ah, props);
-        ahInternal.deloser = deloser;
-        ahInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
+    if (!tabsterInternal.deloser) {
+        const deloser = new DeloserAPI(tabster, props);
+        tabsterInternal.deloser = deloser;
+        tabsterInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
     }
 
-    return ahInternal.deloser;
+    return tabsterInternal.deloser;
 }
 
 /**
  * Creates a new modalizer instance or returns an existing one
- * @param ah Ability helpers instance
+ * @param tabster Tabster instance
  */
-export function getModalizer(ah: Types.AbilityHelpersCore): Types.ModalizerAPI {
-    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+export function getModalizer(tabster: Types.TabsterCore): Types.ModalizerAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
 
-    if (!ahInternal.modalizer) {
-        const modalizer = new ModalizerAPI(ah);
-        ahInternal.modalizer = modalizer;
-        ahInternal.modalizerDispose = () => { ModalizerAPI.dispose(modalizer); };
+    if (!tabsterInternal.modalizer) {
+        const modalizer = new ModalizerAPI(tabster);
+        tabsterInternal.modalizer = modalizer;
+        tabsterInternal.modalizerDispose = () => { ModalizerAPI.dispose(modalizer); };
     }
 
-    return ahInternal.modalizer;
+    return tabsterInternal.modalizer;
 }
 
-export function getObservedElement(ah: Types.AbilityHelpersCore): Types.ObservedElementAPI {
-    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+export function getObservedElement(tabster: Types.TabsterCore): Types.ObservedElementAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
 
-    if (!ahInternal.observedElement) {
-        const observedElement = new ObservedElementAPI(ah);
-        ahInternal.observedElement = observedElement;
-        ahInternal.observedElementDispose = () => { ObservedElementAPI.dispose(observedElement); };
+    if (!tabsterInternal.observedElement) {
+        const observedElement = new ObservedElementAPI(tabster);
+        tabsterInternal.observedElement = observedElement;
+        tabsterInternal.observedElementDispose = () => { ObservedElementAPI.dispose(observedElement); };
     }
 
-    return ahInternal.observedElement;
+    return tabsterInternal.observedElement;
 }
 
-export function getCrossOrigin(ah: Types.AbilityHelpersCore): Types.CrossOriginAPI {
-    const ahInternal = (ah as unknown as Types.AbilityHelpersInternal);
+export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
 
-    if (!ahInternal.crossOrigin) {
-        getDeloser(ah);
-        getOutline(ah);
-        getObservedElement(ah);
-        const crossOrigin = new CrossOriginAPI(ah);
-        ahInternal.crossOrigin = crossOrigin;
-        ahInternal.crossOriginDispose = () => { CrossOriginAPI.dispose(crossOrigin); };
+    if (!tabsterInternal.crossOrigin) {
+        getDeloser(tabster);
+        getOutline(tabster);
+        getObservedElement(tabster);
+        const crossOrigin = new CrossOriginAPI(tabster);
+        tabsterInternal.crossOrigin = crossOrigin;
+        tabsterInternal.crossOriginDispose = () => { CrossOriginAPI.dispose(crossOrigin); };
     }
 
-    return ahInternal.crossOrigin;
+    return tabsterInternal.crossOrigin;
 }
 
-export function disposeAbilityHelpers(ah: Types.AbilityHelpersCore): void {
-    AbilityHelpers.dispose(ah);
+export function disposeTabster(tabster: Types.TabsterCore): void {
+    Tabster.dispose(tabster);
 }
 
-export function getAbilityHelpersAttribute(
-    props: Types.AbilityHelpersAttributeProps | null,
+export function getTabsterAttribute(
+    props: Types.TabsterAttributeProps | null,
     plain: true
 ): string | undefined;
-export function getAbilityHelpersAttribute(
-    props: Types.AbilityHelpersAttributeProps | null, plain?: false
-): Types.AbilityHelpersDOMAttribute;
-export function getAbilityHelpersAttribute(
-    props: Types.AbilityHelpersAttributeProps | null,
+export function getTabsterAttribute(
+    props: Types.TabsterAttributeProps | null, plain?: false
+): Types.TabsterDOMAttribute;
+export function getTabsterAttribute(
+    props: Types.TabsterAttributeProps | null,
     plain?: boolean
-): Types.AbilityHelpersDOMAttribute | string | undefined {
+): Types.TabsterDOMAttribute | string | undefined {
     const attr = props === null ? undefined : JSON.stringify(props);
 
     if (plain === true) {
@@ -304,14 +308,14 @@ export function getAbilityHelpersAttribute(
     }
 
     return {
-        [Types.AbilityHelpersAttributeName]: attr
+        [Types.TabsterAttributeName]: attr
     };
 }
 
 /**
- * Returns an instance of ability helpers if it already exists on the window .
- * @param win window instance that could contain an AH instance.
+ * Returns an instance of Tabster if it already exists on the window .
+ * @param win window instance that could contain an Tabster instance.
  */
-export function getCurrentAbilityHelpers(win: Window): Types.AbilityHelpersCore | undefined {
-    return (win as WindowWithAHInstance).__ahInstance;
+export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
+    return (win as WindowWithTabsterInstance).__tabsterInstance;
 }

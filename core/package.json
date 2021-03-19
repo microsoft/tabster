@@ -1,18 +1,18 @@
 {
-  "name": "ability-helpers",
+  "name": "tabster",
   "version": "0.5.4",
-  "description": "Web application accessibility tools",
+  "description": "Focus Management Tools for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
   "main": "./dist/index.js",
-  "module": "./dist/ability-helpers.esm.js",
+  "module": "./dist/tabster.esm.js",
   "typings": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/ability-helpers"
+    "url": "git+https://github.com/microsoft/tabster"
   },
   "scripts": {
     "build": "npm run tslint && npm run clean && tsdx build",
