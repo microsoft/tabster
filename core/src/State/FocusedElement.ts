@@ -411,13 +411,10 @@ export class FocusedElementState
             }
 
             if (!isTab && ctx.mover) {
-                // Left/Right don't match vertical axis
-                if ((keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical) {
-                    return;
-                }
+                const horizontalKeysOnVerticalAxis = (keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
+                const verticalKeysOnHorizontalAxis = (keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
 
-                // Up/Down don't match horizontal axis
-                if ((keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal) {
+                if (horizontalKeysOnVerticalAxis || verticalKeysOnHorizontalAxis) {
                     return;
                 }
 
