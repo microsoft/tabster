@@ -39,9 +39,9 @@ export const ArrowNavigationCircular = () => (
 export const NestedMovers = () => (
     <div>
         <button>Tabstop</button>
-        <div style={{border: '1px solid', padding: 10}} { ...getAbilityHelpersAttribute({ focusable: { mover: { cyclic: true, navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+        <div style={{border: '1px solid', padding: 10}} { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
             <Collection />
-            <div style={{marginLeft: 10, marginTop: 10}} { ...getAbilityHelpersAttribute({ focusable: { mover: { cyclic: true, navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+            <div style={{marginLeft: 10, marginTop: 10}} { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
                 <Collection />
             </div>
         </div>
