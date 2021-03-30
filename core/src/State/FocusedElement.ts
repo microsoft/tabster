@@ -375,12 +375,24 @@ export class FocusedElementState
                 }
             }
 
-            let fromElement = (isTab && ctx.mover && ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows)
-                ? (isPrev // Find next focusable outside of the Mover container.
-                    ? this._tabster.focusable.findFirst(ctx.mover)
-                    : this._tabster.focusable.findLast(ctx.mover)
-                )
-                : curElement;
+            let fromElement: HTMLElement | null = curElement;
+
+            // If the current element is in a mover, move to the mover boundaries since a mover is considered a single tabstop
+            if (isTab && ctx.mover && ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows) {
+                // Consider nested movers a as a single tab stop, go up until there is no more mover
+                let  parentCtx: typeof ctx | undefined = ctx;
+                let rootMover = ctx.mover;
+                while (parentCtx?.mover?.parentElement) {
+                    rootMover = parentCtx.mover;
+                    parentCtx = RootAPI.getTabsterContext(this._tabster, parentCtx.mover.parentElement);
+                }
+
+                if (isPrev) {
+                    fromElement = this._tabster.focusable.findFirst(rootMover);
+                } else {
+                    fromElement = this._tabster.focusable.findLast(rootMover);
+                }
+            }
 
             if (!fromElement) {
                 return;
