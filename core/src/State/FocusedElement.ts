@@ -380,18 +380,17 @@ export class FocusedElementState
             // If the current element is in a mover, move to the mover boundaries since a mover is considered a single tabstop
             if (isTab && ctx.mover && ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows) {
                 // Consider nested movers a as a single tab stop, go up until there is no more mover
-                if (isPrev) {
-                    let  parentCtx: typeof ctx | undefined = ctx;
-                    let rootMover = ctx.mover;
-                    while (parentCtx?.mover?.parentElement) {
-                        rootMover = parentCtx.mover;
-                        parentCtx = RootAPI.getTabsterContext(this._tabster, parentCtx.mover.parentElement);
-                    }
+                let  parentCtx: typeof ctx | undefined = ctx;
+                let rootMover = ctx.mover;
+                while (parentCtx?.mover?.parentElement) {
+                    rootMover = parentCtx.mover;
+                    parentCtx = RootAPI.getTabsterContext(this._tabster, parentCtx.mover.parentElement);
+                }
 
+                if (isPrev) {
                     fromElement = this._tabster.focusable.findFirst(rootMover);
                 } else {
-                    // no need to find root since tree walking will always find the most nested mover
-                    fromElement = this._tabster.focusable.findLast(ctx.mover);
+                    fromElement = this._tabster.focusable.findLast(rootMover);
                 }
             }
 

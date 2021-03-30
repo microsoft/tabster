@@ -44,6 +44,10 @@ export const NestedMovers = () => (
             <div style={{marginLeft: 10, marginTop: 10}} { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
                 <Collection />
             </div>
+            <div style={{paddingTop: 10}}>
+                <button>In root mover</button>
+                <button>In root mover</button>
+            </div>
         </div>
         <button>Tabstop</button>
     </div>
