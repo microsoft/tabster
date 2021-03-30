@@ -390,6 +390,7 @@ export class FocusedElementState
 
                     fromElement = this._tabster.focusable.findFirst(rootMover);
                 } else {
+                    // no need to find root since tree walking will always find the most nested mover
                     fromElement = this._tabster.focusable.findLast(ctx.mover);
                 }
             }
