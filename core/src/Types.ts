@@ -263,6 +263,10 @@ export interface FocusableProps {
     isDefault?: boolean;
     isIgnored?: boolean;
     mover?: MoverOptions;
+    /**
+     * Do not determine an element's focusability based on aria-disabled
+     */
+    ignoreAriaDisabled?: boolean;
 }
 
 export interface FocusableAPI {
