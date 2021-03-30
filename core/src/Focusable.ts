@@ -975,12 +975,14 @@ export class FocusableAPI implements Types.FocusableAPI {
             newProps.isDefault = props.isDefault;
             newProps.isIgnored = props.isIgnored;
             newProps.mover = props.mover;
+            newProps.ignoreAriaDisabled = props.ignoreAriaDisabled;
         }
 
         if (
             (curProps.isDefault !== newProps.isDefault) ||
             (curProps.isIgnored !== newProps.isIgnored) ||
-            (curProps.mover !== newProps.mover)
+            (curProps.mover !== newProps.mover) || 
+            (curProps.ignoreAriaDisabled!== newProps.ignoreAriaDisabled)
         ) {
             setTabsterOnElement(this._tabster, element, { focusable: newProps });
         }
@@ -1043,8 +1045,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (attrVal && (attrVal.toLowerCase() === 'true')) {
                 return false;
             }
-
-            attrVal = e.getAttribute('aria-disabled');
 
             if (attrVal && (attrVal.toLowerCase() === 'true')) {
                 return false;
