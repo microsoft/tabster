@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getCurrentAbilityHelpers } from 'ability-helpers';
+import { getCurrentTabster } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
@@ -9,8 +9,8 @@ export default {
 export const KeyboardNavigationState = () => {
     const [message, setMessage] = React.useState('undetermined');
     const onFocus = () => {
-        const ah = getCurrentAbilityHelpers(window);
-        const isKeyboard = ah?.keyboardNavigation.isNavigatingWithKeyboard();
+        const tabster = getCurrentTabster(window);
+        const isKeyboard = tabster?.keyboardNavigation.isNavigatingWithKeyboard();
         if (isKeyboard) {
             setMessage('keyboard')
         } else {

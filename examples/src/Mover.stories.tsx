@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getAbilityHelpersAttribute, Types as AHTypes } from 'ability-helpers';
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
@@ -25,13 +25,13 @@ const Collection = () => (
 )
 
 export const ArrowNavigation = () => (
-    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
         <Collection />
     </div>
 );
 
 export const ArrowNavigationCircular = () => (
-    <div { ...getAbilityHelpersAttribute({ focusable: { mover: { cyclic: true, navigationType: AHTypes.MoverKeys.Arrows } } }) }>
+    <div { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
         <Collection />
     </div>
 );

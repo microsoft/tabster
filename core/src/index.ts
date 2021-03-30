@@ -4,16 +4,16 @@
  */
 
 export {
-    createAbilityHelpers,
-    disposeAbilityHelpers,
+    createTabster,
+    disposeTabster,
     forceCleanup,
-    getAbilityHelpersAttribute,
+    getTabsterAttribute,
     getCrossOrigin,
     getDeloser,
     getModalizer,
     getObservedElement,
     getOutline,
-    getCurrentAbilityHelpers,
+    getCurrentTabster,
     overrideBasics,
     Types
-} from './AbilityHelpers';
+} from './Tabster';

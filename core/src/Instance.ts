@@ -6,16 +6,16 @@
 import * as Types from './Types';
 import { getElementUId, HTMLElementWithUID } from './Utils';
 
-export function setAbilityHelpersOnElement(
-    abilityHelpers: Types.AbilityHelpersCore,
+export function setTabsterOnElement(
+    tabster: Types.TabsterCore,
     element: HTMLElementWithUID,
-    helpers: Partial<Types.AbilityHelpersOnElement>
+    tabsterOnElement: Partial<Types.TabsterOnElement>
 ): void {
-    let uid = element.__ahElementUID;
-    let entry = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid) : undefined;
-    const cur = (entry?.ah || {}) as Types.AbilityHelpersOnElement;
+    let uid = element.__tabsterElementUID;
+    let entry = uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid) : undefined;
+    const cur = (entry?.tabster || {}) as Types.TabsterOnElement;
     const attr = entry?.attr;
-    let attrObject: Types.AbilityHelpersAttributeProps;
+    let attrObject: Types.TabsterAttributeProps;
 
     if (attr) {
         attrObject = attr.object;
@@ -23,8 +23,8 @@ export function setAbilityHelpersOnElement(
         attrObject = {};
     }
 
-    Object.keys(helpers).forEach((key: keyof Types.AbilityHelpersOnElement) => {
-        const h = helpers[key];
+    Object.keys(tabsterOnElement).forEach((key: keyof Types.TabsterOnElement) => {
+        const h = tabsterOnElement[key];
 
         if (h === undefined) {
             if (cur) {
@@ -34,68 +34,68 @@ export function setAbilityHelpersOnElement(
         } else {
             switch (key) {
                 case 'deloser':
-                    cur[key] = helpers.deloser;
+                    cur[key] = tabsterOnElement.deloser;
                     attrObject[key] = (h as Types.Deloser).getBasicProps();
                     break;
 
                 case 'root':
-                    cur[key] = helpers.root;
+                    cur[key] = tabsterOnElement.root;
                     attrObject[key] = (h as Types.Root).getBasicProps();
                     break;
 
                 case 'modalizer':
-                    cur[key] = helpers.modalizer;
+                    cur[key] = tabsterOnElement.modalizer;
                     attrObject[key] = (h as Types.Modalizer).getBasicProps();
                     break;
 
                 case 'focusable':
-                    cur[key] = attrObject[key] = helpers.focusable;
+                    cur[key] = attrObject[key] = tabsterOnElement.focusable;
                     break;
 
                 case 'groupper':
-                    cur[key] = helpers.groupper;
+                    cur[key] = tabsterOnElement.groupper;
                     attrObject[key] = (h as Types.Groupper).getBasicProps();
                     break;
 
                 case 'uberGroupper':
-                    cur[key] = helpers.uberGroupper;
+                    cur[key] = tabsterOnElement.uberGroupper;
                     attrObject[key] = true;
                     break;
 
                 case 'observed':
-                    cur[key] = attrObject[key] = helpers.observed;
+                    cur[key] = attrObject[key] = tabsterOnElement.observed;
                     break;
 
                 case 'outline':
-                    cur[key] = attrObject[key] = helpers.outline;
+                    cur[key] = attrObject[key] = tabsterOnElement.outline;
                     break;
 
                 default:
-                    throw new Error('Unknown helper.');
+                    throw new Error('Unknown Tabster part.');
             }
         }
     });
 
     if (Object.keys(cur).length === 0) {
         if (uid && entry) {
-            delete entry.ah;
+            delete entry.tabster;
             delete entry.attr;
-            (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, false);
+            (tabster as unknown as Types.TabsterInternal).storageEntry(uid, false);
         }
 
-        element.removeAttribute(Types.AbilityHelpersAttributeName);
+        element.removeAttribute(Types.TabsterAttributeName);
     } else {
         const attrStr = JSON.stringify(attrObject);
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
+                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
             }
 
-            entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+            entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
         }
 
-        entry.ah = cur;
+        entry.tabster = cur;
         entry.attr = {
             string: attrStr,
             object: attrObject,
@@ -103,38 +103,38 @@ export function setAbilityHelpersOnElement(
         };
 
         if (!attr || (attr.string !== attrStr)) {
-            element.setAttribute(Types.AbilityHelpersAttributeName, entry.attr.string);
+            element.setAttribute(Types.TabsterAttributeName, entry.attr.string);
         }
 
         entry.attr.changing = false;
     }
 }
 
-export function getAbilityHelpersOnElement(
-    abilityHelpers: Types.AbilityHelpersCore,
+export function getTabsterOnElement(
+    tabster: Types.TabsterCore,
     element: Node
-): Types.AbilityHelpersOnElement | undefined {
-    const uid = (element as HTMLElementWithUID).__ahElementUID;
-    return uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid)?.ah : undefined;
+): Types.TabsterOnElement | undefined {
+    const uid = (element as HTMLElementWithUID).__tabsterElementUID;
+    return uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid)?.tabster : undefined;
 }
 
-export function updateAbilityHelpersByAttribute(
-    abilityHelpers: Types.AbilityHelpersCore,
+export function updateTabsterByAttribute(
+    tabster: Types.TabsterCore,
     element: HTMLElementWithUID
 ): void {
-    const newAttrValue = element.getAttribute(Types.AbilityHelpersAttributeName);
-    const ahi = (abilityHelpers as unknown as Types.AbilityHelpersInternal);
+    const newAttrValue = element.getAttribute(Types.TabsterAttributeName);
+    const tabsteri = (tabster as unknown as Types.TabsterInternal);
 
-    let uid = element.__ahElementUID;
-    let entry = uid ? ahi.storageEntry(uid) : undefined;
+    let uid = element.__tabsterElementUID;
+    let entry = uid ? tabsteri.storageEntry(uid) : undefined;
 
     let newAttr = entry?.attr;
-    const elementAH = entry?.ah;
+    const tabsterOnElement = entry?.tabster;
 
     if (newAttrValue) {
         if (newAttrValue !== (newAttr && newAttr.string)) {
             try {
-                const newValue = JSON.parse(newAttrValue) as Types.AbilityHelpersAttributeProps;
+                const newValue = JSON.parse(newAttrValue) as Types.TabsterAttributeProps;
 
                 if (typeof newValue !== 'object') {
                     throw new Error(`Value is not a JSON object, got '${ newAttrValue }'.`);
@@ -151,105 +151,105 @@ export function updateAbilityHelpersByAttribute(
                 }
             }
         }
-    } else if (elementAH) {
+    } else if (tabsterOnElement) {
         newAttr = undefined;
     }
 
     const oldObject = entry?.attr?.object || {};
     const newObject = (newAttr && newAttr.object) || {};
 
-    for (let key of Object.keys(oldObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
+    for (let key of Object.keys(oldObject) as (keyof Types.TabsterAttributeProps)[]) {
         if (!newObject[key]) {
             switch (key) {
                 case 'deloser':
-                    if (ahi.deloser) {
-                        ahi.deloser.remove(element);
+                    if (tabsteri.deloser) {
+                        tabsteri.deloser.remove(element);
                     }
                     break;
 
                 case 'root':
-                    abilityHelpers.root.remove(element);
+                    tabster.root.remove(element);
                     break;
 
                 case 'modalizer':
-                    if (ahi.modalizer) {
-                        ahi.modalizer.remove(element);
+                    if (tabsteri.modalizer) {
+                        tabsteri.modalizer.remove(element);
                     }
                     break;
 
                 case 'focusable':
-                    abilityHelpers.focusable.setProps(element, null);
+                    tabster.focusable.setProps(element, null);
                     break;
 
                 case 'groupper':
-                    abilityHelpers.focusable.removeGroupper(element);
+                    tabster.focusable.removeGroupper(element);
                     break;
 
                 case 'uberGroupper':
                     break;
 
                 case 'observed':
-                    if (ahi.observedElement) {
-                        ahi.observedElement.remove(element);
+                    if (tabsteri.observedElement) {
+                        tabsteri.observedElement.remove(element);
                     }
                     break;
 
                 case 'outline':
-                    if (ahi.outline) {
-                        ahi.outline.setProps(element, null);
+                    if (tabsteri.outline) {
+                        tabsteri.outline.setProps(element, null);
                     }
                     break;
             }
         }
     }
 
-    for (let key of Object.keys(newObject) as (keyof Types.AbilityHelpersAttributeProps)[]) {
+    for (let key of Object.keys(newObject) as (keyof Types.TabsterAttributeProps)[]) {
         switch (key) {
             case 'deloser':
-                if (elementAH && elementAH.deloser) {
-                    elementAH.deloser.setProps(newObject.deloser);
+                if (tabsterOnElement && tabsterOnElement.deloser) {
+                    tabsterOnElement.deloser.setProps(newObject.deloser);
                 } else {
-                    if (ahi.deloser) {
-                        ahi.deloser.add(element, newObject.deloser);
+                    if (tabsteri.deloser) {
+                        tabsteri.deloser.add(element, newObject.deloser);
                     }
 
-                    if (!ahi.deloser && __DEV__) {
+                    if (!tabsteri.deloser && __DEV__) {
                         console.error('Deloser API used before initializing, please call `getDeloser`');
                     }
                 }
                 break;
 
             case 'root':
-                if (elementAH && elementAH.root) {
-                    elementAH.root.setProps(newObject.root);
+                if (tabsterOnElement && tabsterOnElement.root) {
+                    tabsterOnElement.root.setProps(newObject.root);
                 } else {
-                    abilityHelpers.root.add(element);
+                    tabster.root.add(element);
                 }
                 break;
 
             case 'modalizer':
-                if (elementAH && elementAH.modalizer) {
-                    elementAH.modalizer.setProps(newObject.modalizer);
+                if (tabsterOnElement && tabsterOnElement.modalizer) {
+                    tabsterOnElement.modalizer.setProps(newObject.modalizer);
                 } else {
-                    if (ahi.modalizer) {
-                        ahi.modalizer.add(element, newObject.modalizer!!!);
+                    if (tabsteri.modalizer) {
+                        tabsteri.modalizer.add(element, newObject.modalizer!!!);
                     }
 
-                    if (!ahi.modalizer && __DEV__) {
+                    if (!tabsteri.modalizer && __DEV__) {
                         console.error('Modalizer API used before initializing, please call `getDeloser`');
                     }
                 }
                 break;
 
             case 'focusable':
-                abilityHelpers.focusable.setProps(element, newObject.focusable || null);
+                tabster.focusable.setProps(element, newObject.focusable || null);
                 break;
 
             case 'groupper':
-                if (elementAH && elementAH.groupper) {
-                    elementAH.groupper.setProps(newObject.groupper);
+                if (tabsterOnElement && tabsterOnElement.groupper) {
+                    tabsterOnElement.groupper.setProps(newObject.groupper);
                 } else {
-                    abilityHelpers.focusable.addGroupper(element, newObject.groupper);
+                    tabster.focusable.addGroupper(element, newObject.groupper);
                 }
                 break;
 
@@ -257,24 +257,24 @@ export function updateAbilityHelpersByAttribute(
                 break;
 
             case 'observed':
-                if (ahi.observedElement) {
-                    if (elementAH && elementAH.observed) {
-                        ahi.observedElement.setProps(element, newObject.observed);
+                if (tabsteri.observedElement) {
+                    if (tabsterOnElement && tabsterOnElement.observed) {
+                        tabsteri.observedElement.setProps(element, newObject.observed);
                     } else {
-                        ahi.observedElement.add(element, newObject.observed);
+                        tabsteri.observedElement.add(element, newObject.observed);
                     }
                 }
                 break;
 
             case 'outline':
-                if (ahi.outline) {
-                    ahi.outline.setProps(element, newObject.outline || null);
+                if (tabsteri.outline) {
+                    tabsteri.outline.setProps(element, newObject.outline || null);
                 }
                 break;
 
             default:
                 delete newObject[key];
-                console.error(`Unknown key '${ key }' in data-ah attribute value.`);
+                console.error(`Unknown key '${ key }' in data-tabster attribute value.`);
         }
     }
 
@@ -285,16 +285,16 @@ export function updateAbilityHelpersByAttribute(
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
+                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
             }
 
-            entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+            entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
         }
 
         entry.attr = newAttr;
 
         if (newAttr.string !== newAttrValue) {
-            element.setAttribute(Types.AbilityHelpersAttributeName, newAttr.string);
+            element.setAttribute(Types.TabsterAttributeName, newAttr.string);
         }
 
         newAttr.changing = false;
@@ -302,13 +302,13 @@ export function updateAbilityHelpersByAttribute(
 }
 
 export function augmentAttribute(
-    abilityHelpers: Types.AbilityHelpersCore,
+    tabster: Types.TabsterCore,
     element: HTMLElementWithUID,
     name: string,
     value?: string | null // Restore original value when undefined.
 ): void {
-    const uid = getElementUId(element, (abilityHelpers as unknown as Types.AbilityHelpersInternal).getWindow());
-    let entry = (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, true)!;
+    const uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+    let entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
 
     if (!entry.aug) {
         if (value === undefined) {
@@ -344,6 +344,6 @@ export function augmentAttribute(
 
     if ((value === undefined) && (Object.keys(entry.aug).length === 0)) {
         delete entry.aug;
-        (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid, false);
+        (tabster as unknown as Types.TabsterInternal).storageEntry(uid, false);
     }
 }

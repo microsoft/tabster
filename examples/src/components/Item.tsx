@@ -1,4 +1,4 @@
-import { getAbilityHelpersAttribute, Types as AHTypes } from 'ability-helpers';
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 import * as React from 'react';
 
 export class Item extends React.PureComponent<{ onClick?: () => void}> {
@@ -7,8 +7,8 @@ export class Item extends React.PureComponent<{ onClick?: () => void}> {
             <div
                 tabIndex={0}
                 className='item'
-                { ...getAbilityHelpersAttribute({ groupper: {
-                    isLimited: AHTypes.GroupperFocusLimits.LimitedTrapFocus
+                { ...getTabsterAttribute({ groupper: {
+                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
                 }})}
             >
                 { this.props.children

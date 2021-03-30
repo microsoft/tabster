@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Types } from './AbilityHelpers';
+import { Types } from './Tabster';
 import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
-    __ahCacheId?: string;
+    __tabsterCacheId?: string;
 }
 
 interface FocusedElementWithIgnoreFlag extends HTMLElement {
@@ -20,18 +20,18 @@ const _basics: Types.InternalBasics = {
 };
 
 export interface WindowWithUID extends Window {
-    __ahCrossOriginWindowUID?: string;
+    __tabsterCrossOriginWindowUID?: string;
 }
 
 export interface HTMLElementWithUID extends HTMLElement {
-    __ahElementUID?: string;
+    __tabsterElementUID?: string;
 }
 
 export interface CustomFocusFunctionWithOriginal {
-    __ahFocus?: (options?: FocusOptions | undefined) => void;
+    __tabsterFocus?: (options?: FocusOptions | undefined) => void;
 }
 
-export interface AHDOMRect {
+export interface TabsterDOMRect {
     bottom: number;
     left: number;
     right: number;
@@ -41,11 +41,11 @@ export interface AHDOMRect {
 let _isBrokenIE11: boolean;
 let _WeakRef: WeakRefConstructor | undefined;
 
-let _containerBoundingRectCache: { [id: string]: { rect: AHDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
+let _containerBoundingRectCache: { [id: string]: { rect: TabsterDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
 let _lastContainerBoundingRectCacheId = 0;
 let _containerBoundingRectCacheTimer: number | undefined;
 
-let _weakElementStorage: { [id: string]: AHWeakRef; } = {};
+let _weakElementStorage: { [id: string]: TabsterWeakRef; } = {};
 let _lastWeakElementId = 0;
 let _weakCleanupTimer: number | undefined;
 let _weakCleanupStarted = false;
@@ -78,11 +78,11 @@ try {
     _isBrokenIE11 = true;
 }
 
-interface AHWeakRef {
+interface TabsterWeakRef {
     deref(): HTMLElement | undefined;
 }
 
-class FakeWeakRef implements AHWeakRef {
+class FakeWeakRef implements TabsterWeakRef {
     private _target: HTMLElement | undefined;
 
     constructor(target: HTMLElement) {
@@ -191,8 +191,8 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
 
-export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): AHDOMRect {
-    let cacheId = element.__ahCacheId;
+export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): TabsterDOMRect {
+    let cacheId = element.__tabsterCacheId;
     let cached = cacheId ? _containerBoundingRectCache[cacheId] : undefined;
 
     if (cached) {
@@ -229,7 +229,7 @@ export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): AH
 
     if (!cacheId) {
         cacheId = 'r-' + ++_lastContainerBoundingRectCacheId;
-        element.__ahCacheId = cacheId;
+        element.__tabsterCacheId = cacheId;
     }
 
     _containerBoundingRectCache[cacheId] = {
@@ -242,7 +242,7 @@ export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): AH
             _containerBoundingRectCacheTimer = undefined;
 
             for (let cId of Object.keys(_containerBoundingRectCache)) {
-                delete _containerBoundingRectCache[cId].element.__ahCacheId;
+                delete _containerBoundingRectCache[cId].element.__tabsterCacheId;
             }
 
             _containerBoundingRectCache = {};
@@ -339,8 +339,8 @@ export function shouldIgnoreFocus(element: HTMLElement): boolean {
 export function callOriginalFocusOnly(element: HTMLElement): void {
     const focus = element.focus as CustomFocusFunctionWithOriginal;
 
-    if (focus.__ahFocus) {
-        focus.__ahFocus.call(element);
+    if (focus.__tabsterFocus) {
+        focus.__tabsterFocus.call(element);
     } else {
         element.focus();
     }
@@ -374,10 +374,10 @@ export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
 }
 
 export function getElementUId(element: HTMLElementWithUID, win: Window): string {
-    let uid = element.__ahElementUID;
+    let uid = element.__tabsterElementUID;
 
     if (!uid) {
-        uid = element.__ahElementUID = getUId(win);
+        uid = element.__tabsterElementUID = getUId(win);
     }
 
     if (!elementByUId[uid] && documentContains(element.ownerDocument, element)) {
@@ -388,10 +388,10 @@ export function getElementUId(element: HTMLElementWithUID, win: Window): string 
 }
 
 export function getWindowUId(win: WindowWithUID): string {
-    let uid = win.__ahCrossOriginWindowUID;
+    let uid = win.__tabsterCrossOriginWindowUID;
 
     if (!uid) {
-        uid = win.__ahCrossOriginWindowUID = getUId(win);
+        uid = win.__tabsterCrossOriginWindowUID = getUId(win);
     }
 
     return uid;

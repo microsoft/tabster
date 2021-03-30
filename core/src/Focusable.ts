@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
+import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
@@ -29,7 +29,7 @@ let _currentGrouppers: typeof _focusedGrouppers = {};
 export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
 
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
 
@@ -59,13 +59,13 @@ export class UberGroupper implements Types.UberGroupper {
 
     readonly id: string;
 
-    constructor(ah: Types.AbilityHelpersCore, element: HTMLElement, getWindow: Types.GetWindow) {
-        this._ah = ah;
+    constructor(tabster: Types.TabsterCore, element: HTMLElement, getWindow: Types.GetWindow) {
+        this._tabster = tabster;
         this._win = getWindow;
         this._element = new WeakHTMLElement(element);
         this.id = 'fgc' + ++_lastId;
 
-        setAbilityHelpersOnElement(ah, element, {
+        setTabsterOnElement(tabster, element, {
             uberGroupper: this
         });
 
@@ -90,7 +90,7 @@ export class UberGroupper implements Types.UberGroupper {
         const e = this._element.get();
 
         if (e) {
-            setAbilityHelpersOnElement(this._ah, e, { uberGroupper: undefined });
+            setTabsterOnElement(this._tabster, e, { uberGroupper: undefined });
         }
 
         delete UberGroupper._containers[this.id];
@@ -262,19 +262,19 @@ export class UberGroupper implements Types.UberGroupper {
         }
 
         for (let e = element.firstElementChild; e; e = e.nextElementSibling) {
-            const ah = getAbilityHelpersOnElement(this._ah, e);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (ah && ah.groupper && (ah.groupper.id in this._grouppers)) {
-                this._first = ah.groupper;
+            if (tabsterOnElement && tabsterOnElement.groupper && (tabsterOnElement.groupper.id in this._grouppers)) {
+                this._first = tabsterOnElement.groupper;
                 break;
             }
         }
 
         for (let e = element.lastElementChild; e; e = e.previousElementSibling) {
-            const ah = getAbilityHelpersOnElement(this._ah, e);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (ah && ah.groupper && (ah.groupper.id in this._grouppers)) {
-                this._last = ah.groupper;
+            if (tabsterOnElement && tabsterOnElement.groupper && (tabsterOnElement.groupper.id in this._grouppers)) {
+                this._last = tabsterOnElement.groupper;
                 break;
             }
         }
@@ -291,19 +291,19 @@ export class UberGroupper implements Types.UberGroupper {
 
         if (curElement && (curElement.parentElement === this._element.get())) {
             for (let e = curElement.previousElementSibling; e; e = e.previousElementSibling) {
-                const ah = getAbilityHelpersOnElement(this._ah, e);
+                const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-                if (ah && ah.groupper) {
-                    this._prev = ah.groupper;
+                if (tabsterOnElement && tabsterOnElement.groupper) {
+                    this._prev = tabsterOnElement.groupper;
                     break;
                 }
             }
 
             for (let e = curElement.nextElementSibling; e; e = e.nextElementSibling) {
-                const ah = getAbilityHelpersOnElement(this._ah, e);
+                const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-                if (ah && ah.groupper) {
-                    this._next = ah.groupper;
+                if (tabsterOnElement && tabsterOnElement.groupper) {
+                    this._next = tabsterOnElement.groupper;
                     break;
                 }
             }
@@ -383,10 +383,10 @@ export class UberGroupper implements Types.UberGroupper {
 
         if (updateParents) {
             for (let e = element.parentElement; e; e = e.parentElement) {
-                const ah = getAbilityHelpersOnElement(this._ah, e);
+                const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-                if (ah && ah.uberGroupper) {
-                    (ah.uberGroupper as UberGroupper)._updateVisible(false);
+                if (tabsterOnElement && tabsterOnElement.uberGroupper) {
+                    (tabsterOnElement.uberGroupper as UberGroupper)._updateVisible(false);
                 }
             }
         }
@@ -440,7 +440,7 @@ export class UberGroupper implements Types.UberGroupper {
 }
 
 export class Groupper implements Types.Groupper {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
     private _container: Types.UberGroupper | undefined;
@@ -450,20 +450,20 @@ export class Groupper implements Types.Groupper {
     readonly id: string;
 
     constructor(
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         getWindow: Types.GetWindow,
         basic?: Types.GroupperBasicProps,
         extended?: Types.GroupperExtendedProps
     ) {
-        this._ah = ah;
+        this._tabster = tabster;
         this._win = getWindow;
         this._element = new WeakHTMLElement(element);
         this._basic = basic || {};
         this._extended = extended || {};
         this.id = 'fg' + ++_lastId;
 
-        setAbilityHelpersOnElement(this._ah, element, {
+        setTabsterOnElement(this._tabster, element, {
             groupper: this
         });
 
@@ -480,7 +480,7 @@ export class Groupper implements Types.Groupper {
         const element = this._element.get();
 
         if (element) {
-            setAbilityHelpersOnElement(this._ah, element, {
+            setTabsterOnElement(this._tabster, element, {
                 groupper: undefined
             });
         }
@@ -578,12 +578,12 @@ export class Groupper implements Types.Groupper {
         let container: Types.UberGroupper | undefined;
 
         if (containerElement) {
-            const cAh = getAbilityHelpersOnElement(this._ah, containerElement);
+            const containerTabsterOnElement = getTabsterOnElement(this._tabster, containerElement);
 
-            container = cAh && cAh.uberGroupper;
+            container = containerTabsterOnElement && containerTabsterOnElement.uberGroupper;
 
             if (!container && !remove) {
-                container = new UberGroupper(this._ah, containerElement, this._win);
+                container = new UberGroupper(this._tabster, containerElement, this._win);
             }
         }
 
@@ -600,14 +600,14 @@ export class Groupper implements Types.Groupper {
 }
 
 export class FocusableAPI implements Types.FocusableAPI {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
 
-    constructor(ah: Types.AbilityHelpersCore, getWindow: Types.GetWindow) {
-        this._ah = ah;
+    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
+        this._tabster = tabster;
         this._win = getWindow;
         this._initTimer = getWindow().setTimeout(this._init, 0);
     }
@@ -620,7 +620,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         win.addEventListener('scroll', this._onScroll, true);
 
-        this._ah.focusedElement.subscribe(this._onFocus);
+        this._tabster.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
@@ -639,7 +639,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         win.removeEventListener('scroll', this._onScroll, true);
 
-        this._ah.focusedElement.unsubscribe(this._onFocus);
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         this._scrollTargets = [];
     }
@@ -649,7 +649,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _getBody(): HTMLElement | undefined {
-        const last = this._ah.focusedElement.getLastFocusedElement();
+        const last = this._tabster.focusedElement.getLastFocusedElement();
 
         if (last && last.ownerDocument) {
             return last.ownerDocument.body;
@@ -672,10 +672,10 @@ export class FocusableAPI implements Types.FocusableAPI {
         const newFocusedGrouppers: typeof _focusedGrouppers = {};
 
         for (let el = element; el; el = el.parentElement) {
-            const ah = getAbilityHelpersOnElement(this._ah, el);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, el);
 
-            if (ah && ah.groupper) {
-                newFocusedGrouppers[ah.groupper.id] = ah.groupper;
+            if (tabsterOnElement && tabsterOnElement.groupper) {
+                newFocusedGrouppers[tabsterOnElement.groupper.id] = tabsterOnElement.groupper;
             }
         }
 
@@ -750,26 +750,26 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _getGroupFirst(groupElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
-        return this._ah.focusable.isFocusable(groupElement)
+        return this._tabster.focusable.isFocusable(groupElement)
             ? groupElement
-            : this._ah.focusable.findFirst(groupElement, false, false, ignoreGroupper);
+            : this._tabster.focusable.findFirst(groupElement, false, false, ignoreGroupper);
     }
 
     addGroupper(element: HTMLElement, basic?: Types.GroupperBasicProps, extended?: Types.GroupperExtendedProps): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (ah && ah.groupper) {
+        if (tabsterOnElement && tabsterOnElement.groupper) {
             throw new Error('The element already has a focus group');
         }
 
-        const groupper = new Groupper(this._ah, element, this._win, basic, extended);
+        const groupper = new Groupper(this._tabster, element, this._win, basic, extended);
 
         dispatchMutationEvent(element, { groupper });
     }
 
     removeGroupper(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        const groupper = ah && ah.groupper;
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const groupper = tabsterOnElement && tabsterOnElement.groupper;
 
         if (groupper) {
             groupper.dispose();
@@ -780,8 +780,8 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     moveGroupper(from: HTMLElement, to: HTMLElement): void {
         if (from !== to) {
-            const ahFrom = getAbilityHelpersOnElement(this._ah, from);
-            const groupper = ahFrom && ahFrom.groupper;
+            const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
+            const groupper = tabsterOnElementFrom && tabsterOnElementFrom.groupper;
 
             if (groupper) {
                 groupper.moveTo(to);
@@ -876,10 +876,10 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     private _findGroupper(element: HTMLElement): Types.Groupper | null {
         for (let el = element as HTMLElement | null; el; el = el.parentElement) {
-            const ah = getAbilityHelpersOnElement(this._ah, el);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, el);
 
-            if (ah && ah.groupper) {
-                return ah.groupper;
+            if (tabsterOnElement && tabsterOnElement.groupper) {
+                return tabsterOnElement.groupper;
             }
         }
 
@@ -900,15 +900,19 @@ export class FocusableAPI implements Types.FocusableAPI {
         const containerElement = cur && cur.parentElement;
 
         if (cur && containerElement) {
-            const ah = getAbilityHelpersOnElement(this._ah, containerElement);
-            const container = ah && ah.uberGroupper;
+            const tabsterOnElement = getTabsterOnElement(this._tabster, containerElement);
+            const container = tabsterOnElement && tabsterOnElement.uberGroupper;
 
             if (container) {
                 for (let el = next(container, cur); el; el = next(container, cur, el)) {
-                    const gAh = getAbilityHelpersOnElement(this._ah, el);
+                    const groupperTabsterOnElement = getTabsterOnElement(this._tabster, el);
 
-                    if (gAh && gAh.groupper && (ignoreModalizer || this.isAccessible(el as HTMLElement))) {
-                        if (!this._ah.focusable.isFocusable(el) && !this._ah.focusable.findFirst(el, false, false, true)) {
+                    if (
+                        groupperTabsterOnElement &&
+                        groupperTabsterOnElement.groupper &&
+                        (ignoreModalizer || this.isAccessible(el as HTMLElement))
+                    ) {
+                        if (!this._tabster.focusable.isFocusable(el) && !this._tabster.focusable.findFirst(el, false, false, true)) {
                             continue;
                         }
 
@@ -958,13 +962,13 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     getProps(element: HTMLElement): Types.FocusableProps {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        return (ah && ah.focusable) || {};
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        return (tabsterOnElement && tabsterOnElement.focusable) || {};
     }
 
     setProps(element: HTMLElement, props: Partial<Types.FocusableProps> | null): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        const curProps: Types.FocusableProps = (ah && ah.focusable) || {};
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const curProps: Types.FocusableProps = (tabsterOnElement && tabsterOnElement.focusable) || {};
         const newProps: Types.FocusableProps = {};
 
         if (props) {
@@ -978,7 +982,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             (curProps.isIgnored !== newProps.isIgnored) ||
             (curProps.mover !== newProps.mover)
         ) {
-            setAbilityHelpersOnElement(this._ah, element, { focusable: newProps });
+            setTabsterOnElement(this._tabster, element, { focusable: newProps });
         }
     }
 
@@ -1028,9 +1032,9 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     isAccessible(el: HTMLElement): boolean {
         for (let e: (HTMLElement | null) = el; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(this._ah, e);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (ah && ah.modalizer && !ah.modalizer.isActive()) {
+            if (tabsterOnElement && tabsterOnElement.modalizer && !tabsterOnElement.modalizer.isActive()) {
                 return true;
             }
 
@@ -1129,7 +1133,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreModalizer,
             ignoreGroupper,
             false,
-            el => (this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable) && !!this.getProps(el).isDefault)
+            el => (this._tabster.focusable.isFocusable(el, includeProgrammaticallyFocusable) && !!this.getProps(el).isDefault)
         );
     }
 
@@ -1152,7 +1156,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         skipDefaultCondition?: boolean
     ): HTMLElement[] {
         const acceptCondition = (el: HTMLElement): boolean => {
-            const defaultCheck = this._ah.focusable.isFocusable(
+            const defaultCheck = this._tabster.focusable.isFocusable(
                 el,
                 includeProgrammaticallyFocusable
             );
@@ -1210,7 +1214,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (!acceptCondition) {
-            acceptCondition = el => this._ah.focusable.isFocusable(el, includeProgrammaticallyFocusable);
+            acceptCondition = el => this._tabster.focusable.isFocusable(el, includeProgrammaticallyFocusable);
         }
 
         const walker = createElementTreeWalker(
@@ -1252,7 +1256,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): number {
-        const ctx = RootAPI.getAbilityHelpersContext(this._ah, element);
+        const ctx = RootAPI.getTabsterContext(this._tabster, element);
         const currentModalizerId = ctx && ctx.root.getCurrentModalizerId();
 
         if (ignoreModalizer || (!ctx || !ctx.modalizer) ||

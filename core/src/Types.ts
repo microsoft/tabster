@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export const AbilityHelpersAttributeName = 'data-ah';
+export const TabsterAttributeName = 'data-tabster';
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;
     WeakRef?: WeakRefConstructor;
 }
 
-export interface AbilityHelpersDOMAttribute {
-    [AbilityHelpersAttributeName]: string | undefined;
+export interface TabsterDOMAttribute {
+    [TabsterAttributeName]: string | undefined;
 }
 
-export interface AbilityHelpersCoreProps {
+export interface TabsterCoreProps {
     autoRoot?: RootBasicProps;
 }
 
-export interface AbilityHelpersCore {
+export interface TabsterCore {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
     root: RootAPI;
 }
 
-export type GetAbilityHelpers = () => AbilityHelpersCore;
+export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;
 
 export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
@@ -453,7 +453,7 @@ export interface Root {
     moveOutWithDefaultAction(backwards: boolean): void;
 }
 
-export interface AbilityHelpersContext {
+export interface TabsterContext {
     root: Root;
     modalizer?: Modalizer;
     groupper?: Groupper;
@@ -509,7 +509,7 @@ export interface OutlineOnElement {
     outline: OutlinedElementProps;
 }
 
-export type AbilityHelpersAttributeProps = Partial<{
+export type TabsterAttributeProps = Partial<{
     deloser: DeloserBasicProps,
     root: RootBasicProps,
     modalizer: ModalizerBasicProps,
@@ -520,17 +520,17 @@ export type AbilityHelpersAttributeProps = Partial<{
     outline: OutlinedElementProps
 }>;
 
-export interface AbilityHelpersAttributeOnElement {
+export interface TabsterAttributeOnElement {
     string: string;
-    object: AbilityHelpersAttributeProps;
+    object: TabsterAttributeProps;
     changing: boolean;
 }
 
-export interface AbilityHelpersAugmentedAttributes {
+export interface TabsterAugmentedAttributes {
     [name: string]: string | null;
 }
 
-export type AbilityHelpersOnElement = Partial<
+export type TabsterOnElement = Partial<
     RootOnElement &
     DeloserOnElement &
     ModalizerOnElement &
@@ -549,20 +549,20 @@ export interface OutlineElements {
     bottom: HTMLDivElement;
 }
 
-export interface AbilityHelpersElementStorageEntry {
-    ah?: AbilityHelpersOnElement;
-    attr?: AbilityHelpersAttributeOnElement;
-    aug?: AbilityHelpersAugmentedAttributes;
+export interface TabsterElementStorageEntry {
+    tabster?: TabsterOnElement;
+    attr?: TabsterAttributeOnElement;
+    aug?: TabsterAugmentedAttributes;
 }
 
-export interface AbilityHelpersElementStorage {
-    [uid: string]: AbilityHelpersElementStorageEntry;
+export interface TabsterElementStorage {
+    [uid: string]: TabsterElementStorageEntry;
 }
 
 export type DisposeFunc = () => void;
 
-export interface AbilityHelpersInternal {
-    storageEntry(uid: string, addremove?: boolean): AbilityHelpersElementStorageEntry | undefined;
+export interface TabsterInternal {
+    storageEntry(uid: string, addremove?: boolean): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
     outline?: OutlineAPI;

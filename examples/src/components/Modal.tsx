@@ -1,18 +1,18 @@
 import * as React from 'react';
-import { getCurrentAbilityHelpers, getDeloser, getModalizer, Types as AHTypes } from 'ability-helpers';
+import { getCurrentTabster, getDeloser, getModalizer, Types as TabsterTypes } from 'tabster';
 
 export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;
-    private ahModalizer: AHTypes.ModalizerAPI | undefined = undefined;
-    private ahDeloser: AHTypes.DeloserAPI | undefined = undefined;
+    private tabsterModalizer: TabsterTypes.ModalizerAPI | undefined = undefined;
+    private tabsterDeloser: TabsterTypes.DeloserAPI | undefined = undefined;
 
     constructor(props: {}) {
         super(props);
         this.state = { isVisible: false };
-        const ahInstance = getCurrentAbilityHelpers(window);
-        if (ahInstance) {
-            this.ahModalizer = getModalizer(ahInstance);
-            this.ahDeloser = getDeloser(ahInstance);
+        const tabsterInstance = getCurrentTabster(window);
+        if (tabsterInstance) {
+            this.tabsterModalizer = getModalizer(tabsterInstance);
+            this.tabsterDeloser = getDeloser(tabsterInstance);
         }
     }
 
@@ -39,18 +39,18 @@ export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     }
 
     private _onRef = (el: HTMLDivElement | null) => {
-        if (!this.ahModalizer || !this.ahDeloser) {
+        if (!this.tabsterModalizer || !this.tabsterDeloser) {
             return;
         }
 
         if (el) {
             this._div = el;
-            this.ahModalizer.add(el, { id: 'modal' });
-            this.ahDeloser.add(el);
-            this.ahModalizer.focus(el);
+            this.tabsterModalizer.add(el, { id: 'modal' });
+            this.tabsterDeloser.add(el);
+            this.tabsterModalizer.focus(el);
         } else if (this._div) {
-            this.ahModalizer.remove(this._div);
-            this.ahDeloser.remove(this._div);
+            this.tabsterModalizer.remove(this._div);
+            this.tabsterDeloser.remove(this._div);
             this._div = undefined;
         }
     }

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getAbilityHelpersAttribute } from "ability-helpers";
+import { getTabsterAttribute } from "tabster";
 import { Item } from "./components/Item";
 import { Accordion, AccordionSection } from "./components/Accordion";
 
@@ -12,7 +12,7 @@ export const NestedGrouppers = () => (
     <>
         <div
             aria-label="Main"
-            {...getAbilityHelpersAttribute({
+            {...getTabsterAttribute({
                 modalizer: { id: "main" },
                 deloser: {},
             })}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
+import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
@@ -25,9 +25,9 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
 
         if (element) {
             if (remove) {
-                element.style.removeProperty('--ah-root');
+                element.style.removeProperty('--tabster-root');
             } else {
-                element.style.setProperty('--ah-root', id + ',' + currentModalizerId);
+                element.style.setProperty('--tabster-root', id + ',' + currentModalizerId);
             }
         }
     }
@@ -37,7 +37,7 @@ export class Root implements Types.Root {
     readonly uid: string;
 
     private _element: WeakHTMLElement;
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
@@ -49,14 +49,14 @@ export class Root implements Types.Root {
 
     constructor(
         element: HTMLElement,
-        ah: Types.AbilityHelpersCore,
+        tabster: Types.TabsterCore,
         win: Types.GetWindow,
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
     ) {
         this.uid = getElementUId(element, win());
         this._element = new WeakHTMLElement(element);
-        this._ah = ah;
+        this._tabster = tabster;
         this._win = win;
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
@@ -201,10 +201,10 @@ export class Root implements Types.Root {
         const modalizersToUpdate: Types.Modalizer[] = [];
 
         const walker = createElementTreeWalker(ownerDocument, element, (el: HTMLElement) => {
-            const ah = getAbilityHelpersOnElement(this._ah, el);
+            const tabsterOnElement = getTabsterOnElement(this._tabster, el);
 
-            if (ah && ah.modalizer) {
-                modalizersToUpdate.push(ah.modalizer);
+            if (tabsterOnElement && tabsterOnElement.modalizer) {
+                modalizersToUpdate.push(tabsterOnElement.modalizer);
 
                 return NodeFilter.FILTER_ACCEPT;
             }
@@ -286,7 +286,7 @@ export class Root implements Types.Root {
         style.zIndex = '-1';
 
         if (__DEV__) {
-            style.setProperty('--ah-dummy-input', props.isFirst ? 'first' : 'last');
+            style.setProperty('--tabster-dummy-input', props.isFirst ? 'first' : 'last');
         }
 
         makeFocusIgnored(input);
@@ -300,7 +300,7 @@ export class Root implements Types.Root {
                 // the default action to move the focus out.
             } else {
                 // The only way a dummy input gets focused is during the keyboard navigation.
-                KeyboardNavigationState.setVal(this._ah.keyboardNavigation, true);
+                KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
 
                 this._forgetFocusedGrouppers();
 
@@ -310,14 +310,14 @@ export class Root implements Types.Root {
 
                 if (element) {
                     toFocus = props.isFirst
-                        ? this._ah.focusable.findFirst(element)
-                        : this._ah.focusable.findLast(element);
+                        ? this._tabster.focusable.findFirst(element)
+                        : this._tabster.focusable.findLast(element);
                 } else {
                     toFocus = null;
                 }
 
                 if (toFocus) {
-                    this._ah.focusedElement.focus(toFocus);
+                    this._tabster.focusedElement.focus(toFocus);
                 } else {
                     props.input?.blur();
                 }
@@ -389,7 +389,7 @@ export class Root implements Types.Root {
 }
 
 export class RootAPI implements Types.RootAPI {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
@@ -397,9 +397,9 @@ export class RootAPI implements Types.RootAPI {
     private _autoRoot: Types.RootBasicProps | undefined;
     private _autoRootInstance: Root | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootBasicProps) {
-        this._ah = ah;
-        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+    constructor(tabster: Types.TabsterCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootBasicProps) {
+        this._tabster = tabster;
+        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
@@ -444,15 +444,15 @@ export class RootAPI implements Types.RootAPI {
     }
 
     add(element: HTMLElement, basic?: Types.RootBasicProps): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (ah && ah.root) {
+        if (tabsterOnElement && tabsterOnElement.root) {
             return;
         }
 
-        const root = new Root(element, this._ah, this._win, this._forgetFocusedGrouppers, basic);
+        const root = new Root(element, this._tabster, this._win, this._forgetFocusedGrouppers, basic);
 
-        setAbilityHelpersOnElement(this._ah, element, { root });
+        setTabsterOnElement(this._tabster, element, { root });
 
         const n: HTMLElement[] = [];
 
@@ -464,8 +464,8 @@ export class RootAPI implements Types.RootAPI {
     }
 
     remove(element: HTMLElement): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
-        const root = ah && ah.root;
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const root = tabsterOnElement && tabsterOnElement.root;
 
         if (!root) {
             return;
@@ -473,20 +473,20 @@ export class RootAPI implements Types.RootAPI {
 
         dispatchMutationEvent(element, { root, removed: true });
 
-        setAbilityHelpersOnElement(this._ah, element, { root: undefined });
+        setTabsterOnElement(this._tabster, element, { root: undefined });
 
         root.dispose();
     }
 
     move(from: HTMLElement, to: HTMLElement): void {
-        const ahFrom = getAbilityHelpersOnElement(this._ah, from);
-        const root = ahFrom && ahFrom.root;
+        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
+        const root = tabsterOnElementFrom && tabsterOnElementFrom.root;
 
         if (root) {
             root.move(to);
 
-            setAbilityHelpersOnElement(this._ah, to, { root: root });
-            setAbilityHelpersOnElement(this._ah, from, { root: undefined });
+            setTabsterOnElement(this._tabster, to, { root: root });
+            setTabsterOnElement(this._tabster, from, { root: undefined });
 
             dispatchMutationEvent(from, { root, removed: true });
             dispatchMutationEvent(to, { root });
@@ -494,10 +494,10 @@ export class RootAPI implements Types.RootAPI {
     }
 
     setProps(element: HTMLElement, basic?: Partial<Types.RootBasicProps> | null): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (ah && ah.root) {
-            ah.root.setProps(basic);
+        if (tabsterOnElement && tabsterOnElement.root) {
+            tabsterOnElement.root.setProps(basic);
         }
     }
 
@@ -519,19 +519,19 @@ export class RootAPI implements Types.RootAPI {
             return;
         }
 
-        const modalizerRoot = RootAPI._getRootOnly(this._ah, e.target as Node);
+        const modalizerRoot = RootAPI._getRootOnly(this._tabster, e.target as Node);
 
         if (modalizerRoot) {
             modalizerRoot.updateModalizers();
         }
     }
 
-    private static _getRootOnly(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.Root | undefined {
+    private static _getRootOnly(tabster: Types.TabsterCore, element: Node): Types.Root | undefined {
         for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(abilityHelpers, e);
+            const tabsterOnElement = getTabsterOnElement(tabster, e);
 
-            if (ah && ah.root) {
-                return ah.root;
+            if (tabsterOnElement && tabsterOnElement.root) {
+                return tabsterOnElement.root;
             }
         }
 
@@ -542,7 +542,7 @@ export class RootAPI implements Types.RootAPI {
         return _rootById[id];
     }
 
-    static getAbilityHelpersContext(abilityHelpers: Types.AbilityHelpersCore, element: Node): Types.AbilityHelpersContext | undefined {
+    static getTabsterContext(tabster: Types.TabsterCore, element: Node): Types.TabsterContext | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }
@@ -555,17 +555,17 @@ export class RootAPI implements Types.RootAPI {
         let isGroupperFirst: boolean | undefined;
 
         for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const ah = getAbilityHelpersOnElement(abilityHelpers, e);
+            const tabsterOnElement = getTabsterOnElement(tabster, e);
 
-            if (!ah) {
+            if (!tabsterOnElement) {
                 continue;
             }
 
-            if (!groupper && ah.groupper) {
-                groupper = ah.groupper;
+            if (!groupper && tabsterOnElement.groupper) {
+                groupper = tabsterOnElement.groupper;
             }
 
-            const cfk = ah.focusable?.mover;
+            const cfk = tabsterOnElement.focusable?.mover;
             if ((cfk !== undefined) && (moverOptions === undefined)) {
                 moverOptions = cfk;
 
@@ -575,18 +575,18 @@ export class RootAPI implements Types.RootAPI {
                 }
             }
 
-            if (!modalizer && ah.modalizer) {
-                modalizer = ah.modalizer;
+            if (!modalizer && tabsterOnElement.modalizer) {
+                modalizer = tabsterOnElement.modalizer;
             }
 
-            if (ah.root) {
-                root = ah.root;
+            if (tabsterOnElement.root) {
+                root = tabsterOnElement.root;
                 break;
             }
         }
 
-        if (!root && (abilityHelpers.root as RootAPI)._autoRoot) {
-            const rootAPI = abilityHelpers.root as RootAPI;
+        if (!root && (tabster.root as RootAPI)._autoRoot) {
+            const rootAPI = tabster.root as RootAPI;
 
             if (!rootAPI._autoRootInstance) {
                 const body = element.ownerDocument?.body;
@@ -594,7 +594,7 @@ export class RootAPI implements Types.RootAPI {
                 if (body) {
                     rootAPI._autoRootInstance = new Root(
                         body,
-                        rootAPI._ah,
+                        rootAPI._tabster,
                         rootAPI._win,
                         rootAPI._forgetFocusedGrouppers,
                         rootAPI._autoRoot

@@ -1,12 +1,12 @@
 import * as React from "react";
 import {
-    createAbilityHelpers,
-    disposeAbilityHelpers,
-    getAbilityHelpersAttribute,
-    getCurrentAbilityHelpers,
+    createTabster,
+    disposeTabster,
+    getTabsterAttribute,
+    getCurrentTabster,
     getDeloser,
     getModalizer,
-} from "ability-helpers";
+} from "tabster";
 
 export const parameters = {
     actions: { argTypesRegex: "^on[A-Z].*" },
@@ -14,24 +14,24 @@ export const parameters = {
 
 export const decorators = [
     (Story) => {
-        // ensures AH is only created once
+        // ensures Tabster is only created once
         React.useState(() => {
-            const ah = createAbilityHelpers(window)
+            const tabster = createTabster(window)
 
-            // initialize AH API instances
-            getModalizer(ah);
-            getDeloser(ah);
+            // initialize Tabster API instances
+            getModalizer(tabster);
+            getDeloser(tabster);
         });
         React.useEffect(() => {
             return () => {
-                if (getCurrentAbilityHelpers(window)) {
-                    disposeAbilityHelpers(getCurrentAbilityHelpers(window));
+                if (getCurrentTabster(window)) {
+                    disposeTabster(getCurrentTabster(window));
                 }
             };
         }, []);
 
         return (
-            <div {...getAbilityHelpersAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
                 <Story />
             </div>
         );

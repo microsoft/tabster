@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import * as Types from './Types';
 import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID, WeakHTMLElement } from './Utils';
 
@@ -20,12 +20,12 @@ export interface MutationEvent extends Event {
     details: MutationEventDetails;
 }
 
-export const MUTATION_EVENT_NAME = 'ability-helpers:mutation-event';
+export const MUTATION_EVENT_NAME = 'tabster:mutation-event';
 
 export function observeMutations(
     doc: HTMLDocument,
-    abilityHelpers: Types.AbilityHelpersCore,
-    updateAbilityHelpersByAttribute: (ah: Types.AbilityHelpersCore, element: HTMLElementWithUID) => void
+    tabster: Types.TabsterCore,
+    updateTabsterByAttribute: (tabster: Types.TabsterCore, element: HTMLElementWithUID) => void
 ): () => void {
     if (typeof MutationObserver === 'undefined') {
         return () => { /* Noop */ };
@@ -43,18 +43,18 @@ export function observeMutations(
             const added = mutation.addedNodes;
 
             if (mutation.type === 'attributes') {
-                if (mutation.attributeName === Types.AbilityHelpersAttributeName) {
-                    const uid = (target as HTMLElementWithUID).__ahElementUID;
+                if (mutation.attributeName === Types.TabsterAttributeName) {
+                    const uid = (target as HTMLElementWithUID).__tabsterElementUID;
 
-                    const ahAttr = uid ? (abilityHelpers as unknown as Types.AbilityHelpersInternal).storageEntry(uid)?.attr : undefined;
+                    const tabsterAttr = uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid)?.attr : undefined;
 
-                    if (!ahAttr || !ahAttr.changing) {
-                        updateAbilityHelpersByAttribute(abilityHelpers, target as HTMLElement);
+                    if (!tabsterAttr || !tabsterAttr.changing) {
+                        updateTabsterByAttribute(tabster, target as HTMLElement);
                     }
                 }
             } else {
-                const ah = getAbilityHelpersOnElement(abilityHelpers, target);
-                const root = ah && ah.root;
+                const tabsterOnElement = getTabsterOnElement(tabster, target);
+                const root = tabsterOnElement && tabsterOnElement.root;
 
                 if (root) {
                     changedRoots[root.uid] = { root, addedTo: target };
@@ -136,7 +136,7 @@ export function observeMutations(
                 return NodeFilter.FILTER_SKIP;
             }
 
-            const uid = (element as HTMLElementWithUID).__ahElementUID;
+            const uid = (element as HTMLElementWithUID).__tabsterElementUID;
 
             if (uid) {
                 if (removedFrom) {
@@ -146,26 +146,26 @@ export function observeMutations(
                 }
             }
 
-            const ah = getAbilityHelpersOnElement(abilityHelpers, element);
+            const tabsterOnElement = getTabsterOnElement(tabster, element);
 
-            if (ah) {
-                if (ah.root) {
-                    addRootTarget(ah.root, removedFrom, addedTo);
+            if (tabsterOnElement) {
+                if (tabsterOnElement.root) {
+                    addRootTarget(tabsterOnElement.root, removedFrom, addedTo);
                 }
 
-                if (ah.modalizer) {
-                    addModalizerTarget(ah.modalizer, removedFrom, addedTo);
+                if (tabsterOnElement.modalizer) {
+                    addModalizerTarget(tabsterOnElement.modalizer, removedFrom, addedTo);
                 }
 
-                if (ah.groupper) {
-                    addGroupTarget(element, ah.groupper, removedFrom, addedTo);
+                if (tabsterOnElement.groupper) {
+                    addGroupTarget(element, tabsterOnElement.groupper, removedFrom, addedTo);
                 }
 
-                if (ah.observed) {
+                if (tabsterOnElement.observed) {
                     addObservedElementTarget(element, removedFrom, addedTo);
                 }
-            } else if (element.getAttribute(Types.AbilityHelpersAttributeName)) {
-                updateAbilityHelpersByAttribute(abilityHelpers, element);
+            } else if (element.getAttribute(Types.TabsterAttributeName)) {
+                updateTabsterByAttribute(tabster, element);
             }
 
             return NodeFilter.FILTER_SKIP;
@@ -241,7 +241,7 @@ export function observeMutations(
         }
     });
 
-    observer.observe(doc, { childList: true, subtree: true, attributes: true, attributeFilter: [Types.AbilityHelpersAttributeName] });
+    observer.observe(doc, { childList: true, subtree: true, attributes: true, attributeFilter: [Types.TabsterAttributeName] });
 
     return () => {
         observer.disconnect();

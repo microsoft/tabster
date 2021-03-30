@@ -1,4 +1,5 @@
-# Ability Helpers
+# Tabster
+*Tabindex on steroids.*
 
 A set of tools and concepts for making a dynamic web application properly accessible and keyboard-navigable.
 

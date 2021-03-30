@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { getAbilityHelpersOnElement, setAbilityHelpersOnElement } from './Instance';
+import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import * as Types from './Types';
 import { getBoundingRect } from './Utils';
 
 interface WindowWithOutlineStyle extends Window {
-    __ahOutline?: {
+    __tabsterOutline?: {
         style?: HTMLStyleElement;
         elements?: Types.OutlineElements;
     };
 }
 
 const defaultProps: Types.OutlineProps = {
-    areaClass: 'ah-focus-outline-area',
-    outlineClass: 'ah-focus-outline',
+    areaClass: 'tabster-focus-outline-area',
+    outlineClass: 'tabster-focus-outline',
     outlineColor: '#ff4500',
     outlineWidth: 2,
     zIndex: 2147483647
@@ -69,7 +69,7 @@ class OutlinePosition {
 }
 
 export class OutlineAPI implements Types.OutlineAPI {
-    private _ah: Types.AbilityHelpersCore;
+    private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
@@ -80,17 +80,17 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
 
-    constructor(ah: Types.AbilityHelpersCore) {
-        this._ah = ah;
-        this._win = (ah as unknown as Types.AbilityHelpersInternal).getWindow;
+    constructor(tabster: Types.TabsterCore) {
+        this._tabster = tabster;
+        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
         this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
 
-        this._ah.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
-        this._ah.focusedElement.subscribe(this._onFocus);
+        this._tabster.keyboardNavigation.subscribe(this._onKeyboardNavigationStateChanged);
+        this._tabster.focusedElement.subscribe(this._onFocus);
 
         const win = this._win();
 
@@ -106,12 +106,12 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         const win = this._win() as WindowWithOutlineStyle;
 
-        if (!win.__ahOutline) {
-            win.__ahOutline = {};
+        if (!win.__tabsterOutline) {
+            win.__tabsterOutline = {};
         }
 
-        if (!win.__ahOutline.style) {
-            win.__ahOutline.style = appendStyles(win.document, _props);
+        if (!win.__tabsterOutline.style) {
+            win.__tabsterOutline.style = appendStyles(win.document, _props);
         }
 
         if (!props || !props.areaClass) {
@@ -122,9 +122,9 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     setProps(element: HTMLElement, props: Partial<Types.OutlinedElementProps> | null): void {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        let curProps: Types.OutlinedElementProps = (ah && ah.outline) || {};
+        let curProps: Types.OutlinedElementProps = (tabsterOnElement && tabsterOnElement.outline) || {};
         let newProps: Types.OutlinedElementProps = {};
 
         if (props) {
@@ -139,7 +139,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         if (newProps.isIgnored !== curProps.isIgnored) {
-            setAbilityHelpersOnElement(this._ah, element, { outline: newProps });
+            setTabsterOnElement(this._tabster, element, { outline: newProps });
         }
     }
 
@@ -156,8 +156,8 @@ export class OutlineAPI implements Types.OutlineAPI {
             this._updateTimer = undefined;
         }
 
-        this._ah.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
-        this._ah.focusedElement.unsubscribe(this._onFocus);
+        this._tabster.keyboardNavigation.unsubscribe(this._onKeyboardNavigationStateChanged);
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         win.removeEventListener('scroll', this._onScroll, true);
 
@@ -200,13 +200,13 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _onKeyboardNavigationStateChanged = (): void => {
-        this._onFocus(this._ah.focusedElement.getFocusedElement());
+        this._onFocus(this._tabster.focusedElement.getFocusedElement());
     }
 
     private _shouldShowCustomOutline(element: HTMLElement): boolean {
-        const ah = getAbilityHelpersOnElement(this._ah, element);
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        if (ah && ah.outline && ah.outline.isIgnored) {
+        if (tabsterOnElement && tabsterOnElement.outline && tabsterOnElement.outline.isIgnored) {
             return false;
         }
 
@@ -235,7 +235,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         this._curPos = undefined;
 
-        if (!this._ah.keyboardNavigation.isNavigatingWithKeyboard()) {
+        if (!this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
             return false;
         }
 
@@ -267,7 +267,7 @@ export class OutlineAPI implements Types.OutlineAPI {
                 return false;
             }
 
-            if (this._ah.keyboardNavigation.isNavigatingWithKeyboard()) {
+            if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
                 this._outlinedElement = e;
                 this._updateOutline();
             }
@@ -457,15 +457,15 @@ export class OutlineAPI implements Types.OutlineAPI {
         const doc = contextElement.ownerDocument;
         const win = (doc && doc.defaultView) as WindowWithOutlineStyle;
 
-        if (!doc || !win || !win.__ahOutline) {
+        if (!doc || !win || !win.__tabsterOutline) {
             return undefined;
         }
 
-        if (!win.__ahOutline.style) {
-            win.__ahOutline.style = appendStyles(doc, _props);
+        if (!win.__tabsterOutline.style) {
+            win.__tabsterOutline.style = appendStyles(doc, _props);
         }
 
-        if (!win.__ahOutline.elements) {
+        if (!win.__tabsterOutline.elements) {
             const outlineElements: Types.OutlineElements = {
                 container: doc.createElement('div'),
                 left: doc.createElement('div'),
@@ -487,19 +487,19 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             doc.body.appendChild(outlineElements.container);
 
-            win.__ahOutline.elements = outlineElements;
+            win.__tabsterOutline.elements = outlineElements;
 
             // TODO: Make a garbage collector to remove the references
             // to the outlines which are nowhere in the DOM anymore.
             this._allOutlineElements.push(outlineElements);
         }
 
-        return win.__ahOutline.elements;
+        return win.__tabsterOutline.elements;
     }
 
     private _removeDOM(contextElement: HTMLElement): void {
         const win = (contextElement.ownerDocument && contextElement.ownerDocument.defaultView) as WindowWithOutlineStyle;
-        const outline = win && win.__ahOutline;
+        const outline = win && win.__tabsterOutline;
 
         if (!outline) {
             return;
