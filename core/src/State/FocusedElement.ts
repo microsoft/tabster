@@ -411,8 +411,10 @@ export class FocusedElementState
             }
 
             if (!isTab && ctx.mover) {
-                const horizontalKeysOnVerticalAxis = (keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
-                const verticalKeysOnHorizontalAxis = (keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
+                const horizontalKeysOnVerticalAxis =
+                    (keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
+                const verticalKeysOnHorizontalAxis =
+                    (keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
 
                 if (horizontalKeysOnVerticalAxis || verticalKeysOnHorizontalAxis) {
                     return;
