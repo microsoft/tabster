@@ -383,7 +383,7 @@ export class FocusedElementState
                 if (isPrev) {
                     let  parentCtx: typeof ctx | undefined = ctx;
                     let rootMover = ctx.mover;
-                    while(parentCtx?.mover?.parentElement) {
+                    while (parentCtx?.mover?.parentElement) {
                         rootMover = parentCtx.mover;
                         parentCtx = RootAPI.getTabsterContext(this._tabster, parentCtx.mover.parentElement);
                     }
@@ -393,8 +393,6 @@ export class FocusedElementState
                     fromElement = this._tabster.focusable.findLast(ctx.mover);
                 }
             }
-
-
 
             if (!fromElement) {
                 return;
