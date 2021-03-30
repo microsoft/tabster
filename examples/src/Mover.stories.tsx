@@ -24,14 +24,20 @@ const Collection = () => (
 
 )
 
-export const ArrowNavigation = () => (
-    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
+export const ArrowNavigationVertical = () => (
+    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows, axis: TabsterTypes.MoverAxis.Vertical } } }) }>
+        <Collection />
+    </div>
+);
+
+export const ArrowNavigationHorizontal = () => (
+    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows, axis: TabsterTypes.MoverAxis.Horizontal } } }) }>
         <Collection />
     </div>
 );
 
 export const ArrowNavigationCircular = () => (
-    <div { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
+    <div { ...getTabsterAttribute({ focusable: { mover: { cyclic: true, navigationType: TabsterTypes.MoverKeys.Arrows, axis: TabsterTypes.MoverAxis.Vertical } } }) }>
         <Collection />
     </div>
 );

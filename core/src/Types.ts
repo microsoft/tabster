@@ -239,14 +239,24 @@ export enum MoverKeys {
     Both
 }
 
+export interface MoverAxisOptions {
+    Horizontal: 0;
+    Vertical: 1;
+}
+export const MoverAxis: MoverAxisOptions = {
+    Horizontal: 0,
+    Vertical: 1,
+};
+export type MoverAxis = MoverAxisOptions[keyof MoverAxisOptions];
+
 /**
  * Options to configure keyboard navigation mover API
+ * 
+ * TODO move Mover API to top level class and allow sane defaults
  */
 export type MoverOptions = {
     /**
      * The types of navigation required
-     *
-     * @defaultValue MoverKey.Arrows
      */
     navigationType: MoverKeys;
 
@@ -257,6 +267,16 @@ export type MoverOptions = {
      * @defaultValue false
      */
     cyclic?: boolean;
+
+    /**
+     * Determines the arrow keys that are used to move between focusables
+     */
+    axis: MoverAxis,
+
+    /**
+     * By default Home and End
+     */
+    disableHomeEndKeys?: boolean;
 };
 
 export interface FocusableProps {
