@@ -1,5 +1,4 @@
 {
-    "extends": ["tslint-config-prettier"],
     "rules": {
         "class-name": true,
         "curly": true,
