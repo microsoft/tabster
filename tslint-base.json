@@ -1,0 +1,37 @@
+{
+    "extends": ["tslint-config-prettier"],
+    "rules": {
+        "class-name": true,
+        "curly": true,
+        "forin": true,
+        "interface-name": [true, "never-prefix"],
+        "label-position": true,
+        "no-arg": true,
+        "no-bitwise": false,
+        "no-console": [
+            true,
+            "debug",
+            "info",
+            "time",
+            "timeEnd",
+            "trace"
+        ],
+        "no-construct": true,
+        "no-debugger": true,
+        "no-duplicate-variable": true,
+        "no-empty": true,
+        "no-eval": true,
+        "no-switch-case-fall-through": true,
+        "no-unused-expression": true,
+        "ordered-imports": [true, {"module-source-path": "basename"}],
+        "radix": true,
+        "triple-equals": [true, "allow-null-check"],
+        "variable-name": false,
+        "file-header": [
+            true,
+            {
+                "match": "^\\!\n \\* Copyright \\(c\\) Microsoft Corporation\\. All rights reserved\\.\n \\* Licensed under the MIT License\\.\n $"
+            }
+        ]
+    }
+}
