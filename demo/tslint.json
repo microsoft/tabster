@@ -8,7 +8,6 @@
         "indent": [true, "spaces"],
         "interface-name": [true, "never-prefix"],
         "label-position": true,
-        "max-line-length": [true, 140],
         "no-arg": true,
         "no-bitwise": false,
         "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
@@ -29,9 +28,7 @@
             "check-whitespace"
         ],
         "ordered-imports": [true, { "module-source-path": "basename" }],
-        "quotemark": [true, "single", "jsx-single"],
         "radix": true,
-        "semicolon": true,
         "triple-equals": [true, "allow-null-check"],
         "variable-name": false,
         "whitespace": [
