@@ -31,7 +31,14 @@ class App extends React.PureComponent {
                 <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
                     <h1>Hello world</h1>
 
-                    <div { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
+                    <div { ...getTabsterAttribute({ 
+                        focusable: 
+                            { mover: 
+                                { navigationType: TabsterTypes.MoverKeys.Arrows, 
+                                    axis: TabsterTypes.MoverAxis.Horizontal 
+                                } 
+                            } 
+                        }) }>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -48,7 +55,7 @@ class App extends React.PureComponent {
 
                     <div { ...getTabsterAttribute({
                         focusable: {
-                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true }
+                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true, axis: TabsterTypes.MoverAxis.Vertical }
                         }
                     }) }>
                         <button>The</button>
@@ -198,7 +205,7 @@ const FindAllExample: React.FC = () => {
     return (
         <div>
             <div>Filtered ducks: {filtered.map(item => item.textContent + ', ')} </div>
-            <div ref={ref} { ...getTabsterAttribute({ focusable: { mover: { navigationType: TabsterTypes.MoverKeys.Arrows } } }) }>
+            <div ref={ref}>
                 <button>Duck 1</button>
                 <button>Goose 1</button>
                 <button>Goose 2</button>

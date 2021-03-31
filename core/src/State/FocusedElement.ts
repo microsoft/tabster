@@ -402,10 +402,10 @@ export class FocusedElementState
 
             switch (keyCode) {
                 case Keys.Tab:
-                case Keys.Down:
-                case Keys.Right:
                 case Keys.Up:
+                case Keys.Down:
                 case Keys.Left:
+                case Keys.Right:
                     next = isPrev
                         ? this._tabster.focusable.findPrev(fromElement)
                         : this._tabster.focusable.findNext(fromElement);
@@ -422,23 +422,33 @@ export class FocusedElementState
                     return;
             }
 
-            if (!isTab && ctx.mover && (!next || (next && !ctx.mover.contains(next)))) {
-                // Nowhere to move inside the current Mover.
-                e.preventDefault(); // We don't need the page to scroll when we're custom-handling
-                                    // the arrows.
+            if (!isTab && ctx.mover) {
+                const horizontalKeysOnVerticalAxis =
+                    (keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
+                const verticalKeysOnHorizontalAxis =
+                    (keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
 
-                if (!ctx.moverOptions?.cyclic) {
+                if (horizontalKeysOnVerticalAxis || verticalKeysOnHorizontalAxis) {
                     return;
                 }
 
-                // cyclic navigation, focus first or last elements in the mover container respectively
-                if (isPrev) {
-                    next = this._tabster.focusable.findLast(ctx.mover);
-                } else {
-                    next = this._tabster.focusable.findFirst(ctx.mover);
+                if (!next || (next && !ctx.mover.contains(next))) {
+                    // Nowhere to move inside the current Mover.
+                    e.preventDefault(); // We don't need the page to scroll when we're custom-handling
+                                        // the arrows.
+
+                    if (!ctx.moverOptions?.cyclic) {
+                        return;
+                    }
+
+                    // cyclic navigation, focus first or last elements in the mover container respectively
+                    if (isPrev) {
+                        next = this._tabster.focusable.findLast(ctx.mover);
+                    } else {
+                        next = this._tabster.focusable.findFirst(ctx.mover);
+                    }
                 }
             }
-
             const groupper = ctx?.groupper;
             const groupperElement = groupper?.getElement();
 
