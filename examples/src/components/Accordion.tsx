@@ -1,5 +1,10 @@
-import { getCurrentTabster, Types as TabsterTypes } from 'tabster';
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from 'react';
+import { getCurrentTabster, Types as TabsterTypes } from 'tabster';
 
 const AccordionContext = React.createContext<Accordion | undefined>(undefined);
 
@@ -31,7 +36,7 @@ interface AccordionSectionProps {
 }
 
 interface AccordionSectionState {
-    isExpanded: boolean
+    isExpanded: boolean;
 }
 
 export class AccordionSection extends React.PureComponent<AccordionSectionProps, AccordionSectionState> {
@@ -57,22 +62,22 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
                             <h3>
                                 <button
                                     aria-expanded={ this.state.isExpanded ? true : undefined }
-                                    className="Accordion-trigger"
+                                    className='Accordion-trigger'
                                     aria-controls={`accordion-section-${this._index}`}
                                     id={`accordion-section-title-${this._index}`}
                                     onClick={this._toggle}
                                 >
-                                    <span className="Accordion-title">
+                                    <span className='Accordion-title'>
                                         {this.props.title}
-                                        <span className="Accordion-icon"></span>
+                                        <span className='Accordion-icon'></span>
                                     </span>
                                 </button>
                             </h3>
                             <div
                                 id={`accordion-section-${this._index}`}
-                                role="region"
+                                role='region'
                                 aria-labelledby={`accordion-section-title-${this._index}`}
-                                className="Accordion-panel"
+                                className='Accordion-panel'
                                 hidden={
                                     this.state.isExpanded ? undefined : true
                                 }
@@ -128,5 +133,9 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
                 this._accordion.setState({ hasFocus });
             }
         }
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
     }
 }

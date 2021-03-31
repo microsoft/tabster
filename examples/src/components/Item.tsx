@@ -1,5 +1,10 @@
-import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from 'react';
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 
 export class Item extends React.PureComponent<{ onClick?: () => void}> {
     render() {

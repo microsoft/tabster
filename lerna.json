@@ -2,7 +2,8 @@
     "packages": [
         "core",
         "demo",
-        "examples"
+        "examples",
+        "lint"
     ],
     "version": "0.5.6",
     "npmClient": "npm"

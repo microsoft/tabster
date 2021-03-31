@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from 'react';
 import { getCurrentTabster } from 'tabster';
 
@@ -12,12 +17,12 @@ export const KeyboardNavigationState = () => {
         const tabster = getCurrentTabster(window);
         const isKeyboard = tabster?.keyboardNavigation.isNavigatingWithKeyboard();
         if (isKeyboard) {
-            setMessage('keyboard')
+            setMessage('keyboard');
         } else {
             setMessage('mouse');
         }
 
-    }
+    };
     return (
         <>
             <div>Focused with: <strong>{message}</strong></div>
@@ -26,5 +31,5 @@ export const KeyboardNavigationState = () => {
             <button onFocus={onFocus}>Click or use keyboard</button>
             <button onFocus={onFocus}>Click or use keyboard</button>
         </>
-    )
+    );
 };
