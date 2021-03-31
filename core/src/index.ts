@@ -16,4 +16,4 @@ export {
     getCurrentTabster,
     overrideBasics,
     Types,
-} from "./Tabster";
+} from './Tabster';

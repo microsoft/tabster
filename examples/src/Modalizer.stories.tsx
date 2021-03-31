@@ -1,16 +1,16 @@
-import * as React from "react";
-import { Meta } from "@storybook/react";
+import * as React from 'react';
+import { Meta } from '@storybook/react';
 import {
     getTabsterAttribute,
     getCurrentTabster,
     getDeloser,
     getModalizer,
-} from "tabster";
-import { Modal } from "./components/Modal";
+} from 'tabster';
+import { Modal } from './components/Modal';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: "Modalizer",
+    title: 'Modalizer',
 } as Meta;
 
 export const ModalDialog = () => {
@@ -22,7 +22,7 @@ export const ModalDialog = () => {
             <div
                 aria-label="Main"
                 {...getTabsterAttribute({
-                    modalizer: { id: "main" },
+                    modalizer: { id: 'main' },
                     deloser: {},
                 })}
             >
@@ -40,7 +40,7 @@ export const PopupContent = () => {
         if (tabster && node !== null) {
             const modalizer = getModalizer(tabster);
             const deloser = getDeloser(tabster);
-            modalizer.add(node, { id: "popup" });
+            modalizer.add(node, { id: 'popup' });
             deloser.add(node);
             modalizer.focus(node);
         }
@@ -51,7 +51,7 @@ export const PopupContent = () => {
     const popupStyles = {
         maxWidth: 400,
         maxHeight: 400,
-        border: "1px solid",
+        border: '1px solid',
         padding: 5,
     };
 
@@ -60,7 +60,7 @@ export const PopupContent = () => {
             <div
                 aria-label="Main"
                 {...getTabsterAttribute({
-                    modalizer: { id: "main" },
+                    modalizer: { id: 'main' },
                     deloser: {},
                 })}
             >
@@ -80,7 +80,7 @@ export const PopupContent = () => {
             <div
                 aria-label="Main"
                 {...getTabsterAttribute({
-                    modalizer: { id: "main" },
+                    modalizer: { id: 'main' },
                     deloser: {},
                 })}
             >

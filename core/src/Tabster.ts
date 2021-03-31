@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginAPI } from "./CrossOrigin";
-import { DeloserAPI } from "./Deloser";
-import { FocusableAPI } from "./Focusable";
-import { FocusedElementState } from "./State/FocusedElement";
-import { updateTabsterByAttribute } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
-import { ModalizerAPI } from "./Modalizer";
-import { observeMutations } from "./MutationEvent";
-import { ObservedElementAPI } from "./State/ObservedElement";
-import { OutlineAPI } from "./Outline";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
+import { CrossOriginAPI } from './CrossOrigin';
+import { DeloserAPI } from './Deloser';
+import { FocusableAPI } from './Focusable';
+import { FocusedElementState } from './State/FocusedElement';
+import { updateTabsterByAttribute } from './Instance';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
+import { ModalizerAPI } from './Modalizer';
+import { observeMutations } from './MutationEvent';
+import { ObservedElementAPI } from './State/ObservedElement';
+import { OutlineAPI } from './Outline';
+import { RootAPI } from './Root';
+import * as Types from './Types';
 import {
     cleanupWeakRefStorage,
     clearElementCache,
     setBasics as overrideBasics,
     startWeakRefStorageCleanup,
     stopWeakRefStorageCleanupAndClearStorage,
-} from "./Utils";
+} from './Utils';
 
 export { Types };
 
@@ -165,7 +165,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
 
     getWindow = () => {
         if (!this._win) {
-            throw new Error("Using disposed Tabster.");
+            throw new Error('Using disposed Tabster.');
         }
 
         return this._win;
@@ -220,7 +220,7 @@ export function createTabster(
     if (existingAh) {
         if (__DEV__) {
             console.warn(
-                "Attempted to create a duplicate Tabster instance on the window"
+                'Attempted to create a duplicate Tabster instance on the window'
             );
         }
         return existingAh;

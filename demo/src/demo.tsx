@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import {
     createTabster,
     getCurrentTabster,
@@ -13,7 +13,7 @@ import {
     getOutline,
     getTabsterAttribute,
     Types as TabsterTypes,
-} from "tabster";
+} from 'tabster';
 
 const tabster = createTabster(window);
 const tabsterModalizer = getModalizer(tabster);
@@ -31,7 +31,7 @@ class App extends React.PureComponent {
                 <div
                     aria-label="Main"
                     {...getTabsterAttribute({
-                        modalizer: { id: "main" },
+                        modalizer: { id: 'main' },
                         deloser: {},
                     })}
                 >
@@ -164,8 +164,8 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
 
 const TabsterExistsExample: React.FC = () => (
     <div>
-        Tabster instance exists on window:{" "}
-        {getCurrentTabster(window) ? "true" : "false"}
+        Tabster instance exists on window:{' '}
+        {getCurrentTabster(window) ? 'true' : 'false'}
     </div>
 );
 
@@ -207,7 +207,7 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _onRef = (el: HTMLDivElement | null) => {
         if (el) {
             this._div = el;
-            tabsterModalizer.add(el, { id: "modal" });
+            tabsterModalizer.add(el, { id: 'modal' });
             tabsterDeloser.add(el);
             tabsterModalizer.focus(el);
         } else if (this._div) {
@@ -229,7 +229,7 @@ const FindAllExample: React.FC = () => {
         if (ref.current) {
             const ducks = tabster.focusable.findAll(
                 ref?.current,
-                (el: HTMLElement) => !!el.textContent?.includes("Duck")
+                (el: HTMLElement) => !!el.textContent?.includes('Duck')
             );
             setFiltered(ducks);
         }
@@ -238,8 +238,8 @@ const FindAllExample: React.FC = () => {
     return (
         <div>
             <div>
-                Filtered ducks:{" "}
-                {filtered.map((item) => item.textContent + ", ")}{" "}
+                Filtered ducks:{' '}
+                {filtered.map((item) => item.textContent + ', ')}{' '}
             </div>
             <div ref={ref}>
                 <button>Duck 1</button>
@@ -253,4 +253,4 @@ const FindAllExample: React.FC = () => {
     );
 };
 
-ReactDOM.render(<App />, document.getElementById("demo"));
+ReactDOM.render(<App />, document.getElementById('demo'));

@@ -1,9 +1,9 @@
-import * as React from "react";
-import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
+import * as React from 'react';
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: "Mover",
+    title: 'Mover',
 };
 
 const Collection = () => (
@@ -73,7 +73,7 @@ export const NestedMovers = () => (
     <div>
         <button>Tabstop</button>
         <div
-            style={{ border: "1px solid", padding: 10 }}
+            style={{ border: '1px solid', padding: 10 }}
             {...getTabsterAttribute({
                 focusable: {
                     mover: {

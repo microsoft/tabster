@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Types } from "./Tabster";
-import { ElementVisibilities, ElementVisibility, GetWindow } from "./Types";
+import { Types } from './Tabster';
+import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -15,8 +15,8 @@ interface FocusedElementWithIgnoreFlag extends HTMLElement {
 }
 
 const _basics: Types.InternalBasics = {
-    Promise: typeof Promise !== "undefined" ? Promise : undefined,
-    WeakRef: typeof WeakRef !== "undefined" ? WeakRef : undefined,
+    Promise: typeof Promise !== 'undefined' ? Promise : undefined,
+    WeakRef: typeof WeakRef !== 'undefined' ? WeakRef : undefined,
 };
 
 export interface WindowWithUID extends Window {
@@ -56,7 +56,7 @@ let _weakCleanupTimer: number | undefined;
 let _weakCleanupStarted = false;
 
 const _DOMRect =
-    typeof DOMRect !== "undefined"
+    typeof DOMRect !== 'undefined'
         ? DOMRect
         : class {
               readonly bottom: number;
@@ -130,7 +130,7 @@ export class WeakHTMLElement<
     private _data: D | undefined;
 
     constructor(element: T, data?: D) {
-        this._id = "we" + ++_lastWeakElementId;
+        this._id = 'we' + ++_lastWeakElementId;
 
         _weakElementStorage[this._id] = _WeakRef
             ? new _WeakRef(element)
@@ -262,7 +262,7 @@ export function getBoundingRect(
     );
 
     if (!cacheId) {
-        cacheId = "r-" + ++_lastContainerBoundingRectCacheId;
+        cacheId = 'r-' + ++_lastContainerBoundingRectCacheId;
         element.__tabsterCacheId = cacheId;
     }
 
@@ -425,12 +425,12 @@ export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
         srnd.push(rnd[i].toString(36));
     }
 
-    srnd.push("|");
+    srnd.push('|');
     srnd.push((++_uidCounter).toString(36));
-    srnd.push("|");
+    srnd.push('|');
     srnd.push(Date.now().toString(36));
 
-    return srnd.join("");
+    return srnd.join('');
 }
 
 export function getElementUId(
@@ -509,7 +509,7 @@ export function getPromise(): PromiseConstructor {
         return _basics.Promise;
     }
 
-    throw new Error("No Promise defined.");
+    throw new Error('No Promise defined.');
 }
 
 export function getWeakRef<T>(): WeakRefConstructor | undefined {
@@ -519,12 +519,12 @@ export function getWeakRef<T>(): WeakRefConstructor | undefined {
 export function setBasics(basics: Types.InternalBasics): void {
     let key: keyof Types.InternalBasics;
 
-    key = "Promise";
+    key = 'Promise';
     if (key in basics) {
         _basics[key] = basics[key];
     }
 
-    key = "WeakRef";
+    key = 'WeakRef';
     if (key in basics) {
         _basics[key] = basics[key];
     }

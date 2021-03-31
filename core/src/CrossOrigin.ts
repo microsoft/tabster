@@ -7,12 +7,12 @@ import {
     DeloserAPI,
     DeloserHistoryByRootBase,
     DeloserItemBase,
-} from "./Deloser";
-import { getTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
-import { RootAPI } from "./Root";
-import { Subscribable } from "./State/Subscribable";
-import * as Types from "./Types";
+} from './Deloser';
+import { getTabsterOnElement } from './Instance';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
+import { RootAPI } from './Root';
+import { Subscribable } from './State/Subscribable';
+import * as Types from './Types';
 import {
     elementByUId,
     getElementUId,
@@ -20,12 +20,12 @@ import {
     getUId,
     getWindowUId,
     HTMLElementWithUID,
-} from "./Utils";
+} from './Utils';
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;
 
-const _targetIdUp = "up";
+const _targetIdUp = 'up';
 
 const CrossOriginTransactionTypes: Types.CrossOriginTransactionTypes = {
     Bootstrap: 1,
@@ -948,14 +948,14 @@ class CrossOriginTransactions {
     ): (msg: Types.CrossOriginMessage) => void {
         if (this.isSetUp) {
             if (__DEV__) {
-                console.error("CrossOrigin is already set up.");
+                console.error('CrossOrigin is already set up.');
             }
         } else {
             this.isSetUp = true;
 
             this.setSendUp(sendUp);
 
-            this._owner().addEventListener("pagehide", this._onPageHide);
+            this._owner().addEventListener('pagehide', this._onPageHide);
 
             this._ping();
         }
@@ -967,7 +967,7 @@ class CrossOriginTransactions {
         sendUp?: Types.CrossOriginTransactionSend | null
     ): (msg: Types.CrossOriginMessage) => void {
         if (!this.isSetUp) {
-            throw new Error("CrossOrigin is not set up.");
+            throw new Error('CrossOrigin is not set up.');
         }
 
         this.sendUp = sendUp || undefined;
@@ -987,15 +987,15 @@ class CrossOriginTransactions {
                         this.sendUp = (
                             data: Types.CrossOriginTransactionData<any, any>
                         ) => {
-                            owner.parent.postMessage(JSON.stringify(data), "*");
+                            owner.parent.postMessage(JSON.stringify(data), '*');
                         };
                     }
 
-                    owner.addEventListener("message", this._onBrowserMessage);
+                    owner.addEventListener('message', this._onBrowserMessage);
                 }
             }
         } else if (this._isDefaultSendUp) {
-            owner.removeEventListener("message", this._onBrowserMessage);
+            owner.removeEventListener('message', this._onBrowserMessage);
             this._isDefaultSendUp = false;
         }
 
@@ -1010,8 +1010,8 @@ class CrossOriginTransactions {
             this._pingTimer = undefined;
         }
 
-        owner.removeEventListener("message", this._onBrowserMessage);
-        owner.removeEventListener("pagehide", this._onPageHide);
+        owner.removeEventListener('message', this._onBrowserMessage);
+        owner.removeEventListener('pagehide', this._onPageHide);
 
         await this._dead();
 
@@ -1109,7 +1109,7 @@ class CrossOriginTransactions {
             transaction,
             timer: owner.setTimeout(() => {
                 delete wrapper.timer;
-                transaction.end("Cross origin transaction timed out.");
+                transaction.end('Cross origin transaction timed out.');
             }, _transactionTimeout + (timeout || 0)),
         };
 
@@ -1370,7 +1370,7 @@ class CrossOriginTransactions {
 
         const send = (data: Types.CrossOriginTransactionData<any, any>) => {
             if (e.source && e.source.postMessage) {
-                (e.source.postMessage as Function)(JSON.stringify(data), "*");
+                (e.source.postMessage as Function)(JSON.stringify(data), '*');
             }
         };
 

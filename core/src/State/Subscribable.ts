@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "../Types";
+import * as Types from '../Types';
 
 export abstract class Subscribable<A, B = undefined>
     implements Types.Subscribable<A, B> {

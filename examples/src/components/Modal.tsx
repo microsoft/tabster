@@ -1,10 +1,10 @@
-import * as React from "react";
+import * as React from 'react';
 import {
     getCurrentTabster,
     getDeloser,
     getModalizer,
     Types as TabsterTypes,
-} from "tabster";
+} from 'tabster';
 
 export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;
@@ -55,7 +55,7 @@ export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
 
         if (el) {
             this._div = el;
-            this.tabsterModalizer.add(el, { id: "modal" });
+            this.tabsterModalizer.add(el, { id: 'modal' });
             this.tabsterDeloser.add(el);
             this.tabsterModalizer.focus(el);
         } else if (this._div) {

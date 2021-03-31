@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
+import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import {
     dispatchMutationEvent,
     MutationEvent,
     MUTATION_EVENT_NAME,
-} from "./MutationEvent";
-import * as Types from "./Types";
+} from './MutationEvent';
+import * as Types from './Types';
 import {
     callOriginalFocusOnly,
     createElementTreeWalker,
     getElementUId,
     makeFocusIgnored,
     WeakHTMLElement,
-} from "./Utils";
+} from './Utils';
 
 interface DummyInput {
     isFirst: boolean;
@@ -40,11 +40,11 @@ function _setInformativeStyle(
 
         if (element) {
             if (remove) {
-                element.style.removeProperty("--tabster-root");
+                element.style.removeProperty('--tabster-root');
             } else {
                 element.style.setProperty(
-                    "--tabster-root",
-                    id + "," + currentModalizerId
+                    '--tabster-root',
+                    id + ',' + currentModalizerId
                 );
             }
         }
@@ -318,23 +318,23 @@ export class Root implements Types.Root {
             return;
         }
 
-        const input = this._win().document.createElement("div");
+        const input = this._win().document.createElement('div');
 
         input.tabIndex = 0;
-        input.setAttribute("role", "none");
-        input.setAttribute("aria-hidden", "true");
+        input.setAttribute('role', 'none');
+        input.setAttribute('aria-hidden', 'true');
 
         const style = input.style;
-        style.position = "fixed";
-        style.width = style.height = "1px";
-        style.left = style.top = "-100500px";
-        style.opacity = "0";
-        style.zIndex = "-1";
+        style.position = 'fixed';
+        style.width = style.height = '1px';
+        style.left = style.top = '-100500px';
+        style.opacity = '0';
+        style.zIndex = '-1';
 
         if (__DEV__) {
             style.setProperty(
-                "--tabster-dummy-input",
-                props.isFirst ? "first" : "last"
+                '--tabster-dummy-input',
+                props.isFirst ? 'first' : 'last'
             );
         }
 
@@ -380,8 +380,8 @@ export class Root implements Types.Root {
             props.shouldMoveOut = false;
         };
 
-        input.addEventListener("focusin", props.focusin);
-        input.addEventListener("focusout", props.focusout);
+        input.addEventListener('focusin', props.focusin);
+        input.addEventListener('focusout', props.focusout);
     }
 
     private _disposeDummyInput(props: DummyInput): void {
@@ -395,13 +395,13 @@ export class Root implements Types.Root {
 
         const fi = props.focusin;
         if (fi) {
-            input.removeEventListener("focusin", fi);
+            input.removeEventListener('focusin', fi);
             delete props.focusin;
         }
 
         const fo = props.focusout;
         if (fo) {
-            input.removeEventListener("focusout", fo);
+            input.removeEventListener('focusout', fo);
             delete props.focusout;
         }
     }

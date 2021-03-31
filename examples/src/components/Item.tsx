@@ -1,5 +1,5 @@
-import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
-import * as React from "react";
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
+import * as React from 'react';
 
 export class Item extends React.PureComponent<{ onClick?: () => void }> {
     render() {

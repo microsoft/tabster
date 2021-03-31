@@ -1,9 +1,9 @@
-import * as React from "react";
-import { getCurrentTabster, getTabsterAttribute } from "tabster";
+import * as React from 'react';
+import { getCurrentTabster, getTabsterAttribute } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: "Focusable",
+    title: 'Focusable',
 };
 
 export const IgnoreAriaDisabled = () => {
