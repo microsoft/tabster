@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { augmentAttribute, getTabsterOnElement, setTabsterOnElement } from './Instance';
-import { dispatchMutationEvent } from './MutationEvent';
-import { RootAPI } from './Root';
-import * as Types from './Types';
-import { WeakHTMLElement } from './Utils';
+import {
+    augmentAttribute,
+    getTabsterOnElement,
+    setTabsterOnElement,
+} from "./Instance";
+import { dispatchMutationEvent } from "./MutationEvent";
+import { RootAPI } from "./Root";
+import * as Types from "./Types";
+import { WeakHTMLElement } from "./Utils";
 
 let _lastInternalId = 0;
 
@@ -25,17 +29,19 @@ function _setInformativeStyle(
 
         if (element) {
             if (remove) {
-                element.style.removeProperty('--tabster-modalizer');
+                element.style.removeProperty("--tabster-modalizer");
             } else {
                 element.style.setProperty(
-                    '--tabster-modalizer',
-                    internalId + ',' + userId +
-                        ',' +
-                            (isActive ? 'active' : 'inactive') +
-                                ',' +
-                                    (isAccessible ? 'accessible' : 'inaccessible') +
-                                        ',' +
-                                            (isFocused ? 'focused' : 'not-focused')
+                    "--tabster-modalizer",
+                    internalId +
+                        "," +
+                        userId +
+                        "," +
+                        (isActive ? "active" : "inactive") +
+                        "," +
+                        (isAccessible ? "accessible" : "inaccessible") +
+                        "," +
+                        (isFocused ? "focused" : "not-focused")
                 );
             }
         }
@@ -66,7 +72,7 @@ export class Modalizer implements Types.Modalizer {
         this._tabster = tabster;
         this._win = win;
 
-        this.internalId = 'ml' + ++_lastInternalId;
+        this.internalId = "ml" + ++_lastInternalId;
         this.userId = basic.id;
 
         this._element = new WeakHTMLElement(element);
@@ -75,11 +81,22 @@ export class Modalizer implements Types.Modalizer {
         this._setAccessibilityProps();
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            _setInformativeStyle(
+                this._element,
+                false,
+                this.internalId,
+                this.userId,
+                this._isActive,
+                this._isAccessible,
+                this._isFocused
+            );
         }
     }
 
-    setProps(basic?: Partial<Types.ModalizerBasicProps> | null, extended?: Partial<Types.ModalizerExtendedProps> | null): void {
+    setProps(
+        basic?: Partial<Types.ModalizerBasicProps> | null,
+        extended?: Partial<Types.ModalizerExtendedProps> | null
+    ): void {
         if (basic) {
             if (basic.id) {
                 this.userId = basic.id;
@@ -145,18 +162,31 @@ export class Modalizer implements Types.Modalizer {
 
         if (element) {
             if (accessible) {
-                augmentAttribute(this._tabster, element, 'aria-hidden');
+                augmentAttribute(this._tabster, element, "aria-hidden");
             } else {
                 this._setAccessibleTimer = this._win().setTimeout(() => {
                     this._setAccessibleTimer = undefined;
 
-                    augmentAttribute(this._tabster, element, 'aria-hidden', 'true');
+                    augmentAttribute(
+                        this._tabster,
+                        element,
+                        "aria-hidden",
+                        "true"
+                    );
                 }, 0);
             }
         }
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            _setInformativeStyle(
+                this._element,
+                false,
+                this.internalId,
+                this.userId,
+                this._isActive,
+                this._isAccessible,
+                this._isFocused
+            );
         }
     }
 
@@ -168,7 +198,15 @@ export class Modalizer implements Types.Modalizer {
         this._isActive = active;
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            _setInformativeStyle(
+                this._element,
+                false,
+                this.internalId,
+                this.userId,
+                this._isActive,
+                this._isAccessible,
+                this._isFocused
+            );
         }
     }
 
@@ -198,7 +236,15 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            _setInformativeStyle(
+                this._element,
+                false,
+                this.internalId,
+                this.userId,
+                this._isActive,
+                this._isAccessible,
+                this._isFocused
+            );
         }
     }
 
@@ -225,8 +271,8 @@ export class Modalizer implements Types.Modalizer {
     }
 
     private _setAccessibilityProps(): void {
-        if (__DEV__ && !this._element.get()?.getAttribute('aria-label')) {
-            console.error('Modalizer must have aria-label', this._element);
+        if (__DEV__ && !this._element.get()?.getAttribute("aria-label")) {
+            console.error("Modalizer must have aria-label", this._element);
 
             return;
         }
@@ -242,7 +288,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = ((tabster as unknown) as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
@@ -250,7 +296,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = undefined;
 
         this._tabster.focusedElement.subscribe(this._onFocus);
-    }
+    };
 
     protected dispose(): void {
         const win = this._win();
@@ -274,18 +320,31 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         (instance as ModalizerAPI).dispose();
     }
 
-    add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
+    add(
+        element: HTMLElement,
+        basic: Types.ModalizerBasicProps,
+        extended?: Types.ModalizerExtendedProps
+    ): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
         if (tabsterOnElement && tabsterOnElement.modalizer) {
-            if (__DEV__ && (tabsterOnElement.modalizer.userId !== basic.id)) {
-                console.error('Element already has Modalizer with different id.', element);
+            if (__DEV__ && tabsterOnElement.modalizer.userId !== basic.id) {
+                console.error(
+                    "Element already has Modalizer with different id.",
+                    element
+                );
             }
 
             return;
         }
 
-        const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
+        const modalizer = new Modalizer(
+            element,
+            this._tabster,
+            this._win,
+            basic,
+            extended
+        );
 
         setTabsterOnElement(this._tabster, element, { modalizer });
 
@@ -311,14 +370,14 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         if (!modalizer) {
             if (__DEV__) {
-                console.error('No Modalizer to remove.', element);
+                console.error("No Modalizer to remove.", element);
             }
 
             return;
         }
 
         setTabsterOnElement(this._tabster, element, {
-            modalizer: undefined
+            modalizer: undefined,
         });
 
         dispatchMutationEvent(element, { modalizer, removed: true });
@@ -329,7 +388,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     move(from: HTMLElement, to: HTMLElement): void {
         const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
 
-        const modalizer = tabsterOnElementFrom && tabsterOnElementFrom.modalizer;
+        const modalizer =
+            tabsterOnElementFrom && tabsterOnElementFrom.modalizer;
 
         if (modalizer) {
             modalizer.move(to);
@@ -342,8 +402,15 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
     }
 
-    focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean {
-        const ctx = RootAPI.getTabsterContext(this._tabster, elementFromModalizer);
+    focus(
+        elementFromModalizer: HTMLElement,
+        noFocusFirst?: boolean,
+        noFocusDefault?: boolean
+    ): boolean {
+        const ctx = RootAPI.getTabsterContext(
+            this._tabster,
+            elementFromModalizer
+        );
 
         if (ctx && ctx.modalizer) {
             ctx.root.setCurrentModalizerId(ctx.modalizer.userId);
@@ -368,14 +435,17 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                     noFocusDefault = basic.isNoFocusDefault;
                 }
 
-                if (!noFocusDefault && this._tabster.focusedElement.focusDefault(modalizerElement)) {
+                if (
+                    !noFocusDefault &&
+                    this._tabster.focusedElement.focusDefault(modalizerElement)
+                ) {
                     return true;
                 }
 
                 this._tabster.focusedElement.resetFocus(modalizerElement);
             }
         } else if (__DEV__) {
-            console.error('Element is not in Modalizer.', elementFromModalizer);
+            console.error("Element is not in Modalizer.", elementFromModalizer);
         }
 
         return false;
@@ -398,7 +468,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         if (modalizer) {
-            if (this._curModalizer && (modalizer !== this._curModalizer)) {
+            if (this._curModalizer && modalizer !== this._curModalizer) {
                 this._curModalizer.setFocused(false);
             }
 
@@ -416,5 +486,5 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 }
             }, 0);
         }
-    }
+    };
 }

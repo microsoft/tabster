@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from '../Instance';
-import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
-import { documentContains, getElementUId, getPromise, WeakHTMLElement } from '../Utils';
+import { getTabsterOnElement, setTabsterOnElement } from "../Instance";
+import { MutationEvent, MUTATION_EVENT_NAME } from "../MutationEvent";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
+import {
+    documentContains,
+    getElementUId,
+    getPromise,
+    WeakHTMLElement,
+} from "../Utils";
 
 interface ObservedElementInfo {
     element: WeakHTMLElement;
@@ -15,34 +20,41 @@ interface ObservedElementInfo {
 }
 
 let _observedById: { [uid: string]: ObservedElementInfo } = {};
-let _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
+let _observedByName: {
+    [name: string]: { [uid: string]: ObservedElementInfo };
+} = {};
 
 export class ObservedElementAPI
-        extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
-
+    extends Subscribable<HTMLElement, Types.ObservedElementBasicProps>
+    implements Types.ObservedElementAPI {
     private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _waiting: {
         [name: string]: {
-            timer?: number,
-            promise?: Promise<HTMLElement | null>,
-            resolve?: (value: HTMLElement | null) => void,
-            reject?: () => void }
+            timer?: number;
+            promise?: Promise<HTMLElement | null>;
+            resolve?: (value: HTMLElement | null) => void;
+            reject?: () => void;
+        };
     } = {};
     private _lastRequestFocusId = 0;
 
     constructor(tabster: Types.TabsterCore) {
         super();
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = ((tabster as unknown) as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
-        this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
-    }
+        this._win().document.addEventListener(
+            MUTATION_EVENT_NAME,
+            this._onMutation,
+            true
+        ); // Capture!
+    };
 
     protected dispose(): void {
         const win = this._win();
@@ -52,7 +64,11 @@ export class ObservedElementAPI
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        win.document.removeEventListener(
+            MUTATION_EVENT_NAME,
+            this._onMutation,
+            true
+        ); // Capture!
 
         for (let name of Object.keys(this._waiting)) {
             const w = this._waiting[name];
@@ -76,17 +92,23 @@ export class ObservedElementAPI
         (instance as ObservedElementAPI).dispose();
     }
 
-    add(element: HTMLElement, basic: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
+    add(
+        element: HTMLElement,
+        basic: Types.ObservedElementBasicProps,
+        extended?: Types.ObservedElementExtendedProps
+    ): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
         if (tabsterOnElement && tabsterOnElement.observed) {
             if (__DEV__) {
-                console.error('Element is already observed.', element);
+                console.error("Element is already observed.", element);
             }
             return;
         }
 
-        setTabsterOnElement(this._tabster, element, { observed: { ...basic, ...extended } });
+        setTabsterOnElement(this._tabster, element, {
+            observed: { ...basic, ...extended },
+        });
         this._onObservedElementUpdate(element);
     }
 
@@ -95,7 +117,7 @@ export class ObservedElementAPI
 
         if (!tabsterOnElement || !tabsterOnElement.observed) {
             if (__DEV__) {
-                console.error('Element is not observed.', element);
+                console.error("Element is not observed.", element);
             }
             return;
         }
@@ -115,7 +137,7 @@ export class ObservedElementAPI
 
             if (tabsterOnElementTo && tabsterOnElementTo.observed) {
                 if (__DEV__) {
-                    console.error('Element is already observed', to);
+                    console.error("Element is already observed", to);
                 }
                 return;
             }
@@ -123,7 +145,7 @@ export class ObservedElementAPI
             setTabsterOnElement(this._tabster, to, { observed });
             this._onObservedElementUpdate(to);
         } else if (__DEV__) {
-            console.error('Element is not observed.', from);
+            console.error("Element is not observed.", from);
         }
     }
 
@@ -137,12 +159,14 @@ export class ObservedElementAPI
 
         if (!observed) {
             if (__DEV__) {
-                console.error('Element is not observed.', element);
+                console.error("Element is not observed.", element);
             }
             return;
         }
 
-        setTabsterOnElement(this._tabster, element, { observed: { ...observed, ...basic, ...extended } });
+        setTabsterOnElement(this._tabster, element, {
+            observed: { ...observed, ...basic, ...extended },
+        });
         this._onObservedElementUpdate(element);
     }
 
@@ -165,7 +189,10 @@ export class ObservedElementAPI
         return null;
     }
 
-    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null> {
+    waitElement(
+        observedName: string,
+        timeout: number
+    ): Promise<HTMLElement | null> {
         const el = this.getElement(observedName);
 
         if (el) {
@@ -187,24 +214,30 @@ export class ObservedElementAPI
                 if (w.resolve) {
                     w.resolve(null);
                 }
-            }, timeout)
+            }, timeout),
         };
 
-        const promise = new (getPromise())<HTMLElement | null>((resolve, reject) => {
-            w.resolve = resolve;
-            w.reject = reject;
-        });
+        const promise = new (getPromise())<HTMLElement | null>(
+            (resolve, reject) => {
+                w.resolve = resolve;
+                w.reject = reject;
+            }
+        );
 
         w.promise = promise;
 
         return promise;
     }
 
-    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
+    async requestFocus(
+        observedName: string,
+        timeout: number
+    ): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
-        return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._tabster.focusedElement.focus(element)
-            : false
+        return this.waitElement(observedName, timeout).then((element) =>
+            this._lastRequestFocusId === requestId && element
+                ? this._tabster.focusedElement.focus(element)
+                : false
         );
     }
 
@@ -218,11 +251,11 @@ export class ObservedElementAPI
         if (observed && isInDocument) {
             if (!info) {
                 info = _observedById[uid] = {
-                    element: new WeakHTMLElement(element)
+                    element: new WeakHTMLElement(element),
                 };
             }
 
-            if (observed.name && (observed.name !== info.triggeredName)) {
+            if (observed.name && observed.name !== info.triggeredName) {
                 if (info.triggeredName) {
                     const obn = _observedByName[info.triggeredName];
 
@@ -247,7 +280,7 @@ export class ObservedElementAPI
 
                 this._trigger(element, {
                     name: observed.name,
-                    details: observed.details
+                    details: observed.details,
                 });
             }
         } else if (info) {
@@ -267,7 +300,10 @@ export class ObservedElementAPI
         }
     }
 
-    private _trigger(val: HTMLElement, details: Types.ObservedElementBasicProps): void {
+    private _trigger(
+        val: HTMLElement,
+        details: Types.ObservedElementBasicProps
+    ): void {
         this.trigger(val, details);
 
         const name = details.name;
@@ -292,5 +328,5 @@ export class ObservedElementAPI
         }
 
         this._onObservedElementUpdate(e.details.observed);
-    }
+    };
 }

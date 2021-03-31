@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from './Types';
-import { getElementUId, HTMLElementWithUID } from './Utils';
+import * as Types from "./Types";
+import { getElementUId, HTMLElementWithUID } from "./Utils";
 
 export function setTabsterOnElement(
     tabster: Types.TabsterCore,
@@ -12,7 +12,9 @@ export function setTabsterOnElement(
     tabsterOnElement: Partial<Types.TabsterOnElement>
 ): void {
     let uid = element.__tabsterElementUID;
-    let entry = uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid) : undefined;
+    let entry = uid
+        ? ((tabster as unknown) as Types.TabsterInternal).storageEntry(uid)
+        : undefined;
     const cur = (entry?.tabster || {}) as Types.TabsterOnElement;
     const attr = entry?.attr;
     let attrObject: Types.TabsterAttributeProps;
@@ -23,64 +25,71 @@ export function setTabsterOnElement(
         attrObject = {};
     }
 
-    Object.keys(tabsterOnElement).forEach((key: keyof Types.TabsterOnElement) => {
-        const h = tabsterOnElement[key];
+    Object.keys(tabsterOnElement).forEach(
+        (key: keyof Types.TabsterOnElement) => {
+            const h = tabsterOnElement[key];
 
-        if (h === undefined) {
-            if (cur) {
-                delete cur[key];
-                delete attrObject[key];
-            }
-        } else {
-            switch (key) {
-                case 'deloser':
-                    cur[key] = tabsterOnElement.deloser;
-                    attrObject[key] = (h as Types.Deloser).getBasicProps();
-                    break;
+            if (h === undefined) {
+                if (cur) {
+                    delete cur[key];
+                    delete attrObject[key];
+                }
+            } else {
+                switch (key) {
+                    case "deloser":
+                        cur[key] = tabsterOnElement.deloser;
+                        attrObject[key] = (h as Types.Deloser).getBasicProps();
+                        break;
 
-                case 'root':
-                    cur[key] = tabsterOnElement.root;
-                    attrObject[key] = (h as Types.Root).getBasicProps();
-                    break;
+                    case "root":
+                        cur[key] = tabsterOnElement.root;
+                        attrObject[key] = (h as Types.Root).getBasicProps();
+                        break;
 
-                case 'modalizer':
-                    cur[key] = tabsterOnElement.modalizer;
-                    attrObject[key] = (h as Types.Modalizer).getBasicProps();
-                    break;
+                    case "modalizer":
+                        cur[key] = tabsterOnElement.modalizer;
+                        attrObject[
+                            key
+                        ] = (h as Types.Modalizer).getBasicProps();
+                        break;
 
-                case 'focusable':
-                    cur[key] = attrObject[key] = tabsterOnElement.focusable;
-                    break;
+                    case "focusable":
+                        cur[key] = attrObject[key] = tabsterOnElement.focusable;
+                        break;
 
-                case 'groupper':
-                    cur[key] = tabsterOnElement.groupper;
-                    attrObject[key] = (h as Types.Groupper).getBasicProps();
-                    break;
+                    case "groupper":
+                        cur[key] = tabsterOnElement.groupper;
+                        attrObject[key] = (h as Types.Groupper).getBasicProps();
+                        break;
 
-                case 'uberGroupper':
-                    cur[key] = tabsterOnElement.uberGroupper;
-                    attrObject[key] = true;
-                    break;
+                    case "uberGroupper":
+                        cur[key] = tabsterOnElement.uberGroupper;
+                        attrObject[key] = true;
+                        break;
 
-                case 'observed':
-                    cur[key] = attrObject[key] = tabsterOnElement.observed;
-                    break;
+                    case "observed":
+                        cur[key] = attrObject[key] = tabsterOnElement.observed;
+                        break;
 
-                case 'outline':
-                    cur[key] = attrObject[key] = tabsterOnElement.outline;
-                    break;
+                    case "outline":
+                        cur[key] = attrObject[key] = tabsterOnElement.outline;
+                        break;
 
-                default:
-                    throw new Error('Unknown Tabster part.');
+                    default:
+                        throw new Error("Unknown Tabster part.");
+                }
             }
         }
-    });
+    );
 
     if (Object.keys(cur).length === 0) {
         if (uid && entry) {
             delete entry.tabster;
             delete entry.attr;
-            (tabster as unknown as Types.TabsterInternal).storageEntry(uid, false);
+            ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+                uid,
+                false
+            );
         }
 
         element.removeAttribute(Types.TabsterAttributeName);
@@ -89,20 +98,26 @@ export function setTabsterOnElement(
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+                uid = getElementUId(
+                    element,
+                    ((tabster as unknown) as Types.TabsterInternal).getWindow()
+                );
             }
 
-            entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
+            entry = ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+                uid,
+                true
+            )!;
         }
 
         entry.tabster = cur;
         entry.attr = {
             string: attrStr,
             object: attrObject,
-            changing: true
+            changing: true,
         };
 
-        if (!attr || (attr.string !== attrStr)) {
+        if (!attr || attr.string !== attrStr) {
             element.setAttribute(Types.TabsterAttributeName, entry.attr.string);
         }
 
@@ -115,7 +130,10 @@ export function getTabsterOnElement(
     element: Node
 ): Types.TabsterOnElement | undefined {
     const uid = (element as HTMLElementWithUID).__tabsterElementUID;
-    return uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid)?.tabster : undefined;
+    return uid
+        ? ((tabster as unknown) as Types.TabsterInternal).storageEntry(uid)
+              ?.tabster
+        : undefined;
 }
 
 export function updateTabsterByAttribute(
@@ -123,7 +141,7 @@ export function updateTabsterByAttribute(
     element: HTMLElementWithUID
 ): void {
     const newAttrValue = element.getAttribute(Types.TabsterAttributeName);
-    const tabsteri = (tabster as unknown as Types.TabsterInternal);
+    const tabsteri = (tabster as unknown) as Types.TabsterInternal;
 
     let uid = element.__tabsterElementUID;
     let entry = uid ? tabsteri.storageEntry(uid) : undefined;
@@ -134,16 +152,20 @@ export function updateTabsterByAttribute(
     if (newAttrValue) {
         if (newAttrValue !== (newAttr && newAttr.string)) {
             try {
-                const newValue = JSON.parse(newAttrValue) as Types.TabsterAttributeProps;
+                const newValue = JSON.parse(
+                    newAttrValue
+                ) as Types.TabsterAttributeProps;
 
-                if (typeof newValue !== 'object') {
-                    throw new Error(`Value is not a JSON object, got '${ newAttrValue }'.`);
+                if (typeof newValue !== "object") {
+                    throw new Error(
+                        `Value is not a JSON object, got '${newAttrValue}'.`
+                    );
                 }
 
                 newAttr = {
                     string: newAttrValue,
                     object: newValue,
-                    changing: false
+                    changing: false,
                 };
             } catch (e) {
                 if (__DEV__) {
@@ -158,43 +180,45 @@ export function updateTabsterByAttribute(
     const oldObject = entry?.attr?.object || {};
     const newObject = (newAttr && newAttr.object) || {};
 
-    for (let key of Object.keys(oldObject) as (keyof Types.TabsterAttributeProps)[]) {
+    for (let key of Object.keys(
+        oldObject
+    ) as (keyof Types.TabsterAttributeProps)[]) {
         if (!newObject[key]) {
             switch (key) {
-                case 'deloser':
+                case "deloser":
                     if (tabsteri.deloser) {
                         tabsteri.deloser.remove(element);
                     }
                     break;
 
-                case 'root':
+                case "root":
                     tabster.root.remove(element);
                     break;
 
-                case 'modalizer':
+                case "modalizer":
                     if (tabsteri.modalizer) {
                         tabsteri.modalizer.remove(element);
                     }
                     break;
 
-                case 'focusable':
+                case "focusable":
                     tabster.focusable.setProps(element, null);
                     break;
 
-                case 'groupper':
+                case "groupper":
                     tabster.focusable.removeGroupper(element);
                     break;
 
-                case 'uberGroupper':
+                case "uberGroupper":
                     break;
 
-                case 'observed':
+                case "observed":
                     if (tabsteri.observedElement) {
                         tabsteri.observedElement.remove(element);
                     }
                     break;
 
-                case 'outline':
+                case "outline":
                     if (tabsteri.outline) {
                         tabsteri.outline.setProps(element, null);
                     }
@@ -203,9 +227,11 @@ export function updateTabsterByAttribute(
         }
     }
 
-    for (let key of Object.keys(newObject) as (keyof Types.TabsterAttributeProps)[]) {
+    for (let key of Object.keys(
+        newObject
+    ) as (keyof Types.TabsterAttributeProps)[]) {
         switch (key) {
-            case 'deloser':
+            case "deloser":
                 if (tabsterOnElement && tabsterOnElement.deloser) {
                     tabsterOnElement.deloser.setProps(newObject.deloser);
                 } else {
@@ -214,12 +240,14 @@ export function updateTabsterByAttribute(
                     }
 
                     if (!tabsteri.deloser && __DEV__) {
-                        console.error('Deloser API used before initializing, please call `getDeloser`');
+                        console.error(
+                            "Deloser API used before initializing, please call `getDeloser`"
+                        );
                     }
                 }
                 break;
 
-            case 'root':
+            case "root":
                 if (tabsterOnElement && tabsterOnElement.root) {
                     tabsterOnElement.root.setProps(newObject.root);
                 } else {
@@ -227,7 +255,7 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'modalizer':
+            case "modalizer":
                 if (tabsterOnElement && tabsterOnElement.modalizer) {
                     tabsterOnElement.modalizer.setProps(newObject.modalizer);
                 } else {
@@ -236,16 +264,21 @@ export function updateTabsterByAttribute(
                     }
 
                     if (!tabsteri.modalizer && __DEV__) {
-                        console.error('Modalizer API used before initializing, please call `getDeloser`');
+                        console.error(
+                            "Modalizer API used before initializing, please call `getDeloser`"
+                        );
                     }
                 }
                 break;
 
-            case 'focusable':
-                tabster.focusable.setProps(element, newObject.focusable || null);
+            case "focusable":
+                tabster.focusable.setProps(
+                    element,
+                    newObject.focusable || null
+                );
                 break;
 
-            case 'groupper':
+            case "groupper":
                 if (tabsterOnElement && tabsterOnElement.groupper) {
                     tabsterOnElement.groupper.setProps(newObject.groupper);
                 } else {
@@ -253,28 +286,39 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'uberGroupper':
+            case "uberGroupper":
                 break;
 
-            case 'observed':
+            case "observed":
                 if (tabsteri.observedElement) {
                     if (tabsterOnElement && tabsterOnElement.observed) {
-                        tabsteri.observedElement.setProps(element, newObject.observed);
+                        tabsteri.observedElement.setProps(
+                            element,
+                            newObject.observed
+                        );
                     } else {
-                        tabsteri.observedElement.add(element, newObject.observed);
+                        tabsteri.observedElement.add(
+                            element,
+                            newObject.observed
+                        );
                     }
                 }
                 break;
 
-            case 'outline':
+            case "outline":
                 if (tabsteri.outline) {
-                    tabsteri.outline.setProps(element, newObject.outline || null);
+                    tabsteri.outline.setProps(
+                        element,
+                        newObject.outline || null
+                    );
                 }
                 break;
 
             default:
                 delete newObject[key];
-                console.error(`Unknown key '${ key }' in data-tabster attribute value.`);
+                console.error(
+                    `Unknown key '${key}' in data-tabster attribute value.`
+                );
         }
     }
 
@@ -285,10 +329,16 @@ export function updateTabsterByAttribute(
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+                uid = getElementUId(
+                    element,
+                    ((tabster as unknown) as Types.TabsterInternal).getWindow()
+                );
             }
 
-            entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
+            entry = ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+                uid,
+                true
+            )!;
         }
 
         entry.attr = newAttr;
@@ -307,8 +357,14 @@ export function augmentAttribute(
     name: string,
     value?: string | null // Restore original value when undefined.
 ): void {
-    const uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
-    let entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
+    const uid = getElementUId(
+        element,
+        ((tabster as unknown) as Types.TabsterInternal).getWindow()
+    );
+    let entry = ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+        uid,
+        true
+    )!;
 
     if (!entry.aug) {
         if (value === undefined) {
@@ -342,8 +398,11 @@ export function augmentAttribute(
         }
     }
 
-    if ((value === undefined) && (Object.keys(entry.aug).length === 0)) {
+    if (value === undefined && Object.keys(entry.aug).length === 0) {
         delete entry.aug;
-        (tabster as unknown as Types.TabsterInternal).storageEntry(uid, false);
+        ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+            uid,
+            false
+        );
     }
 }

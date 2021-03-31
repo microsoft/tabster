@@ -97,7 +97,12 @@ export const AccordionPrototype = () => (
                     </p>
                     <p>
                         <label htmlFor="cufc4">Extension:</label>
-                        <input type="text" defaultValue="" name="Ext" id="cufc4" />
+                        <input
+                            type="text"
+                            defaultValue=""
+                            name="Ext"
+                            id="cufc4"
+                        />
                     </p>
                     <p>
                         <label htmlFor="cufc5">Country:</label>

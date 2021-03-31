@@ -13,20 +13,10 @@
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist/",
-        "lib": [
-            "es5",
-            "es2015.iterable",
-            "dom",
-            "esnext"
-        ]
+        "lib": ["es5", "es2015.iterable", "dom", "esnext"]
     },
 
-    "include": [
-        "./src/**/*"
-    ],
+    "include": ["./src/**/*"],
 
-    "exclude": [
-        "dist",
-        "node_modules"
-    ]
+    "exclude": ["dist", "node_modules"]
 }

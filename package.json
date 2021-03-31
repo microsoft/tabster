@@ -1,12 +1,23 @@
 {
-  "private": true,
-  "scripts": {
-    "bootstrap": "npm run clean && lerna bootstrap --no-ci",
-    "build": "lerna exec -- npm run build",
-    "clean": "lerna exec -- npm run clean && lerna clean --yes",
-    "start": "lerna exec --scope examples -- npm run start"
-  },
-  "devDependencies": {
-    "lerna": "^4.0.0"
-  }
+    "private": true,
+    "scripts": {
+        "bootstrap": "npm run clean && lerna bootstrap --no-ci",
+        "build": "lerna exec -- npm run build",
+        "clean": "lerna exec -- npm run clean && lerna clean --yes",
+        "start": "lerna exec --scope examples -- npm run start",
+        "prettier": "prettier --write .",
+        "prettier:check": "prettier --check ."
+    },
+    "devDependencies": {
+        "lerna": "^4.0.0",
+        "lint-staged": "^10.5.4",
+        "prettier": "2.2.1",
+        "simple-git-hooks": "^2.2.0"
+    },
+    "simple-git-hooks": {
+        "pre-commit": "npx lint-staged"
+    },
+    "lint-staged": {
+        "*.{js,css,md}": "prettier --write"
+    }
 }

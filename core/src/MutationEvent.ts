@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from './Instance';
-import * as Types from './Types';
-import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID, WeakHTMLElement } from './Utils';
+import { getTabsterOnElement } from "./Instance";
+import * as Types from "./Types";
+import {
+    createElementTreeWalker,
+    elementByUId,
+    getElementUId,
+    HTMLElementWithUID,
+    WeakHTMLElement,
+} from "./Utils";
 
 export interface MutationEventDetails {
     root?: Types.Root;
@@ -20,36 +26,73 @@ export interface MutationEvent extends Event {
     details: MutationEventDetails;
 }
 
-export const MUTATION_EVENT_NAME = 'tabster:mutation-event';
+export const MUTATION_EVENT_NAME = "tabster:mutation-event";
 
 export function observeMutations(
     doc: HTMLDocument,
     tabster: Types.TabsterCore,
-    updateTabsterByAttribute: (tabster: Types.TabsterCore, element: HTMLElementWithUID) => void
+    updateTabsterByAttribute: (
+        tabster: Types.TabsterCore,
+        element: HTMLElementWithUID
+    ) => void
 ): () => void {
-    if (typeof MutationObserver === 'undefined') {
-        return () => { /* Noop */ };
+    if (typeof MutationObserver === "undefined") {
+        return () => {
+            /* Noop */
+        };
     }
 
-    let observer = new MutationObserver(mutations => {
-        const changedRoots: { [id: string]: { removedFrom?: Document; addedTo?: Node; root: Types.Root; } } = {};
-        const changedModalizers: { [id: string]: { removedFrom?: Document; addedTo?: Node; modalizer: Types.Modalizer; } } = {};
-        const changedGrouppers: { [id: string]: { removedFrom?: Document; addedTo?: Node; groupper: Types.Groupper } } = {};
-        const changedObservedElements: { [id: string]: { removedFrom?: Document; addedTo?: Node; element: HTMLElement } } = {};
+    let observer = new MutationObserver((mutations) => {
+        const changedRoots: {
+            [id: string]: {
+                removedFrom?: Document;
+                addedTo?: Node;
+                root: Types.Root;
+            };
+        } = {};
+        const changedModalizers: {
+            [id: string]: {
+                removedFrom?: Document;
+                addedTo?: Node;
+                modalizer: Types.Modalizer;
+            };
+        } = {};
+        const changedGrouppers: {
+            [id: string]: {
+                removedFrom?: Document;
+                addedTo?: Node;
+                groupper: Types.Groupper;
+            };
+        } = {};
+        const changedObservedElements: {
+            [id: string]: {
+                removedFrom?: Document;
+                addedTo?: Node;
+                element: HTMLElement;
+            };
+        } = {};
 
         for (let mutation of mutations) {
             const target = mutation.target;
             const removed = mutation.removedNodes;
             const added = mutation.addedNodes;
 
-            if (mutation.type === 'attributes') {
+            if (mutation.type === "attributes") {
                 if (mutation.attributeName === Types.TabsterAttributeName) {
-                    const uid = (target as HTMLElementWithUID).__tabsterElementUID;
+                    const uid = (target as HTMLElementWithUID)
+                        .__tabsterElementUID;
 
-                    const tabsterAttr = uid ? (tabster as unknown as Types.TabsterInternal).storageEntry(uid)?.attr : undefined;
+                    const tabsterAttr = uid
+                        ? ((tabster as unknown) as Types.TabsterInternal).storageEntry(
+                              uid
+                          )?.attr
+                        : undefined;
 
                     if (!tabsterAttr || !tabsterAttr.changing) {
-                        updateTabsterByAttribute(tabster, target as HTMLElement);
+                        updateTabsterByAttribute(
+                            tabster,
+                            target as HTMLElement
+                        );
                     }
                 }
             } else {
@@ -74,11 +117,19 @@ export function observeMutations(
             const r = changedRoots[id];
 
             if (r.removedFrom) {
-                dispatchMutationEvent(r.removedFrom, { root: r.root, removed: true, isMutation: true });
+                dispatchMutationEvent(r.removedFrom, {
+                    root: r.root,
+                    removed: true,
+                    isMutation: true,
+                });
             }
 
             if (r.addedTo) {
-                dispatchMutationEvent(r.addedTo, { root: r.root, removed: false, isMutation: true });
+                dispatchMutationEvent(r.addedTo, {
+                    root: r.root,
+                    removed: false,
+                    isMutation: true,
+                });
             }
         }
 
@@ -86,11 +137,19 @@ export function observeMutations(
             const l = changedModalizers[id];
 
             if (l.removedFrom) {
-                dispatchMutationEvent(l.removedFrom, { modalizer: l.modalizer, removed: true, isMutation: true });
+                dispatchMutationEvent(l.removedFrom, {
+                    modalizer: l.modalizer,
+                    removed: true,
+                    isMutation: true,
+                });
             }
 
             if (l.addedTo) {
-                dispatchMutationEvent(l.addedTo, { modalizer: l.modalizer, removed: false, isMutation: true });
+                dispatchMutationEvent(l.addedTo, {
+                    modalizer: l.modalizer,
+                    removed: false,
+                    isMutation: true,
+                });
             }
         }
 
@@ -98,11 +157,19 @@ export function observeMutations(
             const g = changedGrouppers[id];
 
             if (g.removedFrom && !g.addedTo) {
-                dispatchMutationEvent(g.removedFrom, { groupper: g.groupper, removed: true, isMutation: true });
+                dispatchMutationEvent(g.removedFrom, {
+                    groupper: g.groupper,
+                    removed: true,
+                    isMutation: true,
+                });
             }
 
             if (g.addedTo) {
-                dispatchMutationEvent(g.addedTo, { groupper: g.groupper, removed: false, isMutation: true });
+                dispatchMutationEvent(g.addedTo, {
+                    groupper: g.groupper,
+                    removed: false,
+                    isMutation: true,
+                });
             }
         }
 
@@ -110,27 +177,53 @@ export function observeMutations(
             const e = changedObservedElements[id];
 
             if (e.removedFrom && !e.addedTo) {
-                dispatchMutationEvent(e.removedFrom, { observed: e.element, removed: true, isMutation: true });
+                dispatchMutationEvent(e.removedFrom, {
+                    observed: e.element,
+                    removed: true,
+                    isMutation: true,
+                });
             }
 
             if (e.addedTo) {
-                dispatchMutationEvent(e.addedTo, { observed: e.element, removed: false, isMutation: true });
+                dispatchMutationEvent(e.addedTo, {
+                    observed: e.element,
+                    removed: false,
+                    isMutation: true,
+                });
             }
         }
 
-        function findTargets(node: Node, removedFrom?: Document, addedTo?: Node): void {
+        function findTargets(
+            node: Node,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): void {
             acceptNode(node as HTMLElement, removedFrom, addedTo);
 
-            const walker = createElementTreeWalker(doc, node, (element: Node): number => {
-                return acceptNode(element as HTMLElement, removedFrom, addedTo);
-            });
+            const walker = createElementTreeWalker(
+                doc,
+                node,
+                (element: Node): number => {
+                    return acceptNode(
+                        element as HTMLElement,
+                        removedFrom,
+                        addedTo
+                    );
+                }
+            );
 
             if (walker) {
-                while (walker.nextNode()) { /* Iterating for the sake of calling acceptNode callback. */ }
+                while (walker.nextNode()) {
+                    /* Iterating for the sake of calling acceptNode callback. */
+                }
             }
         }
 
-        function acceptNode(element: HTMLElement, removedFrom?: Document, addedTo?: Node): number {
+        function acceptNode(
+            element: HTMLElement,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): number {
             if (!element.getAttribute) {
                 // It might actually be a text node.
                 return NodeFilter.FILTER_SKIP;
@@ -154,11 +247,20 @@ export function observeMutations(
                 }
 
                 if (tabsterOnElement.modalizer) {
-                    addModalizerTarget(tabsterOnElement.modalizer, removedFrom, addedTo);
+                    addModalizerTarget(
+                        tabsterOnElement.modalizer,
+                        removedFrom,
+                        addedTo
+                    );
                 }
 
                 if (tabsterOnElement.groupper) {
-                    addGroupTarget(element, tabsterOnElement.groupper, removedFrom, addedTo);
+                    addGroupTarget(
+                        element,
+                        tabsterOnElement.groupper,
+                        removedFrom,
+                        addedTo
+                    );
                 }
 
                 if (tabsterOnElement.observed) {
@@ -171,7 +273,11 @@ export function observeMutations(
             return NodeFilter.FILTER_SKIP;
         }
 
-        function addRootTarget(root: Types.Root, removedFrom?: Document, addedTo?: Node): void {
+        function addRootTarget(
+            root: Types.Root,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): void {
             let r = changedRoots[root.uid];
 
             if (!r) {
@@ -187,7 +293,11 @@ export function observeMutations(
             }
         }
 
-        function addModalizerTarget(modalizer: Types.Modalizer, removedFrom?: Document, addedTo?: Node): void {
+        function addModalizerTarget(
+            modalizer: Types.Modalizer,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): void {
             let m = changedModalizers[modalizer.internalId];
 
             if (!m) {
@@ -203,7 +313,12 @@ export function observeMutations(
             }
         }
 
-        function addGroupTarget(el: Node, groupper: Types.Groupper, removedFrom?: Document, addedTo?: Node): void {
+        function addGroupTarget(
+            el: Node,
+            groupper: Types.Groupper,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): void {
             let g = changedGrouppers[groupper.id];
 
             if (!g) {
@@ -219,7 +334,11 @@ export function observeMutations(
             }
         }
 
-        function addObservedElementTarget(element: HTMLElement, removedFrom?: Document, addedTo?: Node): void {
+        function addObservedElementTarget(
+            element: HTMLElement,
+            removedFrom?: Document,
+            addedTo?: Node
+        ): void {
             if (!doc.defaultView) {
                 return;
             }
@@ -241,15 +360,23 @@ export function observeMutations(
         }
     });
 
-    observer.observe(doc, { childList: true, subtree: true, attributes: true, attributeFilter: [Types.TabsterAttributeName] });
+    observer.observe(doc, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: [Types.TabsterAttributeName],
+    });
 
     return () => {
         observer.disconnect();
     };
 }
 
-export function dispatchMutationEvent(target: Node, details: MutationEventDetails): void {
-    const event = document.createEvent('HTMLEvents') as MutationEvent;
+export function dispatchMutationEvent(
+    target: Node,
+    details: MutationEventDetails
+): void {
+    const event = document.createEvent("HTMLEvents") as MutationEvent;
 
     event.initEvent(MUTATION_EVENT_NAME, true, true);
 

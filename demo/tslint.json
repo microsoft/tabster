@@ -11,14 +11,7 @@
         "max-line-length": [true, 140],
         "no-arg": true,
         "no-bitwise": false,
-        "no-console": [
-            true,
-            "debug",
-            "info",
-            "time",
-            "timeEnd",
-            "trace"
-        ],
+        "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
         "no-consecutive-blank-lines": true,
         "no-construct": true,
         "no-debugger": true,
@@ -35,7 +28,7 @@
             "check-else",
             "check-whitespace"
         ],
-        "ordered-imports": [true, {"module-source-path": "basename"}],
+        "ordered-imports": [true, { "module-source-path": "basename" }],
         "quotemark": [true, "single", "jsx-single"],
         "radix": true,
         "semicolon": true,

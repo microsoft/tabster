@@ -16,7 +16,7 @@ export const decorators = [
     (Story) => {
         // ensures Tabster is only created once
         React.useState(() => {
-            const tabster = createTabster(window)
+            const tabster = createTabster(window);
 
             // initialize Tabster API instances
             getModalizer(tabster);

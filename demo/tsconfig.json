@@ -14,18 +14,10 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist/",
         "jsx": "react",
-        "lib": [
-            "es5",
-            "dom"
-        ]
+        "lib": ["es5", "dom"]
     },
 
-    "include": [
-        "./src/**/*"
-    ],
+    "include": ["./src/**/*"],
 
-    "exclude": [
-        "dist",
-        "node_modules"
-    ]
+    "exclude": ["dist", "node_modules"]
 }

@@ -1,5 +1,5 @@
-import { getCurrentTabster, Types as TabsterTypes } from 'tabster';
-import * as React from 'react';
+import { getCurrentTabster, Types as TabsterTypes } from "tabster";
+import * as React from "react";
 
 const AccordionContext = React.createContext<Accordion | undefined>(undefined);
 
@@ -17,9 +17,9 @@ export class Accordion extends React.PureComponent<{}, AccordionState> {
 
     render() {
         return (
-            <div className={ `Accordion${ this.state.hasFocus ? ' focus' : '' }` }>
-                <AccordionContext.Provider value={ this }>
-                    { this.props.children }
+            <div className={`Accordion${this.state.hasFocus ? " focus" : ""}`}>
+                <AccordionContext.Provider value={this}>
+                    {this.props.children}
                 </AccordionContext.Provider>
             </div>
         );
@@ -31,10 +31,13 @@ interface AccordionSectionProps {
 }
 
 interface AccordionSectionState {
-    isExpanded: boolean
+    isExpanded: boolean;
 }
 
-export class AccordionSection extends React.PureComponent<AccordionSectionProps, AccordionSectionState> {
+export class AccordionSection extends React.PureComponent<
+    AccordionSectionProps,
+    AccordionSectionState
+> {
     private static _index = 0;
     private _index: number;
     private _div: HTMLDivElement | undefined;
@@ -56,7 +59,9 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
                         <div ref={this._onRef}>
                             <h3>
                                 <button
-                                    aria-expanded={ this.state.isExpanded ? true : undefined }
+                                    aria-expanded={
+                                        this.state.isExpanded ? true : undefined
+                                    }
                                     className="Accordion-trigger"
                                     aria-controls={`accordion-section-${this._index}`}
                                     id={`accordion-section-title-${this._index}`}
@@ -92,7 +97,9 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
         if (div) {
             this._div = div;
 
-            tabster?.focusable.addGroupper(div, undefined, { onChange: this._onChange });
+            tabster?.focusable.addGroupper(div, undefined, {
+                onChange: this._onChange,
+            });
 
             if (this._accordion && !this._accordion.expandedSection) {
                 this._accordion.expandedSection = this;
@@ -107,11 +114,14 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
 
             delete this._div;
         }
-    }
+    };
 
     private _toggle = () => {
         if (this._accordion) {
-            if (this._accordion.expandedSection && this._accordion.expandedSection !== this) {
+            if (
+                this._accordion.expandedSection &&
+                this._accordion.expandedSection !== this
+            ) {
                 this._accordion.expandedSection.setState({ isExpanded: false });
             }
 
@@ -119,7 +129,7 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
 
             this.setState({ isExpanded: true });
         }
-    }
+    };
 
     private _onChange = (state: TabsterTypes.GroupperState) => {
         if (this._div && this._accordion) {
@@ -128,5 +138,5 @@ export class AccordionSection extends React.PureComponent<AccordionSectionProps,
                 this._accordion.setState({ hasFocus });
             }
         }
-    }
+    };
 }

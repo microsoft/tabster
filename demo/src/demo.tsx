@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     createTabster,
     getCurrentTabster,
@@ -12,8 +12,8 @@ import {
     getModalizer,
     getOutline,
     getTabsterAttribute,
-    Types as TabsterTypes
-} from 'tabster';
+    Types as TabsterTypes,
+} from "tabster";
 
 const tabster = createTabster(window);
 const tabsterModalizer = getModalizer(tabster);
@@ -26,19 +26,28 @@ class App extends React.PureComponent {
 
     render() {
         return (
-            <div { ...getTabsterAttribute({ root: {} }) }>
+            <div {...getTabsterAttribute({ root: {} })}>
                 <TabsterExistsExample />
-                <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
+                <div
+                    aria-label="Main"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "main" },
+                        deloser: {},
+                    })}
+                >
                     <h1>Hello world</h1>
 
-                    <div { ...getTabsterAttribute({ 
-                        focusable: 
-                            { mover: 
-                                { navigationType: TabsterTypes.MoverKeys.Arrows, 
-                                    axis: TabsterTypes.MoverAxis.Horizontal 
-                                } 
-                            } 
-                        }) }>
+                    <div
+                        {...getTabsterAttribute({
+                            focusable: {
+                                mover: {
+                                    navigationType:
+                                        TabsterTypes.MoverKeys.Arrows,
+                                    axis: TabsterTypes.MoverAxis.Horizontal,
+                                },
+                            },
+                        })}
+                    >
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -53,11 +62,18 @@ class App extends React.PureComponent {
                         <button>tabs</button>
                     </div>
 
-                    <div { ...getTabsterAttribute({
-                        focusable: {
-                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true, axis: TabsterTypes.MoverAxis.Vertical }
-                        }
-                    }) }>
+                    <div
+                        {...getTabsterAttribute({
+                            focusable: {
+                                mover: {
+                                    navigationType:
+                                        TabsterTypes.MoverKeys.Arrows,
+                                    cyclic: true,
+                                    axis: TabsterTypes.MoverAxis.Vertical,
+                                },
+                            },
+                        })}
+                    >
                         <button>The</button>
                         <button>same</button>
                         <button>arrow</button>
@@ -68,56 +84,56 @@ class App extends React.PureComponent {
                     </div>
 
                     <div>
-                        <Item onClick={ this._onClick } />
-                        <Item onClick={ this._onClick } />
+                        <Item onClick={this._onClick} />
+                        <Item onClick={this._onClick} />
 
-                        <Item onClick={ this._onClick }>
+                        <Item onClick={this._onClick}>
                             <div>
-                                <Item onClick={ this._onClick } />
+                                <Item onClick={this._onClick} />
 
-                                <Item onClick={ this._onClick }>
+                                <Item onClick={this._onClick}>
                                     <div>
-                                        <Item onClick={ this._onClick } />
-                                        <Item onClick={ this._onClick } />
+                                        <Item onClick={this._onClick} />
+                                        <Item onClick={this._onClick} />
 
-                                        <Item onClick={ this._onClick }>
+                                        <Item onClick={this._onClick}>
                                             <div>
-                                                <Item onClick={ this._onClick } />
-                                                <Item onClick={ this._onClick } />
-                                                <Item onClick={ this._onClick } />
+                                                <Item onClick={this._onClick} />
+                                                <Item onClick={this._onClick} />
+                                                <Item onClick={this._onClick} />
                                             </div>
                                         </Item>
 
-                                        <Item onClick={ this._onClick } />
-                                        <Item onClick={ this._onClick } />
+                                        <Item onClick={this._onClick} />
+                                        <Item onClick={this._onClick} />
                                     </div>
                                 </Item>
 
-                                <Item onClick={ this._onClick } />
+                                <Item onClick={this._onClick} />
                             </div>
                         </Item>
 
-                        <Item onClick={ this._onClick } />
-                        <Item onClick={ this._onClick } />
+                        <Item onClick={this._onClick} />
+                        <Item onClick={this._onClick} />
                     </div>
 
                     <FindAllExample />
                 </div>
 
-                <Modal ref={ this._onModalRef } />
+                <Modal ref={this._onModalRef} />
             </div>
         );
     }
 
     private _onModalRef = (ref: Modal | null) => {
         this._modal = ref || undefined;
-    }
+    };
 
     private _onClick = () => {
         if (this._modal) {
             this._modal.show();
         }
-    }
+    };
 }
 
 class Item extends React.PureComponent<{ onClick: () => void }> {
@@ -125,24 +141,33 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
         return (
             <div
                 tabIndex={0}
-                className='item'
-                { ...getTabsterAttribute({ groupper: {
-                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
-                }})}
+                className="item"
+                {...getTabsterAttribute({
+                    groupper: {
+                        isLimited:
+                            TabsterTypes.GroupperFocusLimits.LimitedTrapFocus,
+                    },
+                })}
             >
-                { this.props.children
-                    ? this.props.children
-                    : (<>
-                        <button onClick={ this.props.onClick }>Hello</button>
-                        <button onClick={ this.props.onClick }>World</button>
-                    </>)
-                }
+                {this.props.children ? (
+                    this.props.children
+                ) : (
+                    <>
+                        <button onClick={this.props.onClick}>Hello</button>
+                        <button onClick={this.props.onClick}>World</button>
+                    </>
+                )}
             </div>
         );
     }
 }
 
-const TabsterExistsExample: React.FC = () => (<div>Tabster instance exists on window: {getCurrentTabster(window) ? 'true' : 'false'}</div>);
+const TabsterExistsExample: React.FC = () => (
+    <div>
+        Tabster instance exists on window:{" "}
+        {getCurrentTabster(window) ? "true" : "false"}
+    </div>
+);
 
 class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _div: HTMLDivElement | undefined;
@@ -159,12 +184,17 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
 
         return (
             <div>
-                <div className='lightbox'></div>
-                <div ref={ this._onRef } aria-label='Modal' role='region' className='modal'>
+                <div className="lightbox"></div>
+                <div
+                    ref={this._onRef}
+                    aria-label="Modal"
+                    role="region"
+                    className="modal"
+                >
                     <h3>Piu piu</h3>
-                    <button onClick={ this._onBtnClick }>Close</button>
+                    <button onClick={this._onBtnClick}>Close</button>
                     &nbsp;or&nbsp;
-                    <button onClick={ this._onBtnClick }>Dismiss</button>
+                    <button onClick={this._onBtnClick}>Dismiss</button>
                 </div>
             </div>
         );
@@ -177,7 +207,7 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _onRef = (el: HTMLDivElement | null) => {
         if (el) {
             this._div = el;
-            tabsterModalizer.add(el, { id: 'modal' });
+            tabsterModalizer.add(el, { id: "modal" });
             tabsterDeloser.add(el);
             tabsterModalizer.focus(el);
         } else if (this._div) {
@@ -185,11 +215,11 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
             tabsterDeloser.remove(this._div);
             this._div = undefined;
         }
-    }
+    };
 
     private _onBtnClick = () => {
         this.setState({ isVisible: false });
-    }
+    };
 }
 
 const FindAllExample: React.FC = () => {
@@ -197,14 +227,20 @@ const FindAllExample: React.FC = () => {
     const [filtered, setFiltered] = React.useState<HTMLElement[]>([]);
     React.useEffect(() => {
         if (ref.current) {
-            const ducks = tabster.focusable.findAll(ref?.current, (el: HTMLElement) => !!el.textContent?.includes('Duck'));
+            const ducks = tabster.focusable.findAll(
+                ref?.current,
+                (el: HTMLElement) => !!el.textContent?.includes("Duck")
+            );
             setFiltered(ducks);
         }
     }, []);
 
     return (
         <div>
-            <div>Filtered ducks: {filtered.map(item => item.textContent + ', ')} </div>
+            <div>
+                Filtered ducks:{" "}
+                {filtered.map((item) => item.textContent + ", ")}{" "}
+            </div>
             <div ref={ref}>
                 <button>Duck 1</button>
                 <button>Goose 1</button>
@@ -217,4 +253,4 @@ const FindAllExample: React.FC = () => {
     );
 };
 
-ReactDOM.render(<App />, document.getElementById('demo'));
+ReactDOM.render(<App />, document.getElementById("demo"));

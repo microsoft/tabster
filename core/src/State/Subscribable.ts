@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from '../Types';
+import * as Types from "../Types";
 
-export abstract class Subscribable<A, B = undefined> implements Types.Subscribable<A, B> {
+export abstract class Subscribable<A, B = undefined>
+    implements Types.Subscribable<A, B> {
     protected _val: A | undefined;
-    private _callbacks: (Types.SubscribableCallback<A, B>)[] = [];
+    private _callbacks: Types.SubscribableCallback<A, B>[] = [];
 
     protected dispose(): void {
         this._callbacks = [];
@@ -49,6 +50,6 @@ export abstract class Subscribable<A, B = undefined> implements Types.Subscribab
     }
 
     private _callCallbacks(val: A, details: B): void {
-        this._callbacks.forEach(callback => callback(val, details));
+        this._callbacks.forEach((callback) => callback(val, details));
     }
 }

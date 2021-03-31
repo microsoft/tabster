@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export const TabsterAttributeName = 'data-tabster';
+export const TabsterAttributeName = "data-tabster";
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;
@@ -28,7 +28,10 @@ export interface TabsterCore {
 export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;
 
-export type SubscribableCallback<A, B = undefined> = (val: A, details: B) => void;
+export type SubscribableCallback<A, B = undefined> = (
+    val: A,
+    details: B
+) => void;
 
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
@@ -44,10 +47,15 @@ export interface FocusedElementDetails {
     isFocusedProgrammatically?: boolean;
 }
 
-export interface FocusedElementState extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
+export interface FocusedElementState
+    extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
-    focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
+    focus(
+        element: HTMLElement,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): boolean;
     focusDefault(container: HTMLElement): boolean;
     focusFirst(container: HTMLElement): boolean;
     resetFocus(container: HTMLElement): boolean;
@@ -58,16 +66,27 @@ export interface ObservedElementBasicProps {
     details?: any;
 }
 
-export interface ObservedElementExtendedProps {
-}
+export interface ObservedElementExtendedProps {}
 
-export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
-    add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
+export interface ObservedElementAPI
+    extends Subscribable<HTMLElement, ObservedElementBasicProps> {
+    add(
+        element: HTMLElement,
+        basic?: ObservedElementBasicProps,
+        extended?: ObservedElementExtendedProps
+    ): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
+    setProps(
+        element: HTMLElement,
+        basic?: Partial<ObservedElementBasicProps>,
+        extended?: Partial<ObservedElementExtendedProps>
+    ): void;
     getElement(observedName: string): HTMLElement | null;
-    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null>;
+    waitElement(
+        observedName: string,
+        timeout: number
+    ): Promise<HTMLElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -78,7 +97,10 @@ export interface CrossOriginElement {
     readonly rootId?: string;
     readonly observedName?: string;
     readonly observedDetails?: string;
-    focus(noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): Promise<boolean>;
+    focus(
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): Promise<boolean>;
 }
 
 export interface CrossOriginSentTo {
@@ -108,25 +130,47 @@ export interface CrossOriginTransactionData<I, O> {
     endData?: O;
 }
 
-export type CrossOriginTransactionSend = (data: CrossOriginTransactionData<any, any>) => void;
+export type CrossOriginTransactionSend = (
+    data: CrossOriginTransactionData<any, any>
+) => void;
 
 export interface CrossOriginMessage {
     data: CrossOriginTransactionData<any, any>;
     send: CrossOriginTransactionSend;
 }
 
-export interface CrossOriginFocusedElementState extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails> {
-    focus(element: CrossOriginElement, noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean): Promise<boolean>;
-    focusById(elementId: string, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean): Promise<boolean>;
-    focusByObservedName(observedName: string, timeout?: number, rootId?: string, noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean): Promise<boolean>;
+export interface CrossOriginFocusedElementState
+    extends Subscribable<
+        CrossOriginElement | undefined,
+        FocusedElementDetails
+    > {
+    focus(
+        element: CrossOriginElement,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): Promise<boolean>;
+    focusById(
+        elementId: string,
+        rootId?: string,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): Promise<boolean>;
+    focusByObservedName(
+        observedName: string,
+        timeout?: number,
+        rootId?: string,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): Promise<boolean>;
 }
 
-export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
+export interface CrossOriginObservedElementState
+    extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
     getElement(observedName: string): Promise<CrossOriginElement | null>;
-    waitElement(observedName: string, timeout: number): Promise<CrossOriginElement | null>;
+    waitElement(
+        observedName: string,
+        timeout: number
+    ): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -134,7 +178,9 @@ export interface CrossOriginAPI {
     focusedElement: CrossOriginFocusedElementState;
     observedElement: CrossOriginObservedElementState;
 
-    setup(sendUp?: CrossOriginTransactionSend | null): (msg: CrossOriginMessage) => void;
+    setup(
+        sendUp?: CrossOriginTransactionSend | null
+    ): (msg: CrossOriginMessage) => void;
     isSetUp(): boolean;
 }
 
@@ -152,7 +198,10 @@ export interface OutlinedElementProps {
 
 export interface OutlineAPI {
     setup(props?: Partial<OutlineProps>): void;
-    setProps(element: HTMLElement, props: Partial<OutlinedElementProps> | null): void;
+    setProps(
+        element: HTMLElement,
+        props: Partial<OutlinedElementProps> | null
+    ): void;
 }
 
 export interface DeloserElementActions {
@@ -177,7 +226,7 @@ export const RestoreFocusOrders: RestoreFocusOrders = {
     DeloserDefault: 1,
     RootDefault: 2,
     DeloserFirst: 3,
-    RootFirst: 4
+    RootFirst: 4,
 };
 
 export interface DeloserBasicProps {
@@ -191,7 +240,10 @@ export interface DeloserExtendedProps {
 
 export interface Deloser {
     readonly uid: string;
-    setProps(basic?: Partial<DeloserBasicProps> | null, extended?: Partial<DeloserExtendedProps> | null): void;
+    setProps(
+        basic?: Partial<DeloserBasicProps> | null,
+        extended?: Partial<DeloserExtendedProps> | null
+    ): void;
     getBasicProps(): DeloserBasicProps;
     move(newContainer: HTMLElement): void;
     dispose(): void;
@@ -211,10 +263,18 @@ export interface Deloser {
 
 export interface DeloserAPI {
     getActions(element: HTMLElement): DeloserElementActions | undefined;
-    add(element: HTMLElement, basic?: DeloserBasicProps, extended?: DeloserExtendedProps): void;
+    add(
+        element: HTMLElement,
+        basic?: DeloserBasicProps,
+        extended?: DeloserExtendedProps
+    ): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<DeloserBasicProps>, extended?: Partial<DeloserExtendedProps>): void;
+    setProps(
+        element: HTMLElement,
+        basic?: Partial<DeloserBasicProps>,
+        extended?: Partial<DeloserExtendedProps>
+    ): void;
     pause(): void;
     resume(restore?: boolean): void;
 }
@@ -236,7 +296,7 @@ export enum MoverKeys {
     /**
      * Use both tab and arrow keys to move
      */
-    Both
+    Both,
 }
 
 export interface MoverAxisOptions {
@@ -251,7 +311,7 @@ export type MoverAxis = MoverAxisOptions[keyof MoverAxisOptions];
 
 /**
  * Options to configure keyboard navigation mover API
- * 
+ *
  * TODO move Mover API to top level class and allow sane defaults
  */
 export type MoverOptions = {
@@ -271,7 +331,7 @@ export type MoverOptions = {
     /**
      * Determines the arrow keys that are used to move between focusables
      */
-    axis: MoverAxis,
+    axis: MoverAxis;
 
     /**
      * By default Home and End
@@ -290,38 +350,86 @@ export interface FocusableProps {
 }
 
 export interface FocusableAPI {
-    addGroupper(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
+    addGroupper(
+        element: HTMLElement,
+        basic?: GroupperBasicProps,
+        extended?: GroupperExtendedProps
+    ): void;
     removeGroupper(element: HTMLElement): void;
     moveGroupper(from: HTMLElement, to: HTMLElement): void;
-    setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
-        extended?: Partial<GroupperExtendedProps> | null): void;
-    setCurrentGroupper(element: HTMLElement | null, forceUpdate?: boolean): void;
+    setGroupperProps(
+        element: HTMLElement,
+        basic?: Partial<GroupperBasicProps> | null,
+        extended?: Partial<GroupperExtendedProps> | null
+    ): void;
+    setCurrentGroupper(
+        element: HTMLElement | null,
+        forceUpdate?: boolean
+    ): void;
     // isInCurrentGroupper is a tri-state boolean, undefined when no groupper.
     isInCurrentGroupper(element: HTMLElement): boolean | undefined;
     findGroupper(element: HTMLElement): HTMLElement | null;
 
-    findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findLastGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findNextGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findPrevGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
+    findFirstGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null;
+    findLastGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null;
+    findNextGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null;
+    findPrevGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null;
 
     getProps(element: HTMLElement): FocusableProps;
     setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
 
-    isFocusable(element: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
+    isFocusable(
+        element: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        noVisibleCheck?: boolean,
+        noAccessibleCheck?: boolean
+    ): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
-    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
-    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+    findFirst(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
+    ): HTMLElement | null;
+    findLast(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
+    ): HTMLElement | null;
+    findNext(
+        current: HTMLElement,
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
+    ): HTMLElement | null;
+    findPrev(
+        current: HTMLElement,
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
+    ): HTMLElement | null;
+    findDefault(
+        context?: HTMLElement,
+        includeProgrammaticallyFocusable?: boolean,
+        ignoreModalizer?: boolean,
+        ignoreGroupper?: boolean
+    ): HTMLElement | null;
     findAll(
         context: HTMLElement,
         customFilter: (el: HTMLElement) => boolean,
@@ -340,7 +448,7 @@ export interface ElementVisibilities {
 export const ElementVisibilities: ElementVisibilities = {
     Invisible: 0,
     PartiallyVisible: 1,
-    Visible: 2
+    Visible: 2,
 };
 export type ElementVisibility = ElementVisibilities[keyof ElementVisibilities];
 
@@ -365,7 +473,7 @@ export interface GroupperFocusLimits {
 export const GroupperFocusLimits: GroupperFocusLimits = {
     Unlimited: 0,
     Limited: 1,
-    LimitedTrapFocus: 2
+    LimitedTrapFocus: 2,
 };
 export type GroupperFocusLimit = GroupperFocusLimits[keyof GroupperFocusLimits];
 
@@ -379,7 +487,7 @@ export const GroupperNextDirections: GroupperNextDirections = {
     Both: 0,
     Vertical: 1,
     Horizontal: 2,
-    Grid: 3
+    Grid: 3,
 };
 export type GroupperNextDirection = GroupperNextDirections[keyof GroupperNextDirections];
 
@@ -420,7 +528,10 @@ export interface Groupper {
     isDefault(): boolean;
     getBasicProps(): GroupperBasicProps;
     getExtendedProps(): GroupperExtendedProps;
-    setProps(basic?: Partial<GroupperBasicProps> | null, extended?: Partial<GroupperExtendedProps> | null): void;
+    setProps(
+        basic?: Partial<GroupperBasicProps> | null,
+        extended?: Partial<GroupperExtendedProps> | null
+    ): void;
     setFocused(focused: boolean): void;
     setUnlimited(unlimited: boolean): void;
     setCurrent(current: boolean): void;
@@ -444,7 +555,10 @@ export interface ModalizerExtendedProps {
 export interface Modalizer {
     readonly internalId: string;
     readonly userId: string;
-    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
+    setProps(
+        basic?: Partial<ModalizerBasicProps> | null,
+        extended?: Partial<ModalizerExtendedProps> | null
+    ): void;
     getBasicProps(): ModalizerBasicProps;
     getExtendedProps(): ModalizerExtendedProps;
     dispose(): void;
@@ -469,7 +583,10 @@ export interface Root {
     move(newElement: HTMLElement): void;
     getElement(): HTMLElement | undefined;
     getCurrentModalizerId(): string | undefined;
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
+    setCurrentModalizerId(
+        id: string | undefined,
+        noModalizersUpdate?: boolean
+    ): void;
     getModalizers(): Modalizer[];
     getModalizerById(id: string): Modalizer | undefined;
     updateModalizers(): void;
@@ -490,15 +607,30 @@ export interface RootAPI {
     add(element: HTMLElement, basic?: RootBasicProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
+    setProps(
+        element: HTMLElement,
+        basic?: Partial<RootBasicProps> | null
+    ): void;
 }
 
 export interface ModalizerAPI {
-    add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
+    add(
+        element: HTMLElement,
+        basic: ModalizerBasicProps,
+        extended?: ModalizerExtendedProps
+    ): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
-    focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
+    setProps(
+        element: HTMLElement,
+        basic?: Partial<ModalizerBasicProps> | null,
+        extended?: Partial<ModalizerExtendedProps> | null
+    ): void;
+    focus(
+        elementFromModalizer: HTMLElement,
+        noFocusFirst?: boolean,
+        noFocusDefault?: boolean
+    ): boolean;
 }
 
 export interface DeloserOnElement {
@@ -534,14 +666,14 @@ export interface OutlineOnElement {
 }
 
 export type TabsterAttributeProps = Partial<{
-    deloser: DeloserBasicProps,
-    root: RootBasicProps,
-    modalizer: ModalizerBasicProps,
-    focusable: FocusableProps,
-    groupper: GroupperBasicProps,
-    uberGroupper: true,
-    observed: ObservedElementBasicProps,
-    outline: OutlinedElementProps
+    deloser: DeloserBasicProps;
+    root: RootBasicProps;
+    modalizer: ModalizerBasicProps;
+    focusable: FocusableProps;
+    groupper: GroupperBasicProps;
+    uberGroupper: true;
+    observed: ObservedElementBasicProps;
+    outline: OutlinedElementProps;
 }>;
 
 export interface TabsterAttributeOnElement {
@@ -556,13 +688,13 @@ export interface TabsterAugmentedAttributes {
 
 export type TabsterOnElement = Partial<
     RootOnElement &
-    DeloserOnElement &
-    ModalizerOnElement &
-    FocusableOnElement &
-    GroupperOnElement &
-    UberGroupperOnElement &
-    ObservedOnElement &
-    OutlineOnElement
+        DeloserOnElement &
+        ModalizerOnElement &
+        FocusableOnElement &
+        GroupperOnElement &
+        UberGroupperOnElement &
+        ObservedOnElement &
+        OutlineOnElement
 >;
 
 export interface OutlineElements {
@@ -586,7 +718,10 @@ export interface TabsterElementStorage {
 export type DisposeFunc = () => void;
 
 export interface TabsterInternal {
-    storageEntry(uid: string, addremove?: boolean): TabsterElementStorageEntry | undefined;
+    storageEntry(
+        uid: string,
+        addremove?: boolean
+    ): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
     outline?: OutlineAPI;

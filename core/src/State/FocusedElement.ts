@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { KeyboardNavigationState } from './KeyboardNavigation';
-import { Key, Keys } from '../Keys';
-import { RootAPI } from '../Root';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
+import { KeyboardNavigationState } from "./KeyboardNavigation";
+import { Key, Keys } from "../Keys";
+import { RootAPI } from "../Root";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
 import {
     callOriginalFocusOnly,
     CustomFocusFunctionWithOriginal,
@@ -16,14 +16,10 @@ import {
     matchesSelector,
     scrollIntoView,
     shouldIgnoreFocus,
-    WeakHTMLElement
-} from '../Utils';
+    WeakHTMLElement,
+} from "../Utils";
 
-const _inputSelector = [
-    'input',
-    'textarea',
-    '*[contenteditable]'
-].join(', ');
+const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
 interface WindowWithHTMLElement extends Window {
     HTMLElement: typeof HTMLElement;
@@ -39,7 +35,7 @@ function canOverrideNativeFocus(win: Window): boolean {
         isCustomFocusCalled = true;
     };
 
-    const btn = win.document.createElement('button');
+    const btn = win.document.createElement("button");
 
     btn.focus();
 
@@ -49,8 +45,8 @@ function canOverrideNativeFocus(win: Window): boolean {
 }
 
 export class FocusedElementState
-        extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails> implements Types.FocusedElementState {
-
+    extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails>
+    implements Types.FocusedElementState {
     private static _lastFocusedProgrammatically: WeakHTMLElement | undefined;
     private static _lastResetElement: WeakHTMLElement | undefined;
 
@@ -58,7 +54,12 @@ export class FocusedElementState
     private _initTimer: number | undefined;
     private _canOverrideNativeFocus = false;
     private _win: Types.GetWindow;
-    private _nextVal: { element: WeakHTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
+    private _nextVal:
+        | {
+              element: WeakHTMLElement | undefined;
+              details: Types.FocusedElementDetails;
+          }
+        | undefined;
     private _lastVal: WeakHTMLElement | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
@@ -78,11 +79,11 @@ export class FocusedElementState
 
         FocusedElementState.replaceFocus(win);
 
-        win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.addEventListener('keydown', this._onKeyDown);
-    }
+        win.document.addEventListener("focusin", this._onFocusIn, true); // Capture!
+        win.document.addEventListener("focusout", this._onFocusOut, true); // Capture!
+        win.document.addEventListener("mousedown", this._onMouseDown, true); // Capture!
+        win.addEventListener("keydown", this._onKeyDown);
+    };
 
     protected dispose(): void {
         super.dispose();
@@ -96,10 +97,10 @@ export class FocusedElementState
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.removeEventListener('keydown', this._onKeyDown);
+        win.document.removeEventListener("focusin", this._onFocusIn, true); // Capture!
+        win.document.removeEventListener("focusout", this._onFocusOut, true); // Capture!
+        win.document.removeEventListener("mousedown", this._onMouseDown, true); // Capture!
+        win.removeEventListener("keydown", this._onKeyDown);
 
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
@@ -112,7 +113,10 @@ export class FocusedElementState
         (instance as FocusedElementState).dispose();
     }
 
-    static forgetMemorized(instance: Types.FocusedElementState, parent: HTMLElement): void {
+    static forgetMemorized(
+        instance: Types.FocusedElementState,
+        parent: HTMLElement
+    ): void {
         let wel = FocusedElementState._lastFocusedProgrammatically;
         let el = wel && wel.get();
         if (el && parent.contains(el)) {
@@ -151,12 +155,25 @@ export class FocusedElementState
         return el;
     }
 
-    focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean {
-        if (!this._tabster.focusable.isFocusable(element, noFocusedProgrammaticallyFlag, false, noAccessibleCheck)) {
+    focus(
+        element: HTMLElement,
+        noFocusedProgrammaticallyFlag?: boolean,
+        noAccessibleCheck?: boolean
+    ): boolean {
+        if (
+            !this._tabster.focusable.isFocusable(
+                element,
+                noFocusedProgrammaticallyFlag,
+                false,
+                noAccessibleCheck
+            )
+        ) {
             return false;
         }
 
-        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(element);
+        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(
+            element
+        );
 
         element.focus();
 
@@ -193,18 +210,24 @@ export class FocusedElementState
         }
 
         if (!this._tabster.focusable.isFocusable(container, true, true, true)) {
-            const prevTabIndex = container.getAttribute('tabindex');
-            const prevAriaHidden = container.getAttribute('aria-hidden');
+            const prevTabIndex = container.getAttribute("tabindex");
+            const prevAriaHidden = container.getAttribute("aria-hidden");
 
             container.tabIndex = -1;
-            container.setAttribute('aria-hidden', 'true');
+            container.setAttribute("aria-hidden", "true");
 
-            FocusedElementState._lastResetElement = new WeakHTMLElement(container);
+            FocusedElementState._lastResetElement = new WeakHTMLElement(
+                container
+            );
 
             this.focus(container, true, true);
 
-            this._setOrRemoveAttribute(container, 'tabindex', prevTabIndex);
-            this._setOrRemoveAttribute(container, 'aria-hidden', prevAriaHidden);
+            this._setOrRemoveAttribute(container, "tabindex", prevTabIndex);
+            this._setOrRemoveAttribute(
+                container,
+                "aria-hidden",
+                prevAriaHidden
+            );
         } else {
             this.focus(container);
         }
@@ -212,7 +235,11 @@ export class FocusedElementState
         return true;
     }
 
-    private _setOrRemoveAttribute(element: HTMLElement, name: string, value: string | null): void {
+    private _setOrRemoveAttribute(
+        element: HTMLElement,
+        name: string,
+        value: string | null
+    ): void {
         if (value === null) {
             element.removeAttribute(name);
         } else {
@@ -220,27 +247,38 @@ export class FocusedElementState
         }
     }
 
-    private _setFocusedElement(element?: HTMLElement, relatedTarget?: HTMLElement): void {
+    private _setFocusedElement(
+        element?: HTMLElement,
+        relatedTarget?: HTMLElement
+    ): void {
         const details: Types.FocusedElementDetails = { relatedTarget };
 
         if (element) {
             const lastResetElement = FocusedElementState._lastResetElement?.get();
             FocusedElementState._lastResetElement = undefined;
 
-            if ((lastResetElement === element) || shouldIgnoreFocus(element)) {
+            if (lastResetElement === element || shouldIgnoreFocus(element)) {
                 return;
             }
 
-            if (this._canOverrideNativeFocus || FocusedElementState._lastFocusedProgrammatically) {
-                details.isFocusedProgrammatically = (element === FocusedElementState._lastFocusedProgrammatically?.get());
+            if (
+                this._canOverrideNativeFocus ||
+                FocusedElementState._lastFocusedProgrammatically
+            ) {
+                details.isFocusedProgrammatically =
+                    element ===
+                    FocusedElementState._lastFocusedProgrammatically?.get();
 
                 FocusedElementState._lastFocusedProgrammatically = undefined;
             }
         }
 
-        const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(element) : undefined, details };
+        const nextVal = (this._nextVal = {
+            element: element ? new WeakHTMLElement(element) : undefined,
+            details,
+        });
 
-        if (element && (element !== this._val)) {
+        if (element && element !== this._val) {
             this._validateFocusedElement(element, details);
         }
 
@@ -253,7 +291,10 @@ export class FocusedElementState
         this._nextVal = undefined;
     }
 
-    protected setVal(val: HTMLElement | undefined, details: Types.FocusedElementDetails): void {
+    protected setVal(
+        val: HTMLElement | undefined,
+        details: Types.FocusedElementDetails
+    ): void {
         super.setVal(val, details);
 
         if (val) {
@@ -262,15 +303,22 @@ export class FocusedElementState
     }
 
     private _onFocusIn = (e: FocusEvent): void => {
-        this._setFocusedElement(e.target as HTMLElement, (e.relatedTarget as HTMLElement) || undefined);
-    }
+        this._setFocusedElement(
+            e.target as HTMLElement,
+            (e.relatedTarget as HTMLElement) || undefined
+        );
+    };
 
     private _onFocusOut = (e: FocusEvent): void => {
-        this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
-    }
+        this._setFocusedElement(
+            undefined,
+            (e.relatedTarget as HTMLElement) || undefined
+        );
+    };
 
     static replaceFocus(win: Window): void {
-        const origFocus = (win as WindowWithHTMLElement).HTMLElement.prototype.focus;
+        const origFocus = (win as WindowWithHTMLElement).HTMLElement.prototype
+            .focus;
 
         if ((origFocus as CustomFocusFunctionWithOriginal).__tabsterFocus) {
             // Already set up.
@@ -280,7 +328,9 @@ export class FocusedElementState
         (win as WindowWithHTMLElement).HTMLElement.prototype.focus = focus;
 
         function focus(this: HTMLElement) {
-            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(this);
+            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(
+                this
+            );
             return origFocus.apply(this, arguments);
         }
 
@@ -289,7 +339,8 @@ export class FocusedElementState
 
     static restoreFocus(win: Window): void {
         const proto = (win as WindowWithHTMLElement).HTMLElement.prototype;
-        const origFocus = (proto.focus as CustomFocusFunctionWithOriginal).__tabsterFocus;
+        const origFocus = (proto.focus as CustomFocusFunctionWithOriginal)
+            .__tabsterFocus;
 
         if (origFocus) {
             proto.focus = origFocus;
@@ -297,12 +348,14 @@ export class FocusedElementState
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
-        const groupper = this._tabster.focusable.findGroupper(e.target as HTMLElement);
+        const groupper = this._tabster.focusable.findGroupper(
+            e.target as HTMLElement
+        );
 
         if (groupper) {
             this._tabster.focusable.setCurrentGroupper(groupper);
         }
-    }
+    };
 
     private _onKeyDown = (e: KeyboardEvent): void => {
         let curElement = this.getVal();
@@ -333,14 +386,10 @@ export class FocusedElementState
 
         const keyCode = e.keyCode;
         const isTab = keyCode === Keys.Tab;
-        const isNotGroupperCase = (
-            isTab ||
-            (
-                ctx &&
-                ctx.mover &&
-                !ctx.isGroupperFirst
-            )
-        ) && (keyCode !== Keys.Enter) && (keyCode !== Keys.Esc);
+        const isNotGroupperCase =
+            (isTab || (ctx && ctx.mover && !ctx.isGroupperFirst)) &&
+            keyCode !== Keys.Enter &&
+            keyCode !== Keys.Esc;
 
         if (isNotGroupperCase) {
             if (!ctx) {
@@ -348,21 +397,18 @@ export class FocusedElementState
                 return;
             }
 
-            const isPrev = (isTab && e.shiftKey) ||
-                (
-                    !isTab &&
-                    (
-                        (keyCode === Keys.Left) ||
-                        (keyCode === Keys.Up) ||
-                        (keyCode === Keys.PageUp) ||
-                        (keyCode === Keys.Home)
-                    )
-                );
+            const isPrev =
+                (isTab && e.shiftKey) ||
+                (!isTab &&
+                    (keyCode === Keys.Left ||
+                        keyCode === Keys.Up ||
+                        keyCode === Keys.PageUp ||
+                        keyCode === Keys.Home));
 
             if (ctx && ctx.modalizer) {
                 const curModalizerId = ctx.root.getCurrentModalizerId();
 
-                if (curModalizerId && (curModalizerId !== ctx.modalizer.userId)) {
+                if (curModalizerId && curModalizerId !== ctx.modalizer.userId) {
                     ctx.modalizer = ctx.root.getModalizerById(curModalizerId);
 
                     if (ctx.modalizer) {
@@ -378,13 +424,20 @@ export class FocusedElementState
             let fromElement: HTMLElement | null = curElement;
 
             // If the current element is in a mover, move to the mover boundaries since a mover is considered a single tabstop
-            if (isTab && ctx.mover && ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows) {
+            if (
+                isTab &&
+                ctx.mover &&
+                ctx.moverOptions?.navigationType === Types.MoverKeys.Arrows
+            ) {
                 // Consider nested movers a as a single tab stop, go up until there is no more mover
-                let  parentCtx: typeof ctx | undefined = ctx;
+                let parentCtx: typeof ctx | undefined = ctx;
                 let rootMover = ctx.mover;
                 while (parentCtx?.mover?.parentElement) {
                     rootMover = parentCtx.mover;
-                    parentCtx = RootAPI.getTabsterContext(this._tabster, parentCtx.mover.parentElement);
+                    parentCtx = RootAPI.getTabsterContext(
+                        this._tabster,
+                        parentCtx.mover.parentElement
+                    );
                 }
 
                 if (isPrev) {
@@ -411,10 +464,14 @@ export class FocusedElementState
                         : this._tabster.focusable.findNext(fromElement);
                     break;
                 case Keys.Home:
-                    next = ctx.mover?.contains(fromElement)  ? this._tabster.focusable.findFirst(ctx.mover) : next;
+                    next = ctx.mover?.contains(fromElement)
+                        ? this._tabster.focusable.findFirst(ctx.mover)
+                        : next;
                     break;
                 case Keys.End:
-                    next = ctx.mover?.contains(fromElement)  ? this._tabster.focusable.findLast(ctx.mover) : next;
+                    next = ctx.mover?.contains(fromElement)
+                        ? this._tabster.focusable.findLast(ctx.mover)
+                        : next;
                     break;
                 case Keys.PageDown:
                 case Keys.PageUp:
@@ -424,18 +481,23 @@ export class FocusedElementState
 
             if (!isTab && ctx.mover) {
                 const horizontalKeysOnVerticalAxis =
-                    (keyCode === Keys.Left || keyCode === Keys.Right) && ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
+                    (keyCode === Keys.Left || keyCode === Keys.Right) &&
+                    ctx.moverOptions?.axis === Types.MoverAxis.Vertical;
                 const verticalKeysOnHorizontalAxis =
-                    (keyCode === Keys.Up || keyCode === Keys.Down) && ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
+                    (keyCode === Keys.Up || keyCode === Keys.Down) &&
+                    ctx.moverOptions?.axis === Types.MoverAxis.Horizontal;
 
-                if (horizontalKeysOnVerticalAxis || verticalKeysOnHorizontalAxis) {
+                if (
+                    horizontalKeysOnVerticalAxis ||
+                    verticalKeysOnHorizontalAxis
+                ) {
                     return;
                 }
 
                 if (!next || (next && !ctx.mover.contains(next))) {
                     // Nowhere to move inside the current Mover.
                     e.preventDefault(); // We don't need the page to scroll when we're custom-handling
-                                        // the arrows.
+                    // the arrows.
 
                     if (!ctx.moverOptions?.cyclic) {
                         return;
@@ -455,22 +517,35 @@ export class FocusedElementState
             if (groupper && groupperElement) {
                 const first = this._getFirstInGroupper(groupperElement, false);
 
-                if (first && (curElement !== first) &&
-                    (groupper.getBasicProps().isLimited === Types.GroupperFocusLimits.LimitedTrapFocus) &&
-                    (!next || (next === first) || !groupperElement.contains(next))
+                if (
+                    first &&
+                    curElement !== first &&
+                    groupper.getBasicProps().isLimited ===
+                        Types.GroupperFocusLimits.LimitedTrapFocus &&
+                    (!next || next === first || !groupperElement.contains(next))
                 ) {
                     next = isPrev
                         ? this._tabster.focusable.findLast(groupperElement)
-                        : this._tabster.focusable.findNext(first, groupperElement);
-                } else if ((curElement === first) && groupperElement.parentElement) {
-                    const parentGroupper = RootAPI.getTabsterContext(this._tabster, groupperElement.parentElement)?.groupper;
+                        : this._tabster.focusable.findNext(
+                              first,
+                              groupperElement
+                          );
+                } else if (
+                    curElement === first &&
+                    groupperElement.parentElement
+                ) {
+                    const parentGroupper = RootAPI.getTabsterContext(
+                        this._tabster,
+                        groupperElement.parentElement
+                    )?.groupper;
                     const parentGroupperElement = parentGroupper?.getElement();
 
                     if (
                         parentGroupper &&
                         parentGroupperElement &&
                         !parentGroupperElement.contains(next) &&
-                        parentGroupper.getBasicProps().isLimited === Types.GroupperFocusLimits.LimitedTrapFocus
+                        parentGroupper.getBasicProps().isLimited ===
+                            Types.GroupperFocusLimits.LimitedTrapFocus
                     ) {
                         next = curElement;
                     }
@@ -478,13 +553,14 @@ export class FocusedElementState
             }
 
             if (ctx && ctx.modalizer) {
-                const nctx = next && RootAPI.getTabsterContext(this._tabster, next);
+                const nctx =
+                    next && RootAPI.getTabsterContext(this._tabster, next);
 
                 if (
                     !nctx ||
-                    (ctx.root.uid !== nctx.root.uid) ||
+                    ctx.root.uid !== nctx.root.uid ||
                     !nctx.modalizer ||
-                    (nctx.root.getCurrentModalizerId() !== nctx.modalizer.userId)
+                    nctx.root.getCurrentModalizerId() !== nctx.modalizer.userId
                 ) {
                     if (ctx.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
@@ -502,7 +578,10 @@ export class FocusedElementState
                 ctx.root.moveOutWithDefaultAction(isPrev);
             }
         } else {
-            if ((keyCode === Keys.Left || keyCode === Keys.Right) && this._isInput(curElement)) {
+            if (
+                (keyCode === Keys.Left || keyCode === Keys.Right) &&
+                this._isInput(curElement)
+            ) {
                 return;
             }
 
@@ -523,7 +602,11 @@ export class FocusedElementState
                     let state = groupper.getState();
 
                     if (e.keyCode === Keys.Enter) {
-                        if (state.isLimited && (curElement === this._getFirstInGroupper(groupperElement, true))) {
+                        if (
+                            state.isLimited &&
+                            curElement ===
+                                this._getFirstInGroupper(groupperElement, true)
+                        ) {
                             groupper.setUnlimited(true);
 
                             next = this._tabster.focusable.findNext(curElement);
@@ -538,10 +621,14 @@ export class FocusedElementState
                         } else {
                             shouldStopPropagation = false;
                         }
-                    } else { // Esc
+                    } else {
+                        // Esc
                         if (state.isLimited) {
                             if (groupperElement.parentElement) {
-                                const parentGroupper = RootAPI.getTabsterContext(this._tabster, groupperElement.parentElement)?.groupper;
+                                const parentGroupper = RootAPI.getTabsterContext(
+                                    this._tabster,
+                                    groupperElement.parentElement
+                                )?.groupper;
 
                                 if (parentGroupper) {
                                     groupperElement = parentGroupper.getElement();
@@ -562,7 +649,11 @@ export class FocusedElementState
                 case Keys.Right:
                 case Keys.Up:
                 case Keys.Left:
-                    next = this._findNextGroupper(groupperElement, e.keyCode, groupper.getBasicProps().nextDirection);
+                    next = this._findNextGroupper(
+                        groupperElement,
+                        e.keyCode,
+                        groupper.getBasicProps().nextDirection
+                    );
                     break;
 
                 case Keys.PageDown:
@@ -581,13 +672,17 @@ export class FocusedElementState
 
                 case Keys.Home:
                     if (groupperElement.parentElement) {
-                        next = this._tabster.focusable.findFirstGroupper(groupperElement);
+                        next = this._tabster.focusable.findFirstGroupper(
+                            groupperElement
+                        );
                     }
                     break;
 
                 case Keys.End:
                     if (groupperElement.parentElement) {
-                        next = this._tabster.focusable.findLastGroupper(groupperElement);
+                        next = this._tabster.focusable.findLastGroupper(
+                            groupperElement
+                        );
                     }
                     break;
             }
@@ -599,37 +694,66 @@ export class FocusedElementState
 
             if (next) {
                 if (!this._tabster.focusable.isFocusable(next)) {
-                    next = this._tabster.focusable.findFirst(next, false, false, true);
+                    next = this._tabster.focusable.findFirst(
+                        next,
+                        false,
+                        false,
+                        true
+                    );
                 }
 
                 if (next) {
                     this._tabster.focusable.setCurrentGroupper(next);
 
-                    KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
+                    KeyboardNavigationState.setVal(
+                        this._tabster.keyboardNavigation,
+                        true
+                    );
 
                     callOriginalFocusOnly(next);
                 }
             }
         }
-    }
+    };
 
-    private _getFirstInGroupper(groupperElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
+    private _getFirstInGroupper(
+        groupperElement: HTMLElement,
+        ignoreGroupper: boolean
+    ): HTMLElement | null {
         return this._tabster.focusable.isFocusable(groupperElement)
             ? groupperElement
-            : this._tabster.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
+            : this._tabster.focusable.findFirst(
+                  groupperElement,
+                  false,
+                  false,
+                  ignoreGroupper
+              );
     }
 
-    private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection): HTMLElement | null {
-        if ((direction === Types.GroupperNextDirections.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
+    private _findNextGroupper(
+        from: HTMLElement,
+        key: Key,
+        direction?: Types.GroupperNextDirection
+    ): HTMLElement | null {
+        if (
+            direction === Types.GroupperNextDirections.Vertical &&
+            (key === Keys.Left || key === Keys.Right)
+        ) {
             return null;
         }
 
-        if ((direction === Types.GroupperNextDirections.Horizontal) && ((key === Keys.Up) || (key === Keys.Down))) {
+        if (
+            direction === Types.GroupperNextDirections.Horizontal &&
+            (key === Keys.Up || key === Keys.Down)
+        ) {
             return null;
         }
 
-        if ((direction === undefined) || (direction === Types.GroupperNextDirections.Both)) {
-            if ((key === Keys.Left) || (key === Keys.Up)) {
+        if (
+            direction === undefined ||
+            direction === Types.GroupperNextDirections.Both
+        ) {
+            if (key === Keys.Left || key === Keys.Up) {
                 return this._tabster.focusable.findPrevGroupper(from);
             } else {
                 return this._tabster.focusable.findNextGroupper(from);
@@ -641,9 +765,16 @@ export class FocusedElementState
         let lastEl: HTMLElement | undefined;
         let prevTop: number | undefined;
 
-        const nextMethod = ((key === Keys.Down) || (key === Keys.Right)) ? 'findNextGroupper' : 'findPrevGroupper';
+        const nextMethod =
+            key === Keys.Down || key === Keys.Right
+                ? "findNextGroupper"
+                : "findPrevGroupper";
 
-        for (let el = this._tabster.focusable[nextMethod](from); el; el = this._tabster.focusable[nextMethod](el)) {
+        for (
+            let el = this._tabster.focusable[nextMethod](from);
+            el;
+            el = this._tabster.focusable[nextMethod](el)
+        ) {
             const rect = el.getBoundingClientRect();
 
             if (key === Keys.Up) {
@@ -682,8 +813,7 @@ export class FocusedElementState
 
                     next = el;
                 }
-
-            } else if ((key === Keys.Left) || (key === Keys.Right)) {
+            } else if (key === Keys.Left || key === Keys.Right) {
                 next = el;
                 break;
             }
@@ -724,9 +854,14 @@ export class FocusedElementState
         return pde;
     }
 
-    private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
+    private _validateFocusedElement = (
+        element: HTMLElement,
+        details: Types.FocusedElementDetails
+    ): void => {
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        const curModalizerId = ctx ? ctx.root.getCurrentModalizerId() : undefined;
+        const curModalizerId = ctx
+            ? ctx.root.getCurrentModalizerId()
+            : undefined;
 
         this._tabster.focusable.setCurrentGroupper(element);
 
@@ -740,22 +875,29 @@ export class FocusedElementState
             return;
         }
 
-        if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
+        if (curModalizerId === undefined || details.isFocusedProgrammatically) {
             ctx.root.setCurrentModalizerId(eModalizer.userId);
 
             return;
         }
 
         if (eModalizer && element.ownerDocument) {
-            let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
+            let toFocus = this._tabster.focusable.findFirst(
+                ctx.root.getElement()
+            );
 
             if (toFocus) {
-                if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                    toFocus = this._tabster.focusable.findLast(element.ownerDocument.body);
+                if (
+                    element.compareDocumentPosition(toFocus) &
+                    document.DOCUMENT_POSITION_PRECEDING
+                ) {
+                    toFocus = this._tabster.focusable.findLast(
+                        element.ownerDocument.body
+                    );
 
                     if (!toFocus) {
                         // This only might mean that findFirst/findLast are buggy and inconsistent.
-                        throw new Error('Something went wrong.');
+                        throw new Error("Something went wrong.");
                     }
                 }
 
@@ -766,7 +908,7 @@ export class FocusedElementState
                 element.blur();
             }
         }
-    }
+    };
 
     private _isInput(element: HTMLElement): boolean {
         return matchesSelector(element, _inputSelector);

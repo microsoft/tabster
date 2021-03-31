@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Keys } from '../Keys';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
+import { Keys } from "../Keys";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
 
 const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
-                             // during _dismissTimeout time, dismiss the keyboard
-                             // navigation mode.
+// during _dismissTimeout time, dismiss the keyboard
+// navigation mode.
 
-export class KeyboardNavigationState extends Subscribable<boolean> implements Types.KeyboardNavigationState {
+export class KeyboardNavigationState
+    extends Subscribable<boolean>
+    implements Types.KeyboardNavigationState {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _dismissTimer: number | undefined;
@@ -31,11 +33,15 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
 
         const win = this._win();
 
-        win.document.body.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.addEventListener('keydown', this._onKeyDown, true); // Capture!
+        win.document.body.addEventListener(
+            "mousedown",
+            this._onMouseDown,
+            true
+        ); // Capture!
+        win.addEventListener("keydown", this._onKeyDown, true); // Capture!
 
         this._tabster.focusedElement.subscribe(this._onFocus);
-    }
+    };
 
     protected dispose(): void {
         super.dispose();
@@ -52,8 +58,12 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
             this._dismissTimer = undefined;
         }
 
-        win.document.body.removeEventListener('mousedown', this._onMouseDown, true);
-        win.removeEventListener('keydown', this._onKeyDown, true);
+        win.document.body.removeEventListener(
+            "mousedown",
+            this._onMouseDown,
+            true
+        );
+        win.removeEventListener("keydown", this._onKeyDown, true);
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
     }
@@ -67,9 +77,13 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
-        if ((e.buttons === 0) ||
-            ((e.clientX === 0) && (e.clientY === 0) &&
-             (e.screenX === 0) && (e.screenY === 0))) {
+        if (
+            e.buttons === 0 ||
+            (e.clientX === 0 &&
+                e.clientY === 0 &&
+                e.screenX === 0 &&
+                e.screenY === 0)
+        ) {
             // This is most likely an event triggered by the screen reader to perform
             // an action on an element, do not dismiss the keyboard navigation mode.
             return;
@@ -78,19 +92,22 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
         this._isMouseUsed = true;
 
         this.setVal(false, undefined);
-    }
+    };
 
     private _onKeyDown = (e: KeyboardEvent): void => {
         const isNavigatingWithKeyboard = this.isNavigatingWithKeyboard();
 
-        if (!isNavigatingWithKeyboard && (e.keyCode === Keys.Tab)) {
+        if (!isNavigatingWithKeyboard && e.keyCode === Keys.Tab) {
             this.setVal(true, undefined);
-        } else if (isNavigatingWithKeyboard && (e.keyCode === Keys.Esc)) {
+        } else if (isNavigatingWithKeyboard && e.keyCode === Keys.Esc) {
             this._scheduleDismiss();
         }
-    }
+    };
 
-    private _onFocus = (e: HTMLElement | undefined, d: Types.FocusedElementDetails): void => {
+    private _onFocus = (
+        e: HTMLElement | undefined,
+        d: Types.FocusedElementDetails
+    ): void => {
         if (!e) {
             return;
         }
@@ -109,14 +126,17 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
             return;
         }
 
-        if (d.isFocusedProgrammatically || (d.isFocusedProgrammatically === undefined)) {
+        if (
+            d.isFocusedProgrammatically ||
+            d.isFocusedProgrammatically === undefined
+        ) {
             // The element is focused programmatically, or the programmatic focus detection
             // is not working.
             return;
         }
 
         this.setVal(true, undefined);
-    }
+    };
 
     private _scheduleDismiss(): void {
         const win = this._win();
@@ -133,7 +153,7 @@ export class KeyboardNavigationState extends Subscribable<boolean> implements Ty
 
             const cur = this._tabster.focusedElement.getFocusedElement();
 
-            if (was && cur && (was === cur)) {
+            if (was && cur && was === cur) {
                 // Esc was pressed, currently focused element hasn't changed.
                 // Just dismiss the keyboard navigation mode.
                 this.setVal(false, undefined);

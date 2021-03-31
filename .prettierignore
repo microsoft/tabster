@@ -1,0 +1,21 @@
+# Logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules
+
+# Build output
+dist
+storybook-static
+build
+
+# Optional npm cache directory
+.npm
+
+# Miscellaneous user files
+*.user
+.vscode
+.DS_STORE
+.idea/*
+.vs

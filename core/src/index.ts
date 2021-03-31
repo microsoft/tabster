@@ -15,5 +15,5 @@ export {
     getOutline,
     getCurrentTabster,
     overrideBasics,
-    Types
-} from './Tabster';
+    Types,
+} from "./Tabster";

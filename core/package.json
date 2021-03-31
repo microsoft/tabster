@@ -1,33 +1,33 @@
 {
-  "name": "tabster",
-  "version": "0.5.6",
-  "description": "Focus Management Tools for Web",
-  "author": "Marat Abdullin <marata@microsoft.com>",
-  "license": "MIT",
-  "main": "./dist/index.js",
-  "module": "./dist/tabster.esm.js",
-  "typings": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/microsoft/tabster"
-  },
-  "scripts": {
-    "build": "npm run tslint && npm run clean && tsdx build",
-    "clean": "rimraf dist",
-    "tslint": "tslint --project tsconfig.json -r tslint.json -r ./node_modules/tslint-microsoft-contrib --fix || true",
-    "prepare": "npm run build"
-  },
-  "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
-  "devDependencies": {
-    "core-js": "^3.9.1",
-    "rimraf": "^3.0.2",
-    "tsdx": "^0.14.1",
-    "tslint": "^6.1.3",
-    "tslint-microsoft-contrib": "^6.2.0",
-    "tsutils": "^3.21.0",
-    "typescript": "^4.2.3"
-  }
+    "name": "tabster",
+    "version": "0.5.6",
+    "description": "Focus Management Tools for Web",
+    "author": "Marat Abdullin <marata@microsoft.com>",
+    "license": "MIT",
+    "main": "./dist/index.js",
+    "module": "./dist/tabster.esm.js",
+    "typings": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/microsoft/tabster"
+    },
+    "scripts": {
+        "build": "npm run tslint && npm run clean && tsdx build",
+        "clean": "rimraf dist",
+        "tslint": "tslint --project tsconfig.json -r tslint.json -r ./node_modules/tslint-microsoft-contrib --fix || true",
+        "prepare": "npm run build"
+    },
+    "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
+    "devDependencies": {
+        "core-js": "^3.9.1",
+        "rimraf": "^3.0.2",
+        "tsdx": "^0.14.1",
+        "tslint": "^6.1.3",
+        "tslint-microsoft-contrib": "^6.2.0",
+        "tsutils": "^3.21.0",
+        "typescript": "^4.2.3"
+    }
 }

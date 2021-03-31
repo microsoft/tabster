@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginAPI } from './CrossOrigin';
-import { DeloserAPI } from './Deloser';
-import { FocusableAPI } from './Focusable';
-import { FocusedElementState } from './State/FocusedElement';
-import { updateTabsterByAttribute } from './Instance';
-import { KeyboardNavigationState } from './State/KeyboardNavigation';
-import { ModalizerAPI } from './Modalizer';
-import { observeMutations } from './MutationEvent';
-import { ObservedElementAPI } from './State/ObservedElement';
-import { OutlineAPI } from './Outline';
-import { RootAPI } from './Root';
-import * as Types from './Types';
+import { CrossOriginAPI } from "./CrossOrigin";
+import { DeloserAPI } from "./Deloser";
+import { FocusableAPI } from "./Focusable";
+import { FocusedElementState } from "./State/FocusedElement";
+import { updateTabsterByAttribute } from "./Instance";
+import { KeyboardNavigationState } from "./State/KeyboardNavigation";
+import { ModalizerAPI } from "./Modalizer";
+import { observeMutations } from "./MutationEvent";
+import { ObservedElementAPI } from "./State/ObservedElement";
+import { OutlineAPI } from "./Outline";
+import { RootAPI } from "./Root";
+import * as Types from "./Types";
 import {
     cleanupWeakRefStorage,
     clearElementCache,
     setBasics as overrideBasics,
     startWeakRefStorageCleanup,
-    stopWeakRefStorageCleanupAndClearStorage
-} from './Utils';
+    stopWeakRefStorageCleanupAndClearStorage,
+} from "./Utils";
 
 export { Types };
 
@@ -61,7 +61,11 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this._win = win;
 
         if (win && win.document) {
-            this._unobserve = observeMutations(win.document, this, updateTabsterByAttribute);
+            this._unobserve = observeMutations(
+                win.document,
+                this,
+                updateTabsterByAttribute
+            );
         }
 
         const getWindow = this.getWindow;
@@ -69,7 +73,13 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
-        this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
+        this.root = new RootAPI(
+            this,
+            () => {
+                FocusableAPI.forgetFocusedGrouppers(this.focusable);
+            },
+            props?.autoRoot
+        );
 
         startWeakRefStorageCleanup(getWindow);
     }
@@ -136,11 +146,14 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         (instance as Tabster).dispose();
     }
 
-    storageEntry(uid: string, addremove?: boolean): Types.TabsterElementStorageEntry | undefined {
+    storageEntry(
+        uid: string,
+        addremove?: boolean
+    ): Types.TabsterElementStorageEntry | undefined {
         let entry = this._storage[uid];
 
         if (entry) {
-            if ((addremove === false) && (Object.keys(entry).length === 0)) {
+            if (addremove === false && Object.keys(entry).length === 0) {
                 delete this._storage[uid];
             }
         } else if (addremove === true) {
@@ -152,11 +165,11 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
 
     getWindow = () => {
         if (!this._win) {
-            throw new Error('Using disposed Tabster.');
+            throw new Error("Using disposed Tabster.");
         }
 
         return this._win;
-    }
+    };
 
     static forceCleanup(tabster: Tabster): void {
         if (!tabster._win) {
@@ -173,7 +186,9 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
             delete tabster._forgetMemorizedTimer;
 
             for (
-                let el: HTMLElement | undefined = tabster._forgetMemorizedElements.shift();
+                let el:
+                    | HTMLElement
+                    | undefined = tabster._forgetMemorizedElements.shift();
                 el;
                 el = tabster._forgetMemorizedElements.shift()
             ) {
@@ -197,11 +212,16 @@ export function forceCleanup(tabster: Tabster): void {
 /**
  * Creates an instance of Tabster, returns the current window instance if it already exists.
  */
-export function createTabster(win: Window, props?: Types.TabsterCoreProps): Types.TabsterCore {
+export function createTabster(
+    win: Window,
+    props?: Types.TabsterCoreProps
+): Types.TabsterCore {
     const existingAh = getCurrentTabster(win as WindowWithTabsterInstance);
     if (existingAh) {
         if (__DEV__) {
-            console.warn('Attempted to create a duplicate Tabster instance on the window');
+            console.warn(
+                "Attempted to create a duplicate Tabster instance on the window"
+            );
         }
         return existingAh;
     }
@@ -212,12 +232,14 @@ export function createTabster(win: Window, props?: Types.TabsterCoreProps): Type
 }
 
 export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as unknown) as Types.TabsterInternal;
 
     if (!tabsterInternal.outline) {
         const outline = new OutlineAPI(tabster);
         tabsterInternal.outline = outline;
-        tabsterInternal.outlineDispose = () => { OutlineAPI.dispose(outline); };
+        tabsterInternal.outlineDispose = () => {
+            OutlineAPI.dispose(outline);
+        };
     }
 
     return tabsterInternal.outline;
@@ -230,14 +252,18 @@ export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
  */
 export function getDeloser(
     tabster: Types.TabsterCore,
-    props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
+    props?: {
+        autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps;
+    }
 ): Types.DeloserAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as unknown) as Types.TabsterInternal;
 
     if (!tabsterInternal.deloser) {
         const deloser = new DeloserAPI(tabster, props);
         tabsterInternal.deloser = deloser;
-        tabsterInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
+        tabsterInternal.deloserDispose = () => {
+            DeloserAPI.dispose(deloser);
+        };
     }
 
     return tabsterInternal.deloser;
@@ -248,31 +274,39 @@ export function getDeloser(
  * @param tabster Tabster instance
  */
 export function getModalizer(tabster: Types.TabsterCore): Types.ModalizerAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as unknown) as Types.TabsterInternal;
 
     if (!tabsterInternal.modalizer) {
         const modalizer = new ModalizerAPI(tabster);
         tabsterInternal.modalizer = modalizer;
-        tabsterInternal.modalizerDispose = () => { ModalizerAPI.dispose(modalizer); };
+        tabsterInternal.modalizerDispose = () => {
+            ModalizerAPI.dispose(modalizer);
+        };
     }
 
     return tabsterInternal.modalizer;
 }
 
-export function getObservedElement(tabster: Types.TabsterCore): Types.ObservedElementAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+export function getObservedElement(
+    tabster: Types.TabsterCore
+): Types.ObservedElementAPI {
+    const tabsterInternal = (tabster as unknown) as Types.TabsterInternal;
 
     if (!tabsterInternal.observedElement) {
         const observedElement = new ObservedElementAPI(tabster);
         tabsterInternal.observedElement = observedElement;
-        tabsterInternal.observedElementDispose = () => { ObservedElementAPI.dispose(observedElement); };
+        tabsterInternal.observedElementDispose = () => {
+            ObservedElementAPI.dispose(observedElement);
+        };
     }
 
     return tabsterInternal.observedElement;
 }
 
-export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+export function getCrossOrigin(
+    tabster: Types.TabsterCore
+): Types.CrossOriginAPI {
+    const tabsterInternal = (tabster as unknown) as Types.TabsterInternal;
 
     if (!tabsterInternal.crossOrigin) {
         getDeloser(tabster);
@@ -280,7 +314,9 @@ export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI
         getObservedElement(tabster);
         const crossOrigin = new CrossOriginAPI(tabster);
         tabsterInternal.crossOrigin = crossOrigin;
-        tabsterInternal.crossOriginDispose = () => { CrossOriginAPI.dispose(crossOrigin); };
+        tabsterInternal.crossOriginDispose = () => {
+            CrossOriginAPI.dispose(crossOrigin);
+        };
     }
 
     return tabsterInternal.crossOrigin;
@@ -295,7 +331,8 @@ export function getTabsterAttribute(
     plain: true
 ): string | undefined;
 export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps | null, plain?: false
+    props: Types.TabsterAttributeProps | null,
+    plain?: false
 ): Types.TabsterDOMAttribute;
 export function getTabsterAttribute(
     props: Types.TabsterAttributeProps | null,
@@ -308,7 +345,7 @@ export function getTabsterAttribute(
     }
 
     return {
-        [Types.TabsterAttributeName]: attr
+        [Types.TabsterAttributeName]: attr,
     };
 }
 

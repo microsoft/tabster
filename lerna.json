@@ -1,9 +1,5 @@
 {
-    "packages": [
-        "core",
-        "demo",
-        "examples"
-    ],
+    "packages": ["core", "demo", "examples"],
     "version": "0.5.6",
     "npmClient": "npm"
 }
