@@ -1,4 +1,5 @@
 {
+    "extends": ["tslint-config-prettier"],
     "rules": {
         "align": [true, "statements"],
         "class-name": true,
