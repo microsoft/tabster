@@ -437,7 +437,6 @@ export class FocusedElementState
                     }
                 }
             }
-            
             const groupper = ctx?.groupper;
             const groupperElement = groupper?.getElement();
 
