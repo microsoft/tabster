@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export const TabsterAttributeName = 'data-tabster';
+export const TabsterAttributeName = "data-tabster";
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;

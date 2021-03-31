@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
-import * as Types from './Types';
-import { getBoundingRect } from './Utils';
+import { getTabsterOnElement, setTabsterOnElement } from "./Instance";
+import * as Types from "./Types";
+import { getBoundingRect } from "./Utils";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {
@@ -15,9 +15,9 @@ interface WindowWithOutlineStyle extends Window {
 }
 
 const defaultProps: Types.OutlineProps = {
-    areaClass: 'tabster-focus-outline-area',
-    outlineClass: 'tabster-focus-outline',
-    outlineColor: '#ff4500',
+    areaClass: "tabster-focus-outline-area",
+    outlineClass: "tabster-focus-outline",
+    outlineColor: "#ff4500",
     outlineWidth: 2,
     zIndex: 2147483647,
 };
@@ -27,19 +27,19 @@ let _props: Types.OutlineProps = defaultProps;
 let _fullScreenEventName: string | undefined;
 let _fullScreenElementName: string | undefined;
 
-if (typeof document !== 'undefined') {
-    if ('onfullscreenchange' in document) {
-        _fullScreenEventName = 'fullscreenchange';
-        _fullScreenElementName = 'fullscreenElement';
-    } else if ('onwebkitfullscreenchange' in document) {
-        _fullScreenEventName = 'webkitfullscreenchange';
-        _fullScreenElementName = 'webkitFullscreenElement';
-    } else if ('onmozfullscreenchange' in document) {
-        _fullScreenEventName = 'mozfullscreenchange';
-        _fullScreenElementName = 'mozFullScreenElement';
-    } else if ('onmsfullscreenchange' in document) {
-        _fullScreenEventName = 'msfullscreenchange';
-        _fullScreenElementName = 'msFullscreenElement';
+if (typeof document !== "undefined") {
+    if ("onfullscreenchange" in document) {
+        _fullScreenEventName = "fullscreenchange";
+        _fullScreenElementName = "fullscreenElement";
+    } else if ("onwebkitfullscreenchange" in document) {
+        _fullScreenEventName = "webkitfullscreenchange";
+        _fullScreenElementName = "webkitFullscreenElement";
+    } else if ("onmozfullscreenchange" in document) {
+        _fullScreenEventName = "mozfullscreenchange";
+        _fullScreenElementName = "mozFullScreenElement";
+    } else if ("onmsfullscreenchange" in document) {
+        _fullScreenEventName = "msfullscreenchange";
+        _fullScreenElementName = "msFullscreenElement";
     }
 }
 
@@ -103,7 +103,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         const win = this._win();
 
-        win.addEventListener('scroll', this._onScroll, true); // Capture!
+        win.addEventListener("scroll", this._onScroll, true); // Capture!
 
         if (_fullScreenEventName) {
             win.document.addEventListener(
@@ -179,7 +179,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         );
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.removeEventListener('scroll', this._onScroll, true);
+        win.removeEventListener("scroll", this._onScroll, true);
 
         if (_fullScreenEventName) {
             win.document.removeEventListener(
@@ -276,7 +276,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             // TODO: It's hard (and not necessary) to come up with every possible
             // condition when there should be no outline, it's better to add an
             // API to customize the ignores.
-            if (e.tagName === 'INPUT') {
+            if (e.tagName === "INPUT") {
                 const inputType = (e as HTMLInputElement).type;
                 const outlinedInputTypes = {
                     button: true,
@@ -293,9 +293,9 @@ export class OutlineAPI implements Types.OutlineAPI {
                     return false;
                 }
             } else if (
-                e.tagName === 'TEXTAREA' ||
-                e.contentEditable === 'true' ||
-                e.tagName === 'IFRAME'
+                e.tagName === "TEXTAREA" ||
+                e.contentEditable === "true" ||
+                e.tagName === "IFRAME"
             ) {
                 return false;
             }
@@ -438,19 +438,19 @@ export class OutlineAPI implements Types.OutlineAPI {
             const computedStyle = win.getComputedStyle(parent);
             const position = computedStyle.position;
 
-            if (position === 'absolute') {
+            if (position === "absolute") {
                 hasAbsolutePositionedParent = true;
-            } else if (position === 'fixed' || position === 'sticky') {
+            } else if (position === "fixed" || position === "sticky") {
                 hasFixedPositionedParent = true;
             }
 
-            if (computedStyle.overflow === 'visible') {
+            if (computedStyle.overflow === "visible") {
                 continue;
             }
 
             if (
                 (!hasAbsolutePositionedParent && !hasFixedPositionedParent) ||
-                computedStyle.overflow === 'hidden'
+                computedStyle.overflow === "hidden"
             ) {
                 if (boundingRect.left > p.left) {
                     p.left = boundingRect.left;
@@ -495,27 +495,27 @@ export class OutlineAPI implements Types.OutlineAPI {
                     : win.pageYOffset;
 
             container.style.position = hasFixedPositionedParent
-                ? 'fixed'
-                : 'absolute';
+                ? "fixed"
+                : "absolute";
 
             container.style.background = _props.outlineColor;
 
             leftBorderNode.style.width = rightBorderNode.style.width = topBorderNode.style.height = bottomBorderNode.style.height =
-                _props.outlineWidth + 'px';
+                _props.outlineWidth + "px";
 
             leftBorderNode.style.left = topBorderNode.style.left = bottomBorderNode.style.left =
-                p.left + sx + 'px';
-            rightBorderNode.style.left = p.left + sx + width - ow + 'px';
+                p.left + sx + "px";
+            rightBorderNode.style.left = p.left + sx + width - ow + "px";
 
             leftBorderNode.style.top = rightBorderNode.style.top = topBorderNode.style.top =
-                p.top + sy + 'px';
-            bottomBorderNode.style.top = p.top + sy + height - ow + 'px';
+                p.top + sy + "px";
+            bottomBorderNode.style.top = p.top + sy + height - ow + "px";
 
             leftBorderNode.style.height = rightBorderNode.style.height =
-                height + 'px';
+                height + "px";
 
             topBorderNode.style.width = bottomBorderNode.style.width =
-                width + 'px';
+                width + "px";
 
             this._setVisibility(true);
         } else {
@@ -539,11 +539,11 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         if (!win.__tabsterOutline.elements) {
             const outlineElements: Types.OutlineElements = {
-                container: doc.createElement('div'),
-                left: doc.createElement('div'),
-                top: doc.createElement('div'),
-                right: doc.createElement('div'),
-                bottom: doc.createElement('div'),
+                container: doc.createElement("div"),
+                left: doc.createElement("div"),
+                top: doc.createElement("div"),
+                right: doc.createElement("div"),
+                bottom: doc.createElement("div"),
             };
 
             outlineElements.container.className = _props.outlineClass;
@@ -616,8 +616,8 @@ function appendStyles(
     document: HTMLDocument,
     props: Types.OutlineProps
 ): HTMLStyleElement {
-    const style = document.createElement('style');
-    style.type = 'text/css';
+    const style = document.createElement("style");
+    style.type = "text/css";
     style.appendChild(document.createTextNode(getOutlineStyles(props)));
     document.head.appendChild(style);
     return style;

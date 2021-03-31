@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from './Types';
-import { getElementUId, HTMLElementWithUID } from './Utils';
+import * as Types from "./Types";
+import { getElementUId, HTMLElementWithUID } from "./Utils";
 
 export function setTabsterOnElement(
     tabster: Types.TabsterCore,
@@ -36,47 +36,47 @@ export function setTabsterOnElement(
                 }
             } else {
                 switch (key) {
-                    case 'deloser':
+                    case "deloser":
                         cur[key] = tabsterOnElement.deloser;
                         attrObject[key] = (h as Types.Deloser).getBasicProps();
                         break;
 
-                    case 'root':
+                    case "root":
                         cur[key] = tabsterOnElement.root;
                         attrObject[key] = (h as Types.Root).getBasicProps();
                         break;
 
-                    case 'modalizer':
+                    case "modalizer":
                         cur[key] = tabsterOnElement.modalizer;
                         attrObject[
                             key
                         ] = (h as Types.Modalizer).getBasicProps();
                         break;
 
-                    case 'focusable':
+                    case "focusable":
                         cur[key] = attrObject[key] = tabsterOnElement.focusable;
                         break;
 
-                    case 'groupper':
+                    case "groupper":
                         cur[key] = tabsterOnElement.groupper;
                         attrObject[key] = (h as Types.Groupper).getBasicProps();
                         break;
 
-                    case 'uberGroupper':
+                    case "uberGroupper":
                         cur[key] = tabsterOnElement.uberGroupper;
                         attrObject[key] = true;
                         break;
 
-                    case 'observed':
+                    case "observed":
                         cur[key] = attrObject[key] = tabsterOnElement.observed;
                         break;
 
-                    case 'outline':
+                    case "outline":
                         cur[key] = attrObject[key] = tabsterOnElement.outline;
                         break;
 
                     default:
-                        throw new Error('Unknown Tabster part.');
+                        throw new Error("Unknown Tabster part.");
                 }
             }
         }
@@ -156,7 +156,7 @@ export function updateTabsterByAttribute(
                     newAttrValue
                 ) as Types.TabsterAttributeProps;
 
-                if (typeof newValue !== 'object') {
+                if (typeof newValue !== "object") {
                     throw new Error(
                         `Value is not a JSON object, got '${newAttrValue}'.`
                     );
@@ -185,40 +185,40 @@ export function updateTabsterByAttribute(
     ) as (keyof Types.TabsterAttributeProps)[]) {
         if (!newObject[key]) {
             switch (key) {
-                case 'deloser':
+                case "deloser":
                     if (tabsteri.deloser) {
                         tabsteri.deloser.remove(element);
                     }
                     break;
 
-                case 'root':
+                case "root":
                     tabster.root.remove(element);
                     break;
 
-                case 'modalizer':
+                case "modalizer":
                     if (tabsteri.modalizer) {
                         tabsteri.modalizer.remove(element);
                     }
                     break;
 
-                case 'focusable':
+                case "focusable":
                     tabster.focusable.setProps(element, null);
                     break;
 
-                case 'groupper':
+                case "groupper":
                     tabster.focusable.removeGroupper(element);
                     break;
 
-                case 'uberGroupper':
+                case "uberGroupper":
                     break;
 
-                case 'observed':
+                case "observed":
                     if (tabsteri.observedElement) {
                         tabsteri.observedElement.remove(element);
                     }
                     break;
 
-                case 'outline':
+                case "outline":
                     if (tabsteri.outline) {
                         tabsteri.outline.setProps(element, null);
                     }
@@ -231,7 +231,7 @@ export function updateTabsterByAttribute(
         newObject
     ) as (keyof Types.TabsterAttributeProps)[]) {
         switch (key) {
-            case 'deloser':
+            case "deloser":
                 if (tabsterOnElement && tabsterOnElement.deloser) {
                     tabsterOnElement.deloser.setProps(newObject.deloser);
                 } else {
@@ -241,13 +241,13 @@ export function updateTabsterByAttribute(
 
                     if (!tabsteri.deloser && __DEV__) {
                         console.error(
-                            'Deloser API used before initializing, please call `getDeloser`'
+                            "Deloser API used before initializing, please call `getDeloser`"
                         );
                     }
                 }
                 break;
 
-            case 'root':
+            case "root":
                 if (tabsterOnElement && tabsterOnElement.root) {
                     tabsterOnElement.root.setProps(newObject.root);
                 } else {
@@ -255,7 +255,7 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'modalizer':
+            case "modalizer":
                 if (tabsterOnElement && tabsterOnElement.modalizer) {
                     tabsterOnElement.modalizer.setProps(newObject.modalizer);
                 } else {
@@ -265,20 +265,20 @@ export function updateTabsterByAttribute(
 
                     if (!tabsteri.modalizer && __DEV__) {
                         console.error(
-                            'Modalizer API used before initializing, please call `getDeloser`'
+                            "Modalizer API used before initializing, please call `getDeloser`"
                         );
                     }
                 }
                 break;
 
-            case 'focusable':
+            case "focusable":
                 tabster.focusable.setProps(
                     element,
                     newObject.focusable || null
                 );
                 break;
 
-            case 'groupper':
+            case "groupper":
                 if (tabsterOnElement && tabsterOnElement.groupper) {
                     tabsterOnElement.groupper.setProps(newObject.groupper);
                 } else {
@@ -286,10 +286,10 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'uberGroupper':
+            case "uberGroupper":
                 break;
 
-            case 'observed':
+            case "observed":
                 if (tabsteri.observedElement) {
                     if (tabsterOnElement && tabsterOnElement.observed) {
                         tabsteri.observedElement.setProps(
@@ -305,7 +305,7 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'outline':
+            case "outline":
                 if (tabsteri.outline) {
                     tabsteri.outline.setProps(
                         element,

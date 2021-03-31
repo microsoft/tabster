@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
-import { RootAPI } from './Root';
-import * as Types from './Types';
+import { getTabsterOnElement, setTabsterOnElement } from "./Instance";
+import { RootAPI } from "./Root";
+import * as Types from "./Types";
 import {
     documentContains,
     getElementUId,
     getPromise,
     WeakHTMLElement,
-} from './Utils';
+} from "./Utils";
 
 const _containerHistoryLength = 10;
 
@@ -312,13 +312,13 @@ function _setInformativeStyle(
 
         if (element) {
             if (remove) {
-                element.style.removeProperty('--tabster-deloser');
+                element.style.removeProperty("--tabster-deloser");
             } else {
                 element.style.setProperty(
-                    '--tabster-deloser',
-                    (isActive ? 'active' : 'inactive') +
-                        ',' +
-                        ('snapshot-' + snapshotIndex)
+                    "--tabster-deloser",
+                    (isActive ? "active" : "inactive") +
+                        "," +
+                        ("snapshot-" + snapshotIndex)
                 );
             }
         }
@@ -332,21 +332,21 @@ function buildElementSelector(
 ): string {
     const selector: string[] = [];
     const escapeRegExp = /(:|\.|\[|\]|,|=|@)/g;
-    const escapeReplaceValue = '\\$1';
+    const escapeReplaceValue = "\\$1";
 
     if (element.id) {
         selector.push(
-            '#' + element.id.replace(escapeRegExp, escapeReplaceValue)
+            "#" + element.id.replace(escapeRegExp, escapeReplaceValue)
         );
     }
 
     if (withClass !== false && element.className) {
-        element.className.split(' ').forEach((cls) => {
+        element.className.split(" ").forEach((cls) => {
             cls = cls.trim();
 
             if (cls) {
                 selector.push(
-                    '.' + cls.replace(escapeRegExp, escapeReplaceValue)
+                    "." + cls.replace(escapeRegExp, escapeReplaceValue)
                 );
             }
         });
@@ -361,12 +361,12 @@ function buildElementSelector(
             index++;
             el = el.previousElementSibling;
         }
-        selector.unshift(':nth-child(' + index + ')');
+        selector.unshift(":nth-child(" + index + ")");
     }
 
     selector.unshift(element.tagName.toLowerCase());
 
-    return selector.join('');
+    return selector.join("");
 }
 
 function buildSelector(element: HTMLElement): string | undefined {
@@ -379,7 +379,7 @@ function buildSelector(element: HTMLElement): string | undefined {
     let el = element.parentElement;
 
     while (el) {
-        const isBody = el.tagName === 'BODY';
+        const isBody = el.tagName === "BODY";
         selector.unshift(buildElementSelector(el, false, !isBody));
 
         if (isBody) {
@@ -389,7 +389,7 @@ function buildSelector(element: HTMLElement): string | undefined {
         el = el.parentElement;
     }
 
-    return selector.join(' ');
+    return selector.join(" ");
 }
 
 export class Deloser implements Types.Deloser {

@@ -1,5 +1,5 @@
-import { getCurrentTabster, Types as TabsterTypes } from 'tabster';
-import * as React from 'react';
+import { getCurrentTabster, Types as TabsterTypes } from "tabster";
+import * as React from "react";
 
 const AccordionContext = React.createContext<Accordion | undefined>(undefined);
 
@@ -17,7 +17,7 @@ export class Accordion extends React.PureComponent<{}, AccordionState> {
 
     render() {
         return (
-            <div className={`Accordion${this.state.hasFocus ? ' focus' : ''}`}>
+            <div className={`Accordion${this.state.hasFocus ? " focus" : ""}`}>
                 <AccordionContext.Provider value={this}>
                     {this.props.children}
                 </AccordionContext.Provider>

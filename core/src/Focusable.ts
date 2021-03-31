@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement, setTabsterOnElement } from "./Instance";
 import {
     dispatchMutationEvent,
     MutationEvent,
     MUTATION_EVENT_NAME,
-} from './MutationEvent';
-import { RootAPI } from './Root';
-import * as Types from './Types';
+} from "./MutationEvent";
+import { RootAPI } from "./Root";
+import * as Types from "./Types";
 import {
     createElementTreeWalker,
     isElementVisibleInContainer,
     matchesSelector,
     WeakHTMLElement,
-} from './Utils';
+} from "./Utils";
 
 const _focusableSelector = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '*[tabindex]',
-    '*[contenteditable]',
-].join(', ');
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "*[tabindex]",
+    "*[contenteditable]",
+].join(", ");
 
 const _isVisibleTimeout = 200;
 
@@ -78,7 +78,7 @@ export class UberGroupper implements Types.UberGroupper {
         this._tabster = tabster;
         this._win = getWindow;
         this._element = new WeakHTMLElement(element);
-        this.id = 'fgc' + ++_lastId;
+        this.id = "fgc" + ++_lastId;
 
         setTabsterOnElement(tabster, element, {
             uberGroupper: this,
@@ -523,7 +523,7 @@ export class Groupper implements Types.Groupper {
         this._element = new WeakHTMLElement(element);
         this._basic = basic || {};
         this._extended = extended || {};
-        this.id = 'fg' + ++_lastId;
+        this.id = "fg" + ++_lastId;
 
         setTabsterOnElement(this._tabster, element, {
             groupper: this,
@@ -612,7 +612,7 @@ export class Groupper implements Types.Groupper {
 
     isDefault(): boolean {
         const isDefault = this._basic.isDefault || this._extended.isDefault;
-        return typeof isDefault === 'function'
+        return typeof isDefault === "function"
             ? isDefault.call(this._element)
             : isDefault;
     }
@@ -700,7 +700,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             this._onMutation,
             true
         ); // Capture!
-        win.addEventListener('scroll', this._onScroll, true);
+        win.addEventListener("scroll", this._onScroll, true);
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -723,7 +723,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             this._onMutation,
             true
         ); // Capture!
-        win.removeEventListener('scroll', this._onScroll, true);
+        win.removeEventListener("scroll", this._onScroll, true);
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
@@ -861,7 +861,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
         if (tabsterOnElement && tabsterOnElement.groupper) {
-            throw new Error('The element already has a focus group');
+            throw new Error("The element already has a focus group");
         }
 
         const groupper = new Groupper(
@@ -1214,7 +1214,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const computedStyle = win.getComputedStyle(el);
 
-        if (computedStyle.visibility === 'hidden') {
+        if (computedStyle.visibility === "hidden") {
             return false;
         }
 
@@ -1233,19 +1233,19 @@ export class FocusableAPI implements Types.FocusableAPI {
                 return true;
             }
 
-            let attrVal = e.getAttribute('aria-hidden');
+            let attrVal = e.getAttribute("aria-hidden");
 
-            if (attrVal && attrVal.toLowerCase() === 'true') {
+            if (attrVal && attrVal.toLowerCase() === "true") {
                 return false;
             }
 
-            attrVal = e.getAttribute('aria-disabled');
+            attrVal = e.getAttribute("aria-disabled");
             const ignoreDisabled =
                 tabsterOnElement?.focusable?.ignoreAriaDisabled;
             if (
                 !ignoreDisabled &&
                 attrVal &&
-                attrVal.toLowerCase() === 'true'
+                attrVal.toLowerCase() === "true"
             ) {
                 return false;
             }

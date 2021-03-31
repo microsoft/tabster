@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Keys } from '../Keys';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
+import { Keys } from "../Keys";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
 
 const _dismissTimeout = 500; // When Esc is pressed and the focused is not moved
 // during _dismissTimeout time, dismiss the keyboard
@@ -34,11 +34,11 @@ export class KeyboardNavigationState
         const win = this._win();
 
         win.document.body.addEventListener(
-            'mousedown',
+            "mousedown",
             this._onMouseDown,
             true
         ); // Capture!
-        win.addEventListener('keydown', this._onKeyDown, true); // Capture!
+        win.addEventListener("keydown", this._onKeyDown, true); // Capture!
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -59,11 +59,11 @@ export class KeyboardNavigationState
         }
 
         win.document.body.removeEventListener(
-            'mousedown',
+            "mousedown",
             this._onMouseDown,
             true
         );
-        win.removeEventListener('keydown', this._onKeyDown, true);
+        win.removeEventListener("keydown", this._onKeyDown, true);
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
     }

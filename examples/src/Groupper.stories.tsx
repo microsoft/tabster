@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { getTabsterAttribute } from 'tabster';
-import { Item } from './components/Item';
-import { Accordion, AccordionSection } from './components/Accordion';
+import * as React from "react";
+import { getTabsterAttribute } from "tabster";
+import { Item } from "./components/Item";
+import { Accordion, AccordionSection } from "./components/Accordion";
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: 'Groupper',
+    title: "Groupper",
 };
 
 export const NestedGrouppers = () => (
@@ -13,7 +13,7 @@ export const NestedGrouppers = () => (
         <div
             aria-label="Main"
             {...getTabsterAttribute({
-                modalizer: { id: 'main' },
+                modalizer: { id: "main" },
                 deloser: {},
             })}
         >

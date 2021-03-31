@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from './Instance';
-import * as Types from './Types';
+import { getTabsterOnElement } from "./Instance";
+import * as Types from "./Types";
 import {
     createElementTreeWalker,
     elementByUId,
     getElementUId,
     HTMLElementWithUID,
     WeakHTMLElement,
-} from './Utils';
+} from "./Utils";
 
 export interface MutationEventDetails {
     root?: Types.Root;
@@ -26,7 +26,7 @@ export interface MutationEvent extends Event {
     details: MutationEventDetails;
 }
 
-export const MUTATION_EVENT_NAME = 'tabster:mutation-event';
+export const MUTATION_EVENT_NAME = "tabster:mutation-event";
 
 export function observeMutations(
     doc: HTMLDocument,
@@ -36,7 +36,7 @@ export function observeMutations(
         element: HTMLElementWithUID
     ) => void
 ): () => void {
-    if (typeof MutationObserver === 'undefined') {
+    if (typeof MutationObserver === "undefined") {
         return () => {
             /* Noop */
         };
@@ -77,7 +77,7 @@ export function observeMutations(
             const removed = mutation.removedNodes;
             const added = mutation.addedNodes;
 
-            if (mutation.type === 'attributes') {
+            if (mutation.type === "attributes") {
                 if (mutation.attributeName === Types.TabsterAttributeName) {
                     const uid = (target as HTMLElementWithUID)
                         .__tabsterElementUID;
@@ -376,7 +376,7 @@ export function dispatchMutationEvent(
     target: Node,
     details: MutationEventDetails
 ): void {
-    const event = document.createEvent('HTMLEvents') as MutationEvent;
+    const event = document.createEvent("HTMLEvents") as MutationEvent;
 
     event.initEvent(MUTATION_EVENT_NAME, true, true);
 

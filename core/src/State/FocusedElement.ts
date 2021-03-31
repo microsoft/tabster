@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { KeyboardNavigationState } from './KeyboardNavigation';
-import { Key, Keys } from '../Keys';
-import { RootAPI } from '../Root';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
+import { KeyboardNavigationState } from "./KeyboardNavigation";
+import { Key, Keys } from "../Keys";
+import { RootAPI } from "../Root";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
 import {
     callOriginalFocusOnly,
     CustomFocusFunctionWithOriginal,
@@ -17,9 +17,9 @@ import {
     scrollIntoView,
     shouldIgnoreFocus,
     WeakHTMLElement,
-} from '../Utils';
+} from "../Utils";
 
-const _inputSelector = ['input', 'textarea', '*[contenteditable]'].join(', ');
+const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
 interface WindowWithHTMLElement extends Window {
     HTMLElement: typeof HTMLElement;
@@ -35,7 +35,7 @@ function canOverrideNativeFocus(win: Window): boolean {
         isCustomFocusCalled = true;
     };
 
-    const btn = win.document.createElement('button');
+    const btn = win.document.createElement("button");
 
     btn.focus();
 
@@ -79,10 +79,10 @@ export class FocusedElementState
 
         FocusedElementState.replaceFocus(win);
 
-        win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.addEventListener('keydown', this._onKeyDown);
+        win.document.addEventListener("focusin", this._onFocusIn, true); // Capture!
+        win.document.addEventListener("focusout", this._onFocusOut, true); // Capture!
+        win.document.addEventListener("mousedown", this._onMouseDown, true); // Capture!
+        win.addEventListener("keydown", this._onKeyDown);
     };
 
     protected dispose(): void {
@@ -97,10 +97,10 @@ export class FocusedElementState
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.removeEventListener('keydown', this._onKeyDown);
+        win.document.removeEventListener("focusin", this._onFocusIn, true); // Capture!
+        win.document.removeEventListener("focusout", this._onFocusOut, true); // Capture!
+        win.document.removeEventListener("mousedown", this._onMouseDown, true); // Capture!
+        win.removeEventListener("keydown", this._onKeyDown);
 
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
@@ -210,11 +210,11 @@ export class FocusedElementState
         }
 
         if (!this._tabster.focusable.isFocusable(container, true, true, true)) {
-            const prevTabIndex = container.getAttribute('tabindex');
-            const prevAriaHidden = container.getAttribute('aria-hidden');
+            const prevTabIndex = container.getAttribute("tabindex");
+            const prevAriaHidden = container.getAttribute("aria-hidden");
 
             container.tabIndex = -1;
-            container.setAttribute('aria-hidden', 'true');
+            container.setAttribute("aria-hidden", "true");
 
             FocusedElementState._lastResetElement = new WeakHTMLElement(
                 container
@@ -222,10 +222,10 @@ export class FocusedElementState
 
             this.focus(container, true, true);
 
-            this._setOrRemoveAttribute(container, 'tabindex', prevTabIndex);
+            this._setOrRemoveAttribute(container, "tabindex", prevTabIndex);
             this._setOrRemoveAttribute(
                 container,
-                'aria-hidden',
+                "aria-hidden",
                 prevAriaHidden
             );
         } else {
@@ -767,8 +767,8 @@ export class FocusedElementState
 
         const nextMethod =
             key === Keys.Down || key === Keys.Right
-                ? 'findNextGroupper'
-                : 'findPrevGroupper';
+                ? "findNextGroupper"
+                : "findPrevGroupper";
 
         for (
             let el = this._tabster.focusable[nextMethod](from);
@@ -897,7 +897,7 @@ export class FocusedElementState
 
                     if (!toFocus) {
                         // This only might mean that findFirst/findLast are buggy and inconsistent.
-                        throw new Error('Something went wrong.');
+                        throw new Error("Something went wrong.");
                     }
                 }
 

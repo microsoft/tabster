@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from '../Instance';
-import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
-import { Subscribable } from './Subscribable';
-import * as Types from '../Types';
+import { getTabsterOnElement, setTabsterOnElement } from "../Instance";
+import { MutationEvent, MUTATION_EVENT_NAME } from "../MutationEvent";
+import { Subscribable } from "./Subscribable";
+import * as Types from "../Types";
 import {
     documentContains,
     getElementUId,
     getPromise,
     WeakHTMLElement,
-} from '../Utils';
+} from "../Utils";
 
 interface ObservedElementInfo {
     element: WeakHTMLElement;
@@ -101,7 +101,7 @@ export class ObservedElementAPI
 
         if (tabsterOnElement && tabsterOnElement.observed) {
             if (__DEV__) {
-                console.error('Element is already observed.', element);
+                console.error("Element is already observed.", element);
             }
             return;
         }
@@ -117,7 +117,7 @@ export class ObservedElementAPI
 
         if (!tabsterOnElement || !tabsterOnElement.observed) {
             if (__DEV__) {
-                console.error('Element is not observed.', element);
+                console.error("Element is not observed.", element);
             }
             return;
         }
@@ -137,7 +137,7 @@ export class ObservedElementAPI
 
             if (tabsterOnElementTo && tabsterOnElementTo.observed) {
                 if (__DEV__) {
-                    console.error('Element is already observed', to);
+                    console.error("Element is already observed", to);
                 }
                 return;
             }
@@ -145,7 +145,7 @@ export class ObservedElementAPI
             setTabsterOnElement(this._tabster, to, { observed });
             this._onObservedElementUpdate(to);
         } else if (__DEV__) {
-            console.error('Element is not observed.', from);
+            console.error("Element is not observed.", from);
         }
     }
 
@@ -159,7 +159,7 @@ export class ObservedElementAPI
 
         if (!observed) {
             if (__DEV__) {
-                console.error('Element is not observed.', element);
+                console.error("Element is not observed.", element);
             }
             return;
         }

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
     createTabster,
     disposeTabster,
@@ -6,10 +6,10 @@ import {
     getCurrentTabster,
     getDeloser,
     getModalizer,
-} from 'tabster';
+} from "tabster";
 
 export const parameters = {
-    actions: { argTypesRegex: '^on[A-Z].*' },
+    actions: { argTypesRegex: "^on[A-Z].*" },
 };
 
 export const decorators = [
