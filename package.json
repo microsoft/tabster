@@ -11,6 +11,7 @@
     "lerna": "^4.0.0"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm run tslint:check"
+    "pre-commit": "npm run tslint:check",
+    "pre-push": "npm run build"
   }
 }

@@ -13,6 +13,7 @@
   },
   "scripts": {
     "clean": "",
+    "build": "",
     "tslint": "",
     "tslint:check": ""
   },
