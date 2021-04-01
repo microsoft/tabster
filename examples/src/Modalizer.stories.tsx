@@ -1,7 +1,12 @@
-import * as React from 'react';
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Meta } from '@storybook/react';
-import { getTabsterAttribute, getCurrentTabster, getDeloser, getModalizer } from 'tabster';
 import { Modal } from './components/Modal';
+import * as React from 'react';
+import { getCurrentTabster, getDeloser, getModalizer, getTabsterAttribute } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
@@ -19,8 +24,8 @@ export const ModalDialog = () => {
             </div>
             <Modal ref={ref} />
         </>
-    )
-}
+    );
+};
 
 export const PopupContent = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
@@ -37,14 +42,12 @@ export const PopupContent = () => {
 
     const onClick = () => setOpen(s => !s);
 
-
-
     const popupStyles = {
         maxWidth: 400,
         maxHeight: 400,
         border: '1px solid',
         padding: 5
-    }
+    };
 
     return (
         <>
@@ -64,5 +67,5 @@ export const PopupContent = () => {
                 <button>Do not focus</button>
             </div>
         </>
-    )
-}
+    );
+};

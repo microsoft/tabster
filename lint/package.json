@@ -1,0 +1,27 @@
+{
+  "name": "lint",
+  "private": true,
+  "version": "0.5.6",
+  "description": "Lint rules for the repo",
+  "author": "Lingfan Gao <lingfan.gao@microsoft.com>",
+  "homepage": "https://github.com/microsoft/ability-helpers#readme",
+  "license": "ISC",
+  "main": "tslint.json",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/ability-helpers.git"
+  },
+  "scripts": {
+    "clean": "",
+    "tslint": "",
+    "tslint:check": ""
+  },
+  "bugs": {
+    "url": "https://github.com/microsoft/ability-helpers/issues"
+  },
+  "devDependencies": {
+    "tslint": "^6.1.3",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^4.2.3"
+  }
+}
