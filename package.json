@@ -8,7 +8,8 @@
     "tslint:check": "lerna exec -- npm run tslint:check"
   },
   "devDependencies": {
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "simple-git-hooks": "^2.2.0"
   },
   "simple-git-hooks": {
     "pre-commit": "npm run tslint:check"
