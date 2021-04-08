@@ -1,0 +1,27 @@
+name: CI
+
+on:
+    push:
+        branches: [ master ]
+    pull_request:
+        branches: [ master ]
+
+env:
+    CI: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Use Node.js 10
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 10.x
+
+            - run: npm install
+            - run: npm run bootstrap
+            - run: npm run build
+            - run: npm run lint
