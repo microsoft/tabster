@@ -5,6 +5,7 @@
     "build": "lerna exec -- npm run build",
     "clean": "lerna exec -- npm run clean && lerna clean --yes",
     "start": "lerna exec --scope examples -- npm run start",
+    "lint": "npm run tslint:check",
     "tslint:check": "lerna exec -- npm run tslint:check"
   },
   "devDependencies": {
