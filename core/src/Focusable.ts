@@ -30,7 +30,7 @@ export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
 
     private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
+    private _getWindow: Types.GetWindow;
     private _element: WeakHTMLElement;
 
     private _current: Types.Groupper | undefined;
@@ -56,14 +56,21 @@ export class UberGroupper implements Types.UberGroupper {
     private _updateVisibleTimer: number | undefined;
 
     private _grouppers: { [id: string]: Types.Groupper } = {};
+    private _basic: Required<Types.UberGroupperBasicProps>;
 
     readonly id: string;
 
-    constructor(tabster: Types.TabsterCore, element: HTMLElement, getWindow: Types.GetWindow) {
+    constructor(
+        tabster: Types.TabsterCore,
+        element: HTMLElement,
+        getWindow: Types.GetWindow,
+        basic?: Types.UberGroupperBasicProps,
+    ) {
         this._tabster = tabster;
-        this._win = getWindow;
+        this._getWindow = getWindow;
         this._element = new WeakHTMLElement(element);
-        this.id = 'fgc' + ++_lastId;
+        this.id = `fgc${++_lastId}`;
+        this._basic = {cyclic: false, ...basic};
 
         setTabsterOnElement(tabster, element, {
             uberGroupper: this
@@ -72,10 +79,24 @@ export class UberGroupper implements Types.UberGroupper {
         UberGroupper._containers[this.id] = this;
     }
 
+    getBasicProps(): Required<Types.UberGroupperBasicProps> {
+        return this._basic;
+    }
+
+    setProps(
+        basic?: Partial<Types.UberGroupperBasicProps> | null,
+    ): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {cyclic: false};
+        }
+    }
+
     dispose(): void {
         this._grouppers = {};
 
-        const win = this._win();
+        const win = this._getWindow();
 
         if (this._updateVisibleTimer) {
             win.clearTimeout(this._updateVisibleTimer);
@@ -147,108 +168,118 @@ export class UberGroupper implements Types.UberGroupper {
             return;
         }
 
-        const reallyProcessOnChange = () => {
-            this._onChangeTimer = undefined;
-
-            let changed: (Types.Groupper | undefined)[] = [];
-
-            if (this._prevFocused !== this._focused) {
-                for (let id of Object.keys(this._grouppers)) {
-                    changed.push(this._grouppers[id]);
-                }
-
-                if (!this._focused && (!this._prevFocused || !this._prevFocused.getBasicProps().memorizeCurrent)) {
-                    this._setCurrent(undefined);
-                    this._prev = undefined;
-                    this._next = undefined;
-                }
-
-                this._prevFocused = this._focused;
-            }
-
-            if (this._prevCurrent !== this._current) {
-                changed.push(this._prevCurrent);
-                changed.push(this._current);
-                this._prevCurrent = this._current;
-            }
-
-            if (this._prevPrev !== this._prev) {
-                changed.push(this._prevPrev);
-                changed.push(this._prev);
-                this._prevPrev = this._prev;
-            }
-
-            if (this._prevNext !== this._next) {
-                changed.push(this._prevNext);
-                changed.push(this._next);
-                this._prevNext = this._next;
-            }
-
-            if (this._prevFirst !== this._first) {
-                changed.push(this._prevFirst);
-                changed.push(this._first);
-                this._prevFirst = this._first;
-            }
-
-            if (this._prevLast !== this._last) {
-                changed.push(this._prevLast);
-                changed.push(this._last);
-                this._prevLast = this._last;
-            }
-
-            if (this._prevUnlimited !== this._unlimited) {
-                changed.push(this._prevUnlimited);
-                changed.push(this._unlimited);
-                this._prevUnlimited = this._unlimited;
-            }
-
-            if (this._visibleGrouppers !== this._prevVisibleGrouppers) {
-                this._hasFullyVisibleGroupper = false;
-
-                for (let id of Object.keys(this._visibleGrouppers)) {
-                    const isVisible = this._visibleGrouppers[id];
-
-                    if (isVisible !== this._prevVisibleGrouppers[id]) {
-                        changed.push(this._grouppers[id]);
-                    }
-
-                    if (isVisible === Types.ElementVisibilities.Visible) {
-                        this._hasFullyVisibleGroupper = true;
-                    }
-                }
-
-                for (let id of Object.keys(this._prevVisibleGrouppers)) {
-                    if (this._visibleGrouppers[id] !== this._prevVisibleGrouppers[id]) {
-                        changed.push(this._grouppers[id]);
-                    }
-                }
-
-                this._prevVisibleGrouppers = this._visibleGrouppers;
-            }
-
-            const processed: { [id: string]: boolean } = {};
-
-            for (let g of changed.filter(c => (c && this._grouppers[c.id]))) {
-                if (g && !processed[g.id]) {
-                    processed[g.id] = true;
-
-                    const onChange = g.getExtendedProps().onChange;
-
-                    if (onChange) {
-                        onChange(g.getState());
-                    }
-                }
-            }
-        };
-
         if (this._onChangeTimer) {
-            this._win().clearTimeout(this._onChangeTimer);
+            this._getWindow().clearTimeout(this._onChangeTimer);
         }
 
         if (force) {
-            reallyProcessOnChange();
+            this._process();
         } else {
-            this._onChangeTimer = this._win().setTimeout(reallyProcessOnChange, 0);
+            this._onChangeTimer = this._getWindow().setTimeout(
+                this._process,
+                0
+            );
+        }
+    }
+
+    private _process() {
+        this._onChangeTimer = undefined;
+
+        let changed: (Types.Groupper | undefined)[] = [];
+
+        if (this._prevFocused !== this._focused) {
+            for (let id of Object.keys(this._grouppers)) {
+                changed.push(this._grouppers[id]);
+            }
+
+            if (
+                !this._focused &&
+                (!this._prevFocused ||
+                    !this._prevFocused.getBasicProps().memorizeCurrent)
+            ) {
+                this._setCurrent(undefined);
+                this._prev = undefined;
+                this._next = undefined;
+            }
+
+            this._prevFocused = this._focused;
+        }
+
+        if (this._prevCurrent !== this._current) {
+            changed.push(this._prevCurrent);
+            changed.push(this._current);
+            this._prevCurrent = this._current;
+        }
+
+        if (this._prevPrev !== this._prev) {
+            changed.push(this._prevPrev);
+            changed.push(this._prev);
+            this._prevPrev = this._prev;
+        }
+
+        if (this._prevNext !== this._next) {
+            changed.push(this._prevNext);
+            changed.push(this._next);
+            this._prevNext = this._next;
+        }
+
+        if (this._prevFirst !== this._first) {
+            changed.push(this._prevFirst);
+            changed.push(this._first);
+            this._prevFirst = this._first;
+        }
+
+        if (this._prevLast !== this._last) {
+            changed.push(this._prevLast);
+            changed.push(this._last);
+            this._prevLast = this._last;
+        }
+
+        if (this._prevUnlimited !== this._unlimited) {
+            changed.push(this._prevUnlimited);
+            changed.push(this._unlimited);
+            this._prevUnlimited = this._unlimited;
+        }
+
+        if (this._visibleGrouppers !== this._prevVisibleGrouppers) {
+            this._hasFullyVisibleGroupper = false;
+
+            for (let id of Object.keys(this._visibleGrouppers)) {
+                const isVisible = this._visibleGrouppers[id];
+
+                if (isVisible !== this._prevVisibleGrouppers[id]) {
+                    changed.push(this._grouppers[id]);
+                }
+
+                if (isVisible === Types.ElementVisibilities.Visible) {
+                    this._hasFullyVisibleGroupper = true;
+                }
+            }
+
+            for (let id of Object.keys(this._prevVisibleGrouppers)) {
+                if (
+                    this._visibleGrouppers[id] !==
+                    this._prevVisibleGrouppers[id]
+                ) {
+                    changed.push(this._grouppers[id]);
+                }
+            }
+
+            this._prevVisibleGrouppers = this._visibleGrouppers;
+        }
+
+        const processed: { [id: string]: boolean } = {};
+
+        for (let g of changed.filter(c => c && this._grouppers[c.id])) {
+            if (g && !processed[g.id]) {
+                processed[g.id] = true;
+
+                const onChange = g.getExtendedProps().onChange;
+
+                if (onChange) {
+                    onChange(g.getState());
+                }
+            }
         }
     }
 
@@ -264,16 +295,28 @@ export class UberGroupper implements Types.UberGroupper {
         for (let e = element.firstElementChild; e; e = e.nextElementSibling) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (tabsterOnElement && tabsterOnElement.groupper && (tabsterOnElement.groupper.id in this._grouppers)) {
+            if (
+                tabsterOnElement &&
+                tabsterOnElement.groupper &&
+                tabsterOnElement.groupper.id in this._grouppers
+            ) {
                 this._first = tabsterOnElement.groupper;
                 break;
             }
         }
 
-        for (let e = element.lastElementChild; e; e = e.previousElementSibling) {
+        for (
+            let e = element.lastElementChild;
+            e;
+            e = e.previousElementSibling
+        ) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (tabsterOnElement && tabsterOnElement.groupper && (tabsterOnElement.groupper.id in this._grouppers)) {
+            if (
+                tabsterOnElement &&
+                tabsterOnElement.groupper &&
+                tabsterOnElement.groupper.id in this._grouppers
+            ) {
                 this._last = tabsterOnElement.groupper;
                 break;
             }
@@ -312,6 +355,20 @@ export class UberGroupper implements Types.UberGroupper {
         this._processOnChange();
     }
 
+    getFirstGroupper() {
+        return this._first ?? null;
+    }
+
+    getLastGroupper() {
+        return this._last ?? null;
+    }
+    getNextGroupper() {
+        return this._next ?? null;
+    }
+    getPreviousGroupper() {
+        return this._prev ?? null;
+    }
+
     getCurrentGroupper(): Types.Groupper | null {
         if (this._current && (this._current.id in this._grouppers)) {
             return this._current;
@@ -325,13 +382,19 @@ export class UberGroupper implements Types.UberGroupper {
     getGroupperState(groupper: Types.Groupper): Types.GroupperState {
         const props = groupper.getBasicProps();
         const isLimited = props.isLimited;
-        const isVisible = this._visibleGrouppers[groupper.id] || Types.ElementVisibilities.Invisible;
-        let isCurrent = this._current ? (this._current === groupper) : undefined;
+        const isVisible =
+            this._visibleGrouppers[groupper.id] ||
+            Types.ElementVisibilities.Invisible;
+        let isCurrent = this._current ? this._current === groupper : undefined;
 
-        if ((isCurrent === undefined) && (props.lookupVisibility !== Types.ElementVisibilities.Invisible)) {
+        if (
+            isCurrent === undefined &&
+            props.lookupVisibility !== Types.ElementVisibilities.Invisible
+        ) {
             if (
-                (isVisible === Types.ElementVisibilities.Invisible) ||
-                (this._hasFullyVisibleGroupper && (isVisible === Types.ElementVisibilities.PartiallyVisible))
+                isVisible === Types.ElementVisibilities.Invisible ||
+                (this._hasFullyVisibleGroupper &&
+                    isVisible === Types.ElementVisibilities.PartiallyVisible)
             ) {
                 isCurrent = false;
             }
@@ -345,12 +408,13 @@ export class UberGroupper implements Types.UberGroupper {
             isLast: this._last === groupper,
             isVisible,
             hasFocus: this._focused === groupper,
-            siblingHasFocus: !!this._focused && (this._focused !== groupper),
+            siblingHasFocus: !!this._focused && this._focused !== groupper,
             siblingIsVisible: this._hasFullyVisibleGroupper,
-            isLimited: (
-                (isLimited === Types.GroupperFocusLimits.Limited) ||
-                (isLimited === Types.GroupperFocusLimits.LimitedTrapFocus)
-            ) ? this._unlimited !== groupper : false
+            isLimited:
+                isLimited === Types.GroupperFocusLimits.Limited ||
+                isLimited === Types.GroupperFocusLimits.LimitedTrapFocus
+                    ? this._unlimited !== groupper
+                    : false
         };
     }
 
@@ -391,7 +455,7 @@ export class UberGroupper implements Types.UberGroupper {
             }
         }
 
-        this._updateVisibleTimer = this._win().setTimeout(() => {
+        this._updateVisibleTimer = this._getWindow().setTimeout(() => {
             this._updateVisibleTimer = undefined;
 
             let isChanged = false;
@@ -767,6 +831,37 @@ export class FocusableAPI implements Types.FocusableAPI {
         dispatchMutationEvent(element, { groupper });
     }
 
+    addUberGroupper(options: {
+        element: HTMLElement,
+        basic?: Types.UberGroupperBasicProps,
+    }) {
+        const {element, basic} = options;
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+
+        if (tabsterOnElement && tabsterOnElement.uberGroupper) {
+            throw new Error('The element already has a focus container group');
+        }
+
+        const uberGroupper = new UberGroupper(
+            this._tabster,
+            element,
+            this._win,
+            basic
+        );
+
+        dispatchMutationEvent(element, { uberGroupper });
+    }
+    removeUberGroupper(element: HTMLElement) {
+        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+        const uberGroupper = tabsterOnElement && tabsterOnElement.uberGroupper;
+
+        if (uberGroupper) {
+            uberGroupper.dispose();
+
+            dispatchMutationEvent(element, { uberGroupper, removed: true });
+        }
+    }
+
     removeGroupper(element: HTMLElement): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
         const groupper = tabsterOnElement && tabsterOnElement.groupper;
@@ -892,10 +987,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         return groupper ? (groupper.getElement() || null) : null;
     }
 
-    private _findNextGroupper(element: HTMLElement,
-        next: (container: Types.UberGroupper, initial: HTMLElement, el?: HTMLElement | null) => HTMLElement | null,
-        ignoreModalizer?: boolean
-    ): HTMLElement | null {
+    private _findNextGroupper(options: {
+        element: HTMLElement;
+        getNextElement: (container: Types.UberGroupper) => HTMLElement | null;
+        ignoreModalizer?: boolean;
+    }): HTMLElement | null {
+        const {element, getNextElement, ignoreModalizer} = options;
         const cur = this.findGroupper(element);
         const containerElement = cur && cur.parentElement;
 
@@ -904,19 +1001,32 @@ export class FocusableAPI implements Types.FocusableAPI {
             const container = tabsterOnElement && tabsterOnElement.uberGroupper;
 
             if (container) {
-                for (let el = next(container, cur); el; el = next(container, cur, el)) {
-                    const groupperTabsterOnElement = getTabsterOnElement(this._tabster, el);
+                for (
+                    let el = getNextElement(container);
+                    el;
+                    el = getNextElement(container)
+                ) {
+                    const groupperTabsterOnElement = getTabsterOnElement(
+                        this._tabster,
+                        el
+                    );
 
                     if (
-                        groupperTabsterOnElement &&
-                        groupperTabsterOnElement.groupper &&
-                        (ignoreModalizer || this.isAccessible(el as HTMLElement))
+                        groupperTabsterOnElement?.groupper &&
+                        (ignoreModalizer ||
+                            this.isAccessible(el as HTMLElement))
                     ) {
-                        if (!this._tabster.focusable.isFocusable(el) && !this._tabster.focusable.findFirst(el, false, false, true)) {
-                            continue;
+                        if (
+                            this._tabster.focusable.isFocusable(el) ||
+                            this._tabster.focusable.findFirst(
+                                el,
+                                false,
+                                false,
+                                true
+                            )
+                        ) {
+                            return el;
                         }
-
-                        return el;
                     }
                 }
             }
@@ -925,40 +1035,66 @@ export class FocusableAPI implements Types.FocusableAPI {
         return null;
     }
 
-    findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
-        return this._findNextGroupper(context, (container, initial, el) =>
-            ((el === undefined)
-                ? (container.getElement()?.firstElementChild || null)
-                : (el ? el.nextElementSibling : null)) as HTMLElement | null,
+    findFirstGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null {
+        return this._findNextGroupper({
+            element: context,
+            getNextElement: container => container.getFirstGroupper()?.getElement() ?? null,
             ignoreModalizer
-        );
+        });
     }
 
-    findLastGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
-        return this._findNextGroupper(context, (container, initial, el) =>
-            ((el === undefined)
-                ? (container.getElement()?.lastElementChild || null)
-                : (el ? el.previousElementSibling : null)) as HTMLElement | null,
+    findLastGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null {
+        return this._findNextGroupper({
+            element: context,
+            getNextElement: container => container.getLastGroupper()?.getElement() ?? null,
             ignoreModalizer
-        );
+        });
     }
 
-    findNextGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
-        return this._findNextGroupper(context, (container, initial, el) =>
-            ((el === undefined)
-                ? initial.nextElementSibling
-                : (el ? el.nextElementSibling : null)) as HTMLElement | null,
+    findNextGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null {
+        return this._findNextGroupper({
+            element: context,
+            getNextElement: container => {
+                const nextElement = container.getNextGroupper()?.getElement();
+                if (nextElement) {
+                    return nextElement;
+                }
+                if (container.getBasicProps().cyclic) {
+                    return container.getFirstGroupper()?.getElement()!;
+                } 
+                return null;
+            },
             ignoreModalizer
-        );
+        });
     }
 
-    findPrevGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null {
-        return this._findNextGroupper(context, (container, initial, el) =>
-            ((el === undefined)
-                ? initial.previousElementSibling
-                : (el ? el.previousElementSibling as HTMLElement : null)) as HTMLElement | null,
+    findPrevGroupper(
+        context: HTMLElement,
+        ignoreModalizer?: boolean
+    ): HTMLElement | null {
+        return this._findNextGroupper({
+            element: context,
+            getNextElement: container => {
+                const nextElement = container.getPreviousGroupper()?.getElement();
+                if (nextElement) {
+                    return nextElement;
+                }
+                if (container.getBasicProps().cyclic) {
+                    return container.getLastGroupper()?.getElement()!;
+                } 
+                return null;
+            },
             ignoreModalizer
-        );
+        });
     }
 
     getProps(element: HTMLElement): Types.FocusableProps {

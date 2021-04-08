@@ -10,6 +10,7 @@ import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUI
 export interface MutationEventDetails {
     root?: Types.Root;
     modalizer?: Types.Modalizer;
+    uberGroupper?: Types.UberGroupper;
     groupper?: Types.Groupper;
     observed?: HTMLElement;
     removed?: boolean;

@@ -290,6 +290,11 @@ export interface FocusableProps {
 }
 
 export interface FocusableAPI {
+    addUberGroupper(options: {
+        element: HTMLElement,
+        basic?: UberGroupperBasicProps,
+    }): void;
+    removeUberGroupper(element: HTMLElement): void;
     addGroupper(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
     removeGroupper(element: HTMLElement): void;
     moveGroupper(from: HTMLElement, to: HTMLElement): void;
@@ -389,6 +394,11 @@ export interface GroupperBasicProps {
     nextDirection?: GroupperNextDirection;
     memorizeCurrent?: boolean;
     lookupVisibility?: ElementVisibility;
+    cyclic?: boolean;
+}
+
+export interface UberGroupperBasicProps {
+    cyclic?: boolean;
 }
 
 export interface GroupperExtendedProps {
@@ -398,6 +408,8 @@ export interface GroupperExtendedProps {
 
 export interface UberGroupper {
     readonly id: string;
+    getBasicProps(): Required<UberGroupperBasicProps>;
+    setProps(props?: Partial<UberGroupperBasicProps> | null): void;
     dispose(): void;
     getElement(): HTMLElement | undefined;
     addGroupper(groupper: Groupper): void;
@@ -406,6 +418,10 @@ export interface UberGroupper {
     setFocusedGroupper(groupper: Groupper | undefined): void;
     setCurrentGroupper(groupper: Groupper | undefined): void;
     getCurrentGroupper(): Groupper | null;
+    getFirstGroupper(): Groupper | null;
+    getLastGroupper(): Groupper | null;
+    getNextGroupper(): Groupper | null;
+    getPreviousGroupper(): Groupper | null;
     getGroupperState(groupper: Groupper): GroupperState;
     isEmpty(): boolean;
     forceUpdate(): void;
@@ -539,7 +555,7 @@ export type TabsterAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
-    uberGroupper: true,
+    uberGroupper: UberGroupperBasicProps,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
 }>;

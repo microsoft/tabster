@@ -59,7 +59,7 @@ export function setTabsterOnElement(
 
                 case 'uberGroupper':
                     cur[key] = tabsterOnElement.uberGroupper;
-                    attrObject[key] = true;
+                    attrObject[key] = (h as Types.UberGroupper).getBasicProps();
                     break;
 
                 case 'observed':
@@ -186,6 +186,7 @@ export function updateTabsterByAttribute(
                     break;
 
                 case 'uberGroupper':
+                    tabster.focusable.removeUberGroupper(element);
                     break;
 
                 case 'observed':
@@ -254,6 +255,14 @@ export function updateTabsterByAttribute(
                 break;
 
             case 'uberGroupper':
+                if (tabsterOnElement && tabsterOnElement.uberGroupper) {
+                    tabsterOnElement.uberGroupper.setProps(newObject.uberGroupper);
+                } else {
+                    tabster.focusable.addUberGroupper({
+                        element,
+                        basic: newObject.uberGroupper
+                    });
+                }
                 break;
 
             case 'observed':

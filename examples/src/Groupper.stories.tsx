@@ -22,7 +22,7 @@ export const NestedGrouppers = () => (
                 deloser: {},
             })}
         >
-            <div>
+            <div {...getTabsterAttribute({uberGroupper: {cyclic: true}})}>
                 <Item />
                 <Item />
 
