@@ -31,7 +31,3 @@ jobs:
                   target-folder: storybook
 
                   clean: true
-                  # 👇 defines a list of files that should be kept during deployment
-                  clean-exclude: |
-                      CNAME
-                      index.html
