@@ -329,7 +329,7 @@ export class FocusedElementState
                 return;
         }
 
-        const ctx = RootAPI.getTabsterContext(this._tabster, curElement);
+        const ctx = RootAPI.getTabsterContext(this._tabster, curElement, { checkRtl: true });
 
         const keyCode = e.keyCode;
         const isTab = keyCode === Keys.Tab;
@@ -352,7 +352,8 @@ export class FocusedElementState
                 (
                     !isTab &&
                     (
-                        (keyCode === Keys.Left) ||
+                        (keyCode === Keys.Left && !ctx.isRtl) ||
+                        (keyCode === Keys.Right && ctx.isRtl) ||
                         (keyCode === Keys.Up) ||
                         (keyCode === Keys.PageUp) ||
                         (keyCode === Keys.Home)
@@ -562,7 +563,7 @@ export class FocusedElementState
                 case Keys.Right:
                 case Keys.Up:
                 case Keys.Left:
-                    next = this._findNextGroupper(groupperElement, e.keyCode, groupper.getBasicProps().nextDirection);
+                    next = this._findNextGroupper(groupperElement, e.keyCode, groupper.getBasicProps().nextDirection, ctx?.isRtl);
                     break;
 
                 case Keys.PageDown:
@@ -619,7 +620,7 @@ export class FocusedElementState
             : this._tabster.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
     }
 
-    private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection): HTMLElement | null {
+    private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection, isRtl?: boolean): HTMLElement | null {
         if ((direction === Types.GroupperNextDirections.Vertical) && ((key === Keys.Left) || (key === Keys.Right))) {
             return null;
         }
@@ -629,7 +630,7 @@ export class FocusedElementState
         }
 
         if ((direction === undefined) || (direction === Types.GroupperNextDirections.Both)) {
-            if ((key === Keys.Left) || (key === Keys.Up)) {
+            if ((key === Keys.Left && !isRtl) || (key === Keys.Right && isRtl) || (key === Keys.Up)) {
                 return this._tabster.focusable.findPrevGroupper(from);
             } else {
                 return this._tabster.focusable.findNextGroupper(from);

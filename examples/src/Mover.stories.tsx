@@ -58,6 +58,22 @@ export const ArrowNavigationHorizontal = () => (
     </div>
 );
 
+export const ArrowNavigationHorizontalRtl = () => (
+    <div
+        dir='rtl'
+        {...getTabsterAttribute({
+            focusable: {
+                mover: {
+                    navigationType: TabsterTypes.MoverKeys.Arrows,
+                    axis: TabsterTypes.MoverAxis.Horizontal,
+                },
+            },
+        })}
+    >
+        <Collection />
+    </div>
+);
+
 export const ArrowNavigationCircular = () => (
     <div
         {...getTabsterAttribute({

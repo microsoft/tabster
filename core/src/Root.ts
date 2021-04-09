@@ -542,7 +542,18 @@ export class RootAPI implements Types.RootAPI {
         return _rootById[id];
     }
 
-    static getTabsterContext(tabster: Types.TabsterCore, element: Node): Types.TabsterContext | undefined {
+    /**
+     * Fetches the tabster context for an element walking up its ancestors
+     * 
+     * @param tabster Tabster instance
+     * @param element The element the tabster context should represent
+     * @param options Additional options
+     * @returns undefined if the element is not a child of a tabster root, otherwise all applicable tabster behaviours and configurations
+     */
+    static getTabsterContext(
+        tabster: Types.TabsterCore,
+        element: Node, options: Types.GetTabsterContextOptions = {},
+    ): Types.TabsterContext | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }
@@ -553,11 +564,14 @@ export class RootAPI implements Types.RootAPI {
         let mover: HTMLElement | undefined;
         let moverOptions: Types.MoverOptions | undefined;
         let isGroupperFirst: boolean | undefined;
+        let isRtl = false;
 
-        for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const tabsterOnElement = getTabsterOnElement(tabster, e);
+        let curElement: (Node | null) = element;
+        while (curElement && (!root || options.checkRtl )) {
+            const tabsterOnElement = getTabsterOnElement(tabster, curElement);
 
             if (!tabsterOnElement) {
+                curElement = curElement.parentElement;
                 continue;
             }
 
@@ -565,12 +579,11 @@ export class RootAPI implements Types.RootAPI {
                 groupper = tabsterOnElement.groupper;
             }
 
-            const cfk = tabsterOnElement.focusable?.mover;
-            if ((cfk !== undefined) && (moverOptions === undefined)) {
-                moverOptions = cfk;
+            if ((tabsterOnElement.focusable?.mover !== undefined) && (moverOptions === undefined)) {
+                moverOptions = tabsterOnElement.focusable.mover;
 
                 if ((moverOptions.navigationType === Types.MoverKeys.Arrows) || (moverOptions.navigationType === Types.MoverKeys.Both)) {
-                    mover = e as HTMLElement;
+                    mover = curElement as HTMLElement;
                     isGroupperFirst = !!groupper;
                 }
             }
@@ -581,10 +594,16 @@ export class RootAPI implements Types.RootAPI {
 
             if (tabsterOnElement.root) {
                 root = tabsterOnElement.root;
-                break;
             }
+
+            if ((curElement as HTMLElement).getAttribute('dir') === 'rtl') {
+                isRtl = true;
+            }
+
+            curElement = curElement.parentElement;
         }
 
+        // No root element could be found, try to get an auto root
         if (!root && (tabster.root as RootAPI)._autoRoot) {
             const rootAPI = tabster.root as RootAPI;
 
@@ -605,7 +624,16 @@ export class RootAPI implements Types.RootAPI {
             root = rootAPI._autoRootInstance;
         }
 
-        return root ? { root, modalizer, groupper, mover, moverOptions, isGroupperFirst } : undefined;
+        return root ? {
+            root,
+            modalizer,
+            groupper,
+            mover,
+            moverOptions,
+            isGroupperFirst,
+            isRtl: options.checkRtl ? isRtl : undefined,
+        } : undefined;
+
     }
 }
 

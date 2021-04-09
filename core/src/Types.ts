@@ -477,6 +477,13 @@ export interface Root {
     moveOutWithDefaultAction(backwards: boolean): void;
 }
 
+export interface GetTabsterContextOptions {
+    /**
+     * Should visit **all** element ancestors to verify if `dir='rtl'` is set
+     */
+    checkRtl?: boolean;
+}
+
 export interface TabsterContext {
     root: Root;
     modalizer?: Modalizer;
@@ -484,6 +491,10 @@ export interface TabsterContext {
     mover?: HTMLElement;
     moverOptions?: MoverOptions;
     isGroupperFirst?: boolean;
+    /**
+     * Whether `dir='rtl'` is set on an ancestor
+     */
+    isRtl?: boolean;
 }
 
 export interface RootAPI {
