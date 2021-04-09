@@ -59,6 +59,14 @@ export const NestedGrouppers = () => (
     </>
 );
 
+export const GroupperRtl = () => (
+    <div dir='rtl' style={{display: 'flex'}}>
+        <Item />
+        <Item />
+        <Item />
+    </div>
+);
+
 export const AccordionPrototype = () => (
     <>
         <Accordion>
