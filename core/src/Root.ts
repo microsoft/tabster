@@ -544,7 +544,7 @@ export class RootAPI implements Types.RootAPI {
 
     /**
      * Fetches the tabster context for an element walking up its ancestors
-     * 
+     *
      * @param tabster Tabster instance
      * @param element The element the tabster context should represent
      * @param options Additional options
@@ -579,8 +579,9 @@ export class RootAPI implements Types.RootAPI {
                 groupper = tabsterOnElement.groupper;
             }
 
-            if ((tabsterOnElement.focusable?.mover !== undefined) && (moverOptions === undefined)) {
-                moverOptions = tabsterOnElement.focusable.mover;
+            const moverOnElement = tabsterOnElement.focusable?.mover;
+            if ((moverOnElement !== undefined) && (moverOptions === undefined)) {
+                moverOptions = moverOnElement;
 
                 if ((moverOptions.navigationType === Types.MoverKeys.Arrows) || (moverOptions.navigationType === Types.MoverKeys.Both)) {
                     mover = curElement as HTMLElement;
