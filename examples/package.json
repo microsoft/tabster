@@ -16,8 +16,7 @@
     "eject": "react-scripts eject",
     "start": "start-storybook -p 6006 -s public",
     "start:prod": "cross-env NODE_ENV=production npm run start",
-    "build": "cross-env NODE_ENV=development build-storybook",
-    "build:prod": "cross-env NODE_ENV=production build-storybook",
+    "build": "build-storybook --quiet",
     "clean": "rimraf storybook-static",
     "tslint": "tslint --project tsconfig.json --fix || true",
     "tslint:check": "tslint --project tsconfig.json"
