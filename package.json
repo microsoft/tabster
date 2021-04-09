@@ -14,6 +14,6 @@
   },
   "simple-git-hooks": {
     "pre-commit": "npm run tslint:check",
-    "pre-push": "npm run build"
+    "pre-push": ""
   }
 }
