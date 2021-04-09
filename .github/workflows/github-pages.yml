@@ -21,13 +21,14 @@ jobs:
 
             - run: npm install
             - run: npm run bootstrap
-            - run: lerna run --scope examples build:prod
+            - run: lerna run --scope examples build
 
             - name: Deploy storybook
               uses: JamesIves/github-pages-deploy-action@4.1.1
               with:
                   branch: gh-pages
                   folder: examples/storybook-static
+                  target-folder: storybook
 
                   clean: true
                   # 👇 defines a list of files that should be kept during deployment
