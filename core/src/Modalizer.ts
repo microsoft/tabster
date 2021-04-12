@@ -69,7 +69,7 @@ export class Modalizer implements Types.Modalizer {
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
 
-        this._element = new WeakHTMLElement(element);
+        this._element = new WeakHTMLElement(win, element);
         this._basic = basic;
         this._extended = extended || {};
         this._setAccessibilityProps();
@@ -117,7 +117,7 @@ export class Modalizer implements Types.Modalizer {
     move(newElement: HTMLElement): void {
         this._remove();
 
-        this._element = new WeakHTMLElement(newElement);
+        this._element = new WeakHTMLElement(this._win, newElement);
 
         this._setAccessibilityProps();
 

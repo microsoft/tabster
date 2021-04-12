@@ -89,7 +89,7 @@ export function setTabsterOnElement(
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+                uid = getElementUId((tabster as unknown as Types.TabsterInternal).getWindow, element);
             }
 
             entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
@@ -285,7 +285,7 @@ export function updateTabsterByAttribute(
 
         if (!entry) {
             if (!uid) {
-                uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+                uid = getElementUId((tabster as unknown as Types.TabsterInternal).getWindow, element);
             }
 
             entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
@@ -307,7 +307,7 @@ export function augmentAttribute(
     name: string,
     value?: string | null // Restore original value when undefined.
 ): void {
-    const uid = getElementUId(element, (tabster as unknown as Types.TabsterInternal).getWindow());
+    const uid = getElementUId((tabster as unknown as Types.TabsterInternal).getWindow, element);
     let entry = (tabster as unknown as Types.TabsterInternal).storageEntry(uid, true)!;
 
     if (!entry.aug) {

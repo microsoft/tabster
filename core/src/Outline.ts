@@ -326,7 +326,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             return;
         }
 
-        let boundingRect = getBoundingRect(this._outlinedElement);
+        let boundingRect = getBoundingRect(this._win, this._outlinedElement);
 
         const position = new OutlinePosition(
             boundingRect.left,
@@ -372,7 +372,7 @@ export class OutlineAPI implements Types.OutlineAPI {
                 break;
             }
 
-            boundingRect = getBoundingRect(parent);
+            boundingRect = getBoundingRect(this._win, parent);
 
             const win = parent.ownerDocument && parent.ownerDocument.defaultView;
 
@@ -401,7 +401,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             }
         }
 
-        const allRect = getBoundingRect(scrollingElement);
+        const allRect = getBoundingRect(this._win, scrollingElement);
         const allWidth = allRect.left + allRect.right;
         const allHeight = allRect.top + allRect.bottom;
         const ow = _props.outlineWidth;

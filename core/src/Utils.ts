@@ -14,11 +14,6 @@ interface FocusedElementWithIgnoreFlag extends HTMLElement {
     __shouldIgnoreFocus: boolean;
 }
 
-const _basics: Types.InternalBasics = {
-    Promise: typeof Promise !== 'undefined' ? Promise : undefined,
-    WeakRef: typeof WeakRef !== 'undefined' ? WeakRef : undefined
-};
-
 export interface WindowWithUID extends Window {
     __tabsterCrossOriginWindowUID?: string;
 }
@@ -38,17 +33,21 @@ export interface TabsterDOMRect {
     top: number;
 }
 
+export interface InstanceContext {
+    getWindow: GetWindow;
+    elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> };
+    basics: Types.InternalBasics;
+    WeakRef?: WeakRefConstructor;
+    containerBoundingRectCache: { [id: string]: { rect: TabsterDOMRect, element: HTMLElementWithBoundingRectCacheId } };
+    lastContainerBoundingRectCacheId: number;
+    containerBoundingRectCacheTimer?: number;
+    weakElementStorage: { [id: string]: TabsterWeakRef; };
+    lastWeakElementId: number;
+    weakCleanupTimer?: number;
+    weakCleanupStarted: boolean;
+}
+
 let _isBrokenIE11: boolean;
-let _WeakRef: WeakRefConstructor | undefined;
-
-let _containerBoundingRectCache: { [id: string]: { rect: TabsterDOMRect, element: HTMLElementWithBoundingRectCacheId } } = {};
-let _lastContainerBoundingRectCacheId = 0;
-let _containerBoundingRectCacheTimer: number | undefined;
-
-let _weakElementStorage: { [id: string]: TabsterWeakRef; } = {};
-let _lastWeakElementId = 0;
-let _weakCleanupTimer: number | undefined;
-let _weakCleanupStarted = false;
 
 const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
     readonly bottom: number;
@@ -66,8 +65,6 @@ const _DOMRect = typeof DOMRect !== 'undefined' ? DOMRect : class {
 
 let _uidCounter = 0;
 
-export const elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> } = {};
-
 try {
     // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
     // property as the docs define). Also `entityReferenceExpansion` argument is not
@@ -76,6 +73,57 @@ try {
     _isBrokenIE11 = false;
 } catch (e) {
     _isBrokenIE11 = true;
+}
+
+interface WindowWithUtilsConext extends Window {
+    __tabsterInstanceContext?: InstanceContext;
+}
+
+export function getInstanceContext(getWindow: GetWindow): InstanceContext {
+    const win = getWindow();
+    let ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
+
+    if (!ctx) {
+        ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext = {
+            getWindow,
+            elementByUId: {},
+            basics: {
+                Promise: typeof Promise !== 'undefined' ? Promise : undefined,
+                WeakRef: typeof WeakRef !== 'undefined' ? WeakRef : undefined
+            },
+            containerBoundingRectCache: {},
+            lastContainerBoundingRectCacheId: 0,
+            weakElementStorage: {},
+            lastWeakElementId: 0,
+            weakCleanupStarted: false
+        };
+    }
+
+    return ctx;
+}
+
+export function disposeInstanceContext(win: Window): void {
+    const ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
+
+    if (ctx) {
+        ctx.elementByUId = {};
+
+        delete ctx.WeakRef;
+
+        ctx.containerBoundingRectCache = {};
+
+        if (ctx.containerBoundingRectCacheTimer) {
+            win.clearTimeout(ctx.containerBoundingRectCacheTimer);
+        }
+
+        if (ctx.weakCleanupTimer) {
+            win.clearTimeout(ctx.weakCleanupTimer);
+        }
+
+        ctx.weakElementStorage = {};
+
+        delete (win as WindowWithUtilsConext).__tabsterInstanceContext;
+    }
 }
 
 interface TabsterWeakRef {
@@ -108,13 +156,16 @@ class FakeWeakRef implements TabsterWeakRef {
 }
 
 export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> {
+    private _ctx: InstanceContext;
     private _id: string;
     private _data: D | undefined;
 
-    constructor(element: T, data?: D) {
-        this._id = 'we' + ++_lastWeakElementId;
+    constructor(getWindow: GetWindow, element: T, data?: D) {
+        const context = getInstanceContext(getWindow);
+        this._ctx = context;
+        this._id = 'we' + ++context.lastWeakElementId;
 
-        _weakElementStorage[this._id] = _WeakRef ? new _WeakRef(element) : new FakeWeakRef(element);
+        context.weakElementStorage[this._id] = context.WeakRef ? new context.WeakRef(element) : new FakeWeakRef(element);
 
         if (data !== undefined) {
             this._data = data;
@@ -122,10 +173,10 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     }
 
     get(): T | undefined {
-        const ref = _weakElementStorage[this._id];
+        const ref = this._ctx.weakElementStorage[this._id];
         const el = (ref && ref.deref()) as (T | undefined);
         if (ref && !el) {
-            delete _weakElementStorage[this._id];
+            delete this._ctx.weakElementStorage[this._id];
         }
         return el;
     }
@@ -135,47 +186,53 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     }
 }
 
-export function cleanupWeakRefStorage(forceRemove?: boolean): void {
+export function cleanupWeakRefStorage(getWindow: GetWindow, forceRemove?: boolean): void {
+    const context = getInstanceContext(getWindow);
+
     if (forceRemove) {
-        _weakElementStorage = {};
+        context.weakElementStorage = {};
     } else {
-        for (let id of Object.keys(_weakElementStorage)) {
-            const we = _weakElementStorage[id];
-            if (_WeakRef) {
+        for (let id of Object.keys(context.weakElementStorage)) {
+            const we = context.weakElementStorage[id];
+            if (context.WeakRef) {
                 if (!we.deref()) {
-                    delete _weakElementStorage[id];
+                    delete context.weakElementStorage[id];
                 }
             } else {
                 if (FakeWeakRef.cleanup(we as FakeWeakRef)) {
-                    delete _weakElementStorage[id];
+                    delete context.weakElementStorage[id];
                 }
             }
         }
     }
 }
 
-export function startWeakRefStorageCleanup(win: GetWindow): void {
-    if (!_weakCleanupStarted) {
-        _weakCleanupStarted = true;
-        _WeakRef = getWeakRef();
+export function startWeakRefStorageCleanup(getWindow: GetWindow): void {
+    const context = getInstanceContext(getWindow);
+
+    if (!context.weakCleanupStarted) {
+        context.weakCleanupStarted = true;
+        context.WeakRef = getWeakRef(context);
     }
 
-    if (!_weakCleanupTimer) {
-        _weakCleanupTimer = win().setTimeout(() => {
-            _weakCleanupTimer = undefined;
-            cleanupWeakRefStorage();
-            startWeakRefStorageCleanup(win);
+    if (!context.weakCleanupTimer) {
+        context.weakCleanupTimer = context.getWindow().setTimeout(() => {
+            context.weakCleanupTimer = undefined;
+            cleanupWeakRefStorage(getWindow);
+            startWeakRefStorageCleanup(getWindow);
         }, 2 * 60 * 1000); // 2 minutes.
     }
 }
 
-export function stopWeakRefStorageCleanupAndClearStorage(win: GetWindow): void {
-    _weakCleanupStarted = false;
+export function stopWeakRefStorageCleanupAndClearStorage(getWindow: GetWindow): void {
+    const context = getInstanceContext(getWindow);
 
-    if (_weakCleanupTimer) {
-        win().clearTimeout(_weakCleanupTimer);
-        _weakCleanupTimer = undefined;
-        _weakElementStorage = {};
+    context.weakCleanupStarted = false;
+
+    if (context.weakCleanupTimer) {
+        context.getWindow().clearTimeout(context.weakCleanupTimer);
+        context.weakCleanupTimer = undefined;
+        context.weakElementStorage = {};
     }
 }
 
@@ -191,9 +248,10 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
 
-export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): TabsterDOMRect {
+export function getBoundingRect(getWindow: GetWindow, element: HTMLElementWithBoundingRectCacheId): TabsterDOMRect {
     let cacheId = element.__tabsterCacheId;
-    let cached = cacheId ? _containerBoundingRectCache[cacheId] : undefined;
+    const context = getInstanceContext(getWindow);
+    let cached = cacheId ? context.containerBoundingRectCache[cacheId] : undefined;
 
     if (cached) {
         return cached.rect;
@@ -228,35 +286,35 @@ export function getBoundingRect(element: HTMLElementWithBoundingRectCacheId): Ta
     );
 
     if (!cacheId) {
-        cacheId = 'r-' + ++_lastContainerBoundingRectCacheId;
+        cacheId = 'r-' + ++context.lastContainerBoundingRectCacheId;
         element.__tabsterCacheId = cacheId;
     }
 
-    _containerBoundingRectCache[cacheId] = {
+    context.containerBoundingRectCache[cacheId] = {
         rect,
         element
     };
 
-    if (!_containerBoundingRectCacheTimer) {
-        _containerBoundingRectCacheTimer = window.setTimeout(() => {
-            _containerBoundingRectCacheTimer = undefined;
+    if (!context.containerBoundingRectCacheTimer) {
+        context.containerBoundingRectCacheTimer = window.setTimeout(() => {
+            context.containerBoundingRectCacheTimer = undefined;
 
-            for (let cId of Object.keys(_containerBoundingRectCache)) {
-                delete _containerBoundingRectCache[cId].element.__tabsterCacheId;
+            for (let cId of Object.keys(context.containerBoundingRectCache)) {
+                delete context.containerBoundingRectCache[cId].element.__tabsterCacheId;
             }
 
-            _containerBoundingRectCache = {};
+            context.containerBoundingRectCache = {};
         }, 50);
     }
 
     return rect;
 }
 
-export function isElementVerticallyVisibleInContainer(element: HTMLElement): boolean {
+export function isElementVerticallyVisibleInContainer(getWindow: GetWindow, element: HTMLElement): boolean {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = getBoundingRect(container);
+        const containerRect = getBoundingRect(getWindow, container);
         const elementRect = element.getBoundingClientRect();
 
         return (elementRect.top >= containerRect.top) &&
@@ -266,11 +324,11 @@ export function isElementVerticallyVisibleInContainer(element: HTMLElement): boo
     return false;
 }
 
-export function isElementVisibleInContainer(element: HTMLElement, gap = 0): ElementVisibility {
+export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLElement, gap = 0): ElementVisibility {
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = getBoundingRect(container);
+        const containerRect = getBoundingRect(getWindow, container);
         const elementRect = element.getBoundingClientRect();
 
         if (
@@ -295,13 +353,13 @@ export function isElementVisibleInContainer(element: HTMLElement, gap = 0): Elem
     return ElementVisibilities.Invisible;
 }
 
-export function scrollIntoView(element: HTMLElement, alignToTop: boolean): void {
+export function scrollIntoView(getWindow: GetWindow, element: HTMLElement, alignToTop: boolean): void {
     // Built-in DOM's scrollIntoView() is cool, but when we have nested containers,
     // it scrolls all of them, not just the deepest one. So, trying to work it around.
     const container = getScrollableContainer(element);
 
     if (container) {
-        const containerRect = getBoundingRect(container);
+        const containerRect = getBoundingRect(getWindow, container);
         const elementRect = element.getBoundingClientRect();
 
         if (alignToTop) {
@@ -373,18 +431,23 @@ export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
     return srnd.join('');
 }
 
-export function getElementUId(element: HTMLElementWithUID, win: Window): string {
+export function getElementUId(getWindow: GetWindow, element: HTMLElementWithUID): string {
+    const context = getInstanceContext(getWindow);
     let uid = element.__tabsterElementUID;
 
     if (!uid) {
-        uid = element.__tabsterElementUID = getUId(win);
+        uid = element.__tabsterElementUID = getUId(getWindow());
     }
 
-    if (!elementByUId[uid] && documentContains(element.ownerDocument, element)) {
-        elementByUId[uid] = new WeakHTMLElement(element) ;
+    if (!context.elementByUId[uid] && documentContains(element.ownerDocument, element)) {
+        context.elementByUId[uid] = new WeakHTMLElement(getWindow, element) ;
     }
 
     return uid;
+}
+
+export function getElementByUId(context: InstanceContext, uid: string): WeakHTMLElement<HTMLElementWithUID, undefined> | undefined {
+    return context.elementByUId[uid];
 }
 
 export function getWindowUId(win: WindowWithUID): string {
@@ -397,9 +460,11 @@ export function getWindowUId(win: WindowWithUID): string {
     return uid;
 }
 
-export function clearElementCache(parent?: HTMLElement): void {
-    for (let key of Object.keys(elementByUId)) {
-        const wel = elementByUId[key];
+export function clearElementCache(getWindow: GetWindow, parent?: HTMLElement): void {
+    const context = getInstanceContext(getWindow);
+
+    for (let key of Object.keys(context.elementByUId)) {
+        const wel = context.elementByUId[key];
         const el = wel && wel.get();
 
         if (el && parent) {
@@ -408,7 +473,7 @@ export function clearElementCache(parent?: HTMLElement): void {
             }
         }
 
-        delete elementByUId[key];
+        delete context.elementByUId[key];
     }
 }
 
@@ -431,28 +496,31 @@ export function matchesSelector(element: HTMLElement, selector: string): boolean
     return matches && matches.call(element, selector);
 }
 
-export function getPromise(): PromiseConstructor {
-    if (_basics.Promise) {
-        return _basics.Promise;
+export function getPromise(getWindow: GetWindow): PromiseConstructor {
+    const context = getInstanceContext(getWindow);
+    if (context.basics.Promise) {
+        return context.basics.Promise;
     }
 
     throw new Error('No Promise defined.');
 }
 
-export function getWeakRef<T>(): WeakRefConstructor | undefined {
-    return _basics.WeakRef;
+export function getWeakRef<T>(context: InstanceContext): WeakRefConstructor | undefined {
+    return context.basics.WeakRef;
 }
 
-export function setBasics(basics: Types.InternalBasics): void {
+export function setBasics(getWindow: GetWindow, basics: Types.InternalBasics): void {
+    const context = getInstanceContext(getWindow);
+
     let key: keyof Types.InternalBasics;
 
     key = 'Promise';
     if (key in basics) {
-        _basics[key] = basics[key];
+        context.basics[key] = basics[key];
     }
 
     key = 'WeakRef';
     if (key in basics) {
-        _basics[key] = basics[key];
+        context.basics[key] = basics[key];
     }
 }

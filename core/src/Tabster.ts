@@ -13,7 +13,7 @@ import { ModalizerAPI } from './Modalizer';
 import { observeMutations } from './MutationEvent';
 import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
-import { RootAPI } from './Root';
+import { RootAPI, WindowWithTabsterInstance } from './Root';
 import * as Types from './Types';
 import {
     cleanupWeakRefStorage,
@@ -28,9 +28,6 @@ export { Types };
 /**
  * Extends Window to include an internal Tabster instance.
  */
-interface WindowWithTabsterInstance extends Window {
-    __tabsterInstance?: Types.TabsterCore;
-}
 class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     private _storage: Types.TabsterElementStorage;
     private _unobserve: (() => void) | undefined;
@@ -123,12 +120,14 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         RootAPI.dispose(this.root);
 
         stopWeakRefStorageCleanupAndClearStorage(this.getWindow);
-        clearElementCache();
+        clearElementCache(this.getWindow);
+
         this._storage = {};
 
         if (this._win?.__tabsterInstance) {
             delete this._win?.__tabsterInstance;
         }
+
         delete this._win;
     }
 
@@ -177,12 +176,12 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
                 el;
                 el = tabster._forgetMemorizedElements.shift()
             ) {
-                clearElementCache(el);
+                clearElementCache(tabster.getWindow, el);
                 FocusedElementState.forgetMemorized(tabster.focusedElement, el);
             }
         }, 0);
 
-        cleanupWeakRefStorage(true);
+        cleanupWeakRefStorage(tabster.getWindow, true);
     }
 }
 

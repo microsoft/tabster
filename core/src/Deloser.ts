@@ -41,7 +41,8 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        return getPromise().resolve(this._deloser.resetFocus());
+        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
+        return getPromise(getWindow).resolve(this._deloser.resetFocus());
     }
 }
 
@@ -107,7 +108,8 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             }
         }
 
-        const root = RootAPI.getRootByUId(this.rootUId);
+        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
+        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
         const modalizers = root && root.getModalizers();
 
         if (modalizers) {
@@ -142,7 +144,8 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             }
         }
 
-        const root = RootAPI.getRootByUId(this.rootUId);
+        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
+        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
         const modalizers = root && root.getModalizers();
 
         if (modalizers) {
@@ -346,6 +349,7 @@ function buildSelector(element: HTMLElement): string | undefined {
 
 export class Deloser implements Types.Deloser {
     readonly uid: string;
+    private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
     private _basic: Types.DeloserBasicProps;
     private _extended: Types.DeloserExtendedProps;
@@ -361,9 +365,10 @@ export class Deloser implements Types.Deloser {
         basic?: Types.DeloserBasicProps,
         extended?: Types.DeloserExtendedProps
     ) {
-        this.uid = getElementUId(element, getWindow());
+        this.uid = getElementUId(getWindow, element);
+        this._win = getWindow;
         this._tabster = tabster;
-        this._element = new WeakHTMLElement(element);
+        this._element = new WeakHTMLElement(getWindow, element);
         this._basic = basic || {};
         this._extended = extended || {};
 
@@ -392,7 +397,7 @@ export class Deloser implements Types.Deloser {
 
     move(newContainer: HTMLElement): void {
         this._remove();
-        this._element = new WeakHTMLElement(newContainer);
+        this._element = new WeakHTMLElement(this._win, newContainer);
 
         if (__DEV__) {
             _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
@@ -462,7 +467,7 @@ export class Deloser implements Types.Deloser {
             return e && (e !== element);
         });
 
-        cur.unshift(new WeakHTMLElement(element, buildSelector(element)));
+        cur.unshift(new WeakHTMLElement(this._win, element, buildSelector(element)));
 
         while (cur.length > _containerHistoryLength) {
             cur.pop();

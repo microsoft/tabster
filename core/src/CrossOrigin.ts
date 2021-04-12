@@ -9,7 +9,7 @@ import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { RootAPI } from './Root';
 import { Subscribable } from './State/Subscribable';
 import * as Types from './Types';
-import { elementByUId, getElementUId, getPromise, getUId, getWindowUId, HTMLElementWithUID } from './Utils';
+import { getElementUId, getInstanceContext, getPromise, getUId, getWindowUId, HTMLElementWithUID } from './Utils';
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;
@@ -25,12 +25,13 @@ const CrossOriginTransactionTypes: Types.CrossOriginTransactionTypes = {
     Ping: 6
 };
 
-let _ignoreKeyboardNavigationStateUpdate = false;
-let _focusOwner: string | undefined;
-let _focusOwnerTimestamp: number | undefined;
-const _deloserByUId: { [uid: string]: Types.Deloser } = {};
-
-let _origOutlineSetup: ((props?: Partial<Types.OutlineProps>) => void) | undefined;
+interface CrossOriginInstanceContext {
+    ignoreKeyboardNavigationStateUpdate: boolean;
+    focusOwner?: string;
+    focusOwnerTimestamp?: number;
+    deloserByUId: { [uid: string]: Types.Deloser };
+    origOutlineSetup?: ((props?: Partial<Types.OutlineProps>) => void);
+}
 
 interface KnownTargets {
     [id: string]: {
@@ -166,7 +167,7 @@ abstract class CrossOriginTransaction<I, O> {
         this.targetId = targetId;
         this.sendUp = sendUp;
         this.timeout = timeout;
-        this._promise = new (getPromise())<O>((resolve, reject) => {
+        this._promise = new (getPromise(getOwner))<O>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
         });
@@ -439,15 +440,15 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
                 case CrossOriginStates.Focused:
                     return StateTransaction._makeFocusedResponse(tabster, timestamp, beginData, transactions, isSelfResponse);
                 case CrossOriginStates.Blurred:
-                    return StateTransaction._makeBlurredResponse(tabster, timestamp, beginData);
+                    return StateTransaction._makeBlurredResponse(tabster, timestamp, beginData, transactions.ctx);
                 case CrossOriginStates.Observed:
                     return StateTransaction._makeObservedResponse(tabster, beginData);
                 case CrossOriginStates.DeadWindow:
                     return StateTransaction._makeDeadWindowResponse(tabster, beginData, transactions, forwardResult);
                 case CrossOriginStates.KeyboardNavigation:
-                    return StateTransaction._makeKeyboardNavigationResponse(tabster, beginData.isNavigatingWithKeyboard);
+                    return StateTransaction._makeKeyboardNavigationResponse(tabster, transactions.ctx, beginData.isNavigatingWithKeyboard);
                 case CrossOriginStates.Outline:
-                    return StateTransaction._makeOutlineResponse(tabster, beginData.outline);
+                    return StateTransaction._makeOutlineResponse(tabster, transactions.ctx, beginData.outline);
             }
         }
 
@@ -477,8 +478,8 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
         const element = StateTransaction.createElement(tabster, beginData);
 
         if (beginData && (beginData.ownerUId) && element) {
-            _focusOwner = beginData.ownerUId;
-            _focusOwnerTimestamp = timestamp;
+            transactions.ctx.focusOwner = beginData.ownerUId;
+            transactions.ctx.focusOwnerTimestamp = timestamp;
 
             if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
                 const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
@@ -510,12 +511,13 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
     private static async _makeBlurredResponse(
         tabster: Types.TabsterCore,
         timestamp: number,
-        beginData: CrossOriginStateData
+        beginData: CrossOriginStateData,
+        context: CrossOriginInstanceContext
     ): Promise<true> {
         if (
             beginData &&
-            ((beginData.ownerUId === _focusOwner) || beginData.force) &&
-            (!_focusOwnerTimestamp || (_focusOwnerTimestamp < timestamp))
+            ((beginData.ownerUId === context.focusOwner) || beginData.force) &&
+            (!context.focusOwnerTimestamp || (context.focusOwnerTimestamp < timestamp))
         ) {
             CrossOriginFocusedElementState.setVal(
                 (tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement,
@@ -558,28 +560,36 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
         }
 
         return forwardResult.then(() => {
-            if (deadUId === _focusOwner) {
+            if (deadUId === transactions.ctx.focusOwner) {
                 DeloserAPI.forceRestoreFocus((tabster as unknown as Types.TabsterInternal).deloser!!!);
             }
             return true;
         });
     }
 
-    private static async _makeKeyboardNavigationResponse(tabster: Types.TabsterCore, isNavigatingWithKeyboard?: boolean): Promise<true> {
+    private static async _makeKeyboardNavigationResponse(
+        tabster: Types.TabsterCore,
+        context: CrossOriginInstanceContext,
+        isNavigatingWithKeyboard?: boolean
+    ): Promise<true> {
         if (
             (isNavigatingWithKeyboard !== undefined) &&
             (tabster.keyboardNavigation.isNavigatingWithKeyboard() !== isNavigatingWithKeyboard)
         ) {
-            _ignoreKeyboardNavigationStateUpdate = true;
+            context.ignoreKeyboardNavigationStateUpdate = true;
             KeyboardNavigationState.setVal(tabster.keyboardNavigation, isNavigatingWithKeyboard);
-            _ignoreKeyboardNavigationStateUpdate = false;
+            context.ignoreKeyboardNavigationStateUpdate = false;
         }
         return true;
     }
 
-    private static async _makeOutlineResponse(tabster: Types.TabsterCore, props?: Partial<Types.OutlineProps>): Promise<true> {
-        if (_origOutlineSetup) {
-            _origOutlineSetup.call((tabster as unknown as Types.TabsterInternal).outline!!!, props);
+    private static async _makeOutlineResponse(
+        tabster: Types.TabsterCore,
+        context: CrossOriginInstanceContext,
+        props?: Partial<Types.OutlineProps>
+    ): Promise<true> {
+        if (context.origOutlineSetup) {
+            context.origOutlineSetup.call((tabster as unknown as Types.TabsterInternal).outline!!!, props);
         }
         return true;
     }
@@ -605,7 +615,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                     }
                 }
             } else if (data.uid) {
-                const ref = elementByUId[data.uid];
+                const ref = getInstanceContext(getOwner).elementByUId[data.uid];
                 element = ref && ref.get();
             } else if (data.observedName) {
                 element = (tabster as unknown as Types.TabsterInternal).observedElement!!!.getElement(data.observedName);
@@ -619,6 +629,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         tabster: Types.TabsterCore,
         element: HTMLElement,
         getOwner: Types.GetWindow,
+        context: CrossOriginInstanceContext,
         ownerUId: string
     ): CrossOriginElementDataOut {
         const deloser = DeloserAPI.getDeloser(tabster, element);
@@ -627,11 +638,11 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         const observed = tabsterOnElement && tabsterOnElement.observed;
 
         return {
-            uid: getElementUId(element, getOwner()),
+            uid: getElementUId(getOwner, element),
             ownerUId,
             id: element.id || undefined,
             rootUId: ctx ? ctx.root.uid : undefined,
-            deloserUId: deloser ? getDeloserUID(deloser, getOwner()) : undefined,
+            deloserUId: deloser ? getDeloserUID(getOwner, context, deloser) : undefined,
             observedName: observed && observed.name,
             observedDetails: observed && observed.details
         };
@@ -663,7 +674,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                 const e: {
                     element?: HTMLElement | null,
                     crossOrigin?: CrossOriginElementDataOut
-                } = await (new (getPromise())((resolve, reject) => {
+                } = await (new (getPromise(getOwner))((resolve, reject) => {
                     let isWaitElementResolved = false;
                     let isForwardResolved = false;
                     let isResolved = false;
@@ -696,7 +707,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         }
 
         return element
-            ? GetElementTransaction.getElementData(tabster, element, getOwner, ownerUId)
+            ? GetElementTransaction.getElementData(tabster, element, getOwner, transactions.ctx, ownerUId)
             : dataOut;
     }
 }
@@ -725,7 +736,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
         const forwardRet = await forwardResult;
         const begin = !forwardRet && data.beginData;
         const uid = begin && begin.deloserUId;
-        const deloser = uid && _deloserByUId[uid];
+        const deloser = uid && transactions.ctx.deloserByUId[uid];
 
         if (begin && deloser) {
             const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
@@ -765,11 +776,13 @@ class CrossOriginTransactions {
     private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
     sendUp: Types.CrossOriginTransactionSend | undefined;
+    ctx: CrossOriginInstanceContext;
 
-    constructor(tabster: Types.TabsterCore, getOwner: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore, getOwner: Types.GetWindow, context: CrossOriginInstanceContext) {
         this._tabster = tabster;
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
+        this.ctx = context;
     }
 
     setup(sendUp?: Types.CrossOriginTransactionSend | null): (msg: Types.CrossOriginMessage) => void {
@@ -862,7 +875,7 @@ class CrossOriginTransactions {
         withReject?: boolean
     ): Promise<O | undefined> {
         if (!this._owner) {
-            return getPromise().reject();
+            return getPromise(this._owner).reject();
         }
 
         const transaction = new Transaction(this._tabster, this._owner, this._knownTargets, value, timeout, sentTo, targetId, this.sendUp);
@@ -876,7 +889,7 @@ class CrossOriginTransactions {
                     this._owner,
                     this._ownerUId,
                     this,
-                    getPromise().resolve(undefined),
+                    getPromise(this._owner).resolve(undefined),
                     true
                 );
             };
@@ -920,10 +933,11 @@ class CrossOriginTransactions {
     }
 
     forwardTransaction(data: Types.CrossOriginTransactionData<any, any>): Promise<any> {
+        const owner = this._owner;
         let targetId = data.target;
 
         if (targetId === this._ownerUId) {
-            return getPromise().resolve();
+            return getPromise(owner).resolve();
         }
 
         const Transaction = this._getTransactionClass(data.type);
@@ -931,7 +945,7 @@ class CrossOriginTransactions {
         if (Transaction) {
             if (
                 (Transaction.shouldForward === undefined) ||
-                (Transaction.shouldForward(this._tabster, data, this._owner, this._ownerUId))
+                (Transaction.shouldForward(this._tabster, data, owner, this._ownerUId))
             ) {
                 const sentTo = data.sentto;
 
@@ -945,7 +959,7 @@ class CrossOriginTransactions {
                 return this._beginTransaction(
                     new Transaction(
                         this._tabster,
-                        this._owner,
+                        owner,
                         this._knownTargets,
                         data.beginData,
                         data.timeout,
@@ -956,11 +970,11 @@ class CrossOriginTransactions {
                     data.timeout
                 );
             } else {
-                return getPromise().resolve();
+                return getPromise(owner).resolve();
             }
         }
 
-        return getPromise().reject(`Unknown transaction type ${ data.type }`);
+        return getPromise(owner).reject(`Unknown transaction type ${ data.type }`);
     }
 
     private _getTransactionClass(type: Types.CrossOriginTransactionType): CrossOriginTransactionClass<any, any> | null {
@@ -1047,7 +1061,7 @@ class CrossOriginTransactions {
     }
 
     private async _dead(): Promise<void> {
-        if (!this._deadPromise && (_focusOwner === this._ownerUId)) {
+        if (!this._deadPromise && (this.ctx.focusOwner === this._ownerUId)) {
             this._deadPromise = this.beginTransaction(StateTransaction, {
                 ownerUId: this._ownerUId,
                 state: CrossOriginStates.DeadWindow
@@ -1073,7 +1087,7 @@ class CrossOriginTransactions {
         }
 
         if (targets.length) {
-            await getPromise().all(
+            await getPromise(this._owner).all(
                 targets.map(
                     uid => this.beginTransaction(PingTransaction, undefined, undefined, undefined, uid, true).then(() => true, () => {
                         if (uid !== _targetIdUp) {
@@ -1092,7 +1106,7 @@ class CrossOriginTransactions {
         if (deadWindows) {
             const focused = await this.beginTransaction(GetElementTransaction, undefined);
 
-            if (!focused && _focusOwner && (_focusOwner in deadWindows)) {
+            if (!focused && this.ctx.focusOwner && (this.ctx.focusOwner in deadWindows)) {
                 await this.beginTransaction(StateTransaction, {
                     ownerUId: this._ownerUId,
                     state: CrossOriginStates.Blurred,
@@ -1295,6 +1309,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _win: Types.GetWindow;
     private _transactions: CrossOriginTransactions;
     private _blurTimer: number | undefined;
+    private _ctx: CrossOriginInstanceContext;
 
     focusedElement: Types.CrossOriginFocusedElementState;
     observedElement: Types.CrossOriginObservedElementState;
@@ -1302,7 +1317,12 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
-        this._transactions = new CrossOriginTransactions(tabster, this._win);
+        this._ctx = {
+            ignoreKeyboardNavigationStateUpdate: false,
+            deloserByUId: {}
+        };
+
+        this._transactions = new CrossOriginTransactions(tabster, this._win, this._ctx);
         this.focusedElement = new CrossOriginFocusedElementState(this._transactions);
         this.observedElement = new CrossOriginObservedElementState(tabster, this._transactions);
     }
@@ -1329,16 +1349,16 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         tabster.focusedElement.subscribe(this._onFocus);
         (tabster as unknown as Types.TabsterInternal).observedElement!!!.subscribe(this._onObserved);
 
-        if (!_origOutlineSetup) {
-            _origOutlineSetup = (tabster as unknown as Types.TabsterInternal).outline!!!.setup;
+        if (!this._ctx.origOutlineSetup) {
+            this._ctx.origOutlineSetup = (tabster as unknown as Types.TabsterInternal).outline!!!.setup;
             (tabster as unknown as Types.TabsterInternal).outline!!!.setup = this._outlineSetup;
         }
 
         this._transactions.beginTransaction(BootstrapTransaction, undefined, undefined, undefined, _targetIdUp).then(data => {
             if (data && (this._tabster.keyboardNavigation.isNavigatingWithKeyboard() !== data.isNavigatingWithKeyboard)) {
-                _ignoreKeyboardNavigationStateUpdate = true;
+                this._ctx.ignoreKeyboardNavigationStateUpdate = true;
                 KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, data.isNavigatingWithKeyboard);
-                _ignoreKeyboardNavigationStateUpdate = false;
+                this._ctx.ignoreKeyboardNavigationStateUpdate = false;
             }
         });
     }
@@ -1358,6 +1378,8 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);
         CrossOriginObservedElementState.dispose(this.observedElement);
+
+        this._ctx.deloserByUId = {};
     }
 
     static dispose(instance: Types.CrossOriginAPI) {
@@ -1365,7 +1387,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     }
 
     private _onKeyboardNavigationStateChanged = (value: boolean): void => {
-        if (!_ignoreKeyboardNavigationStateUpdate) {
+        if (!this._ctx.ignoreKeyboardNavigationStateUpdate) {
             this._transactions.beginTransaction(StateTransaction, {
                 state: CrossOriginStates.KeyboardNavigation,
                 ownerUId: getWindowUId(this._win()),
@@ -1387,15 +1409,24 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (element) {
             this._transactions.beginTransaction(
                 StateTransaction,
-                { ...GetElementTransaction.getElementData(this._tabster, element, this._win, ownerUId), state: CrossOriginStates.Focused }
+                {
+                    ...GetElementTransaction.getElementData(
+                        this._tabster,
+                        element,
+                        this._win,
+                        this._ctx,
+                        ownerUId
+                    ),
+                    state: CrossOriginStates.Focused
+                }
             );
         } else {
             this._blurTimer = win.setTimeout(() => {
                 this._blurTimer = undefined;
 
-                if (_focusOwner && (_focusOwner === ownerUId)) {
+                if (this._ctx.focusOwner && (this._ctx.focusOwner === ownerUId)) {
                     this._transactions.beginTransaction(GetElementTransaction, undefined).then(value => {
-                        if (!value && (_focusOwner === ownerUId)) {
+                        if (!value && (this._ctx.focusOwner === ownerUId)) {
                             this._transactions.beginTransaction(StateTransaction, {
                                 ownerUId,
                                 state: CrossOriginStates.Blurred,
@@ -1413,6 +1444,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._tabster,
             element,
             this._win,
+            this._ctx,
             getWindowUId(this._win())
         ) as CrossOriginStateData;
 
@@ -1432,14 +1464,14 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     }
 }
 
-function getDeloserUID(deloser: Types.Deloser, window: Window): string | undefined {
+function getDeloserUID(getWindow: Types.GetWindow, context: CrossOriginInstanceContext, deloser: Types.Deloser): string | undefined {
     const deloserElement = deloser.getElement();
 
     if (deloserElement) {
-        const uid = getElementUId(deloserElement, window);
+        const uid = getElementUId(getWindow, deloserElement);
 
-        if (!_deloserByUId[uid]) {
-            _deloserByUId[uid] = deloser;
+        if (!context.deloserByUId[uid]) {
+            context.deloserByUId[uid] = deloser;
         }
 
         return uid;

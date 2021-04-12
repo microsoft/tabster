@@ -7,7 +7,13 @@ import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
-import { callOriginalFocusOnly, createElementTreeWalker, getElementUId, makeFocusIgnored, WeakHTMLElement } from './Utils';
+import {
+    callOriginalFocusOnly,
+    createElementTreeWalker,
+    getElementUId,
+    makeFocusIgnored,
+    WeakHTMLElement
+} from './Utils';
 
 interface DummyInput {
     isFirst: boolean;
@@ -17,7 +23,9 @@ interface DummyInput {
     focusout?: (e: FocusEvent) => void;
 }
 
-let _rootById: { [id: string]: Types.Root } = {};
+export interface WindowWithTabsterInstance extends Window {
+    __tabsterInstance?: Types.TabsterCore;
+}
 
 function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
     if (__DEV__) {
@@ -54,8 +62,8 @@ export class Root implements Types.Root {
         forgetFocusedGrouppers: () => void,
         basic?: Types.RootBasicProps
     ) {
-        this.uid = getElementUId(element, win());
-        this._element = new WeakHTMLElement(element);
+        this.uid = getElementUId(win, element);
+        this._element = new WeakHTMLElement(win, element);
         this._tabster = tabster;
         this._win = win;
         this._basic = basic || {};
@@ -108,7 +116,7 @@ export class Root implements Types.Root {
 
     move(newElement: HTMLElement): void {
         this._remove();
-        this._element = new WeakHTMLElement(newElement);
+        this._element = new WeakHTMLElement(this._win, newElement);
         this._add();
         this.updateModalizers();
     }
@@ -396,6 +404,7 @@ export class RootAPI implements Types.RootAPI {
     private _unobserve: (() => void) | undefined;
     private _autoRoot: Types.RootBasicProps | undefined;
     private _autoRootInstance: Root | undefined;
+    rootById: { [id: string]: Types.Root } = {};
 
     constructor(tabster: Types.TabsterCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootBasicProps) {
         this._tabster = tabster;
@@ -412,7 +421,7 @@ export class RootAPI implements Types.RootAPI {
 
         win.document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
 
-        this._unobserve = observeMutationEvents(win.document);
+        this._unobserve = observeMutationEvents(this._win);
     }
 
     protected dispose(): void {
@@ -437,6 +446,8 @@ export class RootAPI implements Types.RootAPI {
         }
 
         this._forgetFocusedGrouppers = () => {/**/};
+
+        this.rootById = {};
     }
 
     static dispose(instance: Types.RootAPI): void {
@@ -538,8 +549,9 @@ export class RootAPI implements Types.RootAPI {
         return undefined;
     }
 
-    static getRootByUId(id: string): Types.Root | undefined {
-        return _rootById[id];
+    static getRootByUId(getWindow: Types.GetWindow, id: string): Types.Root | undefined {
+        const tabster = (getWindow() as WindowWithTabsterInstance).__tabsterInstance;
+        return tabster && (tabster.root as RootAPI).rootById[id];
     }
 
     /**
@@ -638,22 +650,23 @@ export class RootAPI implements Types.RootAPI {
     }
 }
 
-function observeMutationEvents(doc: HTMLDocument): () => void {
+function observeMutationEvents(getWindow: Types.GetWindow): () => void {
     const handler = (e: MutationEvent) => {
         const root = e.details.root;
+        const tabster = (getWindow() as WindowWithTabsterInstance).__tabsterInstance;
 
-        if (root) {
+        if (tabster && root) {
             if (e.details.removed) {
-                delete _rootById[root.uid];
+                delete (tabster.root as RootAPI).rootById[root.uid];
             } else {
-                _rootById[root.uid] = root;
+                (tabster.root as RootAPI).rootById[root.uid] = root;
             }
         }
     };
 
-    doc.addEventListener(MUTATION_EVENT_NAME, handler);
+    getWindow().document.addEventListener(MUTATION_EVENT_NAME, handler);
 
     return () => {
-        doc.removeEventListener(MUTATION_EVENT_NAME, handler);
+        getWindow().document.removeEventListener(MUTATION_EVENT_NAME, handler);
     };
 }

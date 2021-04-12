@@ -14,9 +14,6 @@ interface ObservedElementInfo {
     triggeredName?: string;
 }
 
-let _observedById: { [uid: string]: ObservedElementInfo } = {};
-let _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
-
 export class ObservedElementAPI
         extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
 
@@ -31,6 +28,8 @@ export class ObservedElementAPI
             reject?: () => void }
     } = {};
     private _lastRequestFocusId = 0;
+    private _observedById: { [uid: string]: ObservedElementInfo } = {};
+    private _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
 
     constructor(tabster: Types.TabsterCore) {
         super();
@@ -68,8 +67,8 @@ export class ObservedElementAPI
             delete this._waiting[name];
         }
 
-        _observedById = {};
-        _observedByName = {};
+        this._observedById = {};
+        this._observedByName = {};
     }
 
     static dispose(instance: Types.ObservedElementAPI): void {
@@ -147,7 +146,7 @@ export class ObservedElementAPI
     }
 
     getElement(observedName: string): HTMLElement | null {
-        const o = _observedByName[observedName];
+        const o = this._observedByName[observedName];
 
         if (o) {
             for (let uid of Object.keys(o)) {
@@ -155,7 +154,7 @@ export class ObservedElementAPI
 
                 if (!el) {
                     delete o[uid];
-                    delete _observedById[uid];
+                    delete this._observedById[uid];
                 }
 
                 return el;
@@ -169,7 +168,7 @@ export class ObservedElementAPI
         const el = this.getElement(observedName);
 
         if (el) {
-            return getPromise().resolve(el);
+            return getPromise(this._win).resolve(el);
         }
 
         let w = this._waiting[observedName];
@@ -190,7 +189,7 @@ export class ObservedElementAPI
             }, timeout)
         };
 
-        const promise = new (getPromise())<HTMLElement | null>((resolve, reject) => {
+        const promise = new (getPromise(this._win))<HTMLElement | null>((resolve, reject) => {
             w.resolve = resolve;
             w.reject = reject;
         });
@@ -211,36 +210,36 @@ export class ObservedElementAPI
     private _onObservedElementUpdate(element: HTMLElement): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
         const observed = tabsterOnElement && tabsterOnElement.observed;
-        const uid = getElementUId(element, this._win());
+        const uid = getElementUId(this._win, element);
         const isInDocument = documentContains(element.ownerDocument, element);
-        let info: ObservedElementInfo | undefined = _observedById[uid];
+        let info: ObservedElementInfo | undefined = this._observedById[uid];
 
         if (observed && isInDocument) {
             if (!info) {
-                info = _observedById[uid] = {
-                    element: new WeakHTMLElement(element)
+                info = this._observedById[uid] = {
+                    element: new WeakHTMLElement(this._win, element)
                 };
             }
 
             if (observed.name && (observed.name !== info.triggeredName)) {
                 if (info.triggeredName) {
-                    const obn = _observedByName[info.triggeredName];
+                    const obn = this._observedByName[info.triggeredName];
 
                     if (obn && obn[uid]) {
                         if (Object.keys(obn).length > 1) {
                             delete obn[uid];
                         } else {
-                            delete _observedByName[info.triggeredName];
+                            delete this._observedByName[info.triggeredName];
                         }
                     }
                 }
 
                 info.triggeredName = observed.name;
 
-                let obn = _observedByName[info.triggeredName];
+                let obn = this._observedByName[info.triggeredName];
 
                 if (!obn) {
-                    obn = _observedByName[info.triggeredName] = {};
+                    obn = this._observedByName[info.triggeredName] = {};
                 }
 
                 obn[uid] = info;
@@ -252,18 +251,18 @@ export class ObservedElementAPI
             }
         } else if (info) {
             if (info.triggeredName) {
-                const obn = _observedByName[info.triggeredName];
+                const obn = this._observedByName[info.triggeredName];
 
                 if (obn && obn[uid]) {
                     if (Object.keys(obn).length > 1) {
                         delete obn[uid];
                     } else {
-                        delete _observedByName[info.triggeredName];
+                        delete this._observedByName[info.triggeredName];
                     }
                 }
             }
 
-            delete _observedById[uid];
+            delete this._observedById[uid];
         }
     }
 

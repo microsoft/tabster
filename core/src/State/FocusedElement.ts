@@ -76,7 +76,7 @@ export class FocusedElementState
 
         this._canOverrideNativeFocus = canOverrideNativeFocus(win);
 
-        FocusedElementState.replaceFocus(win);
+        FocusedElementState.replaceFocus(this._win);
 
         win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
         win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
@@ -156,7 +156,7 @@ export class FocusedElementState
             return false;
         }
 
-        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(element);
+        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(this._win, element);
 
         element.focus();
 
@@ -199,7 +199,7 @@ export class FocusedElementState
             container.tabIndex = -1;
             container.setAttribute('aria-hidden', 'true');
 
-            FocusedElementState._lastResetElement = new WeakHTMLElement(container);
+            FocusedElementState._lastResetElement = new WeakHTMLElement(this._win, container);
 
             this.focus(container, true, true);
 
@@ -238,7 +238,7 @@ export class FocusedElementState
             }
         }
 
-        const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(element) : undefined, details };
+        const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(this._win, element) : undefined, details };
 
         if (element && (element !== this._val)) {
             this._validateFocusedElement(element, details);
@@ -257,7 +257,7 @@ export class FocusedElementState
         super.setVal(val, details);
 
         if (val) {
-            this._lastVal = new WeakHTMLElement(val);
+            this._lastVal = new WeakHTMLElement(this._win, val);
         }
     }
 
@@ -269,7 +269,8 @@ export class FocusedElementState
         this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
     }
 
-    static replaceFocus(win: Window): void {
+    static replaceFocus(getWindow: Types.GetWindow): void {
+        const win = getWindow();
         const origFocus = (win as WindowWithHTMLElement).HTMLElement.prototype.focus;
 
         if ((origFocus as CustomFocusFunctionWithOriginal).__tabsterFocus) {
@@ -280,7 +281,7 @@ export class FocusedElementState
         (win as WindowWithHTMLElement).HTMLElement.prototype.focus = focus;
 
         function focus(this: HTMLElement) {
-            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(this);
+            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(getWindow, this);
             return origFocus.apply(this, arguments);
         }
 
@@ -569,14 +570,14 @@ export class FocusedElementState
                 case Keys.PageDown:
                     next = this._findPageDownGroupper(groupperElement);
                     if (next) {
-                        scrollIntoView(next, true);
+                        scrollIntoView(this._win, next, true);
                     }
                     break;
 
                 case Keys.PageUp:
                     next = this._findPageUpGroupper(groupperElement);
                     if (next) {
-                        scrollIntoView(next, false);
+                        scrollIntoView(this._win, next, false);
                     }
                     break;
 
@@ -702,7 +703,7 @@ export class FocusedElementState
         while (ue) {
             pue = ue;
 
-            ue = isElementVerticallyVisibleInContainer(ue)
+            ue = isElementVerticallyVisibleInContainer(this._win, ue)
                 ? this._tabster.focusable.findPrevGroupper(ue)
                 : null;
         }
@@ -717,7 +718,7 @@ export class FocusedElementState
         while (de) {
             pde = de;
 
-            de = isElementVerticallyVisibleInContainer(de)
+            de = isElementVerticallyVisibleInContainer(this._win, de)
                 ? this._tabster.focusable.findNextGroupper(de)
                 : null;
         }

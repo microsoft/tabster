@@ -5,7 +5,7 @@
 
 import { getTabsterOnElement } from './Instance';
 import * as Types from './Types';
-import { createElementTreeWalker, elementByUId, getElementUId, HTMLElementWithUID, WeakHTMLElement } from './Utils';
+import { createElementTreeWalker, getElementUId, getInstanceContext, HTMLElementWithUID, WeakHTMLElement } from './Utils';
 
 export interface MutationEventDetails {
     root?: Types.Root;
@@ -139,10 +139,12 @@ export function observeMutations(
             const uid = (element as HTMLElementWithUID).__tabsterElementUID;
 
             if (uid) {
+                const getWindow = (tabster as unknown as Types.TabsterInternal).getWindow;
+                const instanceContext = getInstanceContext(getWindow);
                 if (removedFrom) {
-                    delete elementByUId[uid];
+                    delete instanceContext.elementByUId[uid];
                 } else if (addedTo) {
-                    elementByUId[uid] = new WeakHTMLElement(element);
+                    instanceContext.elementByUId[uid] = new WeakHTMLElement(getWindow, element);
                 }
             }
 
@@ -224,7 +226,7 @@ export function observeMutations(
                 return;
             }
 
-            const uid = getElementUId(element, doc.defaultView);
+            const uid = getElementUId((tabster as unknown as Types.TabsterInternal).getWindow, element);
             let e = changedObservedElements[uid];
 
             if (!e) {

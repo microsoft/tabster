@@ -23,8 +23,10 @@ const _isVisibleTimeout = 200;
 
 let _lastId = 0;
 
-let _focusedGrouppers: { [id: string]: Types.Groupper } = {};
-let _currentGrouppers: typeof _focusedGrouppers = {};
+interface CurrentGrouppers {
+    focused: { [id: string]: Types.Groupper };
+    current: { [id: string]: Types.Groupper };
+}
 
 export class UberGroupper implements Types.UberGroupper {
     private static _containers: { [id: string]: UberGroupper } = {};
@@ -32,6 +34,7 @@ export class UberGroupper implements Types.UberGroupper {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _element: WeakHTMLElement;
+    private _cur: CurrentGrouppers;
 
     private _current: Types.Groupper | undefined;
     private _prev: Types.Groupper | undefined;
@@ -59,10 +62,11 @@ export class UberGroupper implements Types.UberGroupper {
 
     readonly id: string;
 
-    constructor(tabster: Types.TabsterCore, element: HTMLElement, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore, element: HTMLElement, getWindow: Types.GetWindow, current: CurrentGrouppers) {
         this._tabster = tabster;
         this._win = getWindow;
-        this._element = new WeakHTMLElement(element);
+        this._cur = current;
+        this._element = new WeakHTMLElement(getWindow, element);
         this.id = 'fgc' + ++_lastId;
 
         setTabsterOnElement(tabster, element, {
@@ -113,7 +117,7 @@ export class UberGroupper implements Types.UberGroupper {
         delete this._grouppers[id];
         delete this._visibleGrouppers[id];
         delete this._prevVisibleGrouppers[id];
-        delete _focusedGrouppers[id];
+        delete this._cur.focused[id];
 
         if (this._current === groupper) {
             this._setCurrent(undefined);
@@ -362,12 +366,12 @@ export class UberGroupper implements Types.UberGroupper {
         const cur = this._current;
 
         if (cur !== groupper) {
-            if (cur && _currentGrouppers[cur.id]) {
-                delete _currentGrouppers[cur.id];
+            if (cur && this._cur.current[cur.id]) {
+                delete this._cur.current[cur.id];
             }
 
             if (groupper) {
-                _currentGrouppers[groupper.id] = groupper;
+                this._cur.current[groupper.id] = groupper;
             }
 
             this._current = groupper;
@@ -399,7 +403,9 @@ export class UberGroupper implements Types.UberGroupper {
 
             for (let id of Object.keys(this._grouppers)) {
                 const groupperElement = this._grouppers[id].getElement();
-                const isVisible = groupperElement ? isElementVisibleInContainer(groupperElement, 10) : Types.ElementVisibilities.Invisible;
+                const isVisible = groupperElement
+                    ? isElementVisibleInContainer(this._win, groupperElement, 10)
+                    : Types.ElementVisibilities.Invisible;
                 const curIsVisible = this._visibleGrouppers[id] || Types.ElementVisibilities.Invisible;
 
                 if (isVisible !== Types.ElementVisibilities.Invisible) {
@@ -442,6 +448,7 @@ export class UberGroupper implements Types.UberGroupper {
 export class Groupper implements Types.Groupper {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
+    private _cur: CurrentGrouppers;
     private _element: WeakHTMLElement;
     private _container: Types.UberGroupper | undefined;
     private _basic: Types.GroupperBasicProps;
@@ -453,12 +460,14 @@ export class Groupper implements Types.Groupper {
         tabster: Types.TabsterCore,
         element: HTMLElement,
         getWindow: Types.GetWindow,
+        current: CurrentGrouppers,
         basic?: Types.GroupperBasicProps,
         extended?: Types.GroupperExtendedProps
     ) {
         this._tabster = tabster;
         this._win = getWindow;
-        this._element = new WeakHTMLElement(element);
+        this._cur = current;
+        this._element = new WeakHTMLElement(getWindow, element);
         this._basic = basic || {};
         this._extended = extended || {};
         this.id = 'fg' + ++_lastId;
@@ -516,7 +525,7 @@ export class Groupper implements Types.Groupper {
         if (this._element.get() !== newElement) {
             this.setupContainer(true);
 
-            this._element = new WeakHTMLElement(newElement);
+            this._element = new WeakHTMLElement(this._win, newElement);
 
             this.setupContainer();
         }
@@ -583,7 +592,7 @@ export class Groupper implements Types.Groupper {
             container = containerTabsterOnElement && containerTabsterOnElement.uberGroupper;
 
             if (!container && !remove) {
-                container = new UberGroupper(this._tabster, containerElement, this._win);
+                container = new UberGroupper(this._tabster, containerElement, this._win, this._cur);
             }
         }
 
@@ -605,10 +614,15 @@ export class FocusableAPI implements Types.FocusableAPI {
     private _initTimer: number | undefined;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
+    private _cur: CurrentGrouppers;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
         this._win = getWindow;
+        this._cur = {
+            focused: {},
+            current: {}
+        };
         this._initTimer = getWindow().setTimeout(this._init, 0);
     }
 
@@ -669,7 +683,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _updateFocusedGrouppers(element: HTMLElement | null, forceUpdate?: boolean): void {
-        const newFocusedGrouppers: typeof _focusedGrouppers = {};
+        const newFocusedGrouppers: CurrentGrouppers['focused'] = {};
 
         for (let el = element; el; el = el.parentElement) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, el);
@@ -679,9 +693,9 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        for (let gid of Object.keys(_focusedGrouppers)) {
+        for (let gid of Object.keys(this._cur.focused)) {
             if (!newFocusedGrouppers[gid]) {
-                const g = _focusedGrouppers[gid];
+                const g = this._cur.focused[gid];
 
                 g.setFocused(false);
                 g.setUnlimited(false);
@@ -693,7 +707,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         for (let gid of Object.keys(newFocusedGrouppers)) {
-            if (!_focusedGrouppers[gid]) {
+            if (!this._cur.focused[gid]) {
                 const g = newFocusedGrouppers[gid];
                 const groupElement = g.getElement();
 
@@ -707,7 +721,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        _focusedGrouppers = newFocusedGrouppers;
+        this._cur.focused = newFocusedGrouppers;
     }
 
     private _onMutation = (e: MutationEvent): void => {
@@ -762,7 +776,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             throw new Error('The element already has a focus group');
         }
 
-        const groupper = new Groupper(this._tabster, element, this._win, basic, extended);
+        const groupper = new Groupper(this._tabster, element, this._win, this._cur, basic, extended);
 
         dispatchMutationEvent(element, { groupper });
     }
@@ -808,8 +822,8 @@ export class FocusableAPI implements Types.FocusableAPI {
         let groupper = element ? this._findGroupper(element) : null;
 
         if (element === null) {
-            for (let gid of Object.keys(_currentGrouppers)) {
-                const g = _currentGrouppers[gid];
+            for (let gid of Object.keys(this._cur.current)) {
+                const g = this._cur.current[gid];
 
                 g.setCurrent(false);
 
@@ -981,7 +995,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         if (
             (curProps.isDefault !== newProps.isDefault) ||
             (curProps.isIgnored !== newProps.isIgnored) ||
-            (curProps.mover !== newProps.mover) || 
+            (curProps.mover !== newProps.mover) ||
             (curProps.ignoreAriaDisabled !== newProps.ignoreAriaDisabled)
         ) {
             setTabsterOnElement(this._tabster, element, { focusable: newProps });
@@ -1047,7 +1061,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
 
             attrVal = e.getAttribute('aria-disabled');
-            const ignoreDisabled = tabsterOnElement?.focusable?.ignoreAriaDisabled;            
+            const ignoreDisabled = tabsterOnElement?.focusable?.ignoreAriaDisabled;
             if (!ignoreDisabled && attrVal && (attrVal.toLowerCase() === 'true')) {
                 return false;
             }
