@@ -509,8 +509,8 @@ export function getWeakRef<T>(context: InstanceContext): WeakRefConstructor | un
     return context.basics.WeakRef;
 }
 
-export function setBasics(getWindow: GetWindow, basics: Types.InternalBasics): void {
-    const context = getInstanceContext(getWindow);
+export function setBasics(win: Window, basics: Types.InternalBasics): void {
+    const context = getInstanceContext(() => win);
 
     let key: keyof Types.InternalBasics;
 

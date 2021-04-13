@@ -277,7 +277,7 @@ export class ObservedElementAPI
                 this._win().clearTimeout(w.timer);
             }
 
-            delete this._waiting[name!!!];
+            delete this._waiting[name];
 
             if (w.resolve) {
                 w.resolve(val);

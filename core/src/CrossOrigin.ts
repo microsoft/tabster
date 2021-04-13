@@ -482,20 +482,24 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
             transactions.ctx.focusOwnerTimestamp = timestamp;
 
             if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
-                const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
+                const deloserAPI = (tabster as unknown as Types.TabsterInternal).deloser;
 
-                const deloser: CrossOriginDeloser = {
-                    ownerUId: beginData.ownerUId,
-                    deloserUId: beginData.deloserUId,
-                    rootUId: beginData.rootUId
-                };
+                if (deloserAPI) {
+                    const history = DeloserAPI.getHistory(deloserAPI);
 
-                const historyItem = history.make(
-                    beginData.rootUId,
-                    () => new CrossOriginDeloserHistoryByRoot(tabster, deloser.rootUId, transactions)
-                );
+                    const deloser: CrossOriginDeloser = {
+                        ownerUId: beginData.ownerUId,
+                        deloserUId: beginData.deloserUId,
+                        rootUId: beginData.rootUId
+                    };
 
-                historyItem.unshift(deloser);
+                    const historyItem = history.make(
+                        beginData.rootUId,
+                        () => new CrossOriginDeloserHistoryByRoot(tabster, deloser.rootUId, transactions)
+                    );
+
+                    historyItem.unshift(deloser);
+                }
             }
 
             CrossOriginFocusedElementState.setVal(
@@ -561,7 +565,11 @@ class StateTransaction extends CrossOriginTransaction<CrossOriginStateData, true
 
         return forwardResult.then(() => {
             if (deadUId === transactions.ctx.focusOwner) {
-                DeloserAPI.forceRestoreFocus((tabster as unknown as Types.TabsterInternal).deloser!!!);
+                const deloserAPI = (tabster as unknown as Types.TabsterInternal).deloser;
+
+                if (deloserAPI) {
+                    DeloserAPI.forceRestoreFocus(deloserAPI);
+                }
             }
             return true;
         });
@@ -737,10 +745,10 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<RestoreFoc
         const begin = !forwardRet && data.beginData;
         const uid = begin && begin.deloserUId;
         const deloser = uid && transactions.ctx.deloserByUId[uid];
+        const deloserAPI = (tabster as unknown as Types.TabsterInternal).deloser;
 
-        if (begin && deloser) {
-            const history = DeloserAPI.getHistory((tabster as unknown as Types.TabsterInternal).deloser!!!);
-
+        if (begin && deloser && deloserAPI) {
+            const history = DeloserAPI.getHistory(deloserAPI);
             return begin.reset ? history.resetFocus(deloser) : history.focusAvailable(deloser);
         }
 
@@ -1113,7 +1121,11 @@ class CrossOriginTransactions {
                     force: true
                 });
 
-                DeloserAPI.forceRestoreFocus((this._tabster as unknown as Types.TabsterInternal).deloser!!!);
+                const deloserAPI = (this._tabster as unknown as Types.TabsterInternal).deloser;
+
+                if (deloserAPI) {
+                    DeloserAPI.forceRestoreFocus(deloserAPI);
+                }
             }
         }
 
