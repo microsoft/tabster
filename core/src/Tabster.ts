@@ -57,11 +57,11 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this._storage = {};
         this._win = win;
 
+        const getWindow = this.getWindow;
+
         if (win && win.document) {
             this._unobserve = observeMutations(win.document, this, updateTabsterByAttribute);
         }
-
-        const getWindow = this.getWindow;
 
         this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
@@ -198,15 +198,18 @@ export function forceCleanup(tabster: Tabster): void {
  */
 export function createTabster(win: Window, props?: Types.TabsterCoreProps): Types.TabsterCore {
     const existingAh = getCurrentTabster(win as WindowWithTabsterInstance);
+
     if (existingAh) {
         if (__DEV__) {
             console.warn('Attempted to create a duplicate Tabster instance on the window');
         }
+
         return existingAh;
     }
 
     const tabster = new Tabster(win, props);
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
+
     return tabster;
 }
 

@@ -34,7 +34,6 @@ export interface TabsterDOMRect {
 }
 
 export interface InstanceContext {
-    getWindow: GetWindow;
     elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> };
     basics: Types.InternalBasics;
     WeakRef?: WeakRefConstructor;
@@ -77,19 +76,21 @@ try {
 
 interface WindowWithUtilsConext extends Window {
     __tabsterInstanceContext?: InstanceContext;
+    Promise: PromiseConstructor;
+    WeakRef: WeakRefConstructor;
 }
 
 export function getInstanceContext(getWindow: GetWindow): InstanceContext {
-    const win = getWindow();
-    let ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
+    const win = getWindow() as WindowWithUtilsConext;
+
+    let ctx = win.__tabsterInstanceContext;
 
     if (!ctx) {
-        ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext = {
-            getWindow,
+        ctx = {
             elementByUId: {},
             basics: {
-                Promise: typeof Promise !== 'undefined' ? Promise : undefined,
-                WeakRef: typeof WeakRef !== 'undefined' ? WeakRef : undefined
+                Promise: win.Promise || undefined,
+                WeakRef: win.WeakRef || undefined
             },
             containerBoundingRectCache: {},
             lastContainerBoundingRectCacheId: 0,
@@ -97,6 +98,8 @@ export function getInstanceContext(getWindow: GetWindow): InstanceContext {
             lastWeakElementId: 0,
             weakCleanupStarted: false
         };
+
+        win.__tabsterInstanceContext = ctx;
     }
 
     return ctx;
@@ -216,7 +219,7 @@ export function startWeakRefStorageCleanup(getWindow: GetWindow): void {
     }
 
     if (!context.weakCleanupTimer) {
-        context.weakCleanupTimer = context.getWindow().setTimeout(() => {
+        context.weakCleanupTimer = getWindow().setTimeout(() => {
             context.weakCleanupTimer = undefined;
             cleanupWeakRefStorage(getWindow);
             startWeakRefStorageCleanup(getWindow);
@@ -230,7 +233,7 @@ export function stopWeakRefStorageCleanupAndClearStorage(getWindow: GetWindow): 
     context.weakCleanupStarted = false;
 
     if (context.weakCleanupTimer) {
-        context.getWindow().clearTimeout(context.weakCleanupTimer);
+        getWindow().clearTimeout(context.weakCleanupTimer);
         context.weakCleanupTimer = undefined;
         context.weakElementStorage = {};
     }
