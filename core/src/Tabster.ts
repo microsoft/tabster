@@ -293,17 +293,10 @@ export function disposeTabster(tabster: Types.TabsterCore): void {
 }
 
 export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps | null,
-    plain: true
-): string | undefined;
-export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps | null, plain?: false
-): Types.TabsterDOMAttribute;
-export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps | null,
+    props?: Types.TabsterAttributeProps,
     plain?: boolean
 ): Types.TabsterDOMAttribute | string | undefined {
-    const attr = props === null ? undefined : JSON.stringify(props);
+    const attr = props ? JSON.stringify(props) : undefined;
 
     if (plain === true) {
         return attr;
