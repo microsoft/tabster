@@ -78,10 +78,11 @@ export class FocusedElementState
 
         FocusedElementState.replaceFocus(this._win);
 
-        win.document.addEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.addEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.addEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.addEventListener('keydown', this._onKeyDown);
+        // Add these event listeners as capture - we want Tabster to run before user event handlers
+        win.document.addEventListener('focusin', this._onFocusIn, true);
+        win.document.addEventListener('focusout', this._onFocusOut, true);
+        win.document.addEventListener('mousedown', this._onMouseDown, true);
+        win.addEventListener('keydown', this._onKeyDown, true);
     }
 
     protected dispose(): void {
@@ -96,10 +97,10 @@ export class FocusedElementState
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.removeEventListener('keydown', this._onKeyDown);
+        win.document.removeEventListener('focusin', this._onFocusIn, true);
+        win.document.removeEventListener('focusout', this._onFocusOut, true);
+        win.document.removeEventListener('mousedown', this._onMouseDown, true);
+        win.removeEventListener('keydown', this._onKeyDown, true);
 
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
