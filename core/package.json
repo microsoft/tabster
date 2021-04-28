@@ -1,9 +1,10 @@
 {
   "name": "tabster",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Focus Management Tools for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/tabster.esm.js",
   "typings": "./dist/index.d.ts",
