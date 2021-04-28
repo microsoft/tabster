@@ -97,10 +97,10 @@ export class FocusedElementState
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener('focusin', this._onFocusIn, true); // Capture!
-        win.document.removeEventListener('focusout', this._onFocusOut, true); // Capture!
-        win.document.removeEventListener('mousedown', this._onMouseDown, true); // Capture!
-        win.removeEventListener('keydown', this._onKeyDown);
+        win.document.removeEventListener('focusin', this._onFocusIn, true);
+        win.document.removeEventListener('focusout', this._onFocusOut, true);
+        win.document.removeEventListener('mousedown', this._onMouseDown, true);
+        win.removeEventListener('keydown', this._onKeyDown, true);
 
         delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
