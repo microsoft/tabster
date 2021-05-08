@@ -219,15 +219,13 @@ export class Root implements Types.Root {
                     currentIsPresent = true;
                     isOthersAccessible = !!tabsterOnElement.modalizer.getBasicProps().isOthersAccessible;
                 }
-
-                return NodeFilter.FILTER_ACCEPT;
             }
 
             return NodeFilter.FILTER_SKIP;
         });
 
         if (walker) {
-            while (walker.nextNode()) { /* Iterating for the sake of calling acceptNode callback. */ }
+            while (walker.nextNode()) { /* Iterate nodes to find all modalizers */ }
         }
 
         if (!currentIsPresent) {
