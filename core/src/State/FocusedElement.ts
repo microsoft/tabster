@@ -369,7 +369,7 @@ export class FocusedElementState
                     ctx.modalizer = ctx.root.getModalizerById(curModalizerId);
 
                     if (ctx.modalizer) {
-                        curElement = ctx.modalizer.getElement();
+                        curElement = ctx.modalizer.getElementContaining(curElement);
 
                         if (!curElement) {
                             return;

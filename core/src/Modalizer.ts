@@ -48,13 +48,13 @@ export class Modalizer implements Types.Modalizer {
 
     /* private */ _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _element: WeakHTMLElement;
     private _basic: Types.ModalizerBasicProps;
     private _extended: Types.ModalizerExtendedProps;
     private _isActive: boolean | undefined;
     private _isAccessible = true;
     private _setAccessibleTimer: number | undefined;
     private _isFocused = false;
+    private _modalizerElements: WeakHTMLElement[];
 
     constructor(
         element: HTMLElement,
@@ -69,13 +69,22 @@ export class Modalizer implements Types.Modalizer {
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
 
-        this._element = new WeakHTMLElement(win, element);
+        const firstModalizerElement = new WeakHTMLElement(win, element);
+        this._modalizerElements = [firstModalizerElement];
         this._basic = basic;
         this._extended = extended || {};
         this._setAccessibilityProps();
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            _setInformativeStyle(
+                firstModalizerElement,
+                false,
+                this.internalId,
+                this.userId,
+                this._isActive, 
+                this._isAccessible, 
+                this._isFocused,
+            );
         }
     }
 
@@ -99,6 +108,23 @@ export class Modalizer implements Types.Modalizer {
         this._setAccessibilityProps();
     }
 
+    add(element: HTMLElement, win: Types.GetWindow): boolean {
+        if (win !== this._win) {
+            if (__DEV__) {
+                console.warn('Attempted to add an element from another window to modalizer:', this.userId);
+            }
+            return false;
+        }
+
+        const alreadyExists = this._modalizerElements.some(modalizerElement => modalizerElement.get() === element);
+        if (!alreadyExists) {
+            const newModalizerElement = new WeakHTMLElement(this._win, element);
+            this._modalizerElements.push(newModalizerElement);
+        }
+
+        return true;
+    }
+
     dispose(): void {
         if (this._setAccessibleTimer) {
             this._win().clearTimeout(this._setAccessibleTimer);
@@ -114,10 +140,17 @@ export class Modalizer implements Types.Modalizer {
         this._extended = {};
     }
 
-    move(newElement: HTMLElement): void {
+    move(fromElement: HTMLElement, newElement: HTMLElement): void {
+        const fromElementIndex = this._modalizerElements.findIndex(modalizerElement => modalizerElement.get() === fromElement);
+        if (fromElementIndex === -1) {
+            return;
+        }
+
         this._remove();
 
-        this._element = new WeakHTMLElement(this._win, newElement);
+        this._modalizerElements.splice(fromElementIndex, 1);
+        const newModalizerElement = new WeakHTMLElement(this._win, newElement);
+        this._modalizerElements.push(newModalizerElement);
 
         this._setAccessibilityProps();
 
@@ -141,23 +174,33 @@ export class Modalizer implements Types.Modalizer {
             this._setAccessibleTimer = undefined;
         }
 
-        const element = this._element.get();
+        this._modalizerElements.forEach(modalizerElement => {
+            const element = modalizerElement.get();
+            if (element) {
+                if (accessible) {
+                    augmentAttribute(this._tabster, element, 'aria-hidden');
+                } else {
+                    this._setAccessibleTimer = this._win().setTimeout(() => {
+                        this._setAccessibleTimer = undefined;
 
-        if (element) {
-            if (accessible) {
-                augmentAttribute(this._tabster, element, 'aria-hidden');
-            } else {
-                this._setAccessibleTimer = this._win().setTimeout(() => {
-                    this._setAccessibleTimer = undefined;
+                        augmentAttribute(this._tabster, element, 'aria-hidden', 'true');
+                    }, 0);
+                }
 
-                    augmentAttribute(this._tabster, element, 'aria-hidden', 'true');
-                }, 0);
             }
-        }
 
-        if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
-        }
+            if (__DEV__) {
+                _setInformativeStyle(
+                    modalizerElement,
+                    false,
+                    this.internalId, 
+                    this.userId,
+                    this._isActive, 
+                    this._isAccessible, 
+                    this._isFocused,
+                );
+            }
+        });
     }
 
     setActive(active: boolean): void {
@@ -168,7 +211,11 @@ export class Modalizer implements Types.Modalizer {
         this._isActive = active;
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            this._modalizerElements.forEach(modalizerElement => {
+                _setInformativeStyle(
+                    modalizerElement, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused
+                );
+            });
         }
     }
 
@@ -176,8 +223,28 @@ export class Modalizer implements Types.Modalizer {
         return !!this._isActive;
     }
 
-    getElement(): HTMLElement | undefined {
-        return this._element.get();
+    getElementContaining(element: HTMLElement): HTMLElement | undefined {
+        const elementIndex = this._modalizerElements.findIndex(modalizerElement => !!modalizerElement.get()?.contains(element));
+        if (elementIndex !== -1) {
+            return this._modalizerElements[elementIndex].get();
+        }
+
+        return undefined;
+    }
+
+    getElements(): HTMLElement[] {
+        const elements: HTMLElement[] = [];
+        this._modalizerElements.forEach(modalizerElement => {
+            const el = modalizerElement.get();
+            if (el) {
+                elements.push(el);
+            }
+        });
+        return elements;
+    }
+
+    hasElement(element: HTMLElement): boolean {
+        return this._modalizerElements.some(modalizerElement => modalizerElement.get() === element);
     }
 
     setFocused(focused: boolean): void {
@@ -198,7 +265,11 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused);
+            this._modalizerElements.forEach(modalizerElement => {
+                _setInformativeStyle(
+                    modalizerElement, false, this.internalId, this.userId, this._isActive, this._isAccessible, this._isFocused
+                );
+            });
         }
     }
 
@@ -220,15 +291,19 @@ export class Modalizer implements Types.Modalizer {
 
     private _remove(): void {
         if (__DEV__) {
-            _setInformativeStyle(this._element, true);
+            this._modalizerElements.forEach(modalizerElement => {
+                _setInformativeStyle(modalizerElement, true);
+            });
         }
     }
 
     private _setAccessibilityProps(): void {
-        if (__DEV__ && !this._element.get()?.getAttribute('aria-label')) {
-            console.error('Modalizer must have aria-label', this._element);
-
-            return;
+        if (__DEV__) {
+            this._modalizerElements.forEach(modalizerElement => {
+                if (!modalizerElement.get()?.getAttribute('aria-label')) {
+                    console.error('Modalizer element must have aria-label', modalizerElement);
+                }
+            });
         }
     }
 }
@@ -239,11 +314,16 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _initTimer: number | undefined;
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
+    /**
+     * Modalizers managed by this API, stored by id
+     */
+    private _modalizers: Record<string, Types.Modalizer>;
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
+        this._modalizers = {};
     }
 
     private _init = (): void => {
@@ -265,6 +345,14 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._focusOutTimer = undefined;
         }
 
+        // Dispose all modalizers managed by the API
+        Object.keys(this._modalizers).forEach(modalizerId => {
+            if (this._modalizers[modalizerId]) {
+                this._modalizers[modalizerId].dispose();
+                delete this._modalizers[modalizerId];
+            }
+        });
+
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         delete this._curModalizer;
@@ -277,6 +365,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
+        // Modalizer already on an element
         if (tabsterOnElement && tabsterOnElement.modalizer) {
             if (__DEV__ && (tabsterOnElement.modalizer.userId !== basic.id)) {
                 console.error('Element already has Modalizer with different id.', element);
@@ -285,11 +374,16 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
+        if (!this._modalizers[basic.id]) {
+            const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
+            this._modalizers[basic.id] = modalizer;
+        } else {
+            this._modalizers[basic.id].add(element, this._win);
+        }
 
-        setTabsterOnElement(this._tabster, element, { modalizer });
+        setTabsterOnElement(this._tabster, element, { modalizer: this._modalizers[basic.id] });
 
-        dispatchMutationEvent(element, { modalizer });
+        dispatchMutationEvent(element, { modalizer: this._modalizers[basic.id] });
     }
 
     setProps(
@@ -332,7 +426,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const modalizer = tabsterOnElementFrom && tabsterOnElementFrom.modalizer;
 
         if (modalizer) {
-            modalizer.move(to);
+            modalizer.move(from, to);
 
             setTabsterOnElement(this._tabster, to, { modalizer: modalizer });
             setTabsterOnElement(this._tabster, from, { modalizer: undefined });
@@ -349,7 +443,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             ctx.root.setCurrentModalizerId(ctx.modalizer.userId);
 
             const basic = ctx.modalizer.getBasicProps();
-            const modalizerElement = ctx.modalizer.getElement();
+            const modalizerElement = ctx.modalizer.getElementContaining(elementFromModalizer);
 
             if (modalizerElement) {
                 if (noFocusFirst === undefined) {

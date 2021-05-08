@@ -116,13 +116,15 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // Nothing satisfactory in the focus history, each Modalizer has Deloser,
             // let's try to find something under the same root.
             for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
-                const deloserItem = deloser && new DeloserItem(this._tabster, deloser);
+                const modalizerElements = m.getElements();
+                for (let e of modalizerElements) {
+                    const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
+                    const deloser = tabsterOnElement && tabsterOnElement.deloser;
+                    const deloserItem = deloser && new DeloserItem(this._tabster, deloser);
 
-                if (deloserItem && await deloserItem.focusAvailable()) {
-                    return true;
+                    if (deloserItem && await deloserItem.focusAvailable()) {
+                        return true;
+                    }
                 }
             }
         }
@@ -152,12 +154,14 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             // Nothing satisfactory in the focus history, each Modalizer has Deloser,
             // let's try to find something under the same root.
             for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
+                const modalizerElements = m.getElements();
+                for (let e of modalizerElements) {
+                    const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
+                    const deloser = tabsterOnElement && tabsterOnElement.deloser;
 
-                if (deloser && !(deloser.uid in resetQueue)) {
-                    resetQueue[deloser.uid] = new DeloserItem(this._tabster, deloser);
+                    if (deloser && !(deloser.uid in resetQueue)) {
+                        resetQueue[deloser.uid] = new DeloserItem(this._tabster, deloser);
+                    }
                 }
             }
         }

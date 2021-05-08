@@ -444,17 +444,42 @@ export interface ModalizerExtendedProps {
 export interface Modalizer {
     readonly internalId: string;
     readonly userId: string;
-    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
-    getBasicProps(): ModalizerBasicProps;
-    getExtendedProps(): ModalizerExtendedProps;
+    /**
+     * Adds an element to the modalizer
+     * 
+     * @param element element the modalizer should manage
+     * @param win window getter, u
+     * @returns boolean, if operation was successful
+     */
+    add(element: HTMLElement, win: GetWindow): boolean;
     dispose(): void;
-    move(newElement: HTMLElement): void;
+    getBasicProps(): ModalizerBasicProps;
+    /**
+     * @returns All managed modalizer elements
+     */
+    getElements(): HTMLElement[];
+    /**
+     * Returns the modalizer element that contains the provided element
+     * 
+     * @param element Element to test
+     * @returns Modalizer element that contains the provided element
+     */
+    getElementContaining(element: HTMLElement): HTMLElement | undefined;
+    getExtendedProps(): ModalizerExtendedProps;
+    /**
+     * Checks if an element belongs to the modalizer instance
+     * 
+     * @param element Element to test
+     * @returns Whether the element is managed by the modalizer
+     */
+    hasElement(element: HTMLElement): boolean;
+    isActive(): boolean;
+    move(fromElement: HTMLElement, newElement: HTMLElement): void;
+    onBeforeFocusOut(): boolean;
     setAccessible(accessible: boolean): void;
     setActive(active: boolean): void;
-    isActive(): boolean;
-    getElement(): HTMLElement | undefined;
     setFocused(focused: boolean): void;
-    onBeforeFocusOut(): boolean;
+    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
 }
 
 export interface RootBasicProps {
