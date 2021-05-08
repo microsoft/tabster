@@ -54,6 +54,9 @@ export class Modalizer implements Types.Modalizer {
     private _isAccessible = true;
     private _setAccessibleTimer: number | undefined;
     private _isFocused = false;
+    /**
+     * All HTML elements that are managed by the modalizer instance
+     */
     private _modalizerElements: WeakHTMLElement[];
 
     constructor(
