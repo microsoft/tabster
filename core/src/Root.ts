@@ -241,7 +241,7 @@ export class Root implements Types.Root {
 
             modalizer.setActive(active);
             modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
-        })
+        });
     }
 
     private _createDummyInput(props: DummyInput): void {
