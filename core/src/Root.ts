@@ -206,13 +206,19 @@ export class Root implements Types.Root {
             return;
         }
 
-        const modalizersToUpdate: Types.Modalizer[] = [];
-
+        let currentIsPresent = false;
+        let isOthersAccessible = (this._curModalizerId === undefined);
+        const newKnownModalizers: { [id: string]: Types.Modalizer } = {};
         const walker = createElementTreeWalker(ownerDocument, element, (el: HTMLElement) => {
             const tabsterOnElement = getTabsterOnElement(this._tabster, el);
 
             if (tabsterOnElement && tabsterOnElement.modalizer) {
-                modalizersToUpdate.push(tabsterOnElement.modalizer);
+                newKnownModalizers[tabsterOnElement.modalizer.userId] = tabsterOnElement.modalizer;
+
+                if (tabsterOnElement.modalizer.userId === this._curModalizerId) {
+                    currentIsPresent = true;
+                    isOthersAccessible = !!tabsterOnElement.modalizer.getBasicProps().isOthersAccessible;
+                }
 
                 return NodeFilter.FILTER_ACCEPT;
             }
@@ -224,55 +230,18 @@ export class Root implements Types.Root {
             while (walker.nextNode()) { /* Iterating for the sake of calling acceptNode callback. */ }
         }
 
-        let isOthersAccessible = (this._curModalizerId === undefined);
-        let currentIsPresent = false;
-
-        const prevKnownModalizers = this._knownModalizers;
-        const newKnownModalizers: { [id: string]: Types.Modalizer } = {};
-        const addedModalizers: { [id: string]: Types.Modalizer } = {};
-        const removedModalizers: { [id: string]: Types.Modalizer } = {};
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-            const isCurrent = modalizerId === this._curModalizerId;
-
-            if (!isOthersAccessible && isCurrent) {
-                isOthersAccessible = !!modalizer.getBasicProps().isOthersAccessible;
-            }
-
-            if (isCurrent) {
-                currentIsPresent = true;
-            }
-
-            newKnownModalizers[modalizerId] = modalizer;
-
-            if (!(modalizerId in prevKnownModalizers)) {
-                addedModalizers[modalizerId] = modalizer;
-            }
-        }
-
-        for (let id of Object.keys(prevKnownModalizers)) {
-            if (!(id in newKnownModalizers)) {
-                removedModalizers[id] = prevKnownModalizers[id];
-            }
-        }
-
         if (!currentIsPresent) {
             this.setCurrentModalizerId(undefined, true);
         }
 
         this._knownModalizers = newKnownModalizers;
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-
+        Object.keys(this._knownModalizers).forEach(modalizerId => {
+            const modalizer = this._knownModalizers[modalizerId];
             const active = (this._curModalizerId === undefined) || (modalizerId === this._curModalizerId);
 
             modalizer.setActive(active);
             modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
-        }
+        })
     }
 
     private _createDummyInput(props: DummyInput): void {
