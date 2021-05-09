@@ -499,8 +499,6 @@ export interface Root {
     getBasicProps(): RootBasicProps;
     move(newElement: HTMLElement): void;
     getElement(): HTMLElement | undefined;
-    getModalizers(): Modalizer[];
-    getModalizerById(id: string): Modalizer | undefined;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
 }

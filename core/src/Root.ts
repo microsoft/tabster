@@ -48,7 +48,6 @@ export class Root implements Types.Root {
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
     private _curModalizerId: string | undefined;
-    private _knownModalizers: { [id: string]: Types.Modalizer } = {};
     private _updateModalizersTimer: number | undefined;
     private _dummyInputFirst: DummyInput | undefined;
     private _dummyInputLast: DummyInput | undefined;
@@ -97,7 +96,6 @@ export class Root implements Types.Root {
             delete this._dummyInputLast;
         }
 
-        this._knownModalizers = {};
         this._forgetFocusedGrouppers = () => {/**/};
     }
 
@@ -121,32 +119,6 @@ export class Root implements Types.Root {
 
     getElement(): HTMLElement | undefined {
         return this._element.get();
-    }
-
-    getCurrentModalizerId(): string | undefined {
-        return this._curModalizerId;
-    }
-
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void {
-        this._curModalizerId = id;
-
-        if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
-        }
-    }
-
-    getModalizers(): Types.Modalizer[] {
-        const modalizers: Types.Modalizer[] = [];
-
-        for (let id of Object.keys(this._knownModalizers)) {
-            modalizers.push(this._knownModalizers[id]);
-        }
-
-        return modalizers;
-    }
-
-    getModalizerById(id: string): Types.Modalizer | undefined {
-        return this._knownModalizers[id];
     }
 
     updateDummyInputs(): void {
