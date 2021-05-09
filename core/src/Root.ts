@@ -26,7 +26,7 @@ export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
 }
 
-function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
+function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string) {
     if (__DEV__) {
         const element = weakElement.get();
 
@@ -34,7 +34,7 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
             if (remove) {
                 element.style.removeProperty('--tabster-root');
             } else {
-                element.style.setProperty('--tabster-root', id + ',' + currentModalizerId);
+                element.style.setProperty('--tabster-root', id + ',');
             }
         }
     }
@@ -47,7 +47,6 @@ export class Root implements Types.Root {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
-    private _curModalizerId: string | undefined;
     private _updateModalizersTimer: number | undefined;
     private _dummyInputFirst: DummyInput | undefined;
     private _dummyInputLast: DummyInput | undefined;
@@ -139,7 +138,7 @@ export class Root implements Types.Root {
 
     private _add(): void {
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
+            _setInformativeStyle(this._element, false, this.uid);
         }
     }
 
