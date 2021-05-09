@@ -1273,11 +1273,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreGroupper?: boolean
     ): number {
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        const currentModalizerId = ctx && ctx.root.getCurrentModalizerId();
 
         if (ignoreModalizer || (!ctx || !ctx.modalizer) ||
-            (currentModalizerId === undefined) ||
-            (currentModalizerId === ctx.modalizer.userId) ||
+            (ctx.modalizer.isActive()) ||
             ctx.modalizer.getBasicProps().isAlwaysAccessible
         ) {
             if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {

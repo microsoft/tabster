@@ -362,19 +362,11 @@ export class FocusedElementState
                     )
                 );
 
-            if (ctx && ctx.modalizer) {
-                const curModalizerId = ctx.root.getCurrentModalizerId();
+            if (ctx && ctx.modalizer?.isActive()) {
+                curElement = ctx.modalizer.getElementContaining(curElement);
 
-                if (curModalizerId && (curModalizerId !== ctx.modalizer.userId)) {
-                    ctx.modalizer = ctx.root.getModalizerById(curModalizerId);
-
-                    if (ctx.modalizer) {
-                        curElement = ctx.modalizer.getElementContaining(curElement);
-
-                        if (!curElement) {
-                            return;
-                        }
-                    }
+                if (!curElement) {
+                    return;
                 }
             }
 
@@ -486,8 +478,7 @@ export class FocusedElementState
                 if (
                     !nctx ||
                     (ctx.root.uid !== nctx.root.uid) ||
-                    !nctx.modalizer ||
-                    (nctx.root.getCurrentModalizerId() !== nctx.modalizer.userId)
+                    !nctx.modalizer?.isActive()
                 ) {
                     if (ctx.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
@@ -729,7 +720,6 @@ export class FocusedElementState
 
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        const curModalizerId = ctx ? ctx.root.getCurrentModalizerId() : undefined;
 
         this._tabster.focusable.setCurrentGroupper(element);
 
@@ -739,13 +729,7 @@ export class FocusedElementState
 
         let eModalizer = ctx.modalizer;
 
-        if (curModalizerId === eModalizer.userId) {
-            return;
-        }
-
-        if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
-            ctx.root.setCurrentModalizerId(eModalizer.userId);
-
+        if (eModalizer.isActive()) {
             return;
         }
 

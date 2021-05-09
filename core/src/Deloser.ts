@@ -200,7 +200,7 @@ export class DeloserHistory {
 
         const historyByRoot = this.make(rootUId, () => new DeloserHistoryByRoot(this._tabster, rootUId));
 
-        if (!ctx || !ctx.modalizer || (ctx.root.getCurrentModalizerId() === ctx.modalizer.userId)) {
+        if (!ctx || !ctx.modalizer?.isActive()) {
             historyByRoot.unshiftToDeloser(deloser, element);
         }
 

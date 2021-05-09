@@ -9,7 +9,6 @@ import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './Mut
 import * as Types from './Types';
 import {
     callOriginalFocusOnly,
-    createElementTreeWalker,
     getElementUId,
     makeFocusIgnored,
     WeakHTMLElement
@@ -118,7 +117,6 @@ export class Root implements Types.Root {
         this._remove();
         this._element = new WeakHTMLElement(this._win, newElement);
         this._add();
-        this.updateModalizers();
     }
 
     getElement(): HTMLElement | undefined {
@@ -135,10 +133,6 @@ export class Root implements Types.Root {
         if (__DEV__) {
             _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
         }
-
-        if (!noModalizersUpdate) {
-            this.updateModalizers();
-        }
     }
 
     getModalizers(): Types.Modalizer[] {
@@ -153,19 +147,6 @@ export class Root implements Types.Root {
 
     getModalizerById(id: string): Types.Modalizer | undefined {
         return this._knownModalizers[id];
-    }
-
-    updateModalizers(): void {
-        if (this._updateModalizersTimer) {
-            return;
-        }
-
-        this.updateDummyInputs();
-
-        this._updateModalizersTimer = this._win().setTimeout(() => {
-            this._updateModalizersTimer = undefined;
-            this._reallyUpdateModalizers();
-        }, 0);
     }
 
     updateDummyInputs(): void {
@@ -196,50 +177,6 @@ export class Root implements Types.Root {
         if (__DEV__) {
             _setInformativeStyle(this._element, true);
         }
-    }
-
-    private _reallyUpdateModalizers(): void {
-        const element = this._element.get();
-        const ownerDocument = element?.ownerDocument;
-
-        if (!element || !ownerDocument) {
-            return;
-        }
-
-        let currentIsPresent = false;
-        let isOthersAccessible = (this._curModalizerId === undefined);
-        const newKnownModalizers: { [id: string]: Types.Modalizer } = {};
-        const walker = createElementTreeWalker(ownerDocument, element, (el: HTMLElement) => {
-            const tabsterOnElement = getTabsterOnElement(this._tabster, el);
-
-            if (tabsterOnElement && tabsterOnElement.modalizer) {
-                newKnownModalizers[tabsterOnElement.modalizer.userId] = tabsterOnElement.modalizer;
-
-                if (tabsterOnElement.modalizer.userId === this._curModalizerId) {
-                    currentIsPresent = true;
-                    isOthersAccessible = !!tabsterOnElement.modalizer.getBasicProps().isOthersAccessible;
-                }
-            }
-
-            return NodeFilter.FILTER_SKIP;
-        });
-
-        if (walker) {
-            while (walker.nextNode()) { /* Iterate nodes to find all modalizers */ }
-        }
-
-        if (!currentIsPresent) {
-            this.setCurrentModalizerId(undefined, true);
-        }
-
-        this._knownModalizers = newKnownModalizers;
-        Object.keys(this._knownModalizers).forEach(modalizerId => {
-            const modalizer = this._knownModalizers[modalizerId];
-            const active = (this._curModalizerId === undefined) || (modalizerId === this._curModalizerId);
-
-            modalizer.setActive(active);
-            modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
-        });
     }
 
     private _createDummyInput(props: DummyInput): void {
@@ -492,28 +429,6 @@ export class RootAPI implements Types.RootAPI {
                 root.updateDummyInputs();
             }
         }
-
-        if (!e.target || !details.modalizer) {
-            return;
-        }
-
-        const modalizerRoot = RootAPI._getRootOnly(this._tabster, e.target as Node);
-
-        if (modalizerRoot) {
-            modalizerRoot.updateModalizers();
-        }
-    }
-
-    private static _getRootOnly(tabster: Types.TabsterCore, element: Node): Types.Root | undefined {
-        for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const tabsterOnElement = getTabsterOnElement(tabster, e);
-
-            if (tabsterOnElement && tabsterOnElement.root) {
-                return tabsterOnElement.root;
-            }
-        }
-
-        return undefined;
     }
 
     static getRootByUId(getWindow: Types.GetWindow, id: string): Types.Root | undefined {

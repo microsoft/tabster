@@ -476,7 +476,13 @@ export interface Modalizer {
     isActive(): boolean;
     move(fromElement: HTMLElement, newElement: HTMLElement): void;
     onBeforeFocusOut(): boolean;
-    setAccessible(accessible: boolean): void;
+    /**
+     * Sets the active state of the modalizr
+     * When active, sets `aria-hidden` on all other elements
+     * Reverts `aria-hidden` changes when set to inactive
+     *  
+     * @param active Whether the modalizer is active
+     */
     setActive(active: boolean): void;
     setFocused(focused: boolean): void;
     setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
@@ -493,11 +499,8 @@ export interface Root {
     getBasicProps(): RootBasicProps;
     move(newElement: HTMLElement): void;
     getElement(): HTMLElement | undefined;
-    getCurrentModalizerId(): string | undefined;
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
     getModalizers(): Modalizer[];
     getModalizerById(id: string): Modalizer | undefined;
-    updateModalizers(): void;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
 }
