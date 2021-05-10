@@ -47,7 +47,6 @@ export class Root implements Types.Root {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
-    private _updateModalizersTimer: number | undefined;
     private _dummyInputFirst: DummyInput | undefined;
     private _dummyInputLast: DummyInput | undefined;
     private _forgetFocusedGrouppers: () => void;
@@ -76,11 +75,6 @@ export class Root implements Types.Root {
     }
 
     dispose(): void {
-        if (this._updateModalizersTimer) {
-            this._win().clearTimeout(this._updateModalizersTimer);
-            this._updateModalizersTimer = undefined;
-        }
-
         this._remove();
 
         const dif = this._dummyInputFirst;
