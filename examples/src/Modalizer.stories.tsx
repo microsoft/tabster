@@ -29,29 +29,26 @@ export const ModalDialog = () => {
 
 export const PopupContent = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
-    const popupRef = React.useRef<HTMLDivElement>(null);
-    React.useEffect(() => {
-        const popupEl = popupRef.current;
+    const popupRef = React.useRef<HTMLDivElement>();
+
+    const callbackRef = React.useCallback((node: HTMLDivElement) => {
         const tabster = getCurrentTabster(window);
-        if (popupEl && open && tabster) {
-            const modalizer = getModalizer(tabster);
-            const deloser = getDeloser(tabster);
-            modalizer.add(popupEl, {id: 'popup'});
-            deloser.add(popupEl);
-            modalizer.focus(popupEl);
+        const modalizer = tabster && getModalizer(tabster);
+        const deloser = tabster && getDeloser(tabster);
+        if (!modalizer || !deloser) {
+            return;
         }
 
-        return () => {
-            const tabster = getCurrentTabster(window);
-            if (popupEl && tabster && open) {
-                const modalizer = getModalizer(tabster);
-                const deloser = getDeloser(tabster);
-                modalizer.remove(popupEl);
-                deloser.remove(popupEl);
-            }
-        };
-
-    }, [open, popupRef]);
+        if (node) {
+            popupRef.current = node;
+            modalizer.add(popupRef.current, {id: 'popup'});
+            deloser.add(popupRef.current);
+            modalizer.focus(popupRef.current);
+        } else {
+            popupRef.current &&  modalizer.remove(popupRef.current);
+            popupRef.current && deloser.remove(popupRef.current);
+        }
+    }, [popupRef])
 
     const onClick = () => setOpen(s => !s);
 
@@ -68,7 +65,7 @@ export const PopupContent = () => {
                 <button onClick={onClick}>Toggle popup</button>
             </div>
             <div>
-                {open && <div aria-label={'popup'} ref={popupRef} style={popupStyles}>
+                {open && <div aria-label={'popup'} ref={callbackRef} style={popupStyles}>
                     <div tabIndex={0}>Focusable item</div>
                     <div tabIndex={0}>Focusable item</div>
                     <div tabIndex={0}>Focusable item</div>
