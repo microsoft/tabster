@@ -168,12 +168,12 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
         //     }
         // }
 
-        // // Nothing is found, at least try to reset.
-        // for (let id of Object.keys(resetQueue)) {
-        //     if (await resetQueue[id].resetFocus()) {
-        //         return true;
-        //     }
-        // }
+        // Nothing is found, at least try to reset.
+        for (let id of Object.keys(resetQueue)) {
+            if (await resetQueue[id].resetFocus()) {
+                return true;
+            }
+        }
 
         return false;
     }
