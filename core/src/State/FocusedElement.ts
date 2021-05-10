@@ -362,14 +362,6 @@ export class FocusedElementState
                     )
                 );
 
-            if (ctx && ctx.modalizer?.isActive()) {
-                curElement = ctx.modalizer.getElementContaining(curElement);
-
-                if (!curElement) {
-                    return;
-                }
-            }
-
             let fromElement: HTMLElement | null = curElement;
 
             // If the current element is in a mover, move to the mover boundaries since a mover is considered a single tabstop

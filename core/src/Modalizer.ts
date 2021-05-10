@@ -178,21 +178,33 @@ export class Modalizer implements Types.Modalizer {
             }
 
             const isModalizerElement = this._modalizerElements.some(modalizerElement => modalizerElement.get() === el);
-            const hasModalizerElement = this._modalizerElements.some(modalizerElement => !!modalizerElement.get()?.contains(el));
+            const containsModalizerElement = this._modalizerElements.some(modalizerElement => {
+                const modalizerElementValue = modalizerElement.get();
+                if (modalizerElementValue && el.contains(modalizerElementValue)) {
+                    return true;
+                }
+
+                return false;
+            });
 
             // Reached a modalizer element, no need to continue
             if (isModalizerElement) {
                 return NodeFilter.FILTER_REJECT;
             }
 
-            // Has a modalizer element as a descendant, continue
-            if (hasModalizerElement) {
+            // Contains a modalizer element as a descendant, continue
+            if (containsModalizerElement) {
                 return NodeFilter.FILTER_SKIP;
             }
 
             augmentAttribute(this._tabster, el, 'aria-hidden', active ? 'true' : undefined);
-            // aria-hidden will apply for all children
-            return NodeFilter.FILTER_REJECT;
+            // TODO: figure out a way to ignore  subtrees when restoring aria-hidden
+            if (active) {
+                // aria-hidden will apply for all children
+                return NodeFilter.FILTER_REJECT;
+            }
+
+            return NodeFilter.FILTER_SKIP;
         });
 
         if (ariaHiddenWalker) {

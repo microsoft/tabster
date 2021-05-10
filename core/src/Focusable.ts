@@ -5,7 +5,6 @@
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
-import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer, matchesSelector, WeakHTMLElement } from './Utils';
 
@@ -1054,20 +1053,36 @@ export class FocusableAPI implements Types.FocusableAPI {
                 return true;
             }
 
-            let attrVal = e.getAttribute('aria-hidden');
-
-            if (attrVal && (attrVal.toLowerCase() === 'true')) {
+            if (this._isHidden(e)) {
                 return false;
             }
 
-            attrVal = e.getAttribute('aria-disabled');
             const ignoreDisabled = tabsterOnElement?.focusable?.ignoreAriaDisabled;
-            if (!ignoreDisabled && attrVal && (attrVal.toLowerCase() === 'true')) {
+
+            if (!ignoreDisabled && this._isDisabled(e)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private _attrIs(el: HTMLElement, name: string, value: string): boolean {
+        let attrVal = el.getAttribute(name);
+        if (attrVal && (attrVal.toLowerCase() === value)) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    private _isDisabled(el: HTMLElement): boolean {
+        return this._attrIs(el, 'aria-disabled', 'true');
+    }
+
+    private _isHidden(el: HTMLElement): boolean {
+        return this._attrIs(el, 'aria-hidden', 'true');
     }
 
     findFirst(
@@ -1272,19 +1287,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): number {
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
-
-        if (ignoreModalizer || (!ctx || !ctx.modalizer) ||
-            (ctx.modalizer.isActive()) ||
-            ctx.modalizer.getBasicProps().isAlwaysAccessible
-        ) {
-            if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
-                return NodeFilter.FILTER_REJECT;
-            }
-
-            return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        if (this._isHidden(element)) {
+            return NodeFilter.FILTER_REJECT;
         }
 
-        return ctx ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+        if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
+            return NodeFilter.FILTER_REJECT;
+        }
+
+        return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     }
 }

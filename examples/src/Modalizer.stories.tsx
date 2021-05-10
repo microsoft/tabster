@@ -29,16 +29,29 @@ export const ModalDialog = () => {
 
 export const PopupContent = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
-    const modalizerRef = React.useCallback(node => {
+    const popupRef = React.useRef<HTMLDivElement>(null);
+    React.useEffect(() => {
+        const popupEl = popupRef.current;
         const tabster = getCurrentTabster(window);
-        if (tabster && node !== null) {
+        if (popupEl && open && tabster) {
             const modalizer = getModalizer(tabster);
             const deloser = getDeloser(tabster);
-            modalizer.add(node, {id: 'popup'});
-            deloser.add(node);
-            modalizer.focus(node);
+            modalizer.add(popupEl, {id: 'popup'});
+            deloser.add(popupEl);
+            modalizer.focus(popupEl);
         }
-    }, []);
+
+        return () => {
+            const tabster = getCurrentTabster(window);
+            if (popupEl && tabster && open) {
+                const modalizer = getModalizer(tabster);
+                const deloser = getDeloser(tabster);
+                modalizer.remove(popupEl);
+                deloser.remove(popupEl);
+            }
+        };
+
+    }, [open, popupRef]);
 
     const onClick = () => setOpen(s => !s);
 
@@ -55,7 +68,7 @@ export const PopupContent = () => {
                 <button onClick={onClick}>Toggle popup</button>
             </div>
             <div>
-                {open && <div ref={modalizerRef} style={popupStyles}>
+                {open && <div aria-label={'popup'} ref={popupRef} style={popupStyles}>
                     <div tabIndex={0}>Focusable item</div>
                     <div tabIndex={0}>Focusable item</div>
                     <div tabIndex={0}>Focusable item</div>
