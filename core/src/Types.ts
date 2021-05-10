@@ -532,10 +532,29 @@ export interface RootAPI {
 }
 
 export interface ModalizerAPI {
+    /**
+     * Adds an element to be managed by Modalizer
+     * 
+     * @param element Element that is not managed by Modalizer
+     * @param basic Basic props
+     * @param extended Extended props
+     */
     add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
+    /**
+     * Stops managing an element with Modalizer. Should be called before the element is removed from DOM.
+     *  
+     * @param element Element that is managed by Modalizer
+     */
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
+    /**
+     * Activates a Modalizer and focuses the first or default element within
+     * 
+     * @param elementFromModalizer An element that belongs to a Modalizer
+     * @param noFocusFirst Do not focus on the first element in the Modalizer
+     * @param noFocusDefault Do not focus the default element in the Modalizre
+     */
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
 }
 
