@@ -4,7 +4,7 @@
  */
 
 import { augmentAttribute, getTabsterOnElement, setTabsterOnElement } from './Instance';
-import { dispatchMutationEvent } from './MutationEvent';
+import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME} from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, WeakHTMLElement } from './Utils';
@@ -167,12 +167,12 @@ export class Modalizer implements Types.Modalizer {
         }
 
         const windowDocument = this._win().document;
-        // TODO: should a root instance be used instead ?
+        // TODO: should a root instance be used instead ? but modals should hide entire content of the page
         const root = windowDocument.body;
 
         // Sets or restores aria-hidden value based on `active` flag
         const ariaHiddenWalker = createElementTreeWalker(windowDocument, root, (el: HTMLElement) => {
-            // if others are accessible
+            // if other content should be accessible no need to do walk the tree
             if (this._basic.isOthersAccessible) {
                 return NodeFilter.FILTER_REJECT;
             }
@@ -187,18 +187,19 @@ export class Modalizer implements Types.Modalizer {
                 return false;
             });
 
-            // Reached a modalizer element, no need to continue
             if (isModalizerElement) {
                 return NodeFilter.FILTER_REJECT;
             }
 
-            // Contains a modalizer element as a descendant, continue
             if (containsModalizerElement) {
                 return NodeFilter.FILTER_SKIP;
             }
 
+            // Add `aria-hidden` when modalizer is active
+            // Restore `aria-hidden` when modalizer is inactive
             augmentAttribute(this._tabster, el, 'aria-hidden', active ? 'true' : undefined);
             // TODO: figure out a way to ignore  subtrees when restoring aria-hidden
+            // Modalizer element might no longer be on the DOM so containsModalizerElement might never return
             if (active) {
                 // aria-hidden will apply for all children
                 return NodeFilter.FILTER_REJECT;
@@ -323,6 +324,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = undefined;
 
         this._tabster.focusedElement.subscribe(this._onFocus);
+        this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
     }
 
     protected dispose(): void {
@@ -469,6 +471,29 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     getActiveModalizer() {
         return this._curModalizer;
+    }
+
+    /**
+     * If a modalizer is still active and has no elements left on the document, set it to inactive
+     * This is a fallback, recommended action is to remove the modalizer before removing DOM elements
+     */
+    private _onMutation = (e: MutationEvent) => {
+        const details = e.details;
+        if (!details.modalizer?.isActive() || !details.removed) {
+            return;
+        }
+
+        const existsOnDocument = details.modalizer?.getElements().some(el => this._win().document.body.contains(el));
+        if (!existsOnDocument) {
+            if (__DEV__) {
+                console.error(`Modalizer: ${details.modalizer.userId}.
+                    Elements should be removed from the Modalizer before they are removed from DOM.
+                    Removing elements from the modalizer first is more performant.
+                `);
+            }
+
+            details.modalizer.setActive(false);
+        }
     }
 
     private _onFocus = (e: HTMLElement): void => {
