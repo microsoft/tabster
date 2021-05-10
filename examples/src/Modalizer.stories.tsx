@@ -31,6 +31,7 @@ export const PopupContent = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
     const popupRef = React.useRef<HTMLDivElement>();
 
+    // Use callback ref because it will run before DOM element is removed from the tree
     const callbackRef = React.useCallback((node: HTMLDivElement) => {
         const tabster = getCurrentTabster(window);
         const modalizer = tabster && getModalizer(tabster);
@@ -44,11 +45,11 @@ export const PopupContent = () => {
             modalizer.add(popupRef.current, {id: 'popup'});
             deloser.add(popupRef.current);
             modalizer.focus(popupRef.current);
-        } else {
-            popupRef.current &&  modalizer.remove(popupRef.current);
-            popupRef.current && deloser.remove(popupRef.current);
+        } else if (!node && popupRef.current) {
+            modalizer.remove(popupRef.current);
+            deloser.remove(popupRef.current);
         }
-    }, [popupRef])
+    }, [popupRef]);
 
     const onClick = () => setOpen(s => !s);
 
