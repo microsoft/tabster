@@ -1048,11 +1048,6 @@ export class FocusableAPI implements Types.FocusableAPI {
     isAccessible(el: HTMLElement): boolean {
         for (let e: (HTMLElement | null) = el; e; e = e.parentElement) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
-
-            if (tabsterOnElement && tabsterOnElement.modalizer && !tabsterOnElement.modalizer.isActive()) {
-                return true;
-            }
-
             if (this._isHidden(e)) {
                 return false;
             }
