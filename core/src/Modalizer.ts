@@ -151,7 +151,7 @@ export class Modalizer implements Types.Modalizer {
         this.setActive(!this._isActive);
     }
 
-    setActive(active: boolean): void {
+    setActive(active: boolean, visitSubTree?: boolean): void {
         if (active === this._isActive) {
             return;
         }
@@ -198,10 +198,10 @@ export class Modalizer implements Types.Modalizer {
             // Add `aria-hidden` when modalizer is active
             // Restore `aria-hidden` when modalizer is inactive
             augmentAttribute(this._tabster, el, 'aria-hidden', active ? 'true' : undefined);
-            // TODO: figure out a way to ignore  subtrees when restoring aria-hidden
-            // Modalizer element might no longer be on the DOM so containsModalizerElement might never return
-            if (active) {
-                // aria-hidden will apply for all children
+
+            if (!visitSubTree) {
+                // if the modalizer elements guaranteed to be in DOM, there is no need to visit subtrees
+                // Previous checks will either skip or reject subtrees if mdoalizer elements are present
                 return NodeFilter.FILTER_REJECT;
             }
 
@@ -492,7 +492,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 `);
             }
 
-            details.modalizer.setActive(false);
+            // No guarantee modalizer elements are on the page - safer to visit all subtrees
+            details.modalizer.setActive(false, true);
         }
     }
 

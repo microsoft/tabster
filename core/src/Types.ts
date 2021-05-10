@@ -482,8 +482,9 @@ export interface Modalizer {
      * Reverts `aria-hidden` changes when set to inactive
      *  
      * @param active Whether the modalizer is active
+     * @param visitSubtree If modalizer elements are not present in DOM, visit all nodes in subtrees to restore `aria-hidden`
      */
-    setActive(active: boolean): void;
+    setActive(active: boolean, visitSubtree?: boolean): void;
     setFocused(focused: boolean): void;
     setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
 }
