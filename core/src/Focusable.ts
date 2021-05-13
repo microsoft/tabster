@@ -4,7 +4,6 @@
  */
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
-import { Modalizer } from './Modalizer';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
