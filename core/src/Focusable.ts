@@ -4,7 +4,9 @@
  */
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { Modalizer } from './Modalizer';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
+import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer, matchesSelector, WeakHTMLElement } from './Utils';
 
@@ -1282,12 +1284,15 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): number {
+        const ctx = RootAPI.getTabsterContext(this._tabster, element);
         if (this._isHidden(element)) {
             return NodeFilter.FILTER_REJECT;
         }
 
-        if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
-            return NodeFilter.FILTER_REJECT;
+        if (ignoreModalizer || (!ctx || !ctx.modalizer) || ctx.modalizer.getBasicProps().isAlwaysAccessible) {
+            if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
+                return NodeFilter.FILTER_REJECT;
+            }
         }
 
         return acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
