@@ -138,7 +138,7 @@ export class Modalizer implements Types.Modalizer {
         this.setActive(!this._isActive);
     }
 
-    setActive(active: boolean, visitSubTree?: boolean): void {
+    setActive(active: boolean): void {
         if (active === this._isActive) {
             return;
         }
@@ -271,6 +271,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
+    /**
+     * The current active modalizer
+     */
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
     /**
@@ -376,6 +379,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         });
 
         modalizer.setActive(false);
+        if (this._curModalizer === modalizer) {
+            this._curModalizer = undefined;
+        }
+
         delete this._modalizers[modalizer.userId];
         modalizer.dispose();
     }
@@ -400,10 +407,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const ctx = RootAPI.getTabsterContext(this._tabster, elementFromModalizer);
 
         if (ctx && ctx.modalizer) {
-            ctx.modalizer.setActive(true);
+            this._curModalizer = ctx.modalizer;
+            this._curModalizer.setActive(true);
 
-            const basic = ctx.modalizer.getBasicProps();
-            const modalizerRoot = ctx.modalizer.getModalizerRoot();
+            const basic = this._curModalizer.getBasicProps();
+            const modalizerRoot = this._curModalizer.getModalizerRoot();
 
             if (modalizerRoot) {
                 if (noFocusFirst === undefined) {
@@ -457,8 +465,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 `);
             }
 
-            // No guarantee modalizer elements are on the page - safer to visit all subtrees
-            details.modalizer.setActive(false, true);
+            details.modalizer.setActive(false);
         }
     }
 
@@ -479,18 +486,23 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         if (modalizer) {
+            // New focused modalizer is different, activate the new modalizer
             if (this._curModalizer && (modalizer !== this._curModalizer)) {
+                this._curModalizer.setActive(false);
                 this._curModalizer.setFocused(false);
             }
 
             this._curModalizer = modalizer;
 
+            this._curModalizer.setActive(true);
             this._curModalizer.setFocused(true);
         } else if (this._curModalizer) {
+            // Focused element was not a modalizer, deactivate the active modalizer
             this._focusOutTimer = this._win().setTimeout(() => {
                 this._focusOutTimer = undefined;
 
                 if (this._curModalizer) {
+                    this._curModalizer.setActive(false);
                     this._curModalizer.setFocused(false);
 
                     this._curModalizer = undefined;
