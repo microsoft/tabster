@@ -51,9 +51,13 @@ export class Modalizer implements Types.Modalizer {
     private _isActive: boolean | undefined;
     private _isFocused = false;
     /**
-     * All HTML elements that are managed by the modalizer instance
+     * Root element of the modal
      */
-    private _modalizerElements: WeakHTMLElement[];
+    private _modalizerRoot: WeakHTMLElement;
+    /**
+     * Parent of modalizer Root, can be used for DOM cleanup if the modalizerRoot is no longer present
+     */
+    private _modalizerParent: WeakHTMLElement | null;
 
     constructor(
         element: HTMLElement,
@@ -68,15 +72,20 @@ export class Modalizer implements Types.Modalizer {
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
 
-        const firstModalizerElement = new WeakHTMLElement(win, element);
-        this._modalizerElements = [firstModalizerElement];
+        this._modalizerRoot = new WeakHTMLElement(win, element);
+        if (element.parentElement) {
+            this._modalizerParent = new WeakHTMLElement(win, element.parentElement);
+        } else {
+            this._modalizerParent = null;
+        }
+
         this._basic = basic;
         this._extended = extended || {};
         this._setAccessibilityProps();
 
         if (__DEV__) {
             _setInformativeStyle(
-                firstModalizerElement,
+                this._modalizerRoot,
                 false,
                 this.internalId,
                 this.userId,
@@ -106,23 +115,6 @@ export class Modalizer implements Types.Modalizer {
         this._setAccessibilityProps();
     }
 
-    add(element: HTMLElement, win: Types.GetWindow): boolean {
-        if (win !== this._win) {
-            if (__DEV__) {
-                console.warn('Attempted to add an element from another window to modalizer:', this.userId);
-            }
-            return false;
-        }
-
-        const alreadyExists = this._modalizerElements.some(modalizerElement => modalizerElement.get() === element);
-        if (!alreadyExists) {
-            const newModalizerElement = new WeakHTMLElement(this._win, element);
-            this._modalizerElements.push(newModalizerElement);
-        }
-
-        return true;
-    }
-
     dispose(): void {
         if (this._isFocused) {
             this.setFocused(false);
@@ -133,17 +125,12 @@ export class Modalizer implements Types.Modalizer {
         this._extended = {};
     }
 
-    move(fromElement: HTMLElement, newElement: HTMLElement): void {
-        const fromElementIndex = this._modalizerElements.findIndex(modalizerElement => modalizerElement.get() === fromElement);
-        if (fromElementIndex === -1) {
-            return;
-        }
-
+    move(newElement: HTMLElement): void {
         this._remove();
-
-        this._modalizerElements.splice(fromElementIndex, 1);
-        const newModalizerElement = new WeakHTMLElement(this._win, newElement);
-        this._modalizerElements.push(newModalizerElement);
+        this._modalizerRoot = new WeakHTMLElement(this._win, newElement);
+        if (newElement.parentElement) {
+            this._modalizerParent = new WeakHTMLElement(this._win, newElement.parentElement);
+        }
 
         this._setAccessibilityProps();
 
@@ -159,39 +146,36 @@ export class Modalizer implements Types.Modalizer {
         this._isActive = active;
 
         if (__DEV__) {
-            this._modalizerElements.forEach(modalizerElement => {
-                _setInformativeStyle(
-                    modalizerElement, false, this.internalId, this.userId, this._isActive, this._isFocused
-                );
-            });
+            _setInformativeStyle(
+                this._modalizerRoot, false, this.internalId, this.userId, this._isActive, this._isFocused
+            );
         }
 
-        const windowDocument = this._win().document;
-        // TODO: should a root instance be used instead ? but modals should hide entire content of the page
-        const root = windowDocument.body;
+        let targetDocument = this._modalizerRoot.get()?.ownerDocument || this._modalizerParent?.get()?.ownerDocument;
+        // Document can't be determined frm the modalizer root or its parent, fallback to window
+        if (!targetDocument) {
+            targetDocument = this._win().document;
+        }
+        const root = targetDocument.body;
 
         // Sets or restores aria-hidden value based on `active` flag
-        const ariaHiddenWalker = createElementTreeWalker(windowDocument, root, (el: HTMLElement) => {
+        const ariaHiddenWalker = createElementTreeWalker(targetDocument, root, (el: HTMLElement) => {
             // if other content should be accessible no need to do walk the tree
             if (this._basic.isOthersAccessible) {
                 return NodeFilter.FILTER_REJECT;
             }
 
-            const isModalizerElement = this._modalizerElements.some(modalizerElement => modalizerElement.get() === el);
-            const containsModalizerElement = this._modalizerElements.some(modalizerElement => {
-                const modalizerElementValue = modalizerElement.get();
-                if (modalizerElementValue && el.contains(modalizerElementValue)) {
-                    return true;
-                }
-
-                return false;
-            });
+            const modalizerRoot = this._modalizerRoot.get();
+            const modalizerParent = this._modalizerParent?.get();
+            const isModalizerElement = modalizerRoot === el;
+            const containsModalizerRoot = !!el.contains(modalizerRoot || null);
+            const containsModalizerParent = !!el.contains(modalizerParent || null);
 
             if (isModalizerElement) {
                 return NodeFilter.FILTER_REJECT;
             }
 
-            if (containsModalizerElement) {
+            if (containsModalizerRoot || containsModalizerParent) {
                 return NodeFilter.FILTER_SKIP;
             }
 
@@ -199,13 +183,20 @@ export class Modalizer implements Types.Modalizer {
             // Restore `aria-hidden` when modalizer is inactive
             augmentAttribute(this._tabster, el, 'aria-hidden', active ? 'true' : undefined);
 
-            if (!visitSubTree) {
-                // if the modalizer elements guaranteed to be in DOM, there is no need to visit subtrees
-                // Previous checks will either skip or reject subtrees if mdoalizer elements are present
-                return NodeFilter.FILTER_REJECT;
+            const modalizerRootOnPage = (modalizerRoot === modalizerRoot?.ownerDocument.body) 
+                ? false 
+                : modalizerRoot?.ownerDocument.body.contains(modalizerRoot);
+
+            const modalizerParentOnPage = (modalizerParent === modalizerParent?.ownerDocument.body) 
+                ? false 
+                : modalizerParent?.ownerDocument.body.contains(modalizerParent);
+
+            // if the modalizer root or its parent is not on the page, all nodes need to be visited
+            if (!modalizerParentOnPage && !modalizerRootOnPage) {
+                return NodeFilter.FILTER_SKIP;
             }
 
-            return NodeFilter.FILTER_SKIP;
+            return NodeFilter.FILTER_REJECT;
         });
 
         if (ariaHiddenWalker) {
@@ -217,28 +208,8 @@ export class Modalizer implements Types.Modalizer {
         return !!this._isActive;
     }
 
-    getElementContaining(element: HTMLElement): HTMLElement | undefined {
-        const elementIndex = this._modalizerElements.findIndex(modalizerElement => !!modalizerElement.get()?.contains(element));
-        if (elementIndex !== -1) {
-            return this._modalizerElements[elementIndex].get();
-        }
-
-        return undefined;
-    }
-
-    getElements(): HTMLElement[] {
-        const elements: HTMLElement[] = [];
-        this._modalizerElements.forEach(modalizerElement => {
-            const el = modalizerElement.get();
-            if (el) {
-                elements.push(el);
-            }
-        });
-        return elements;
-    }
-
-    hasElement(element: HTMLElement): boolean {
-        return this._modalizerElements.some(modalizerElement => modalizerElement.get() === element);
+    getModalizerRoot(): HTMLElement | undefined  {
+        return this._modalizerRoot.get();
     }
 
     setFocused(focused: boolean): void {
@@ -259,11 +230,9 @@ export class Modalizer implements Types.Modalizer {
         }
 
         if (__DEV__) {
-            this._modalizerElements.forEach(modalizerElement => {
-                _setInformativeStyle(
-                    modalizerElement, false, this.internalId, this.userId, this._isActive, this._isFocused
-                );
-            });
+            _setInformativeStyle(
+                this._modalizerRoot, false, this.internalId, this.userId, this._isActive, this._isFocused
+            );
         }
     }
 
@@ -285,19 +254,15 @@ export class Modalizer implements Types.Modalizer {
 
     private _remove(): void {
         if (__DEV__) {
-            this._modalizerElements.forEach(modalizerElement => {
-                _setInformativeStyle(modalizerElement, true);
-            });
+            _setInformativeStyle(this._modalizerRoot, true);
         }
     }
 
     private _setAccessibilityProps(): void {
         if (__DEV__) {
-            this._modalizerElements.forEach(modalizerElement => {
-                if (!modalizerElement.get()?.getAttribute('aria-label')) {
-                    console.error('Modalizer element must have aria-label', modalizerElement);
-                }
-            });
+            if (!this._modalizerRoot.get()?.getAttribute('aria-label')) {
+                console.error('Modalizer element must have aria-label', this._modalizerRoot.get());
+            }
         }
     }
 }
@@ -360,7 +325,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
 
-        // Modalizer already on an element
         if (tabsterOnElement && tabsterOnElement.modalizer) {
             if (__DEV__ && (tabsterOnElement.modalizer.userId !== basic.id)) {
                 console.error('Element already has Modalizer with different id.', element);
@@ -372,8 +336,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         if (!this._modalizers[basic.id]) {
             const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
             this._modalizers[basic.id] = modalizer;
-        } else {
-            this._modalizers[basic.id].add(element, this._win);
+        } else if (__DEV__) {
+            const err = new Error(`Attempted to add Modalizer: ${basic.id} which already exists`);
+            console.error(err.stack);
         }
 
         setTabsterOnElement(this._tabster, element, { modalizer: this._modalizers[basic.id] });
@@ -411,6 +376,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         });
 
         modalizer.setActive(false);
+        delete this._modalizers[modalizer.userId];
         modalizer.dispose();
     }
 
@@ -420,7 +386,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const modalizer = tabsterOnElementFrom && tabsterOnElementFrom.modalizer;
 
         if (modalizer) {
-            modalizer.move(from, to);
+            modalizer.move(to);
 
             setTabsterOnElement(this._tabster, to, { modalizer: modalizer });
             setTabsterOnElement(this._tabster, from, { modalizer: undefined });
@@ -437,9 +403,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             ctx.modalizer.setActive(true);
 
             const basic = ctx.modalizer.getBasicProps();
-            const modalizerElement = ctx.modalizer.getElementContaining(elementFromModalizer);
+            const modalizerRoot = ctx.modalizer.getModalizerRoot();
 
-            if (modalizerElement) {
+            if (modalizerRoot) {
                 if (noFocusFirst === undefined) {
                     noFocusFirst = basic.isNoFocusFirst;
                 }
@@ -447,7 +413,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 if (
                     !noFocusFirst &&
                     this._tabster.keyboardNavigation.isNavigatingWithKeyboard() &&
-                    this._tabster.focusedElement.focusFirst(modalizerElement)
+                    this._tabster.focusedElement.focusFirst(modalizerRoot)
                 ) {
                     return true;
                 }
@@ -456,11 +422,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                     noFocusDefault = basic.isNoFocusDefault;
                 }
 
-                if (!noFocusDefault && this._tabster.focusedElement.focusDefault(modalizerElement)) {
+                if (!noFocusDefault && this._tabster.focusedElement.focusDefault(modalizerRoot)) {
                     return true;
                 }
 
-                this._tabster.focusedElement.resetFocus(modalizerElement);
+                this._tabster.focusedElement.resetFocus(modalizerRoot);
             }
         } else if (__DEV__) {
             console.error('Element is not in Modalizer.', elementFromModalizer);
@@ -483,10 +449,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        const existsOnDocument = details.modalizer?.getElements().some(el => this._win().document.body.contains(el));
-        if (!existsOnDocument) {
+        if (details.modalizer.isActive()) {
             if (__DEV__) {
-                console.error(`Modalizer: ${details.modalizer.userId}.
+                console.warn(`Modalizer: ${details.modalizer.userId}.
                     Elements should be removed from the Modalizer before they are removed from DOM.
                     Removing elements from the modalizer first is more performant.
                 `);

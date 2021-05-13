@@ -108,28 +108,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             }
         }
 
-        // TODO: Can look for modalizers and do the same thing, but is it necessary ? 
-        // const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        // const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        // const modalizers = root && root.getModalizers();
-
-        // if (modalizers) {
-        //     // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-        //     // let's try to find something under the same root.
-        //     for (let m of modalizers) {
-        //         const modalizerElements = m.getElements();
-        //         for (let e of modalizerElements) {
-        //             const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-        //             const deloser = tabsterOnElement && tabsterOnElement.deloser;
-        //             const deloserItem = deloser && new DeloserItem(this._tabster, deloser);
-
-        //             if (deloserItem && await deloserItem.focusAvailable()) {
-        //                 return true;
-        //             }
-        //         }
-        //     }
-        // }
-
         return false;
     }
 
@@ -146,27 +124,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
                 resetQueue[i.uid] = i;
             }
         }
-
-        // TODO: Can look for modalizers and do the same thing, but is it necessary ? 
-        // const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        // const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        // const modalizers = root && root.getModalizers();
-
-        // if (modalizers) {
-        //     // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-        //     // let's try to find something under the same root.
-        //     for (let m of modalizers) {
-        //         const modalizerElements = m.getElements();
-        //         for (let e of modalizerElements) {
-        //             const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-        //             const deloser = tabsterOnElement && tabsterOnElement.deloser;
-
-        //             if (deloser && !(deloser.uid in resetQueue)) {
-        //                 resetQueue[deloser.uid] = new DeloserItem(this._tabster, deloser);
-        //             }
-        //         }
-        //     }
-        // }
 
         // Nothing is found, at least try to reset.
         for (let id of Object.keys(resetQueue)) {

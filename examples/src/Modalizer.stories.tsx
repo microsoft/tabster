@@ -19,7 +19,7 @@ export const ModalDialog = () => {
     const onClick = () => ref.current?.show();
     return (
         <>
-            <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
+            <div { ...getTabsterAttribute({ deloser: {} })}>
                 <button onClick={onClick}>Open modal</button>
             </div>
             <Modal ref={ref} />
@@ -62,19 +62,17 @@ export const PopupContent = () => {
 
     return (
         <>
-            <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
+            <div  { ...getTabsterAttribute({ deloser: {} })}>
                 <button onClick={onClick}>Toggle popup</button>
             </div>
-            <div>
-                {open && <div aria-label={'popup'} ref={callbackRef} style={popupStyles}>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <button onClick={onClick}>Dismiss</button>
-                </div>}
-            </div>
-            <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} })}>
+            {open && <div aria-label={'popup'} ref={callbackRef} style={popupStyles}>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <button onClick={onClick}>Dismiss</button>
+            </div>}
+            <div { ...getTabsterAttribute({ deloser: {} })}>
                 <button>Do not focus</button>
             </div>
         </>
