@@ -121,7 +121,7 @@ export const DeclarativeModalizerAPI = () => {
 
 };
 
-export const ModalizerAlwaysOnPage = () => {
+export const AlwaysOnPage = () => {
     const modalRef = React.useRef<HTMLDivElement>(null);
     const outsideRef = React.useRef<HTMLButtonElement>(null);
 
@@ -155,6 +155,46 @@ export const ModalizerAlwaysOnPage = () => {
                 <div tabIndex={0}>Focusable item</div>
                 <div tabIndex={0}>Focusable item</div>
                 <button onClick={focusOut}>Focus out</button>
+            </div>
+            <button ref={outsideRef}>Outside modal</button>
+        </div>
+    ); 
+};
+
+export const AllowFocusOutside = () => {
+    const modalRef = React.useRef<HTMLDivElement>(null);
+    const outsideRef = React.useRef<HTMLButtonElement>(null);
+
+    const focusIn = () => {
+        if (modalRef.current) {
+            modalRef.current.removeAttribute('aria-hidden');
+            const first = getCurrentTabster(window)?.focusable.findFirst(modalRef.current);
+            first?.focus();
+        }
+    };
+
+    const focusOut = () => {
+        if (modalRef.current && outsideRef.current) {
+            modalRef.current.setAttribute('aria-hidden', 'true');
+            outsideRef.current.focus();
+        }
+    };
+
+    return (
+        <div  { ...getTabsterAttribute({ deloser: {} })}>
+            <button onClick={focusIn}>Activate modalizer</button>
+            <div 
+                aria-hidden 
+                ref={modalRef} 
+                aria-label={'popup'} 
+                style={popupStyles} 
+                {...getTabsterAttribute({ modalizer: { id: 'modalizer', isOthersAccessible: true} })}
+            >
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <button onClick={focusOut}>Deactivate modalizer</button>
             </div>
             <button ref={outsideRef}>Outside modal</button>
         </div>
