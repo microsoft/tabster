@@ -506,7 +506,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer.setActive(true);
                 this._curModalizer.setFocused(true);
             } 
-        } else if (focusedElement && this._curModalizer && !this._curModalizer.contains(e)) {
+        } else if (focusedElement && this._curModalizer && !this._curModalizer.contains(focusedElement)) {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
             this._restoreModalizerFocus(focusedElement);
         }
