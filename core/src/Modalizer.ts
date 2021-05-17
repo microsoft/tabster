@@ -469,45 +469,58 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
     }
 
-    private _onFocus = (e: HTMLElement): void => {
+    private _onFocus = (e: HTMLElement | undefined, details: Types.FocusedElementDetails): void => {
         if (this._focusOutTimer) {
             this._win().clearTimeout(this._focusOutTimer);
             this._focusOutTimer = undefined;
         }
 
-        let modalizer: Types.Modalizer | undefined;
-
-        if (e) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, e);
-
-            if (ctx) {
-                modalizer = ctx.modalizer;
-            }
+        const ctx = e && RootAPI.getTabsterContext(this._tabster, e);
+        if (!ctx) {
+            return;
         }
 
-        if (modalizer) {
-            // New focused modalizer is different, activate the new modalizer
-            if (this._curModalizer && (modalizer !== this._curModalizer)) {
+        const modalizer = ctx?.modalizer;
+
+        if (modalizer === this._curModalizer) {
+            return;
+        }
+
+        // `element.focus()` should change/deactivate active modalizer 
+        if (details.isFocusedProgrammatically) {
+            if (this._curModalizer) {
                 this._curModalizer.setActive(false);
                 this._curModalizer.setFocused(false);
             }
 
-            this._curModalizer = modalizer;
+            if (modalizer) {
+                this._curModalizer = modalizer;
+                this._curModalizer.setActive(true);
+                this._curModalizer.setFocused(true);
+            } 
+        } else {
+            // Focused outside of any modalizer, pull focus back to current modalizer
+            // Only do this when the element has a tabster context (opt-in)
+            if (e?.ownerDocument) {
+                let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
 
-            this._curModalizer.setActive(true);
-            this._curModalizer.setFocused(true);
-        } else if (this._curModalizer) {
-            // Focused element was not a modalizer, deactivate the active modalizer
-            this._focusOutTimer = this._win().setTimeout(() => {
-                this._focusOutTimer = undefined;
+                if (toFocus) {
+                    if (e.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
+                        toFocus = this._tabster.focusable.findLast(e.ownerDocument.body);
 
-                if (this._curModalizer) {
-                    this._curModalizer.setActive(false);
-                    this._curModalizer.setFocused(false);
+                        if (!toFocus) {
+                            // This only might mean that findFirst/findLast are buggy and inconsistent.
+                            throw new Error('Something went wrong.');
+                        }
+                    }
 
-                    this._curModalizer = undefined;
+                    this._tabster.focusedElement.focus(toFocus);
+                } else {
+                    // Current Modalizer doesn't seem to have focusable elements.
+                    // Blurring the currently focused element which is outside of the current Modalizer.
+                    e.blur();
                 }
-            }, 0);
+            }
         }
     }
 }

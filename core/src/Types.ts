@@ -518,6 +518,10 @@ export interface ModalizerAPI {
      */
     add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
     /**
+     * Gets the currently active modalizer if it exists
+     */
+    getActiveModalizer(): Modalizer | undefined;
+    /**
      * Stops managing an element with Modalizer. Should be called before the element is removed from DOM.
      *  
      * @param element Element that is managed by Modalizer

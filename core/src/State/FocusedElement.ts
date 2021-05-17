@@ -711,40 +711,7 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
-
         this._tabster.focusable.setCurrentGroupper(element);
-
-        if (!ctx || !ctx.modalizer) {
-            return;
-        }
-
-        let eModalizer = ctx.modalizer;
-
-        if (eModalizer.isActive()) {
-            return;
-        }
-
-        if (eModalizer && element.ownerDocument) {
-            let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
-
-            if (toFocus) {
-                if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                    toFocus = this._tabster.focusable.findLast(element.ownerDocument.body);
-
-                    if (!toFocus) {
-                        // This only might mean that findFirst/findLast are buggy and inconsistent.
-                        throw new Error('Something went wrong.');
-                    }
-                }
-
-                this._tabster.focusedElement.focus(toFocus);
-            } else {
-                // Current Modalizer doesn't seem to have focusable elements.
-                // Blurring the currently focused element which is outside of the current Modalizer.
-                element.blur();
-            }
-        }
     }
 
     private _isInput(element: HTMLElement): boolean {

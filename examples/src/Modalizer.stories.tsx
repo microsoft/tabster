@@ -78,3 +78,55 @@ export const PopupContent = () => {
         </>
     );
 };
+
+export const FocusWithoutModalizerAPI = () => {
+    const modalRef = React.useRef<HTMLDivElement>(null);
+    const outsideRef = React.useRef<HTMLButtonElement>(null);
+    const popupStyles = {
+        maxWidth: 400,
+        maxHeight: 400,
+        border: '2px solid green',
+        padding: 5,
+        marginTop: 5,
+        marginBottom: 5
+    };
+
+    const focusIn = () => {
+        if (modalRef.current) {
+            modalRef.current.removeAttribute('aria-hidden');
+            const first = getCurrentTabster(window)?.focusable.findFirst(modalRef.current);
+            first?.focus();
+        }
+    };
+
+    const focusOut = () => {
+        if (modalRef.current && outsideRef.current) {
+            modalRef.current.setAttribute('aria-hidden', 'true');
+            outsideRef.current.focus();
+        }
+    };
+
+    return (
+        <>
+            <div  >
+                <button onClick={focusIn}>Focus modalizer</button>
+            </div>
+            <div 
+                aria-hidden 
+                ref={modalRef} 
+                aria-label={'popup'} 
+                style={popupStyles} 
+                {...getTabsterAttribute({ modalizer: { id: 'modalizer'} })}
+            >
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <div tabIndex={0}>Focusable item</div>
+                <button onClick={focusOut}>Focus out</button>
+            </div>
+            <div >
+                <button ref={outsideRef}>Outside modal</button>
+            </div>
+        </>
+    ); 
+};
