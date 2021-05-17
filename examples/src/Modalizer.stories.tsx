@@ -109,7 +109,7 @@ export const DeclarativeModalizerAPI = () => {
         </div>
     );
 
-}
+};
 
 export const ModalizerAlwaysOnPage = () => {
     const modalRef = React.useRef<HTMLDivElement>(null);
