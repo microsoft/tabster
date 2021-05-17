@@ -444,6 +444,10 @@ export interface ModalizerExtendedProps {
 export interface Modalizer {
     readonly internalId: string;
     readonly userId: string;
+    /**
+     * @returns - Whether the element is inside the modalizer
+     */
+    contains(element: HTMLElement): boolean;
     dispose(): void;
     getBasicProps(): ModalizerBasicProps;
     /**

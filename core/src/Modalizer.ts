@@ -212,6 +212,10 @@ export class Modalizer implements Types.Modalizer {
         return this._modalizerRoot.get();
     }
 
+    contains(element: HTMLElement) {
+        return !!this.getModalizerRoot()?.contains(element);
+    }
+
     setFocused(focused: boolean): void {
         if (this._isFocused === focused) {
             return;
@@ -449,7 +453,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     /**
      * If a modalizer is still active and has no elements left on the document, set it to inactive
-     * This is a fallback, recommended action is to remove the modalizer before removing DOM elements
      */
     private _onMutation = (e: MutationEvent) => {
         const details = e.details;
@@ -491,19 +494,19 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
+        this._curModalizer?.setFocused(false);
+
         // Developers calling `element.focus()` should change/deactivate active modalizer 
         if (details.isFocusedProgrammatically) {
-            if (this._curModalizer) {
-                this._curModalizer.setActive(false);
-                this._curModalizer.setFocused(false);
-            }
+            this._curModalizer?.setActive(false);
+            this._curModalizer = undefined;
 
             if (modalizer) {
                 this._curModalizer = modalizer;
                 this._curModalizer.setActive(true);
                 this._curModalizer.setFocused(true);
             } 
-        } else {
+        } else if (e && this._curModalizer && !this._curModalizer.contains(e)) {
             // Focused outside of the active modalizer, pull focus back to current modalizer
             this._restoreModalizerFocus(e);
         }
