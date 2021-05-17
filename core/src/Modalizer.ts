@@ -452,7 +452,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     /**
-     * If a modalizer is still active and has no elements left on the document, set it to inactive
+     * Listens to DOM mutation events for removed modalizers
      */
     private _onMutation = (e: MutationEvent) => {
         const details = e.details;
@@ -460,6 +460,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
+        // If an active modalizer is no longer on DOM, remove it
         if (details.modalizer.isActive()) {
             if (__DEV__) {
                 console.warn(`Modalizer: ${details.modalizer.userId}.
