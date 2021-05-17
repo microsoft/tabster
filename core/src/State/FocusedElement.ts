@@ -242,7 +242,7 @@ export class FocusedElementState
         const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(this._win, element) : undefined, details };
 
         if (element && (element !== this._val)) {
-            this._validateFocusedElement(element, details);
+            this._validateFocusedElement(element);
         }
 
         // _validateFocusedElement() might cause the refocus which will trigger
@@ -710,7 +710,7 @@ export class FocusedElementState
         return pde;
     }
 
-    private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
+    private _validateFocusedElement = (element: HTMLElement): void => {
         this._tabster.focusable.setCurrentGroupper(element);
     }
 

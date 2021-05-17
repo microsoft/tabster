@@ -476,17 +476,17 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         const ctx = e && RootAPI.getTabsterContext(this._tabster, e);
+        // Modalizer behaviour is opt in, only apply to elements that have a tabster context
         if (!ctx) {
             return;
         }
 
         const modalizer = ctx?.modalizer;
-
         if (modalizer === this._curModalizer) {
             return;
         }
 
-        // `element.focus()` should change/deactivate active modalizer 
+        // Developers calling `element.focus()` should change/deactivate active modalizer 
         if (details.isFocusedProgrammatically) {
             if (this._curModalizer) {
                 this._curModalizer.setActive(false);
@@ -499,28 +499,37 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer.setFocused(true);
             } 
         } else {
-            // Focused outside of any modalizer, pull focus back to current modalizer
-            // Only do this when the element has a tabster context (opt-in)
-            if (e?.ownerDocument) {
-                let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
+            // Focused outside of the active modalizer, pull focus back to current modalizer
+            this._restoreModalizerFocus(e);
+        }
+    }
 
-                if (toFocus) {
-                    if (e.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                        toFocus = this._tabster.focusable.findLast(e.ownerDocument.body);
+    /**
+     * Called when an element is focused outside of an active modalizer.
+     * Attempts to pull focus back into the active modalizer
+     * @param outsideElement - An element being focused outside of the modalizer
+     */
+    private _restoreModalizerFocus(outsideElement: HTMLElement | undefined): void {
+        if (!outsideElement?.ownerDocument || !this._curModalizer) {
+            return;
+        }
 
-                        if (!toFocus) {
-                            // This only might mean that findFirst/findLast are buggy and inconsistent.
-                            throw new Error('Something went wrong.');
-                        }
-                    }
+        let toFocus = this._tabster.focusable.findFirst(this._curModalizer.getModalizerRoot());
+        if (toFocus) {
+            if (outsideElement.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
+                toFocus = this._tabster.focusable.findLast(outsideElement.ownerDocument.body);
 
-                    this._tabster.focusedElement.focus(toFocus);
-                } else {
-                    // Current Modalizer doesn't seem to have focusable elements.
-                    // Blurring the currently focused element which is outside of the current Modalizer.
-                    e.blur();
+                if (!toFocus) {
+                    // This only might mean that findFirst/findLast are buggy and inconsistent.
+                    throw new Error('Something went wrong.');
                 }
             }
-        }
+
+            this._tabster.focusedElement.focus(toFocus);
+        } else {
+            // Current Modalizer doesn't seem to have focusable elements.
+            // Blurring the currently focused element which is outside of the current Modalizer.
+            outsideElement.blur();
+        } 
     }
 }
