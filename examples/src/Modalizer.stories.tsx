@@ -64,14 +64,22 @@ export const ImperativeModalizerAPI = () => {
     return (
         <div  { ...getTabsterAttribute({ deloser: {} })}>
             <button onClick={onClick}>Toggle popup</button>
-            {open && <div aria-label={'popup'} ref={callbackRef} style={popupStyles}>
-                <div tabIndex={0}>Focusable item</div>
-                <div tabIndex={0}>Focusable item</div>
-                <div tabIndex={0}>Focusable item</div>
-                <div tabIndex={0}>Focusable item</div>
-                <button onClick={onClick}>Dismiss</button>
-            </div>}
-            <button>Outside Modalizer</button>
+            {open && (
+                <>
+                    <div 
+                        ref={callbackRef} 
+                        aria-label={'popup'} 
+                        style={popupStyles} 
+                    >
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <button onClick={onClick}>Dismiss</button>
+                    </div>
+                    <button>Outside Modalizer</button>
+                </>
+            )}
         </div>
     );
 };
@@ -92,20 +100,22 @@ export const DeclarativeModalizerAPI = () => {
         <div  { ...getTabsterAttribute({ deloser: {} })}>
             <button onClick={onClick}>Toggle popup</button>
             {open && (
-                <div 
-                    ref={popupRef} 
-                    aria-label={'popup'} 
-                    style={popupStyles} 
-                    {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
-                >
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <div tabIndex={0}>Focusable item</div>
-                    <button onClick={onClick}>Dismiss</button>
-                </div>
+                <>
+                    <div 
+                        ref={popupRef} 
+                        aria-label={'popup'} 
+                        style={popupStyles} 
+                        {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
+                    >
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <button onClick={onClick}>Dismiss</button>
+                    </div>
+                    <button>Outside Modalizer</button>
+                </>
             )}
-            <button>Outside Modalizer</button>
         </div>
     );
 
