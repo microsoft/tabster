@@ -477,8 +477,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
      * @param e - Element that is focused
      * @param details - Additional data about the focus event
      */
-    private _onFocus = (e: HTMLElement | undefined, details: Types.FocusedElementDetails): void => {
-        const ctx = e && RootAPI.getTabsterContext(this._tabster, e);
+    private _onFocus = (focusedElement: HTMLElement | undefined, details: Types.FocusedElementDetails): void => {
+        const ctx = focusedElement && RootAPI.getTabsterContext(this._tabster, focusedElement);
         // Modalizer behaviour is opt in, only apply to elements that have a tabster context
         if (!ctx) {
             return;
@@ -506,9 +506,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer.setActive(true);
                 this._curModalizer.setFocused(true);
             } 
-        } else if (e && this._curModalizer && !this._curModalizer.contains(e)) {
-            // Focused outside of the active modalizer, pull focus back to current modalizer
-            this._restoreModalizerFocus(e);
+        } else if (focusedElement && this._curModalizer && !this._curModalizer.contains(e)) {
+            // Focused outside of the active modalizer, try pull focus back to current modalizer
+            this._restoreModalizerFocus(focusedElement);
         }
     }
 
