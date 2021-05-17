@@ -463,12 +463,17 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         if (details.modalizer.isActive()) {
             if (__DEV__) {
                 console.warn(`Modalizer: ${details.modalizer.userId}.
-                    Elements should be removed from the Modalizer before they are removed from DOM.
-                    Removing elements from the modalizer first is more performant.
+                    calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
                 `);
             }
 
+            delete this._modalizers[details.modalizer.userId];
+            if (this._curModalizer === details.modalizer) {
+                this._curModalizer = undefined;
+            }
+            details.modalizer.setFocused(false);
             details.modalizer.setActive(false);
+            details.modalizer.dispose();
         }
     }
 
