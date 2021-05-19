@@ -6,7 +6,7 @@
 import { Meta } from '@storybook/react';
 import { Modal } from './components/Modal';
 import * as React from 'react';
-import { getCurrentTabster, getDeloser, getModalizer, getTabsterAttribute } from 'tabster';
+import { getCurrentTabster, getModalizer, getTabsterAttribute } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
@@ -36,55 +36,7 @@ const popupStyles = {
     marginBottom: 5
 }; 
 
-export const ImperativeModalizerAPI = () => {
-    const [open, setOpen ] = React.useState<boolean>(false);
-    const popupRef = React.useRef<HTMLDivElement>();
-
-    // Use callback ref because it will run before DOM element is removed from the tree
-    const callbackRef = React.useCallback((node: HTMLDivElement) => {
-        const tabster = getCurrentTabster(window);
-        const modalizer = tabster && getModalizer(tabster);
-        const deloser = tabster && getDeloser(tabster);
-        if (!modalizer || !deloser) {
-            return;
-        }
-
-        if (node) {
-            popupRef.current = node;
-            modalizer.add(popupRef.current, {id: 'popup'});
-            deloser.add(popupRef.current);
-            modalizer.focus(popupRef.current);
-        } else if (!node && popupRef.current) {
-            modalizer.remove(popupRef.current);
-            deloser.remove(popupRef.current);
-        }
-    }, [popupRef]);
-
-    const onClick = () => setOpen(s => !s);
-    return (
-        <div  { ...getTabsterAttribute({ deloser: {} })}>
-            <button onClick={onClick}>Toggle popup</button>
-            {open && (
-                <>
-                    <div 
-                        ref={callbackRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
-                    >
-                        <div tabIndex={0}>Focusable item</div>
-                        <div tabIndex={0}>Focusable item</div>
-                        <div tabIndex={0}>Focusable item</div>
-                        <div tabIndex={0}>Focusable item</div>
-                        <button onClick={onClick}>Dismiss</button>
-                    </div>
-                    <button>Outside Modalizer</button>
-                </>
-            )}
-        </div>
-    );
-};
-
-export const DeclarativeModalizerAPI = () => {
+export const NativeFocus = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
     const popupRef = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
@@ -119,6 +71,44 @@ export const DeclarativeModalizerAPI = () => {
         </div>
     );
 
+};
+
+export const ModalizerAPIFocus = () => {
+    const [open, setOpen ] = React.useState<boolean>(false);
+    const popupRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const tabster = getCurrentTabster(window);
+        const modalizer = tabster && getModalizer(tabster);
+        if (open && popupRef.current && modalizer) {
+            modalizer.focus(popupRef.current);
+        }
+
+    }, [open, popupRef]);
+
+    const onClick = () => setOpen(s => !s);
+    return (
+        <div  { ...getTabsterAttribute({ deloser: {} })}>
+            <button onClick={onClick}>Toggle popup</button>
+            {open && (
+                <>
+                    <div 
+                        ref={popupRef} 
+                        aria-label={'popup'} 
+                        style={popupStyles} 
+                        {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
+                    >
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <div tabIndex={0}>Focusable item</div>
+                        <button onClick={onClick}>Dismiss</button>
+                    </div>
+                    <button>Outside Modalizer</button>
+                </>
+            )}
+        </div>
+    );
 };
 
 export const AlwaysOnPage = () => {
