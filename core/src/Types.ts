@@ -313,15 +313,15 @@ export interface FocusableAPI {
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
     findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findAll(
         context: HTMLElement,
         customFilter: (el: HTMLElement) => boolean,

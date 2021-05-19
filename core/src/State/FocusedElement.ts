@@ -585,7 +585,7 @@ export class FocusedElementState
 
             if (next) {
                 if (!this._tabster.focusable.isFocusable(next)) {
-                    next = this._tabster.focusable.findFirst(next, false, false, true);
+                    next = this._tabster.focusable.findFirst(next, false, true);
                 }
 
                 if (next) {
@@ -602,7 +602,7 @@ export class FocusedElementState
     private _getFirstInGroupper(groupperElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
         return this._tabster.focusable.isFocusable(groupperElement)
             ? groupperElement
-            : this._tabster.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
+            : this._tabster.focusable.findFirst(groupperElement, false, ignoreGroupper);
     }
 
     private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection, isRtl?: boolean): HTMLElement | null {
