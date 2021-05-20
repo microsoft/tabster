@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { EvaluateFn, SerializableOrJSHandle } from 'puppeteer';
 
 function buildAttributesString(attributes: {[name: string]: string}): string {
@@ -26,7 +27,7 @@ export async function bootstrapTabsterPage() {
     // Waiting for the test app to set Tabster up.
     await page.evaluate(() => {
         return new Promise((resolve) => {
-            setTimeout(check, 1000);
+            setTimeout(check, 100);
 
             function check() {
                 if (__tabsterInstance) {
