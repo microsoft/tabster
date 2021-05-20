@@ -25,7 +25,7 @@ let _lastId = 0;
 export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
 
 /**
- * Source of truth for all the keyborg instances and the current keyboard navigation state
+ * Source of truth for all the keyborg core instances and the current keyboard navigation state
  */
 export class KeyborgState {
     private __keyborgCoreRefs: { [id: string]: WeakRefInstance<KeyborgCore> } = {};
@@ -73,7 +73,7 @@ export class KeyborgState {
 const _state = new KeyborgState();
 
 /**
- * Manages a collection of Keyborg instances and keyboard navigation state for a window/document
+ * Manages a collection of Keyborg instances in a window/document and updates keyborg state
  */
 class KeyborgCore implements Disposable {
     readonly id: string;
