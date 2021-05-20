@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tabster Test</title>
+<script src="../node_modules/requirejs/require.js"></script>
+<script>
+window.exports = {};
+
+requirejs.config({
+    shim: {
+        "tabster": {
+            "deps": [
+                'tslib'
+            ]
+        }
+    },
+    paths: {
+        "tslib": "../node_modules/tslib/tslib",
+        "tabster": "../dist/tabster.cjs.development"
+    }
+});
+
+require(['tabster'], function() {
+    const tabster = createTabster(window);
+    getDeloser(tabster);
+    getModalizer(tabster);
+    getObservedElement(tabster);
+    getOutline(tabster).setup();
+});
+
+</script>
+</head>
+<body></body>
+</html>

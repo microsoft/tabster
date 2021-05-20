@@ -10,7 +10,6 @@ import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
 import {
-    createElementTreeWalker,
     getElementUId,
     makeFocusIgnored,
     WeakHTMLElement
@@ -28,7 +27,7 @@ export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
 }
 
-function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string, currentModalizerId?: string) {
+function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?: string) {
     if (__DEV__) {
         const element = weakElement.get();
 
@@ -36,7 +35,7 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
             if (remove) {
                 element.style.removeProperty('--tabster-root');
             } else {
-                element.style.setProperty('--tabster-root', id + ',' + currentModalizerId);
+                element.style.setProperty('--tabster-root', id + ',');
             }
         }
     }
@@ -49,9 +48,6 @@ export class Root implements Types.Root {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
-    private _curModalizerId: string | undefined;
-    private _knownModalizers: { [id: string]: Types.Modalizer } = {};
-    private _updateModalizersTimer: number | undefined;
     private _dummyInputFirst: DummyInput | undefined;
     private _dummyInputLast: DummyInput | undefined;
     private _forgetFocusedGrouppers: () => void;
@@ -80,11 +76,6 @@ export class Root implements Types.Root {
     }
 
     dispose(): void {
-        if (this._updateModalizersTimer) {
-            this._win().clearTimeout(this._updateModalizersTimer);
-            this._updateModalizersTimer = undefined;
-        }
-
         this._remove();
 
         const dif = this._dummyInputFirst;
@@ -99,7 +90,6 @@ export class Root implements Types.Root {
             delete this._dummyInputLast;
         }
 
-        this._knownModalizers = {};
         this._forgetFocusedGrouppers = () => {/**/};
     }
 
@@ -119,54 +109,10 @@ export class Root implements Types.Root {
         this._remove();
         this._element = new WeakHTMLElement(this._win, newElement);
         this._add();
-        this.updateModalizers();
     }
 
     getElement(): HTMLElement | undefined {
         return this._element.get();
-    }
-
-    getCurrentModalizerId(): string | undefined {
-        return this._curModalizerId;
-    }
-
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void {
-        this._curModalizerId = id;
-
-        if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
-        }
-
-        if (!noModalizersUpdate) {
-            this.updateModalizers();
-        }
-    }
-
-    getModalizers(): Types.Modalizer[] {
-        const modalizers: Types.Modalizer[] = [];
-
-        for (let id of Object.keys(this._knownModalizers)) {
-            modalizers.push(this._knownModalizers[id]);
-        }
-
-        return modalizers;
-    }
-
-    getModalizerById(id: string): Types.Modalizer | undefined {
-        return this._knownModalizers[id];
-    }
-
-    updateModalizers(): void {
-        if (this._updateModalizersTimer) {
-            return;
-        }
-
-        this.updateDummyInputs();
-
-        this._updateModalizersTimer = this._win().setTimeout(() => {
-            this._updateModalizersTimer = undefined;
-            this._reallyUpdateModalizers();
-        }, 0);
     }
 
     updateDummyInputs(): void {
@@ -187,7 +133,7 @@ export class Root implements Types.Root {
 
     private _add(): void {
         if (__DEV__) {
-            _setInformativeStyle(this._element, false, this.uid, this._curModalizerId);
+            _setInformativeStyle(this._element, false, this.uid);
         }
     }
 
@@ -196,83 +142,6 @@ export class Root implements Types.Root {
 
         if (__DEV__) {
             _setInformativeStyle(this._element, true);
-        }
-    }
-
-    private _reallyUpdateModalizers(): void {
-        const element = this._element.get();
-        const ownerDocument = element?.ownerDocument;
-
-        if (!element || !ownerDocument) {
-            return;
-        }
-
-        const modalizersToUpdate: Types.Modalizer[] = [];
-
-        const walker = createElementTreeWalker(ownerDocument, element, (el: HTMLElement) => {
-            const tabsterOnElement = getTabsterOnElement(this._tabster, el);
-
-            if (tabsterOnElement && tabsterOnElement.modalizer) {
-                modalizersToUpdate.push(tabsterOnElement.modalizer);
-
-                return NodeFilter.FILTER_ACCEPT;
-            }
-
-            return NodeFilter.FILTER_SKIP;
-        });
-
-        if (walker) {
-            while (walker.nextNode()) { /* Iterating for the sake of calling acceptNode callback. */ }
-        }
-
-        let isOthersAccessible = (this._curModalizerId === undefined);
-        let currentIsPresent = false;
-
-        const prevKnownModalizers = this._knownModalizers;
-        const newKnownModalizers: { [id: string]: Types.Modalizer } = {};
-        const addedModalizers: { [id: string]: Types.Modalizer } = {};
-        const removedModalizers: { [id: string]: Types.Modalizer } = {};
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-            const isCurrent = modalizerId === this._curModalizerId;
-
-            if (!isOthersAccessible && isCurrent) {
-                isOthersAccessible = !!modalizer.getBasicProps().isOthersAccessible;
-            }
-
-            if (isCurrent) {
-                currentIsPresent = true;
-            }
-
-            newKnownModalizers[modalizerId] = modalizer;
-
-            if (!(modalizerId in prevKnownModalizers)) {
-                addedModalizers[modalizerId] = modalizer;
-            }
-        }
-
-        for (let id of Object.keys(prevKnownModalizers)) {
-            if (!(id in newKnownModalizers)) {
-                removedModalizers[id] = prevKnownModalizers[id];
-            }
-        }
-
-        if (!currentIsPresent) {
-            this.setCurrentModalizerId(undefined, true);
-        }
-
-        this._knownModalizers = newKnownModalizers;
-
-        for (let i = 0; i < modalizersToUpdate.length; i++) {
-            const modalizer = modalizersToUpdate[i];
-            const modalizerId = modalizer.userId;
-
-            const active = (this._curModalizerId === undefined) || (modalizerId === this._curModalizerId);
-
-            modalizer.setActive(active);
-            modalizer.setAccessible(modalizer.getBasicProps().isAlwaysAccessible || isOthersAccessible || active);
         }
     }
 
@@ -526,28 +395,6 @@ export class RootAPI implements Types.RootAPI {
                 root.updateDummyInputs();
             }
         }
-
-        if (!e.target || !details.modalizer) {
-            return;
-        }
-
-        const modalizerRoot = RootAPI._getRootOnly(this._tabster, e.target as Node);
-
-        if (modalizerRoot) {
-            modalizerRoot.updateModalizers();
-        }
-    }
-
-    private static _getRootOnly(tabster: Types.TabsterCore, element: Node): Types.Root | undefined {
-        for (let e: (Node | null) = element; e; e = e.parentElement) {
-            const tabsterOnElement = getTabsterOnElement(tabster, e);
-
-            if (tabsterOnElement && tabsterOnElement.root) {
-                return tabsterOnElement.root;
-            }
-        }
-
-        return undefined;
     }
 
     static getRootByUId(getWindow: Types.GetWindow, id: string): Types.Root | undefined {
