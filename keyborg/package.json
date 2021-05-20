@@ -1,12 +1,12 @@
 {
-  "name": "tabster",
+  "name": "keyborg",
   "version": "0.6.2",
-  "description": "Focus Management Tools for Web",
+  "description": "Keyboard Navigation Detection for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
   "sideEffects": false,
   "main": "./dist/index.js",
-  "module": "./dist/tabster.esm.js",
+  "module": "./dist/keyborg.esm.js",
   "typings": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -22,12 +22,7 @@
     "tslint:check": "tslint --project tsconfig.json",
     "prepare": "npm run build"
   },
-  "dependencies": {
-    "keyborg": "^0.6.2"
-  },
-  "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
-    "core-js": "^3.9.1",
     "lint": "^0.6.0",
     "rimraf": "^3.0.2",
     "tsdx": "^0.14.1",
