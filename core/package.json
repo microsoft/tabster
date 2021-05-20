@@ -1,6 +1,6 @@
 {
   "name": "tabster",
-  "version": "0.6.2",
+  "version": "0.7.0-alpha.0",
   "description": "Focus Management Tools for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "keyborg": "^0.6.2"
+    "keyborg": "^0.7.0-alpha.0"
   },
   "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
