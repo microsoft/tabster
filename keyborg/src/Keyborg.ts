@@ -28,9 +28,6 @@ export type KeyborgCallback = (isNavigatingWithKeyboard: boolean) => void;
  * Source of truth for all the keyborg instances and the current keyboard navigation state
  */
 export class KeyborgState {
-    /**
-     * All managed keyborg instances
-     */
     private __keyborgCoreRefs: { [id: string]: WeakRefInstance<KeyborgCore> } = {};
     private _isNavigatingWithKeyboard = false;
 
