@@ -2,25 +2,32 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { WeakRefInstance } from './WeakRefInstance';
 
 export const KEYBORG_FOCUSIN = 'keyborg:focusin';
 
-interface CustomFocusFunctionWithOriginal {
-    __keyborgFocus?: (options?: FocusOptions | undefined) => void;
+interface KeyborgFocus {
+    /**
+     * This is the native `focus` function that is retained so that it can be restored when keyborg is disposed
+     */
+    __keyborgNativeFocus?: (options?: FocusOptions | undefined) => void;
 }
 
 interface KeyborgFocusEventData {
     focusInHandler: (e: FocusEvent) => void;
-    lastFocusedProgrammatically?: WeakHTMLElement;
+    lastFocusedProgrammatically?: WeakRefInstance<HTMLElement>;
 }
 
-interface WindowWithHTMLElementAndLastFocusedElement extends Window {
+/**
+ * Extends the global window with keyborg focus event data
+ */
+interface WindowWithKeyborgFocusEvent extends Window {
     HTMLElement: typeof HTMLElement;
     __keyborgData?: KeyborgFocusEventData;
 }
 
 function canOverrideNativeFocus(win: Window): boolean {
-    const HTMLElement = (win as WindowWithHTMLElementAndLastFocusedElement).HTMLElement;
+    const HTMLElement = (win as WindowWithKeyborgFocusEvent).HTMLElement;
     const origFocus = HTMLElement.prototype.focus;
 
     let isCustomFocusCalled = false;
@@ -40,37 +47,6 @@ function canOverrideNativeFocus(win: Window): boolean {
 
 let _canOverrideNativeFocus = false;
 
-const _hasWeakRef = typeof WeakRef !== 'undefined';
-
-class WeakHTMLElement {
-    private _weakRef?: WeakRef<HTMLElement>;
-    private _element?: HTMLElement;
-
-    constructor(element: HTMLElement) {
-        if (_hasWeakRef) {
-            this._weakRef = new WeakRef(element);
-        } else {
-            this._element = element;
-        }
-    }
-
-    deref(): HTMLElement | undefined {
-        let target: HTMLElement | undefined;
-
-        if (_hasWeakRef) {
-            target = this._weakRef?.deref();
-
-            if (!target) {
-                delete this._weakRef;
-            }
-        } else {
-            target = this._element;
-        }
-
-        return target;
-    }
-}
-
 export interface KeyborgFocusInEventDetails {
     relatedTarget?: HTMLElement;
     isFocusedProgrammatically?: boolean;
@@ -80,82 +56,93 @@ export interface KeyborgFocusInEvent extends Event {
     details: KeyborgFocusInEventDetails;
 }
 
-export function callOriginalFocusOnly(element: HTMLElement): void {
-    const focus = element.focus as CustomFocusFunctionWithOriginal;
+/**
+ * Guarantees that the native `focus` will be used
+ */
+export function nativeFocus(element: HTMLElement): void {
+    const focus = element.focus as KeyborgFocus;
 
-    if (focus.__keyborgFocus) {
-        focus.__keyborgFocus.call(element);
+    if (focus.__keyborgNativeFocus) {
+        focus.__keyborgNativeFocus.call(element);
     } else {
         element.focus();
     }
 }
 
+/**
+ * Overrides the native `focus` and setups the keyborg focus event
+ */
 export function setupFocusEvent(win: Window): void {
-    const wnd = win as WindowWithHTMLElementAndLastFocusedElement;
+    const kwin = win as WindowWithKeyborgFocusEvent;
 
     if (!_canOverrideNativeFocus) {
-        _canOverrideNativeFocus = canOverrideNativeFocus(wnd);
+        _canOverrideNativeFocus = canOverrideNativeFocus(kwin);
     }
 
-    const origFocus = wnd.HTMLElement.prototype.focus;
+    const origFocus = kwin.HTMLElement.prototype.focus;
 
-    if ((origFocus as CustomFocusFunctionWithOriginal).__keyborgFocus) {
+    if ((origFocus as KeyborgFocus).__keyborgNativeFocus) {
         // Already set up.
         return;
     }
 
-    wnd.HTMLElement.prototype.focus = focus;
+    kwin.HTMLElement.prototype.focus = focus;
 
-    const data: KeyborgFocusEventData = wnd.__keyborgData = {
+    const data: KeyborgFocusEventData = kwin.__keyborgData = {
         focusInHandler: (e: FocusEvent) => {
             const target = e.target as HTMLElement;
-
-            if (target) {
-                const event = document.createEvent('HTMLEvents') as KeyborgFocusInEvent;
-
-                event.initEvent(KEYBORG_FOCUSIN, true, true);
-
-                const details: KeyborgFocusInEventDetails = {
-                    relatedTarget: (e.relatedTarget as HTMLElement) || undefined
-                };
-
-                if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
-                    details.isFocusedProgrammatically = (target === data.lastFocusedProgrammatically?.deref());
-
-                    data.lastFocusedProgrammatically = undefined;
-                }
-
-                event.details = details;
-
-                target.dispatchEvent(event);
+            if (!target) {
+                return;
             }
+
+            const event = document.createEvent('HTMLEvents') as KeyborgFocusInEvent;
+
+            event.initEvent(KEYBORG_FOCUSIN, true, true);
+
+            const details: KeyborgFocusInEventDetails = {
+                relatedTarget: (e.relatedTarget as HTMLElement) || undefined
+            };
+
+            if (_canOverrideNativeFocus || data.lastFocusedProgrammatically) {
+                details.isFocusedProgrammatically = (target === data.lastFocusedProgrammatically?.deref());
+
+                data.lastFocusedProgrammatically = undefined;
+            }
+
+            event.details = details;
+
+            target.dispatchEvent(event);
         }
     };
 
-    wnd.document.addEventListener('focusin', wnd.__keyborgData.focusInHandler, true);
+    kwin.document.addEventListener('focusin', kwin.__keyborgData.focusInHandler, true);
 
     function focus(this: HTMLElement) {
-        const keyborgFocusEvent = (wnd as WindowWithHTMLElementAndLastFocusedElement).__keyborgData;
+        const keyborgNativeFocusEvent = (kwin as WindowWithKeyborgFocusEvent).__keyborgData;
 
-        if (keyborgFocusEvent) {
-            keyborgFocusEvent.lastFocusedProgrammatically = new WeakHTMLElement(this);
+        if (keyborgNativeFocusEvent) {
+            keyborgNativeFocusEvent.lastFocusedProgrammatically = new WeakRefInstance(this);
         }
 
         return origFocus.apply(this, arguments);
     }
 
-    (focus as CustomFocusFunctionWithOriginal).__keyborgFocus = origFocus;
+    (focus as KeyborgFocus).__keyborgNativeFocus = origFocus;
 }
 
+/**
+ * Removes keyborg event listeners and custom focus override
+ * @param win The window that stores keyborg focus events
+ */
 export function disposeFocusEvent(win: Window): void {
-    const wnd = win as WindowWithHTMLElementAndLastFocusedElement;
-    const proto = wnd.HTMLElement.prototype;
-    const origFocus = (proto.focus as CustomFocusFunctionWithOriginal).__keyborgFocus;
-    const keyborgFocusEvent = wnd.__keyborgData;
+    const kwin = win as WindowWithKeyborgFocusEvent;
+    const proto = kwin.HTMLElement.prototype;
+    const origFocus = (proto.focus as KeyborgFocus).__keyborgNativeFocus;
+    const keyborgNativeFocusEvent = kwin.__keyborgData;
 
-    if (keyborgFocusEvent) {
-        wnd.document.removeEventListener('focusin', keyborgFocusEvent.focusInHandler, true);
-        delete wnd.__keyborgData;
+    if (keyborgNativeFocusEvent) {
+        kwin.document.removeEventListener('focusin', keyborgNativeFocusEvent.focusInHandler, true);
+        delete kwin.__keyborgData;
     }
 
     if (origFocus) {
@@ -163,10 +150,14 @@ export function disposeFocusEvent(win: Window): void {
     }
 }
 
+/**
+ * @param win The window that stores keyborg focus events
+ * @returns The last element focused with element.focus()
+ */
 export function getLastFocusedProgrammatically(win: Window): HTMLElement | null | undefined {
-    const keyborgFocusEvent = (win as WindowWithHTMLElementAndLastFocusedElement).__keyborgData;
+    const keyborgNativeFocusEvent = (win as WindowWithKeyborgFocusEvent).__keyborgData;
 
-    return keyborgFocusEvent
-        ? (keyborgFocusEvent.lastFocusedProgrammatically?.deref() || null)
+    return keyborgNativeFocusEvent
+        ? (keyborgNativeFocusEvent.lastFocusedProgrammatically?.deref() || null)
         : undefined;
 }

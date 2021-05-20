@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { callOriginalFocusOnly, KeyborgFocusInEvent, KEYBORG_FOCUSIN } from 'keyborg';
+import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from 'keyborg';
 
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Key, Keys } from '../Keys';
@@ -415,7 +415,7 @@ export class FocusedElementState
             if (next) {
                 e.preventDefault();
 
-                callOriginalFocusOnly(next);
+                nativeFocus(next);
             } else if (ctx) {
                 ctx.root.moveOutWithDefaultAction(isPrev);
             }
@@ -525,7 +525,7 @@ export class FocusedElementState
 
                     KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
 
-                    callOriginalFocusOnly(next);
+                    nativeFocus(next);
                 }
             }
         }

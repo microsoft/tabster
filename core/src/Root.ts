@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { callOriginalFocusOnly } from 'keyborg';
+import { nativeFocus } from 'keyborg';
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
@@ -123,10 +123,10 @@ export class Root implements Types.Root {
         if (this._dummyInputFirst?.input && this._dummyInputLast?.input) {
             if (backwards) {
                 this._dummyInputFirst.shouldMoveOut = true;
-                callOriginalFocusOnly(this._dummyInputFirst.input);
+                nativeFocus(this._dummyInputFirst.input);
             } else {
                 this._dummyInputLast.shouldMoveOut = true;
-                callOriginalFocusOnly(this._dummyInputLast.input);
+                nativeFocus(this._dummyInputLast.input);
             }
         }
     }
