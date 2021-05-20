@@ -7,7 +7,7 @@ import { disposeFocusEvent, KeyborgFocusInEvent, KEYBORG_FOCUSIN, setupFocusEven
 import { Disposable, WeakRefInstance, _canUseWeakRef } from './WeakRefInstance';
 
 interface WindowWithKeyborg extends Window {
-    _keyborg?: {
+    __keyborg?: {
         core: KeyborgCore,
         refs: { [id: string]: Keyborg }
     };
@@ -31,21 +31,21 @@ export class KeyborgState {
     /**
      * All managed keyborg instances
      */
-    private _keyborgCoreRefs: { [id: string]: WeakRefInstance<KeyborgCore> } = {};
+    private __keyborgCoreRefs: { [id: string]: WeakRefInstance<KeyborgCore> } = {};
     private _isNavigatingWithKeyboard = false;
 
     add(keyborg: KeyborgCore): void {
         const id = keyborg.id;
 
-        if (!(id in this._keyborgCoreRefs)) {
-            this._keyborgCoreRefs[id] = new WeakRefInstance<KeyborgCore>(keyborg);
+        if (!(id in this.__keyborgCoreRefs)) {
+            this.__keyborgCoreRefs[id] = new WeakRefInstance<KeyborgCore>(keyborg);
         }
     }
 
     remove(id: string): void {
-        delete this._keyborgCoreRefs[id];
+        delete this.__keyborgCoreRefs[id];
 
-        if (Object.keys(this._keyborgCoreRefs).length === 0) {
+        if (Object.keys(this.__keyborgCoreRefs).length === 0) {
             this._isNavigatingWithKeyboard = false;
         }
     }
@@ -56,8 +56,8 @@ export class KeyborgState {
         }
 
         this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
-        for (let id of Object.keys(this._keyborgCoreRefs)) {
-            const ref = this._keyborgCoreRefs[id];
+        for (let id of Object.keys(this.__keyborgCoreRefs)) {
+            const ref = this.__keyborgCoreRefs[id];
             const keyborg = ref.deref();
 
             if (keyborg) {
@@ -130,7 +130,7 @@ class KeyborgCore implements Disposable {
      * Updates all keyborg instances with the keyboard navigation state
      */
     update(isNavigatingWithKeyboard: boolean): void {
-        const keyborgs = this._win?._keyborg?.refs;
+        const keyborgs = this._win?.__keyborg?.refs;
 
         if (keyborgs) {
             for (let id of Object.keys(keyborgs)) {
@@ -243,14 +243,14 @@ export class Keyborg {
         this._id = 'k' + ++_lastId;
         this._win = win;
 
-        const current = win._keyborg;
+        const current = win.__keyborg;
 
         if (current) {
             this._core = current.core;
             current.refs[this._id] = this;
         } else {
             this._core = new KeyborgCore(win);
-            win._keyborg = {
+            win.__keyborg = {
                 core: this._core,
                 refs: { [this._id]: this }
             };
@@ -258,14 +258,14 @@ export class Keyborg {
     }
 
     private dispose(): void {
-        const current = this._win?._keyborg;
+        const current = this._win?.__keyborg;
 
         if (current?.refs[this._id]) {
             delete current.refs[this._id];
 
             if (Object.keys(current.refs).length === 0) {
                 current.core.dispose();
-                delete this._win!!!._keyborg;
+                delete this._win!!!.__keyborg;
             }
         } else if (__DEV__) {
             console.error(`Keyborg instance ${ this._id } is being disposed incorrectly.`);
