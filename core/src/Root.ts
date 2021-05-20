@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { callOriginalFocusOnly } from 'keyborg';
+
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
 import {
-    callOriginalFocusOnly,
     getElementUId,
     makeFocusIgnored,
     WeakHTMLElement

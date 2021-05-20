@@ -23,6 +23,9 @@
     "prepare": "npm run build",
     "test": "jest"
   },
+  "dependencies": {
+    "keyborg": "^0.6.2"
+  },
   "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.12.1",

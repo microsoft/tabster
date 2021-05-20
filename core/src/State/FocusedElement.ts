@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { callOriginalFocusOnly, KeyborgFocusInEvent, KEYBORG_FOCUSIN } from 'keyborg';
+
 import { KeyboardNavigationState } from './KeyboardNavigation';
 import { Key, Keys } from '../Keys';
 import { RootAPI } from '../Root';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import {
-    callOriginalFocusOnly,
-    CustomFocusFunctionWithOriginal,
     documentContains,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
@@ -25,38 +25,13 @@ const _inputSelector = [
     '*[contenteditable]'
 ].join(', ');
 
-interface WindowWithHTMLElement extends Window {
-    HTMLElement: typeof HTMLElement;
-}
-
-function canOverrideNativeFocus(win: Window): boolean {
-    const HTMLElement = (win as WindowWithHTMLElement).HTMLElement;
-    const origFocus = HTMLElement.prototype.focus;
-
-    let isCustomFocusCalled = false;
-
-    HTMLElement.prototype.focus = function focus(): void {
-        isCustomFocusCalled = true;
-    };
-
-    const btn = win.document.createElement('button');
-
-    btn.focus();
-
-    HTMLElement.prototype.focus = origFocus;
-
-    return isCustomFocusCalled;
-}
-
 export class FocusedElementState
         extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails> implements Types.FocusedElementState {
 
-    private static _lastFocusedProgrammatically: WeakHTMLElement | undefined;
     private static _lastResetElement: WeakHTMLElement | undefined;
 
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
-    private _canOverrideNativeFocus = false;
     private _win: Types.GetWindow;
     private _nextVal: { element: WeakHTMLElement | undefined, details: Types.FocusedElementDetails } | undefined;
     private _lastVal: WeakHTMLElement | undefined;
@@ -74,12 +49,8 @@ export class FocusedElementState
 
         const win = this._win();
 
-        this._canOverrideNativeFocus = canOverrideNativeFocus(win);
-
-        FocusedElementState.replaceFocus(this._win);
-
         // Add these event listeners as capture - we want Tabster to run before user event handlers
-        win.document.addEventListener('focusin', this._onFocusIn, true);
+        win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener('focusout', this._onFocusOut, true);
         win.document.addEventListener('mousedown', this._onMouseDown, true);
         win.addEventListener('keydown', this._onKeyDown, true);
@@ -90,19 +61,16 @@ export class FocusedElementState
 
         const win = this._win();
 
-        FocusedElementState.restoreFocus(win);
-
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener('focusin', this._onFocusIn, true);
+        win.document.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.removeEventListener('focusout', this._onFocusOut, true);
         win.document.removeEventListener('mousedown', this._onMouseDown, true);
         win.removeEventListener('keydown', this._onKeyDown, true);
 
-        delete FocusedElementState._lastFocusedProgrammatically;
         delete FocusedElementState._lastResetElement;
 
         delete this._nextVal;
@@ -114,14 +82,8 @@ export class FocusedElementState
     }
 
     static forgetMemorized(instance: Types.FocusedElementState, parent: HTMLElement): void {
-        let wel = FocusedElementState._lastFocusedProgrammatically;
+        let wel = FocusedElementState._lastResetElement;
         let el = wel && wel.get();
-        if (el && parent.contains(el)) {
-            delete FocusedElementState._lastFocusedProgrammatically;
-        }
-
-        wel = FocusedElementState._lastResetElement;
-        el = wel && wel.get();
         if (el && parent.contains(el)) {
             delete FocusedElementState._lastResetElement;
         }
@@ -156,8 +118,6 @@ export class FocusedElementState
         if (!this._tabster.focusable.isFocusable(element, noFocusedProgrammaticallyFlag, false, noAccessibleCheck)) {
             return false;
         }
-
-        FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(this._win, element);
 
         element.focus();
 
@@ -221,7 +181,7 @@ export class FocusedElementState
         }
     }
 
-    private _setFocusedElement(element?: HTMLElement, relatedTarget?: HTMLElement): void {
+    private _setFocusedElement(element?: HTMLElement, relatedTarget?: HTMLElement, isFocusedProgrammatically?: boolean): void {
         const details: Types.FocusedElementDetails = { relatedTarget };
 
         if (element) {
@@ -232,11 +192,7 @@ export class FocusedElementState
                 return;
             }
 
-            if (this._canOverrideNativeFocus || FocusedElementState._lastFocusedProgrammatically) {
-                details.isFocusedProgrammatically = (element === FocusedElementState._lastFocusedProgrammatically?.get());
-
-                FocusedElementState._lastFocusedProgrammatically = undefined;
-            }
+            details.isFocusedProgrammatically = isFocusedProgrammatically;
         }
 
         const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(this._win, element) : undefined, details };
@@ -262,40 +218,16 @@ export class FocusedElementState
         }
     }
 
-    private _onFocusIn = (e: FocusEvent): void => {
-        this._setFocusedElement(e.target as HTMLElement, (e.relatedTarget as HTMLElement) || undefined);
+    private _onFocusIn = (e: KeyborgFocusInEvent): void => {
+        this._setFocusedElement(
+            e.target as HTMLElement,
+            (e.details.relatedTarget as HTMLElement) || undefined,
+            e.details.isFocusedProgrammatically
+        );
     }
 
     private _onFocusOut = (e: FocusEvent): void => {
         this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
-    }
-
-    static replaceFocus(getWindow: Types.GetWindow): void {
-        const win = getWindow();
-        const origFocus = (win as WindowWithHTMLElement).HTMLElement.prototype.focus;
-
-        if ((origFocus as CustomFocusFunctionWithOriginal).__tabsterFocus) {
-            // Already set up.
-            return;
-        }
-
-        (win as WindowWithHTMLElement).HTMLElement.prototype.focus = focus;
-
-        function focus(this: HTMLElement) {
-            FocusedElementState._lastFocusedProgrammatically = new WeakHTMLElement(getWindow, this);
-            return origFocus.apply(this, arguments);
-        }
-
-        (focus as CustomFocusFunctionWithOriginal).__tabsterFocus = origFocus;
-    }
-
-    static restoreFocus(win: Window): void {
-        const proto = (win as WindowWithHTMLElement).HTMLElement.prototype;
-        const origFocus = (proto.focus as CustomFocusFunctionWithOriginal).__tabsterFocus;
-
-        if (origFocus) {
-            proto.focus = origFocus;
-        }
     }
 
     private _onMouseDown = (e: MouseEvent): void => {

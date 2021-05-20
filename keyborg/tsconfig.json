@@ -4,7 +4,6 @@
         "noResolve": false,
         "module": "es2015",
         "target": "es5",
-        "moduleResolution": "node",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -14,15 +13,12 @@
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist/",
-        "jsx": "react",
-        "jsxFactory": "BroTest.createElementString",
         "lib": [
             "es5",
             "es2015.iterable",
             "dom",
             "esnext"
-        ],
-        "esModuleInterop": true
+        ]
     },
 
     "include": [

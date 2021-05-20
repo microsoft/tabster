@@ -63,7 +63,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
             this._unobserve = observeMutations(win.document, this, updateTabsterByAttribute);
         }
 
-        this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
+        this.keyboardNavigation = new KeyboardNavigationState(getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
         this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
