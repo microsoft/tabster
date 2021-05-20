@@ -108,25 +108,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             }
         }
 
-        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        const modalizers = root && root.getModalizers();
-
-        if (modalizers) {
-            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-            // let's try to find something under the same root.
-            for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
-                const deloserItem = deloser && new DeloserItem(this._tabster, deloser);
-
-                if (deloserItem && await deloserItem.focusAvailable()) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     }
 
@@ -141,24 +122,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
 
             if (!skip && !resetQueue[i.uid]) {
                 resetQueue[i.uid] = i;
-            }
-        }
-
-        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        const modalizers = root && root.getModalizers();
-
-        if (modalizers) {
-            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-            // let's try to find something under the same root.
-            for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
-
-                if (deloser && !(deloser.uid in resetQueue)) {
-                    resetQueue[deloser.uid] = new DeloserItem(this._tabster, deloser);
-                }
             }
         }
 
@@ -196,7 +159,7 @@ export class DeloserHistory {
 
         const historyByRoot = this.make(rootUId, () => new DeloserHistoryByRoot(this._tabster, rootUId));
 
-        if (!ctx || !ctx.modalizer || (ctx.root.getCurrentModalizerId() === ctx.modalizer.userId)) {
+        if (!ctx || !ctx.modalizer || ctx.modalizer?.isActive()) {
             historyByRoot.unshiftToDeloser(deloser, element);
         }
 

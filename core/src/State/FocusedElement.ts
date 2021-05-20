@@ -242,7 +242,7 @@ export class FocusedElementState
         const nextVal = this._nextVal = { element: element ? new WeakHTMLElement(this._win, element) : undefined, details };
 
         if (element && (element !== this._val)) {
-            this._validateFocusedElement(element, details);
+            this._validateFocusedElement(element);
         }
 
         // _validateFocusedElement() might cause the refocus which will trigger
@@ -362,22 +362,6 @@ export class FocusedElementState
                     )
                 );
 
-            if (ctx && ctx.modalizer) {
-                const curModalizerId = ctx.root.getCurrentModalizerId();
-
-                if (curModalizerId && (curModalizerId !== ctx.modalizer.userId)) {
-                    ctx.modalizer = ctx.root.getModalizerById(curModalizerId);
-
-                    if (ctx.modalizer) {
-                        curElement = ctx.modalizer.getElement();
-
-                        if (!curElement) {
-                            return;
-                        }
-                    }
-                }
-            }
-
             let fromElement: HTMLElement | null = curElement;
 
             // If the current element is in a mover, move to the mover boundaries since a mover is considered a single tabstop
@@ -486,8 +470,7 @@ export class FocusedElementState
                 if (
                     !nctx ||
                     (ctx.root.uid !== nctx.root.uid) ||
-                    !nctx.modalizer ||
-                    (nctx.root.getCurrentModalizerId() !== nctx.modalizer.userId)
+                    !nctx.modalizer?.isActive()
                 ) {
                     if (ctx.modalizer.onBeforeFocusOut()) {
                         e.preventDefault();
@@ -602,7 +585,7 @@ export class FocusedElementState
 
             if (next) {
                 if (!this._tabster.focusable.isFocusable(next)) {
-                    next = this._tabster.focusable.findFirst(next, false, false, true);
+                    next = this._tabster.focusable.findFirst(next, false, true);
                 }
 
                 if (next) {
@@ -619,7 +602,7 @@ export class FocusedElementState
     private _getFirstInGroupper(groupperElement: HTMLElement, ignoreGroupper: boolean): HTMLElement | null {
         return this._tabster.focusable.isFocusable(groupperElement)
             ? groupperElement
-            : this._tabster.focusable.findFirst(groupperElement, false, false, ignoreGroupper);
+            : this._tabster.focusable.findFirst(groupperElement, false, ignoreGroupper);
     }
 
     private _findNextGroupper(from: HTMLElement, key: Key, direction?: Types.GroupperNextDirection, isRtl?: boolean): HTMLElement | null {
@@ -727,48 +710,8 @@ export class FocusedElementState
         return pde;
     }
 
-    private _validateFocusedElement = (element: HTMLElement, details: Types.FocusedElementDetails): void => {
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        const curModalizerId = ctx ? ctx.root.getCurrentModalizerId() : undefined;
-
+    private _validateFocusedElement = (element: HTMLElement): void => {
         this._tabster.focusable.setCurrentGroupper(element);
-
-        if (!ctx || !ctx.modalizer) {
-            return;
-        }
-
-        let eModalizer = ctx.modalizer;
-
-        if (curModalizerId === eModalizer.userId) {
-            return;
-        }
-
-        if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
-            ctx.root.setCurrentModalizerId(eModalizer.userId);
-
-            return;
-        }
-
-        if (eModalizer && element.ownerDocument) {
-            let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
-
-            if (toFocus) {
-                if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                    toFocus = this._tabster.focusable.findLast(element.ownerDocument.body);
-
-                    if (!toFocus) {
-                        // This only might mean that findFirst/findLast are buggy and inconsistent.
-                        throw new Error('Something went wrong.');
-                    }
-                }
-
-                this._tabster.focusedElement.focus(toFocus);
-            } else {
-                // Current Modalizer doesn't seem to have focusable elements.
-                // Blurring the currently focused element which is outside of the current Modalizer.
-                element.blur();
-            }
-        }
     }
 
     private _isInput(element: HTMLElement): boolean {

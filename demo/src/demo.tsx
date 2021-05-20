@@ -28,7 +28,7 @@ class App extends React.PureComponent {
         return (
             <div { ...getTabsterAttribute({ root: {} }) }>
                 <TabsterExistsExample />
-                <div aria-label='Main' { ...getTabsterAttribute({ modalizer: { id: 'main' }, deloser: {} }) }>
+                <div { ...getTabsterAttribute({ deloser: {} }) }>
                     <h1>Hello world</h1>
 
                     <div { ...getTabsterAttribute({ 
