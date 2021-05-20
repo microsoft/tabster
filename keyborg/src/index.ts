@@ -11,7 +11,7 @@ export {
 
 export {
     getLastFocusedProgrammatically,
-    callOriginalFocusOnly,
+    nativeFocus,
     KEYBORG_FOCUSIN,
     KeyborgFocusInEvent,
     KeyborgFocusInEventDetails
