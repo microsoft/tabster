@@ -13,12 +13,15 @@
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist/",
+        "jsx": "react",
+        "jsxFactory": "BroTest.createElementString",
         "lib": [
             "es5",
             "es2015.iterable",
             "dom",
             "esnext"
-        ]
+        ],
+        "esModuleInterop": true
     },
 
     "include": [
