@@ -479,6 +479,8 @@ export class RootAPI implements Types.RootAPI {
                         rootAPI._forgetFocusedGrouppers,
                         rootAPI._autoRoot
                     );
+
+                    setTabsterOnElement(rootAPI._tabster, body, { root: rootAPI._autoRootInstance });
                 }
             }
 
