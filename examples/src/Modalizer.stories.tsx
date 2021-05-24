@@ -268,7 +268,7 @@ export const ModalizerStack = () => {
                 </>
             )}
 
-            <button onClick={() => { setOpen(false); setSecondOpen(false); setThirdOpen(false)}}>Close all</button>
+            <button onClick={() => { setOpen(false); setSecondOpen(false); setThirdOpen(false); }}>Close all</button>
         </div>
     );
-}
+};
