@@ -456,25 +456,26 @@ export class ModalizerAPI implements Types.ModalizerAPI {
      */
     private _onMutation = (e: MutationEvent) => {
         const details = e.details;
-        if (!details.modalizer?.isActive() || !details.removed) {
+        if (!details.modalizer || !details.removed) {
             return;
         }
 
-        // If an active modalizer is no longer on DOM, remove it
-        if (details.modalizer.isActive()) {
-            if (__DEV__) {
-                console.warn(`Modalizer: ${details.modalizer.userId}.
-                    calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
-                `);
-            }
+        if (__DEV__) {
+            console.warn(`Modalizer: ${details.modalizer.userId}.
+                calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
+            `);
+        }
 
-            delete this._modalizers[details.modalizer.userId];
-            if (this._curModalizer === details.modalizer) {
-                this._curModalizer = undefined;
-            }
+        // If an active modalizer is no longer on DOM, deactivate it
+        if (details.modalizer.isActive()) {
             details.modalizer.setFocused(false);
             details.modalizer.setActive(false);
-            details.modalizer.dispose();
+        }
+
+        details.modalizer.dispose();
+        delete this._modalizers[details.modalizer.userId];
+        if (this._curModalizer === details.modalizer) {
+            this._curModalizer = undefined;
         }
     }
 
