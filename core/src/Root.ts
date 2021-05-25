@@ -90,6 +90,11 @@ export class Root implements Types.Root {
             delete this._dummyInputLast;
         }
 
+        const rootElement = this._element.get();
+        if (rootElement) {
+            setTabsterOnElement(this._tabster, rootElement, { root: undefined });
+        }
+
         this._forgetFocusedGrouppers = () => {/**/};
     }
 
@@ -353,9 +358,6 @@ export class RootAPI implements Types.RootAPI {
         }
 
         dispatchMutationEvent(element, { root, removed: true });
-
-        setTabsterOnElement(this._tabster, element, { root: undefined });
-
         root.dispose();
     }
 
