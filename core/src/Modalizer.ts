@@ -456,25 +456,26 @@ export class ModalizerAPI implements Types.ModalizerAPI {
      */
     private _onMutation = (e: MutationEvent) => {
         const details = e.details;
-        if (!details.modalizer?.isActive() || !details.removed) {
+        if (!details.modalizer || !details.removed) {
             return;
         }
 
-        // If an active modalizer is no longer on DOM, remove it
-        if (details.modalizer.isActive()) {
-            if (__DEV__) {
-                console.warn(`Modalizer: ${details.modalizer.userId}.
-                    calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
-                `);
-            }
+        if (__DEV__) {
+            console.warn(`Modalizer: ${details.modalizer.userId}.
+                calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
+            `);
+        }
 
-            delete this._modalizers[details.modalizer.userId];
-            if (this._curModalizer === details.modalizer) {
-                this._curModalizer = undefined;
-            }
+        // If an active modalizer is no longer on DOM, deactivate it
+        if (details.modalizer.isActive()) {
             details.modalizer.setFocused(false);
             details.modalizer.setActive(false);
-            details.modalizer.dispose();
+        }
+
+        details.modalizer.dispose();
+        delete this._modalizers[details.modalizer.userId];
+        if (this._curModalizer === details.modalizer) {
+            this._curModalizer = undefined;
         }
     }
 
@@ -486,7 +487,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _onFocus = (focusedElement: HTMLElement | undefined, details: Types.FocusedElementDetails): void => {
         const ctx = focusedElement && RootAPI.getTabsterContext(this._tabster, focusedElement);
         // Modalizer behaviour is opt in, only apply to elements that have a tabster context
-        if (!ctx) {
+        if (!ctx || !focusedElement) {
             return;
         }
 
@@ -503,7 +504,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._curModalizer?.setFocused(false);
 
         // Developers calling `element.focus()` should change/deactivate active modalizer 
-        if (details.isFocusedProgrammatically) {
+        if (details.isFocusedProgrammatically && !this._curModalizer?.contains(focusedElement)) {
             this._curModalizer?.setActive(false);
             this._curModalizer = undefined;
 
@@ -512,7 +513,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer.setActive(true);
                 this._curModalizer.setFocused(true);
             } 
-        } else if (focusedElement && this._curModalizer && !this._curModalizer.getBasicProps().isOthersAccessible) {
+        } else if (!this._curModalizer?.getBasicProps().isOthersAccessible) {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
             this._restoreModalizerFocus(focusedElement);
         }
