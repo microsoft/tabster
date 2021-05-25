@@ -479,7 +479,6 @@ export interface Root {
     dispose(): void;
     setProps(basic?: Partial<RootBasicProps> | null): void;
     getBasicProps(): RootBasicProps;
-    move(newElement: HTMLElement): void;
     getElement(): HTMLElement | undefined;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
@@ -508,7 +507,6 @@ export interface TabsterContext {
 export interface RootAPI {
     add(element: HTMLElement, basic?: RootBasicProps): void;
     remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 

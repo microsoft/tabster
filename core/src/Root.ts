@@ -73,6 +73,8 @@ export class Root implements Types.Root {
 
         this._add();
         this._addDummyInputs();
+
+        setTabsterOnElement(this._tabster, element, { root: this });
     }
 
     dispose(): void {
@@ -108,12 +110,6 @@ export class Root implements Types.Root {
 
     getBasicProps(): Types.RootBasicProps {
         return this._basic;
-    }
-
-    move(newElement: HTMLElement): void {
-        this._remove();
-        this._element = new WeakHTMLElement(this._win, newElement);
-        this._add();
     }
 
     getElement(): HTMLElement | undefined {
@@ -338,8 +334,6 @@ export class RootAPI implements Types.RootAPI {
 
         const root = new Root(element, this._tabster, this._win, this._forgetFocusedGrouppers, basic);
 
-        setTabsterOnElement(this._tabster, element, { root });
-
         const n: HTMLElement[] = [];
 
         for (let i: HTMLElement | null = element; i; i = i.parentElement) {
@@ -359,21 +353,6 @@ export class RootAPI implements Types.RootAPI {
 
         dispatchMutationEvent(element, { root, removed: true });
         root.dispose();
-    }
-
-    move(from: HTMLElement, to: HTMLElement): void {
-        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
-        const root = tabsterOnElementFrom && tabsterOnElementFrom.root;
-
-        if (root) {
-            root.move(to);
-
-            setTabsterOnElement(this._tabster, to, { root: root });
-            setTabsterOnElement(this._tabster, from, { root: undefined });
-
-            dispatchMutationEvent(from, { root, removed: true });
-            dispatchMutationEvent(to, { root });
-        }
     }
 
     setProps(element: HTMLElement, basic?: Partial<Types.RootBasicProps> | null): void {
@@ -481,8 +460,6 @@ export class RootAPI implements Types.RootAPI {
                         rootAPI._forgetFocusedGrouppers,
                         rootAPI._autoRoot
                     );
-
-                    setTabsterOnElement(rootAPI._tabster, body, { root: rootAPI._autoRootInstance });
                 }
             }
 
