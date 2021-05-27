@@ -18,7 +18,6 @@ export const NestedGrouppers = () => (
         <div
             aria-label='Main'
             {...getTabsterAttribute({
-                modalizer: { id: 'main' },
                 deloser: {},
             })}
         >
