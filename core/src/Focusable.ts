@@ -1278,7 +1278,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_REJECT;
         }
 
-        if (ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
+        if (!ignoreGroupper && (this._isInCurrentGroupper(element, true) === false)) {
             return NodeFilter.FILTER_REJECT;
         }
 
