@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "clean": "rimraf dist",
-    "start": "npx webpack serve"
+    "build": "npx webpack",
+    "start": "npx webpack serve",
+    "tslint": "echo noop",
+    "tslint:check": "echo noop"
   },
   "author": "lingfangao@hotmail.com",
   "license": "ISC",
