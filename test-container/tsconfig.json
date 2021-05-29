@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "noResolve": false,
+        "module": "es2015",
+        "target": "es5",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": [
+            "es5",
+            "es2015.iterable",
+            "dom",
+            "esnext"
+        ],
+        "paths": {
+            "tabster": ["../core/src/index.ts"]
+        },
+        "baseUrl": ".",
+        "esModuleInterop": true
+    },
+
+    "include": [
+        "src"
+    ],
+}

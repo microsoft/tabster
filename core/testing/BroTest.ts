@@ -21,7 +21,8 @@ export function createElementString(tagName: string, attributes: {[name: string]
 declare var __tabsterInstance: any;
 
 export async function bootstrapTabsterPage() {
-    await page.goto(`file://${__dirname}/test-app.html`);
+    // TODO configure this easier
+    await page.goto('http://localhost:8080');
     await expect(page.title()).resolves.toMatch('Tabster Test');
 
     // Waiting for the test app to set Tabster up.
