@@ -19,7 +19,8 @@
     "build": "build-storybook --quiet",
     "clean": "rimraf storybook-static",
     "tslint": "tslint --project tsconfig.json --fix || true",
-    "tslint:check": "tslint --project tsconfig.json"
+    "tslint:check": "tslint --project tsconfig.json",
+    "prepare": "npm run build"
   },
   "eslintConfig": {
     "extends": [
