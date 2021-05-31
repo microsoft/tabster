@@ -21,8 +21,7 @@
     "tslint": "tslint --project tsconfig.json --fix || true",
     "tslint:check": "tslint --project tsconfig.json",
     "prepare": "npm run build",
-    "test": "jest",
-    "test:ci": "CI=true jest"
+    "test": "jest"
   },
   "dependencies": {
     "keyborg": "^0.7.0"
