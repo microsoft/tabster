@@ -47,6 +47,6 @@ module.exports = {
             },
             '__DEV__': isDev
         }),
-        new HtmlWebpackPlugin(),
+        new HtmlWebpackPlugin({ title: 'Tabster Test' }),
     ],
 };
