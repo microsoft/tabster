@@ -4,7 +4,8 @@
         "keyborg",
         "demo",
         "examples",
-        "lint"
+        "lint",
+        "test-container"
     ],
     "version": "0.7.0",
     "npmClient": "npm"
