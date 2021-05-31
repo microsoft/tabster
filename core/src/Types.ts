@@ -61,13 +61,25 @@ export interface ObservedElementBasicProps {
 export interface ObservedElementExtendedProps {
 }
 
+export interface ObservedElementAccesibilities {
+    Any: 0;
+    Accessible: 1;
+    Focusable: 2;
+}
+export type ObservedElementAccesibility = ObservedElementAccesibilities[keyof ObservedElementAccesibilities];
+export const ObservedElementAccesibilities: ObservedElementAccesibilities = {
+    Any: 0,
+    Accessible: 1,
+    Focusable: 2
+};
+
 export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
     add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
-    getElement(observedName: string, accessible?: boolean): HTMLElement | null;
-    waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<HTMLElement | null>;
+    getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
+    waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<HTMLElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -125,8 +137,8 @@ export interface CrossOriginFocusedElementState extends Subscribable<CrossOrigin
 }
 
 export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
-    getElement(observedName: string, accessible?: boolean): Promise<CrossOriginElement | null>;
-    waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<CrossOriginElement | null>;
+    getElement(observedName: string, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
+    waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 

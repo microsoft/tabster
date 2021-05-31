@@ -347,7 +347,10 @@ interface CrossOriginElementDataIn {
     rootId?: string;
     ownerId?: string;
     observedName?: string;
-    accessible?: boolean;
+    /**
+     * Optionally wait if the element is accessible or focusable before returning it
+     */
+    accessibility?: Types.ObservedElementAccesibility;
 }
 
 interface FocusElementData extends CrossOriginElementDataIn {
@@ -678,7 +681,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
         if (!element && beginData) {
             const name = beginData.observedName;
             const timeout = data.timeout;
-            const accessible = beginData.accessible;
+            const accessibility = beginData.accessibility;
 
             if (name && timeout) {
                 const e: {
@@ -689,7 +692,11 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                     let isForwardResolved = false;
                     let isResolved = false;
 
-                    (tabster as unknown as Types.TabsterInternal).observedElement!!!.waitElement(name, timeout, accessible).then(value => {
+                    (tabster as unknown as Types.TabsterInternal).observedElement!!!.waitElement(
+                        name,
+                        timeout,
+                        accessibility
+                    ).then(value => {
                         isWaitElementResolved = true;
 
                         if (!isResolved && (value || isForwardResolved)) {
@@ -1290,20 +1297,28 @@ export class CrossOriginObservedElementState
         (instance as CrossOriginObservedElementState).dispose();
     }
 
-    async getElement(observedName: string, accessible?: boolean): Promise<CrossOriginElement | null> {
-        return this.waitElement(observedName, 0, accessible);
+    async getElement(observedName: string, accessibility?: Types.ObservedElementAccesibility): Promise<CrossOriginElement | null> {
+        return this.waitElement(observedName, 0, accessibility);
     }
 
-    async waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<CrossOriginElement | null> {
+    async waitElement(
+        observedName: string,
+        timeout: number,
+        accessibility?: Types.ObservedElementAccesibility
+    ): Promise<CrossOriginElement | null> {
         return this._transactions.beginTransaction(GetElementTransaction, {
             observedName,
-            accessible
+            accessibility
         }, timeout).then(value => value ? StateTransaction.createElement(this._tabster, value) : null);
     }
 
     async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
-        return this.waitElement(observedName, timeout, true).then(element => ((this._lastRequestFocusId === requestId) && element)
+        return this.waitElement(
+            observedName,
+            timeout,
+            Types.ObservedElementAccesibilities.Focusable
+        ).then(element => ((this._lastRequestFocusId === requestId) && element)
             ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element)
             : false
         );
