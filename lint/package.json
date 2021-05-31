@@ -5,7 +5,7 @@
   "description": "Lint rules for the repo",
   "author": "Lingfan Gao <lingfan.gao@microsoft.com>",
   "homepage": "https://github.com/microsoft/ability-helpers#readme",
-  "license": "ISC",
+  "license": "MIT",
   "main": "tslint.json",
   "repository": {
     "type": "git",

@@ -13,8 +13,8 @@
     "tslint:check": "echo noop",
     "prepare": "npm run build"
   },
-  "author": "lingfangao@hotmail.com",
-  "license": "ISC",
+  "author": "Lingfan Gao <lingfan.gao@microsoft.com>",
+  "license": "MIT",
   "dependencies": {
     "tabster": "^0.7.0"
   },
