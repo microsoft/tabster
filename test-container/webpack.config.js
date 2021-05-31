@@ -3,8 +3,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
 
-const isDev = (process.env.NODE_ENV !== 'production');
-
 module.exports = {
     mode: 'development',
 
@@ -43,9 +41,9 @@ module.exports = {
     plugins: [
         new webpack.DefinePlugin({
             'process.env': {
-                NODE_ENV: isDev ? '"development"' : '"production"'
+                NODE_ENV: "development"
             },
-            '__DEV__': isDev
+            '__DEV__': true
         }),
         new HtmlWebpackPlugin({ title: 'Tabster Test' }),
     ],
