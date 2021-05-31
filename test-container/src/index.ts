@@ -9,3 +9,6 @@ getDeloser(tabster)
 console.log('created deloser')
 getOutline(tabster)
 console.log('created outline')
+
+// @ts-ignore
+console.log('initialized tabster', window.__tabsterInstance);

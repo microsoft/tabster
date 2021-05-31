@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
 
@@ -18,6 +19,7 @@ module.exports = {
 
     devServer: {
         port: 8080,
+        contentBase: path.join(__dirname, 'dist'),
     },
 
     resolve: {
@@ -45,5 +47,6 @@ module.exports = {
             },
             '__DEV__': isDev
         }),
+        new HtmlWebpackPlugin(),
     ],
 };
