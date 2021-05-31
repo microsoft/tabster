@@ -5,6 +5,9 @@
     "build": "lerna exec -- npm run build",
     "clean": "lerna exec -- npm run clean && lerna clean --yes",
     "start": "lerna exec --scope examples -- npm run start",
+    "serve": "lerna exec --scope test-container -- npm run serve",
+    "test": "lerna exec --scope tabster -- npm run test",
+    "test:ci": "lerna exec --scope tabster -- npm run test:ci",
     "lint": "npm run tslint:check",
     "tslint:check": "lerna exec -- npm run tslint:check"
   },
