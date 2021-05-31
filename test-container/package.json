@@ -10,7 +10,8 @@
     "start": "npx webpack serve",
     "serve": "npx http-serve dist",
     "tslint": "echo noop",
-    "tslint:check": "echo noop"
+    "tslint:check": "echo noop",
+    "prepare": "npm run build"
   },
   "author": "lingfangao@hotmail.com",
   "license": "ISC",
