@@ -9,9 +9,19 @@ import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { documentContains, getElementUId, getPromise, WeakHTMLElement } from '../Utils';
 
+const _accessibleCheckTime = 100;
+
 interface ObservedElementInfo {
     element: WeakHTMLElement;
     triggeredName?: string;
+}
+
+interface ObservedWaiting {
+    timer?: number;
+    aTimer?: number;
+    promise?: Promise<HTMLElement | null>;
+    resolve?: (value: HTMLElement | null) => void;
+    reject?: () => void;
 }
 
 export class ObservedElementAPI
@@ -20,13 +30,7 @@ export class ObservedElementAPI
     private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
-    private _waiting: {
-        [name: string]: {
-            timer?: number,
-            promise?: Promise<HTMLElement | null>,
-            resolve?: (value: HTMLElement | null) => void,
-            reject?: () => void }
-    } = {};
+    private _waiting: { [key: string]: ObservedWaiting } = {};
     private _lastRequestFocusId = 0;
     private _observedById: { [uid: string]: ObservedElementInfo } = {};
     private _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
@@ -53,18 +57,22 @@ export class ObservedElementAPI
 
         win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
 
-        for (let name of Object.keys(this._waiting)) {
-            const w = this._waiting[name];
+        for (let key of Object.keys(this._waiting)) {
+            const w = this._waiting[key];
 
             if (w.timer) {
                 win.clearTimeout(w.timer);
+            }
+
+            if (w.aTimer) {
+                win.clearTimeout(w.aTimer);
             }
 
             if (w.reject) {
                 w.reject();
             }
 
-            delete this._waiting[name];
+            delete this._waiting[key];
         }
 
         this._observedById = {};
@@ -145,7 +153,7 @@ export class ObservedElementAPI
         this._onObservedElementUpdate(element);
     }
 
-    getElement(observedName: string): HTMLElement | null {
+    getElement(observedName: string, accessible?: boolean): HTMLElement | null {
         const o = this._observedByName[observedName];
 
         if (o) {
@@ -157,31 +165,34 @@ export class ObservedElementAPI
                     delete this._observedById[uid];
                 }
 
-                return el;
+                return el && (!accessible || this._tabster.focusable.isAccessible(el)) ? el : null;
             }
         }
 
         return null;
     }
 
-    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null> {
-        const el = this.getElement(observedName);
+    waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<HTMLElement | null> {
+        const el = this.getElement(observedName, accessible);
 
         if (el) {
             return getPromise(this._win).resolve(el);
         }
 
-        let w = this._waiting[observedName];
+        const key = (accessible ? 'a' : '_') + observedName;
+        let w = this._waiting[key];
 
         if (w && w.promise) {
             return w.promise;
         }
 
-        w = this._waiting[observedName] = {
+        w = this._waiting[key] = {
             timer: this._win().setTimeout(() => {
-                w.timer = undefined;
+                if (w.aTimer) {
+                    this._win().clearTimeout(w.aTimer);
+                }
 
-                delete this._waiting[observedName];
+                delete this._waiting[key];
 
                 if (w.resolve) {
                     w.resolve(null);
@@ -201,7 +212,7 @@ export class ObservedElementAPI
 
     async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
-        return this.waitElement(observedName, timeout).then(element => ((this._lastRequestFocusId === requestId) && element)
+        return this.waitElement(observedName, timeout, true).then(element => ((this._lastRequestFocusId === requestId) && element)
             ? this._tabster.focusedElement.focus(element)
             : false
         );
@@ -270,17 +281,41 @@ export class ObservedElementAPI
         this.trigger(val, details);
 
         const name = details.name;
-        const w = name && this._waiting[name];
 
-        if (w) {
-            if (w.timer) {
-                this._win().clearTimeout(w.timer);
+        if (name) {
+            const key1 = '_' + name;
+            const key2 = 'a' + name;
+            const w1 = this._waiting[key1];
+            const w2 = this._waiting[key2];
+            const win = this._win();
+
+            const resolve = (key: string, waiting: ObservedWaiting) => {
+                if (waiting.timer) {
+                    win.clearTimeout(waiting.timer);
+                }
+
+                delete this._waiting[key];
+
+                if (waiting.resolve) {
+                    waiting.resolve(val);
+                }
+            };
+
+            if (w1) {
+                resolve(key1, w1);
             }
 
-            delete this._waiting[name];
+            if (w2 && !w2.aTimer) {
+                const resolveAccessible = () => {
+                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isAccessible(val)) {
+                        resolve(key2, w2);
+                        w2.aTimer = undefined;
+                    } else {
+                        w2.aTimer = win.setTimeout(resolveAccessible, _accessibleCheckTime);
+                    }
+                };
 
-            if (w.resolve) {
-                w.resolve(val);
+                resolveAccessible();
             }
         }
     }

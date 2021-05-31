@@ -66,8 +66,8 @@ export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedEl
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
-    getElement(observedName: string): HTMLElement | null;
-    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null>;
+    getElement(observedName: string, accessible?: boolean): HTMLElement | null;
+    waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<HTMLElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -125,8 +125,8 @@ export interface CrossOriginFocusedElementState extends Subscribable<CrossOrigin
 }
 
 export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
-    getElement(observedName: string): Promise<CrossOriginElement | null>;
-    waitElement(observedName: string, timeout: number): Promise<CrossOriginElement | null>;
+    getElement(observedName: string, accessible?: boolean): Promise<CrossOriginElement | null>;
+    waitElement(observedName: string, timeout: number, accessible?: boolean): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -251,7 +251,7 @@ export type MoverAxis = MoverAxisOptions[keyof MoverAxisOptions];
 
 /**
  * Options to configure keyboard navigation mover API
- * 
+ *
  * TODO move Mover API to top level class and allow sane defaults
  */
 export type MoverOptions = {
@@ -462,7 +462,7 @@ export interface Modalizer {
      * Sets the active state of the modalizr
      * When active, sets `aria-hidden` on all other elements
      * Reverts `aria-hidden` changes when set to inactive
-     *  
+     *
      * @param active Whether the modalizer is active
      */
     setActive(active: boolean): void;
@@ -513,7 +513,7 @@ export interface RootAPI {
 export interface ModalizerAPI {
     /**
      * Adds an element to be managed by Modalizer
-     * 
+     *
      * @param element Element that is not managed by Modalizer
      * @param basic Basic props
      * @param extended Extended props
@@ -525,7 +525,7 @@ export interface ModalizerAPI {
     getActiveModalizer(): Modalizer | undefined;
     /**
      * Stops managing an element with Modalizer. Should be called before the element is removed from DOM.
-     *  
+     *
      * @param element Element that is managed by Modalizer
      */
     remove(element: HTMLElement): void;
@@ -533,7 +533,7 @@ export interface ModalizerAPI {
     setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
     /**
      * Activates a Modalizer and focuses the first or default element within
-     * 
+     *
      * @param elementFromModalizer An element that belongs to a Modalizer
      * @param noFocusFirst Do not focus on the first element in the Modalizer
      * @param noFocusDefault Do not focus the default element in the Modalizre
