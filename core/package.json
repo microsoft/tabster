@@ -1,6 +1,6 @@
 {
   "name": "tabster",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Focus Management Tools for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "keyborg": "^0.7.0"
+    "keyborg": "^0.7.1"
   },
   "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
@@ -41,7 +41,7 @@
     "core-js": "^3.9.1",
     "jest": "^26.6.3",
     "jest-puppeteer": "^4.4.0",
-    "lint": "^0.6.0",
+    "lint": "^0.7.1",
     "puppeteer": "^5.5.0",
     "requirejs": "^2.3.6",
     "rimraf": "^3.0.2",

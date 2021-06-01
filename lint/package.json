@@ -1,11 +1,11 @@
 {
   "name": "lint",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.1",
   "description": "Lint rules for the repo",
   "author": "Lingfan Gao <lingfan.gao@microsoft.com>",
   "homepage": "https://github.com/microsoft/ability-helpers#readme",
-  "license": "ISC",
+  "license": "MIT",
   "main": "tslint.json",
   "repository": {
     "type": "git",

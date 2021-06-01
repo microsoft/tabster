@@ -1,7 +1,7 @@
 {
   "name": "tabster-react-demo",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A demo React project",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -17,7 +17,7 @@
     "prepare": "npm run build"
   },
   "devDependencies": {
-    "lint": "^0.6.0",
+    "lint": "^0.7.1",
     "rimraf": "^3.0.2",
     "source-map-loader": "^2.0.1",
     "terser-webpack-plugin": "^5.1.1",
@@ -33,6 +33,6 @@
     "@types/react-dom": "^17.0.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "tabster": "^0.7.0"
+    "tabster": "^0.7.1"
   }
 }
