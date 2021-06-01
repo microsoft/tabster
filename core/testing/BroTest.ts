@@ -264,4 +264,45 @@ export class BroTest implements PromiseLike<undefined> {
 
         return this;
     }
+
+    focusElement(selector: string) {
+        this._chain.push(new BroTestItemCallback(async() => {
+            await page.evaluate((selector: string) => {
+                const el = document.querySelector(selector);
+                if (!el) {
+                    throw new Error(`focusElement: could not find element with selector ${selector}`);
+                }
+
+                // TODO remove this if ever switching to cypress
+                // tslint:disable-next-line
+                // https://github.com/cypress-io/cypress/blob/56234e52d6d1cbd292acdfd5f5d547f0c4706b51/packages/driver/src/cy/focused.js#L101
+                let hasFocused = false;
+                const onFocus = () => hasFocused = true;
+
+                el.addEventListener('focus', onFocus);
+                (el as HTMLElement).focus();
+                el.removeEventListener('focus', onFocus);
+
+                // only simulate the focus events if the element was sucessfully focused
+                if (!hasFocused && document.activeElement === el) {
+                    const focusinEvt = new FocusEvent('focusin', {
+                        bubbles: true,
+                        view: window,
+                        relatedTarget: null,
+                    });
+
+                    const focusEvt = new FocusEvent('focus', {
+                        view: window,
+                        relatedTarget: null,
+                    });
+
+                    el.dispatchEvent(focusinEvt);
+                    el.dispatchEvent(focusEvt);
+                }
+
+            }, selector);
+        }));
+
+        return this;
+    }
 }
