@@ -89,7 +89,7 @@ export class Modalizer implements Types.Modalizer {
                 false,
                 this.internalId,
                 this.userId,
-                this._isActive, 
+                this._isActive,
                 this._isFocused,
             );
         }
@@ -183,12 +183,12 @@ export class Modalizer implements Types.Modalizer {
             // Restore `aria-hidden` when modalizer is inactive
             augmentAttribute(this._tabster, el, 'aria-hidden', active ? 'true' : undefined);
 
-            const modalizerRootOnPage = (modalizerRoot === modalizerRoot?.ownerDocument.body) 
-                ? false 
+            const modalizerRootOnPage = (modalizerRoot === modalizerRoot?.ownerDocument.body)
+                ? false
                 : modalizerRoot?.ownerDocument.body.contains(modalizerRoot);
 
-            const modalizerParentOnPage = (modalizerParent === modalizerParent?.ownerDocument.body) 
-                ? false 
+            const modalizerParentOnPage = (modalizerParent === modalizerParent?.ownerDocument.body)
+                ? false
                 : modalizerParent?.ownerDocument.body.contains(modalizerParent);
 
             // if the modalizer root or its parent is not on the page, all nodes need to be visited
@@ -503,7 +503,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         this._curModalizer?.setFocused(false);
 
-        // Developers calling `element.focus()` should change/deactivate active modalizer 
+        // Developers calling `element.focus()` should change/deactivate active modalizer
         if (details.isFocusedProgrammatically && !this._curModalizer?.contains(focusedElement)) {
             this._curModalizer?.setActive(false);
             this._curModalizer = undefined;
@@ -512,7 +512,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer = modalizer;
                 this._curModalizer.setActive(true);
                 this._curModalizer.setFocused(true);
-            } 
+            }
         } else if (!this._curModalizer?.getBasicProps().isOthersAccessible) {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
             this._restoreModalizerFocus(focusedElement);
@@ -545,6 +545,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             // Current Modalizer doesn't seem to have focusable elements.
             // Blurring the currently focused element which is outside of the current Modalizer.
             outsideElement.blur();
-        } 
+        }
     }
 }

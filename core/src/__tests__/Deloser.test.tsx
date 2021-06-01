@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from '../testing/BroTest';
-import { getTabsterAttribute } from './Tabster';
+import * as BroTest from '../../testing/BroTest';
+import { getTabsterAttribute } from '../Tabster';
 
 describe('Deloser', () => {
     beforeAll(async () => {
