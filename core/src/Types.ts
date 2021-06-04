@@ -468,6 +468,10 @@ export interface Modalizer {
     getModalizerRoot(): HTMLElement | undefined;
     getExtendedProps(): ModalizerExtendedProps;
     isActive(): boolean;
+    /**
+     * @returns Whether focus is inside the modalizer
+     */
+    hasFocus(): boolean;
     move(newElement: HTMLElement): void;
     onBeforeFocusOut(): boolean;
     /**

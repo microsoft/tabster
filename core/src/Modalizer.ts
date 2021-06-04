@@ -138,6 +138,15 @@ export class Modalizer implements Types.Modalizer {
         this.setActive(!this._isActive);
     }
 
+    hasFocus(): boolean {
+        const modalizerRoot = this._modalizerRoot.get();
+        if (!modalizerRoot) {
+            return false;
+        }
+
+        return modalizerRoot.contains(modalizerRoot.ownerDocument.activeElement);
+    }
+
     setActive(active: boolean): void {
         if (active === this._isActive) {
             return;
@@ -340,12 +349,23 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        if (!this._modalizers[basic.id]) {
-            const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
-            this._modalizers[basic.id] = modalizer;
-        } else if (__DEV__) {
-            const err = new Error(`Attempted to add Modalizer: ${basic.id} which already exists`);
+        if (this._modalizers[basic.id] && __DEV__) {
+            const err = new Error(`Attempting to add Modalizer: ${basic.id} which already exists`);
             console.error(err.stack);
+        }
+
+        const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
+        this._modalizers[basic.id] = modalizer;
+
+        // Adding a modalizer which is already focused, activate it
+        if (modalizer.hasFocus()) {
+            const prevModalizer = this._curModalizer;
+            if (prevModalizer) {
+                prevModalizer.setActive(false);
+                prevModalizer.setFocused(false);
+            }
+            this._curModalizer = modalizer;
+            this._curModalizer.setActive(true);
         }
 
         setTabsterOnElement(this._tabster, element, { modalizer: this._modalizers[basic.id] });
@@ -460,21 +480,16 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        if (__DEV__) {
-            console.warn(`Modalizer: ${details.modalizer.userId}.
-                calling ModalizerAPI.remove(element) before removing a modalizer from DOM can be safer.
-            `);
-        }
-
+        const removedModalizer = details.modalizer;
         // If an active modalizer is no longer on DOM, deactivate it
-        if (details.modalizer.isActive()) {
-            details.modalizer.setFocused(false);
-            details.modalizer.setActive(false);
+        if (removedModalizer.isActive()) {
+            removedModalizer.setFocused(false);
+            removedModalizer.setActive(false);
         }
 
-        details.modalizer.dispose();
-        delete this._modalizers[details.modalizer.userId];
-        if (this._curModalizer === details.modalizer) {
+        removedModalizer.dispose();
+        delete this._modalizers[removedModalizer.userId];
+        if (this._curModalizer === removedModalizer) {
             this._curModalizer = undefined;
         }
     }
