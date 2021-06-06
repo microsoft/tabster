@@ -207,6 +207,10 @@ export interface Deloser {
     getBasicProps(): DeloserBasicProps;
     move(newContainer: HTMLElement): void;
     dispose(): void;
+    /**
+     * @returns Whether focus is inside the deloser
+     */
+    hasFocus(): boolean;
     isActive(): boolean;
     setActive(active: boolean): void;
     getActions(): DeloserElementActions;
