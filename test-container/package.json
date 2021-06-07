@@ -19,6 +19,7 @@
     "tabster": "^0.7.1"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "^9.0.0",
     "html-webpack-plugin": "^5.3.1",
     "rimraf": "^3.0.2",
     "source-map-loader": "^3.0.0",
