@@ -7,9 +7,11 @@ import { CrossOriginAPI } from './CrossOrigin';
 import { DeloserAPI } from './Deloser';
 import { FocusableAPI } from './Focusable';
 import { FocusedElementState } from './State/FocusedElement';
+import { GroupperAPI } from './Groupper';
 import { updateTabsterByAttribute } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
+import { MoverAPI } from './Mover';
 import { observeMutations } from './MutationEvent';
 import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
@@ -40,12 +42,16 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
 
+    groupper?: Types.GroupperAPI;
+    mover?: Types.MoverAPI;
     outline?: Types.OutlineAPI;
     deloser?: Types.DeloserAPI;
     modalizer?: Types.ModalizerAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
 
+    groupperDispose?: Types.DisposeFunc;
+    moverDispose?: Types.DisposeFunc;
     outlineDispose?: Types.DisposeFunc;
     rootDispose?: Types.DisposeFunc;
     deloserDispose?: Types.DisposeFunc;
@@ -66,7 +72,9 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.keyboardNavigation = new KeyboardNavigationState(this, getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
-        this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
+        this.root = new RootAPI(this, () => {
+            (this.groupper as Types.GroupperInternalAPI | undefined)?.forgetUnlimitedGrouppers();
+        }, props?.autoRoot);
 
         startWeakRefStorageCleanup(getWindow);
     }
@@ -82,6 +90,18 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         if (this._win && this._forgetMemorizedTimer) {
             this._win.clearTimeout(this._forgetMemorizedTimer);
             delete this._forgetMemorizedTimer;
+        }
+
+        if (this.groupperDispose) {
+            this.groupperDispose();
+            delete this.groupper;
+            delete this.groupperDispose;
+        }
+
+        if (this.moverDispose) {
+            this.moverDispose();
+            delete this.mover;
+            delete this.moverDispose;
         }
 
         if (this.outlineDispose) {
@@ -211,6 +231,38 @@ export function createTabster(win: Window, props?: Types.TabsterCoreProps): Type
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
 
     return tabster;
+}
+
+/**
+ * Creates a new groupper instance or returns an existing one
+ * @param tabster Tabster instance
+ */
+export function getGroupper(tabster: Types.TabsterCore): Types.GroupperAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+
+    if (!tabsterInternal.groupper) {
+        const groupper = new GroupperAPI(tabster, tabsterInternal.getWindow);
+        tabsterInternal.groupper = groupper;
+        tabsterInternal.groupperDispose = () => { GroupperAPI.dispose(groupper); };
+    }
+
+    return tabsterInternal.groupper;
+}
+
+/**
+ * Creates a new mover instance or returns an existing one
+ * @param tabster Tabster instance
+ */
+export function getMover(tabster: Types.TabsterCore): Types.MoverAPI {
+    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+
+    if (!tabsterInternal.mover) {
+        const mover = new MoverAPI(tabster, tabsterInternal.getWindow);
+        tabsterInternal.mover = mover;
+        tabsterInternal.moverDispose = () => { MoverAPI.dispose(mover); };
+    }
+
+    return tabsterInternal.mover;
 }
 
 export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {

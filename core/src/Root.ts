@@ -564,22 +564,25 @@ export class RootAPI implements Types.RootAPI {
      */
     static getTabsterContext(
         tabster: Types.TabsterCore,
-        element: Node, options: Types.GetTabsterContextOptions = {},
+        element: Node,
+        options: Types.GetTabsterContextOptions = {}
     ): Types.TabsterContext | undefined {
         if (!element.ownerDocument) {
             return undefined;
         }
 
+        const getAllGrouppersAndMovers = options.getAllGrouppersAndMovers;
         let root: Types.Root | undefined;
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
-        let mover: HTMLElement | undefined;
-        let moverOptions: Types.MoverOptions | undefined;
+        let mover: Types.Mover | undefined;
         let isGroupperFirst: boolean | undefined;
         let isRtl = false;
+        let allGrouppersAndMovers: Types.TabsterContext['allGrouppersAndMovers'] = getAllGrouppersAndMovers ? [] : undefined;
 
         let curElement: (Node | null) = element;
-        while (curElement && (!root || options.checkRtl )) {
+
+        while (curElement && (!root || options.checkRtl)) {
             const tabsterOnElement = getTabsterOnElement(tabster, curElement);
 
             if (!tabsterOnElement) {
@@ -587,18 +590,32 @@ export class RootAPI implements Types.RootAPI {
                 continue;
             }
 
-            if (!groupper && tabsterOnElement.groupper) {
-                groupper = tabsterOnElement.groupper;
+            const curGroupper = tabsterOnElement.groupper;
+            const curMover = tabsterOnElement.mover;
+
+            if (getAllGrouppersAndMovers && allGrouppersAndMovers) {
+                if (curGroupper) {
+                    allGrouppersAndMovers.push({
+                        isGroupper: true,
+                        groupper: curGroupper
+                    });
+                }
+
+                if (curMover) {
+                    allGrouppersAndMovers.push({
+                        isGroupper: false,
+                        mover: curMover
+                    });
+                }
             }
 
-            const moverOnElement = tabsterOnElement.focusable?.mover;
-            if ((moverOnElement !== undefined) && (moverOptions === undefined)) {
-                moverOptions = moverOnElement;
+            if (!groupper && curGroupper) {
+                groupper = curGroupper;
+            }
 
-                if ((moverOptions.navigationType === Types.MoverKeys.Arrows) || (moverOptions.navigationType === Types.MoverKeys.Both)) {
-                    mover = curElement as HTMLElement;
-                    isGroupperFirst = !!groupper;
-                }
+            if (!mover && curMover) {
+                mover = curMover;
+                isGroupperFirst = !!groupper;
             }
 
             if (!modalizer && tabsterOnElement.modalizer) {
@@ -642,9 +659,9 @@ export class RootAPI implements Types.RootAPI {
             modalizer,
             groupper,
             mover,
-            moverOptions,
             isGroupperFirst,
-            isRtl: options.checkRtl ? isRtl : undefined,
+            allGrouppersAndMovers,
+            isRtl: options.checkRtl ? isRtl : undefined
         } : undefined;
 
     }

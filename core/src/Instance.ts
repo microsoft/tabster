@@ -57,9 +57,9 @@ export function setTabsterOnElement(
                     attrObject[key] = (h as Types.Groupper).getBasicProps();
                     break;
 
-                case 'uberGroupper':
-                    cur[key] = tabsterOnElement.uberGroupper;
-                    attrObject[key] = true;
+                case 'mover':
+                    cur[key] = tabsterOnElement.mover;
+                    attrObject[key] = (h as Types.Mover).getBasicProps();
                     break;
 
                 case 'observed':
@@ -182,10 +182,15 @@ export function updateTabsterByAttribute(
                     break;
 
                 case 'groupper':
-                    tabster.focusable.removeGroupper(element);
+                    if (tabsteri.groupper) {
+                        tabsteri.groupper.remove(element);
+                    }
                     break;
 
-                case 'uberGroupper':
+                case 'mover':
+                    if (tabsteri.mover) {
+                        tabsteri.mover.remove(element);
+                    }
                     break;
 
                 case 'observed':
@@ -249,11 +254,28 @@ export function updateTabsterByAttribute(
                 if (tabsterOnElement && tabsterOnElement.groupper) {
                     tabsterOnElement.groupper.setProps(newObject.groupper);
                 } else {
-                    tabster.focusable.addGroupper(element, newObject.groupper);
+                    if (tabsteri.groupper) {
+                        tabsteri.groupper.add(element, newObject.groupper);
+                    }
+
+                    if (!tabsteri.groupper && __DEV__) {
+                        console.error('Groupper API used before initializing, please call `getGroupper`');
+                    }
                 }
                 break;
 
-            case 'uberGroupper':
+            case 'mover':
+                if (tabsterOnElement && tabsterOnElement.mover) {
+                    tabsterOnElement.mover.setProps(newObject.mover);
+                } else {
+                    if (tabsteri.mover) {
+                        tabsteri.mover.add(element, newObject.mover);
+                    }
+
+                    if (!tabsteri.mover && __DEV__) {
+                        console.error('Mover API used before initializing, please call `getMover`');
+                    }
+                }
                 break;
 
             case 'observed':

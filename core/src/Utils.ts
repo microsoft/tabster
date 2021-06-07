@@ -4,7 +4,7 @@
  */
 
 import { Types } from './Tabster';
-import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
+import { GetWindow, Visibilities, Visibility } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -158,7 +158,7 @@ class FakeWeakRef implements TabsterWeakRef {
     }
 }
 
-export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> {
+export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> implements Types.WeakHTMLElement<D> {
     private _ctx: InstanceContext;
     private _id: string;
     private _data: D | undefined;
@@ -327,7 +327,7 @@ export function isElementVerticallyVisibleInContainer(getWindow: GetWindow, elem
     return false;
 }
 
-export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLElement, gap = 0): ElementVisibility {
+export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLElement, gap = 0): Visibility {
     const container = getScrollableContainer(element);
 
     if (container) {
@@ -338,7 +338,7 @@ export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLE
             ((elementRect.left > containerRect.right) || (elementRect.top > containerRect.bottom)) ||
             ((elementRect.bottom < containerRect.top) || (elementRect.right < containerRect.left))
         ) {
-            return ElementVisibilities.Invisible;
+            return Visibilities.Invisible;
         }
 
         if (
@@ -347,13 +347,13 @@ export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLE
             ((elementRect.left + gap >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
             ((elementRect.right >= containerRect.left) && (elementRect.right - gap <= containerRect.right))
         ) {
-            return ElementVisibilities.Visible;
+            return Visibilities.Visible;
         }
 
-        return ElementVisibilities.PartiallyVisible;
+        return Visibilities.PartiallyVisible;
     }
 
-    return ElementVisibilities.Invisible;
+    return Visibilities.Invisible;
 }
 
 export function scrollIntoView(getWindow: GetWindow, element: HTMLElement, alignToTop: boolean): void {
@@ -525,5 +525,58 @@ export function setBasics(win: Window, basics: Types.InternalBasics): void {
     key = 'WeakRef';
     if (key in basics) {
         context.basics[key] = basics[key];
+    }
+}
+
+let _lastTabsterPartId = 0;
+
+export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterPart<B, E> {
+    protected _tabster: Types.TabsterCore;
+    protected _element: WeakHTMLElement<HTMLElement, D>;
+    protected _win: GetWindow;
+    protected _basic: Partial<B>;
+    protected _extended: Partial<E>;
+
+    readonly id: string;
+
+    constructor(
+        tabster: Types.TabsterCore,
+        element: HTMLElement,
+        getWindow: GetWindow,
+        basic?: B,
+        extended?: E
+    ) {
+        this._tabster = tabster;
+        this._element = new WeakHTMLElement(getWindow, element);
+        this._win = getWindow;
+        this._basic = basic || {};
+        this._extended = extended || {};
+        this.id = 'i' + ++_lastTabsterPartId;
+    }
+
+    getElement(): HTMLElement | undefined {
+        return this._element.get();
+    }
+
+    getBasicProps(): Partial<B> {
+        return this._basic;
+    }
+
+    getExtendedProps(): Partial<E> {
+        return this._extended;
+    }
+
+    setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {};
+        }
+
+        if (extended) {
+            this._extended = { ...this._extended, ...extended };
+        } else if (extended === null) {
+            this._extended = {};
+        }
     }
 }
