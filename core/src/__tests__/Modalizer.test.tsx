@@ -6,28 +6,28 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types } from '../Tabster';
 
-const getTestHtml = (options: Partial<Types.ModalizerBasicProps> = {}) => {
-    const id = 'modal';
-    const rootAttr = getTabsterAttribute({ root: {} });
-    const modalizerAttr = getTabsterAttribute({
-        modalizer: { id, ...options }
-    });
-
-    return (
-        <div {...rootAttr}>
-            <div id='hidden'>
-                <div>Hidden</div>
-                <button id='outside'>Outside</button>
-            </div>
-            <div aria-label='modal' id='modal' {...modalizerAttr}>
-                <button id='foo'>Foo</button>
-                <button>Bar</button>
-            </div>
-        </div>
-    );
-};
-
 describe('Modalizer', () => {
+    const getTestHtml = (options: Partial<Types.ModalizerBasicProps> = {}) => {
+        const id = 'modal';
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const modalizerAttr = getTabsterAttribute({
+            modalizer: { id, ...options }
+        });
+
+        return (
+            <div {...rootAttr}>
+                <div id='hidden'>
+                    <div>Hidden</div>
+                    <button id='outside'>Outside</button>
+                </div>
+                <div aria-label='modal' id='modal' {...modalizerAttr}>
+                    <button id='foo'>Foo</button>
+                    <button>Bar</button>
+                </div>
+            </div>
+        );
+    };
+
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
@@ -95,9 +95,50 @@ describe('Modalizer', () => {
             .pressTab()
             .activeElement(el => expect(el?.textContent).toBe('Foo'));
     });
+
+    describe('Others content accessible', () => {
+        it('should allow focus outside of modalizer', async () => {
+            await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
+                .focusElement('#foo')
+                .eval(() =>
+                    document
+                        .getElementById('hidden')
+                        ?.hasAttribute('aria-hidden')
+                )
+                .check((hasAriaHidden: boolean | undefined) =>
+                    expect(hasAriaHidden).toBe(false)
+                )
+                .pressTab(true)
+                .activeElement(el => expect(el?.attributes.id).toBe('outside'));
+        });
+
+        it('should allow focus into modalizer', async () => {
+            await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
+                .focusElement('#outside')
+                .pressTab()
+                .activeElement(el => expect(el?.attributes.id).toBe('foo'));
+        });
+    });
 });
 
-describe('Modalizer - Others content accessible', () => {
+describe('New Modalizer that already has focus', () => {
+    const getTestHtml = () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+
+        return (
+            <div {...rootAttr}>
+                <div id='hidden'>
+                    <div>Hidden</div>
+                    <button id='outside'>Outside</button>
+                </div>
+                <div aria-label='modal' id='modal'>
+                    <button id='foo'>Foo</button>
+                    <button>Bar</button>
+                </div>
+            </div>
+        );
+    };
+
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
@@ -107,23 +148,29 @@ describe('Modalizer - Others content accessible', () => {
         await new BroTest.BroTest((<div></div>));
     });
 
-    it('should allow focus outside of modalizer', async () => {
-        await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
-            .focusElement('#foo')
-            .eval(() =>
-                document.getElementById('hidden')?.hasAttribute('aria-hidden')
-            )
-            .check((hasAriaHidden: boolean | undefined) =>
-                expect(hasAriaHidden).toBe(false)
-            )
-            .pressTab(true)
-            .activeElement(el => expect(el?.attributes.id).toBe('outside'));
-    });
+    it('should be activated', async () => {
+        const tabsterAttr = getTabsterAttribute(
+            {
+                modalizer: { id: 'modal ' }
+            },
+            true
+        ) as string;
 
-    it('should allow focus into modalizer', async () => {
-        await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
-            .focusElement('#outside')
-            .pressTab()
-            .activeElement(el => expect(el?.attributes.id).toBe('foo'));
+        await new BroTest.BroTest(getTestHtml())
+            .focusElement('#foo')
+            .eval(
+                (attrName, tabsterAttr) => {
+                    const newModalizer = document.getElementById('modal');
+                    newModalizer?.setAttribute(attrName, tabsterAttr);
+                },
+                Types.TabsterAttributeName,
+                tabsterAttr
+            )
+            .eval(() =>
+                document.getElementById('hidden')?.getAttribute('aria-hidden')
+            )
+            .check((ariaHidden: string | undefined) =>
+                expect(ariaHidden).toBe('true')
+            );
     });
 });
