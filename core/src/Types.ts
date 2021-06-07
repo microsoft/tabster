@@ -207,10 +207,6 @@ export interface Deloser {
     getBasicProps(): DeloserBasicProps;
     move(newContainer: HTMLElement): void;
     dispose(): void;
-    /**
-     * @returns Whether focus is inside the deloser
-     */
-    hasFocus(): boolean;
     isActive(): boolean;
     setActive(active: boolean): void;
     getActions(): DeloserElementActions;
@@ -472,10 +468,6 @@ export interface Modalizer {
     getModalizerRoot(): HTMLElement | undefined;
     getExtendedProps(): ModalizerExtendedProps;
     isActive(): boolean;
-    /**
-     * @returns Whether focus is inside the modalizer
-     */
-    hasFocus(): boolean;
     move(newElement: HTMLElement): void;
     onBeforeFocusOut(): boolean;
     /**

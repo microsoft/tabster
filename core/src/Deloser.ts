@@ -378,11 +378,6 @@ export class Deloser implements Types.Deloser {
         this._history = [];
     }
 
-    hasFocus() {
-        const deloserRoot = this._element.get();
-        return !!deloserRoot?.contains(deloserRoot.ownerDocument?.activeElement);
-    }
-
     isActive = (): boolean => {
         return this._isActive;
     }
@@ -693,7 +688,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         const deloser = new Deloser(element, this._tabster, this._win, basic, extended);
         setTabsterOnElement(this._tabster, element, { deloser });
 
-        if (deloser.hasFocus()) {
+        if (element.contains(this._tabster.focusedElement.getFocusedElement() ?? null)) {
             this._activate(deloser);
         }
     }

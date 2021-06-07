@@ -138,15 +138,6 @@ export class Modalizer implements Types.Modalizer {
         this.setActive(!this._isActive);
     }
 
-    hasFocus(): boolean {
-        const modalizerRoot = this._modalizerRoot.get();
-        if (!modalizerRoot) {
-            return false;
-        }
-
-        return modalizerRoot.contains(modalizerRoot.ownerDocument.activeElement);
-    }
-
     setActive(active: boolean): void {
         if (active === this._isActive) {
             return;
@@ -358,7 +349,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._modalizers[basic.id] = modalizer;
 
         // Adding a modalizer which is already focused, activate it
-        if (modalizer.hasFocus()) {
+        if (element.contains(this._tabster.focusedElement.getFocusedElement() ?? null)) {
             const prevModalizer = this._curModalizer;
             if (prevModalizer) {
                 prevModalizer.setActive(false);
