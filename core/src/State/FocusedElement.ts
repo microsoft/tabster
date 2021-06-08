@@ -413,9 +413,11 @@ export class FocusedElementState
             }
 
             if (next) {
-                e.preventDefault();
-
-                nativeFocus(next);
+                // For iframes just allow normal Tab behaviour
+                if (next.tagName !== 'IFRAME') {
+                    e.preventDefault();
+                    nativeFocus(next);
+                }
             } else if (ctx) {
                 ctx.root.moveOutWithDefaultAction(isPrev);
             }
@@ -520,11 +522,9 @@ export class FocusedElementState
                     next = this._tabster.focusable.findFirst(next, false, true);
                 }
 
-                if (next) {
+                if (next && next.tagName !== 'IFRAME') {
                     this._tabster.focusable.setCurrentGroupper(next);
-
                     KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
-
                     nativeFocus(next);
                 }
             }

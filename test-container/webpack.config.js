@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
 
@@ -18,13 +19,14 @@ module.exports = {
     devServer: {
         port: 8080,
         contentBase: path.join(__dirname, 'dist'),
+        writeToDisk: true,
     },
 
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.json'],
         plugins: [
             new TsconfigPathsPlugin(),
-        ]
+        ],
     },
     stats: {
         errorDetails:true
@@ -43,5 +45,8 @@ module.exports = {
             '__DEV__': true
         }),
         new HtmlWebpackPlugin({ title: 'Tabster Test' }),
+        new CopyPlugin({
+            patterns: [{ from: 'public' }],
+        }),
     ],
 };
