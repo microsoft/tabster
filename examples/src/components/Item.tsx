@@ -13,7 +13,7 @@ export class Item extends React.PureComponent<{ onClick?: () => void}> {
                 tabIndex={0}
                 className='item'
                 { ...getTabsterAttribute({ groupper: {
-                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
+                    tabbability: TabsterTypes.GroupperTabbabilities.LimitedTrapFocus
                 }})}
             >
                 { this.props.children

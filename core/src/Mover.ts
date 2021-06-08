@@ -683,19 +683,23 @@ export class MoverAPI implements Types.MoverAPI {
         const isHorizontal = isBoth || (direction === Types.MoverDirections.Horizontal);
         const isGrid = direction === Types.MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
+        const shouldFlipRtl = isHorizontal && !!ctx.isRtl;
         let next: HTMLElement | null | undefined;
 
-        if (((keyCode === Keys.Down) && isVertical) || ((keyCode === Keys.Right) && isHorizontal)) {
-            next = focusable.findNext(focused, container);
+        let nextArrow = (isVertical && keyCode === Keys.Down) || (isHorizontal && keyCode === Keys.Right);
+        let prevArrow = (isVertical && keyCode === Keys.Up) || (isHorizontal && keyCode === Keys.Left);
+
+        if (nextArrow) {
+            next = shouldFlipRtl ? focusable.findPrev(focused, container) : focusable.findNext(focused, container);
 
             if (!next && isCyclic) {
-                next = focusable.findFirst(container);
+                next = shouldFlipRtl ? focusable.findLast(container) : focusable.findPrev(container);
             }
-        } else if (((keyCode === Keys.Up) && isVertical) || ((keyCode === Keys.Left) && isHorizontal)) {
-            next = focusable.findPrev(focused, container);
+        } else if (prevArrow) {
+            next = shouldFlipRtl ? focusable.findNext(focused, container) : focusable.findPrev(focused, container);
 
             if (!next && isCyclic) {
-                next = focusable.findLast(container);
+                next = shouldFlipRtl ? focusable.findFirst(container) : focusable.findLast(container);
             }
         } else if (keyCode === Keys.Home) {
             next = focusable.findFirst(container);

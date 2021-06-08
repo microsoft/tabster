@@ -31,11 +31,8 @@ const Collection = () => (
 export const ArrowNavigationVertical = () => (
     <div
         {...getTabsterAttribute({
-            focusable: {
-                mover: {
-                    navigationType: TabsterTypes.MoverKeys.Arrows,
-                    axis: TabsterTypes.MoverAxis.Vertical,
-                },
+            mover: {
+                direction: TabsterTypes.MoverDirections.Vertical,
             },
         })}
     >
@@ -46,11 +43,8 @@ export const ArrowNavigationVertical = () => (
 export const ArrowNavigationHorizontal = () => (
     <div
         {...getTabsterAttribute({
-            focusable: {
-                mover: {
-                    navigationType: TabsterTypes.MoverKeys.Arrows,
-                    axis: TabsterTypes.MoverAxis.Horizontal,
-                },
+            mover: {
+                direction: TabsterTypes.MoverDirections.Horizontal,
             },
         })}
     >
@@ -62,11 +56,9 @@ export const ArrowNavigationHorizontalRtl = () => (
     <div
         dir='rtl'
         {...getTabsterAttribute({
-            focusable: {
-                mover: {
-                    navigationType: TabsterTypes.MoverKeys.Arrows,
-                    axis: TabsterTypes.MoverAxis.Horizontal,
-                },
+            mover: {
+                direction: TabsterTypes.MoverDirections.Horizontal,
+                cyclic: true
             },
         })}
     >
@@ -77,12 +69,9 @@ export const ArrowNavigationHorizontalRtl = () => (
 export const ArrowNavigationCircular = () => (
     <div
         {...getTabsterAttribute({
-            focusable: {
-                mover: {
-                    cyclic: true,
-                    navigationType: TabsterTypes.MoverKeys.Arrows,
-                    axis: TabsterTypes.MoverAxis.Vertical,
-                },
+            mover: {
+                direction: TabsterTypes.MoverDirections.Horizontal,
+                cyclic: true,
             },
         })}
     >
@@ -96,12 +85,9 @@ export const NestedMovers = () => (
         <div
             style={{ border: '1px solid', padding: 10 }}
             {...getTabsterAttribute({
-                focusable: {
-                    mover: {
-                        cyclic: true,
-                        navigationType: TabsterTypes.MoverKeys.Arrows,
-                        axis: TabsterTypes.MoverAxis.Vertical,
-                    },
+                mover: {
+                    cyclic: true,
+                    direction: TabsterTypes.MoverDirections.Horizontal,
                 },
             })}
         >
@@ -109,13 +95,10 @@ export const NestedMovers = () => (
             <div
                 style={{ marginLeft: 10, marginTop: 10 }}
                 {...getTabsterAttribute({
-                    focusable: {
                         mover: {
                             cyclic: true,
-                            navigationType: TabsterTypes.MoverKeys.Arrows,
-                            axis: TabsterTypes.MoverAxis.Vertical,
+                            direction: TabsterTypes.MoverDirections.Horizontal,
                         },
-                    },
                 })}
             >
                 <Collection />
