@@ -24,7 +24,9 @@ module.exports = {
 
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.json'],
-        plugins: [new TsconfigPathsPlugin()],
+        plugins: [
+            new TsconfigPathsPlugin(),
+        ],
     },
     stats: {
         errorDetails:true
