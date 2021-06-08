@@ -11,7 +11,7 @@ module.exports = {
 
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, "dist"),
     },
 
     devtool: 'source-map',
@@ -34,13 +34,13 @@ module.exports = {
         rules: [
             // TODO replace with babel loader, this project really doesn't need to care about types
             { test: /\.ts?$/, loader: 'ts-loader' },
-            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
-        ],
+            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
+        ]
     },
 
     plugins: [
         new webpack.DefinePlugin({
-            __DEV__: true,
+            '__DEV__': true
         }),
         new HtmlWebpackPlugin({ title: 'Tabster Test' }),
         new CopyPlugin({
