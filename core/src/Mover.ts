@@ -615,7 +615,7 @@ export class MoverAPI implements Types.MoverAPI {
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
-        const keyCode = e.keyCode;
+        let keyCode = e.keyCode;
 
         switch (keyCode) {
             case Keys.Down:
@@ -684,23 +684,27 @@ export class MoverAPI implements Types.MoverAPI {
         const isHorizontal = isBoth || (direction === Types.MoverDirections.Horizontal);
         const isGrid = direction === Types.MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
-        const shouldFlipRtl = isHorizontal && !!ctx.isRtl;
         let next: HTMLElement | null | undefined;
 
-        let nextArrow = (isVertical && keyCode === Keys.Down) || (isHorizontal && keyCode === Keys.Right);
-        let prevArrow = (isVertical && keyCode === Keys.Up) || (isHorizontal && keyCode === Keys.Left);
-
-        if (nextArrow) {
-            next = shouldFlipRtl ? focusable.findPrev(focused, container) : focusable.findNext(focused, container);
-
-            if (!next && isCyclic) {
-                next = shouldFlipRtl ? focusable.findLast(container) : focusable.findPrev(container);
+        if (ctx.isRtl) {
+            if (keyCode === Keys.Right) {
+                keyCode = Keys.Left;
+            } else if (keyCode === Keys.Left) {
+                keyCode = Keys.Right;
             }
-        } else if (prevArrow) {
-            next = shouldFlipRtl ? focusable.findNext(focused, container) : focusable.findPrev(focused, container);
+        }
+
+        if (((keyCode === Keys.Down) && isVertical) || ((keyCode === Keys.Right) && isHorizontal)) {
+            next = focusable.findNext(focused, container);
 
             if (!next && isCyclic) {
-                next = shouldFlipRtl ? focusable.findFirst(container) : focusable.findLast(container);
+                next = focusable.findFirst(container);
+            }
+        } else if (((keyCode === Keys.Up) && isVertical) || ((keyCode === Keys.Left) && isHorizontal)) {
+            next = focusable.findPrev(focused, container);
+
+            if (!next && isCyclic) {
+                next = focusable.findLast(container);
             }
         } else if (keyCode === Keys.Home) {
             next = focusable.findFirst(container);

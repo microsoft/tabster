@@ -401,18 +401,26 @@ export class RootAPI implements Types.RootAPI {
         }
 
         const getAllGrouppersAndMovers = options.getAllGrouppersAndMovers;
+        const checkRtl = options.checkRtl;
         let root: Types.Root | undefined;
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
         let mover: Types.Mover | undefined;
         let isGroupperFirst: boolean | undefined;
-        let isRtl = false;
+        let isRtl: boolean | undefined;
         let allGrouppersAndMovers: Types.TabsterContext['allGrouppersAndMovers'] = getAllGrouppersAndMovers ? [] : undefined;
-
         let curElement: (Node | null) = element;
 
-        while (curElement && (!root || options.checkRtl)) {
+        while (curElement && (!root || checkRtl)) {
             const tabsterOnElement = getTabsterOnElement(tabster, curElement);
+
+            if (checkRtl && (isRtl === undefined)) {
+                const dir = (curElement as HTMLElement).dir;
+
+                if (dir) {
+                    isRtl = dir.toLowerCase() === 'rtl';
+                }
+            }
 
             if (!tabsterOnElement) {
                 curElement = curElement.parentElement;
@@ -455,10 +463,6 @@ export class RootAPI implements Types.RootAPI {
                 root = tabsterOnElement.root;
             }
 
-            if ((curElement as HTMLElement).getAttribute('dir') === 'rtl') {
-                isRtl = true;
-            }
-
             curElement = curElement.parentElement;
         }
 
@@ -490,7 +494,7 @@ export class RootAPI implements Types.RootAPI {
             mover,
             isGroupperFirst,
             allGrouppersAndMovers,
-            isRtl: options.checkRtl ? isRtl : undefined
+            isRtl: checkRtl ? !!isRtl : undefined
         } : undefined;
 
     }
