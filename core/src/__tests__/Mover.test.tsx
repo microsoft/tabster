@@ -31,20 +31,18 @@ describe('Mover', () => {
     it.each<
         [
             string,
-            Types.MoverAxis,
+            Types.MoverDirection,
             'pressDown' | 'pressRight',
             'pressUp' | 'pressLeft'
         ]
     >([
-        ['vertical', Types.MoverAxis.Vertical, 'pressDown', 'pressUp'],
-        ['horizontal', Types.MoverAxis.Horizontal, 'pressRight', 'pressLeft']
-    ])('should use arrow keys on %s axis', async (_, axis, next, previous) => {
+        ['vertical', Types.MoverDirections.Vertical, 'pressDown', 'pressUp'],
+        ['horizontal', Types.MoverDirections.Horizontal, 'pressRight', 'pressLeft']
+    ])('should use arrow keys on %s axis', async (_, direction, next, previous) => {
+        jest.setTimeout(100000000)
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis,
-                    navigationType: Types.MoverKeys.Arrows
-                }
+            mover: {
+                direction,
             }
         });
 
@@ -69,23 +67,20 @@ describe('Mover', () => {
     it.each<
         [
             string,
-            Types.MoverAxis,
+            Types.MoverDirection,
             'pressDown' | 'pressRight',
             'pressUp' | 'pressLeft'
         ]
     >([
-        ['vertical', Types.MoverAxis.Vertical, 'pressDown', 'pressUp'],
-        ['horizontal', Types.MoverAxis.Horizontal, 'pressRight', 'pressLeft']
+        ['vertical', Types.MoverDirections.Vertical, 'pressDown', 'pressUp'],
+        ['horizontal', Types.MoverDirections.Horizontal, 'pressRight', 'pressLeft']
     ])(
         'should not escape boundaries with arrow keys on %s axis',
-        async (_, axis, next, previous) => {
+        async (_, direction, next, previous) => {
             const attr = getTabsterAttribute({
-                focusable: {
                     mover: {
-                        axis,
-                        navigationType: Types.MoverKeys.Arrows
+                        direction,
                     }
-                }
             });
 
             await new BroTest.BroTest(getTestHtml(attr))
@@ -101,23 +96,20 @@ describe('Mover', () => {
     it.each<
         [
             string,
-            Types.MoverAxis,
+            Types.MoverDirection,
             'pressDown' | 'pressRight',
             'pressUp' | 'pressLeft'
         ]
     >([
-        ['vertical', Types.MoverAxis.Vertical, 'pressDown', 'pressUp'],
-        ['horizontal', Types.MoverAxis.Horizontal, 'pressRight', 'pressLeft']
+        ['vertical', Types.MoverDirections.Vertical, 'pressDown', 'pressUp'],
+        ['horizontal', Types.MoverDirections.Horizontal, 'pressRight', 'pressLeft']
     ])(
         'should allow circular navigation on %s axis',
-        async (_, axis, next, previous) => {
+        async (_, direction, next, previous) => {
             const attr = getTabsterAttribute({
-                focusable: {
-                    mover: {
-                        axis,
-                        navigationType: Types.MoverKeys.Arrows,
-                        cyclic: true
-                    }
+                mover: {
+                    direction,
+                    cyclic: true
                 }
             });
 
@@ -133,11 +125,9 @@ describe('Mover', () => {
 
     it('should navigate using tab keys', async () => {
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis: Types.MoverAxis.Horizontal,
-                    navigationType: Types.MoverKeys.Tab,
-                }
+            mover: {
+                direction: Types.MoverDirections.Horizontal,
+                tabbable: true,
             }
         });
 
@@ -161,11 +151,8 @@ describe('Mover', () => {
 
     it('should leave the mover using tab if navigation type is arrows only', async () => {
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis: Types.MoverAxis.Vertical,
-                    navigationType: Types.MoverKeys.Arrows,
-                }
+            mover: {
+                direction: Types.MoverDirections.Vertical,
             }
         });
 
@@ -212,11 +199,8 @@ describe('NestedMovers', () => {
 
     it('should move from from parent to nested mover with arrow keys', async () => {
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis: Types.MoverAxis.Vertical,
-                    navigationType: Types.MoverKeys.Arrows
-                }
+            mover: {
+                direction: Types.MoverDirections.Vertical,
             }
         });
 
@@ -228,11 +212,8 @@ describe('NestedMovers', () => {
 
     it('should not move from from nested to parent mover with arrow keys', async () => {
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis: Types.MoverAxis.Vertical,
-                    navigationType: Types.MoverKeys.Arrows
-                }
+            mover: {
+                direction: Types.MoverDirections.Vertical,
             }
         });
 
@@ -244,12 +225,9 @@ describe('NestedMovers', () => {
 
     it('should not move from from nested to parent mover with arrow keys with circular navigation', async () => {
         const attr = getTabsterAttribute({
-            focusable: {
-                mover: {
-                    axis: Types.MoverAxis.Vertical,
-                    navigationType: Types.MoverKeys.Arrows,
-                    cyclic: true,
-                }
+            mover: {
+                direction: Types.MoverDirections.Vertical,
+                cyclic: true,
             }
         });
 

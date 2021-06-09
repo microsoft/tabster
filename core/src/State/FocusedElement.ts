@@ -302,8 +302,6 @@ export class FocusedElementState
                 nativeFocus(nextElemment);
             }
 
-            e.preventDefault();
-
             if (next.callback) {
                 next.callback();
             }
