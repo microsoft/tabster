@@ -4,7 +4,6 @@
  */
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
-// import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, matchesSelector } from './Utils';
@@ -119,19 +118,13 @@ export class FocusableAPI implements Types.FocusableAPI {
         for (let e: (HTMLElement | null) = el; e; e = e.parentElement) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
-            if (tabsterOnElement && tabsterOnElement.modalizer && !tabsterOnElement.modalizer.isActive()) {
-                return true;
-            }
-
-            let attrVal = e.getAttribute('aria-hidden');
-
-            if (attrVal && (attrVal.toLowerCase() === 'true')) {
+            if (this._isHidden(e)) {
                 return false;
             }
 
-            attrVal = e.getAttribute('aria-disabled');
             const ignoreDisabled = tabsterOnElement?.focusable?.ignoreAriaDisabled;
-            if (!ignoreDisabled && attrVal && (attrVal.toLowerCase() === 'true')) {
+
+            if (!ignoreDisabled && this._isDisabled(e)) {
                 return false;
             }
         }
@@ -139,17 +132,33 @@ export class FocusableAPI implements Types.FocusableAPI {
         return true;
     }
 
+    private _attrIs(el: HTMLElement, name: string, value: string): boolean {
+        let attrVal = el.getAttribute(name);
+        if (attrVal && (attrVal.toLowerCase() === value)) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    private _isDisabled(el: HTMLElement): boolean {
+        return this._attrIs(el, 'aria-disabled', 'true');
+    }
+
+    private _isHidden(el: HTMLElement): boolean {
+        return this._attrIs(el, 'aria-hidden', 'true');
+    }
+
     findFirst(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this.findElement(
             context || this._getBody(),
             null,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             false
         );
@@ -158,14 +167,12 @@ export class FocusableAPI implements Types.FocusableAPI {
     findLast(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this.findElement(
             context || this._getBody(),
             null,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             true
         );
@@ -175,14 +182,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         current: HTMLElement,
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this.findElement(
             context || this._getBody(),
             current,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             false
         );
@@ -192,14 +197,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         current: HTMLElement,
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this.findElement(
             context || this._getBody(),
             current,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             true
         );
@@ -208,14 +211,12 @@ export class FocusableAPI implements Types.FocusableAPI {
     findDefault(
         context?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean
     ): HTMLElement | null {
         return this.findElement(
             context || this._getBody(),
             null,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             false,
             el => (this._tabster.focusable.isFocusable(el, includeProgrammaticallyFocusable) && !!this.getProps(el).isDefault)
@@ -228,7 +229,6 @@ export class FocusableAPI implements Types.FocusableAPI {
      * @param context @see {@link _findElement}
      * @param customFilter A callback that checks whether an element should be added to results
      * @param ignoreProgrammaticallyFocusable @see {@link _findElement}
-     * @param ignoreModalizer @see {@link _findElement}
      * @param ignoreGroupper @see {@link _findElement}
      * @param skipDefaultCondition skips the default condition that leverages @see {@link isFocusable}, be careful using this
      */
@@ -236,7 +236,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         context: HTMLElement,
         customFilter?: (el: HTMLElement) => boolean,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean,
         skipDefaultCondition?: boolean
     ): HTMLElement[] {
@@ -265,7 +264,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             from: null,
             acceptCondition,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             grouppers: {}
         };
@@ -295,7 +293,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         container: HTMLElement | undefined,
         currentElement: HTMLElement | null,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean,
         prev?: boolean,
         acceptCondition?: (el: HTMLElement) => boolean
@@ -317,7 +314,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             from: currentElement,
             acceptCondition,
             includeProgrammaticallyFocusable,
-            ignoreModalizer,
             ignoreGroupper,
             grouppers: {}
         };

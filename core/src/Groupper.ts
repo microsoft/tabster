@@ -134,7 +134,6 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
                             groupperElement,
                             null,
                             state.includeProgrammaticallyFocusable,
-                            state.ignoreModalizer,
                             state.ignoreGroupper,
                             false,
                             state.acceptCondition

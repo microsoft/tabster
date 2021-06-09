@@ -259,7 +259,6 @@ export interface FocusableAcceptElementState {
     found?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
-    ignoreModalizer?: boolean;
     ignoreGroupper?: boolean;
     grouppers: {
         [id: string]: {
@@ -292,7 +291,6 @@ export interface FocusableAPI {
         context: HTMLElement,
         customFilter?: (el: HTMLElement) => boolean,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean,
         skipDefaultCondition?: boolean
     ): HTMLElement[];
@@ -300,7 +298,6 @@ export interface FocusableAPI {
         container: HTMLElement | undefined,
         from: HTMLElement | null,
         includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
         ignoreGroupper?: boolean,
         prev?: boolean,
         acceptCondition?: (el: HTMLElement) => boolean
