@@ -384,17 +384,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         if (!state.ignoreGroupper) {
             let groupper: Types.Groupper | undefined;
             let mover: Types.Mover | undefined;
+            groupper = ctx.groupper;
+            mover = ctx.mover;
+            const isGroupperFirst = ctx.isGroupperFirst;
 
-            if (ctx) {
-                groupper = ctx.groupper;
-                mover = ctx.mover;
-                const isGroupperFirst = ctx.isGroupperFirst;
-
-                if (groupper && isGroupperFirst) {
-                    mover = undefined;
-                } else if (mover && !isGroupperFirst) {
-                    groupper = undefined;
-                }
+            if (groupper && isGroupperFirst) {
+                mover = undefined;
+            } else if (mover && !isGroupperFirst) {
+                groupper = undefined;
             }
 
             if (groupper) {
