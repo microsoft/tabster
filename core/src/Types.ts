@@ -318,14 +318,7 @@ export type Visibility = Visibilities[keyof Visibilities];
 
 export interface MoverElementState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
-    isPrevious: boolean;
-    isNext: boolean;
-    isFirst: boolean;
-    isLast: boolean;
     isVisible: Visibility;
-    hasFocus: boolean;
-    siblingIsVisible: boolean;
-    siblingHasFocus: boolean;
 }
 
 export interface MoverDirections {

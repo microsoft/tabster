@@ -8,18 +8,12 @@ import { nativeFocus } from 'keyborg';
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
-// import { KeyboardNavigationState } from './KeyboardNavigation';
-// import { getElementUId } from './Utils';
-// import { FocusedElementState } from './State/FocusedElement';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import {
-    // CustomFocusFunctionWithOriginal,
-    // documentContains,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     isElementVisibleInContainer,
-    // shouldIgnoreFocus,
     matchesSelector,
     scrollIntoView,
     TabsterPart,
@@ -37,27 +31,13 @@ const _isVisibleTimeout = 200;
 export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtendedProps> implements Types.Mover {
     private static _movers: Record<string, Mover> = {};
 
-    private _current: WeakHTMLElement | undefined;
     private _unobserve: (() => void) | undefined;
     private _domChangedTimer: number | undefined;
-    private _prev: WeakHTMLElement | undefined;
-    private _next: WeakHTMLElement | undefined;
-    private _first: WeakHTMLElement | undefined;
-    private _last: WeakHTMLElement | undefined;
-    private _focused: WeakHTMLElement | undefined;
-    private _unlimited: WeakHTMLElement | undefined;
-    private _visible: Record<string, Types.Visibility> = {};
-    private _hasFullyVisible = false;
-
+    private _current: WeakHTMLElement | undefined;
     private _prevCurrent: WeakHTMLElement | undefined;
-    private _prevPrev: WeakHTMLElement | undefined;
-    private _prevNext: WeakHTMLElement | undefined;
-    private _prevFirst: WeakHTMLElement | undefined;
-    private _prevLast: WeakHTMLElement | undefined;
-    private _prevFocused: WeakHTMLElement | undefined;
-    private _prevUnlimited: WeakHTMLElement | undefined;
+    private _visible: Record<string, Types.Visibility> = {};
     private _prevVisible: Record<string, Types.Visibility> = {};
-
+    private _hasFullyVisible = false;
     private _onChangeTimer: number | undefined;
     private _updateVisibleTimer: number | undefined;
 
@@ -80,13 +60,9 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             this._observeState();
             this._domChangedTimer = getWindow().setTimeout(this._domChanged, 0);
         }
-
-        tabster.focusedElement.subscribe(this._onFocus);
     }
 
     dispose(): void {
-        this._tabster.focusedElement.unsubscribe(this._onFocus);
-
         this._focusables = {};
 
         if (this._unobserve) {
@@ -120,25 +96,15 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         delete Mover._movers[this.id];
     }
 
-    private _onFocus = (el: HTMLElement | undefined): void => {
-        if (el && this.getElement()?.contains(el)) {
-            const id = getElementUId(this._win, el);
-
-            if ((id in this._focusables) && (el !== this._focused?.get())) {
-                this._focused = new WeakHTMLElement(this._win, el);
-                this._processOnChange();
-            }
-        } else if (this._focused) {
-            this._focused = undefined;
-            this._processOnChange();
-        }
-    }
-
     setCurrent(element: HTMLElement | undefined): boolean {
         if (element) {
             this._current = new WeakHTMLElement(this._win, element);
         } else {
             this._current = undefined;
+        }
+
+        if (this._basic.trackState || this._basic.visibilityAware) {
+            this._processOnChange();
         }
 
         return false;
@@ -231,26 +197,13 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             const newFocusables: Record<string, WeakHTMLElement> = {};
             const prevFocusables = this._focusables;
 
-            if (elements.length === 0) {
-                this._first = undefined;
-                this._last = undefined;
-            }
-
             for (let i = 0; i < elements.length; i++) {
                 const el = elements[i];
-                const id = getElementUId(this._win, element);
+                const id = getElementUId(this._win, el);
                 let weakEl: WeakHTMLElement | undefined = prevFocusables[id];
 
                 if (!weakEl) {
                     weakEl = new WeakHTMLElement(this._win, el);
-                }
-
-                if (i === 0) {
-                    this._first = weakEl;
-                }
-
-                if (i === elements.length - 1) {
-                    this._last = weakEl;
                 }
 
                 newFocusables[id] = weakEl;
@@ -260,7 +213,6 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                 if (!(id in newFocusables)) {
                     delete this._focusables[id];
                     delete this._visible[id];
-                    delete this._prevVisible[id];
 
                     if (this._current?.get() === prevFocusables[id].get()) {
                         this.setCurrent(undefined);
@@ -288,54 +240,10 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
             let changed: (WeakHTMLElement | undefined)[] = [];
 
-            if (this._prevFocused !== this._focused) {
-                for (let id of Object.keys(this._focusables)) {
-                    changed.push(this._focusables[id]);
-                }
-
-                if (!this._focused && (!this._prevFocused || !this._basic.memorizeCurrent)) {
-                    this.setCurrent(undefined);
-                    this._prev = undefined;
-                    this._next = undefined;
-                }
-
-                this._prevFocused = this._focused;
-            }
-
-            if (this._prevCurrent !== this._current) {
-                changed.push(this._prevCurrent);
+            if (this._current !== this._prevCurrent) {
                 changed.push(this._current);
+                changed.push(this._prevCurrent);
                 this._prevCurrent = this._current;
-            }
-
-            if (this._prevPrev !== this._prev) {
-                changed.push(this._prevPrev);
-                changed.push(this._prev);
-                this._prevPrev = this._prev;
-            }
-
-            if (this._prevNext !== this._next) {
-                changed.push(this._prevNext);
-                changed.push(this._next);
-                this._prevNext = this._next;
-            }
-
-            if (this._prevFirst !== this._first) {
-                changed.push(this._prevFirst);
-                changed.push(this._first);
-                this._prevFirst = this._first;
-            }
-
-            if (this._prevLast !== this._last) {
-                changed.push(this._prevLast);
-                changed.push(this._last);
-                this._prevLast = this._last;
-            }
-
-            if (this._prevUnlimited !== this._unlimited) {
-                changed.push(this._prevUnlimited);
-                changed.push(this._unlimited);
-                this._prevUnlimited = this._unlimited;
             }
 
             if (this._visible !== this._prevVisible) {
@@ -413,14 +321,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
         return {
             isCurrent,
-            isPrevious: this._prev?.get() === element,
-            isNext: this._next?.get() === element,
-            isFirst: this._first?.get() === element,
-            isLast: this._last?.get() === element,
-            isVisible,
-            hasFocus: this._focused?.get() === element,
-            siblingHasFocus: !!this._focused && (this._focused.get() !== element),
-            siblingIsVisible: this._hasFullyVisible
+            isVisible
         };
     }
 
@@ -448,9 +349,9 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             const visibleMovers: { [id: string]: Types.Visibility } = {};
 
             for (let id of Object.keys(this._focusables)) {
-                const moverElement = this._focusables[id].get();
-                const isVisible = moverElement
-                    ? isElementVisibleInContainer(this._win, moverElement, 10)
+                const element = this._focusables[id].get();
+                const isVisible = element
+                    ? isElementVisibleInContainer(this._win, element, 10)
                     : Types.Visibilities.Invisible;
                 const curIsVisible = this._visible[id] || Types.Visibilities.Invisible;
 
