@@ -370,50 +370,54 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        const currentModalizerId = ctx?.root.getCurrentModalizerId();
-        const modalizer = ctx?.modalizer;
 
-        if (state.ignoreModalizer || (!modalizer) ||
-            (currentModalizerId === undefined) ||
-            (currentModalizerId === modalizer.userId) ||
-            modalizer.getBasicProps().isAlwaysAccessible
-        ) {
-            if (!state.ignoreGroupper) {
-                let groupper: Types.Groupper | undefined;
-                let mover: Types.Mover | undefined;
+        // Tabster is opt in, if it is not managed, don't try and get do anything special
+        if (!ctx) {
+            return NodeFilter.FILTER_SKIP;
+        }
 
-                if (ctx) {
-                    groupper = ctx.groupper;
-                    mover = ctx.mover;
-                    const isGroupperFirst = ctx.isGroupperFirst;
+        // We assume iframes are focusable because native tab behaviour would tab inside
+        if (element.tagName === 'IFRAME') {
+            return NodeFilter.FILTER_ACCEPT;
+        }
 
-                    if (groupper && isGroupperFirst) {
-                        mover = undefined;
-                    } else if (mover && !isGroupperFirst) {
-                        groupper = undefined;
-                    }
-                }
+        if (!this.isAccessible(element)) {
+            return NodeFilter.FILTER_REJECT;
+        }
 
-                if (groupper) {
-                    const result = groupper.acceptElement(element, state);
+        if (!state.ignoreGroupper) {
+            let groupper: Types.Groupper | undefined;
+            let mover: Types.Mover | undefined;
 
-                    if (result !== undefined) {
-                        return result;
-                    }
-                }
+            if (ctx) {
+                groupper = ctx.groupper;
+                mover = ctx.mover;
+                const isGroupperFirst = ctx.isGroupperFirst;
 
-                if (mover) {
-                    const result = mover.acceptElement(element, state);
-
-                    if (result !== undefined) {
-                        return result;
-                    }
+                if (groupper && isGroupperFirst) {
+                    mover = undefined;
+                } else if (mover && !isGroupperFirst) {
+                    groupper = undefined;
                 }
             }
 
-            return state.acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+            if (groupper) {
+                const result = groupper.acceptElement(element, state);
+
+                if (result !== undefined) {
+                    return result;
+                }
+            }
+
+            if (mover) {
+                const result = mover.acceptElement(element, state);
+
+                if (result !== undefined) {
+                    return result;
+                }
+            }
         }
 
-        return ctx ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+        return state.acceptCondition(element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     }
 }

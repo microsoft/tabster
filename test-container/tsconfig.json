@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "declaration": true,
         "noResolve": false,
         "module": "es2015",
         "target": "es5",
@@ -13,24 +12,20 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
-        "outDir": "./dist/",
-        "jsx": "react",
-        "jsxFactory": "BroTest.createElementString",
         "lib": [
             "es5",
             "es2015.iterable",
             "dom",
             "esnext"
         ],
+        "paths": {
+            "tabster": ["../core/src/index.ts"]
+        },
+        "baseUrl": ".",
         "esModuleInterop": true
     },
 
     "include": [
-        "./src/**/*"
+        "src"
     ],
-
-    "exclude": [
-        "dist",
-        "node_modules"
-    ]
 }

@@ -10,7 +10,6 @@
     "allowJs": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "es2015",

@@ -74,13 +74,25 @@ export interface ObservedElementBasicProps {
 export interface ObservedElementExtendedProps {
 }
 
+export interface ObservedElementAccesibilities {
+    Any: 0;
+    Accessible: 1;
+    Focusable: 2;
+}
+export type ObservedElementAccesibility = ObservedElementAccesibilities[keyof ObservedElementAccesibilities];
+export const ObservedElementAccesibilities: ObservedElementAccesibilities = {
+    Any: 0,
+    Accessible: 1,
+    Focusable: 2
+};
+
 export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
     add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
-    getElement(observedName: string): HTMLElement | null;
-    waitElement(observedName: string, timeout: number): Promise<HTMLElement | null>;
+    getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
+    waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<HTMLElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -138,8 +150,8 @@ export interface CrossOriginFocusedElementState extends Subscribable<CrossOrigin
 }
 
 export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
-    getElement(observedName: string): Promise<CrossOriginElement | null>;
-    waitElement(observedName: string, timeout: number): Promise<CrossOriginElement | null>;
+    getElement(observedName: string, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
+    waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
 
@@ -267,15 +279,15 @@ export interface FocusableAPI {
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
     findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean, ignoreGroupper?: boolean): HTMLElement | null;
+        ignoreGroupper?: boolean): HTMLElement | null;
     findAll(
         context: HTMLElement,
         customFilter?: (el: HTMLElement) => boolean,
@@ -443,17 +455,30 @@ export interface ModalizerExtendedProps {
 export interface Modalizer {
     readonly internalId: string;
     readonly userId: string;
-    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
-    getBasicProps(): ModalizerBasicProps;
-    getExtendedProps(): ModalizerExtendedProps;
+    /**
+     * @returns - Whether the element is inside the modalizer
+     */
+    contains(element: HTMLElement): boolean;
     dispose(): void;
-    move(newElement: HTMLElement): void;
-    setAccessible(accessible: boolean): void;
-    setActive(active: boolean): void;
+    getBasicProps(): ModalizerBasicProps;
+    /**
+     * @returns The root element of the modal
+     */
+    getModalizerRoot(): HTMLElement | undefined;
+    getExtendedProps(): ModalizerExtendedProps;
     isActive(): boolean;
-    getElement(): HTMLElement | undefined;
-    setFocused(focused: boolean): void;
+    move(newElement: HTMLElement): void;
     onBeforeFocusOut(): boolean;
+    /**
+     * Sets the active state of the modalizr
+     * When active, sets `aria-hidden` on all other elements
+     * Reverts `aria-hidden` changes when set to inactive
+     *
+     * @param active Whether the modalizer is active
+     */
+    setActive(active: boolean): void;
+    setFocused(focused: boolean): void;
+    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
 }
 
 export interface RootBasicProps {
@@ -465,13 +490,7 @@ export interface Root {
     dispose(): void;
     setProps(basic?: Partial<RootBasicProps> | null): void;
     getBasicProps(): RootBasicProps;
-    move(newElement: HTMLElement): void;
     getElement(): HTMLElement | undefined;
-    getCurrentModalizerId(): string | undefined;
-    setCurrentModalizerId(id: string | undefined, noModalizersUpdate?: boolean): void;
-    getModalizers(): Modalizer[];
-    getModalizerById(id: string): Modalizer | undefined;
-    updateModalizers(): void;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
 }
@@ -511,15 +530,37 @@ export interface TabsterContext {
 export interface RootAPI {
     add(element: HTMLElement, basic?: RootBasicProps): void;
     remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
 export interface ModalizerAPI {
+    /**
+     * Adds an element to be managed by Modalizer
+     *
+     * @param element Element that is not managed by Modalizer
+     * @param basic Basic props
+     * @param extended Extended props
+     */
     add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
+    /**
+     * Gets the currently active modalizer if it exists
+     */
+    getActiveModalizer(): Modalizer | undefined;
+    /**
+     * Stops managing an element with Modalizer. Should be called before the element is removed from DOM.
+     *
+     * @param element Element that is managed by Modalizer
+     */
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
+    /**
+     * Activates a Modalizer and focuses the first or default element within
+     *
+     * @param elementFromModalizer An element that belongs to a Modalizer
+     * @param noFocusFirst Do not focus on the first element in the Modalizer
+     * @param noFocusDefault Do not focus the default element in the Modalizre
+     */
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean;
 }
 

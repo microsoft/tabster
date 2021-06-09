@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from 'keyborg';
+
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
@@ -12,7 +14,6 @@ import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import {
-    callOriginalFocusOnly,
     // CustomFocusFunctionWithOriginal,
     // documentContains,
     getElementUId,
@@ -803,7 +804,7 @@ export class MoverAPI implements Types.MoverAPI {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            callOriginalFocusOnly(next);
+            nativeFocus(next);
         }
     }
 

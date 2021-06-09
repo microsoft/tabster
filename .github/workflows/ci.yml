@@ -23,5 +23,8 @@ jobs:
 
             - run: npm install
             - run: npm run bootstrap
-            - run: npm run build
             - run: npm run lint
+            - name: "Run tests"
+              run: |
+                npm run serve &
+                npm run test

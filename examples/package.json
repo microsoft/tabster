@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "version": "0.6.2",
+  "version": "0.7.2",
   "private": true,
   "dependencies": {
     "@types/node": "^14.14.35",
@@ -9,7 +9,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.3",
-    "tabster": "^0.6.2",
+    "tabster": "^0.7.2",
     "typescript": "^4.2.3"
   },
   "scripts": {
@@ -19,7 +19,8 @@
     "build": "build-storybook --quiet",
     "clean": "rimraf storybook-static",
     "tslint": "tslint --project tsconfig.json --fix || true",
-    "tslint:check": "tslint --project tsconfig.json"
+    "tslint:check": "tslint --project tsconfig.json",
+    "prepare": "npm run build"
   },
   "eslintConfig": {
     "extends": [
@@ -46,7 +47,7 @@
     "@storybook/preset-create-react-app": "^3.1.7",
     "@storybook/react": "^6.1.21",
     "cross-env": "^7.0.3",
-    "lint": "^0.6.0",
+    "lint": "^0.7.1",
     "rimraf": "^3.0.2",
     "tsconfig-paths-webpack-plugin": "^3.5.1",
     "tslint": "^6.1.3"

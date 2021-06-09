@@ -108,25 +108,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
             }
         }
 
-        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        const modalizers = root && root.getModalizers();
-
-        if (modalizers) {
-            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-            // let's try to find something under the same root.
-            for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
-                const deloserItem = deloser && new DeloserItem(this._tabster, deloser);
-
-                if (deloserItem && await deloserItem.focusAvailable()) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     }
 
@@ -141,24 +122,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<Types.Deloser, Delos
 
             if (!skip && !resetQueue[i.uid]) {
                 resetQueue[i.uid] = i;
-            }
-        }
-
-        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
-        const root = RootAPI.getRootByUId(getWindow, this.rootUId);
-        const modalizers = root && root.getModalizers();
-
-        if (modalizers) {
-            // Nothing satisfactory in the focus history, each Modalizer has Deloser,
-            // let's try to find something under the same root.
-            for (let m of modalizers) {
-                const e = m.getElement();
-                const tabsterOnElement = e && getTabsterOnElement(this._tabster, e);
-                const deloser = tabsterOnElement && tabsterOnElement.deloser;
-
-                if (deloser && !(deloser.uid in resetQueue)) {
-                    resetQueue[deloser.uid] = new DeloserItem(this._tabster, deloser);
-                }
             }
         }
 
@@ -196,7 +159,7 @@ export class DeloserHistory {
 
         const historyByRoot = this.make(rootUId, () => new DeloserHistoryByRoot(this._tabster, rootUId));
 
-        if (!ctx || !ctx.modalizer || (ctx.root.getCurrentModalizerId() === ctx.modalizer.userId)) {
+        if (!ctx || !ctx.modalizer || ctx.modalizer?.isActive()) {
             historyByRoot.unshiftToDeloser(deloser, element);
         }
 
@@ -640,7 +603,10 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
-    private _isInSomeDeloser = false;
+    /**
+     * Tracks if focus is inside a deloser
+     */
+    private _inDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
     private _history: DeloserHistory;
     private _restoreFocusTimer: number | undefined;
@@ -719,9 +685,12 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        setTabsterOnElement(this._tabster, element, {
-            deloser: new Deloser(element, this._tabster, this._win, basic, extended)
-        });
+        const deloser = new Deloser(element, this._tabster, this._win, basic, extended);
+        setTabsterOnElement(this._tabster, element, { deloser });
+
+        if (element.contains(this._tabster.focusedElement.getFocusedElement() ?? null)) {
+            this._activate(deloser);
+        }
     }
 
     remove(element: HTMLElement): void {
@@ -806,28 +775,32 @@ export class DeloserAPI implements Types.DeloserAPI {
         const deloser = this._history.process(e);
 
         if (deloser) {
-            this._isInSomeDeloser = true;
-
-            if (deloser !== this._curDeloser) {
-                if (this._curDeloser) {
-                    this._curDeloser.setActive(false);
-                }
-
-                this._curDeloser = deloser;
-            }
-
-            deloser.setActive(true);
+            this._activate(deloser);
         } else {
-            this._isInSomeDeloser = false;
-
-            this._curDeloser = undefined;
+            this._deactivate();
         }
     }
 
-    private _isLastFocusedAvailable(): boolean {
-        const last = this._tabster.focusedElement.getLastFocusedElement();
+    /**
+     * Activates and sets the current deloser
+     */
+    private _activate(deloser: Types.Deloser) {
+        const curDeloser = this._curDeloser;
+        if (curDeloser !== deloser) {
+            this._inDeloser = true;
+            curDeloser?.setActive(false);
+            deloser.setActive(true);
+            this._curDeloser = deloser;
+        }
+    }
 
-        return !!(last && last.offsetParent);
+    /**
+     * Called when focus should no longer be in a deloser
+     */
+    private _deactivate() {
+        this._inDeloser = false;
+        this._curDeloser?.setActive(false);
+        this._curDeloser = undefined;
     }
 
     private _scheduleRestoreFocus(force?: boolean): void {
@@ -835,33 +808,28 @@ export class DeloserAPI implements Types.DeloserAPI {
             return;
         }
 
-        const reallySchedule = async () => {
+        const restoreFocus = async () => {
             this._restoreFocusTimer = undefined;
+            const lastFocused = this._tabster.focusedElement.getLastFocusedElement();
 
-            if (!force && (this._isRestoringFocus || !this._isInSomeDeloser || this._isLastFocusedAvailable())) {
+            if (!force && (this._isRestoringFocus || !this._inDeloser || !!lastFocused?.offsetParent)) {
                 return;
             }
 
-            if (this._curDeloser) {
-                const last = this._tabster.focusedElement.getLastFocusedElement();
-
-                if (last && this._curDeloser.customFocusLostHandler(last)) {
+            const curDeloser = this._curDeloser;
+            if (curDeloser) {
+                if (lastFocused && curDeloser.customFocusLostHandler(lastFocused)) {
                     return;
                 }
 
-                const el = this._curDeloser.findAvailable();
+                const el = curDeloser.findAvailable();
 
                 if (el && this._tabster.focusedElement.focus(el)) {
                     return;
                 }
             }
 
-            this._isInSomeDeloser = false;
-
-            if (this._curDeloser) {
-                this._curDeloser.setActive(false);
-                this._curDeloser = undefined;
-            }
+            this._deactivate();
 
             this._isRestoringFocus = true;
 
@@ -873,9 +841,9 @@ export class DeloserAPI implements Types.DeloserAPI {
         };
 
         if (force) {
-            reallySchedule();
+            restoreFocus();
         } else {
-            this._restoreFocusTimer = this._win().setTimeout(reallySchedule, 100);
+            this._restoreFocusTimer = this._win().setTimeout(restoreFocus, 100);
         }
     }
 

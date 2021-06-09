@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from 'keyborg';
+
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import {
-    callOriginalFocusOnly,
-    TabsterPart
-} from './Utils';
+import { TabsterPart } from './Utils';
 
 export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.GroupperExtendedProps> implements Types.Groupper {
     private _isUnlimited = false;
@@ -277,7 +276,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                         return;
                     }
 
-                    next = this._tabster.focusable.findFirst(groupperElement, false, false, true);
+                    next = this._tabster.focusable.findFirst(groupperElement, false, true);
 
                     if (next) {
                         this._updateUnlimited(next);
@@ -311,7 +310,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                 if (next) {
                     e.preventDefault();
 
-                    callOriginalFocusOnly(next);
+                    nativeFocus(next);
                 }
             }
         }

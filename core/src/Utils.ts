@@ -22,10 +22,6 @@ export interface HTMLElementWithUID extends HTMLElement {
     __tabsterElementUID?: string;
 }
 
-export interface CustomFocusFunctionWithOriginal {
-    __tabsterFocus?: (options?: FocusOptions | undefined) => void;
-}
-
 export interface TabsterDOMRect {
     bottom: number;
     left: number;
@@ -395,16 +391,6 @@ export function makeFocusIgnored(element: HTMLElement): void {
 
 export function shouldIgnoreFocus(element: HTMLElement): boolean {
     return !!(element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus;
-}
-
-export function callOriginalFocusOnly(element: HTMLElement): void {
-    const focus = element.focus as CustomFocusFunctionWithOriginal;
-
-    if (focus.__tabsterFocus) {
-        focus.__tabsterFocus.call(element);
-    } else {
-        element.focus();
-    }
 }
 
 export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
