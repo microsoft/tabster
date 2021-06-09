@@ -39,7 +39,6 @@ describe('Mover', () => {
         ['vertical', Types.MoverDirections.Vertical, 'pressDown', 'pressUp'],
         ['horizontal', Types.MoverDirections.Horizontal, 'pressRight', 'pressLeft']
     ])('should use arrow keys on %s axis', async (_, direction, next, previous) => {
-        jest.setTimeout(100000000)
         const attr = getTabsterAttribute({
             mover: {
                 direction,
