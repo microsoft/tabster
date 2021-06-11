@@ -14,12 +14,12 @@ import {
     getMover,
     getOutline,
     getTabsterAttribute,
-    Types as TabsterTypes
+    Types as TabsterTypes,
 } from 'tabster';
 
 const tabster = createTabster(window);
 getGroupper(tabster);
-const mover = getMover(tabster);
+getMover(tabster);
 const tabsterModalizer = getModalizer(tabster);
 const tabsterDeloser = getDeloser(tabster);
 const tabsterOutline = getOutline(tabster);
@@ -50,18 +50,16 @@ class App extends React.PureComponent {
                         <button>are</button>
                         <button>navigable</button>
                         <button>using</button>
+                        <button>left/right</button>
                         <button>arrows</button>
-                        <button>instead</button>
-                        <button>of</button>
+                        <button>and</button>
                         <button>tabs</button>
                     </div>
 
-                    <div { ...getTabsterAttribute({
-                            mover: {
-                                direction: TabsterTypes.MoverDirections.Grid
-                            }
-                        }) }>
-                            <br/><br/>
+                    <div { ...getTabsterAttribute({ mover: {
+                        direction: TabsterTypes.MoverDirections.Grid
+                    } }) }>
+                        <br/><br/>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -71,9 +69,9 @@ class App extends React.PureComponent {
                         <button>navigable</button>
                         <button>using</button>
                         <button>arrows</button>
-                        <button>instead</button>
-                        <button>of</button>
-                        <button>tabs</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -83,22 +81,9 @@ class App extends React.PureComponent {
                         <button>navigable</button>
                         <button>using</button>
                         <button>arrows</button>
-                        <button>instead</button>
-                        <button>of</button>
-                        <button>tabs</button>
-                        <button>A</button>
-                        <button>bunch</button>
-                        <button>of</button>
-                        <input defaultValue='lalalalla'/>
-                        <button>buttons</button>
-                        <button>which</button>
-                        <button>are</button>
-                        <button>navigable</button>
-                        <button>using</button>
-                        <button>arrows</button>
-                        <button>instead</button>
-                        <button>of</button>
-                        <button>tabs</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
                         <button>A</button>
                         <button>bunch</button>
                         <button>of</button>
@@ -108,27 +93,48 @@ class App extends React.PureComponent {
                         <button>navigable</button>
                         <button>using</button>
                         <button>arrows</button>
-                        <button>instead</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
+                        <button>A</button>
+                        <button>bunch</button>
                         <button>of</button>
-                        <button>tabs</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
                         <br/><br/>
                     </div>
 
-                    <div ref={this._onMoverRef}>
+                    <div { ...getTabsterAttribute({ mover: {
+                        tabbable: false,
+                        cyclic: true,
+                        direction: TabsterTypes.MoverDirections.Vertical,
+                        memorizeCurrent: true
+                    } }) }>
                         <button>The</button>
                         <button>same</button>
                         <button>arrow</button>
                         <button>navigation</button>
                         <button>but</button>
-                        <button>is</button>
+                        <button>using</button>
+                        <button>up/down</button>
+                        <button>arrows</button>
+                        <button>and</button>
                         <button>cyclic</button>
                     </div>
 
                     <div { ...getTabsterAttribute({ mover: {
                         tabbable: false,
                         cyclic: true,
-                        trackState: true
-                    } }) }>,
+                        trackState: true,
+                        visibilityAware: TabsterTypes.Visibilities.Visible
+                    } }) } style={{height: 300, overflow: 'scroll'}}>
                         <Item onClick={ this._onClick } />
                         <Item onClick={ this._onClick } />
 
@@ -177,21 +183,6 @@ class App extends React.PureComponent {
     private _onClick = () => {
         if (this._modal) {
             this._modal.show();
-        }
-    }
-
-    private _onMoverRef = (el: HTMLDivElement | null) => {
-        if (el) {
-            mover.add(el, {
-                    tabbable: false,
-                    cyclic: true,
-                    direction: TabsterTypes.MoverDirections.Vertical,
-                    memorizeCurrent: true
-            }, {
-                onChange: ((el, state ) => {
-                    console.error(8888, el, state);
-                })
-            });
         }
     }
 }
