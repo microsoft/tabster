@@ -285,7 +285,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         ignoreGroupper?: boolean,
         prev?: boolean,
         acceptCondition?(el: HTMLElement): boolean,
-        ignoreChildren?: boolean,
     }): HTMLElement | null {
         const {
             container,
@@ -293,7 +292,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             includeProgrammaticallyFocusable,
             ignoreGroupper,
             prev,
-            ignoreChildren
         } = options;
 
         let { acceptCondition } = options;
@@ -350,8 +348,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        let found = acceptElementState.found ?? null;
-        return found;
+        const found = (prev ? walker.previousNode() : walker.nextNode()) as HTMLElement | null;
+        return acceptElementState.found || found;
     }
 
     private _acceptElement(
