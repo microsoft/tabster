@@ -262,6 +262,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         const acceptElementState: Types.FocusableAcceptElementState = {
             container: context,
             from: null,
+            isForward: true,
             acceptCondition,
             includeProgrammaticallyFocusable,
             ignoreGroupper,
@@ -312,6 +313,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         const acceptElementState: Types.FocusableAcceptElementState = {
             container,
             from: currentElement,
+            isForward: !prev,
             acceptCondition,
             includeProgrammaticallyFocusable,
             ignoreGroupper,

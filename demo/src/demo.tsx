@@ -9,13 +9,17 @@ import {
     createTabster,
     getCurrentTabster,
     getDeloser,
+    getGroupper,
     getModalizer,
+    getMover,
     getOutline,
     getTabsterAttribute,
     Types as TabsterTypes
 } from 'tabster';
 
 const tabster = createTabster(window);
+getGroupper(tabster);
+const mover = getMover(tabster);
 const tabsterModalizer = getModalizer(tabster);
 const tabsterDeloser = getDeloser(tabster);
 const tabsterOutline = getOutline(tabster);
@@ -31,13 +35,12 @@ class App extends React.PureComponent {
                 <div { ...getTabsterAttribute({ deloser: {} }) }>
                     <h1>Hello world</h1>
 
-                    <div { ...getTabsterAttribute({ 
-                        focusable: 
-                            { mover: 
-                                { navigationType: TabsterTypes.MoverKeys.Arrows, 
-                                    axis: TabsterTypes.MoverAxis.Horizontal 
-                                } 
-                            } 
+                    <div { ...getTabsterAttribute({
+                        mover:
+                            {
+                                direction: TabsterTypes.MoverDirections.Horizontal,
+                                tabbable: true
+                            }
                         }) }>
                         <button>A</button>
                         <button>bunch</button>
@@ -54,10 +57,64 @@ class App extends React.PureComponent {
                     </div>
 
                     <div { ...getTabsterAttribute({
-                        focusable: {
-                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true, axis: TabsterTypes.MoverAxis.Vertical }
-                        }
-                    }) }>
+                            mover: {
+                                direction: TabsterTypes.MoverDirections.Grid
+                            }
+                        }) }>
+                            <br/><br/>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>instead</button>
+                        <button>of</button>
+                        <button>tabs</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>instead</button>
+                        <button>of</button>
+                        <button>tabs</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <input defaultValue='lalalalla'/>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>instead</button>
+                        <button>of</button>
+                        <button>tabs</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>instead</button>
+                        <button>of</button>
+                        <button>tabs</button>
+                        <br/><br/>
+                    </div>
+
+                    <div ref={this._onMoverRef}>
                         <button>The</button>
                         <button>same</button>
                         <button>arrow</button>
@@ -67,7 +124,11 @@ class App extends React.PureComponent {
                         <button>cyclic</button>
                     </div>
 
-                    <div>
+                    <div { ...getTabsterAttribute({ mover: {
+                        tabbable: false,
+                        cyclic: true,
+                        trackState: true
+                    } }) }>,
                         <Item onClick={ this._onClick } />
                         <Item onClick={ this._onClick } />
 
@@ -118,6 +179,21 @@ class App extends React.PureComponent {
             this._modal.show();
         }
     }
+
+    private _onMoverRef = (el: HTMLDivElement | null) => {
+        if (el) {
+            mover.add(el, {
+                    tabbable: false,
+                    cyclic: true,
+                    direction: TabsterTypes.MoverDirections.Vertical,
+                    memorizeCurrent: true
+            }, {
+                onChange: ((el, state ) => {
+                    console.error(8888, el, state);
+                })
+            });
+        }
+    }
 }
 
 class Item extends React.PureComponent<{ onClick: () => void }> {
@@ -127,7 +203,7 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
                 tabIndex={0}
                 className='item'
                 { ...getTabsterAttribute({ groupper: {
-                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
+                    tabbability: TabsterTypes.GroupperTabbabilities.LimitedTrapFocus
                 }})}
             >
                 { this.props.children
