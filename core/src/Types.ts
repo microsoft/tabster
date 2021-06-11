@@ -290,10 +290,6 @@ export interface FindFocusableProps {
      * @returns if an element should be accepted
      */
     acceptCondition?(el: HTMLElement): boolean;
-    /**
-     * Ignore the children of {@see currentElement}
-     */
-    ignoreChildren?: boolean;
 }
 
 export interface FocusableAPI {

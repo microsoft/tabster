@@ -351,12 +351,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         let found = acceptElementState.found ?? null;
-        if (ignoreChildren) {
-            found = (prev ? walker.previousSibling() : walker.nextSibling()) as (HTMLElement | null);
-        } else {
-            found = (prev ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null);
-        }
-
         return found;
     }
 
