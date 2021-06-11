@@ -113,7 +113,7 @@ export class FocusedElementState
     }
 
     focusDefault(container: HTMLElement): boolean {
-        const el = this._tabster.focusable.findDefault(container);
+        const el = this._tabster.focusable.findDefault({ container });
 
         if (el) {
             this._tabster.focusedElement.focus(el);
@@ -125,7 +125,7 @@ export class FocusedElementState
     }
 
     focusFirst(container: HTMLElement): boolean {
-        const first = this._tabster.focusable.findFirst(container, false, true);
+        const first = this._tabster.focusable.findFirst({ container, ignoreGroupper: true });
 
         if (first) {
             this.focus(first);
@@ -246,8 +246,8 @@ export class FocusedElementState
             next = ctx.mover.findNextTabbable(current, prev);
         } else {
             const element = prev
-                ? tabster.focusable.findPrev(current)
-                : tabster.focusable.findNext(current);
+                ? tabster.focusable.findPrev({ currentElement: current })
+                : tabster.focusable.findNext({ currentElement: current });
 
             if (element) {
                 next = { element };

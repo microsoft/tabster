@@ -535,10 +535,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        let toFocus = this._tabster.focusable.findFirst(this._curModalizer.getModalizerRoot());
+        let toFocus = this._tabster.focusable.findFirst({ container: this._curModalizer.getModalizerRoot() });
         if (toFocus) {
             if (outsideElement.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-                toFocus = this._tabster.focusable.findLast(outsideElement.ownerDocument.body);
+                toFocus = this._tabster.focusable.findLast({ container: outsideElement.ownerDocument.body });
 
                 if (!toFocus) {
                     // This only might mean that findFirst/findLast are buggy and inconsistent.

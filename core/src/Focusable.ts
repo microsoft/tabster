@@ -150,100 +150,88 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._attrIs(el, 'aria-hidden', 'true');
     }
 
-    findFirst(
-        context?: HTMLElement,
+    findFirst(options: {
+        container?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean
-    ): HTMLElement | null {
-        return this.findElement(
-            context || this._getBody(),
-            null,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            false
-        );
+    }): HTMLElement | null {
+        return this.findElement({
+            container: this._getBody(),
+            ...options,
+        });
     }
 
-    findLast(
-        context?: HTMLElement,
+    findLast(options: {
+        container?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean
-    ): HTMLElement | null {
-        return this.findElement(
-            context || this._getBody(),
-            null,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            true
-        );
+    }): HTMLElement | null {
+        return this.findElement({
+            container: this._getBody(),
+            prev: true,
+            ...options,
+        });
     }
 
-    findNext(
-        current: HTMLElement,
-        context?: HTMLElement,
+    findNext(options: {
+        currentElement: HTMLElement,
+        container?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean
-    ): HTMLElement | null {
-        return this.findElement(
-            context || this._getBody(),
-            current,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            false
-        );
+    }): HTMLElement | null {
+        return this.findElement({
+            container: this._getBody(),
+            ...options,
+        });
     }
 
-    findPrev(
-        current: HTMLElement,
-        context?: HTMLElement,
+    findPrev(options: {
+        currentElement: HTMLElement,
+        container?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean
-    ): HTMLElement | null {
-        return this.findElement(
-            context || this._getBody(),
-            current,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            true
-        );
+    }): HTMLElement | null {
+        return this.findElement({
+            container: this._getBody(),
+            prev: true,
+            ...options,
+        });
     }
 
-    findDefault(
-        context?: HTMLElement,
+    findDefault(options: {
+        container?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean
-    ): HTMLElement | null {
-        return this.findElement(
-            context || this._getBody(),
-            null,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            false,
-            el => (this._tabster.focusable.isFocusable(el, includeProgrammaticallyFocusable) && !!this.getProps(el).isDefault)
-        );
+    }): HTMLElement | null {
+        return this.findElement({
+            ...options,
+            acceptCondition:
+                el =>
+                    this._tabster.focusable.isFocusable(el, options.includeProgrammaticallyFocusable) &&
+                    !!this.getProps(el).isDefault,
+        });
     }
 
-    /**
-     * Finds all focusables in a given context that satisfy an given condition
-     *
-     * @param context @see {@link _findElement}
-     * @param customFilter A callback that checks whether an element should be added to results
-     * @param ignoreProgrammaticallyFocusable @see {@link _findElement}
-     * @param ignoreGroupper @see {@link _findElement}
-     * @param skipDefaultCondition skips the default condition that leverages @see {@link isFocusable}, be careful using this
-     */
-    findAll(
-        context: HTMLElement,
-        customFilter?: (el: HTMLElement) => boolean,
+    findAll(options: {
+        container: HTMLElement,
+        acceptCondition?: (el: HTMLElement) => boolean,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean,
-        skipDefaultCondition?: boolean
-    ): HTMLElement[] {
+        skipDefaultCheck?: boolean
+    }): HTMLElement[] {
+        const {
+            container,
+            acceptCondition: customAcceptCondition,
+            includeProgrammaticallyFocusable,
+            ignoreGroupper,
+            skipDefaultCheck,
+        } = options;
         const acceptCondition = (el: HTMLElement): boolean => {
+
             let defaultCheck: boolean;
             let customCheck = false;
 
-            if (skipDefaultCondition) {
+            if (skipDefaultCheck) {
                 defaultCheck = true;
             } else {
                 defaultCheck = this._tabster.focusable.isFocusable(
@@ -253,14 +241,14 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
 
             if (defaultCheck) {
-                customCheck = customFilter ? customFilter(el) : true;
+                customCheck = customAcceptCondition ? customAcceptCondition (el) : true;
             }
 
             return defaultCheck && customCheck;
         };
 
         const acceptElementState: Types.FocusableAcceptElementState = {
-            container: context,
+            container,
             from: null,
             acceptCondition,
             includeProgrammaticallyFocusable,
@@ -269,8 +257,8 @@ export class FocusableAPI implements Types.FocusableAPI {
         };
 
         const walker = createElementTreeWalker(
-            context.ownerDocument,
-            context,
+            container.ownerDocument,
+            container,
             node => this._acceptElement(node as HTMLElement, acceptElementState)
         );
 
@@ -289,14 +277,26 @@ export class FocusableAPI implements Types.FocusableAPI {
         return foundNodes;
     }
 
-    findElement(
-        container: HTMLElement | undefined,
-        currentElement: HTMLElement | null,
+    findElement(options: {
+        container?: HTMLElement,
+        currentElement?: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         ignoreGroupper?: boolean,
         prev?: boolean,
-        acceptCondition?: (el: HTMLElement) => boolean
-    ): HTMLElement | null {
+        acceptCondition?(el: HTMLElement): boolean,
+        ignoreChildren?: boolean,
+    }): HTMLElement | null {
+        const {
+            container,
+            currentElement = null,
+            includeProgrammaticallyFocusable,
+            ignoreGroupper,
+            prev,
+            ignoreChildren
+        } = options;
+
+        let { acceptCondition } = options;
+
         if (!container) {
             return null;
         }
@@ -348,9 +348,14 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        const ret = (prev ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null);
+        let found = acceptElementState.found ?? null;
+        if (ignoreChildren) {
+            found = (prev ? walker.previousSibling() : walker.nextSibling()) as (HTMLElement | null);
+        } else {
+            found = (prev ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null);
+        }
 
-        return acceptElementState.found || ret;
+        return found;
     }
 
     private _acceptElement(

@@ -127,8 +127,8 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
         if (this._basic.tabbable) {
             next = prev
-                ? focusable.findPrev(current, container)
-                : focusable.findNext(current, container);
+                ? focusable.findPrev({ currentElement: current, container })
+                : focusable.findNext({ currentElement: current, container });
         }
 
         if (!next) {
@@ -138,7 +138,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                 const parentCtx = RootAPI.getTabsterContext(tabster, parentElement);
 
                 if (parentCtx) {
-                    const from = (prev ? container : focusable.findLast(container)) || container;
+                    const from = (prev ? container : focusable.findLast({ container })) || container;
                     return FocusedElementState.findNext(tabster, parentCtx, from, prev);
                 }
             }
@@ -193,7 +193,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         const element = this.getElement();
 
         if (element) {
-            const elements: HTMLElement[] = this._tabster.focusable.findAll(element);
+            const elements: HTMLElement[] = this._tabster.focusable.findAll({ container: element });
             const newFocusables: Record<string, WeakHTMLElement> = {};
             const prevFocusables = this._focusables;
 
@@ -596,30 +596,30 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         if (((keyCode === Keys.Down) && isVertical) || ((keyCode === Keys.Right) && isHorizontal)) {
-            next = focusable.findNext(focused, container);
+            next = focusable.findNext({ currentElement: focused, container });
 
             if (!next && isCyclic) {
-                next = focusable.findFirst(container);
+                next = focusable.findFirst({ container });
             }
         } else if (((keyCode === Keys.Up) && isVertical) || ((keyCode === Keys.Left) && isHorizontal)) {
-            next = focusable.findPrev(focused, container);
+            next = focusable.findPrev({ currentElement: focused, container });
 
             if (!next && isCyclic) {
-                next = focusable.findLast(container);
+                next = focusable.findLast({ container });
             }
         } else if (keyCode === Keys.Home) {
-            next = focusable.findFirst(container);
+            next = focusable.findFirst({ container });
         } else if (keyCode === Keys.End) {
-            next = focusable.findLast(container);
+            next = focusable.findLast({ container });
         } else if (keyCode === Keys.PageUp) {
-            let prevElement = focusable.findPrev(focused, container);
+            let prevElement = focusable.findPrev({ currentElement: focused, container });
             let pageUpElement: HTMLElement | null = null;
 
             while (prevElement) {
                 pageUpElement = prevElement;
 
                 prevElement = isElementVerticallyVisibleInContainer(this._win, prevElement)
-                    ? focusable.findPrev(prevElement, container)
+                    ? focusable.findPrev({ currentElement: prevElement, container })
                     : null;
             }
 
@@ -629,14 +629,14 @@ export class MoverAPI implements Types.MoverAPI {
                 scrollIntoView(this._win, next, false);
             }
         } else if (keyCode === Keys.PageDown) {
-            let nextElement = focusable.findNext(focused, container);
+            let nextElement = focusable.findNext({ currentElement: focused, container });
             let pageDownElement: HTMLElement | null = null;
 
             while (nextElement) {
                 pageDownElement = nextElement;
 
                 nextElement = isElementVerticallyVisibleInContainer(this._win, nextElement)
-                    ? focusable.findNext(nextElement, container)
+                    ? focusable.findNext({ currentElement: nextElement, container })
                     : null;
             }
 
@@ -652,7 +652,11 @@ export class MoverAPI implements Types.MoverAPI {
 
             const nextMethod = ((keyCode === Keys.Down) || (keyCode === Keys.Right)) ? 'findNext' : 'findPrev';
 
-            for (let el = focusable[nextMethod](focused, container); el; el = focusable[nextMethod](el, container)) {
+            for (
+                let el = focusable[nextMethod]({ currentElement: focused, container });
+                el;
+                el = focusable[nextMethod]({ currentElement: el, container })
+            ) {
                 const rect = el.getBoundingClientRect();
 
                 if (keyCode === Keys.Up) {

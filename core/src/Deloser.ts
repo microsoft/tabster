@@ -475,7 +475,7 @@ export class Deloser implements Types.Deloser {
         }
 
         if (restoreFocusOrder === Types.RestoreFocusOrders.RootDefault) {
-            available = this._tabster.focusable.findDefault(rootElement);
+            available = this._tabster.focusable.findDefault({ container: rootElement });
         }
 
         if (!available && (restoreFocusOrder === Types.RestoreFocusOrders.RootFirst)) {
@@ -487,7 +487,7 @@ export class Deloser implements Types.Deloser {
         }
 
         const availableInHistory = this._findInHistory();
-        const availableDefault = this._tabster.focusable.findDefault(element);
+        const availableDefault = this._tabster.focusable.findDefault({ container: element });
         const availableFirst = this._findFirst(element);
 
         if (availableInHistory && (restoreFocusOrder === Types.RestoreFocusOrders.History)) {
@@ -582,7 +582,7 @@ export class Deloser implements Types.Deloser {
 
     private _findFirst(element: HTMLElement): HTMLElement | null {
         if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
-            const first = this._tabster.focusable.findFirst(element);
+            const first = this._tabster.focusable.findFirst({ container: element });
 
             if (first) {
                 return first;

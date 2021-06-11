@@ -189,8 +189,8 @@ export class Root implements Types.Root {
 
                 if (element) {
                     toFocus = props.isFirst
-                        ? this._tabster.focusable.findFirst(element)
-                        : this._tabster.focusable.findLast(element);
+                        ? this._tabster.focusable.findFirst({ container: element })
+                        : this._tabster.focusable.findLast({ container: element });
                 } else {
                     toFocus = null;
                 }

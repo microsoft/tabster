@@ -53,13 +53,13 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
 
         if (this._isUnlimited) {
             next = prev
-                ? tabster.focusable.findPrev(current, container)
-                : tabster.focusable.findNext(current, container);
+                ? tabster.focusable.findPrev({ container, currentElement: current })
+                : tabster.focusable.findNext({ container, currentElement: current });
 
             if (!next && (this._basic.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
                 next = prev
-                    ? tabster.focusable.findLast(container)
-                    : tabster.focusable.findFirst(container);
+                    ? tabster.focusable.findLast({ container })
+                    : tabster.focusable.findFirst({ container });
             }
         }
 
@@ -130,14 +130,12 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
                 if (isInside && (isActive !== true)) {
                     cached.first = state.acceptCondition(groupperElement)
                         ? groupperElement
-                        : this._tabster.focusable.findElement(
-                            groupperElement,
-                            null,
-                            state.includeProgrammaticallyFocusable,
-                            state.ignoreGroupper,
-                            false,
-                            state.acceptCondition
-                        );
+                        : this._tabster.focusable.findElement({
+                            container: groupperElement,
+                            includeProgrammaticallyFocusable: state.includeProgrammaticallyFocusable,
+                            ignoreGroupper: state.ignoreGroupper,
+                            acceptCondition: state.acceptCondition,
+                        });
                 }
             }
         }
@@ -239,7 +237,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                         ) ||
                         (
                             (el !== element) &&
-                            (this._tabster.focusable.isFocusable(el) || (element !== this._tabster.focusable.findFirst(el)))
+                            (this._tabster.focusable.isFocusable(el) || (element !== this._tabster.focusable.findFirst({ container: el })))
                         )
                     )
                 ) {
@@ -275,7 +273,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                         return;
                     }
 
-                    next = this._tabster.focusable.findFirst(groupperElement, false, true);
+                    next = this._tabster.focusable.findFirst({ container: groupperElement, ignoreGroupper: true });
 
                     if (next) {
                         this._updateUnlimited(next);
@@ -292,7 +290,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                             if (ge) {
                                 g.makeUnlimited(false);
 
-                                next = this._tabster.focusable.isFocusable(ge) ? ge : this._tabster.focusable.findFirst(ge);
+                                next = this._tabster.focusable.isFocusable(ge) ? ge : this._tabster.focusable.findFirst({ container: ge });
 
                                 if (next) {
                                     break;

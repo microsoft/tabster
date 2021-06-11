@@ -269,6 +269,32 @@ export interface FocusableAcceptElementState {
     };
 }
 
+export interface FindFocusableProps {
+    /**
+     * The container used for the search
+     */
+    container?: HTMLElement;
+    /**
+     * The elemet to start from
+     */
+    currentElement?: HTMLElement;
+    /**
+     * includes elements that can be focused programmatically
+     */
+    includeProgrammaticallyFocusable?: boolean;
+    ignoreGroupper?: boolean;
+    prev?: boolean;
+    /**
+     * @param el element visited
+     * @returns if an element should be accepted
+     */
+    acceptCondition?(el: HTMLElement): boolean;
+    /**
+     * Ignore the children of {@see currentElement}
+     */
+    ignoreChildren?: boolean;
+}
+
 export interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
     setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
@@ -277,31 +303,57 @@ export interface FocusableAPI {
         includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findAll(
-        context: HTMLElement,
-        customFilter?: (el: HTMLElement) => boolean,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean,
-        skipDefaultCondition?: boolean
-    ): HTMLElement[];
-    findElement(
-        container: HTMLElement | undefined,
-        from: HTMLElement | null,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean,
-        prev?: boolean,
-        acceptCondition?: (el: HTMLElement) => boolean
+    findFirst(
+        options: Pick<
+            FindFocusableProps,
+            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
+        >
     ): HTMLElement | null;
+    findLast(
+        options: Pick<
+            FindFocusableProps,
+            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
+        >
+    ): HTMLElement | null;
+    findNext(
+        options: Pick<
+            FindFocusableProps,
+            | 'currentElement'
+            | 'container'
+            | 'includeProgrammaticallyFocusable'
+            | 'ignoreGroupper'
+        >
+    ): HTMLElement | null;
+    findPrev(
+        options: Pick<
+            FindFocusableProps,
+            | 'currentElement'
+            | 'container'
+            | 'includeProgrammaticallyFocusable'
+            | 'ignoreGroupper'
+        >
+    ): HTMLElement | null;
+    findDefault(
+        options: Pick<
+            FindFocusableProps,
+            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
+        >
+    ): HTMLElement | null;
+    /**
+     * @returns All focusables in a given context that satisfy an given condition
+     */
+    findAll(
+        options:
+            | Pick<
+                  FindFocusableProps,
+                  | 'container'
+                  | 'includeProgrammaticallyFocusable'
+                  | 'ignoreGroupper'
+                  | 'acceptCondition'
+              >
+            | { skipDefaultCheck?: boolean }
+    ): HTMLElement[];
+    findElement(options: FindFocusableProps): HTMLElement | null;
 }
 
 export interface Visibilities {

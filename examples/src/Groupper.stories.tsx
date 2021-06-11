@@ -15,29 +15,28 @@ export default {
 
 export const NestedGrouppers = () => {
     const moverAttr = getTabsterAttribute({
-        mover: { direction: TabsterTypes.MoverDirections.Vertical }
+        mover: { direction: TabsterTypes.MoverDirections.Vertical, tabbable: true }
     }) as TabsterTypes.TabsterDOMAttribute;
 
     return (
         <div
             aria-label='Main'
-            {...moverAttr}
         >
             <div>
                 <Item />
                 <Item />
 
-                <Item>
-                    <div {...moverAttr}>
+                <Item mover>
+                    <div>
                         <Item />
 
-                        <Item>
-                            <div {...moverAttr}>
+                        <Item mover>
+                            <div>
                                 <Item />
                                 <Item />
 
-                                <Item>
-                                    <div {...moverAttr}>
+                                <Item mover>
+                                    <div>
                                         <Item />
                                         <Item />
                                         <Item />
