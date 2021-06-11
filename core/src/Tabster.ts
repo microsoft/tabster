@@ -20,6 +20,7 @@ import * as Types from './Types';
 import {
     cleanupWeakRefStorage,
     clearElementCache,
+    disposeInstanceContext,
     setBasics as overrideBasics,
     startWeakRefStorageCleanup,
     stopWeakRefStorageCleanupAndClearStorage
@@ -85,53 +86,43 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
             delete this._unobserve;
         }
 
+        const win = this._win;
+
         this._forgetMemorizedElements = [];
 
-        if (this._win && this._forgetMemorizedTimer) {
-            this._win.clearTimeout(this._forgetMemorizedTimer);
+        if (win && this._forgetMemorizedTimer) {
+            win.clearTimeout(this._forgetMemorizedTimer);
             delete this._forgetMemorizedTimer;
         }
 
-        if (this.groupperDispose) {
-            this.groupperDispose();
-            delete this.groupper;
-            delete this.groupperDispose;
+        interface DisposeParts {
+            'outlineDispose': 'outline';
+            'crossOriginDispose': 'crossOrigin';
+            'deloserDispose': 'deloser';
+            'groupperDispose': 'groupper';
+            'moverDispose': 'mover';
+            'modalizerDispose': 'modalizer';
+            'observedElementDispose': 'observedElement';
         }
 
-        if (this.moverDispose) {
-            this.moverDispose();
-            delete this.mover;
-            delete this.moverDispose;
-        }
+        const disposeParts: DisposeParts = {
+            'outlineDispose': 'outline',
+            'crossOriginDispose': 'crossOrigin',
+            'deloserDispose': 'deloser',
+            'groupperDispose': 'groupper',
+            'moverDispose': 'mover',
+            'modalizerDispose': 'modalizer',
+            'observedElementDispose': 'observedElement'
+        };
 
-        if (this.outlineDispose) {
-            this.outlineDispose();
-            delete this.outline;
-            delete this.outlineDispose;
-        }
+        for (let key of Object.keys(disposeParts) as (keyof DisposeParts)[]) {
+            const disposeFunc = this[key];
 
-        if (this.crossOriginDispose) {
-            this.crossOriginDispose();
-            delete this.crossOrigin;
-            delete this.crossOriginDispose;
-        }
-
-        if (this.deloserDispose) {
-            this.deloserDispose();
-            delete this.deloser;
-            delete this.deloserDispose;
-        }
-
-        if (this.modalizerDispose) {
-            this.modalizerDispose();
-            delete this.modalizer;
-            delete this.modalizerDispose;
-        }
-
-        if (this.observedElementDispose) {
-            this.observedElementDispose();
-            delete this.observedElement;
-            delete this.observedElementDispose;
+            if (disposeFunc) {
+                disposeFunc();
+                delete this[disposeParts[key]];
+                delete this[key];
+            }
         }
 
         KeyboardNavigationState.dispose(this.keyboardNavigation);
@@ -144,11 +135,11 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
 
         this._storage = {};
 
-        if (this._win?.__tabsterInstance) {
-            delete this._win?.__tabsterInstance;
+        if (win) {
+            disposeInstanceContext(win);
+            delete win.__tabsterInstance;
+            delete this._win;
         }
-
-        delete this._win;
     }
 
     static dispose(instance: Types.TabsterCore): void {
@@ -330,6 +321,9 @@ export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI
 
     if (!tabsterInternal.crossOrigin) {
         getDeloser(tabster);
+        getModalizer(tabster);
+        getMover(tabster);
+        getGroupper(tabster);
         getOutline(tabster);
         getObservedElement(tabster);
         const crossOrigin = new CrossOriginAPI(tabster);

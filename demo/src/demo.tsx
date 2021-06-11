@@ -9,13 +9,17 @@ import {
     createTabster,
     getCurrentTabster,
     getDeloser,
+    getGroupper,
     getModalizer,
+    getMover,
     getOutline,
     getTabsterAttribute,
-    Types as TabsterTypes
+    Types as TabsterTypes,
 } from 'tabster';
 
 const tabster = createTabster(window);
+getGroupper(tabster);
+getMover(tabster);
 const tabsterModalizer = getModalizer(tabster);
 const tabsterDeloser = getDeloser(tabster);
 const tabsterOutline = getOutline(tabster);
@@ -31,13 +35,12 @@ class App extends React.PureComponent {
                 <div { ...getTabsterAttribute({ deloser: {} }) }>
                     <h1>Hello world</h1>
 
-                    <div { ...getTabsterAttribute({ 
-                        focusable: 
-                            { mover: 
-                                { navigationType: TabsterTypes.MoverKeys.Arrows, 
-                                    axis: TabsterTypes.MoverAxis.Horizontal 
-                                } 
-                            } 
+                    <div { ...getTabsterAttribute({
+                        mover:
+                            {
+                                direction: TabsterTypes.MoverDirections.Horizontal,
+                                tabbable: true
+                            }
                         }) }>
                         <button>A</button>
                         <button>bunch</button>
@@ -47,27 +50,91 @@ class App extends React.PureComponent {
                         <button>are</button>
                         <button>navigable</button>
                         <button>using</button>
+                        <button>left/right</button>
                         <button>arrows</button>
-                        <button>instead</button>
-                        <button>of</button>
+                        <button>and</button>
                         <button>tabs</button>
                     </div>
 
-                    <div { ...getTabsterAttribute({
-                        focusable: {
-                            mover: { navigationType: TabsterTypes.MoverKeys.Arrows, cyclic: true, axis: TabsterTypes.MoverAxis.Vertical }
-                        }
-                    }) }>
+                    <div { ...getTabsterAttribute({ mover: {
+                        direction: TabsterTypes.MoverDirections.Grid
+                    } }) }>
+                        <br/><br/>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
+                        <button>A</button>
+                        <button>bunch</button>
+                        <button>of</button>
+                        <button>buttons</button>
+                        <button>which</button>
+                        <button>are</button>
+                        <button>navigable</button>
+                        <button>using</button>
+                        <button>arrows</button>
+                        <button>as</button>
+                        <button>a</button>
+                        <button>gird</button>
+                        <br/><br/>
+                    </div>
+
+                    <div { ...getTabsterAttribute({ mover: {
+                        tabbable: false,
+                        cyclic: true,
+                        direction: TabsterTypes.MoverDirections.Vertical,
+                        memorizeCurrent: true
+                    } }) }>
                         <button>The</button>
                         <button>same</button>
                         <button>arrow</button>
                         <button>navigation</button>
                         <button>but</button>
-                        <button>is</button>
+                        <button>using</button>
+                        <button>up/down</button>
+                        <button>arrows</button>
+                        <button>and</button>
                         <button>cyclic</button>
                     </div>
 
-                    <div>
+                    <div { ...getTabsterAttribute({ mover: {
+                        tabbable: false,
+                        cyclic: true,
+                        trackState: true,
+                        visibilityAware: TabsterTypes.Visibilities.Visible
+                    } }) } style={{height: 300, overflow: 'scroll'}}>
                         <Item onClick={ this._onClick } />
                         <Item onClick={ this._onClick } />
 
@@ -127,7 +194,7 @@ class Item extends React.PureComponent<{ onClick: () => void }> {
                 tabIndex={0}
                 className='item'
                 { ...getTabsterAttribute({ groupper: {
-                    isLimited: TabsterTypes.GroupperFocusLimits.LimitedTrapFocus
+                    tabbability: TabsterTypes.GroupperTabbabilities.LimitedTrapFocus
                 }})}
             >
                 { this.props.children

@@ -256,6 +256,7 @@ export interface FocusableProps {
 export interface FocusableAcceptElementState {
     container: HTMLElement;
     from: HTMLElement | null;
+    isForward: boolean;
     found?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
@@ -370,7 +371,7 @@ export type Visibility = Visibilities[keyof Visibilities];
 
 export interface MoverElementState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
-    isVisible: Visibility;
+    visibility: Visibility;
 }
 
 export interface MoverDirections {
@@ -390,7 +391,6 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 export interface MoverBasicProps {
     direction?: MoverDirection;
     memorizeCurrent?: boolean;
-    lookupVisibility?: Visibility;
     tabbable?: boolean;
     /**
      * Whether to allow cyclic navigation in the mover
@@ -407,11 +407,12 @@ export interface MoverBasicProps {
      */
     trackState?: boolean;
     /**
-     * Uses the visibility part of the trackState prop to be able to
+     * When set to Visibility.Visible or Visibility.PartiallyVisible,
+     * uses the visibility part of the trackState prop to be able to
      * go to first/last visible element (instead of first/last focusable
      * element in DOM) when tabbing from outside of the mover.
      */
-    visibilityAware?: boolean;
+    visibilityAware?: Visibility;
 }
 
 export interface MoverExtendedProps {

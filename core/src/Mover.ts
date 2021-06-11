@@ -32,15 +32,14 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     private static _movers: Record<string, Mover> = {};
 
     private _unobserve: (() => void) | undefined;
+    private _onChangeTimer: number | undefined;
     private _domChangedTimer: number | undefined;
     private _current: WeakHTMLElement | undefined;
     private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
     private _prevVisible: Record<string, Types.Visibility> = {};
     private _hasFullyVisible = false;
-    private _onChangeTimer: number | undefined;
     private _updateVisibleTimer: number | undefined;
-
     private _focusables: Record<string, WeakHTMLElement> = {};
 
     constructor(
@@ -148,14 +147,49 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {
-        if (this._basic.memorizeCurrent) {
-            const container = this.getElement();
-            const current = this._current?.get();
+        const  { memorizeCurrent, visibilityAware } = this._basic;
 
-            if (container && current && this._tabster.focusable.isFocusable(current)) {
-                if (state.from && !container.contains(state.from)) {
-                    state.found = current;
-                    return NodeFilter.FILTER_REJECT;
+        if (memorizeCurrent || visibilityAware) {
+            const container = this.getElement();
+
+            if (container) {
+                if (memorizeCurrent) {
+                    const current = this._current?.get();
+
+                    if (current && state.acceptCondition(current)) {
+                        if (state.from && !container.contains(state.from)) {
+                            state.found = current;
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    }
+                }
+
+                if (visibilityAware && !container.contains(state.from)) {
+                    const visible = Object.keys(this._visible);
+                    let found: HTMLElement | undefined;
+
+                    if (!state.isForward) {
+                        visible.reverse();
+                    }
+
+                    for (let id of visible) {
+                        const visibility = this._visible[id];
+
+                        if (
+                            (visibility === Types.Visibilities.Visible) ||
+                            (
+                                (visibility === Types.Visibilities.PartiallyVisible) &&
+                                ((visibilityAware === Types.Visibilities.PartiallyVisible || !this._hasFullyVisible))
+                            )
+                        ) {
+                            found = this._focusables[id]?.get();
+
+                            if (found && state.acceptCondition(found)) {
+                                state.found = found;
+                                return NodeFilter.FILTER_ACCEPT;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -250,13 +284,13 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                 this._hasFullyVisible = false;
 
                 for (let id of Object.keys(this._visible)) {
-                    const isVisible = this._visible[id];
+                    const visibility = this._visible[id];
 
-                    if (isVisible !== this._prevVisible[id]) {
+                    if (visibility !== this._prevVisible[id]) {
                         changed.push(this._focusables[id]);
                     }
 
-                    if (isVisible === Types.Visibilities.Visible) {
+                    if (visibility === Types.Visibilities.Visible) {
                         this._hasFullyVisible = true;
                     }
                 }
@@ -307,22 +341,18 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
     getState(element: HTMLElement): Types.MoverElementState | undefined {
         const id = getElementUId(this._win, element);
-        const isVisible = this._visible[id] || Types.Visibilities.Invisible;
-        let isCurrent = this._current ? (this._current.get() === element) : undefined;
 
-        if ((isCurrent === undefined) && (this._basic.lookupVisibility !== Types.Visibilities.Invisible)) {
-            if (
-                (isVisible === Types.Visibilities.Invisible) ||
-                (this._hasFullyVisible && (isVisible === Types.Visibilities.PartiallyVisible))
-            ) {
-                isCurrent = false;
-            }
+        if (id in this._visible) {
+            const visibility = this._visible[id] || Types.Visibilities.Invisible;
+            let isCurrent = this._current ? (this._current.get() === element) : undefined;
+
+            return {
+                isCurrent,
+                visibility
+            };
         }
 
-        return {
-            isCurrent,
-            isVisible
-        };
+        return undefined;
     }
 
     private _updateVisible(updateParents: boolean): void {
@@ -350,16 +380,16 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
             for (let id of Object.keys(this._focusables)) {
                 const element = this._focusables[id].get();
-                const isVisible = element
+                const visible = element
                     ? isElementVisibleInContainer(this._win, element, 10)
                     : Types.Visibilities.Invisible;
                 const curIsVisible = this._visible[id] || Types.Visibilities.Invisible;
 
-                if (isVisible !== Types.Visibilities.Invisible) {
-                    visibleMovers[id] = isVisible;
+                if (visible !== Types.Visibilities.Invisible) {
+                    visibleMovers[id] = visible;
                 }
 
-                if (curIsVisible !== isVisible) {
+                if (curIsVisible !== visible) {
                     isChanged = true;
                 }
             }
@@ -755,5 +785,4 @@ export class MoverAPI implements Types.MoverAPI {
 
         return false;
     }
-
 }
