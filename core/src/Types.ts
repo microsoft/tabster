@@ -4,6 +4,7 @@
  */
 
 export const TabsterAttributeName = 'data-tabster';
+export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;
