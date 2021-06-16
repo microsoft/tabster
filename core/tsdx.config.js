@@ -1,5 +1,6 @@
 const replace = require('@rollup/plugin-replace');
 const typescript = require('rollup-plugin-typescript2');
+const version = require('./package.json').version;
 
 module.exports = {
     rollup(config, options) {
@@ -17,7 +18,8 @@ module.exports = {
         // A workaround for babel-plugin-transform-async-to-promises used by tsdx
         // injecting helper code with `const` and producing invalid ES5 code.
         config.plugins.push(replace({
-            'const ': 'var '
+            'const ': 'var ',
+            'LOCAL_VERSION': version,
         }));
 
         return config;

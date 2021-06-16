@@ -654,4 +654,7 @@ export interface TabsterInternal {
     modalizerDispose?: DisposeFunc;
     observedElementDispose?: DisposeFunc;
     crossOriginDispose?: DisposeFunc;
+
+    // The version of the tabster package this instance is on
+    _version?: string;
 }
