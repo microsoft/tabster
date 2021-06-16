@@ -656,5 +656,5 @@ export interface TabsterInternal {
     crossOriginDispose?: DisposeFunc;
 
     // The version of the tabster package this instance is on
-    _version?: string;
+    _version: string;
 }

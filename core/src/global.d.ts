@@ -1,2 +1,2 @@
 declare const __DEV__: boolean;
-declare const __VERSION__: string | undefined;
+declare const __VERSION__: string;
