@@ -19,7 +19,7 @@ module.exports = {
         // injecting helper code with `const` and producing invalid ES5 code.
         config.plugins.push(replace({
             'const ': 'var ',
-            '__VERSION__': version,
+            '__VERSION__': `'${version}'`,
         }));
 
         return config;

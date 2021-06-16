@@ -34,7 +34,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
-    public _version: string | undefined;
+    public _version: string | undefined = __VERSION__;
 
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -209,8 +209,6 @@ export function createTabster(win: Window, props?: Types.TabsterCoreProps): Type
     }
 
     const tabster = new Tabster(win, props);
-    // This will be replaced during build
-    tabster._version = __VERSION__;
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
 
     return tabster;
