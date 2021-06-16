@@ -155,6 +155,7 @@ export class Root implements Types.Root {
 
         input.tabIndex = 0;
         input.setAttribute('role', 'none');
+        input.setAttribute(Types.TabsterDummyInputAttributeName, '');
         input.setAttribute('aria-hidden', 'true');
 
         const style = input.style;

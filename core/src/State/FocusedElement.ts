@@ -241,7 +241,7 @@ export class FocusedElementState
     private _onKeyDown = (e: KeyboardEvent): void => {
         let curElement = this.getVal();
 
-        if (!curElement || !curElement.ownerDocument) {
+        if (!curElement || !curElement.ownerDocument || curElement.contentEditable === 'true') {
             return;
         }
 

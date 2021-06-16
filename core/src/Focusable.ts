@@ -1074,7 +1074,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _isDisabled(el: HTMLElement): boolean {
-        return this._attrIs(el, 'aria-disabled', 'true');
+        return this._attrIs(el, 'disabled', 'true');
     }
 
     private _isHidden(el: HTMLElement): boolean {
