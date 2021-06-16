@@ -210,7 +210,7 @@ export function createTabster(win: Window, props?: Types.TabsterCoreProps): Type
 
     const tabster = new Tabster(win, props);
     // This will be replaced during build
-    tabster._version = 'LOCAL_VERSION';
+    tabster._version = __VERSION__;
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
 
     return tabster;
