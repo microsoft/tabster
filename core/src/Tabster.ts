@@ -34,6 +34,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
+    public _version: string = __VERSION__;
 
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;

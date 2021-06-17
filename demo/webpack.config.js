@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const TerserPlugin = require("terser-webpack-plugin");
+const version = require('../core/package.json').version;
 
 const isDev = (process.env.NODE_ENV !== 'production');
 
@@ -34,7 +35,8 @@ module.exports = {
             'process.env': {
                 NODE_ENV: isDev ? '"development"' : '"production"'
             },
-            '__DEV__': isDev
+            '__DEV__': isDev,
+            '__VERSION__': `'${version}'`,
         })
     ],
 
