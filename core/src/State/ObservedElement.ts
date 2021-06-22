@@ -242,14 +242,19 @@ export class ObservedElementAPI
         return promise;
     }
 
-    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
+    async requestFocus(
+        observedName: string,
+        timeout: number,
+        accessibility: Types.ObservedElementAccesibility = Types.ObservedElementAccesibilities.Focusable,
+    ): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(
             observedName,
             timeout,
-            Types.ObservedElementAccesibilities.Focusable
+            accessibility,
         ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._tabster.focusedElement.focus(element)
+            // ignore focusedElement checks since observedElement has its own
+            ? this._tabster.focusedElement.focus(element, true, true)
             : false
         );
     }

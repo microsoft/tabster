@@ -81,7 +81,7 @@ export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedEl
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
     waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<HTMLElement | null>;
-    requestFocus(observedName: string, timeout: number): Promise<boolean>;
+    requestFocus(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<boolean>;
 }
 
 export interface CrossOriginElement {
