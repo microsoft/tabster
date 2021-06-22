@@ -1312,19 +1312,14 @@ export class CrossOriginObservedElementState
         }, timeout).then(value => value ? StateTransaction.createElement(this._tabster, value) : null);
     }
 
-    async requestFocus(
-        observedName: string,
-        timeout: number,
-        accessibility: Types.ObservedElementAccesibility = Types.ObservedElementAccesibilities.Focusable,
-    ): Promise<boolean> {
+    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(
             observedName,
             timeout,
-            accessibility,
+            Types.ObservedElementAccesibilities.Focusable
         ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            // ignore focusedElement checks since cross origin has its own
-            ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element, true, true)
+            ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element, true)
             : false
         );
     }

@@ -13,7 +13,7 @@ describe('Focusable', () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it('should not request focus tabindex -1 by default', async () => {
+    it('should request focus for element with tabindex -1', async () => {
         const name = 'test';
         await new BroTest.BroTest(
             (
@@ -32,45 +32,13 @@ describe('Focusable', () => {
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button1');
             })
-            .eval(name => {
-                return (window as unknown as WindowWithTabsterInternal).__tabsterInstance?.observedElement?.requestFocus(
-                    name,
-                    0
-                );
-            }, name)
-            .check((res: boolean) => expect(res).toBe(false))
-            .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
-            });
-    });
-
-    it('should request focus for any element', async () => {
-        const name = 'test';
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button
-                        {...getTabsterAttribute({ observed: { name } })}
-                        tabIndex={-1}
-                    >
-                        Button2
-                    </button>
-                </div>
-            )
-        )
-            .pressTab()
-            .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
-            })
-            .eval((name, accessibility) => {
+            .eval((name) => {
                 // @ts-ignore
                 return (window as unknwon as WindowWithTabsterInternal).__tabsterInstance.observedElement.requestFocus(
                     name,
                     0,
-                    accessibility
                 );
-            }, name, Types.ObservedElementAccesibilities.Any)
+            }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button2');

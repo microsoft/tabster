@@ -166,11 +166,13 @@ export class ObservedElementAPI
         if (o) {
             for (let uid of Object.keys(o)) {
                 let el = o[uid].element.get() || null;
-
                 if (el) {
                     if (
-                        ((accessibility === Types.ObservedElementAccesibilities.Accessible) && !this._tabster.focusable.isAccessible(el)) ||
-                        ((accessibility === Types.ObservedElementAccesibilities.Focusable) && !this._tabster.focusable.isFocusable(el))
+                        (accessibility === Types.ObservedElementAccesibilities.Accessible &&
+                        !this._tabster.focusable.isAccessible(el)) ||
+
+                        (accessibility === Types.ObservedElementAccesibilities.Focusable &&
+                        !this._tabster.focusable.isFocusable(el, true))
                     ) {
                         el = null;
                     }
@@ -242,19 +244,14 @@ export class ObservedElementAPI
         return promise;
     }
 
-    async requestFocus(
-        observedName: string,
-        timeout: number,
-        accessibility: Types.ObservedElementAccesibility = Types.ObservedElementAccesibilities.Focusable,
-    ): Promise<boolean> {
+    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
         let requestId = ++this._lastRequestFocusId;
         return this.waitElement(
             observedName,
             timeout,
-            accessibility,
+            Types.ObservedElementAccesibilities.Focusable
         ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            // ignore focusedElement checks since observedElement has its own
-            ? this._tabster.focusedElement.focus(element, true, true)
+            ? this._tabster.focusedElement.focus(element, true)
             : false
         );
     }
