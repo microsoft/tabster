@@ -9,7 +9,6 @@ import { getTabsterAttribute } from '../Tabster';
 describe('data-tabster-ignore', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
-        jest.setTimeout(100000000);
     });
 
     it('should allow aria-hidden element to be focused', async () => {
