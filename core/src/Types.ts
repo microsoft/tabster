@@ -4,7 +4,6 @@
  */
 
 export const TabsterAttributeName = 'data-tabster';
-export const TabsterIgnoreAttributeName = 'data-tabster-ignore';
 export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
 
 export interface InternalBasics {
