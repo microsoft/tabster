@@ -4,6 +4,7 @@
  */
 
 export const TabsterAttributeName = 'data-tabster';
+export const TabsterIgnoreAttributeName = 'data-tabster-ignore';
 export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
 
 export interface InternalBasics {
@@ -523,6 +524,18 @@ export interface RootAPI {
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
+export interface IgnoreAPI {
+    /**
+     * @param element - Tabster is does nothing within this element
+     */
+    add(element: HTMLElement): void;
+
+    /**
+     * @param element - Tabster will control focus inside this element again
+     */
+    remove(element: HTMLElement): void;
+}
+
 export interface ModalizerAPI {
     /**
      * Adds an element to be managed by Modalizer
@@ -578,6 +591,10 @@ export interface UberGroupperOnElement {
     uberGroupper: UberGroupper;
 }
 
+export interface IgnoreOnElement {
+    ignore: Record<string, never>;
+}
+
 export interface ObservedOnElement {
     observed: ObservedElementBasicProps & ObservedElementExtendedProps;
 }
@@ -592,6 +609,7 @@ export type TabsterAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
+    ignore: IgnoreOnElement['ignore'],
     uberGroupper: true,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
@@ -615,7 +633,8 @@ export type TabsterOnElement = Partial<
     GroupperOnElement &
     UberGroupperOnElement &
     ObservedOnElement &
-    OutlineOnElement
+    OutlineOnElement &
+    IgnoreOnElement
 >;
 
 export interface OutlineElements {
@@ -647,6 +666,7 @@ export interface TabsterInternal {
     modalizer?: ModalizerAPI;
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
+    ignore: IgnoreAPI;
 
     outlineDispose?: DisposeFunc;
     rootDispose?: DisposeFunc;

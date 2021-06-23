@@ -417,6 +417,11 @@ export class RootAPI implements Types.RootAPI {
                 continue;
             }
 
+            // Element inside an ignore subtree - no context
+            if (tabsterOnElement.ignore) {
+                return undefined;
+            }
+
             if (!groupper && tabsterOnElement.groupper) {
                 groupper = tabsterOnElement.groupper;
             }

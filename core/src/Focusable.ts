@@ -5,7 +5,6 @@
 
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
-import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, isElementVisibleInContainer, matchesSelector, WeakHTMLElement } from './Utils';
 
@@ -1268,11 +1267,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         acceptCondition: (el: HTMLElement) => boolean,
         ignoreGroupper?: boolean
     ): number {
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        // Tabster is opt in, if it is not managed, don't try and get do anything special
-        if (!ctx) {
-            return NodeFilter.FILTER_SKIP;
-        }
         // We assume iframes are focusable because native tab behaviour would tab inside
         if (element.tagName === 'IFRAME') {
             return NodeFilter.FILTER_ACCEPT;

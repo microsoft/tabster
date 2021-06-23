@@ -69,6 +69,9 @@ export function setTabsterOnElement(
                 case 'outline':
                     cur[key] = attrObject[key] = tabsterOnElement.outline;
                     break;
+                case 'ignore':
+                    cur[key] = attrObject[key] = tabsterOnElement.ignore;
+                    break;
 
                 default:
                     throw new Error('Unknown Tabster part.');
@@ -199,6 +202,9 @@ export function updateTabsterByAttribute(
                         tabsteri.outline.setProps(element, null);
                     }
                     break;
+
+                case 'ignore':
+                    tabsteri.ignore.remove(element);
             }
         }
     }
@@ -270,6 +276,10 @@ export function updateTabsterByAttribute(
                 if (tabsteri.outline) {
                     tabsteri.outline.setProps(element, newObject.outline || null);
                 }
+                break;
+
+            case 'ignore':
+                tabsteri.ignore.add(element);
                 break;
 
             default:
