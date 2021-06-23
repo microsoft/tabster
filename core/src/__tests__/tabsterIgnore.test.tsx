@@ -37,7 +37,7 @@ describe('data-tabster-ignore', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div id='container' {...getTabsterAttribute({ root: {} })}>
+                    <div id='container' {...getTabsterAttribute({ ignore: {} })}>
                         <button>Button1</button>
                         <button>Button2</button>
                         <button>Button3</button>
