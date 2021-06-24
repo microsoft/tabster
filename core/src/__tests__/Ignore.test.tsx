@@ -6,7 +6,7 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute } from '../Tabster';
 
-describe('data-tabster-ignore', () => {
+describe('Ignorer', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
@@ -15,7 +15,7 @@ describe('data-tabster-ignore', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ ignore: {} })}>
+                    <div {...getTabsterAttribute({ ignorer: {} })}>
                         <button>Button1</button>
                         <button aria-hidden='true'>Button2</button>
                         <button>Button3</button>
@@ -37,7 +37,7 @@ describe('data-tabster-ignore', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div id='container' {...getTabsterAttribute({ ignore: {} })}>
+                    <div id='container' {...getTabsterAttribute({ ignorer: {} })}>
                         <button>Button1</button>
                         <button>Button2</button>
                         <button>Button3</button>

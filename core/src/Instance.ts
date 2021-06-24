@@ -69,8 +69,8 @@ export function setTabsterOnElement(
                 case 'outline':
                     cur[key] = attrObject[key] = tabsterOnElement.outline;
                     break;
-                case 'ignore':
-                    cur[key] = attrObject[key] = tabsterOnElement.ignore;
+                case 'ignorer':
+                    cur[key] = attrObject[key] = tabsterOnElement.ignorer;
                     break;
 
                 default:
@@ -203,8 +203,8 @@ export function updateTabsterByAttribute(
                     }
                     break;
 
-                case 'ignore':
-                    tabsteri.ignore.remove(element);
+                case 'ignorer':
+                    tabsteri.ignorer.remove(element);
             }
         }
     }
@@ -278,8 +278,8 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
-            case 'ignore':
-                tabsteri.ignore.add(element);
+            case 'ignorer':
+                tabsteri.ignorer.add(element);
                 break;
 
             default:

@@ -591,7 +591,7 @@ export interface UberGroupperOnElement {
 }
 
 export interface IgnorerOnElement {
-    ignore: Record<string, never>;
+    ignorer: Record<string, never>;
 }
 
 export interface ObservedOnElement {
@@ -608,7 +608,7 @@ export type TabsterAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
-    ignore: IgnorerOnElement['ignore'],
+    ignorer: IgnorerOnElement['ignorer'],
     uberGroupper: true,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
@@ -665,7 +665,7 @@ export interface TabsterInternal {
     modalizer?: ModalizerAPI;
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
-    ignore: IgnorerAPI;
+    ignorer: IgnorerAPI;
 
     outlineDispose?: DisposeFunc;
     rootDispose?: DisposeFunc;
