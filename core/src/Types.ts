@@ -523,7 +523,7 @@ export interface RootAPI {
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
-export interface IgnoreAPI {
+export interface IgnorerAPI {
     /**
      * @param element - Tabster is does nothing within this element
      */
@@ -590,7 +590,7 @@ export interface UberGroupperOnElement {
     uberGroupper: UberGroupper;
 }
 
-export interface IgnoreOnElement {
+export interface IgnorerOnElement {
     ignore: Record<string, never>;
 }
 
@@ -608,7 +608,7 @@ export type TabsterAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
-    ignore: IgnoreOnElement['ignore'],
+    ignore: IgnorerOnElement['ignore'],
     uberGroupper: true,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
@@ -633,7 +633,7 @@ export type TabsterOnElement = Partial<
     UberGroupperOnElement &
     ObservedOnElement &
     OutlineOnElement &
-    IgnoreOnElement
+    IgnorerOnElement
 >;
 
 export interface OutlineElements {
@@ -665,7 +665,7 @@ export interface TabsterInternal {
     modalizer?: ModalizerAPI;
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
-    ignore: IgnoreAPI;
+    ignore: IgnorerAPI;
 
     outlineDispose?: DisposeFunc;
     rootDispose?: DisposeFunc;

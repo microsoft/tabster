@@ -9,7 +9,7 @@ import * as Types from './Types';
 /**
  * Forces tabster to ignore any focus operations on the DOM subtree
  */
-export class IgnoreAPI implements Types.IgnoreAPI {
+export class IgnorerAPI implements Types.IgnorerAPI {
     private _tabster: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {

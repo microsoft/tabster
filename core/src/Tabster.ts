@@ -7,7 +7,7 @@ import { CrossOriginAPI } from './CrossOrigin';
 import { DeloserAPI } from './Deloser';
 import { FocusableAPI } from './Focusable';
 import { FocusedElementState } from './State/FocusedElement';
-import { IgnoreAPI } from './Ignore';
+import { IgnorerAPI } from './Ignorer';
 import { updateTabsterByAttribute } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
@@ -41,7 +41,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     focusedElement: Types.FocusedElementState;
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
-    ignore: Types.IgnoreAPI;
+    ignore: Types.IgnorerAPI;
 
     outline?: Types.OutlineAPI;
     deloser?: Types.DeloserAPI;
@@ -70,7 +70,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
         this.root = new RootAPI(this, () => { FocusableAPI.forgetFocusedGrouppers(this.focusable); }, props?.autoRoot);
-        this.ignore = new IgnoreAPI(this);
+        this.ignore = new IgnorerAPI(this);
 
         startWeakRefStorageCleanup(getWindow);
     }
