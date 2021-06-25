@@ -6,7 +6,7 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute } from '../Tabster';
 
-describe('Ignorer', () => {
+describe('Uncontrolled', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
@@ -15,7 +15,7 @@ describe('Ignorer', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ ignorer: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
                         <button>Button1</button>
                         <button aria-hidden='true'>Button2</button>
                         <button>Button3</button>
@@ -37,7 +37,7 @@ describe('Ignorer', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div id='container' {...getTabsterAttribute({ ignorer: {} })}>
+                    <div id='container' {...getTabsterAttribute({ uncontrolled: {} })}>
                         <button>Button1</button>
                         <button>Button2</button>
                         <button>Button3</button>

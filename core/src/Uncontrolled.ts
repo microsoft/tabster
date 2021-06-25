@@ -7,9 +7,10 @@ import { setTabsterOnElement } from './Instance';
 import * as Types from './Types';
 
 /**
- * Forces tabster to ignorer any focus operations on the DOM subtree
+ * Allows default or user focus behaviour on the DOM subtree
+ * i.e. Tabster will not control focus events within an uncontrolled area
  */
-export class IgnorerAPI implements Types.IgnorerAPI {
+export class UncontrolledAPI implements Types.UncontrolledAPI {
     private _tabster: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {
@@ -17,10 +18,10 @@ export class IgnorerAPI implements Types.IgnorerAPI {
     }
 
     add(element: HTMLElement) {
-        setTabsterOnElement(this._tabster, element, { ignorer: {} });
+        setTabsterOnElement(this._tabster, element, { uncontrolled: {} });
     }
 
     remove(element: HTMLElement) {
-        setTabsterOnElement(this._tabster, element, { ignorer: undefined });
+        setTabsterOnElement(this._tabster, element, { uncontrolled: undefined });
     }
 }
