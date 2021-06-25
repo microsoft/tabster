@@ -418,7 +418,7 @@ export class RootAPI implements Types.RootAPI {
             }
 
             // Element inside an ignorer subtree - no context
-            if (tabsterOnElement.ignorer) {
+            if (tabsterOnElement.uncontrolled) {
                 return undefined;
             }
 
