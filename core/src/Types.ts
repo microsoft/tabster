@@ -523,6 +523,18 @@ export interface RootAPI {
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
+export interface UncontrolledAPI {
+    /**
+     * @param element - Tabster is does nothing within this element
+     */
+    add(element: HTMLElement): void;
+
+    /**
+     * @param element - Tabster will control focus inside this element again
+     */
+    remove(element: HTMLElement): void;
+}
+
 export interface ModalizerAPI {
     /**
      * Adds an element to be managed by Modalizer
@@ -578,6 +590,10 @@ export interface UberGroupperOnElement {
     uberGroupper: UberGroupper;
 }
 
+export interface UncontrolledOnElement {
+    uncontrolled: Record<string, never>;
+}
+
 export interface ObservedOnElement {
     observed: ObservedElementBasicProps & ObservedElementExtendedProps;
 }
@@ -592,6 +608,7 @@ export type TabsterAttributeProps = Partial<{
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
+    uncontrolled: UncontrolledOnElement['uncontrolled'],
     uberGroupper: true,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
@@ -615,7 +632,8 @@ export type TabsterOnElement = Partial<
     GroupperOnElement &
     UberGroupperOnElement &
     ObservedOnElement &
-    OutlineOnElement
+    OutlineOnElement &
+    UncontrolledOnElement
 >;
 
 export interface OutlineElements {
@@ -647,6 +665,7 @@ export interface TabsterInternal {
     modalizer?: ModalizerAPI;
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
+    uncontrolled: UncontrolledAPI;
 
     outlineDispose?: DisposeFunc;
     rootDispose?: DisposeFunc;
