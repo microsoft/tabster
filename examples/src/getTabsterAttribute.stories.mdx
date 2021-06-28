@@ -1,0 +1,48 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/getTabsterAttribute" />
+
+# getTabsterAttribute
+
+Helper method that configures the `data-tabster` attribute. Serializes the configuration as a JSON string that can be applied to a DOM element.
+
+> We recommend that you use this helper method instead of manually writing a serialized JSON string in DOM.
+
+## Import
+
+```js
+// esm
+import { getTabsterAttribute } from 'tabster';
+
+// commonjs
+const { getTabsterAttribute } = require('tabster');
+```
+
+## Syntax
+
+Two variants that support object spread for JSX and an optional flag to return a plain DOM attribute.
+The available configs are documented in other API sections.
+
+```js
+getTabsterAttribute(config);
+getTabsterAttribute(config, plainDOMAttribute);
+```
+
+## Usage
+
+### Plain DOM attribute
+
+```js
+import { getTabsterAttribute, Types } from 'tabster';
+
+const attr = getTabsterAttribute({ root: {} /** config */ }, true);
+document.getElementById('root').setAttribute(Types.TabsterAttributeName, attr)
+```
+### Object spread (JSX syntax)
+
+```jsx
+import { getTabsterAttribute, Types } from 'tabster';
+
+const attr = getTabsterAttribute({ root: {} /** config */ });
+const root = <div {...attr} />
+```

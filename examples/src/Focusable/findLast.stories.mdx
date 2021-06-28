@@ -1,0 +1,40 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/Focusable/findLast" />
+
+# findLast
+
+Finds the last focusable element in the context (i.e. within) of a DOM element.
+
+## Syntax
+
+```js
+findLast(
+    context?: HTMLElement,
+    includeProgrammaticallyFocusable?: boolean,
+    ignoreGroupper?: boolean
+): HTMLElement | null;
+```
+
+## Usage
+
+```js
+const tabster = getCurrentTabster(window);
+
+const context = document.getElementById('some-element');
+tabster.focusable.findLast(context)
+```
+
+## Options
+
+### _context_
+
+Finds the focusable element within the context of another HTML element.
+
+### _includeProgramaticallyFocusable_
+
+Incudes items that have the attribute `tabindex="-1"` that can only be focused with javascript.
+
+### _ignoreGroupper_
+
+Ignores focusable [Grouppers](#) as valid focusable elements

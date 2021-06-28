@@ -1,0 +1,52 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/Focusable/findAll" />
+
+# findAll
+
+Finds the all focusable elements in the context (i.e. within) of a DOM element.
+
+## Syntax
+
+```js
+findAll(
+    context: HTMLElement,
+    customFilter: (el: HTMLElement) => boolean,
+    includeProgrammaticallyFocusable?: boolean,
+    ignoreModalizer?: boolean,
+    ignoreGroupper?: boolean,
+    skipDefaultCondition?: boolean
+): HTMLElement[];
+```
+
+## Usage
+
+```js
+const tabster = getCurrentTabster(window);
+
+const context = document.getElementById('some-element');
+const filter = (element) => element.hasAttribute('foo');
+tabster.focusable.findAll(context, filter)
+```
+
+## Options
+
+### _context_
+
+Finds the focusable element within the context of another HTML element.
+
+### _customFilter_
+
+Callback that filters focusable elements.
+
+### _context_
+
+Finds the focusable element within the context of another HTML element. Defaults to `document.body`
+
+### _includeProgramaticallyFocusable_
+
+Incudes items that have the attribute `tabindex="-1"` that can only be focused with javascript.
+
+### _ignoreGroupper_
+
+Ignores focusable [Grouppers](#) as valid focusable elements

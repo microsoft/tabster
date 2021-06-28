@@ -1,0 +1,35 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/getCurrentTabster" />
+
+# getCurrentTabster
+
+Returns the tabster instance on the window if it exists.
+
+## Import
+
+```js
+// esm
+import { getCurrentTabster } from 'tabster';
+
+// commonjs
+const { getCurrentTabster } = require('tabster');
+```
+
+## Syntax
+
+```js
+getCurrentTabster(window);
+```
+
+## Usage
+
+```js
+const tabster = getCurrentTabster(window);
+
+if (tabster) {
+	console.log('exists');
+} else {
+    console.log('nope')
+}
+```

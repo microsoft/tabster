@@ -1,0 +1,92 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+import LinkTo from '@storybook/addon-links/react';
+
+<Meta title="API/Modalizer" />
+
+# Modalizer
+
+The Modalizer applies focus behaviour to a DOM element for a modal dialog.
+
+
+## Examples
+
+<LinkTo kind="examples/modalizer">Go to examples</LinkTo>
+
+## Syntax
+
+```js
+getTabsterAttribute({
+    modalizer: {
+        id,
+        isOthersAccessible,
+    }
+});
+```
+
+## Usage
+
+The Modalizer API is not enabled by default when tabster is created.
+Once the Modalizer API is initialized simply configure the `data-tabster` attribute to define a Modalizer.
+
+```jsx
+import { getCurrentTabster, getModalizer, getTabsterAttribute } from 'tabster';
+
+const tabster = getCurrentTabster();
+getModalizer(tabster);
+
+const attr = getTabsterAttribute({
+	modalizer: { id: 'modalizer' },
+});
+
+const modal = <div id="modal" {...attr}>{children}</div>
+```
+
+## Lifecycle
+
+A Modalizer needs to be activated for the its behaviour to start working. The lifecycle of the Modalizer is determined by focus.
+Once a Modalizer element receives focus it will be activated. It can only be deactivated if the element is removed from the page
+or an outisde element is focused with `focus()`
+
+```js
+// Activates the modal
+document.getElementById('modal').focus();
+
+// Deactivates the modal
+document.getElementById('modal').remove();
+document.getElementById('outside-element').focus();
+```
+
+A Modalizer does have the concept of an `open` state, this is left to the user. In most cases we assume that users will remove
+modal elements from the page. However, it certainly is possible to have a Modalizer element that is always visible on the page.
+
+#### Active
+
+Once a modalizer is active it will:
+
+* Focus trap - but allow the browser to be tabbable
+* Set `aria-hidden` on all content that is not inside the modalizer to hide non-focusable content from the screen reader
+* Pull focus from non-modal content to the modalizer
+    * This can happen for example when a user clicks on an outside element
+
+#### Inactive
+
+Once a modalizer becomes inactive it will:
+* Cleanup `aria-hidden` from the active state
+
+## Options
+
+```ts
+interface ModalizerBasicProps {
+    id: string;
+    isOthersAccessible?: boolean;
+}
+```
+
+### _id_
+
+Any user provided id.
+
+### _isOthersAccessible_
+
+This option stops the Modalizer from trapping focus and setting `aria-hidden` on outside elements when active.
+

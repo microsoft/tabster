@@ -1,0 +1,78 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+import LinkTo from '@storybook/addon-links/react';
+
+<Meta title="API/Mover" />
+
+# Mover
+
+The Mover applies collection-like keyboard navigation between focusable elements using Arrow/Tab/Home/End keys.
+
+## Examples
+
+<LinkTo kind="examples/mover">Go to examples</LinkTo>
+
+## Syntax
+
+```js
+getTabsterAttribute({
+    mover: {
+        navigationType,
+        cyclic,
+        axis,
+        disableHomeEndKeys,
+    }
+});
+```
+
+## Usage
+
+```jsx
+import { getTabsterAttribute, Types } from 'tabster';
+
+const attr = getTabsterAttribute({
+	mover: {
+        navigationType: Types.MoverKeys.Arrows
+        axis: Types.MoverAxis.Vertical
+    },
+});
+
+const navigationGroup = <div {...attr}>{children}</div>
+```
+
+## Options
+
+```ts
+interface MoverOptions {
+    navigationType: MoverKeys;
+    cyclic?: boolean;
+    axis: MoverAxis,
+    disableHomeEndKeys?: boolean;
+};
+
+const MoverAxis: MoverAxisOptions = {
+    Horizontal: 0,
+    Vertical: 1,
+};
+
+const MoverKeys = {
+    Tab: 0,
+    Arrows: 1,
+    Both: 2,
+}
+```
+
+### _navigationType_
+
+Choose how to navigate the collection of focusable elements
+
+### _cyclic_
+
+From the last item, navigate to the first item, and the other way around.
+
+### _axis_
+
+Determines the direction of the arrow keys for navigation.
+
+### _disableHomeEndKeys_
+
+By default, `Home` will focus the first item in the Mover and `End` will focus the last item in the Mover. Use this flag to disable this default behaviour.

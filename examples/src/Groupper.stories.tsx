@@ -10,7 +10,7 @@ import { getTabsterAttribute } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: 'Groupper',
+    title: 'Examples/Groupper',
 };
 
 export const NestedGrouppers = () => (

@@ -8,23 +8,16 @@ import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: 'Mover',
+    title: 'Examples/Mover',
 };
 
 const Collection = () => (
     <>
-        <button>A</button>
-        <button>bunch</button>
-        <button>of</button>
-        <button>buttons</button>
-        <button>which</button>
-        <button>are</button>
-        <button>navigable</button>
-        <button>using</button>
-        <button>arrows</button>
-        <button>instead</button>
-        <button>of</button>
-        <button>tabs</button>
+        <button>Navigate</button>
+        <button>Me</button>
+        <button>With</button>
+        <button>Arrow</button>
+        <button>Keys</button>
     </>
 );
 
@@ -45,6 +38,7 @@ export const ArrowNavigationVertical = () => (
 
 export const ArrowNavigationHorizontal = () => (
     <div
+        style={{ display: 'flex'}}
         {...getTabsterAttribute({
             focusable: {
                 mover: {
@@ -60,6 +54,7 @@ export const ArrowNavigationHorizontal = () => (
 
 export const ArrowNavigationHorizontalRtl = () => (
     <div
+        style={{ display: 'flex'}}
         dir='rtl'
         {...getTabsterAttribute({
             focusable: {

@@ -10,7 +10,7 @@ import { getCurrentTabster, getModalizer, getTabsterAttribute } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
-    title: 'Modalizer',
+    title: 'Examples/Modalizer',
 } as Meta;
 
 export const ModalDialog = () => {
@@ -34,7 +34,7 @@ const popupStyles = {
     padding: 5,
     marginTop: 5,
     marginBottom: 5
-}; 
+};
 
 export const NativeFocus = () => {
     const [open, setOpen ] = React.useState<boolean>(false);
@@ -53,10 +53,10 @@ export const NativeFocus = () => {
             <button onClick={onClick}>Toggle popup</button>
             {open && (
                 <>
-                    <div 
-                        ref={popupRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
+                    <div
+                        ref={popupRef}
+                        aria-label={'popup'}
+                        style={popupStyles}
                         {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
                     >
                         <div tabIndex={0}>Focusable item</div>
@@ -92,10 +92,10 @@ export const ModalizerAPIFocus = () => {
             <button onClick={onClick}>Toggle popup</button>
             {open && (
                 <>
-                    <div 
-                        ref={popupRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
+                    <div
+                        ref={popupRef}
+                        aria-label={'popup'}
+                        style={popupStyles}
                         {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
                     >
                         <div tabIndex={0}>Focusable item</div>
@@ -133,11 +133,11 @@ export const AlwaysOnPage = () => {
     return (
         <div  { ...getTabsterAttribute({ deloser: {} })}>
             <button onClick={focusIn}>Focus modalizer</button>
-            <div 
-                aria-hidden 
-                ref={modalRef} 
-                aria-label={'popup'} 
-                style={popupStyles} 
+            <div
+                aria-hidden
+                ref={modalRef}
+                aria-label={'popup'}
+                style={popupStyles}
                 {...getTabsterAttribute({ modalizer: { id: 'modalizer'} })}
             >
                 <div tabIndex={0}>Focusable item</div>
@@ -148,7 +148,7 @@ export const AlwaysOnPage = () => {
             </div>
             <button ref={outsideRef}>Outside modal</button>
         </div>
-    ); 
+    );
 };
 
 export const AllowFocusOutside = () => {
@@ -173,11 +173,11 @@ export const AllowFocusOutside = () => {
     return (
         <div  { ...getTabsterAttribute({ deloser: {} })}>
             <button onClick={focusIn}>Activate modalizer</button>
-            <div 
-                aria-hidden 
-                ref={modalRef} 
-                aria-label={'popup'} 
-                style={popupStyles} 
+            <div
+                aria-hidden
+                ref={modalRef}
+                aria-label={'popup'}
+                style={popupStyles}
                 {...getTabsterAttribute({ modalizer: { id: 'modalizer', isOthersAccessible: true} })}
             >
                 <div tabIndex={0}>Focusable item</div>
@@ -188,7 +188,7 @@ export const AllowFocusOutside = () => {
             </div>
             <button ref={outsideRef}>Outside modal</button>
         </div>
-    ); 
+    );
 };
 
 export const ModalizerStack = () => {
@@ -226,10 +226,10 @@ export const ModalizerStack = () => {
             <button onClick={onClick}>Toggle popup</button>
             {open && (
                 <>
-                    <div 
-                        ref={popupRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
+                    <div
+                        ref={popupRef}
+                        aria-label={'popup'}
+                        style={popupStyles}
                         {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer'} })}
                     >
                         <button onClick={() => setSecondOpen(true)}>Open next</button>
@@ -241,10 +241,10 @@ export const ModalizerStack = () => {
 
             {secondOpen && (
                 <>
-                    <div 
-                        ref={secondPopupRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
+                    <div
+                        ref={secondPopupRef}
+                        aria-label={'popup'}
+                        style={popupStyles}
                         {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer-2'} })}
                     >
                         <button onClick={() => setThirdOpen(true)}>Open next</button>
@@ -256,10 +256,10 @@ export const ModalizerStack = () => {
 
             {thirdOpen && (
                 <>
-                    <div 
-                        ref={thirdPopupRef} 
-                        aria-label={'popup'} 
-                        style={popupStyles} 
+                    <div
+                        ref={thirdPopupRef}
+                        aria-label={'popup'}
+                        style={popupStyles}
                         {...getTabsterAttribute({ deloser: {}, modalizer: { id: 'modalizer-3'} })}
                     >
                         <button onClick={() => setThirdOpen(false)}>Dismiss</button>

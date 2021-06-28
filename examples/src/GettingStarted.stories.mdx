@@ -1,0 +1,54 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+import LinkTo from '@storybook/addon-links/react';
+
+<Meta title="Getting started" />
+
+# Getting started
+
+## data-tabster
+
+Tabster works as a [HTML5 data-\* attribute](https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes).
+The value of the `data-tabster` attribute is a JSON string which will configure the way tabster will handle focus. Don't worry!
+you definitely won't need to write all this down in the DOM by hand.
+
+We provide a simple `getTabsterAttribute` helper to construct `data-tabster` safely. Below is a simple example for React JSX syntax. We will go more into detail
+in the <LinkTo kind="API" story="createTabster"> API documentation </LinkTo>.
+
+```jsx
+const tabster = createTabster(window);
+
+<div {...getTabsterAttribute({ root: {}})} />
+```
+
+You'll also be able to see the different APIs available under the <LinkTo kind="API" story="createTabster"> API documentation </LinkTo>.
+
+## Framework support
+
+Although Tabster was designed to be independent of the rendering framework, most of our examples and tests rely on JSX. This is because
+Tabster's biggest customer uses React and it's really quite nice to be able to leverage JSX for less verbose code.
+
+We make sure that the library itself can be used with any rendering framework or even native DOM.
+
+## Root
+
+The first thing you need to do with tabster is to define the root.
+This will let Tabster know that it can manage the focus of all the children under root
+
+```html
+<body data-tabster="{'root':{}}">
+    <!-- Rest of your page -->
+</body>
+```
+
+If you want to gradually migrate an entire webpage to
+Tabster, or if you only need Tabster for a particular part of the page, just set the root somewhere else.
+
+```html
+<body>
+    <!-- Rest of your page, tabster doesn't care what happens here -->
+
+    <div data-tabster="{'root':{}}">
+        <!-- Focus is managed by tabster here -->
+    </div>
+</body>
+```
