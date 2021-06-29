@@ -6,7 +6,9 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types } from '../Tabster';
 
-interface WindowWithTabsterInternal extends Window { __tabsterInstance: Types.TabsterInternal; }
+interface WindowWithTabsterInternal extends Window {
+    __tabsterInstance: Types.TabsterInternal;
+}
 
 describe('Focusable', () => {
     beforeAll(async () => {
@@ -32,16 +34,42 @@ describe('Focusable', () => {
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button1');
             })
-            .eval((name) => {
-                // @ts-ignore
-                return (window as unknwon as WindowWithTabsterInternal).__tabsterInstance.observedElement.requestFocus(
+            .eval(name => {
+                return ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
                     name,
-                    0,
+                    0
                 );
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button2');
+            });
+    });
+
+    it('should request focus for non-existent element with tabindex -1', async () => {
+        const name = 'test';
+        await new BroTest.BroTest(
+            (<div id='root' {...getTabsterAttribute({ root: {} })}></div>)
+        )
+            .eval(name => {
+                const request = ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
+                    name,
+                    5000
+                );
+
+                const observedButton = document.createElement('button');
+                observedButton.textContent = name;
+                document.getElementById('root')?.appendChild(observedButton);
+                ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.add(
+                    observedButton,
+                    { name }
+                );
+
+                return request;
+            }, name)
+            .check((res: boolean) => expect(res).toBe(true))
+            .activeElement(el => {
+                expect(el?.textContent).toContain(name);
             });
     });
 });
