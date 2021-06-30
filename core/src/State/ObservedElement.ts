@@ -359,7 +359,7 @@ export class ObservedElementAPI
 
             if (waitingFocusableElement && !waitingFocusableElement.conditionTimer) {
                 const resolveFocusable = () => {
-                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isFocusable(val)) {
+                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isFocusable(val, true)) {
                         resolve(waitingFocusableElementKey, waitingFocusableElement);
                     } else {
                         waitingFocusableElement.conditionTimer = win.setTimeout(resolveFocusable, _conditionCheckTimeout);
