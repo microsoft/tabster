@@ -617,6 +617,10 @@ export class MoverAPI implements Types.MoverAPI {
         const isCyclic = moverProps.cyclic;
         let next: HTMLElement | null | undefined;
 
+        if (moverProps.disableHomeEndKeys && ((keyCode === Keys.Home) || (keyCode === Keys.End))) {
+            return;
+        }
+
         if (ctx.isRtl) {
             if (keyCode === Keys.Right) {
                 keyCode = Keys.Left;

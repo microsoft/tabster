@@ -226,8 +226,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreGroupper,
             skipDefaultCheck,
         } = options;
-        const acceptCondition = (el: HTMLElement): boolean => {
 
+        const acceptCondition = (el: HTMLElement): boolean => {
             let defaultCheck: boolean;
             let customCheck = false;
 
@@ -265,7 +265,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const nodeFilter = walker?.filter;
 
-        if (!walker || !context || !nodeFilter) {
+        if (!walker || !nodeFilter) {
             return [];
         }
 

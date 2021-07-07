@@ -409,6 +409,7 @@ export interface MoverBasicProps {
      * element in DOM) when tabbing from outside of the mover.
      */
     visibilityAware?: Visibility;
+    disableHomeEndKeys?: boolean;
 }
 
 export interface MoverExtendedProps {
@@ -707,4 +708,8 @@ export interface TabsterInternal {
     modalizerDispose?: DisposeFunc;
     observedElementDispose?: DisposeFunc;
     crossOriginDispose?: DisposeFunc;
+}
+
+export interface TabsterCompat {
+    attributeTransform?: <P>(old: P) => TabsterAttributeProps;
 }

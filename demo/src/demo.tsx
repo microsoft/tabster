@@ -264,7 +264,10 @@ const FindAllExample: React.FC = () => {
     const [filtered, setFiltered] = React.useState<HTMLElement[]>([]);
     React.useEffect(() => {
         if (ref.current) {
-            const ducks = tabster.focusable.findAll(ref?.current, (el: HTMLElement) => !!el.textContent?.includes('Duck'));
+            const ducks = tabster.focusable.findAll({
+                container: ref?.current,
+                acceptCondition: (el: HTMLElement) => !!el.textContent?.includes('Duck')
+            });
             setFiltered(ducks);
         }
     }, []);
