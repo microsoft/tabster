@@ -17,6 +17,7 @@ import {
 
 interface DummyInput {
     isFirst: boolean;
+    active: boolean;
     shouldMoveOut?: boolean;
     input?: HTMLDivElement;
     focusin?: (e: FocusEvent) => void;
@@ -66,18 +67,22 @@ export class Root implements Types.Root {
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
-        this._dummyInputFirst = { isFirst: true };
-        this._dummyInputLast = { isFirst: false };
+        this._dummyInputFirst = { isFirst: true, active: true };
+        this._dummyInputLast = { isFirst: false, active: true };
         this._createDummyInput(this._dummyInputFirst);
         this._createDummyInput(this._dummyInputLast);
 
         this._add();
         this._addDummyInputs();
 
+        tabster.focusedElement.subscribe(this._onFocus);
+
         setTabsterOnElement(this._tabster, element, { root: this });
     }
 
     dispose(): void {
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
+
         this._remove();
 
         const dif = this._dummyInputFirst;
@@ -128,6 +133,31 @@ export class Root implements Types.Root {
             } else {
                 this._dummyInputLast.shouldMoveOut = true;
                 nativeFocus(this._dummyInputLast.input);
+            }
+        }
+    }
+
+    private _onFocus = (e: HTMLElement | undefined) => {
+        if (e) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, e);
+
+            if (!ctx) {
+                this._setDummyInputsActive(false);
+                return;
+            }
+        }
+
+        this._setDummyInputsActive(true);
+    }
+
+    private _setDummyInputsActive(active: boolean) {
+        for (let dummy of [this._dummyInputFirst, this._dummyInputLast]) {
+            if (dummy && (dummy.active !== active) && dummy.input) {
+                // If the uncontrolled element is first/last in the application, focusing the
+                // dummy input will not let the focus to go outside of the application.
+                // So, we're making dummy inputs not tabbable if the uncontrolled element has focus.
+                dummy.input.tabIndex = active ? 0 : -1;
+                dummy.active = active;
             }
         }
     }
