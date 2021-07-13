@@ -67,4 +67,82 @@ describe('Uncontrolled', () => {
                 expect(el?.textContent).toContain('Button4');
             });
     });
+
+    it('should allow to go outside of the application when tabbing and the uncontrolled element is the last', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            });
+    });
+
+    it('should allow to go outside of the application when tabbing backwards and the uncontrolled element is first', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                    </div>
+                    <button>Button3</button>
+                    <button>Button4</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
 });
