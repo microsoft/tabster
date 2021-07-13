@@ -34,4 +34,76 @@ describe('Root', () => {
                 expect(areFirstAndLast).toBe(true);
             });
     });
+
+    it('should allow to go outside of the application when tabbing and the uncontrolled element is the last', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                // For some reason, the Puppeeteer testing environment doesn't
+                // move the focus to the address bar. In the real world, we should
+                // have undefined here, but the testing environment moves the focus
+                // to the first button.
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should allow to go outside of the application when tabbing backwards and the uncontrolled element is first', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
 });
