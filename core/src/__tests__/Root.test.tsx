@@ -35,7 +35,7 @@ describe('Root', () => {
             });
     });
 
-    it('should allow to go outside of the application when tabbing and the uncontrolled element is the last', async () => {
+    it('should allow to go outside of the application when tabbing forward', async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -67,7 +67,7 @@ describe('Root', () => {
             });
     });
 
-    it('should allow to go outside of the application when tabbing backwards and the uncontrolled element is first', async () => {
+    it('should allow to go outside of the application when tabbing backwards', async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
