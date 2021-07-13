@@ -59,11 +59,7 @@ describe('Root', () => {
             })
             .pressTab()
             .activeElement(el => {
-                // For some reason, the Puppeeteer testing environment doesn't
-                // move the focus to the address bar. In the real world, we should
-                // have undefined here, but the testing environment moves the focus
-                // to the first button.
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toBeUndefined();
             });
     });
 
