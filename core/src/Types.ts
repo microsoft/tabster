@@ -727,6 +727,7 @@ export interface TabsterInternal extends TabsterCore {
     modalizer?: ModalizerAPI;
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
+    uncontrolled: UncontrolledAPI;
 
     groupperDispose?: DisposeFunc;
     moverDispose?: DisposeFunc;
