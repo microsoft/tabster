@@ -263,6 +263,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreUncontrolled,
             ignoreAccessibiliy,
             prev,
+            onUncontrolled,
         } = options;
 
         let { acceptCondition } = options;
@@ -328,7 +329,8 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         let foundElement = (prev ? walker.previousNode() : walker.nextNode()) as HTMLElement | null | undefined;
 
-        if (acceptElementState.hasUncontrolled) {
+        const nextUncontrolled = acceptElementState.nextUncontrolled;
+        if (nextUncontrolled) {
             if (foundElement) {
                 // We have an uncontrolled area and there is a controlled element after it.
                 // Return undefined for the default Tab action.
@@ -336,6 +338,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             } else {
                 // Otherwise, return null to moveOutWithDefaultAction().
                 foundElement = null;
+            }
+
+            if (onUncontrolled) {
+                onUncontrolled(nextUncontrolled);
             }
         }
 
@@ -366,7 +372,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 return NodeFilter.FILTER_SKIP;
             }
         } else if (ctx.uncontrolled) {
-            state.hasUncontrolled = true;
+            state.nextUncontrolled = ctx.uncontrolled;
 
             return NodeFilter.FILTER_REJECT;
         }

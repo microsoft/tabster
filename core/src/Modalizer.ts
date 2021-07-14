@@ -436,7 +436,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 if (
                     !noFocusFirst &&
                     this._tabster.keyboardNavigation.isNavigatingWithKeyboard() &&
-                    this._tabster.focusedElement.focusFirst(modalizerRoot)
+                    this._tabster.focusedElement.focusFirst({ container: modalizerRoot })
                 ) {
                     return true;
                 }

@@ -51,7 +51,8 @@ export interface FocusedElementState extends Subscribable<HTMLElement | undefine
     getLastFocusedElement(): HTMLElement | undefined;
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
     focusDefault(container: HTMLElement): boolean;
-    focusFirst(container: HTMLElement): boolean;
+    focusFirst(props: FindFirstProps): boolean;
+    focusLast(props: FindFirstProps): boolean;
     resetFocus(container: HTMLElement): boolean;
 }
 
@@ -261,7 +262,7 @@ export interface FocusableAcceptElementState {
     isForward: boolean;
     found?: boolean;
     foundElement?: HTMLElement;
-    hasUncontrolled?: boolean;
+    nextUncontrolled?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
     ignoreGroupper?: boolean;
@@ -304,6 +305,11 @@ export interface FindFocusableProps {
      * @returns if an element should be accepted
      */
     acceptCondition?(el: HTMLElement): boolean;
+    /**
+     * A callback that will be called if an uncontrolled area is met.
+     * @param el uncontrolled element.
+     */
+    onUncontrolled?(el: HTMLElement): void;
 }
 
 export type FindFirstProps = Pick<
@@ -323,6 +329,7 @@ export type FindNextProps = Pick<
     | 'ignoreGroupper'
     | 'ignoreUncontrolled'
     | 'ignoreAccessibiliy'
+    | 'onUncontrolled'
 >;
 
 export type FindDefaultProps = Pick<
@@ -395,6 +402,11 @@ export const MoverDirections: MoverDirections = {
 };
 export type MoverDirection = MoverDirections[keyof MoverDirections];
 
+export type NextTabbable = {
+    element: HTMLElement | null | undefined;
+    uncontrolled?: HTMLElement;
+};
+
 export interface MoverBasicProps {
     direction?: MoverDirection;
     memorizeCurrent?: boolean;
@@ -434,7 +446,7 @@ export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> 
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
     forceUpdate(): void;
-    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined;
+    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
@@ -470,7 +482,7 @@ export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtend
     makeUnlimited(isUnlimited: boolean): void;
     isUnlimited(): boolean;
     isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
-    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined;
+    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 

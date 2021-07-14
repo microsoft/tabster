@@ -587,8 +587,8 @@ export class DummyInput<P> {
     constructor(
         getWindow: Types.GetWindow,
         isPhantom: boolean,
-        focusin: DummyInputFocusCallback<P>,
-        focusout: DummyInputFocusCallback<P>,
+        focusIn: DummyInputFocusCallback<P>,
+        focusOut: DummyInputFocusCallback<P>,
         props: P
     ) {
         const input = getWindow().document.createElement('div');
@@ -613,12 +613,12 @@ export class DummyInput<P> {
 
         this.input = input;
         this._isPhantom = isPhantom;
-        this._onFocusIn = focusin;
-        this._onFocusOut = focusout;
+        this._onFocusIn = focusIn;
+        this._onFocusOut = focusOut;
         this.props = props;
 
-        input.addEventListener('focusin', this._focusin);
-        input.addEventListener('focusout', this._focusout);
+        input.addEventListener('focusin', this._focusIn);
+        input.addEventListener('focusout', this._focusOut);
     }
 
     dispose(): void {
@@ -632,25 +632,25 @@ export class DummyInput<P> {
         delete this._onFocusOut;
         delete this.input;
 
-        input.removeEventListener('focusin', this._focusin);
-        input.removeEventListener('focusout', this._focusout);
+        input.removeEventListener('focusin', this._focusIn);
+        input.removeEventListener('focusout', this._focusOut);
 
         input.parentElement?.removeChild(input);
     }
 
-    private _focusin = (e: FocusEvent): void => {
+    private _focusIn = (e: FocusEvent): void => {
         if (this._onFocusIn && this.input) {
             this._onFocusIn(this.input, this.props);
+        }
+    }
+
+    private _focusOut = (e: FocusEvent): void => {
+        if (this._onFocusOut && this.input) {
+            this._onFocusOut(this.input, this.props);
         }
 
         if (this._isPhantom) {
             this.dispose();
-        }
-    }
-
-    private _focusout = (e: FocusEvent): void => {
-        if (this._onFocusOut && this.input) {
-            this._onFocusOut(this.input, this.props);
         }
     }
 }

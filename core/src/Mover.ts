@@ -113,7 +113,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         return this._current?.get() || null;
     }
 
-    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined {
+    findNextTabbable(current: HTMLElement, prev?: boolean): Types.NextTabbable | null {
         const container = this.getElement();
 
         if (!container || !container.contains(current)) {
@@ -123,11 +123,13 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         const tabster = this._tabster;
         const focusable = tabster.focusable;
         let next: HTMLElement | null | undefined = null;
+        let uncontrolled: HTMLElement | undefined;
+        const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
 
         if (this._basic.tabbable) {
             next = prev
-                ? focusable.findPrev({ currentElement: current, container })
-                : focusable.findNext({ currentElement: current, container });
+                ? focusable.findPrev({ currentElement: current, container, onUncontrolled })
+                : focusable.findNext({ currentElement: current, container, onUncontrolled });
         }
 
         if (next === null) {
@@ -143,7 +145,10 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             }
         }
 
-        return next;
+        return {
+            element: next,
+            uncontrolled,
+        };
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {

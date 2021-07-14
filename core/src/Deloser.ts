@@ -419,7 +419,7 @@ export class Deloser implements Types.Deloser {
 
     focusFirst = (): boolean => {
         const e = this._element.get();
-        return !!e && this._tabster.focusedElement.focusFirst(e);
+        return !!e && this._tabster.focusedElement.focusFirst({ container: e });
     }
 
     unshift(element: HTMLElement): void {

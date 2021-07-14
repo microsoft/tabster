@@ -195,27 +195,17 @@ export class Root implements Types.Root {
 
             const element = this._element.get();
 
-            let toFocus: HTMLElement | null | undefined;
-
             if (element) {
-                toFocus = props.isFirst
-                    ? this._tabster.focusable.findFirst({ container: element })
-                    : this._tabster.focusable.findLast({ container: element });
+                let hasFocused = props.isFirst
+                    ? this._tabster.focusedElement.focusFirst({ container: element })
+                    : this._tabster.focusedElement.focusLast({ container: element });
 
-                if (!toFocus) {
-                    toFocus = props.isFirst
-                        ? this._tabster.focusable.findFirst({ container: element, ignoreUncontrolled: true, ignoreAccessibiliy: true })
-                        : this._tabster.focusable.findLast({ container: element, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+                if (hasFocused) {
+                    return;
                 }
-            } else {
-                toFocus = null;
             }
 
-            if (toFocus) {
-                this._tabster.focusedElement.focus(toFocus, false, true);
-            } else {
-                input.blur();
-            }
+            input.blur();
         }
     }
 

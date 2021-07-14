@@ -11,6 +11,7 @@ import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import {
     documentContains,
+    DummyInput,
     shouldIgnoreFocus,
     WeakHTMLElement
 } from '../Utils';
@@ -124,11 +125,31 @@ export class FocusedElementState
         return false;
     }
 
-    focusFirst(container: HTMLElement): boolean {
-        const first = this._tabster.focusable.findFirst({ container, ignoreGroupper: true });
+    focusFirst(props: Types.FindFirstProps): boolean {
+        let toFocus = this._tabster.focusable.findFirst(props);
 
-        if (first) {
-            this.focus(first);
+        if (!toFocus) {
+            toFocus = this._tabster.focusable.findFirst({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+        }
+
+        if (toFocus) {
+            this.focus(toFocus, false, true);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    focusLast(props: Types.FindFirstProps): boolean {
+        let toFocus = this._tabster.focusable.findLast(props);
+
+        if (!toFocus) {
+            toFocus = this._tabster.focusable.findLast({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+        }
+
+        if (toFocus) {
+            this.focus(toFocus, false, true);
 
             return true;
         }
@@ -223,8 +244,8 @@ export class FocusedElementState
         ctx: Types.TabsterContext,
         current: HTMLElement,
         prev?: boolean
-    ): HTMLElement | null | undefined {
-        let next: HTMLElement | null | undefined = null;
+    ): Types.NextTabbable | null {
+        let next: Types.NextTabbable | null = null;
 
         if (ctx.groupper && ctx.mover) {
             if (ctx.isGroupperFirst) {
@@ -245,9 +266,12 @@ export class FocusedElementState
         } else if (ctx.mover) {
             next = ctx.mover.findNextTabbable(current, prev);
         } else {
-            next = prev
-                ? tabster.focusable.findPrev({ currentElement: current })
-                : tabster.focusable.findNext({ currentElement: current });
+            let uncontrolled: HTMLElement | undefined;
+            const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
+            const nextElement = prev
+                ? tabster.focusable.findPrev({ currentElement: current, onUncontrolled })
+                : tabster.focusable.findNext({ currentElement: current, onUncontrolled });
+            next = { element: nextElement, uncontrolled };
         }
 
         return next;
@@ -266,25 +290,36 @@ export class FocusedElementState
 
         const ctx = RootAPI.getTabsterContext(this._tabster, curElement, { checkRtl: true });
 
-        if (!ctx || ctx.uncontrolled) {
+        if (!ctx) {
             return;
         }
 
         const isPrev = e.shiftKey;
         const next = FocusedElementState.findNext(this._tabster, ctx, curElement, isPrev);
 
-        if (next === undefined) {
-            // We have met an uncontrolled area, just allow default action.
+        if (!next) {
             return;
         }
 
+        let uncontrolled = next.uncontrolled;
+
+        if (uncontrolled) {
+            if (!ctx.uncontrolled) {
+                // We have met an uncontrolled area, just allow default action.
+                this._moveToUncontrolled(uncontrolled, isPrev);
+            }
+            return;
+        }
+
+        const nextElement = next.element;
+
         if (ctx.modalizer) {
-            const nctx = next && RootAPI.getTabsterContext(this._tabster, next);
+            const nextElementCtx = nextElement && RootAPI.getTabsterContext(this._tabster, nextElement);
 
             if (
-                !nctx ||
-                (ctx.root.uid !== nctx.root.uid) ||
-                !nctx.modalizer?.isActive()
+                !nextElementCtx ||
+                (ctx.root.uid !== nextElementCtx.root.uid) ||
+                !nextElementCtx.modalizer?.isActive()
             ) {
                 if (ctx.modalizer.onBeforeFocusOut()) {
                     e.preventDefault();
@@ -294,21 +329,11 @@ export class FocusedElementState
             }
         }
 
-        if (next === null) {
-            const first = isPrev
-                ? this._tabster.focusable.findFirst({ ignoreUncontrolled: true, ignoreAccessibiliy: true })
-                : this._tabster.focusable.findLast({ ignoreUncontrolled: true, ignoreAccessibiliy: true });
-
-            if (first && RootAPI.getTabsterContext(this._tabster, first)?.uncontrolled) {
-                return;
-            }
-        }
-
-        if (next) {
+        if (nextElement) {
             // For iframes just allow normal Tab behaviour
-            if (next.tagName !== 'IFRAME') {
+            if (nextElement.tagName !== 'IFRAME') {
                 e.preventDefault();
-                nativeFocus(next);
+                nativeFocus(nextElement);
             }
         } else {
             ctx.root.moveOutWithDefaultAction(isPrev);
@@ -317,5 +342,16 @@ export class FocusedElementState
 
     private _validateFocusedElement = (element: HTMLElement): void => {
         // TODO: Make sure this is not needed anymore and write tests.
+    }
+
+    private _moveToUncontrolled(uncontrolled: HTMLElement, isPrev: boolean): void {
+        const dummy: DummyInput<undefined> = new DummyInput(this._win, true, () => {/**/}, () => {/**/}, undefined);
+        const input = dummy.input;
+
+        if (input) {
+            const firstChild = uncontrolled.firstElementChild;
+            uncontrolled.insertBefore(input, isPrev || !firstChild ? null : firstChild);
+            nativeFocus(input);
+        }
     }
 }

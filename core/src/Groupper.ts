@@ -41,7 +41,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
         }
     }
 
-    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined {
+    findNextTabbable(current: HTMLElement, prev?: boolean): Types.NextTabbable | null {
         const container = this.getElement();
 
         if (!container || !container.contains(current)) {
@@ -50,13 +50,15 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
 
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
+        let uncontrolled: HTMLElement | undefined;
+        const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
 
         if (this._isUnlimited) {
             next = prev
-                ? tabster.focusable.findPrev({ container, currentElement: current })
-                : tabster.focusable.findNext({ container, currentElement: current });
+                ? tabster.focusable.findPrev({ container, currentElement: current, onUncontrolled })
+                : tabster.focusable.findNext({ container, currentElement: current, onUncontrolled });
 
-            if (!next && (this._basic.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
+            if (!uncontrolled && !next && (this._basic.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
                 next = prev
                     ? tabster.focusable.findLast({ container })
                     : tabster.focusable.findFirst({ container });
@@ -75,7 +77,10 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
             }
         }
 
-        return next;
+        return {
+            element: next,
+            uncontrolled,
+        };
     }
 
     makeUnlimited(isUnlimited: boolean): void {
