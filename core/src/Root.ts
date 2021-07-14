@@ -9,19 +9,7 @@ import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME } from './MutationEvent';
 import * as Types from './Types';
-import {
-    getElementUId,
-    makeFocusIgnored,
-    WeakHTMLElement
-} from './Utils';
-
-interface DummyInput {
-    isFirst: boolean;
-    shouldMoveOut?: boolean;
-    input?: HTMLDivElement;
-    focusin?: (e: FocusEvent) => void;
-    focusout?: (e: FocusEvent) => void;
-}
+import { DummyInput, getElementUId, WeakHTMLElement } from './Utils';
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -41,15 +29,20 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
     }
 }
 
+interface DummyInputProps {
+    isFirst: boolean;
+    shouldMoveOut?: boolean;
+    isActive: boolean;
+}
+
 export class Root implements Types.Root {
     readonly uid: string;
 
     private _element: WeakHTMLElement;
     private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
     private _basic: Types.RootBasicProps;
-    private _dummyInputFirst: DummyInput | undefined;
-    private _dummyInputLast: DummyInput | undefined;
+    private _dummyInputFirst: DummyInput<DummyInputProps> | undefined;
+    private _dummyInputLast: DummyInput<DummyInputProps> | undefined;
     private _forgetFocusedGrouppers: () => void;
 
     constructor(
@@ -62,33 +55,47 @@ export class Root implements Types.Root {
         this.uid = getElementUId(win, element);
         this._element = new WeakHTMLElement(win, element);
         this._tabster = tabster;
-        this._win = win;
         this._basic = basic || {};
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
 
-        this._dummyInputFirst = { isFirst: true };
-        this._dummyInputLast = { isFirst: false };
-        this._createDummyInput(this._dummyInputFirst);
-        this._createDummyInput(this._dummyInputLast);
+        this._dummyInputFirst = new DummyInput(
+            win,
+            false,
+            this._onDummyInputFocus,
+            this._onDummyInputBlur,
+            { isFirst: true, isActive: true }
+        );
+
+        this._dummyInputLast = new DummyInput(
+            win,
+            false,
+            this._onDummyInputFocus,
+            this._onDummyInputBlur,
+            { isFirst: false, isActive: true }
+        );
 
         this._add();
         this._addDummyInputs();
+
+        tabster.focusedElement.subscribe(this._onFocus);
 
         setTabsterOnElement(this._tabster, element, { root: this });
     }
 
     dispose(): void {
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
+
         this._remove();
 
         const dif = this._dummyInputFirst;
         if (dif) {
-            this._disposeDummyInput(dif);
+            dif.dispose();
             delete this._dummyInputFirst;
         }
 
         const dil = this._dummyInputLast;
         if (dil) {
-            this._disposeDummyInput(dil);
+            dil.dispose();
             delete this._dummyInputLast;
         }
 
@@ -121,13 +128,41 @@ export class Root implements Types.Root {
     }
 
     moveOutWithDefaultAction(backwards: boolean): void {
-        if (this._dummyInputFirst?.input && this._dummyInputLast?.input) {
+        const first = this._dummyInputFirst;
+        const last = this._dummyInputLast;
+
+        if (first?.input && last?.input) {
             if (backwards) {
-                this._dummyInputFirst.shouldMoveOut = true;
-                nativeFocus(this._dummyInputFirst.input);
+                first.props.shouldMoveOut = true;
+                nativeFocus(first.input);
             } else {
-                this._dummyInputLast.shouldMoveOut = true;
-                nativeFocus(this._dummyInputLast.input);
+                last.props.shouldMoveOut = true;
+                nativeFocus(last.input);
+            }
+        }
+    }
+
+    private _onFocus = (e: HTMLElement | undefined) => {
+        if (e) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, e);
+
+            if (!ctx || ctx.uncontrolled) {
+                this._setDummyInputsActive(false);
+                return;
+            }
+        }
+
+        this._setDummyInputsActive(true);
+    }
+
+    private _setDummyInputsActive(isActive: boolean) {
+        for (let dummy of [this._dummyInputFirst, this._dummyInputLast]) {
+            if (dummy && (dummy.props.isActive !== isActive) && dummy.input) {
+                // If the uncontrolled element is first/last in the application, focusing the
+                // dummy input will not let the focus to go outside of the application.
+                // So, we're making dummy inputs not tabbable if the uncontrolled element has focus.
+                dummy.input.tabIndex = isActive ? 0 : -1;
+                dummy.props.isActive = isActive;
             }
         }
     }
@@ -146,91 +181,46 @@ export class Root implements Types.Root {
         }
     }
 
-    private _createDummyInput(props: DummyInput): void {
-        if (props.input) {
-            return;
-        }
+    private _onDummyInputFocus = (input: HTMLDivElement, props: DummyInputProps): void => {
+        if (props.shouldMoveOut) {
+            // When we've reached the last focusable element, we want to let the browser
+            // to move the focus outside of the page. In order to do that we're synchronously
+            // calling focus() of the dummy input from the Tab key handler and allowing
+            // the default action to move the focus out.
+        } else {
+            // The only way a dummy input gets focused is during the keyboard navigation.
+            KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
 
-        const input = this._win().document.createElement('div');
+            this._forgetFocusedGrouppers();
 
-        input.tabIndex = 0;
-        input.setAttribute('role', 'none');
-        input.setAttribute('aria-hidden', 'true');
+            const element = this._element.get();
 
-        const style = input.style;
-        style.position = 'fixed';
-        style.width = style.height = '1px';
-        style.left = style.top = '-100500px';
-        style.opacity = '0';
-        style.zIndex = '-1';
+            let toFocus: HTMLElement | null | undefined;
 
-        if (__DEV__) {
-            style.setProperty('--tabster-dummy-input', props.isFirst ? 'first' : 'last');
-        }
+            if (element) {
+                toFocus = props.isFirst
+                    ? this._tabster.focusable.findFirst({ container: element })
+                    : this._tabster.focusable.findLast({ container: element });
 
-        makeFocusIgnored(input);
-
-        props.input = input;
-        props.focusin = e => {
-            if (props.shouldMoveOut) {
-                // When we've reached the last focusable element, we want to let the browser
-                // to move the focus outside of the page. In order to do that we're synchronously
-                // calling focus() of the dummy input from the Tab key handler and allowing
-                // the default action to move the focus out.
-            } else {
-                // The only way a dummy input gets focused is during the keyboard navigation.
-                KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
-
-                this._forgetFocusedGrouppers();
-
-                const element = this._element.get();
-
-                let toFocus: HTMLElement | null;
-
-                if (element) {
+                if (!toFocus) {
                     toFocus = props.isFirst
-                        ? this._tabster.focusable.findFirst({ container: element })
-                        : this._tabster.focusable.findLast({ container: element });
-                } else {
-                    toFocus = null;
+                        ? this._tabster.focusable.findFirst({ container: element, ignoreUncontrolled: true, ignoreAccessibiliy: true })
+                        : this._tabster.focusable.findLast({ container: element, ignoreUncontrolled: true, ignoreAccessibiliy: true });
                 }
-
-                if (toFocus) {
-                    this._tabster.focusedElement.focus(toFocus);
-                } else {
-                    props.input?.blur();
-                }
+            } else {
+                toFocus = null;
             }
-        };
 
-        props.focusout = e => {
-            props.shouldMoveOut = false;
-        };
-
-        input.addEventListener('focusin', props.focusin);
-        input.addEventListener('focusout', props.focusout);
+            if (toFocus) {
+                this._tabster.focusedElement.focus(toFocus, false, true);
+            } else {
+                input.blur();
+            }
+        }
     }
 
-    private _disposeDummyInput(props: DummyInput): void {
-        const input = props.input;
-
-        if (!input) {
-            return;
-        }
-
-        delete props.input;
-
-        const fi = props.focusin;
-        if (fi) {
-            input.removeEventListener('focusin', fi);
-            delete props.focusin;
-        }
-
-        const fo = props.focusout;
-        if (fo) {
-            input.removeEventListener('focusout', fo);
-            delete props.focusout;
-        }
+    private _onDummyInputBlur = (input: HTMLDivElement, props: DummyInputProps): void => {
+        props.shouldMoveOut = false;
     }
 
     private _addDummyInputs(): void {
@@ -408,6 +398,7 @@ export class RootAPI implements Types.RootAPI {
         let mover: Types.Mover | undefined;
         let isGroupperFirst: boolean | undefined;
         let isRtl: boolean | undefined;
+        let uncontrolled: HTMLElement | undefined;
         let allGrouppersAndMovers: Types.TabsterContext['allGrouppersAndMovers'] = getAllGrouppersAndMovers ? [] : undefined;
         let curElement: (Node | null) = element;
 
@@ -425,6 +416,10 @@ export class RootAPI implements Types.RootAPI {
             if (!tabsterOnElement) {
                 curElement = curElement.parentElement;
                 continue;
+            }
+
+            if (tabsterOnElement.uncontrolled) {
+                uncontrolled = curElement as HTMLElement;
             }
 
             const curGroupper = tabsterOnElement.groupper;
@@ -494,7 +489,8 @@ export class RootAPI implements Types.RootAPI {
             mover,
             isGroupperFirst,
             allGrouppersAndMovers,
-            isRtl: checkRtl ? !!isRtl : undefined
+            isRtl: checkRtl ? !!isRtl : undefined,
+            uncontrolled
         } : undefined;
 
     }

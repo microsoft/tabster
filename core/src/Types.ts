@@ -4,6 +4,7 @@
  */
 
 export const TabsterAttributeName = 'data-tabster';
+export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;
@@ -23,6 +24,7 @@ export interface TabsterCore {
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
     root: RootAPI;
+    uncontrolled: UncontrolledAPI;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -257,10 +259,14 @@ export interface FocusableAcceptElementState {
     container: HTMLElement;
     from: HTMLElement | null;
     isForward: boolean;
-    found?: HTMLElement;
+    found?: boolean;
+    foundElement?: HTMLElement;
+    hasUncontrolled?: boolean;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
     ignoreGroupper?: boolean;
+    ignoreUncontrolled?: boolean;
+    ignoreAccessibiliy?: boolean;
     grouppers: {
         [id: string]: {
             isActive: boolean | undefined,
@@ -284,6 +290,14 @@ export interface FindFocusableProps {
      */
     includeProgrammaticallyFocusable?: boolean;
     ignoreGroupper?: boolean;
+    /**
+     * Ignore uncontrolled areas.
+     */
+    ignoreUncontrolled?: boolean;
+    /**
+     * Ignore accessibility check.
+     */
+    ignoreAccessibiliy?: boolean;
     prev?: boolean;
     /**
      * @param el element visited
@@ -291,6 +305,43 @@ export interface FindFocusableProps {
      */
     acceptCondition?(el: HTMLElement): boolean;
 }
+
+export type FindFirstProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+>;
+
+export type FindNextProps = Pick<
+    FindFocusableProps,
+    | 'currentElement'
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+>;
+
+export type FindDefaultProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreAccessibiliy'
+>;
+
+export type FindAllProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'acceptCondition'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+> & { container: HTMLElement, skipDefaultCheck?: boolean };
 
 export interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
@@ -300,57 +351,17 @@ export interface FocusableAPI {
         includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
-    findFirst(
-        options: Pick<
-            FindFocusableProps,
-            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
-        >
-    ): HTMLElement | null;
-    findLast(
-        options: Pick<
-            FindFocusableProps,
-            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
-        >
-    ): HTMLElement | null;
-    findNext(
-        options: Pick<
-            FindFocusableProps,
-            | 'currentElement'
-            | 'container'
-            | 'includeProgrammaticallyFocusable'
-            | 'ignoreGroupper'
-        >
-    ): HTMLElement | null;
-    findPrev(
-        options: Pick<
-            FindFocusableProps,
-            | 'currentElement'
-            | 'container'
-            | 'includeProgrammaticallyFocusable'
-            | 'ignoreGroupper'
-        >
-    ): HTMLElement | null;
-    findDefault(
-        options: Pick<
-            FindFocusableProps,
-            'container' | 'includeProgrammaticallyFocusable' | 'ignoreGroupper'
-        >
-    ): HTMLElement | null;
+    // find* return null when there is no element and undefined when there is an uncontrolled area.
+    findFirst(options: FindFirstProps): HTMLElement | null | undefined;
+    findLast(options: FindFirstProps): HTMLElement | null | undefined;
+    findNext(options: FindNextProps): HTMLElement | null | undefined;
+    findPrev(options: FindNextProps): HTMLElement | null | undefined;
+    findDefault(options: FindDefaultProps): HTMLElement | null;
     /**
      * @returns All focusables in a given context that satisfy an given condition
      */
-    findAll(
-        options:
-            | Pick<
-                  FindFocusableProps,
-                  | 'container'
-                  | 'includeProgrammaticallyFocusable'
-                  | 'ignoreGroupper'
-                  | 'acceptCondition'
-              >
-            | { skipDefaultCheck?: boolean }
-    ): HTMLElement[];
-    findElement(options: FindFocusableProps): HTMLElement | null;
+    findAll(options: FindAllProps): HTMLElement[];
+    findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 
 export interface Visibilities {
@@ -416,11 +427,6 @@ export interface MoverExtendedProps {
     onChange?: (element: HTMLElement, state: MoverElementState) => void;
 }
 
-export interface NextTabbable {
-    element: HTMLElement;
-    callback?: () => void;
-}
-
 export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> {
     readonly id: string;
     dispose(): void;
@@ -428,7 +434,7 @@ export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> 
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
     forceUpdate(): void;
-    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
@@ -464,7 +470,7 @@ export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtend
     makeUnlimited(isUnlimited: boolean): void;
     isUnlimited(): boolean;
     isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
-    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
@@ -565,12 +571,28 @@ export interface TabsterContext {
      * Whether `dir='rtl'` is set on an ancestor
      */
     isRtl?: boolean;
+    /**
+     * The uncontrolled container of this element (if any).
+     */
+    uncontrolled?: HTMLElement;
 }
 
 export interface RootAPI {
     add(element: HTMLElement, basic?: RootBasicProps): void;
     remove(element: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
+}
+
+export interface UncontrolledAPI {
+    /**
+     * @param element - Tabster is does nothing within this element
+     */
+    add(element: HTMLElement): void;
+
+    /**
+     * @param element - Tabster will control focus inside this element again
+     */
+    remove(element: HTMLElement): void;
 }
 
 export interface ModalizerAPI {
@@ -628,6 +650,10 @@ export interface GroupperOnElement {
     groupper: Groupper;
 }
 
+export interface UncontrolledOnElement {
+    uncontrolled: Record<string, never>;
+}
+
 export interface ObservedOnElement {
     observed: ObservedElementBasicProps & ObservedElementExtendedProps;
 }
@@ -639,6 +665,7 @@ export interface OutlineOnElement {
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserBasicProps,
     root: RootBasicProps,
+    uncontrolled: UncontrolledOnElement['uncontrolled'],
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
@@ -665,7 +692,8 @@ export type TabsterOnElement = Partial<
     MoverOnElement &
     GroupperOnElement &
     ObservedOnElement &
-    OutlineOnElement
+    OutlineOnElement &
+    UncontrolledOnElement
 >;
 
 export interface OutlineElements {
@@ -688,7 +716,7 @@ export interface TabsterElementStorage {
 
 export type DisposeFunc = () => void;
 
-export interface TabsterInternal {
+export interface TabsterInternal extends TabsterCore {
     storageEntry(uid: string, addremove?: boolean): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
@@ -708,6 +736,9 @@ export interface TabsterInternal {
     modalizerDispose?: DisposeFunc;
     observedElementDispose?: DisposeFunc;
     crossOriginDispose?: DisposeFunc;
+
+    // The version of the tabster package this instance is on
+    _version: string;
 }
 
 export interface TabsterCompat {

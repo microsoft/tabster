@@ -113,7 +113,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         return this._current?.get() || null;
     }
 
-    findNextTabbable(current: HTMLElement, prev?: boolean): Types.NextTabbable | null {
+    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined {
         const container = this.getElement();
 
         if (!container || !container.contains(current)) {
@@ -122,7 +122,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
         const tabster = this._tabster;
         const focusable = tabster.focusable;
-        let next: HTMLElement | null = null;
+        let next: HTMLElement | null | undefined = null;
 
         if (this._basic.tabbable) {
             next = prev
@@ -130,7 +130,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                 : focusable.findNext({ currentElement: current, container });
         }
 
-        if (!next) {
+        if (next === null) {
             const parentElement = container.parentElement;
 
             if (parentElement) {
@@ -143,7 +143,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             }
         }
 
-        return next ? { element: next } : null;
+        return next;
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {
@@ -158,7 +158,8 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
                     if (current && state.acceptCondition(current)) {
                         if (state.from && !container.contains(state.from)) {
-                            state.found = current;
+                            state.found = true;
+                            state.foundElement = current;
                             return NodeFilter.FILTER_ACCEPT;
                         }
                     }
@@ -185,7 +186,8 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                             found = this._focusables[id]?.get();
 
                             if (found && state.acceptCondition(found)) {
-                                state.found = found;
+                                state.found = true;
+                                state.foundElement = found;
                                 return NodeFilter.FILTER_ACCEPT;
                             }
                         }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Types } from './Tabster';
+import * as Types from './Types';
 import { GetWindow, Visibilities, Visibility } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
@@ -563,6 +563,94 @@ export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterP
             this._extended = { ...this._extended, ...extended };
         } else if (extended === null) {
             this._extended = {};
+        }
+    }
+}
+
+export interface DummyInputProps {
+    isFirst: boolean;
+    focusin?: (e: FocusEvent) => void;
+    focusout?: (e: FocusEvent) => void;
+    isPhantom?: boolean; // The input is created to be used only once and autoremoved when focused.
+}
+
+export type DummyInputFocusCallback<P> = (input: HTMLDivElement, props: P) => void;
+
+export class DummyInput<P> {
+    private _onFocusIn: DummyInputFocusCallback<P> | undefined;
+    private _onFocusOut: DummyInputFocusCallback<P> | undefined;
+    private _isPhantom: boolean;
+
+    input: HTMLDivElement | undefined;
+    props: P;
+
+    constructor(
+        getWindow: Types.GetWindow,
+        isPhantom: boolean,
+        focusin: DummyInputFocusCallback<P>,
+        focusout: DummyInputFocusCallback<P>,
+        props: P
+    ) {
+        const input = getWindow().document.createElement('div');
+
+        input.tabIndex = 0;
+        input.setAttribute('role', 'none');
+        input.setAttribute(Types.TabsterDummyInputAttributeName, '');
+        input.setAttribute('aria-hidden', 'true');
+
+        const style = input.style;
+        style.position = 'fixed';
+        style.width = style.height = '1px';
+        style.left = style.top = '-100500px';
+        style.opacity = '0';
+        style.zIndex = '-1';
+
+        if (__DEV__) {
+            style.setProperty('--tabster-dummy-input', 'yes');
+        }
+
+        makeFocusIgnored(input);
+
+        this.input = input;
+        this._isPhantom = isPhantom;
+        this._onFocusIn = focusin;
+        this._onFocusOut = focusout;
+        this.props = props;
+
+        input.addEventListener('focusin', this._focusin);
+        input.addEventListener('focusout', this._focusout);
+    }
+
+    dispose(): void {
+        const input = this.input;
+
+        if (!input) {
+            return;
+        }
+
+        delete this._onFocusIn;
+        delete this._onFocusOut;
+        delete this.input;
+
+        input.removeEventListener('focusin', this._focusin);
+        input.removeEventListener('focusout', this._focusout);
+
+        input.parentElement?.removeChild(input);
+    }
+
+    private _focusin = (e: FocusEvent): void => {
+        if (this._onFocusIn && this.input) {
+            this._onFocusIn(this.input, this.props);
+        }
+
+        if (this._isPhantom) {
+            this.dispose();
+        }
+    }
+
+    private _focusout = (e: FocusEvent): void => {
+        if (this._onFocusOut && this.input) {
+            this._onFocusOut(this.input, this.props);
         }
     }
 }

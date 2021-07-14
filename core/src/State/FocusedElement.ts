@@ -223,20 +223,20 @@ export class FocusedElementState
         ctx: Types.TabsterContext,
         current: HTMLElement,
         prev?: boolean
-    ): Types.NextTabbable | null {
-        let next: Types.NextTabbable | null | undefined;
+    ): HTMLElement | null | undefined {
+        let next: HTMLElement | null | undefined = null;
 
         if (ctx.groupper && ctx.mover) {
             if (ctx.isGroupperFirst) {
                 next = ctx.groupper.findNextTabbable(current, prev);
 
-                if (!next) {
+                if (next === null) {
                     next = ctx.mover.findNextTabbable(current, prev);
                 }
             } else {
                 next = ctx.mover.findNextTabbable(current, prev);
 
-                if (!next) {
+                if (next === null) {
                     next = ctx.groupper.findNextTabbable(current, prev);
                 }
             }
@@ -245,16 +245,12 @@ export class FocusedElementState
         } else if (ctx.mover) {
             next = ctx.mover.findNextTabbable(current, prev);
         } else {
-            const element = prev
+            next = prev
                 ? tabster.focusable.findPrev({ currentElement: current })
                 : tabster.focusable.findNext({ currentElement: current });
-
-            if (element) {
-                next = { element };
-            }
         }
 
-        return next || null;
+        return next;
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
@@ -264,21 +260,26 @@ export class FocusedElementState
 
         let curElement = this.getVal();
 
-        if (!curElement || !curElement.ownerDocument) {
+        if (!curElement || !curElement.ownerDocument || curElement.contentEditable === 'true') {
             return;
         }
 
         const ctx = RootAPI.getTabsterContext(this._tabster, curElement, { checkRtl: true });
 
-        if (!ctx) {
+        if (!ctx || ctx.uncontrolled) {
             return;
         }
 
         const isPrev = e.shiftKey;
         const next = FocusedElementState.findNext(this._tabster, ctx, curElement, isPrev);
 
+        if (next === undefined) {
+            // We have met an uncontrolled area, just allow default action.
+            return;
+        }
+
         if (ctx.modalizer) {
-            const nctx = next && RootAPI.getTabsterContext(this._tabster, next.element);
+            const nctx = next && RootAPI.getTabsterContext(this._tabster, next);
 
             if (
                 !nctx ||
@@ -293,17 +294,21 @@ export class FocusedElementState
             }
         }
 
-        if (next) {
-            const nextElemment = next.element;
+        if (next === null) {
+            const first = isPrev
+                ? this._tabster.focusable.findFirst({ ignoreUncontrolled: true, ignoreAccessibiliy: true })
+                : this._tabster.focusable.findLast({ ignoreUncontrolled: true, ignoreAccessibiliy: true });
 
-            // For iframes just allow normal Tab behaviour
-            if (nextElemment.tagName !== 'IFRAME') {
-                e.preventDefault();
-                nativeFocus(nextElemment);
+            if (first && RootAPI.getTabsterContext(this._tabster, first)?.uncontrolled) {
+                return;
             }
+        }
 
-            if (next.callback) {
-                next.callback();
+        if (next) {
+            // For iframes just allow normal Tab behaviour
+            if (next.tagName !== 'IFRAME') {
+                e.preventDefault();
+                nativeFocus(next);
             }
         } else {
             ctx.root.moveOutWithDefaultAction(isPrev);
@@ -311,44 +316,6 @@ export class FocusedElementState
     }
 
     private _validateFocusedElement = (element: HTMLElement): void => {
-        // const ctx = RootAPI.getTabsterContext(this._tabster, element);
-        // const curModalizerId = ctx ? ctx.root.getCurrentModalizerId() : undefined;
-
-        // if (!ctx || !ctx.modalizer) {
-        //     return;
-        // }
-
-        // let eModalizer = ctx.modalizer;
-
-        // if (curModalizerId === eModalizer.userId) {
-        //     return;
-        // }
-
-        // if ((curModalizerId === undefined) || details.isFocusedProgrammatically) {
-        //     ctx.root.setCurrentModalizerId(eModalizer.userId);
-
-        //     return;
-        // }
-
-        // if (eModalizer && element.ownerDocument) {
-        //     let toFocus = this._tabster.focusable.findFirst(ctx.root.getElement());
-
-        //     if (toFocus) {
-        //         if (element.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
-        //             toFocus = this._tabster.focusable.findLast(element.ownerDocument.body);
-
-        //             if (!toFocus) {
-        //                 // This only might mean that findFirst/findLast are buggy and inconsistent.
-        //                 throw new Error('Something went wrong.');
-        //             }
-        //         }
-
-        //         this._tabster.focusedElement.focus(toFocus);
-        //     } else {
-        //         // Current Modalizer doesn't seem to have focusable elements.
-        //         // Blurring the currently focused element which is outside of the current Modalizer.
-        //         element.blur();
-        //     }
-        // }
+        // TODO: Make sure this is not needed anymore and write tests.
     }
 }

@@ -10,8 +10,17 @@ function buildAttributesString(attributes: {[name: string]: string}): string {
         className: 'class'
     };
 
-    return Object.keys(attributes).map(name =>
-        `${ nameOverrides[name] || name }="${ attributes[name].replace(/"/g, '&quot;') }"`).join(' ');
+    return Object.keys(attributes).map(name => {
+        if (typeof attributes[name] === 'string') {
+            return`${ nameOverrides[name] || name }="${ attributes[name].replace(/"/g, '&quot;') }"`;
+        } else if (typeof attributes[name] === 'number') {
+            return`${ nameOverrides[name] || name }="${attributes[name]}"`;
+        } else if (typeof attributes[name] === 'boolean') {
+            return`${ nameOverrides[name] || name }="${attributes[name] ? 'true' : 'false'}"`;
+        }
+
+        throw new Error(`unknown attribute: ${name}`);
+    }).join(' ');
 }
 
 export function createElementString(tagName: string, attributes: {[name: string]: string} | null, ...children: any[]): string {

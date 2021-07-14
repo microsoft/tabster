@@ -70,6 +70,10 @@ export function setTabsterOnElement(
                     cur[key] = attrObject[key] = tabsterOnElement.outline;
                     break;
 
+                case 'uncontrolled':
+                    cur[key] = attrObject[key] = tabsterOnElement.uncontrolled;
+                    break;
+
                 default:
                     throw new Error('Unknown Tabster part.');
             }
@@ -204,6 +208,10 @@ export function updateTabsterByAttribute(
                         tabsteri.outline.setProps(element, null);
                     }
                     break;
+
+                case 'uncontrolled':
+                    tabsteri.uncontrolled.remove(element);
+                    break;
             }
         }
     }
@@ -292,6 +300,10 @@ export function updateTabsterByAttribute(
                 if (tabsteri.outline) {
                     tabsteri.outline.setProps(element, newObject.outline || null);
                 }
+                break;
+
+            case 'uncontrolled':
+                tabsteri.uncontrolled.add(element);
                 break;
 
             default:

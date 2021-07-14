@@ -1319,7 +1319,7 @@ export class CrossOriginObservedElementState
             timeout,
             Types.ObservedElementAccesibilities.Focusable
         ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element)
+            ? (this._tabster as unknown as Types.TabsterInternal).crossOrigin!!!.focusedElement.focus(element, true)
             : false
         );
     }

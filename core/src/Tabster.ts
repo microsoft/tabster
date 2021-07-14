@@ -17,6 +17,7 @@ import { ObservedElementAPI } from './State/ObservedElement';
 import { OutlineAPI } from './Outline';
 import { RootAPI, WindowWithTabsterInstance } from './Root';
 import * as Types from './Types';
+import { UncontrolledAPI } from './Uncontrolled';
 import {
     cleanupWeakRefStorage,
     clearElementCache,
@@ -37,11 +38,13 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
+    public _version: string = __VERSION__;
 
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
+    uncontrolled: Types.UncontrolledAPI;
 
     groupper?: Types.GroupperAPI;
     mover?: Types.MoverAPI;
@@ -76,6 +79,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.root = new RootAPI(this, () => {
             (this.groupper as Types.GroupperInternalAPI | undefined)?.forgetUnlimitedGrouppers();
         }, props?.autoRoot);
+        this.uncontrolled = new UncontrolledAPI(this);
 
         startWeakRefStorageCleanup(getWindow);
     }

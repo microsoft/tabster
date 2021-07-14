@@ -3,6 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
+const version = require('../core/package.json').version;
 
 module.exports = {
     mode: 'development',
@@ -42,7 +43,8 @@ module.exports = {
 
     plugins: [
         new webpack.DefinePlugin({
-            '__DEV__': true
+            '__DEV__': true,
+            '__VERSION__': `'${version}'`,
         }),
         new HtmlWebpackPlugin({ title: 'Tabster Test' }),
         new CopyPlugin({

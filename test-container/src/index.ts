@@ -1,4 +1,12 @@
-import { getModalizer, createTabster, getDeloser, getOutline, getMover, getGroupper } from 'tabster';
+import {
+    getModalizer,
+    createTabster,
+    getDeloser,
+    getOutline,
+    getMover,
+    getGroupper,
+    getObservedElement
+} from 'tabster';
 
 const tabster = createTabster(window);
 console.log('created tabster');
@@ -13,6 +21,8 @@ getMover(tabster)
 console.log('created mover')
 getGroupper(tabster)
 console.log('created groupper')
+getObservedElement(tabster)
+console.log('created observed');
 
 // @ts-ignore
 console.log('initialized tabster', window.__tabsterInstance);

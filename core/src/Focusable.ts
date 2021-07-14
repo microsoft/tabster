@@ -6,7 +6,7 @@
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, matchesSelector } from './Utils';
+import { createElementTreeWalker, matchesSelector, shouldIgnoreFocus } from './Utils';
 
 const _focusableSelector = [
     'a[href]',
@@ -143,29 +143,21 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _isDisabled(el: HTMLElement): boolean {
-        return this._attrIs(el, 'aria-disabled', 'true');
+        return this._attrIs(el, 'disabled', 'true');
     }
 
     private _isHidden(el: HTMLElement): boolean {
         return this._attrIs(el, 'aria-hidden', 'true');
     }
 
-    findFirst(options: {
-        container?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean
-    }): HTMLElement | null {
+    findFirst(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
             container: this._getBody(),
             ...options,
         });
     }
 
-    findLast(options: {
-        container?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean
-    }): HTMLElement | null {
+    findLast(options: Types.FindFirstProps): HTMLElement | null | undefined  {
         return this.findElement({
             container: this._getBody(),
             prev: true,
@@ -173,24 +165,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         });
     }
 
-    findNext(options: {
-        currentElement: HTMLElement,
-        container?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean
-    }): HTMLElement | null {
+    findNext(options: Types.FindNextProps): HTMLElement | null | undefined  {
         return this.findElement({
             container: this._getBody(),
             ...options,
         });
     }
 
-    findPrev(options: {
-        currentElement: HTMLElement,
-        container?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean
-    }): HTMLElement | null {
+    findPrev(options: Types.FindNextProps): HTMLElement | null | undefined  {
         return this.findElement({
             container: this._getBody(),
             prev: true,
@@ -198,32 +180,24 @@ export class FocusableAPI implements Types.FocusableAPI {
         });
     }
 
-    findDefault(options: {
-        container?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean
-    }): HTMLElement | null {
+    findDefault(options: Types.FindDefaultProps): HTMLElement | null {
         return this.findElement({
             ...options,
             acceptCondition:
                 el =>
                     this._tabster.focusable.isFocusable(el, options.includeProgrammaticallyFocusable) &&
                     !!this.getProps(el).isDefault,
-        });
+        }) || null;
     }
 
-    findAll(options: {
-        container: HTMLElement,
-        acceptCondition?: (el: HTMLElement) => boolean,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean,
-        skipDefaultCheck?: boolean
-    }): HTMLElement[] {
+    findAll(options: Types.FindAllProps): HTMLElement[] {
         const {
             container,
             acceptCondition: customAcceptCondition,
             includeProgrammaticallyFocusable,
             ignoreGroupper,
+            ignoreUncontrolled,
+            ignoreAccessibiliy,
             skipDefaultCheck,
         } = options;
 
@@ -254,6 +228,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             acceptCondition,
             includeProgrammaticallyFocusable,
             ignoreGroupper,
+            ignoreUncontrolled,
+            ignoreAccessibiliy,
             grouppers: {}
         };
 
@@ -278,19 +254,14 @@ export class FocusableAPI implements Types.FocusableAPI {
         return foundNodes;
     }
 
-    findElement(options: {
-        container?: HTMLElement,
-        currentElement?: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean,
-        prev?: boolean,
-        acceptCondition?(el: HTMLElement): boolean,
-    }): HTMLElement | null {
+    findElement(options: Types.FindFocusableProps): HTMLElement | null | undefined {
         const {
             container,
             currentElement = null,
             includeProgrammaticallyFocusable,
             ignoreGroupper,
+            ignoreUncontrolled,
+            ignoreAccessibiliy,
             prev,
         } = options;
 
@@ -305,7 +276,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (!acceptCondition) {
-            acceptCondition = el => this._tabster.focusable.isFocusable(el, includeProgrammaticallyFocusable);
+            acceptCondition = el => this._tabster.focusable.isFocusable(
+                el,
+                includeProgrammaticallyFocusable,
+                ignoreAccessibiliy,
+                ignoreAccessibiliy
+            );
         }
 
         const acceptElementState: Types.FocusableAcceptElementState = {
@@ -315,6 +291,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             acceptCondition,
             includeProgrammaticallyFocusable,
             ignoreGroupper,
+            ignoreUncontrolled,
+            ignoreAccessibiliy,
             grouppers: {}
         };
 
@@ -348,8 +326,20 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        const found = (prev ? walker.previousNode() : walker.nextNode()) as HTMLElement | null;
-        return acceptElementState.found || found;
+        let foundElement = (prev ? walker.previousNode() : walker.nextNode()) as HTMLElement | null | undefined;
+
+        if (acceptElementState.hasUncontrolled) {
+            if (foundElement) {
+                // We have an uncontrolled area and there is a controlled element after it.
+                // Return undefined for the default Tab action.
+                foundElement = undefined;
+            } else {
+                // Otherwise, return null to moveOutWithDefaultAction().
+                foundElement = null;
+            }
+        }
+
+        return acceptElementState.found ? acceptElementState.foundElement : foundElement;
     }
 
     private _acceptElement(
@@ -361,7 +351,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (state.found) {
-            return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
         }
 
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
@@ -371,12 +361,22 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_SKIP;
         }
 
+        if (state.ignoreUncontrolled) {
+            if (shouldIgnoreFocus(element)) {
+                return NodeFilter.FILTER_SKIP;
+            }
+        } else if (ctx.uncontrolled) {
+            state.hasUncontrolled = true;
+
+            return NodeFilter.FILTER_REJECT;
+        }
+
         // We assume iframes are focusable because native tab behaviour would tab inside
         if (element.tagName === 'IFRAME') {
             return NodeFilter.FILTER_ACCEPT;
         }
 
-        if (!this.isAccessible(element)) {
+        if (!state.ignoreAccessibiliy && !this.isAccessible(element)) {
             return NodeFilter.FILTER_REJECT;
         }
 

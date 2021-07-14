@@ -166,11 +166,13 @@ export class ObservedElementAPI
         if (o) {
             for (let uid of Object.keys(o)) {
                 let el = o[uid].element.get() || null;
-
                 if (el) {
                     if (
-                        ((accessibility === Types.ObservedElementAccesibilities.Accessible) && !this._tabster.focusable.isAccessible(el)) ||
-                        ((accessibility === Types.ObservedElementAccesibilities.Focusable) && !this._tabster.focusable.isFocusable(el))
+                        (accessibility === Types.ObservedElementAccesibilities.Accessible &&
+                        !this._tabster.focusable.isAccessible(el)) ||
+
+                        (accessibility === Types.ObservedElementAccesibilities.Focusable &&
+                        !this._tabster.focusable.isFocusable(el, true))
                     ) {
                         el = null;
                     }
@@ -249,7 +251,7 @@ export class ObservedElementAPI
             timeout,
             Types.ObservedElementAccesibilities.Focusable
         ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._tabster.focusedElement.focus(element)
+            ? this._tabster.focusedElement.focus(element, true)
             : false
         );
     }
@@ -357,7 +359,7 @@ export class ObservedElementAPI
 
             if (waitingFocusableElement && !waitingFocusableElement.conditionTimer) {
                 const resolveFocusable = () => {
-                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isFocusable(val)) {
+                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isFocusable(val, true)) {
                         resolve(waitingFocusableElementKey, waitingFocusableElement);
                     } else {
                         waitingFocusableElement.conditionTimer = win.setTimeout(resolveFocusable, _conditionCheckTimeout);

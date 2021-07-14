@@ -41,7 +41,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
         }
     }
 
-    findNextTabbable(current: HTMLElement, prev?: boolean): Types.NextTabbable | null {
+    findNextTabbable(current: HTMLElement, prev?: boolean): HTMLElement | null | undefined {
         const container = this.getElement();
 
         if (!container || !container.contains(current)) {
@@ -49,7 +49,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
         }
 
         const tabster = this._tabster;
-        let next: HTMLElement | null = null;
+        let next: HTMLElement | null | undefined = null;
 
         if (this._isUnlimited) {
             next = prev
@@ -63,7 +63,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
             }
         }
 
-        if (!next) {
+        if (next === null) {
             const parentElement = container.parentElement;
 
             if (parentElement) {
@@ -75,7 +75,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
             }
         }
 
-        return next ? { element: next } : null;
+        return next;
     }
 
     makeUnlimited(isUnlimited: boolean): void {
