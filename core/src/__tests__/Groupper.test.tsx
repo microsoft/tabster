@@ -61,16 +61,6 @@ describe('Groupper - default', () => {
                 expect(el?.attributes['data-count']).toBe('1')
             );
     });
-
-    it('should focus next groupper with arrow key if focus is inside', async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressTab()
-            .pressDown()
-            .activeElement(el =>
-                expect(el?.attributes['data-count']).toBe('2')
-            );
-    });
 });
 
 describe('Groupper - limited focus trap', () => {
@@ -81,7 +71,7 @@ describe('Groupper - limited focus trap', () => {
     const getTestHtml = () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const groupperAttr = getTabsterAttribute({
-            groupper: { isLimited: Types.GroupperFocusLimits.LimitedTrapFocus }
+            groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus }
         });
 
         return (
@@ -108,16 +98,6 @@ describe('Groupper - limited focus trap', () => {
             .pressEsc()
             .activeElement(el =>
                 expect(el?.attributes['data-count']).toBe('1')
-            );
-    });
-
-    it('should focus next groupper with arrow key if focus is inside', async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressEnter()
-            .pressDown()
-            .activeElement(el =>
-                expect(el?.attributes['data-count']).toBe('2')
             );
     });
 

@@ -6,6 +6,8 @@ import {
     getCurrentTabster,
     getDeloser,
     getModalizer,
+    getMover,
+    getGroupper,
 } from "tabster";
 
 export const parameters = {
@@ -20,6 +22,8 @@ export const decorators = [
 
             // initialize Tabster API instances
             getModalizer(tabster);
+            getMover(tabster);
+            getGroupper(tabster);
             getDeloser(tabster);
         });
         React.useEffect(() => {

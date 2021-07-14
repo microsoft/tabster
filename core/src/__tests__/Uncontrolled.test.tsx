@@ -72,19 +72,15 @@ describe('Uncontrolled', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
+                    <button aria-hidden='true'>Button1</button>
                     <button>Button2</button>
                     <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                        <button>Button3</button>
+                        <button aria-hidden='true'>Button3</button>
                         <button>Button4</button>
                     </div>
                 </div>
             )
         )
-            .pressTab()
-            .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
-            })
             .pressTab()
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button2');
@@ -143,6 +139,108 @@ describe('Uncontrolled', () => {
             .pressTab()
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should properly ignore disabled elements around the uncontrolled area', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button disabled>Button2</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                    <button disabled>Button5</button>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button6');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should transparently transit between Movers and Uncontrolled', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                    </div>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button aria-hidden='true'>Button3</button>
+                        <button aria-hidden='true'>Button4</button>
+                    </div>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button5');
+            })
+            .pressRight()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button6');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
             });
     });
 });

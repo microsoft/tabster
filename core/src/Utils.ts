@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Types } from './Tabster';
-import { ElementVisibilities, ElementVisibility, GetWindow } from './Types';
+import * as Types from './Types';
+import { GetWindow, Visibilities, Visibility } from './Types';
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -154,7 +154,7 @@ class FakeWeakRef implements TabsterWeakRef {
     }
 }
 
-export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> {
+export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> implements Types.WeakHTMLElement<D> {
     private _ctx: InstanceContext;
     private _id: string;
     private _data: D | undefined;
@@ -323,7 +323,7 @@ export function isElementVerticallyVisibleInContainer(getWindow: GetWindow, elem
     return false;
 }
 
-export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLElement, gap = 0): ElementVisibility {
+export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLElement, gap = 0): Visibility {
     const container = getScrollableContainer(element);
 
     if (container) {
@@ -334,7 +334,7 @@ export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLE
             ((elementRect.left > containerRect.right) || (elementRect.top > containerRect.bottom)) ||
             ((elementRect.bottom < containerRect.top) || (elementRect.right < containerRect.left))
         ) {
-            return ElementVisibilities.Invisible;
+            return Visibilities.Invisible;
         }
 
         if (
@@ -343,13 +343,13 @@ export function isElementVisibleInContainer(getWindow: GetWindow, element: HTMLE
             ((elementRect.left + gap >= containerRect.left) && (elementRect.left <= containerRect.right)) &&
             ((elementRect.right >= containerRect.left) && (elementRect.right - gap <= containerRect.right))
         ) {
-            return ElementVisibilities.Visible;
+            return Visibilities.Visible;
         }
 
-        return ElementVisibilities.PartiallyVisible;
+        return Visibilities.PartiallyVisible;
     }
 
-    return ElementVisibilities.Invisible;
+    return Visibilities.Invisible;
 }
 
 export function scrollIntoView(getWindow: GetWindow, element: HTMLElement, alignToTop: boolean): void {
@@ -511,5 +511,146 @@ export function setBasics(win: Window, basics: Types.InternalBasics): void {
     key = 'WeakRef';
     if (key in basics) {
         context.basics[key] = basics[key];
+    }
+}
+
+let _lastTabsterPartId = 0;
+
+export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterPart<B, E> {
+    protected _tabster: Types.TabsterCore;
+    protected _element: WeakHTMLElement<HTMLElement, D>;
+    protected _win: GetWindow;
+    protected _basic: Partial<B>;
+    protected _extended: Partial<E>;
+
+    readonly id: string;
+
+    constructor(
+        tabster: Types.TabsterCore,
+        element: HTMLElement,
+        getWindow: GetWindow,
+        basic?: B,
+        extended?: E
+    ) {
+        this._tabster = tabster;
+        this._element = new WeakHTMLElement(getWindow, element);
+        this._win = getWindow;
+        this._basic = basic || {};
+        this._extended = extended || {};
+        this.id = 'i' + ++_lastTabsterPartId;
+    }
+
+    getElement(): HTMLElement | undefined {
+        return this._element.get();
+    }
+
+    getBasicProps(): Partial<B> {
+        return this._basic;
+    }
+
+    getExtendedProps(): Partial<E> {
+        return this._extended;
+    }
+
+    setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void {
+        if (basic) {
+            this._basic = { ...this._basic, ...basic };
+        } else if (basic === null) {
+            this._basic = {};
+        }
+
+        if (extended) {
+            this._extended = { ...this._extended, ...extended };
+        } else if (extended === null) {
+            this._extended = {};
+        }
+    }
+}
+
+export interface DummyInputProps {
+    isFirst: boolean;
+    focusin?: (e: FocusEvent) => void;
+    focusout?: (e: FocusEvent) => void;
+    isPhantom?: boolean; // The input is created to be used only once and autoremoved when focused.
+}
+
+export type DummyInputFocusCallback<P> = (input: HTMLDivElement, props: P) => void;
+
+export class DummyInput<P> {
+    private _onFocusIn: DummyInputFocusCallback<P> | undefined;
+    private _onFocusOut: DummyInputFocusCallback<P> | undefined;
+    private _isPhantom: boolean;
+
+    input: HTMLDivElement | undefined;
+    props: P;
+
+    constructor(
+        getWindow: Types.GetWindow,
+        isPhantom: boolean,
+        focusIn: DummyInputFocusCallback<P>,
+        focusOut: DummyInputFocusCallback<P>,
+        props: P
+    ) {
+        const input = getWindow().document.createElement('div');
+
+        input.tabIndex = 0;
+        input.setAttribute('role', 'none');
+        input.setAttribute(Types.TabsterDummyInputAttributeName, '');
+        input.setAttribute('aria-hidden', 'true');
+
+        const style = input.style;
+        style.position = 'fixed';
+        style.width = style.height = '1px';
+        style.left = style.top = '-100500px';
+        style.opacity = '0';
+        style.zIndex = '-1';
+
+        if (__DEV__) {
+            style.setProperty('--tabster-dummy-input', 'yes');
+        }
+
+        makeFocusIgnored(input);
+
+        this.input = input;
+        this._isPhantom = isPhantom;
+        this._onFocusIn = focusIn;
+        this._onFocusOut = focusOut;
+        this.props = props;
+
+        input.addEventListener('focusin', this._focusIn);
+        input.addEventListener('focusout', this._focusOut);
+    }
+
+    dispose(): void {
+        const input = this.input;
+
+        if (!input) {
+            return;
+        }
+
+        delete this._onFocusIn;
+        delete this._onFocusOut;
+        delete this.input;
+
+        input.removeEventListener('focusin', this._focusIn);
+        input.removeEventListener('focusout', this._focusOut);
+
+        input.parentElement?.removeChild(input);
+    }
+
+    private _focusIn = (e: FocusEvent): void => {
+        if (this._onFocusIn && this.input) {
+            this._onFocusIn(this.input, this.props);
+        }
+    }
+
+    private _focusOut = (e: FocusEvent): void => {
+        if (this._onFocusOut && this.input) {
+            this._onFocusOut(this.input, this.props);
+        }
+
+        if (this._isPhantom) {
+            this.dispose();
+        }
     }
 }

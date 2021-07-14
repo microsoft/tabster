@@ -6,35 +6,36 @@
 import { Accordion, AccordionSection } from './components/Accordion';
 import { Item } from './components/Item';
 import * as React from 'react';
-import { getTabsterAttribute } from 'tabster';
+import { getTabsterAttribute, Types as TabsterTypes } from 'tabster';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
     title: 'Groupper',
 };
 
-export const NestedGrouppers = () => (
-    <>
+export const NestedGrouppers = () => {
+    const moverAttr = getTabsterAttribute({
+        mover: { direction: TabsterTypes.MoverDirections.Vertical, tabbable: true }
+    }) as TabsterTypes.TabsterDOMAttribute;
+
+    return (
         <div
             aria-label='Main'
-            {...getTabsterAttribute({
-                deloser: {},
-            })}
         >
             <div>
                 <Item />
                 <Item />
 
-                <Item>
+                <Item mover>
                     <div>
                         <Item />
 
-                        <Item>
+                        <Item mover>
                             <div>
                                 <Item />
                                 <Item />
 
-                                <Item>
+                                <Item mover>
                                     <div>
                                         <Item />
                                         <Item />
@@ -55,8 +56,8 @@ export const NestedGrouppers = () => (
                 <Item />
             </div>
         </div>
-    </>
-);
+    );
+};
 
 export const GroupperRtl = () => (
     <div dir='rtl' style={{display: 'flex'}}>

@@ -8,6 +8,8 @@ export {
     disposeTabster,
     forceCleanup,
     getTabsterAttribute,
+    getGroupper,
+    getMover,
     getCrossOrigin,
     getDeloser,
     getModalizer,

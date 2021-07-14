@@ -24,6 +24,7 @@ export interface TabsterCore {
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
     root: RootAPI;
+    uncontrolled: UncontrolledAPI;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -50,8 +51,22 @@ export interface FocusedElementState extends Subscribable<HTMLElement | undefine
     getLastFocusedElement(): HTMLElement | undefined;
     focus(element: HTMLElement, noFocusedProgrammaticallyFlag?: boolean, noAccessibleCheck?: boolean): boolean;
     focusDefault(container: HTMLElement): boolean;
-    focusFirst(container: HTMLElement): boolean;
+    focusFirst(props: FindFirstProps): boolean;
+    focusLast(props: FindFirstProps): boolean;
     resetFocus(container: HTMLElement): boolean;
+}
+
+export interface WeakHTMLElement<D = undefined> {
+    get(): HTMLElement | undefined;
+    getData(): D | undefined;
+}
+
+export interface TabsterPart<B, E> {
+    readonly id: string;
+    getElement(): HTMLElement | undefined;
+    getBasicProps(): Partial<B>;
+    getExtendedProps(): Partial<E>;
+    setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void;
 }
 
 export interface ObservedElementBasicProps {
@@ -232,92 +247,110 @@ export interface DeloserAPI {
     resume(restore?: boolean): void;
 }
 
-/**
- * Declare the kinds of keyboard movers
- */
-export enum MoverKeys {
-    /**
-     * Move within a mover block using only tab key
-     */
-    Tab,
-    /**
-     * Move within a mover block using up/left and down/right arrows
-     *
-     * This is the only mover kind that supports cyclic navigation
-     */
-    Arrows,
-    /**
-     * Use both tab and arrow keys to move
-     */
-    Both
-}
-
-export interface MoverAxisOptions {
-    Horizontal: 0;
-    Vertical: 1;
-}
-export const MoverAxis: MoverAxisOptions = {
-    Horizontal: 0,
-    Vertical: 1,
-};
-export type MoverAxis = MoverAxisOptions[keyof MoverAxisOptions];
-
-/**
- * Options to configure keyboard navigation mover API
- *
- * TODO move Mover API to top level class and allow sane defaults
- */
-export type MoverOptions = {
-    /**
-     * The types of navigation required
-     */
-    navigationType: MoverKeys;
-
-    /**
-     * Whether to allow cyclic navigation in the mover
-     * Can only be applied if navigationType is MoverKeys.Arrows
-     *
-     * @defaultValue false
-     */
-    cyclic?: boolean;
-
-    /**
-     * Determines the arrow keys that are used to move between focusables
-     */
-    axis: MoverAxis,
-
-    /**
-     * By default Home and End
-     */
-    disableHomeEndKeys?: boolean;
-};
-
 export interface FocusableProps {
     isDefault?: boolean;
     isIgnored?: boolean;
-    mover?: MoverOptions;
     /**
      * Do not determine an element's focusability based on aria-disabled
      */
     ignoreAriaDisabled?: boolean;
 }
 
+export interface FocusableAcceptElementState {
+    container: HTMLElement;
+    from: HTMLElement | null;
+    isForward: boolean;
+    found?: boolean;
+    foundElement?: HTMLElement;
+    nextUncontrolled?: HTMLElement;
+    acceptCondition: (el: HTMLElement) => boolean;
+    includeProgrammaticallyFocusable?: boolean;
+    ignoreGroupper?: boolean;
+    ignoreUncontrolled?: boolean;
+    ignoreAccessibiliy?: boolean;
+    grouppers: {
+        [id: string]: {
+            isActive: boolean | undefined,
+            isInside: boolean,
+            first?: HTMLElement | null
+        }
+    };
+}
+
+export interface FindFocusableProps {
+    /**
+     * The container used for the search
+     */
+    container?: HTMLElement;
+    /**
+     * The elemet to start from
+     */
+    currentElement?: HTMLElement;
+    /**
+     * includes elements that can be focused programmatically
+     */
+    includeProgrammaticallyFocusable?: boolean;
+    ignoreGroupper?: boolean;
+    /**
+     * Ignore uncontrolled areas.
+     */
+    ignoreUncontrolled?: boolean;
+    /**
+     * Ignore accessibility check.
+     */
+    ignoreAccessibiliy?: boolean;
+    prev?: boolean;
+    /**
+     * @param el element visited
+     * @returns if an element should be accepted
+     */
+    acceptCondition?(el: HTMLElement): boolean;
+    /**
+     * A callback that will be called if an uncontrolled area is met.
+     * @param el uncontrolled element.
+     */
+    onUncontrolled?(el: HTMLElement): void;
+}
+
+export type FindFirstProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+>;
+
+export type FindNextProps = Pick<
+    FindFocusableProps,
+    | 'currentElement'
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+    | 'onUncontrolled'
+>;
+
+export type FindDefaultProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'ignoreAccessibiliy'
+>;
+
+export type FindAllProps = Pick<
+    FindFocusableProps,
+    | 'container'
+    | 'includeProgrammaticallyFocusable'
+    | 'ignoreGroupper'
+    | 'acceptCondition'
+    | 'ignoreUncontrolled'
+    | 'ignoreAccessibiliy'
+> & { container: HTMLElement, skipDefaultCheck?: boolean };
+
 export interface FocusableAPI {
-    addGroupper(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
-    removeGroupper(element: HTMLElement): void;
-    moveGroupper(from: HTMLElement, to: HTMLElement): void;
-    setGroupperProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
-        extended?: Partial<GroupperExtendedProps> | null): void;
-    setCurrentGroupper(element: HTMLElement | null, forceUpdate?: boolean): void;
-    // isInCurrentGroupper is a tri-state boolean, undefined when no groupper.
-    isInCurrentGroupper(element: HTMLElement): boolean | undefined;
-    findGroupper(element: HTMLElement): HTMLElement | null;
-
-    findFirstGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findLastGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findNextGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-    findPrevGroupper(context: HTMLElement, ignoreModalizer?: boolean): HTMLElement | null;
-
     getProps(element: HTMLElement): FocusableProps;
     setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
 
@@ -325,120 +358,143 @@ export interface FocusableAPI {
         includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
-    findFirst(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findLast(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findNext(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findPrev(current: HTMLElement, context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findDefault(context?: HTMLElement, includeProgrammaticallyFocusable?: boolean,
-        ignoreGroupper?: boolean): HTMLElement | null;
-    findAll(
-        context: HTMLElement,
-        customFilter: (el: HTMLElement) => boolean,
-        includeProgrammaticallyFocusable?: boolean,
-        ignoreModalizer?: boolean,
-        ignoreGroupper?: boolean,
-        skipDefaultCondition?: boolean
-    ): HTMLElement[];
+    // find* return null when there is no element and undefined when there is an uncontrolled area.
+    findFirst(options: FindFirstProps): HTMLElement | null | undefined;
+    findLast(options: FindFirstProps): HTMLElement | null | undefined;
+    findNext(options: FindNextProps): HTMLElement | null | undefined;
+    findPrev(options: FindNextProps): HTMLElement | null | undefined;
+    findDefault(options: FindDefaultProps): HTMLElement | null;
+    /**
+     * @returns All focusables in a given context that satisfy an given condition
+     */
+    findAll(options: FindAllProps): HTMLElement[];
+    findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 
-export interface ElementVisibilities {
+export interface Visibilities {
     Invisible: 0;
     PartiallyVisible: 1;
     Visible: 2;
 }
-export const ElementVisibilities: ElementVisibilities = {
+export const Visibilities: Visibilities = {
     Invisible: 0,
     PartiallyVisible: 1,
     Visible: 2
 };
-export type ElementVisibility = ElementVisibilities[keyof ElementVisibilities];
+export type Visibility = Visibilities[keyof Visibilities];
 
-export interface GroupperState {
+export interface MoverElementState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
-    isPrevious: boolean;
-    isNext: boolean;
-    isFirst: boolean;
-    isLast: boolean;
-    isVisible: ElementVisibility;
-    hasFocus: boolean;
-    siblingIsVisible: boolean;
-    siblingHasFocus: boolean;
-    isLimited: boolean;
+    visibility: Visibility;
 }
 
-export interface GroupperFocusLimits {
-    Unlimited: 0;
-    Limited: 1; // The focus is limited to the container only and explicit Enter is needed to go inside.
-    LimitedTrapFocus: 2; // The focus is limited as above, plus trapped when inside.
-}
-export const GroupperFocusLimits: GroupperFocusLimits = {
-    Unlimited: 0,
-    Limited: 1,
-    LimitedTrapFocus: 2
-};
-export type GroupperFocusLimit = GroupperFocusLimits[keyof GroupperFocusLimits];
-
-export interface GroupperNextDirections {
+export interface MoverDirections {
     Both: 0; // Default, both left/up keys move to the previous, right/down move to the next.
     Vertical: 1; // Only up/down arrows move to the next/previous.
     Horizontal: 2; // Only left/right arrows move to the next/previous.
     Grid: 3; // Two-dimentional movement depending on the visual placement.
 }
-export const GroupperNextDirections: GroupperNextDirections = {
+export const MoverDirections: MoverDirections = {
     Both: 0,
     Vertical: 1,
     Horizontal: 2,
     Grid: 3
 };
-export type GroupperNextDirection = GroupperNextDirections[keyof GroupperNextDirections];
+export type MoverDirection = MoverDirections[keyof MoverDirections];
+
+export type NextTabbable = {
+    element: HTMLElement | null | undefined;
+    uncontrolled?: HTMLElement;
+};
+
+export interface MoverBasicProps {
+    direction?: MoverDirection;
+    memorizeCurrent?: boolean;
+    tabbable?: boolean;
+    /**
+     * Whether to allow cyclic navigation in the mover
+     * Can only be applied if navigationType is MoverKeys.Arrows
+     *
+     * @defaultValue false
+     */
+    cyclic?: boolean;
+    /**
+     * In case we need a rich state of the elements inside a Mover,
+     * we can track it. It takes extra resourses and might affect
+     * performance when a Mover has many elements inside, so make sure
+     * you use this prop when it is really needed.
+     */
+    trackState?: boolean;
+    /**
+     * When set to Visibility.Visible or Visibility.PartiallyVisible,
+     * uses the visibility part of the trackState prop to be able to
+     * go to first/last visible element (instead of first/last focusable
+     * element in DOM) when tabbing from outside of the mover.
+     */
+    visibilityAware?: Visibility;
+    disableHomeEndKeys?: boolean;
+}
+
+export interface MoverExtendedProps {
+    onChange?: (element: HTMLElement, state: MoverElementState) => void;
+}
+
+export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> {
+    readonly id: string;
+    dispose(): void;
+    setCurrent(element: HTMLElement | undefined): boolean;
+    getCurrent(): HTMLElement | null;
+    getState(element: HTMLElement): MoverElementState | undefined;
+    forceUpdate(): void;
+    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
+}
+
+export interface MoverAPI {
+    add(element: HTMLElement, basic?: MoverBasicProps, extended?: MoverExtendedProps): void;
+    remove(element: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<MoverBasicProps> | null,
+        extended?: Partial<MoverExtendedProps> | null): void;
+}
+
+export interface GroupperTabbabilities {
+    Unlimited: 0;
+    Limited: 1; // The tabbability is limited to the container (or first element if container is not focusable)
+                // and explicit Enter is needed to go inside.
+    LimitedTrapFocus: 2; // The focus is limited as above, plus trapped when inside.
+}
+export const GroupperTabbabilities: GroupperTabbabilities = {
+    Unlimited: 0,
+    Limited: 1,
+    LimitedTrapFocus: 2
+};
+export type GroupperTabbability = GroupperTabbabilities[keyof GroupperTabbabilities];
 
 export interface GroupperBasicProps {
-    isDefault?: boolean;
-    isLimited?: GroupperFocusLimit;
-    nextDirection?: GroupperNextDirection;
-    memorizeCurrent?: boolean;
-    lookupVisibility?: ElementVisibility;
+    tabbability?: GroupperTabbability;
 }
 
-export interface GroupperExtendedProps {
-    isDefault?: () => boolean;
-    onChange?: (state: GroupperState) => void;
-}
+export interface GroupperExtendedProps {}
 
-export interface UberGroupper {
+export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtendedProps> {
     readonly id: string;
     dispose(): void;
-    getElement(): HTMLElement | undefined;
-    addGroupper(groupper: Groupper): void;
-    removeGroupper(groupper: Groupper): void;
-    setUnlimitedGroupper(groupper: Groupper | undefined): void;
-    setFocusedGroupper(groupper: Groupper | undefined): void;
-    setCurrentGroupper(groupper: Groupper | undefined): void;
-    getCurrentGroupper(): Groupper | null;
-    getGroupperState(groupper: Groupper): GroupperState;
-    isEmpty(): boolean;
-    forceUpdate(): void;
+    makeUnlimited(isUnlimited: boolean): void;
+    isUnlimited(): boolean;
+    isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
+    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
-export interface Groupper {
-    readonly id: string;
-    dispose(): void;
-    getElement(): HTMLElement | undefined;
-    moveTo(newElement: HTMLElement): void;
-    getState(): GroupperState;
-    isDefault(): boolean;
-    getBasicProps(): GroupperBasicProps;
-    getExtendedProps(): GroupperExtendedProps;
-    setProps(basic?: Partial<GroupperBasicProps> | null, extended?: Partial<GroupperExtendedProps> | null): void;
-    setFocused(focused: boolean): void;
-    setUnlimited(unlimited: boolean): void;
-    setCurrent(current: boolean): void;
-    forceUpdate(): void;
-    setupContainer(remove?: boolean): void;
+export interface GroupperAPI {
+    add(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
+    remove(element: HTMLElement): void;
+    setProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
+        extended?: Partial<GroupperExtendedProps> | null): void;
+}
+
+export interface GroupperInternalAPI {
+    forgetUnlimitedGrouppers(): void;
 }
 
 export interface ModalizerBasicProps {
@@ -502,19 +558,35 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
+
+    getAllGrouppersAndMovers?: boolean;
+}
+
+export interface TabsterContextGroupper {
+    isGroupper: true;
+    groupper: Groupper;
+}
+
+export interface TabsterContextMover {
+    isGroupper: false;
+    mover: Mover;
 }
 
 export interface TabsterContext {
     root: Root;
     modalizer?: Modalizer;
     groupper?: Groupper;
-    mover?: HTMLElement;
-    moverOptions?: MoverOptions;
+    mover?: Mover;
     isGroupperFirst?: boolean;
+    allGrouppersAndMovers?: (TabsterContextGroupper | TabsterContextMover)[];
     /**
      * Whether `dir='rtl'` is set on an ancestor
      */
     isRtl?: boolean;
+    /**
+     * The uncontrolled container of this element (if any).
+     */
+    uncontrolled?: HTMLElement;
 }
 
 export interface RootAPI {
@@ -582,12 +654,12 @@ export interface FocusableOnElement {
     focusable: FocusableProps;
 }
 
-export interface GroupperOnElement {
-    groupper: Groupper;
+export interface MoverOnElement {
+    mover: Mover;
 }
 
-export interface UberGroupperOnElement {
-    uberGroupper: UberGroupper;
+export interface GroupperOnElement {
+    groupper: Groupper;
 }
 
 export interface UncontrolledOnElement {
@@ -605,11 +677,11 @@ export interface OutlineOnElement {
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserBasicProps,
     root: RootBasicProps,
+    uncontrolled: UncontrolledOnElement['uncontrolled'],
     modalizer: ModalizerBasicProps,
     focusable: FocusableProps,
     groupper: GroupperBasicProps,
-    uncontrolled: UncontrolledOnElement['uncontrolled'],
-    uberGroupper: true,
+    mover: MoverBasicProps,
     observed: ObservedElementBasicProps,
     outline: OutlinedElementProps
 }>;
@@ -629,8 +701,8 @@ export type TabsterOnElement = Partial<
     DeloserOnElement &
     ModalizerOnElement &
     FocusableOnElement &
+    MoverOnElement &
     GroupperOnElement &
-    UberGroupperOnElement &
     ObservedOnElement &
     OutlineOnElement &
     UncontrolledOnElement
@@ -656,10 +728,12 @@ export interface TabsterElementStorage {
 
 export type DisposeFunc = () => void;
 
-export interface TabsterInternal {
+export interface TabsterInternal extends TabsterCore {
     storageEntry(uid: string, addremove?: boolean): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
+    groupper?: GroupperAPI;
+    mover?: MoverAPI;
     outline?: OutlineAPI;
     deloser?: DeloserAPI;
     modalizer?: ModalizerAPI;
@@ -667,6 +741,8 @@ export interface TabsterInternal {
     crossOrigin?: CrossOriginAPI;
     uncontrolled: UncontrolledAPI;
 
+    groupperDispose?: DisposeFunc;
+    moverDispose?: DisposeFunc;
     outlineDispose?: DisposeFunc;
     rootDispose?: DisposeFunc;
     deloserDispose?: DisposeFunc;
@@ -676,4 +752,8 @@ export interface TabsterInternal {
 
     // The version of the tabster package this instance is on
     _version: string;
+}
+
+export interface TabsterCompat {
+    attributeTransform?: <P>(old: P) => TabsterAttributeProps;
 }
