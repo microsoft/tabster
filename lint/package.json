@@ -1,7 +1,7 @@
 {
   "name": "lint",
   "private": true,
-  "version": "0.7.1",
+  "version": "1.0.0-alpha.0",
   "description": "Lint rules for the repo",
   "author": "Lingfan Gao <lingfan.gao@microsoft.com>",
   "homepage": "https://github.com/microsoft/ability-helpers#readme",
