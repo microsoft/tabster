@@ -243,4 +243,94 @@ describe('Uncontrolled', () => {
                 expect(el?.textContent).toBeUndefined();
             });
     });
+
+    it('should properly handle consecutive Uncontrolled', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <button>Button1</button>
+                        <button disabled>Button2</button>
+                    </div>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button aria-hidden='true'>Button3</button>
+                    </div>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button aria-hidden='true'>Button4</button>
+                    </div>
+                    <div>
+                        <button disabled>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button6');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should properly transition between controlled and uncontrolled areas', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button tabIndex={-1}>Button2</button>
+                        <button>Button3</button>
+                        <button tabIndex={-1}>Button4</button>
+                    </div>
+                    <div>
+                        <button tabIndex={-1}>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button6');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
 });
