@@ -132,22 +132,18 @@ export class FocusableAPI implements Types.FocusableAPI {
         return true;
     }
 
-    private _attrIs(el: HTMLElement, name: string, value: string): boolean {
-        let attrVal = el.getAttribute(name);
-        if (attrVal && (attrVal.toLowerCase() === value)) {
+    private _isDisabled(el: HTMLElement): boolean {
+        return el.hasAttribute('disabled');
+    }
+
+    private _isHidden(el: HTMLElement): boolean {
+        let attrVal = el.getAttribute('aria-hidden');
+
+        if (attrVal && (attrVal.toLowerCase() === 'true')) {
             return true;
         }
 
         return false;
-
-    }
-
-    private _isDisabled(el: HTMLElement): boolean {
-        return this._attrIs(el, 'disabled', 'true');
-    }
-
-    private _isHidden(el: HTMLElement): boolean {
-        return this._attrIs(el, 'aria-hidden', 'true');
     }
 
     findFirst(options: Types.FindFirstProps): HTMLElement | null | undefined {
@@ -371,7 +367,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
             }
-        } else if (ctx.uncontrolled) {
+        } else if (ctx.uncontrolled && !state.nextUncontrolled) {
             state.nextUncontrolled = ctx.uncontrolled;
 
             return NodeFilter.FILTER_REJECT;

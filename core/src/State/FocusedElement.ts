@@ -349,9 +349,12 @@ export class FocusedElementState
         const input = dummy.input;
 
         if (input) {
-            const firstChild = uncontrolled.firstElementChild;
-            uncontrolled.insertBefore(input, isPrev || !firstChild ? null : firstChild);
-            nativeFocus(input);
+            const parent = uncontrolled.parentElement;
+
+            if (parent) {
+                parent.insertBefore(input, isPrev ? uncontrolled.nextElementSibling : uncontrolled);
+                nativeFocus(input);
+            }
         }
     }
 }
