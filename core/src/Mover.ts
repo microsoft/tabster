@@ -252,10 +252,12 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
             for (let id of Object.keys(prevFocusables)) {
                 if (!(id in newFocusables)) {
-                    delete this._focusables[id];
+                    const prevFocusable = prevFocusables[id].get();
+
+                    delete prevFocusables[id];
                     delete this._visible[id];
 
-                    if (this._current?.get() === prevFocusables[id].get()) {
+                    if (prevFocusable && (this._current?.get() === prevFocusable)) {
                         this.setCurrent(undefined);
                     }
                 }
