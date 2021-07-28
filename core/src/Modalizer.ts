@@ -519,11 +519,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 this._curModalizer.setFocused(true);
             }
         } else if (!this._curModalizer?.getBasicProps().isOthersAccessible) {
-            // this._restoreModalizerFocus(focusedElement);
-            const win = this._win();
             // Focused outside of the active modalizer, try pull focus back to current modalizer
+            const win = this._win();
             win.clearTimeout(this._restoreModalizerFocusTimer);
-            this._restoreModalizerFocusTimer = win.setTimeout(() => this._restoreModalizerFocus(focusedElement), 0);
+            // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
+            // Figure out a better way of doing this rather than a 100ms timeout
+            this._restoreModalizerFocusTimer = win.setTimeout(() => this._restoreModalizerFocus(focusedElement), 100);
         }
     }
 
