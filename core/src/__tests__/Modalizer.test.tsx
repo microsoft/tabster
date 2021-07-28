@@ -96,6 +96,30 @@ describe('Modalizer', () => {
             .activeElement(el => expect(el?.textContent).toBe('Foo'));
     });
 
+    describe('should restore focus', () => {
+        it('after clicking on outside focusable', async () => {
+            await new BroTest.BroTest(getTestHtml())
+                .focusElement('#foo')
+                .activeElement(el => expect(el?.textContent).toBe('Foo'))
+                .click('#outside')
+                .activeElement(el => expect(el?.textContent).toBe('Foo'));
+        });
+
+        it('asynchronously after user mutates DOM', async () => {
+            await new BroTest.BroTest(getTestHtml())
+                .focusElement('#foo')
+                .activeElement(el => expect(el?.textContent).toBe('Foo'))
+                .eval(() => {
+                    // Simulates user clicking outside a modal dialog to close it
+                    document.addEventListener('click', () => {
+                        document.getElementById('modal')?.remove();
+                    });
+                })
+                .click('#outside')
+                .activeElement(el => expect(el?.textContent).toBe('Outside'));
+        });
+    });
+
     describe('Others content accessible', () => {
         it('should allow focus outside of modalizer', async () => {
             await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))

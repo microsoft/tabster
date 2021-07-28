@@ -182,6 +182,14 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
+    /**
+     * @param time - in milliseconds
+     */
+    debug(time: number = 3600000) {
+        jest.setTimeout(time);
+        return this.wait(time);
+    }
+
     eval(func: EvaluateFn<any>, ...args: SerializableOrJSHandle[]): BroTest {
         this._chain.push(new BroTestItemEval(func, args, (lastEval) => this._lastEval = lastEval));
         return this;
@@ -214,6 +222,18 @@ export class BroTest implements PromiseLike<undefined> {
             if (shift) {
                 await page.keyboard.up('Shift');
             }
+        }));
+
+        return this;
+    }
+
+    /**
+     * Simulates user click on an element
+     * This cannot be `element.click()` because native clicks on focusable elements will focus them
+     */
+    click(selector: string) {
+        this._chain.push(new BroTestItemCallback(async() => {
+            await page.click(selector);
         }));
 
         return this;
@@ -260,15 +280,19 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    removeElement(selector?: string) {
+    removeElement(selector?: string, async: boolean = false) {
         this._chain.push(new BroTestItemCallback(async () => {
-            await page.evaluate((selector: string) => {
+            await page.evaluate((selector: string, async?: boolean) => {
                 const el = selector ? document.querySelector(selector) : document.activeElement;
 
                 if (el && el.parentElement) {
-                    el.parentElement.removeChild(el);
+                    if (async) {
+                        setTimeout(() => el.parentElement?.removeChild(el), 0);
+                    } else {
+                        el.parentElement.removeChild(el);
+                    }
                 }
-            }, selector || '');
+            }, selector || '', async);
         }));
 
         return this;
