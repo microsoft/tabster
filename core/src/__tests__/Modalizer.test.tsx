@@ -102,6 +102,7 @@ describe('Modalizer', () => {
                 .focusElement('#foo')
                 .activeElement(el => expect(el?.textContent).toBe('Foo'))
                 .click('#outside')
+                .wait(100)
                 .activeElement(el => expect(el?.textContent).toBe('Foo'));
         });
 
