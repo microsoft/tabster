@@ -12,7 +12,7 @@ import * as Types from '../Types';
 import {
     documentContains,
     DummyInput,
-    findLastChild,
+    getLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement
 } from '../Utils';
@@ -167,7 +167,7 @@ export class FocusedElementState
             const ctx = RootAPI.getTabsterContext(this._tabster, container, { checkRtl: true });
 
             if (ctx) {
-                const next = FocusedElementState.findNextTabbable(this._tabster, ctx, findLastChild(container), true);
+                const next = FocusedElementState.findNextTabbable(this._tabster, ctx, getLastChild(container), true);
 
                 if (next && !next.uncontrolled) {
                     toFocus = next.element;
@@ -290,7 +290,7 @@ export class FocusedElementState
             const container = ctx.root.getElement();
 
             if (container) {
-                current = findLastChild(container) || container;
+                current = getLastChild(container) || container;
             } else {
                 return null;
             }

@@ -655,12 +655,12 @@ export class DummyInput<P> {
     }
 }
 
-export function findLastChild(container: HTMLElement): HTMLElement | null {
+export function getLastChild(container: HTMLElement): HTMLElement | null {
     let lastChild: HTMLElement | null = null;
 
     for (let i = container.lastElementChild; i; i = i.lastElementChild) {
         lastChild = i as HTMLElement;
     }
 
-    return lastChild || container;
+    return lastChild;
 }
