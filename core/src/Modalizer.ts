@@ -280,6 +280,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
      */
     private _curModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
+    private _restoreModalizerFocusTimer: number | undefined;
     /**
      * Modalizers managed by this API, stored by id
      */
@@ -307,10 +308,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._initTimer = undefined;
         }
 
-        if (this._focusOutTimer) {
-            win.clearTimeout(this._focusOutTimer);
-            this._focusOutTimer = undefined;
-        }
+        win.clearTimeout(this._restoreModalizerFocusTimer);
+        win.clearTimeout(this._focusOutTimer);
 
         // Dispose all modalizers managed by the API
         Object.keys(this._modalizers).forEach(modalizerId => {
@@ -521,7 +520,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         } else if (!this._curModalizer?.getBasicProps().isOthersAccessible) {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
-            this._restoreModalizerFocus(focusedElement);
+            const win = this._win();
+            win.clearTimeout(this._restoreModalizerFocusTimer);
+            // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
+            // Figure out a better way of doing this rather than a 100ms timeout
+            this._restoreModalizerFocusTimer = win.setTimeout(() => this._restoreModalizerFocus(focusedElement), 100);
         }
     }
 
