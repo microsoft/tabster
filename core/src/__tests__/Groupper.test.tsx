@@ -111,3 +111,73 @@ describe('Groupper - limited focus trap', () => {
             .activeElement(el => expect(el?.textContent).toBe('Foo'));
     });
 });
+
+describe('Groupper tabbing forward and backwards', () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it('should properly move the focus when tabbing from outside of the groupper', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.Limited } })}>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <button>Button4</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should properly move the focus when tabbing from outside of the page', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.Limited } })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            });
+    });
+});

@@ -12,6 +12,7 @@ import * as Types from '../Types';
 import {
     documentContains,
     DummyInput,
+    findLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement
 } from '../Utils';
@@ -126,10 +127,27 @@ export class FocusedElementState
     }
 
     focusFirst(props: Types.FindFirstProps): boolean {
-        let toFocus = this._tabster.focusable.findFirst(props);
+        const container = props.container;
+        let toFocus: HTMLElement | null | undefined;
+
+        if (container) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, container, { checkRtl: true });
+
+            if (ctx) {
+                const next = FocusedElementState.findNextTabbable(this._tabster, ctx, container);
+
+                if (next && !next.uncontrolled) {
+                    toFocus = next.element;
+                }
+            }
+        }
 
         if (!toFocus) {
-            toFocus = this._tabster.focusable.findFirst({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+            toFocus = this._tabster.focusable.findFirst(props);
+
+            if (!toFocus) {
+                toFocus = this._tabster.focusable.findFirst({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+            }
         }
 
         if (toFocus) {
@@ -142,10 +160,27 @@ export class FocusedElementState
     }
 
     focusLast(props: Types.FindFirstProps): boolean {
-        let toFocus = this._tabster.focusable.findLast(props);
+        const container = props.container;
+        let toFocus: HTMLElement | null | undefined;
+
+        if (container) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, container, { checkRtl: true });
+
+            if (ctx) {
+                const next = FocusedElementState.findNextTabbable(this._tabster, ctx, findLastChild(container), true);
+
+                if (next && !next.uncontrolled) {
+                    toFocus = next.element;
+                }
+            }
+        }
 
         if (!toFocus) {
-            toFocus = this._tabster.focusable.findLast({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+            toFocus = this._tabster.focusable.findLast(props);
+
+            if (!toFocus) {
+                toFocus = this._tabster.focusable.findLast({ ...props, ignoreUncontrolled: true, ignoreAccessibiliy: true });
+            }
         }
 
         if (toFocus) {
@@ -239,13 +274,27 @@ export class FocusedElementState
         this._setFocusedElement(undefined, (e.relatedTarget as HTMLElement) || undefined);
     }
 
-    static findNext(
+    static findNextTabbable(
         tabster: Types.TabsterCore,
         ctx: Types.TabsterContext,
-        current: HTMLElement,
+        from: HTMLElement | null,
         prev?: boolean
     ): Types.NextTabbable | null {
         let next: Types.NextTabbable | null = null;
+
+        let current: HTMLElement;
+
+        if (from) {
+            current = from;
+        } else {
+            const container = ctx.root.getElement();
+
+            if (container) {
+                current = findLastChild(container) || container;
+            } else {
+                return null;
+            }
+        }
 
         if (ctx.groupper && ctx.mover) {
             if (ctx.isGroupperFirst) {
@@ -295,7 +344,7 @@ export class FocusedElementState
         }
 
         const isPrev = e.shiftKey;
-        const next = FocusedElementState.findNext(this._tabster, ctx, curElement, isPrev);
+        const next = FocusedElementState.findNextTabbable(this._tabster, ctx, curElement, isPrev);
 
         if (!next) {
             return;

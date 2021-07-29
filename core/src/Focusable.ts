@@ -6,7 +6,7 @@
 import { getTabsterOnElement, setTabsterOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, matchesSelector, shouldIgnoreFocus } from './Utils';
+import { createElementTreeWalker, findLastChild, matchesSelector, shouldIgnoreFocus } from './Utils';
 
 const _focusableSelector = [
     'a[href]',
@@ -306,11 +306,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         if (currentElement) {
             walker.currentNode = currentElement;
         } else if (prev) {
-            let lastChild: HTMLElement | null = null;
-
-            for (let i = container.lastElementChild; i; i = i.lastElementChild) {
-                lastChild = i as HTMLElement;
-            }
+            const lastChild = findLastChild(container);
 
             if (!lastChild) {
                 return null;

@@ -239,3 +239,98 @@ describe('NestedMovers', () => {
             .activeElement(el => expect(el?.textContent).toContain('Nested4'));
     });
 });
+
+describe('Mover memorizing current', () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it('should memorize current element and move to it when tabbing from outside of the Mover', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div {...getTabsterAttribute({ mover: { memorizeCurrent: true } })}>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button6');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button4');
+            });
+    });
+
+    it('should memorize current element and move to it when tabbing from outside of the page', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: { memorizeCurrent: true } })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button3');
+            });
+    });
+});

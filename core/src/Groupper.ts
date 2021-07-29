@@ -72,7 +72,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
                 const parentCtx = RootAPI.getTabsterContext(tabster, parentElement);
 
                 if (parentCtx) {
-                    return FocusedElementState.findNext(tabster, parentCtx, current, prev);
+                    return FocusedElementState.findNextTabbable(tabster, parentCtx, current, prev);
                 }
             }
         }

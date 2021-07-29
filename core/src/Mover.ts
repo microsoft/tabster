@@ -140,7 +140,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
 
                 if (parentCtx) {
                     const from = (prev ? container : focusable.findLast({ container })) || container;
-                    return FocusedElementState.findNext(tabster, parentCtx, from, prev);
+                    return FocusedElementState.findNextTabbable(tabster, parentCtx, from, prev);
                 }
             }
         }
