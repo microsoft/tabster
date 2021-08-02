@@ -89,14 +89,23 @@ export const ObservedElementAccesibilities: ObservedElementAccesibilities = {
     Focusable: 2
 };
 
+export interface ObservedElementAsyncRequest<T> {
+    result: Promise<T>;
+    cancel(): void;
+}
+
 export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
     add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
     remove(element: HTMLElement): void;
     move(from: HTMLElement, to: HTMLElement): void;
     setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
-    waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<HTMLElement | null>;
-    requestFocus(observedName: string, timeout: number): Promise<boolean>;
+    waitElement(
+        observedName: string,
+        timeout: number,
+        accessibility?: ObservedElementAccesibility
+    ): ObservedElementAsyncRequest<HTMLElement | null>;
+    requestFocus(observedName: string, timeout: number): ObservedElementAsyncRequest<boolean>;
 }
 
 export interface CrossOriginElement {

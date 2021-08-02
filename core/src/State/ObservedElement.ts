@@ -19,7 +19,7 @@ interface ObservedElementInfo {
 interface ObservedWaiting {
     timer?: number;
     conditionTimer?: number;
-    promise?: Promise<HTMLElement | null>;
+    request?: Types.ObservedElementAsyncRequest<HTMLElement | null>;
     resolve?: (value: HTMLElement | null) => void;
     reject?: () => void;
 }
@@ -34,6 +34,7 @@ export class ObservedElementAPI
     private _lastRequestFocusId = 0;
     private _observedById: { [uid: string]: ObservedElementInfo } = {};
     private _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
+    private _currentRequestFocus: Types.ObservedElementAsyncRequest<HTMLElement | null> | undefined;
 
     constructor(tabster: Types.TabsterCore) {
         super();
@@ -45,6 +46,7 @@ export class ObservedElementAPI
     private _init = (): void => {
         this._initTimer = undefined;
         this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        this._tabster.focusedElement.subscribe(this._onFocus);
     }
 
     protected dispose(): void {
@@ -56,9 +58,32 @@ export class ObservedElementAPI
         }
 
         win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
+        this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         for (let key of Object.keys(this._waiting)) {
-            const w = this._waiting[key];
+            this._rejectWaiting(key);
+        }
+
+        this._observedById = {};
+        this._observedByName = {};
+    }
+
+    private _onFocus = (e: HTMLElement | undefined): void => {
+        if (e) {
+            const current = this._currentRequestFocus;
+
+            if (current) {
+                delete this._currentRequestFocus;
+                current.cancel();
+            }
+        }
+    }
+
+    private _rejectWaiting(key: string, shouldResolve?: boolean): void {
+        const w = this._waiting[key];
+
+        if (w) {
+            const win = this._win();
 
             if (w.timer) {
                 win.clearTimeout(w.timer);
@@ -68,15 +93,14 @@ export class ObservedElementAPI
                 win.clearTimeout(w.conditionTimer);
             }
 
-            if (w.reject) {
+            if (!shouldResolve && w.reject) {
                 w.reject();
+            } else if (shouldResolve && w.resolve) {
+                w.resolve(null);
             }
 
             delete this._waiting[key];
         }
-
-        this._observedById = {};
-        this._observedByName = {};
     }
 
     static dispose(instance: Types.ObservedElementAPI): void {
@@ -196,11 +220,18 @@ export class ObservedElementAPI
      * @param accessibility Optionally, wait for the element to also become accessible or focusable before returning it
      * @returns Promise<HTMLElement | null>
      */
-    waitElement(observedName: string, timeout: number, accessibility?: Types.ObservedElementAccesibility): Promise<HTMLElement | null> {
+    waitElement(
+        observedName: string,
+        timeout: number,
+        accessibility?: Types.ObservedElementAccesibility
+    ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
         const el = this.getElement(observedName, accessibility);
 
         if (el) {
-            return getPromise(this._win).resolve(el);
+            return {
+                result: getPromise(this._win).resolve(el),
+                cancel: () => {/**/}
+            };
         }
 
         let prefix: string;
@@ -216,8 +247,8 @@ export class ObservedElementAPI
         const key = prefix + observedName;
         let w = this._waiting[key];
 
-        if (w && w.promise) {
-            return w.promise;
+        if (w && w.request) {
+            return w.request;
         }
 
         w = this._waiting[key] = {
@@ -239,21 +270,47 @@ export class ObservedElementAPI
             w.reject = reject;
         });
 
-        w.promise = promise;
+        w.request = {
+            result: promise,
+            cancel: () => {
+                this._rejectWaiting(key, true);
+            }
+        };
 
-        return promise;
+        return w.request;
     }
 
-    async requestFocus(observedName: string, timeout: number): Promise<boolean> {
+    requestFocus(observedName: string, timeout: number): Types.ObservedElementAsyncRequest<boolean> {
         let requestId = ++this._lastRequestFocusId;
-        return this.waitElement(
+        const currentRequestFocus = this._currentRequestFocus;
+        const request = this.waitElement(
             observedName,
             timeout,
             Types.ObservedElementAccesibilities.Focusable
-        ).then(element => ((this._lastRequestFocusId === requestId) && element)
-            ? this._tabster.focusedElement.focus(element, true)
-            : false
         );
+
+        if (currentRequestFocus) {
+            currentRequestFocus.cancel();
+        }
+
+        this._currentRequestFocus = request;
+
+        request.result.finally(() => {
+            if (this._currentRequestFocus === request) {
+                delete this._currentRequestFocus;
+            }
+        });
+
+        return {
+            result: request.result.then(
+                element => ((this._lastRequestFocusId === requestId) && element)
+                    ? this._tabster.focusedElement.focus(element, true)
+                    : false
+            ),
+            cancel: () => {
+                request.cancel();
+            }
+        };
     }
 
     private _onObservedElementUpdate(element: HTMLElement): void {

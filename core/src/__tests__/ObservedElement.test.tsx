@@ -38,7 +38,7 @@ describe('Focusable', () => {
                 return ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
                     name,
                     0
-                );
+                ).result;
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
@@ -55,7 +55,7 @@ describe('Focusable', () => {
                 const request = ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
                     name,
                     5000
-                );
+                ).result;
 
                 const observedButton = document.createElement('button');
                 observedButton.textContent = name;
