@@ -696,7 +696,7 @@ class GetElementTransaction extends CrossOriginTransaction<CrossOriginElementDat
                         name,
                         timeout,
                         accessibility
-                    ).then(value => {
+                    ).result.then(value => {
                         isWaitElementResolved = true;
 
                         if (!isResolved && (value || isForwardResolved)) {

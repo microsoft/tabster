@@ -38,7 +38,7 @@ describe('Focusable', () => {
                 return ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
                     name,
                     0
-                );
+                ).result;
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
@@ -55,7 +55,7 @@ describe('Focusable', () => {
                 const request = ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
                     name,
                     5000
-                );
+                ).result;
 
                 const observedButton = document.createElement('button');
                 observedButton.textContent = name;
@@ -70,6 +70,55 @@ describe('Focusable', () => {
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
                 expect(el?.textContent).toContain(name);
+            });
+    });
+
+    it('should cancel the focus request when the next one is happened', async () => {
+        await new BroTest.BroTest(
+            (<div id='root'></div>)
+        )
+            .eval(() => {
+                return new Promise((resolve => {
+                    const request1 = ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
+                        'button1',
+                        10005000
+                    );
+
+                    setTimeout(() => {
+                        const request2 = ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
+                            'button2',
+                            10005000
+                        );
+
+                        setTimeout(() => {
+                            const button1 = document.createElement('button');
+                            button1.setAttribute('data-tabster', '{"observed":{"name": "button1"}}');
+                            button1.textContent = 'Button1';
+
+                            const root = document.getElementById('root');
+
+                            root?.appendChild(button1);
+
+                            setTimeout(() => {
+                                const button2 = document.createElement('button');
+                                button2.setAttribute('data-tabster', '{"observed":{"name": "button2"}}');
+                                button2.textContent = 'Button2';
+                                root?.appendChild(button2);
+
+                                Promise.all([request1?.result, request2?.result]).then(onfulfilled => {
+                                    resolve(onfulfilled);
+                                });
+                            }, 100);
+                        }, 100);
+                    }, 100);
+                }));
+            })
+            .check((result: [boolean, boolean]) => {
+                expect(result[0]).toBe(false);
+                expect(result[1]).toBe(true);
+            })
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button2');
             });
     });
 });
