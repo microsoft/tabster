@@ -34,7 +34,8 @@ export class ObservedElementAPI
     private _lastRequestFocusId = 0;
     private _observedById: { [uid: string]: ObservedElementInfo } = {};
     private _observedByName: { [name: string]: { [uid: string]: ObservedElementInfo } } = {};
-    private _currentRequestFocus: Types.ObservedElementAsyncRequest<HTMLElement | null> | undefined;
+    private _currentRequest: Types.ObservedElementAsyncRequest<HTMLElement | null> | undefined;
+    private _currentRequestTimestamp = 0;
 
     constructor(tabster: Types.TabsterCore) {
         super();
@@ -70,11 +71,18 @@ export class ObservedElementAPI
 
     private _onFocus = (e: HTMLElement | undefined): void => {
         if (e) {
-            const current = this._currentRequestFocus;
+            const current = this._currentRequest;
 
             if (current) {
-                delete this._currentRequestFocus;
-                current.cancel();
+                const delta = Date.now() - this._currentRequestTimestamp;
+                const settleTime = 300;
+
+                if (delta >= settleTime) {
+                    // Giving some time for the focus to settle before
+                    // automatically cancelling the current request on focus change.
+                    delete this._currentRequest;
+                    current.cancel();
+                }
             }
         }
     }
@@ -282,7 +290,7 @@ export class ObservedElementAPI
 
     requestFocus(observedName: string, timeout: number): Types.ObservedElementAsyncRequest<boolean> {
         let requestId = ++this._lastRequestFocusId;
-        const currentRequestFocus = this._currentRequestFocus;
+        const currentRequestFocus = this._currentRequest;
         const request = this.waitElement(
             observedName,
             timeout,
@@ -293,11 +301,12 @@ export class ObservedElementAPI
             currentRequestFocus.cancel();
         }
 
-        this._currentRequestFocus = request;
+        this._currentRequest = request;
+        this._currentRequestTimestamp = Date.now();
 
         request.result.finally(() => {
-            if (this._currentRequestFocus === request) {
-                delete this._currentRequestFocus;
+            if (this._currentRequest === request) {
+                delete this._currentRequest;
             }
         });
 
