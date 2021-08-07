@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { documentContains, getElementUId, getPromise, WeakHTMLElement } from './Utils';
+import { documentContains, getElementUId, getPromise, TabsterPart, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
@@ -41,7 +41,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        const getWindow = (this._tabster as unknown as Types.TabsterInternal).getWindow;
+        const getWindow = (this._tabster as Types.TabsterInternal).getWindow;
         return getPromise(getWindow).resolve(this._deloser.resetFocus());
     }
 }
@@ -310,57 +310,24 @@ function buildSelector(element: HTMLElement): string | undefined {
     return selector.join(' ');
 }
 
-export class Deloser implements Types.Deloser {
+export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserExtendedProps> implements Types.Deloser {
     readonly uid: string;
-    private _win: Types.GetWindow;
-    private _tabster: Types.TabsterCore;
-    private _basic: Types.DeloserBasicProps;
-    private _extended: Types.DeloserExtendedProps;
     private _isActive = false;
     private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
     private _snapshotIndex = 0;
-    private _element: WeakHTMLElement;
+    private _onDispose: (deloser: Deloser) => void;
 
     constructor(
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        tabster: Types.TabsterCore,
-        getWindow: Types.GetWindow,
+        onDispose: (deloser: Deloser) => void,
         basic?: Types.DeloserBasicProps,
-        extended?: Types.DeloserExtendedProps
+        extended?: Types.DeloserExtendedProps,
     ) {
-        this.uid = getElementUId(getWindow, element);
-        this._win = getWindow;
-        this._tabster = tabster;
-        this._element = new WeakHTMLElement(getWindow, element);
-        this._basic = basic || {};
-        this._extended = extended || {};
+        super(tabster, element, basic, extended);
 
-        if (__DEV__) {
-            _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
-        }
-    }
-
-    setProps(basic?: Partial<Types.DeloserBasicProps> | null, extended?: Partial<Types.DeloserExtendedProps> | null): void {
-        if (basic) {
-            this._basic = { ...this._basic, ...basic };
-        } else if (basic === null) {
-            this._basic = {};
-        }
-
-        if (extended) {
-            this._extended = { ...this._extended, ...extended };
-        } else if (extended === null) {
-            this._extended = {};
-        }
-    }
-
-    getBasicProps(): Types.RootBasicProps {
-        return this._basic;
-    }
-
-    move(newContainer: HTMLElement): void {
-        this._remove();
-        this._element = new WeakHTMLElement(this._win, newContainer);
+        this.uid = getElementUId(tabster.getWindow, element);
+        this._onDispose = onDispose;
 
         if (__DEV__) {
             _setInformativeStyle(this._element, false, this._isActive, this._snapshotIndex);
@@ -369,6 +336,8 @@ export class Deloser implements Types.Deloser {
 
     dispose(): void {
         this._remove();
+
+        this._onDispose(this);
 
         this._isActive = false;
         this._snapshotIndex = 0;
@@ -430,7 +399,7 @@ export class Deloser implements Types.Deloser {
             return e && (e !== element);
         });
 
-        cur.unshift(new WeakHTMLElement(this._win, element, buildSelector(element)));
+        cur.unshift(new WeakHTMLElement(this._tabster.getWindow, element, buildSelector(element)));
 
         while (cur.length > _containerHistoryLength) {
             cur.pop();
@@ -529,10 +498,6 @@ export class Deloser implements Types.Deloser {
         return false;
     }
 
-    getElement(): HTMLElement | undefined {
-        return this._element.get();
-    }
-
     private _findInHistory(): HTMLElement | null {
         const cur = this._history[this._snapshotIndex].slice(0);
 
@@ -620,7 +585,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
     ) {
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = (tabster as Types.TabsterInternal).getWindow;
         this._history = new DeloserHistory(tabster);
         this._initTimer = this._win().setTimeout(this._init, 0);
 
@@ -666,6 +631,21 @@ export class DeloserAPI implements Types.DeloserAPI {
         (instance as DeloserAPI).dispose();
     }
 
+    static createDeloser: Types.DeloserConstructor = (
+        tabster: Types.TabsterInternal,
+        element: HTMLElement,
+        basic?: Types.DeloserBasicProps,
+        extended?: Types.DeloserExtendedProps
+    ): Types.Deloser => {
+        const deloser = new Deloser(tabster, element, (tabster.deloser as DeloserAPI)._onDeloserDispose, basic, extended);
+
+        if (element.contains(tabster.focusedElement.getFocusedElement() ?? null)) {
+            (tabster.deloser as DeloserAPI)._activate(deloser);
+        }
+
+        return deloser;
+    }
+
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
         for (let e: (HTMLElement | null) = element; e; e = e.parentElement) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
@@ -676,63 +656,6 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         return undefined;
-    }
-
-    add(element: HTMLElement, basic?: Types.DeloserBasicProps, extended?: Types.DeloserExtendedProps): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement && tabsterOnElement.deloser) {
-            return;
-        }
-
-        const deloser = new Deloser(element, this._tabster, this._win, basic, extended);
-        setTabsterOnElement(this._tabster, element, { deloser });
-
-        if (element.contains(this._tabster.focusedElement.getFocusedElement() ?? null)) {
-            this._activate(deloser);
-        }
-    }
-
-    remove(element: HTMLElement): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (!tabsterOnElement) {
-            return;
-        }
-
-        const deloser = tabsterOnElement.deloser;
-
-        if (!deloser) {
-            return;
-        }
-
-        this._history.removeDeloser(deloser);
-
-        if (deloser.isActive()) {
-            this._scheduleRestoreFocus();
-        }
-
-        deloser.dispose();
-
-        setTabsterOnElement(this._tabster, element, {
-            deloser: undefined
-        });
-    }
-
-    move(from: HTMLElement, to: HTMLElement): void {
-        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
-
-        if (tabsterOnElementFrom && tabsterOnElementFrom.deloser) {
-            tabsterOnElementFrom.deloser.move(to);
-
-            setTabsterOnElement(this._tabster, to, {
-                deloser: tabsterOnElementFrom.deloser
-            });
-
-            setTabsterOnElement(this._tabster, from, {
-                deloser: undefined
-            });
-        }
     }
 
     pause(): void {
@@ -749,14 +672,6 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         if (restore) {
             this._scheduleRestoreFocus();
-        }
-    }
-
-    setProps(element: HTMLElement, basic?: Partial<Types.DeloserBasicProps>, extended?: Partial<Types.DeloserExtendedProps>): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement && tabsterOnElement.deloser) {
-            tabsterOnElement.deloser.setProps(basic, extended);
         }
     }
 
@@ -856,7 +771,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             }
         }
 
-        const tabsteri = tabster as unknown as Types.TabsterInternal;
+        const tabsteri = tabster as Types.TabsterInternal;
         const deloserAPI = tabsteri.deloser && (tabsteri.deloser as DeloserAPI);
 
         if (deloserAPI) {
@@ -871,9 +786,9 @@ export class DeloserAPI implements Types.DeloserAPI {
 
                 if (body) {
                     deloserAPI._autoDeloserInstance = new Deloser(
+                        tabsteri,
                         body,
-                        tabster,
-                        deloserAPI._win,
+                        (tabsteri.deloser as DeloserAPI)._onDeloserDispose,
                         autoDeloserProps,
                         autoDeloserProps
                     );
@@ -884,6 +799,14 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         return undefined;
+    }
+
+    private _onDeloserDispose = (deloser: Deloser) => {
+        this._history.removeDeloser(deloser);
+
+        if (deloser.isActive()) {
+            this._scheduleRestoreFocus();
+        }
     }
 
     static getHistory(instance: Types.DeloserAPI): DeloserHistory {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import { createElementTreeWalker, getLastChild, matchesSelector, shouldIgnoreFocus } from './Utils';
@@ -48,26 +48,6 @@ export class FocusableAPI implements Types.FocusableAPI {
     getProps(element: HTMLElement): Types.FocusableProps {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
         return (tabsterOnElement && tabsterOnElement.focusable) || {};
-    }
-
-    setProps(element: HTMLElement, props: Partial<Types.FocusableProps> | null): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-        const curProps: Types.FocusableProps = (tabsterOnElement && tabsterOnElement.focusable) || {};
-        const newProps: Types.FocusableProps = {};
-
-        if (props) {
-            newProps.isDefault = props.isDefault;
-            newProps.isIgnored = props.isIgnored;
-            newProps.ignoreAriaDisabled = props.ignoreAriaDisabled;
-        }
-
-        if (
-            (curProps.isDefault !== newProps.isDefault) ||
-            (curProps.isIgnored !== newProps.isIgnored) ||
-            (curProps.ignoreAriaDisabled !== newProps.ignoreAriaDisabled)
-        ) {
-            setTabsterOnElement(this._tabster, element, { focusable: newProps });
-        }
     }
 
     isFocusable(

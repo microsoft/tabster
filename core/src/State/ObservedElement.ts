@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from '../Instance';
-import { MutationEvent, MUTATION_EVENT_NAME } from '../MutationEvent';
+import { getTabsterOnElement } from '../Instance';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import { documentContains, getElementUId, getPromise, WeakHTMLElement } from '../Utils';
@@ -40,13 +39,12 @@ export class ObservedElementAPI
     constructor(tabster: Types.TabsterCore) {
         super();
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = (tabster as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
-        this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         this._tabster.focusedElement.subscribe(this._onFocus);
     }
 
@@ -58,7 +56,6 @@ export class ObservedElementAPI
             this._initTimer = undefined;
         }
 
-        win.document.removeEventListener(MUTATION_EVENT_NAME, this._onMutation, true); // Capture!
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         for (let key of Object.keys(this._waiting)) {
@@ -113,76 +110,6 @@ export class ObservedElementAPI
 
     static dispose(instance: Types.ObservedElementAPI): void {
         (instance as ObservedElementAPI).dispose();
-    }
-
-    add(element: HTMLElement, basic: Types.ObservedElementBasicProps, extended?: Types.ObservedElementExtendedProps): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement && tabsterOnElement.observed) {
-            if (__DEV__) {
-                console.error('Element is already observed.', element);
-            }
-            return;
-        }
-
-        setTabsterOnElement(this._tabster, element, { observed: { ...basic, ...extended } });
-        this._onObservedElementUpdate(element);
-    }
-
-    remove(element: HTMLElement): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (!tabsterOnElement || !tabsterOnElement.observed) {
-            if (__DEV__) {
-                console.error('Element is not observed.', element);
-            }
-            return;
-        }
-
-        setTabsterOnElement(this._tabster, element, { observed: undefined });
-        this._onObservedElementUpdate(element);
-    }
-
-    move(from: HTMLElement, to: HTMLElement): void {
-        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
-        const tabsterOnElementTo = getTabsterOnElement(this._tabster, to);
-        const observed = tabsterOnElementFrom && tabsterOnElementFrom.observed;
-
-        if (observed) {
-            setTabsterOnElement(this._tabster, from, { observed: undefined });
-            this._onObservedElementUpdate(from);
-
-            if (tabsterOnElementTo && tabsterOnElementTo.observed) {
-                if (__DEV__) {
-                    console.error('Element is already observed', to);
-                }
-                return;
-            }
-
-            setTabsterOnElement(this._tabster, to, { observed });
-            this._onObservedElementUpdate(to);
-        } else if (__DEV__) {
-            console.error('Element is not observed.', from);
-        }
-    }
-
-    setProps(
-        element: HTMLElement,
-        basic?: Partial<Types.ObservedElementBasicProps>,
-        extended?: Partial<Types.ObservedElementExtendedProps>
-    ): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-        const observed = tabsterOnElement && tabsterOnElement.observed;
-
-        if (!observed) {
-            if (__DEV__) {
-                console.error('Element is not observed.', element);
-            }
-            return;
-        }
-
-        setTabsterOnElement(this._tabster, element, { observed: { ...observed, ...basic, ...extended } });
-        this._onObservedElementUpdate(element);
     }
 
     /**
@@ -322,9 +249,9 @@ export class ObservedElementAPI
         };
     }
 
-    private _onObservedElementUpdate(element: HTMLElement): void {
+    onObservedElementUpdate = (element: HTMLElement): void => {
         const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-        const observed = tabsterOnElement && tabsterOnElement.observed;
+        const observed = tabsterOnElement?.observed;
         const uid = getElementUId(this._win, element);
         const isInDocument = documentContains(element.ownerDocument, element);
         let info: ObservedElementInfo | undefined = this._observedById[uid];
@@ -435,13 +362,5 @@ export class ObservedElementAPI
                 resolveFocusable();
             }
         }
-    }
-
-    private _onMutation = (e: MutationEvent): void => {
-        if (!e.target || !e.details.observed) {
-            return;
-        }
-
-        this._onObservedElementUpdate(e.details.observed);
     }
 }

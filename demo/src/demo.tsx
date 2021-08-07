@@ -21,7 +21,7 @@ const tabster = createTabster(window);
 getGroupper(tabster);
 getMover(tabster);
 const tabsterModalizer = getModalizer(tabster);
-const tabsterDeloser = getDeloser(tabster);
+getDeloser(tabster);
 const tabsterOutline = getOutline(tabster);
 tabsterOutline.setup();
 
@@ -227,7 +227,7 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
         return (
             <div>
                 <div className='lightbox'></div>
-                <div ref={ this._onRef } aria-label='Modal' role='region' className='modal'>
+                <div ref={ this._onRef } {...getTabsterAttribute({ modalizer: { id: 'modal' }, deloser: {} })} aria-label='Modal' role='region' className='modal'>
                     <h3>Piu piu</h3>
                     <button onClick={ this._onBtnClick }>Close</button>
                     &nbsp;or&nbsp;
@@ -244,12 +244,8 @@ class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     private _onRef = (el: HTMLDivElement | null) => {
         if (el) {
             this._div = el;
-            tabsterModalizer.add(el, { id: 'modal' });
-            tabsterDeloser.add(el);
-            tabsterModalizer.focus(el);
+            setTimeout(() => tabsterModalizer.focus(el));
         } else if (this._div) {
-            tabsterModalizer.remove(this._div);
-            tabsterDeloser.remove(this._div);
             this._div = undefined;
         }
     }

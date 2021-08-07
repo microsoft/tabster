@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import * as Types from './Types';
 import { getBoundingRect } from './Utils';
 
@@ -82,7 +82,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = (tabster as Types.TabsterInternal).getWindow;
         this._win().setTimeout(this._init, 0);
     }
 
@@ -118,28 +118,6 @@ export class OutlineAPI implements Types.OutlineAPI {
             win.document.body.classList.add(defaultProps.areaClass);
         } else {
             win.document.body.classList.remove(defaultProps.areaClass);
-        }
-    }
-
-    setProps(element: HTMLElement, props: Partial<Types.OutlinedElementProps> | null): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        let curProps: Types.OutlinedElementProps = (tabsterOnElement && tabsterOnElement.outline) || {};
-        let newProps: Types.OutlinedElementProps = {};
-
-        if (props) {
-            for (let key of Object.keys(props) as (keyof Types.OutlinedElementProps)[]) {
-                const prop = props[key];
-                if (prop) {
-                    newProps[key] = prop;
-                } else if ((prop === undefined) && curProps[key]) {
-                    newProps[key] = curProps[key];
-                }
-            }
-        }
-
-        if (newProps.isIgnored !== curProps.isIgnored) {
-            setTabsterOnElement(this._tabster, element, { outline: newProps });
         }
     }
 

@@ -9,6 +9,7 @@ export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
 export interface InternalBasics {
     Promise?: PromiseConstructor;
     WeakRef?: WeakRefConstructor;
+    WeakMap?: WeakMapConstructor;
 }
 
 export interface TabsterDOMAttribute {
@@ -95,10 +96,6 @@ export interface ObservedElementAsyncRequest<T> {
 }
 
 export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
-    add(element: HTMLElement, basic?: ObservedElementBasicProps, extended?: ObservedElementExtendedProps): void;
-    remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<ObservedElementBasicProps>, extended?: Partial<ObservedElementExtendedProps>): void;
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
     waitElement(
         observedName: string,
@@ -189,7 +186,6 @@ export interface OutlinedElementProps {
 
 export interface OutlineAPI {
     setup(props?: Partial<OutlineProps>): void;
-    setProps(element: HTMLElement, props: Partial<OutlinedElementProps> | null): void;
 }
 
 export interface DeloserElementActions {
@@ -226,11 +222,8 @@ export interface DeloserExtendedProps {
     onFocusLost?(last: HTMLElement, actions: DeloserElementActions): boolean;
 }
 
-export interface Deloser {
+export interface Deloser extends TabsterPart<DeloserBasicProps, DeloserExtendedProps> {
     readonly uid: string;
-    setProps(basic?: Partial<DeloserBasicProps> | null, extended?: Partial<DeloserExtendedProps> | null): void;
-    getBasicProps(): DeloserBasicProps;
-    move(newContainer: HTMLElement): void;
     dispose(): void;
     isActive(): boolean;
     setActive(active: boolean): void;
@@ -243,15 +236,17 @@ export interface Deloser {
     findAvailable(): HTMLElement | null;
     clearHistory(preserveExisting?: boolean): void;
     customFocusLostHandler(element: HTMLElement): boolean;
-    getElement(): HTMLElement | undefined;
 }
+
+export type DeloserConstructor = (
+    tabster: TabsterInternal,
+    element: HTMLElement,
+    basic?: DeloserBasicProps,
+    extended?: DeloserExtendedProps
+) => Deloser;
 
 export interface DeloserAPI {
     getActions(element: HTMLElement): DeloserElementActions | undefined;
-    add(element: HTMLElement, basic?: DeloserBasicProps, extended?: DeloserExtendedProps): void;
-    remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<DeloserBasicProps>, extended?: Partial<DeloserExtendedProps>): void;
     pause(): void;
     resume(restore?: boolean): void;
 }
@@ -361,7 +356,6 @@ export type FindAllProps = Pick<
 
 export interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
-    setProps(element: HTMLElement, props: Partial<FocusableProps> | null): void;
 
     isFocusable(element: HTMLElement,
         includeProgrammaticallyFocusable?: boolean, noVisibleCheck?: boolean, noAccessibleCheck?: boolean): boolean;
@@ -459,11 +453,14 @@ export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> 
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
+export type MoverConstructor = (
+    tabster: TabsterInternal,
+    element: HTMLElement,
+    basic?: MoverBasicProps,
+    extended?: MoverExtendedProps
+) => Mover;
+
 export interface MoverAPI {
-    add(element: HTMLElement, basic?: MoverBasicProps, extended?: MoverExtendedProps): void;
-    remove(element: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<MoverBasicProps> | null,
-        extended?: Partial<MoverExtendedProps> | null): void;
 }
 
 export interface GroupperTabbabilities {
@@ -495,11 +492,14 @@ export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtend
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
 
+export type GroupperConstructor = (
+    tabster: TabsterInternal,
+    element: HTMLElement,
+    basic?: GroupperBasicProps,
+    extended?: GroupperExtendedProps
+) => Groupper;
+
 export interface GroupperAPI {
-    add(element: HTMLElement, basic?: GroupperBasicProps, extended?: GroupperExtendedProps): void;
-    remove(element: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<GroupperBasicProps> | null,
-        extended?: Partial<GroupperExtendedProps> | null): void;
 }
 
 export interface GroupperInternalAPI {
@@ -519,7 +519,7 @@ export interface ModalizerExtendedProps {
     onFocusOut?: (before: boolean) => boolean;
 }
 
-export interface Modalizer {
+export interface Modalizer extends TabsterPart<ModalizerBasicProps, ModalizerExtendedProps> {
     readonly internalId: string;
     readonly userId: string;
     /**
@@ -527,14 +527,7 @@ export interface Modalizer {
      */
     contains(element: HTMLElement): boolean;
     dispose(): void;
-    getBasicProps(): ModalizerBasicProps;
-    /**
-     * @returns The root element of the modal
-     */
-    getModalizerRoot(): HTMLElement | undefined;
-    getExtendedProps(): ModalizerExtendedProps;
     isActive(): boolean;
-    move(newElement: HTMLElement): void;
     onBeforeFocusOut(): boolean;
     /**
      * Sets the active state of the modalizr
@@ -545,22 +538,31 @@ export interface Modalizer {
      */
     setActive(active: boolean): void;
     setFocused(focused: boolean): void;
-    setProps(basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
 }
+
+export type ModalizerConstructor = (
+    tabster: TabsterInternal,
+    element: HTMLElement,
+    basic: ModalizerBasicProps,
+    extended?: ModalizerExtendedProps
+) => Modalizer;
 
 export interface RootBasicProps {
     restoreFocusOrder?: RestoreFocusOrder;
 }
 
-export interface Root {
+export interface Root extends TabsterPart<RootBasicProps, undefined> {
     readonly uid: string;
     dispose(): void;
-    setProps(basic?: Partial<RootBasicProps> | null): void;
-    getBasicProps(): RootBasicProps;
-    getElement(): HTMLElement | undefined;
     updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
 }
+
+export type RootConstructor = (
+    tabster: TabsterInternal,
+    element: HTMLElement,
+    basic?: RootBasicProps
+) => Root;
 
 export interface GetTabsterContextOptions {
     /**
@@ -599,44 +601,16 @@ export interface TabsterContext {
 }
 
 export interface RootAPI {
-    add(element: HTMLElement, basic?: RootBasicProps): void;
-    remove(element: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<RootBasicProps> | null): void;
 }
 
 export interface UncontrolledAPI {
-    /**
-     * @param element - Tabster is does nothing within this element
-     */
-    add(element: HTMLElement): void;
-
-    /**
-     * @param element - Tabster will control focus inside this element again
-     */
-    remove(element: HTMLElement): void;
 }
 
 export interface ModalizerAPI {
     /**
-     * Adds an element to be managed by Modalizer
-     *
-     * @param element Element that is not managed by Modalizer
-     * @param basic Basic props
-     * @param extended Extended props
-     */
-    add(element: HTMLElement, basic: ModalizerBasicProps, extended?: ModalizerExtendedProps): void;
-    /**
      * Gets the currently active modalizer if it exists
      */
     getActiveModalizer(): Modalizer | undefined;
-    /**
-     * Stops managing an element with Modalizer. Should be called before the element is removed from DOM.
-     *
-     * @param element Element that is managed by Modalizer
-     */
-    remove(element: HTMLElement): void;
-    move(from: HTMLElement, to: HTMLElement): void;
-    setProps(element: HTMLElement, basic?: Partial<ModalizerBasicProps> | null, extended?: Partial<ModalizerExtendedProps> | null): void;
     /**
      * Activates a Modalizer and focuses the first or default element within
      *
@@ -698,7 +672,6 @@ export type TabsterAttributeProps = Partial<{
 export interface TabsterAttributeOnElement {
     string: string;
     object: TabsterAttributeProps;
-    changing: boolean;
 }
 
 export interface TabsterAugmentedAttributes {
@@ -738,7 +711,7 @@ export interface TabsterElementStorage {
 export type DisposeFunc = () => void;
 
 export interface TabsterInternal extends TabsterCore {
-    storageEntry(uid: string, addremove?: boolean): TabsterElementStorageEntry | undefined;
+    storageEntry(element: HTMLElement, addremove?: boolean): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
     groupper?: GroupperAPI;
@@ -758,6 +731,15 @@ export interface TabsterInternal extends TabsterCore {
     modalizerDispose?: DisposeFunc;
     observedElementDispose?: DisposeFunc;
     crossOriginDispose?: DisposeFunc;
+
+    createRoot: RootConstructor;
+    updateRoot: (root: Root, removed?: boolean) => void;
+    createGroupper?: GroupperConstructor;
+    createMover?: MoverConstructor;
+    createDeloser?: DeloserConstructor;
+    createModalizer?: ModalizerConstructor;
+    updateObserved?: (element: HTMLElement) => void;
+    updateModalizer?: (modalizer: Modalizer, removed?: boolean) => void;
 
     // The version of the tabster package this instance is on
     _version: string;
