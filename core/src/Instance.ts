@@ -177,16 +177,16 @@ export function updateTabsterByAttribute(
                 }
                 break;
 
+            case 'uncontrolled':
+                tabsterOnElement.uncontrolled = newTabsterProps.uncontrolled;
+                break;
+
             case 'outline':
                 if (tabsteri.outline) {
                     tabsterOnElement.outline = newTabsterProps.outline;
                 } else if (__DEV__) {
                     console.error('Outline API used before initializing, please call `getOutline()`');
                 }
-                break;
-
-            case 'uncontrolled':
-                tabsterOnElement.uncontrolled = newTabsterProps.uncontrolled;
                 break;
 
             default:
@@ -201,7 +201,7 @@ export function updateTabsterByAttribute(
             delete entry.tabster;
             delete entry.attr;
         }
-        (tabster as Types.TabsterInternal).storageEntry(element, false);
+        tabsteri.storageEntry(element, false);
     }
 }
 
