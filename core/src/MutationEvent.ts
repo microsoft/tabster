@@ -46,24 +46,24 @@ export function observeMutations(
                 }
             } else {
                 for (let i = 0; i < removed.length; i++) {
-                    updateTabsterElements(removed[i], target.ownerDocument || doc);
+                    updateTabsterElements(removed[i], true);
                 }
 
                 for (let i = 0; i < added.length; i++) {
-                    updateTabsterElements(added[i], undefined, target);
+                    updateTabsterElements(added[i]);
                 }
             }
         }
 
-        function updateTabsterElements(node: Node, removedFrom?: Document, addedTo?: Node): void {
+        function updateTabsterElements(node: Node, removed?: boolean): void {
             if (!elementByUId) {
                 elementByUId = getInstanceContext(getWindow).elementByUId;
             }
 
-            processNode(node as HTMLElement, removedFrom, addedTo);
+            processNode(node as HTMLElement, removed);
 
             const walker = createElementTreeWalker(doc, node, (element: Node): number => {
-                return processNode(element as HTMLElement, removedFrom, addedTo);
+                return processNode(element as HTMLElement, removed);
             });
 
             if (walker) {
@@ -71,7 +71,7 @@ export function observeMutations(
             }
         }
 
-        function processNode(element: HTMLElement, removedFrom?: Document, addedTo?: Node): number {
+        function processNode(element: HTMLElement, removed?: boolean): number {
             if (!element.getAttribute) {
                 // It might actually be a text node.
                 return NodeFilter.FILTER_SKIP;
@@ -80,15 +80,15 @@ export function observeMutations(
             const uid = (element as HTMLElementWithUID).__tabsterElementUID;
 
             if (uid) {
-                if (removedFrom) {
+                if (removed) {
                     delete elementByUId!!![uid];
-                } else if (addedTo) {
+                } else {
                     elementByUId!!![uid] = new WeakHTMLElement(getWindow, element);
                 }
             }
 
             if (getTabsterOnElement(tabster, element) || element.hasAttribute(Types.TabsterAttributeName)) {
-                updateTabsterByAttribute(tabster, element, !!removedFrom);
+                updateTabsterByAttribute(tabster, element, removed);
             }
 
             return NodeFilter.FILTER_SKIP;
