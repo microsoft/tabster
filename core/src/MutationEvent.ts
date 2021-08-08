@@ -25,7 +25,7 @@ export interface MutationEventDetails {
 export function observeMutations(
     doc: HTMLDocument,
     tabster: Types.TabsterInternal,
-    updateTabsterByAttribute: (tabster: Types.TabsterCore, element: HTMLElementWithUID, dispose?: boolean) => void
+    updateTabsterByAttribute: (tabster: Types.TabsterInternal, element: HTMLElementWithUID, dispose?: boolean) => void
 ): () => void {
     if (typeof MutationObserver === 'undefined') {
         return () => { /* Noop */ };

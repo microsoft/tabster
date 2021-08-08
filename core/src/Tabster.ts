@@ -8,7 +8,7 @@ import { DeloserAPI } from './Deloser';
 import { FocusableAPI } from './Focusable';
 import { FocusedElementState } from './State/FocusedElement';
 import { GroupperAPI } from './Groupper';
-import { updateTabsterByAttribute } from './Instance';
+import { getTabsterOnElement, updateTabsterByAttribute } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
 import { MoverAPI } from './Mover';
@@ -21,6 +21,7 @@ import { UncontrolledAPI } from './Uncontrolled';
 import {
     cleanupFakeWeakRefs,
     clearElementCache,
+    createElementTreeWalker,
     createWeakMap,
     disposeInstanceContext,
     setBasics as overrideBasics,
@@ -39,7 +40,9 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
-    public _version: string = __VERSION__;
+
+    _version: string = __VERSION__;
+    _noop = false;
 
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -391,4 +394,39 @@ export function getTabsterAttribute(
  */
 export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
     return (win as WindowWithTabsterInstance).__tabsterInstance;
+}
+
+export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
+    const self = tabster as Tabster;
+
+    if (self._noop !== noop) {
+        self._noop = noop;
+
+        const processNode = (element: HTMLElement): number => {
+            if (!element.getAttribute) {
+                return NodeFilter.FILTER_SKIP;
+            }
+
+            if (getTabsterOnElement(self, element) || element.hasAttribute(Types.TabsterAttributeName)) {
+                updateTabsterByAttribute(self, element);
+            }
+
+            return NodeFilter.FILTER_SKIP;
+        };
+
+        const doc = self.getWindow().document;
+        const body = doc.body;
+
+        processNode(body);
+
+        const walker = createElementTreeWalker(doc, body, processNode);
+
+        if (walker) {
+            while (walker.nextNode()) { /* Iterating for the sake of calling processNode() callback. */ }
+        }
+    }
+}
+
+export function isNoOp(tabster: Types.TabsterCore): boolean {
+    return (tabster as Tabster)._noop;
 }

@@ -743,6 +743,9 @@ export interface TabsterInternal extends TabsterCore {
 
     // The version of the tabster package this instance is on
     _version: string;
+
+    // No operation flag for the debugging purposes
+    _noop: boolean;
 }
 
 export interface TabsterCompat {

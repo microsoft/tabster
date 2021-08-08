@@ -13,11 +13,11 @@ export function getTabsterOnElement(
 }
 
 export function updateTabsterByAttribute(
-    tabster: Types.TabsterCore,
+    tabster: Types.TabsterInternal,
     element: HTMLElement,
     dispose?: boolean
 ): void {
-    const newAttrValue = dispose ? undefined : element.getAttribute(Types.TabsterAttributeName);
+    const newAttrValue = (dispose || tabster._noop) ? undefined : element.getAttribute(Types.TabsterAttributeName);
     const tabsteri = (tabster as Types.TabsterInternal);
 
     let entry = tabsteri.storageEntry(element);
