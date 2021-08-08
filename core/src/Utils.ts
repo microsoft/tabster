@@ -36,10 +36,9 @@ export interface InstanceContext {
     containerBoundingRectCache: { [id: string]: { rect: TabsterDOMRect, element: HTMLElementWithBoundingRectCacheId } };
     lastContainerBoundingRectCacheId: number;
     containerBoundingRectCacheTimer?: number;
-    weakElementStorage: { [id: string]: TabsterWeakRef; };
-    lastWeakElementId: number;
-    weakCleanupTimer?: number;
-    weakCleanupStarted: boolean;
+    fakeWeakRefs: TabsterWeakRef<any>[];
+    fakeWeakRefsTimer?: number;
+    fakeWeakRefsStarted: boolean;
 }
 
 let _isBrokenIE11: boolean;
@@ -90,9 +89,8 @@ export function getInstanceContext(getWindow: GetWindow): InstanceContext {
             },
             containerBoundingRectCache: {},
             lastContainerBoundingRectCacheId: 0,
-            weakElementStorage: {},
-            lastWeakElementId: 0,
-            weakCleanupStarted: false
+            fakeWeakRefs: [],
+            fakeWeakRefsStarted: false
         };
 
         win.__tabsterInstanceContext = ctx;
@@ -115,37 +113,42 @@ export function disposeInstanceContext(win: Window): void {
             win.clearTimeout(ctx.containerBoundingRectCacheTimer);
         }
 
-        if (ctx.weakCleanupTimer) {
-            win.clearTimeout(ctx.weakCleanupTimer);
+        if (ctx.fakeWeakRefsTimer) {
+            win.clearTimeout(ctx.fakeWeakRefsTimer);
         }
 
-        ctx.weakElementStorage = {};
+        ctx.fakeWeakRefs = [];
 
         delete (win as WindowWithUtilsConext).__tabsterInstanceContext;
     }
 }
 
-interface TabsterWeakRef {
-    deref(): HTMLElement | undefined;
+export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
+    const ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
+    return new (ctx?.basics.WeakMap || WeakMap)();
 }
 
-class FakeWeakRef implements TabsterWeakRef {
-    private _target: HTMLElement | undefined;
+interface TabsterWeakRef<T> {
+    deref(): T | undefined;
+}
 
-    constructor(target: HTMLElement) {
+class FakeWeakRef<T extends HTMLElement = HTMLElement> implements TabsterWeakRef<T> {
+    private _target: T | undefined;
+
+    constructor(target: T) {
         this._target = target;
     }
 
-    deref(): HTMLElement | undefined {
+    deref(): T | undefined {
         return this._target;
     }
 
-    static cleanup(fwr: FakeWeakRef): boolean {
+    static cleanup(fwr: FakeWeakRef, forceRemove?: boolean): boolean {
         if (!fwr._target) {
             return true;
         }
 
-        if (!documentContains(fwr._target.ownerDocument, fwr._target)) {
+        if (forceRemove || !documentContains(fwr._target.ownerDocument, fwr._target)) {
             delete fwr._target;
             return true;
         }
@@ -155,29 +158,37 @@ class FakeWeakRef implements TabsterWeakRef {
 }
 
 export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined> implements Types.WeakHTMLElement<D> {
-    private _ctx: InstanceContext;
-    private _id: string;
+    private _ref: TabsterWeakRef<T> | undefined;
     private _data: D | undefined;
 
     constructor(getWindow: GetWindow, element: T, data?: D) {
         const context = getInstanceContext(getWindow);
-        this._ctx = context;
-        this._id = 'we' + ++context.lastWeakElementId;
 
-        context.weakElementStorage[this._id] = context.WeakRef ? new context.WeakRef(element) : new FakeWeakRef(element);
-
-        if (data !== undefined) {
-            this._data = data;
+        let ref: TabsterWeakRef<T>;
+        if (context.WeakRef) {
+            ref = new context.WeakRef(element);
+        } else {
+            ref = new FakeWeakRef(element);
+            context.fakeWeakRefs.push(ref);
         }
+
+        this._ref = ref;
+        this._data = data;
     }
 
     get(): T | undefined {
-        const ref = this._ctx.weakElementStorage[this._id];
-        const el = (ref && ref.deref()) as (T | undefined);
-        if (ref && !el) {
-            delete this._ctx.weakElementStorage[this._id];
+        const ref = this._ref;
+        let element: T | undefined;
+
+        if (ref) {
+            element = ref.deref();
+
+            if (!element) {
+                delete this._ref;
+            }
         }
-        return el;
+
+        return element;
     }
 
     getData(): D | undefined {
@@ -185,53 +196,37 @@ export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
     }
 }
 
-export function cleanupWeakRefStorage(getWindow: GetWindow, forceRemove?: boolean): void {
+export function cleanupFakeWeakRefs(getWindow: GetWindow, forceRemove?: boolean): void {
     const context = getInstanceContext(getWindow);
-
-    if (forceRemove) {
-        context.weakElementStorage = {};
-    } else {
-        for (let id of Object.keys(context.weakElementStorage)) {
-            const we = context.weakElementStorage[id];
-            if (context.WeakRef) {
-                if (!we.deref()) {
-                    delete context.weakElementStorage[id];
-                }
-            } else {
-                if (FakeWeakRef.cleanup(we as FakeWeakRef)) {
-                    delete context.weakElementStorage[id];
-                }
-            }
-        }
-    }
+    context.fakeWeakRefs = context.fakeWeakRefs.filter(e => !FakeWeakRef.cleanup(e as FakeWeakRef, forceRemove));
 }
 
-export function startWeakRefStorageCleanup(getWindow: GetWindow): void {
+export function startFakeWeakRefsCleanup(getWindow: GetWindow): void {
     const context = getInstanceContext(getWindow);
 
-    if (!context.weakCleanupStarted) {
-        context.weakCleanupStarted = true;
+    if (!context.fakeWeakRefsStarted) {
+        context.fakeWeakRefsStarted = true;
         context.WeakRef = getWeakRef(context);
     }
 
-    if (!context.weakCleanupTimer) {
-        context.weakCleanupTimer = getWindow().setTimeout(() => {
-            context.weakCleanupTimer = undefined;
-            cleanupWeakRefStorage(getWindow);
-            startWeakRefStorageCleanup(getWindow);
+    if (!context.fakeWeakRefsTimer) {
+        context.fakeWeakRefsTimer = getWindow().setTimeout(() => {
+            context.fakeWeakRefsTimer = undefined;
+            cleanupFakeWeakRefs(getWindow);
+            startFakeWeakRefsCleanup(getWindow);
         }, 2 * 60 * 1000); // 2 minutes.
     }
 }
 
-export function stopWeakRefStorageCleanupAndClearStorage(getWindow: GetWindow): void {
+export function stopFakeWeakRefsCleanupAndClearStorage(getWindow: GetWindow): void {
     const context = getInstanceContext(getWindow);
 
-    context.weakCleanupStarted = false;
+    context.fakeWeakRefsStarted = false;
 
-    if (context.weakCleanupTimer) {
-        getWindow().clearTimeout(context.weakCleanupTimer);
-        context.weakCleanupTimer = undefined;
-        context.weakElementStorage = {};
+    if (context.fakeWeakRefsTimer) {
+        getWindow().clearTimeout(context.fakeWeakRefsTimer);
+        context.fakeWeakRefsTimer = undefined;
+        context.fakeWeakRefs = [];
     }
 }
 
@@ -512,29 +507,32 @@ export function setBasics(win: Window, basics: Types.InternalBasics): void {
     if (key in basics) {
         context.basics[key] = basics[key];
     }
+
+    key = 'WeakMap';
+    if (key in basics) {
+        context.basics[key] = basics[key];
+    }
 }
 
 let _lastTabsterPartId = 0;
 
 export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterPart<B, E> {
-    protected _tabster: Types.TabsterCore;
+    protected _tabster: Types.TabsterInternal;
     protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _win: GetWindow;
     protected _basic: Partial<B>;
     protected _extended: Partial<E>;
 
     readonly id: string;
 
     constructor(
-        tabster: Types.TabsterCore,
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        getWindow: GetWindow,
         basic?: B,
         extended?: E
     ) {
+        const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
-        this._win = getWindow;
         this._basic = basic || {};
         this._extended = extended || {};
         this.id = 'i' + ++_lastTabsterPartId;
@@ -554,13 +552,13 @@ export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterP
 
     setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void {
         if (basic) {
-            this._basic = { ...this._basic, ...basic };
+            this._basic = { ...basic };
         } else if (basic === null) {
             this._basic = {};
         }
 
         if (extended) {
-            this._extended = { ...this._extended, ...extended };
+            this._extended = { ...extended };
         } else if (extended === null) {
             this._extended = {};
         }

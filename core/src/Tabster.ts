@@ -8,7 +8,7 @@ import { DeloserAPI } from './Deloser';
 import { FocusableAPI } from './Focusable';
 import { FocusedElementState } from './State/FocusedElement';
 import { GroupperAPI } from './Groupper';
-import { updateTabsterByAttribute } from './Instance';
+import { getTabsterOnElement, updateTabsterByAttribute } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import { ModalizerAPI } from './Modalizer';
 import { MoverAPI } from './Mover';
@@ -19,12 +19,14 @@ import { RootAPI, WindowWithTabsterInstance } from './Root';
 import * as Types from './Types';
 import { UncontrolledAPI } from './Uncontrolled';
 import {
-    cleanupWeakRefStorage,
+    cleanupFakeWeakRefs,
     clearElementCache,
+    createElementTreeWalker,
+    createWeakMap,
     disposeInstanceContext,
     setBasics as overrideBasics,
-    startWeakRefStorageCleanup,
-    stopWeakRefStorageCleanupAndClearStorage
+    startFakeWeakRefsCleanup,
+    stopFakeWeakRefsCleanupAndClearStorage
 } from './Utils';
 
 export { Types };
@@ -33,12 +35,14 @@ export { Types };
  * Extends Window to include an internal Tabster instance.
  */
 class Tabster implements Types.TabsterCore, Types.TabsterInternal {
-    private _storage: Types.TabsterElementStorage;
+    private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     private _unobserve: (() => void) | undefined;
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
-    public _version: string = __VERSION__;
+
+    _version: string = __VERSION__;
+    _noop = false;
 
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -63,8 +67,17 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     observedElementDispose?: Types.DisposeFunc;
     crossOriginDispose?: Types.DisposeFunc;
 
+    createRoot: Types.RootConstructor;
+    updateRoot: (root: Types.Root, removed?: boolean) => void;
+    createGroupper?: Types.GroupperConstructor;
+    createMover?: Types.MoverConstructor;
+    createDeloser?: Types.DeloserConstructor;
+    createModalizer?: Types.ModalizerConstructor;
+    updateObserved?: (element: HTMLElement) => void;
+    updateModalizer?: (modalzier: Types.Modalizer, removed?: boolean) => void;
+
     constructor(win: Window, props?: Types.TabsterCoreProps) {
-        this._storage = {};
+        this._storage = createWeakMap(win);
         this._win = win;
 
         const getWindow = this.getWindow;
@@ -79,9 +92,13 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.root = new RootAPI(this, () => {
             (this.groupper as Types.GroupperInternalAPI | undefined)?.forgetUnlimitedGrouppers();
         }, props?.autoRoot);
+        this.createRoot = RootAPI.createRoot;
+        this.updateRoot = (root: Types.Root, removed?: boolean) => {
+            RootAPI.onRoot(this.root, root, removed);
+        };
         this.uncontrolled = new UncontrolledAPI(this);
 
-        startWeakRefStorageCleanup(getWindow);
+        startFakeWeakRefsCleanup(getWindow);
     }
 
     protected dispose(): void {
@@ -100,23 +117,23 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         }
 
         interface DisposeParts {
-            'outlineDispose': 'outline';
-            'crossOriginDispose': 'crossOrigin';
-            'deloserDispose': 'deloser';
-            'groupperDispose': 'groupper';
-            'moverDispose': 'mover';
-            'modalizerDispose': 'modalizer';
-            'observedElementDispose': 'observedElement';
+            'outlineDispose': ['outline'];
+            'crossOriginDispose': ['crossOrigin'];
+            'deloserDispose': ['deloser', 'createDeloser'];
+            'groupperDispose': ['groupper', 'createGroupper'];
+            'moverDispose': ['mover', 'createMover'];
+            'modalizerDispose': ['modalizer', 'createModalizer', 'updateModalizer'];
+            'observedElementDispose': ['observedElement', 'updateObserved'];
         }
 
         const disposeParts: DisposeParts = {
-            'outlineDispose': 'outline',
-            'crossOriginDispose': 'crossOrigin',
-            'deloserDispose': 'deloser',
-            'groupperDispose': 'groupper',
-            'moverDispose': 'mover',
-            'modalizerDispose': 'modalizer',
-            'observedElementDispose': 'observedElement'
+            'outlineDispose': ['outline'],
+            'crossOriginDispose': ['crossOrigin'],
+            'deloserDispose': ['deloser', 'createDeloser'],
+            'groupperDispose': ['groupper', 'createGroupper'],
+            'moverDispose': ['mover', 'createMover'],
+            'modalizerDispose': ['modalizer', 'createModalizer', 'updateModalizer'],
+            'observedElementDispose': ['observedElement', 'updateObserved'],
         };
 
         for (let key of Object.keys(disposeParts) as (keyof DisposeParts)[]) {
@@ -124,7 +141,11 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
 
             if (disposeFunc) {
                 disposeFunc();
-                delete this[disposeParts[key]];
+                for (let partKey of disposeParts[key]) {
+                    if (this[partKey]) {
+                        delete this[partKey];
+                    }
+                }
                 delete this[key];
             }
         }
@@ -134,10 +155,10 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         FocusedElementState.dispose(this.focusedElement);
         RootAPI.dispose(this.root);
 
-        stopWeakRefStorageCleanupAndClearStorage(this.getWindow);
+        stopFakeWeakRefsCleanupAndClearStorage(this.getWindow);
         clearElementCache(this.getWindow);
 
-        this._storage = {};
+        this._storage = new WeakMap();
 
         if (win) {
             disposeInstanceContext(win);
@@ -150,15 +171,17 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         (instance as Tabster).dispose();
     }
 
-    storageEntry(uid: string, addremove?: boolean): Types.TabsterElementStorageEntry | undefined {
-        let entry = this._storage[uid];
+    storageEntry(element: HTMLElement, addremove?: boolean): Types.TabsterElementStorageEntry | undefined {
+        const storage = this._storage;
+        let entry = storage.get(element);
 
         if (entry) {
             if ((addremove === false) && (Object.keys(entry).length === 0)) {
-                delete this._storage[uid];
+                storage.delete(element);
             }
         } else if (addremove === true) {
-            entry = this._storage[uid] = {};
+            entry = {};
+            storage.set(element, entry);
         }
 
         return entry;
@@ -196,7 +219,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
             }
         }, 0);
 
-        cleanupWeakRefStorage(tabster.getWindow, true);
+        cleanupFakeWeakRefs(tabster.getWindow, true);
     }
 }
 
@@ -233,11 +256,12 @@ export function createTabster(win: Window, props?: Types.TabsterCoreProps): Type
  * @param tabster Tabster instance
  */
 export function getGroupper(tabster: Types.TabsterCore): Types.GroupperAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.groupper) {
         const groupper = new GroupperAPI(tabster, tabsterInternal.getWindow);
         tabsterInternal.groupper = groupper;
+        tabsterInternal.createGroupper = GroupperAPI.createGroupper;
         tabsterInternal.groupperDispose = () => { GroupperAPI.dispose(groupper); };
     }
 
@@ -249,11 +273,12 @@ export function getGroupper(tabster: Types.TabsterCore): Types.GroupperAPI {
  * @param tabster Tabster instance
  */
 export function getMover(tabster: Types.TabsterCore): Types.MoverAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.mover) {
         const mover = new MoverAPI(tabster, tabsterInternal.getWindow);
         tabsterInternal.mover = mover;
+        tabsterInternal.createMover = MoverAPI.createMover;
         tabsterInternal.moverDispose = () => { MoverAPI.dispose(mover); };
     }
 
@@ -261,7 +286,7 @@ export function getMover(tabster: Types.TabsterCore): Types.MoverAPI {
 }
 
 export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.outline) {
         const outline = new OutlineAPI(tabster);
@@ -281,11 +306,12 @@ export function getDeloser(
     tabster: Types.TabsterCore,
     props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
 ): Types.DeloserAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.deloser) {
         const deloser = new DeloserAPI(tabster, props);
         tabsterInternal.deloser = deloser;
+        tabsterInternal.createDeloser = DeloserAPI.createDeloser;
         tabsterInternal.deloserDispose = () => { DeloserAPI.dispose(deloser); };
     }
 
@@ -297,11 +323,15 @@ export function getDeloser(
  * @param tabster Tabster instance
  */
 export function getModalizer(tabster: Types.TabsterCore): Types.ModalizerAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.modalizer) {
         const modalizer = new ModalizerAPI(tabster);
         tabsterInternal.modalizer = modalizer;
+        tabsterInternal.createModalizer = ModalizerAPI.createModalizer;
+        tabsterInternal.updateModalizer = (modalizer: Types.Modalizer, removed?: boolean) => {
+            ModalizerAPI.updateModalizer(tabsterInternal, modalizer, removed);
+        };
         tabsterInternal.modalizerDispose = () => { ModalizerAPI.dispose(modalizer); };
     }
 
@@ -309,11 +339,12 @@ export function getModalizer(tabster: Types.TabsterCore): Types.ModalizerAPI {
 }
 
 export function getObservedElement(tabster: Types.TabsterCore): Types.ObservedElementAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.observedElement) {
         const observedElement = new ObservedElementAPI(tabster);
         tabsterInternal.observedElement = observedElement;
+        tabsterInternal.updateObserved = observedElement.onObservedElementUpdate;
         tabsterInternal.observedElementDispose = () => { ObservedElementAPI.dispose(observedElement); };
     }
 
@@ -321,7 +352,7 @@ export function getObservedElement(tabster: Types.TabsterCore): Types.ObservedEl
 }
 
 export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI {
-    const tabsterInternal = (tabster as unknown as Types.TabsterInternal);
+    const tabsterInternal = (tabster as Types.TabsterInternal);
 
     if (!tabsterInternal.crossOrigin) {
         getDeloser(tabster);
@@ -363,4 +394,39 @@ export function getTabsterAttribute(
  */
 export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
     return (win as WindowWithTabsterInstance).__tabsterInstance;
+}
+
+export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
+    const self = tabster as Tabster;
+
+    if (self._noop !== noop) {
+        self._noop = noop;
+
+        const processNode = (element: HTMLElement): number => {
+            if (!element.getAttribute) {
+                return NodeFilter.FILTER_SKIP;
+            }
+
+            if (getTabsterOnElement(self, element) || element.hasAttribute(Types.TabsterAttributeName)) {
+                updateTabsterByAttribute(self, element);
+            }
+
+            return NodeFilter.FILTER_SKIP;
+        };
+
+        const doc = self.getWindow().document;
+        const body = doc.body;
+
+        processNode(body);
+
+        const walker = createElementTreeWalker(doc, body, processNode);
+
+        if (walker) {
+            while (walker.nextNode()) { /* Iterating for the sake of calling processNode() callback. */ }
+        }
+    }
+}
+
+export function isNoOp(tabster: Types.TabsterCore): boolean {
+    return (tabster as Tabster)._noop;
 }

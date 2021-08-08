@@ -60,10 +60,8 @@ describe('Focusable', () => {
                 const observedButton = document.createElement('button');
                 observedButton.textContent = name;
                 document.getElementById('root')?.appendChild(observedButton);
-                ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.add(
-                    observedButton,
-                    { name }
-                );
+                const observed: Types.TabsterOnElement = { observed: { name } };
+                observedButton.setAttribute('data-tabster', JSON.stringify(observed));
 
                 return request;
             }, name)

@@ -6,7 +6,7 @@
 import { nativeFocus } from 'keyborg';
 
 import { FocusedElementState } from './State/FocusedElement';
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
@@ -16,16 +16,12 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
     private _isUnlimited = false;
 
     constructor(
-        tabster: Types.TabsterCore,
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        getWindow: Types.GetWindow,
         basic?: Types.GroupperBasicProps,
         extended?: Types.GroupperExtendedProps
     ) {
-        super(tabster, element, getWindow, basic, extended);
-
-        setTabsterOnElement(this._tabster, element, { groupper: this });
-
+        super(tabster, element, basic, extended);
         this.makeUnlimited(false);
     }
 
@@ -36,8 +32,6 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
             if (__DEV__) {
                 _setInformativeStyle(this._element, true);
             }
-
-            setTabsterOnElement(this._tabster, element, { groupper: undefined });
         }
     }
 
@@ -198,6 +192,15 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
         (instance as GroupperAPI).dispose();
     }
 
+    static createGroupper: Types.GroupperConstructor = (
+        tabster: Types.TabsterInternal,
+        element: HTMLElement,
+        basic?: Types.GroupperBasicProps,
+        extended?: Types.GroupperExtendedProps
+    ): Types.Groupper => {
+        return new Groupper(tabster, element, basic, extended);
+    }
+
     forgetUnlimitedGrouppers(): void {
         this._unlimited = {};
     }
@@ -316,49 +319,6 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                 }
             }
         }
-    }
-
-    add(element: HTMLElement, basic?: Types.GroupperBasicProps, extended?: Types.GroupperExtendedProps): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement?.groupper) {
-            throw new Error('The element already has a focus group');
-        }
-
-        // tslint:disable-next-line:no-unused-expression
-        new Groupper(this._tabster, element, this._win, basic, extended);
-    }
-
-    remove(element: HTMLElement): void {
-        const groupper = getTabsterOnElement(this._tabster, element)?.groupper;
-
-        if (groupper) {
-            groupper.dispose();
-        }
-    }
-
-    setProps(
-        element: HTMLElement,
-        basic?: Partial<Types.GroupperBasicProps> | null,
-        extended?: Partial<Types.GroupperExtendedProps> | null
-    ): void {
-        let groupper = this._find(element);
-
-        if (groupper) {
-            groupper.setProps(basic, extended);
-        }
-    }
-
-    private _find(element: HTMLElement): Types.Groupper | null {
-        for (let el = element as HTMLElement | null; el; el = el.parentElement) {
-            const groupper = getTabsterOnElement(this._tabster, el)?.groupper;
-
-            if (groupper) {
-                return groupper;
-            }
-        }
-
-        return null;
     }
 }
 

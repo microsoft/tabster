@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { augmentAttribute, getTabsterOnElement, setTabsterOnElement } from './Instance';
-import { dispatchMutationEvent, MutationEvent, MUTATION_EVENT_NAME} from './MutationEvent';
+import { augmentAttribute } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, WeakHTMLElement } from './Utils';
+import { createElementTreeWalker, TabsterPart, WeakHTMLElement } from './Utils';
 
 let _lastInternalId = 0;
 
@@ -40,52 +39,43 @@ function _setInformativeStyle(
     }
 }
 
-export class Modalizer implements Types.Modalizer {
+export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.ModalizerExtendedProps> implements Types.Modalizer {
     readonly internalId: string;
     userId: string;
 
-    /* private */ _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _basic: Types.ModalizerBasicProps;
-    private _extended: Types.ModalizerExtendedProps;
     private _isActive: boolean | undefined;
     private _isFocused = false;
-    /**
-     * Root element of the modal
-     */
-    private _modalizerRoot: WeakHTMLElement;
     /**
      * Parent of modalizer Root, can be used for DOM cleanup if the modalizerRoot is no longer present
      */
     private _modalizerParent: WeakHTMLElement | null;
+    private _onDispose: (modalizer: Modalizer) => void;
 
     constructor(
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        tabster: Types.TabsterCore,
-        win: Types.GetWindow,
+        onDispose: (modalizer: Modalizer) => void,
         basic: Types.ModalizerBasicProps,
         extended?: Types.ModalizerExtendedProps
     ) {
-        this._tabster = tabster;
-        this._win = win;
+        super(tabster, element, basic, extended);
 
         this.internalId = 'ml' + ++_lastInternalId;
         this.userId = basic.id;
+        this._onDispose = onDispose;
 
-        this._modalizerRoot = new WeakHTMLElement(win, element);
-        if (element.parentElement) {
-            this._modalizerParent = new WeakHTMLElement(win, element.parentElement);
+        const parentElement = element.parentElement;
+        if (parentElement) {
+            this._modalizerParent = new WeakHTMLElement(tabster.getWindow, parentElement);
         } else {
             this._modalizerParent = null;
         }
 
-        this._basic = basic;
-        this._extended = extended || {};
         this._setAccessibilityProps();
 
         if (__DEV__) {
             _setInformativeStyle(
-                this._modalizerRoot,
+                this._element,
                 false,
                 this.internalId,
                 this.userId,
@@ -116,6 +106,8 @@ export class Modalizer implements Types.Modalizer {
     }
 
     dispose(): void {
+        this._onDispose(this);
+
         if (this._isFocused) {
             this.setFocused(false);
         }
@@ -123,19 +115,6 @@ export class Modalizer implements Types.Modalizer {
         this._remove();
 
         this._extended = {};
-    }
-
-    move(newElement: HTMLElement): void {
-        this._remove();
-        this._modalizerRoot = new WeakHTMLElement(this._win, newElement);
-        if (newElement.parentElement) {
-            this._modalizerParent = new WeakHTMLElement(this._win, newElement.parentElement);
-        }
-
-        this._setAccessibilityProps();
-
-        this._isActive = !this._isActive;
-        this.setActive(!this._isActive);
     }
 
     setActive(active: boolean): void {
@@ -147,14 +126,14 @@ export class Modalizer implements Types.Modalizer {
 
         if (__DEV__) {
             _setInformativeStyle(
-                this._modalizerRoot, false, this.internalId, this.userId, this._isActive, this._isFocused
+                this._element, false, this.internalId, this.userId, this._isActive, this._isFocused
             );
         }
 
-        let targetDocument = this._modalizerRoot.get()?.ownerDocument || this._modalizerParent?.get()?.ownerDocument;
+        let targetDocument = this._element.get()?.ownerDocument || this._modalizerParent?.get()?.ownerDocument;
         // Document can't be determined frm the modalizer root or its parent, fallback to window
         if (!targetDocument) {
-            targetDocument = this._win().document;
+            targetDocument = this._tabster.getWindow().document;
         }
         const root = targetDocument.body;
 
@@ -165,7 +144,7 @@ export class Modalizer implements Types.Modalizer {
                 return NodeFilter.FILTER_REJECT;
             }
 
-            const modalizerRoot = this._modalizerRoot.get();
+            const modalizerRoot = this._element.get();
             const modalizerParent = this._modalizerParent?.get();
             const isModalizerElement = modalizerRoot === el;
             const containsModalizerRoot = !!el.contains(modalizerRoot || null);
@@ -208,12 +187,8 @@ export class Modalizer implements Types.Modalizer {
         return !!this._isActive;
     }
 
-    getModalizerRoot(): HTMLElement | undefined  {
-        return this._modalizerRoot.get();
-    }
-
     contains(element: HTMLElement) {
-        return !!this.getModalizerRoot()?.contains(element);
+        return !!this.getElement()?.contains(element);
     }
 
     setFocused(focused: boolean): void {
@@ -235,7 +210,7 @@ export class Modalizer implements Types.Modalizer {
 
         if (__DEV__) {
             _setInformativeStyle(
-                this._modalizerRoot, false, this.internalId, this.userId, this._isActive, this._isFocused
+                this._element, false, this.internalId, this.userId, this._isActive, this._isFocused
             );
         }
     }
@@ -248,24 +223,16 @@ export class Modalizer implements Types.Modalizer {
         return false;
     }
 
-    getBasicProps(): Types.ModalizerBasicProps {
-        return this._basic;
-    }
-
-    getExtendedProps(): Types.ModalizerExtendedProps {
-        return this._extended;
-    }
-
     private _remove(): void {
         if (__DEV__) {
-            _setInformativeStyle(this._modalizerRoot, true);
+            _setInformativeStyle(this._element, true);
         }
     }
 
     private _setAccessibilityProps(): void {
         if (__DEV__) {
-            if (!this._modalizerRoot.get()?.getAttribute('aria-label')) {
-                console.error('Modalizer element must have aria-label', this._modalizerRoot.get());
+            if (!this._element.get()?.getAttribute('aria-label')) {
+                console.error('Modalizer element must have aria-label', this._element.get());
             }
         }
     }
@@ -288,7 +255,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as unknown as Types.TabsterInternal).getWindow;
+        this._win = (tabster as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
     }
@@ -297,7 +264,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = undefined;
 
         this._tabster.focusedElement.subscribe(this._onFocus);
-        this._win().document.addEventListener(MUTATION_EVENT_NAME, this._onMutation);
     }
 
     protected dispose(): void {
@@ -328,93 +294,39 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         (instance as ModalizerAPI).dispose();
     }
 
-    add(element: HTMLElement, basic: Types.ModalizerBasicProps, extended?: Types.ModalizerExtendedProps): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+    static createModalizer: Types.ModalizerConstructor = (
+        tabster: Types.TabsterInternal,
+        element: HTMLElement,
+        basic: Types.ModalizerBasicProps,
+        extended?: Types.ModalizerExtendedProps
+    ): Types.Modalizer => {
+        const self = (tabster as Types.TabsterInternal).modalizer as ModalizerAPI;
+        const modalizer = new Modalizer(tabster, element, self._onModalizerDispose, basic, extended);
 
-        if (tabsterOnElement && tabsterOnElement.modalizer) {
-            if (__DEV__ && (tabsterOnElement.modalizer.userId !== basic.id)) {
-                console.error('Element already has Modalizer with different id.', element);
-            }
-
-            return;
-        }
-
-        if (this._modalizers[basic.id] && __DEV__) {
-            const err = new Error(`Attempting to add Modalizer: ${basic.id} which already exists`);
-            console.error(err.stack);
-        }
-
-        const modalizer = new Modalizer(element, this._tabster, this._win, basic, extended);
-        this._modalizers[basic.id] = modalizer;
+        self._modalizers[basic.id] = modalizer;
 
         // Adding a modalizer which is already focused, activate it
-        if (element.contains(this._tabster.focusedElement.getFocusedElement() ?? null)) {
-            const prevModalizer = this._curModalizer;
+        if (element.contains(tabster.focusedElement.getFocusedElement() ?? null)) {
+            const prevModalizer = self._curModalizer;
             if (prevModalizer) {
                 prevModalizer.setActive(false);
                 prevModalizer.setFocused(false);
             }
-            this._curModalizer = modalizer;
-            this._curModalizer.setActive(true);
+            self._curModalizer = modalizer;
+            self._curModalizer.setActive(true);
         }
 
-        setTabsterOnElement(this._tabster, element, { modalizer: this._modalizers[basic.id] });
-
-        dispatchMutationEvent(element, { modalizer: this._modalizers[basic.id] });
+        return modalizer;
     }
 
-    setProps(
-        element: HTMLElement,
-        basic?: Partial<Types.ModalizerBasicProps> | null,
-        extended?: Partial<Types.ModalizerExtendedProps> | null
-    ): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement && tabsterOnElement.modalizer) {
-            tabsterOnElement.modalizer.setProps(basic, extended);
-        }
-    }
-
-    remove(element: HTMLElement): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        const modalizer = tabsterOnElement && tabsterOnElement.modalizer;
-
-        if (!modalizer) {
-            if (__DEV__) {
-                console.error('No Modalizer to remove.', element);
-            }
-
-            return;
-        }
-
-        setTabsterOnElement(this._tabster, element, {
-            modalizer: undefined
-        });
-
+    private _onModalizerDispose = (modalizer: Modalizer) => {
         modalizer.setActive(false);
+
         if (this._curModalizer === modalizer) {
             this._curModalizer = undefined;
         }
 
         delete this._modalizers[modalizer.userId];
-        modalizer.dispose();
-    }
-
-    move(from: HTMLElement, to: HTMLElement): void {
-        const tabsterOnElementFrom = getTabsterOnElement(this._tabster, from);
-
-        const modalizer = tabsterOnElementFrom && tabsterOnElementFrom.modalizer;
-
-        if (modalizer) {
-            modalizer.move(to);
-
-            setTabsterOnElement(this._tabster, to, { modalizer: modalizer });
-            setTabsterOnElement(this._tabster, from, { modalizer: undefined });
-
-            dispatchMutationEvent(from, { modalizer, removed: true });
-            dispatchMutationEvent(to, { modalizer });
-        }
     }
 
     focus(elementFromModalizer: HTMLElement, noFocusFirst?: boolean, noFocusDefault?: boolean): boolean {
@@ -425,7 +337,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._curModalizer.setActive(true);
 
             const basic = this._curModalizer.getBasicProps();
-            const modalizerRoot = this._curModalizer.getModalizerRoot();
+            const modalizerRoot = this._curModalizer.getElement();
 
             if (modalizerRoot) {
                 if (noFocusFirst === undefined) {
@@ -461,26 +373,39 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         return this._curModalizer;
     }
 
-    /**
-     * Listens to DOM mutation events for removed modalizers
-     */
-    private _onMutation = (e: MutationEvent) => {
-        const details = e.details;
-        if (!details.modalizer || !details.removed) {
-            return;
-        }
+    static updateModalizer(
+        tabster: Types.TabsterInternal,
+        modalizer: Types.Modalizer,
+        removed?: boolean
+    ): void {
+        if (removed && tabster.modalizer) {
+            const self = tabster.modalizer as ModalizerAPI;
 
-        const removedModalizer = details.modalizer;
-        // If an active modalizer is no longer on DOM, deactivate it
-        if (removedModalizer.isActive()) {
-            removedModalizer.setFocused(false);
-            removedModalizer.setActive(false);
-        }
+            if (modalizer.isActive()) {
+                modalizer.setFocused(false);
+                modalizer.setActive(false);
+            }
 
-        removedModalizer.dispose();
-        delete this._modalizers[removedModalizer.userId];
-        if (this._curModalizer === removedModalizer) {
-            this._curModalizer = undefined;
+            delete self._modalizers[modalizer.userId];
+
+            if (self._curModalizer === modalizer) {
+                self._curModalizer = undefined;
+            }
+        }
+    }
+
+    updateModalizer = (modalizer: Modalizer, removed?: boolean) => {
+        if (removed) {
+            if (modalizer.isActive()) {
+                modalizer.setFocused(false);
+                modalizer.setActive(false);
+            }
+
+            delete this._modalizers[modalizer.userId];
+
+            if (this._curModalizer === modalizer) {
+                this._curModalizer = undefined;
+            }
         }
     }
 
@@ -538,7 +463,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        let toFocus = this._tabster.focusable.findFirst({ container: this._curModalizer.getModalizerRoot() });
+        let toFocus = this._tabster.focusable.findFirst({ container: this._curModalizer.getElement() });
         if (toFocus) {
             if (outsideElement.compareDocumentPosition(toFocus) & document.DOCUMENT_POSITION_PRECEDING) {
                 toFocus = this._tabster.focusable.findLast({ container: outsideElement.ownerDocument.body });

@@ -6,7 +6,7 @@
 import { nativeFocus } from 'keyborg';
 
 import { FocusedElementState } from './State/FocusedElement';
-import { getTabsterOnElement, setTabsterOnElement } from './Instance';
+import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
@@ -41,23 +41,23 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     private _hasFullyVisible = false;
     private _updateVisibleTimer: number | undefined;
     private _focusables: Record<string, WeakHTMLElement> = {};
+    private _win: Types.GetWindow;
 
     constructor(
-        tabster: Types.TabsterCore,
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        getWindow: Types.GetWindow,
         basic?: Types.MoverBasicProps,
         extended?: Types.MoverExtendedProps
     ) {
-        super(tabster, element, getWindow, basic, extended);
+        super(tabster, element, basic, extended);
 
         Mover._movers[this.id] = this;
 
-        setTabsterOnElement(tabster, element, { mover: this });
+        this._win = tabster.getWindow;
 
         if (this._basic.trackState || this._basic.visibilityAware) {
             this._observeState();
-            this._domChangedTimer = getWindow().setTimeout(this._domChanged, 0);
+            this._domChangedTimer = tabster.getWindow().setTimeout(this._domChanged, 0);
         }
     }
 
@@ -84,12 +84,6 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         if (this._onChangeTimer) {
             win.clearTimeout(this._onChangeTimer);
             this._onChangeTimer = undefined;
-        }
-
-        const e = this._element.get();
-
-        if (e) {
-            setTabsterOnElement(this._tabster, e, { mover: undefined });
         }
 
         delete Mover._movers[this.id];
@@ -481,35 +475,13 @@ export class MoverAPI implements Types.MoverAPI {
         (instance as MoverAPI).dispose();
     }
 
-    add(element: HTMLElement, basic?: Types.MoverBasicProps, extended?: Types.MoverExtendedProps): void {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-
-        if (tabsterOnElement && tabsterOnElement.mover) {
-            throw new Error('The element already has Mover');
-        }
-
-        // tslint:disable-next-line:no-unused-expression
-        new Mover(this._tabster, element, this._win, basic, extended);
-    }
-
-    remove(element: HTMLElement): void {
-        const mover = getTabsterOnElement(this._tabster, element)?.mover;
-
-        if (mover) {
-            mover.dispose();
-        }
-    }
-
-    setProps(
+    static createMover: Types.MoverConstructor = (
+        tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Partial<Types.MoverBasicProps> | null,
-        extended?: Partial<Types.MoverExtendedProps> | null
-    ): void {
-        const mover = RootAPI.getTabsterContext(this._tabster, element)?.mover;
-
-        if (mover) {
-            mover.setProps(basic, extended);
-        }
+        basic?: Types.MoverBasicProps,
+        extended?: Types.MoverExtendedProps
+    ): Types.Mover => {
+        return new Mover(tabster, element, basic, extended);
     }
 
     private _onFocus = (e: HTMLElement | undefined): void => {
