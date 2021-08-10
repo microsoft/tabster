@@ -7,11 +7,11 @@ import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types } from '../Tabster';
 
 const groupperItem = (
-    tabsterAttr: ReturnType<typeof getTabsterAttribute>,
+    tabsterAttr: Types.TabsterDOMAttribute,
     count: number
 ) => {
     return (
-        <div tabindex='0' {...tabsterAttr} data-count={`${count}`}>
+        <div tabIndex={0} {...tabsterAttr} data-count={`${count}`}>
             <button>Foo</button>
             <button>Bar</button>
         </div>

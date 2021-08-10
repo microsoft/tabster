@@ -11,7 +11,7 @@ describe('Mover', () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    const getTestHtml = (attr: ReturnType<typeof getTabsterAttribute>) => {
+    const getTestHtml = (attr: Types.TabsterDOMAttribute) => {
         const rootAttr = getTabsterAttribute({ root: {} });
 
         return (
@@ -171,8 +171,8 @@ describe('NestedMovers', () => {
     });
 
     const getTestHtml = (
-        parentAttr: ReturnType<typeof getTabsterAttribute>,
-        nestedAttr: ReturnType<typeof getTabsterAttribute>
+        parentAttr: Types.TabsterDOMAttribute,
+        nestedAttr: Types.TabsterDOMAttribute
     ) => {
         const rootAttr = getTabsterAttribute({ root: {} });
 
