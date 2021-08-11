@@ -96,11 +96,6 @@ export class Modalizer extends TabsterPart<Types.ModalizerProps> implements Type
 
     dispose(): void {
         this._onDispose(this);
-
-        if (this._isFocused) {
-            this.setFocused(false);
-        }
-
         this._remove();
     }
 
@@ -178,34 +173,11 @@ export class Modalizer extends TabsterPart<Types.ModalizerProps> implements Type
         return !!this.getElement()?.contains(element);
     }
 
-    setFocused(focused: boolean): void {
-        const element = this.getElement();
-
-        if (!element || (this._isFocused === focused)) {
-            return;
-        }
-
-        this._isFocused = focused;
-
-        triggerEvent<Types.ModalizerEventDetails>(
-            element,
-            Types.ModalizerEventName,
-            focused
-                ? { eventName: 'focusin' }
-                : { eventName: 'focusout', before: false });
-
-        if (__DEV__) {
-            _setInformativeStyle(
-                this._element, false, this.internalId, this.userId, this._isActive, this._isFocused
-            );
-        }
-    }
-
     onBeforeFocusOut(): boolean {
         const element = this.getElement();
 
         return element
-            ? !triggerEvent<Types.ModalizerEventDetails>(element, Types.ModalizerEventName, { eventName: 'focusout', before: true })
+            ? !triggerEvent<Types.ModalizerEventDetails>(element, Types.ModalizerEventName, { eventName: 'beforefocusout' })
             : false;
     }
 
@@ -301,7 +273,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             const prevModalizer = self._curModalizer;
             if (prevModalizer) {
                 prevModalizer.setActive(false);
-                prevModalizer.setFocused(false);
             }
             self._curModalizer = modalizer;
             self._curModalizer.setActive(true);
@@ -327,12 +298,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._curModalizer = ctx.modalizer;
             this._curModalizer.setActive(true);
 
-            const basic = this._curModalizer.getProps();
+            const props = this._curModalizer.getProps();
             const modalizerRoot = this._curModalizer.getElement();
 
             if (modalizerRoot) {
                 if (noFocusFirst === undefined) {
-                    noFocusFirst = basic.isNoFocusFirst;
+                    noFocusFirst = props.isNoFocusFirst;
                 }
 
                 if (
@@ -344,7 +315,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 }
 
                 if (noFocusDefault === undefined) {
-                    noFocusDefault = basic.isNoFocusDefault;
+                    noFocusDefault = props.isNoFocusDefault;
                 }
 
                 if (!noFocusDefault && this._tabster.focusedElement.focusDefault(modalizerRoot)) {
@@ -373,7 +344,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             const self = tabster.modalizer as ModalizerAPI;
 
             if (modalizer.isActive()) {
-                modalizer.setFocused(false);
                 modalizer.setActive(false);
             }
 
@@ -388,7 +358,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     updateModalizer = (modalizer: Modalizer, removed?: boolean) => {
         if (removed) {
             if (modalizer.isActive()) {
-                modalizer.setFocused(false);
                 modalizer.setActive(false);
             }
 
@@ -422,8 +391,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        this._curModalizer?.setFocused(false);
-
         // Developers calling `element.focus()` should change/deactivate active modalizer
         if (details.isFocusedProgrammatically && !this._curModalizer?.contains(focusedElement)) {
             this._curModalizer?.setActive(false);
@@ -432,7 +399,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             if (modalizer) {
                 this._curModalizer = modalizer;
                 this._curModalizer.setActive(true);
-                this._curModalizer.setFocused(true);
             }
         } else if (!this._curModalizer?.getProps().isOthersAccessible) {
             // Focused outside of the active modalizer, try pull focus back to current modalizer

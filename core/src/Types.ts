@@ -438,10 +438,6 @@ export interface MoverProps {
      */
     visibilityAware?: Visibility;
     disableHomeEndKeys?: boolean;
-    /**
-     * When true, custom HTML event will be triggered for the Mover state changes.
-     */
-    triggerOnChange?: boolean;
 }
 
 export interface MoverEvent extends TabsterEventWithDetails<MoverElementState> {
@@ -515,7 +511,7 @@ export interface ModalizerProps {
     isNoFocusDefault?: boolean;
 }
 
-export type ModalizerEventDetails = { eventName: 'focusin' } | { eventName: 'focusout', before: boolean };
+export type ModalizerEventDetails = { eventName: 'beforefocusout' };
 
 export interface ModalizerEvent extends TabsterEventWithDetails<ModalizerEventDetails> {
 }
@@ -538,7 +534,6 @@ export interface Modalizer extends TabsterPart<ModalizerProps> {
      * @param active Whether the modalizer is active
      */
     setActive(active: boolean): void;
-    setFocused(focused: boolean): void;
 }
 
 export type ModalizerConstructor = (

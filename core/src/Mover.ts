@@ -317,7 +317,9 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
                     processed[id] = true;
 
                     if (this._focusables[id]) {
-                        if (el && this._props.triggerOnChange) {
+                        const props = this._props;
+
+                        if (el && (props.visibilityAware !== undefined || props.trackState)) {
                             const state = this.getState(el);
 
                             if (state) {
