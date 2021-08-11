@@ -25,7 +25,7 @@ describe('Focusable', () => {
             });
     });
 
-    it('should not allow aria-hidden elements to be focused', async () => {
+    it('should allow aria-hidden elements to be focused', async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -36,7 +36,7 @@ describe('Focusable', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toContain('Button1');
             });
     });
 });

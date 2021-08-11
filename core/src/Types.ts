@@ -451,6 +451,7 @@ export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> 
     forceUpdate(): void;
     findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
+    moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export type MoverConstructor = (
@@ -490,6 +491,7 @@ export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtend
     isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
     findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
+    moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export type GroupperConstructor = (
@@ -554,8 +556,9 @@ export interface RootBasicProps {
 export interface Root extends TabsterPart<RootBasicProps, undefined> {
     readonly uid: string;
     dispose(): void;
-    updateDummyInputs(): void;
-    moveOutWithDefaultAction(backwards: boolean): void;
+    setProps(basic?: Partial<RootBasicProps> | null): void;
+    getBasicProps(): RootBasicProps;
+    getElement(): HTMLElement | undefined;
 }
 
 export type RootConstructor = (

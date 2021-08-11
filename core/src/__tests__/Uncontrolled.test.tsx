@@ -68,19 +68,22 @@ describe('Uncontrolled', () => {
             });
     });
 
-    it('should allow to go outside of the application when tabbing and the uncontrolled element is the last', async () => {
+    it.only('should allow to go outside of the application when tabbing and the uncontrolled element is the last', async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <button aria-hidden='true'>Button1</button>
-                    <button>Button2</button>
+                    <button>Button1</button>
                     <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                        <button aria-hidden='true'>Button3</button>
-                        <button>Button4</button>
+                        <button aria-hidden='true'>Button2</button>
+                        <button>Button3</button>
                     </div>
                 </div>
             )
         )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            })
             .pressTab()
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button2');
@@ -88,10 +91,6 @@ describe('Uncontrolled', () => {
             .pressTab()
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button3');
-            })
-            .pressTab()
-            .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
             })
             .pressTab()
             .activeElement(el => {
