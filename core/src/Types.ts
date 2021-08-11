@@ -221,10 +221,6 @@ export interface DeloserProps {
     noSelectorCheck?: boolean;
 }
 
-// export interface DeloserExtendedProps {
-//     onFocusLost?(last: HTMLElement, actions: DeloserElementActions): boolean;
-// }
-
 export interface Deloser extends TabsterPart<DeloserProps> {
     readonly uid: string;
     dispose(): void;
