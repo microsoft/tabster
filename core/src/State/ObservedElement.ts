@@ -24,7 +24,7 @@ interface ObservedWaiting {
 }
 
 export class ObservedElementAPI
-        extends Subscribable<HTMLElement, Types.ObservedElementBasicProps> implements Types.ObservedElementAPI {
+        extends Subscribable<HTMLElement, Types.ObservedElementProps> implements Types.ObservedElementAPI {
 
     private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
@@ -308,7 +308,7 @@ export class ObservedElementAPI
         }
     }
 
-    private _trigger(val: HTMLElement, details: Types.ObservedElementBasicProps): void {
+    private _trigger(val: HTMLElement, details: Types.ObservedElementProps): void {
         this.trigger(val, details);
 
         const name = details.name;

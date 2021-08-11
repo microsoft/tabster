@@ -17,6 +17,7 @@ import {
     matchesSelector,
     scrollIntoView,
     TabsterPart,
+    triggerEvent,
     WeakHTMLElement
 } from './Utils';
 
@@ -28,7 +29,7 @@ const _inputSelector = [
 
 const _isVisibleTimeout = 200;
 
-export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtendedProps> implements Types.Mover {
+export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover {
     private static _movers: Record<string, Mover> = {};
 
     private _unobserve: (() => void) | undefined;
@@ -46,16 +47,15 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.MoverBasicProps,
-        extended?: Types.MoverExtendedProps
+        props: Types.MoverProps
     ) {
-        super(tabster, element, basic, extended);
+        super(tabster, element, props);
 
         Mover._movers[this.id] = this;
 
         this._win = tabster.getWindow;
 
-        if (this._basic.trackState || this._basic.visibilityAware) {
+        if (this._props.trackState || this._props.visibilityAware) {
             this._observeState();
             this._domChangedTimer = tabster.getWindow().setTimeout(this._domChanged, 0);
         }
@@ -96,7 +96,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             this._current = undefined;
         }
 
-        if (this._basic.trackState || this._basic.visibilityAware) {
+        if (this._props.trackState || this._props.visibilityAware) {
             this._processOnChange();
         }
 
@@ -120,7 +120,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         let uncontrolled: HTMLElement | undefined;
         const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
 
-        if (this._basic.tabbable) {
+        if (this._props.tabbable) {
             next = prev
                 ? focusable.findPrev({ currentElement: current, container, onUncontrolled })
                 : focusable.findNext({ currentElement: current, container, onUncontrolled });
@@ -146,7 +146,7 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {
-        const  { memorizeCurrent, visibilityAware } = this._basic;
+        const  { memorizeCurrent, visibilityAware } = this._props;
 
         if (memorizeCurrent || visibilityAware) {
             const container = this.getElement();
@@ -317,13 +317,11 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
                     processed[id] = true;
 
                     if (this._focusables[id]) {
-                        const onChange = this._extended.onChange;
-
-                        if (el && onChange) {
+                        if (el && this._props.triggerOnChange) {
                             const state = this.getState(el);
 
                             if (state) {
-                                onChange(el, state);
+                                triggerEvent(el, Types.MoverEventName, state);
                             }
                         }
                     }
@@ -425,6 +423,10 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     }
 }
 
+function validateMoverProps(props: Types.MoverProps): void {
+    // TODO: Implement validation.
+}
+
 export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
@@ -478,10 +480,11 @@ export class MoverAPI implements Types.MoverAPI {
     static createMover: Types.MoverConstructor = (
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.MoverBasicProps,
-        extended?: Types.MoverExtendedProps
+        props: Types.MoverProps
     ): Types.Mover => {
-        return new Mover(tabster, element, basic, extended);
+        validateMoverProps(props);
+
+        return new Mover(tabster, element, props);
     }
 
     private _onFocus = (e: HTMLElement | undefined): void => {
@@ -589,7 +592,7 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         const focusable = tabster.focusable;
-        const moverProps = mover.getBasicProps();
+        const moverProps = mover.getProps();
         const direction = moverProps.direction || Types.MoverDirections.Both;
         const isBoth = direction === Types.MoverDirections.Both;
         const isVertical = isBoth || (direction === Types.MoverDirections.Vertical);

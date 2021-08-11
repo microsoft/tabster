@@ -109,10 +109,14 @@ export function updateTabsterByAttribute(
         switch (key) {
             case 'deloser':
                 if (tabsterOnElement.deloser) {
-                    tabsterOnElement.deloser.setProps(newTabsterProps.deloser);
+                    tabsterOnElement.deloser.setProps(newTabsterProps.deloser as Types.DeloserProps);
                 } else {
                     if (tabsteri.createDeloser) {
-                        tabsterOnElement.deloser = tabsteri.createDeloser(tabsteri, element, newTabsterProps.deloser);
+                        tabsterOnElement.deloser = tabsteri.createDeloser(
+                            tabsteri,
+                            element,
+                            newTabsterProps.deloser as Types.DeloserProps
+                        );
                     } else if (__DEV__) {
                         console.error('Deloser API used before initializing, please call `getDeloser()`');
                     }
@@ -121,19 +125,23 @@ export function updateTabsterByAttribute(
 
             case 'root':
                 if (tabsterOnElement.root) {
-                    tabsterOnElement.root.setProps(newTabsterProps.root);
+                    tabsterOnElement.root.setProps(newTabsterProps.root as Types.RootProps);
                 } else {
-                    tabsterOnElement.root = tabsteri.createRoot(tabsteri, element, newTabsterProps.root);
-                    tabsteri.updateRoot(tabsterOnElement.root);
+                    tabsterOnElement.root = tabsteri.createRoot(tabsteri, element, newTabsterProps.root as Types.RootProps);
                 }
+                tabsteri.updateRoot(tabsterOnElement.root);
                 break;
 
             case 'modalizer':
                 if (tabsterOnElement.modalizer) {
-                    tabsterOnElement.modalizer.setProps(newTabsterProps.modalizer);
+                    tabsterOnElement.modalizer.setProps(newTabsterProps.modalizer as Types.ModalizerProps);
                 } else {
                     if (tabsteri.createModalizer) {
-                        tabsterOnElement.modalizer = tabsteri.createModalizer(tabsteri, element, newTabsterProps.modalizer!!!);
+                        tabsterOnElement.modalizer = tabsteri.createModalizer(
+                            tabsteri,
+                            element,
+                            newTabsterProps.modalizer as Types.ModalizerProps
+                        );
                     } else if (__DEV__) {
                         console.error('Modalizer API used before initializing, please call `getModalizer()`');
                     }
@@ -146,10 +154,14 @@ export function updateTabsterByAttribute(
 
             case 'groupper':
                 if (tabsterOnElement.groupper) {
-                    tabsterOnElement.groupper.setProps(newTabsterProps.groupper);
+                    tabsterOnElement.groupper.setProps(newTabsterProps.groupper as Types.GroupperProps);
                 } else {
                     if (tabsteri.createGroupper) {
-                        tabsterOnElement.groupper = tabsteri.createGroupper(tabsteri, element, newTabsterProps.groupper);
+                        tabsterOnElement.groupper = tabsteri.createGroupper(
+                            tabsteri,
+                            element,
+                            newTabsterProps.groupper as Types.GroupperProps
+                        );
                     } else if (__DEV__) {
                         console.error('Groupper API used before initializing, please call `getGroupper()`');
                     }
@@ -158,10 +170,10 @@ export function updateTabsterByAttribute(
 
             case 'mover':
                 if (tabsterOnElement.mover) {
-                    tabsterOnElement.mover.setProps(newTabsterProps.mover);
+                    tabsterOnElement.mover.setProps(newTabsterProps.mover as Types.MoverProps);
                 } else {
                     if (tabsteri.createMover) {
-                        tabsterOnElement.mover = tabsteri.createMover(tabsteri, element, newTabsterProps.mover);
+                        tabsterOnElement.mover = tabsteri.createMover(tabsteri, element, newTabsterProps.mover as Types.MoverProps);
                     } else if (__DEV__) {
                         console.error('Mover API used before initializing, please call `getMover()`');
                     }

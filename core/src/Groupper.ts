@@ -12,16 +12,15 @@ import { RootAPI } from './Root';
 import * as Types from './Types';
 import { TabsterPart } from './Utils';
 
-export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.GroupperExtendedProps> implements Types.Groupper {
+export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
     private _isUnlimited = false;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.GroupperBasicProps,
-        extended?: Types.GroupperExtendedProps
+        props: Types.GroupperProps
     ) {
-        super(tabster, element, basic, extended);
+        super(tabster, element, props);
         this.makeUnlimited(false);
     }
 
@@ -52,7 +51,7 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
                 ? tabster.focusable.findPrev({ container, currentElement: current, onUncontrolled })
                 : tabster.focusable.findNext({ container, currentElement: current, onUncontrolled });
 
-            if (!uncontrolled && !next && (this._basic.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
+            if (!uncontrolled && !next && (this._props.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
                 next = prev
                     ? tabster.focusable.findLast({ container })
                     : tabster.focusable.findFirst({ container });
@@ -151,6 +150,10 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
     }
 }
 
+function validateGroupperProps(props: Types.GroupperProps): void {
+    // TODO: Implement validation.
+}
+
 export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
@@ -195,10 +198,11 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
     static createGroupper: Types.GroupperConstructor = (
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.GroupperBasicProps,
-        extended?: Types.GroupperExtendedProps
+        props: Types.GroupperProps
     ): Types.Groupper => {
-        return new Groupper(tabster, element, basic, extended);
+        validateGroupperProps(props);
+
+        return new Groupper(tabster, element, props);
     }
 
     forgetUnlimitedGrouppers(): void {
@@ -240,7 +244,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                     !groupper.isUnlimited() &&
                     (
                         (
-                            (groupper.getBasicProps().tabbability || Types.GroupperTabbabilities.Unlimited) ===
+                            (groupper.getProps().tabbability || Types.GroupperTabbabilities.Unlimited) ===
                                 Types.GroupperTabbabilities.Unlimited
                         ) ||
                         (

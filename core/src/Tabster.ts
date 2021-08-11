@@ -304,7 +304,7 @@ export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
  */
 export function getDeloser(
     tabster: Types.TabsterCore,
-    props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
+    props?: { autoDeloser: Types.DeloserProps }
 ): Types.DeloserAPI {
     const tabsterInternal = (tabster as Types.TabsterInternal);
 

@@ -1276,7 +1276,7 @@ export class CrossOriginFocusedElementState
 }
 
 export class CrossOriginObservedElementState
-        extends Subscribable<CrossOriginElement, Types.ObservedElementBasicProps>
+        extends Subscribable<CrossOriginElement, Types.ObservedElementProps>
         implements Types.CrossOriginObservedElementState {
 
     private _tabster: Types.TabsterCore;
@@ -1327,7 +1327,7 @@ export class CrossOriginObservedElementState
     static trigger(
         instance: Types.CrossOriginObservedElementState,
         element: CrossOriginElement,
-        details: Types.ObservedElementBasicProps
+        details: Types.ObservedElementProps
     ): void {
         (instance as CrossOriginObservedElementState).trigger(element, details);
     }
@@ -1469,7 +1469,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         }
     }
 
-    private _onObserved = (element: HTMLElement, details: Types.ObservedElementBasicProps): void => {
+    private _onObserved = (element: HTMLElement, details: Types.ObservedElementProps): void => {
         const d = GetElementTransaction.getElementData(
             this._tabster,
             element,

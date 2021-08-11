@@ -7,7 +7,7 @@ import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types } from '../Tabster';
 
 describe('Modalizer', () => {
-    const getTestHtml = (options: Partial<Types.ModalizerBasicProps> = {}) => {
+    const getTestHtml = (options: Partial<Types.ModalizerProps> = {}) => {
         const id = 'modal';
         const rootAttr = getTabsterAttribute({ root: {} });
         const modalizerAttr = getTabsterAttribute({
