@@ -11,6 +11,7 @@ import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import {
+    DummyInput,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     isElementVisibleInContainer,
@@ -18,7 +19,6 @@ import {
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
-    DummyInput,
 } from './Utils';
 
 const _inputSelector = [

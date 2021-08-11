@@ -88,7 +88,7 @@ describe('Modalizer', () => {
             .pressTab()
             .activeElement(el => expect(el?.textContent).toBe('Foo'))
             .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toBe('Bar'))
+            .activeElement(el => expect(el?.textContent).toBe('Bar'));
     });
 
     describe('should restore focus', () => {

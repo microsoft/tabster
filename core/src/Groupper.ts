@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from 'keyborg';
-
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement } from './Instance';
+import { nativeFocus } from 'keyborg';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { TabsterPart, DummyInput } from './Utils';
+import { DummyInput, TabsterPart } from './Utils';
 
 interface DummyInputProps {
     shouldMoveOut?: boolean;

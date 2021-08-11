@@ -6,7 +6,7 @@
 import { augmentAttribute } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, TabsterPart, WeakHTMLElement, DummyInput } from './Utils';
+import { createElementTreeWalker, DummyInput, TabsterPart, WeakHTMLElement } from './Utils';
 
 let _lastInternalId = 0;
 
@@ -80,8 +80,8 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
         this._setAccessibilityProps();
 
         const getWin = tabster.getWindow;
-        this.preDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => {}, {});
-        this.postDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => {}, {});
+        this.preDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => undefined, {});
+        this.postDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => undefined, {});
         this._addDummyInputs();
 
         if (__DEV__) {
@@ -98,7 +98,7 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
 
     private _onFocusDummyInput = (input: HTMLDivElement) => {
         const container = this._element.get();
-        if(this.isActive()) {
+        if (this.isActive()) {
             // Focus trap is active
             if (input === this.postDummy.input) {
                 this._tabster.focusedElement.focusFirst({ container });
