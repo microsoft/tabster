@@ -177,6 +177,9 @@ export class BroTest implements PromiseLike<undefined> {
         }, 0) as any;
     }
 
+    /**
+     * @param time - in milliseconds
+     */
     wait(time: number) {
         this._chain.push(new BroTestItemWait(time));
         return this;

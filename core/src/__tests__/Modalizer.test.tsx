@@ -78,6 +78,7 @@ describe('Modalizer', () => {
             );
     });
 
+    // TODO focus trap no longer escapes the document
     it('should trap focus', async () => {
         await new BroTest.BroTest(getTestHtml())
             .focusElement('#foo')
@@ -85,15 +86,9 @@ describe('Modalizer', () => {
             .pressTab()
             .activeElement(el => expect(el?.textContent).toBe('Bar'))
             .pressTab()
-            .activeElement(el => expect(el).toBeNull())
-            .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toBe('Bar'))
-            .pressTab(true)
             .activeElement(el => expect(el?.textContent).toBe('Foo'))
             .pressTab(true)
-            .activeElement(el => expect(el).toBeNull())
-            .pressTab()
-            .activeElement(el => expect(el?.textContent).toBe('Foo'));
+            .activeElement(el => expect(el?.textContent).toBe('Bar'))
     });
 
     describe('should restore focus', () => {

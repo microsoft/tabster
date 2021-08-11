@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from 'keyborg';
+import { KeyborgFocusInEvent, KEYBORG_FOCUSIN } from 'keyborg';
 
-import { Keys } from '../Keys';
 import { RootAPI } from '../Root';
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';
 import {
     documentContains,
-    DummyInput,
     getLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement
@@ -44,7 +42,6 @@ export class FocusedElementState
         // Add these event listeners as capture - we want Tabster to run before user event handlers
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener('focusout', this._onFocusOut, true);
-        win.addEventListener('keydown', this._onKeyDown, true);
     }
 
     protected dispose(): void {
@@ -59,7 +56,6 @@ export class FocusedElementState
 
         win.document.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.removeEventListener('focusout', this._onFocusOut, true);
-        win.removeEventListener('keydown', this._onKeyDown, true);
 
         delete FocusedElementState._lastResetElement;
 
@@ -326,84 +322,7 @@ export class FocusedElementState
         return next;
     }
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
-        if (e.keyCode !== Keys.Tab) {
-            return;
-        }
-
-        let curElement = this.getVal();
-
-        if (!curElement || !curElement.ownerDocument || curElement.contentEditable === 'true') {
-            return;
-        }
-
-        const ctx = RootAPI.getTabsterContext(this._tabster, curElement, { checkRtl: true });
-
-        if (!ctx) {
-            return;
-        }
-
-        const isPrev = e.shiftKey;
-        const next = FocusedElementState.findNextTabbable(this._tabster, ctx, curElement, isPrev);
-
-        if (!next) {
-            return;
-        }
-
-        let uncontrolled = next.uncontrolled;
-
-        if (uncontrolled) {
-            if (!ctx.uncontrolled) {
-                // We have met an uncontrolled area, just allow default action.
-                this._moveToUncontrolled(uncontrolled, isPrev);
-            }
-            return;
-        }
-
-        const nextElement = next.element;
-
-        if (ctx.modalizer) {
-            const nextElementCtx = nextElement && RootAPI.getTabsterContext(this._tabster, nextElement);
-
-            if (
-                !nextElementCtx ||
-                (ctx.root.uid !== nextElementCtx.root.uid) ||
-                !nextElementCtx.modalizer?.isActive()
-            ) {
-                if (ctx.modalizer.onBeforeFocusOut()) {
-                    e.preventDefault();
-
-                    return;
-                }
-            }
-        }
-
-        if (nextElement) {
-            // For iframes just allow normal Tab behaviour
-            if (nextElement.tagName !== 'IFRAME') {
-                e.preventDefault();
-                nativeFocus(nextElement);
-            }
-        } else {
-            ctx.root.moveOutWithDefaultAction(isPrev);
-        }
-    }
-
     private _validateFocusedElement = (element: HTMLElement): void => {
         // TODO: Make sure this is not needed anymore and write tests.
-    }
-
-    private _moveToUncontrolled(uncontrolled: HTMLElement, isPrev: boolean): void {
-        const dummy: DummyInput<undefined> = new DummyInput(this._win, true, () => {/**/}, () => {/**/}, undefined);
-        const input = dummy.input;
-
-        if (input) {
-            const parent = uncontrolled.parentElement;
-
-            if (parent) {
-                parent.insertBefore(input, isPrev ? uncontrolled.nextElementSibling : uncontrolled);
-                nativeFocus(input);
-            }
-        }
     }
 }

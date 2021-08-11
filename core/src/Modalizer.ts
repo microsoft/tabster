@@ -6,7 +6,7 @@
 import { augmentAttribute } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { createElementTreeWalker, TabsterPart, WeakHTMLElement } from './Utils';
+import { createElementTreeWalker, TabsterPart, WeakHTMLElement, DummyInput } from './Utils';
 
 let _lastInternalId = 0;
 
@@ -39,6 +39,10 @@ function _setInformativeStyle(
     }
 }
 
+interface DummyInputProps {
+    shouldMoveOut?: boolean;
+}
+
 export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.ModalizerExtendedProps> implements Types.Modalizer {
     readonly internalId: string;
     userId: string;
@@ -50,6 +54,8 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
      */
     private _modalizerParent: WeakHTMLElement | null;
     private _onDispose: (modalizer: Modalizer) => void;
+    private preDummy: DummyInput<DummyInputProps>;
+    private postDummy: DummyInput<DummyInputProps>;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -73,6 +79,11 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
 
         this._setAccessibilityProps();
 
+        const getWin = tabster.getWindow;
+        this.preDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => {}, {});
+        this.postDummy = new DummyInput(getWin, false, this._onFocusDummyInput, () => {}, {});
+        this._addDummyInputs();
+
         if (__DEV__) {
             _setInformativeStyle(
                 this._element,
@@ -82,6 +93,38 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
                 this._isActive,
                 this._isFocused,
             );
+        }
+    }
+
+    private _onFocusDummyInput = (input: HTMLDivElement) => {
+        const container = this._element.get();
+        if(this.isActive()) {
+            // Focus trap is active
+            if (input === this.postDummy.input) {
+                this._tabster.focusedElement.focusFirst({ container });
+            } else {
+                this._tabster.focusedElement.focusLast({ container });
+            }
+        } else {
+            // not active, forward focus inside
+            if (input === this.postDummy.input) {
+                this._tabster.focusedElement.focusLast({ container });
+            } else {
+                this._tabster.focusedElement.focusFirst({ container });
+            }
+        }
+    }
+
+    private _addDummyInputs() {
+        const element = this._element.get();
+        if (element && !this._basic.isOthersAccessible) {
+            if (this.postDummy.input) {
+                element.appendChild(this.postDummy.input);
+            }
+
+            if (this.preDummy.input) {
+                element.prepend(this.preDummy.input);
+            }
         }
     }
 
@@ -113,6 +156,8 @@ export class Modalizer extends TabsterPart<Types.ModalizerBasicProps, Types.Moda
         }
 
         this._remove();
+        this.preDummy.dispose();
+        this.postDummy.dispose();
 
         this._extended = {};
     }

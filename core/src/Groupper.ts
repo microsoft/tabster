@@ -10,10 +10,16 @@ import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { TabsterPart } from './Utils';
+import { TabsterPart, DummyInput } from './Utils';
+
+interface DummyInputProps {
+    shouldMoveOut?: boolean;
+}
 
 export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.GroupperExtendedProps> implements Types.Groupper {
     private _isUnlimited = false;
+    private preDummy: DummyInput<DummyInputProps>;
+    private postDummy: DummyInput<DummyInputProps>;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -23,6 +29,35 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
     ) {
         super(tabster, element, basic, extended);
         this.makeUnlimited(false);
+
+        const getWin = tabster.getWindow;
+        this.preDummy = new DummyInput(getWin, false, this._onFocusDummyInput, this._onBlurDummyInput, {});
+        this.postDummy = new DummyInput(getWin, false, this._onFocusDummyInput, this._onBlurDummyInput, {});
+        this._addDummyInputs();
+    }
+
+    private _onFocusDummyInput = (input: HTMLDivElement, props: DummyInputProps) => {
+        const container = this._element.get();
+        if (container && !props.shouldMoveOut) {
+            this._tabster.focusedElement.focusFirst({ container });
+        }
+    }
+
+    private _onBlurDummyInput = (input: HTMLDivElement, props: DummyInputProps) => {
+        props.shouldMoveOut = false;
+    }
+
+    private _addDummyInputs() {
+        const element = this._element.get();
+        if (element) {
+            if (this.postDummy.input) {
+                element.appendChild(this.postDummy.input);
+            }
+
+            if (this.preDummy.input) {
+                element.prepend(this.preDummy.input);
+            }
+        }
     }
 
     dispose(): void {
@@ -31,6 +66,24 @@ export class Groupper extends TabsterPart<Types.GroupperBasicProps, Types.Groupp
         if (element) {
             if (__DEV__) {
                 _setInformativeStyle(this._element, true);
+            }
+        }
+
+        this.preDummy.dispose();
+        this.postDummy.dispose();
+    }
+
+    moveOutWithDefaultAction(backwards: boolean): void {
+        const first = this.preDummy;
+        const last = this.postDummy;
+
+        if (first?.input && last?.input) {
+            if (backwards) {
+                first.props.shouldMoveOut = true;
+                nativeFocus(first.input);
+            } else {
+                last.props.shouldMoveOut = true;
+                nativeFocus(last.input);
             }
         }
     }
@@ -263,18 +316,20 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
-        if ((e.keyCode !== Keys.Enter) && (e.keyCode !== Keys.Esc)) {
+        if ((e.keyCode !== Keys.Enter) && (e.keyCode !== Keys.Esc) && (e.keyCode !== Keys.Tab)) {
             return;
         }
 
         const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            let groupper = RootAPI.getTabsterContext(this._tabster, element)?.groupper;
+            let ctx = RootAPI.getTabsterContext(this._tabster, element);
+            let groupper = ctx?.groupper;
 
-            if (groupper) {
+            if (ctx && groupper) {
                 const groupperElement = groupper.getElement();
                 let next: HTMLElement | null | undefined;
+                let isPrev = e.shiftKey;
 
                 if ((e.keyCode === Keys.Enter)) {
                     if ((groupperElement !== element) || groupper.isActive()) {
@@ -310,12 +365,16 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                     if (ge) {
                         this._updateUnlimited(ge);
                     }
+                } else if (e.keyCode === Keys.Tab) {
+                    next = FocusedElementState.findNextTabbable(this._tabster, ctx, element, isPrev)?.element;
                 }
 
                 if (next) {
                     e.preventDefault();
 
                     nativeFocus(next);
+                } else {
+                    groupper.moveOutWithDefaultAction(isPrev);
                 }
             }
         }

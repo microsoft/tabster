@@ -17,7 +17,8 @@ import {
     matchesSelector,
     scrollIntoView,
     TabsterPart,
-    WeakHTMLElement
+    WeakHTMLElement,
+    DummyInput,
 } from './Utils';
 
 const _inputSelector = [
@@ -27,6 +28,10 @@ const _inputSelector = [
 ].join(', ');
 
 const _isVisibleTimeout = 200;
+
+interface DummyInputProps {
+    shouldMoveOut?: boolean;
+}
 
 export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtendedProps> implements Types.Mover {
     private static _movers: Record<string, Mover> = {};
@@ -42,6 +47,8 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
     private _updateVisibleTimer: number | undefined;
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
+    private preDummy: DummyInput<DummyInputProps>;
+    private postDummy: DummyInput<DummyInputProps>;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -58,6 +65,58 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
         if (this._basic.trackState || this._basic.visibilityAware) {
             this._observeState();
             this._domChangedTimer = tabster.getWindow().setTimeout(this._domChanged, 0);
+        }
+
+        const getWin = tabster.getWindow;
+        this.preDummy = new DummyInput(getWin, false, this._onFocusDummyInput, this._onBlurDummyInput, {});
+        this.postDummy = new DummyInput(getWin, false, this._onFocusDummyInput, this._onBlurDummyInput, {});
+        this._addDummyInputs();
+    }
+
+    private _onFocusDummyInput = (input: HTMLDivElement, props: DummyInputProps) => {
+        const container = this._element.get();
+        if (container && !props.shouldMoveOut) {
+            let toFocus = this._tabster.focusable.findFirst({ container });
+            if (this._basic.memorizeCurrent && this._current) {
+                const memorized = this._current?.get();
+                if (memorized) {
+                    toFocus = memorized;
+                }
+            }
+
+            toFocus?.focus();
+        }
+    }
+
+    private _onBlurDummyInput = (input: HTMLDivElement, props: DummyInputProps) => {
+        props.shouldMoveOut = false;
+    }
+
+    private _addDummyInputs() {
+        const element = this._element.get();
+        if (element) {
+            if (this.postDummy.input) {
+                element.appendChild(this.postDummy.input);
+            }
+
+            if (this.preDummy.input) {
+                element.prepend(this.preDummy.input);
+            }
+        }
+    }
+
+    moveOutWithDefaultAction(backwards: boolean): void {
+        const first = this.preDummy;
+        const last = this.postDummy;
+
+        if (first?.input && last?.input) {
+            if (backwards) {
+                first.props.shouldMoveOut = true;
+                nativeFocus(first.input);
+            } else {
+                last.props.shouldMoveOut = true;
+                nativeFocus(last.input);
+            }
         }
     }
 
@@ -85,6 +144,9 @@ export class Mover extends TabsterPart<Types.MoverBasicProps, Types.MoverExtende
             win.clearTimeout(this._onChangeTimer);
             this._onChangeTimer = undefined;
         }
+
+        this.preDummy.dispose();
+        this.postDummy.dispose();
 
         delete Mover._movers[this.id];
     }
@@ -538,13 +600,10 @@ export class MoverAPI implements Types.MoverAPI {
             case Keys.PageUp:
             case Keys.Home:
             case Keys.End:
+            case Keys.Tab:
                 break;
             default:
                 return;
-        }
-
-        if (e.shiftKey) {
-            return;
         }
 
         const tabster = this._tabster;
@@ -660,6 +719,8 @@ export class MoverAPI implements Types.MoverAPI {
             if (next) {
                 scrollIntoView(this._win, next, true);
             }
+        } else if (keyCode === Keys.Tab) {
+            next = FocusedElementState.findNextTabbable(tabster, ctx, focused, e.shiftKey)?.element;
         } else if (isGrid) {
             const fromRect = focused.getBoundingClientRect();
             let lastElement: HTMLElement | undefined;
@@ -729,6 +790,10 @@ export class MoverAPI implements Types.MoverAPI {
             e.stopImmediatePropagation();
 
             nativeFocus(next);
+        } else {
+            if (keyCode === Keys.Tab) {
+                mover.moveOutWithDefaultAction(e.shiftKey);
+            }
         }
     }
 

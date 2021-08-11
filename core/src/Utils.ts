@@ -574,7 +574,7 @@ export interface DummyInputProps {
 
 export type DummyInputFocusCallback<P> = (input: HTMLDivElement, props: P) => void;
 
-export class DummyInput<P> {
+export class DummyInput<P = {}> {
     private _onFocusIn: DummyInputFocusCallback<P> | undefined;
     private _onFocusOut: DummyInputFocusCallback<P> | undefined;
     private _isPhantom: boolean;
