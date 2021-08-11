@@ -634,7 +634,9 @@ export class DeloserAPI implements Types.DeloserAPI {
         element: HTMLElement,
         props: Types.DeloserProps
     ): Types.Deloser => {
-        validateDeloserProps(props);
+        if (__DEV__) {
+            validateDeloserProps(props);
+        }
 
         const deloser = new Deloser(tabster, element, (tabster.deloser as DeloserAPI)._onDeloserDispose, props);
 

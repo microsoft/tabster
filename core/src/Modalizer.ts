@@ -261,7 +261,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         element: HTMLElement,
         props: Types.ModalizerProps
     ): Types.Modalizer => {
-        validateModalizerProps(props);
+        if (__DEV__) {
+            validateModalizerProps(props);
+        }
 
         const self = (tabster as Types.TabsterInternal).modalizer as ModalizerAPI;
         const modalizer = new Modalizer(tabster, element, self._onModalizerDispose, props);

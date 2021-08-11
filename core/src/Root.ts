@@ -291,7 +291,9 @@ export class RootAPI implements Types.RootAPI {
         element: HTMLElement,
         props: Types.RootProps
     ): Types.Root => {
-        validateRootProps(props);
+        if (__DEV__) {
+            validateRootProps(props);
+        }
 
         return new Root(tabster, element, (tabster.root as RootAPI)._forgetFocusedGrouppers, props) as Types.Root;
     }

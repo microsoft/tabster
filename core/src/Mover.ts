@@ -484,7 +484,9 @@ export class MoverAPI implements Types.MoverAPI {
         element: HTMLElement,
         props: Types.MoverProps
     ): Types.Mover => {
-        validateMoverProps(props);
+        if (__DEV__) {
+            validateMoverProps(props);
+        }
 
         return new Mover(tabster, element, props);
     }

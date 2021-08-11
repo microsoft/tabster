@@ -200,7 +200,9 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
         element: HTMLElement,
         props: Types.GroupperProps
     ): Types.Groupper => {
-        validateGroupperProps(props);
+        if (__DEV__) {
+            validateGroupperProps(props);
+        }
 
         return new Groupper(tabster, element, props);
     }
