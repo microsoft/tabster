@@ -411,18 +411,18 @@ export function setTabsterAttribute(element: HTMLElement, newProps: Types.Tabste
         }
     }
 
-    if (update && props) {
-        for (let key of Object.keys(newProps) as (keyof Types.TabsterAttributeProps)[]) {
-            const value = newProps[key];
+    if (!update || !props) {
+        props = {};
+    }
 
-            if (!value) {
-                delete props[key];
-            } else {
-                props[key] = value as any;
-            }
+    for (let key of Object.keys(newProps) as (keyof Types.TabsterAttributeProps)[]) {
+        const value = newProps[key];
+
+        if (value) {
+            props[key] = value as any;
+        } else {
+            delete props[key];
         }
-    } else {
-        props = newProps;
     }
 
     if (Object.keys(props).length > 0) {
