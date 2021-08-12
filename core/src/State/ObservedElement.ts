@@ -12,7 +12,7 @@ const _conditionCheckTimeout = 100;
 
 interface ObservedElementInfo {
     element: WeakHTMLElement;
-    triggeredName?: string;
+    prevName?: string;
 }
 
 interface ObservedWaiting {
@@ -24,7 +24,7 @@ interface ObservedWaiting {
 }
 
 export class ObservedElementAPI
-        extends Subscribable<HTMLElement, Types.ObservedElementProps> implements Types.ObservedElementAPI {
+        extends Subscribable<HTMLElement, Types.ObservedElementDetails> implements Types.ObservedElementAPI {
 
     private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
@@ -160,7 +160,7 @@ export class ObservedElementAPI
         timeout: number,
         accessibility?: Types.ObservedElementAccesibility
     ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
-        const el = this.getElement(observedName, accessibility);
+        let el = this.getElement(observedName, accessibility);
 
         if (el) {
             return {
@@ -212,21 +212,28 @@ export class ObservedElementAPI
             }
         };
 
+        if (accessibility && this.getElement(observedName)) {
+            // If the observed element is alread in DOM, but not accessible yet,
+            // we need to run the wait logic.
+            this._waitConditional(observedName);
+        }
+
         return w.request;
     }
 
     requestFocus(observedName: string, timeout: number): Types.ObservedElementAsyncRequest<boolean> {
         let requestId = ++this._lastRequestFocusId;
         const currentRequestFocus = this._currentRequest;
+
+        if (currentRequestFocus) {
+            currentRequestFocus.cancel();
+        }
+
         const request = this.waitElement(
             observedName,
             timeout,
             Types.ObservedElementAccesibilities.Focusable
         );
-
-        if (currentRequestFocus) {
-            currentRequestFocus.cancel();
-        }
 
         this._currentRequest = request;
         this._currentRequestTimestamp = Date.now();
@@ -250,56 +257,56 @@ export class ObservedElementAPI
     }
 
     onObservedElementUpdate = (element: HTMLElement): void => {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-        const observed = tabsterOnElement?.observed;
+        const observed = getTabsterOnElement(this._tabster, element)?.observed;
         const uid = getElementUId(this._win, element);
-        const isInDocument = documentContains(element.ownerDocument, element);
         let info: ObservedElementInfo | undefined = this._observedById[uid];
 
-        if (observed && isInDocument) {
+        if (observed && documentContains(element.ownerDocument, element)) {
             if (!info) {
                 info = this._observedById[uid] = {
                     element: new WeakHTMLElement(this._win, element)
                 };
             }
 
-            if (observed.name && (observed.name !== info.triggeredName)) {
-                if (info.triggeredName) {
-                    const obn = this._observedByName[info.triggeredName];
+            const observedName = observed.name;
+            let prevName = info.prevName;
+
+            if (observedName !== prevName) {
+                if (prevName) {
+                    const obn = this._observedByName[prevName];
 
                     if (obn && obn[uid]) {
                         if (Object.keys(obn).length > 1) {
                             delete obn[uid];
                         } else {
-                            delete this._observedByName[info.triggeredName];
+                            delete this._observedByName[prevName];
                         }
                     }
                 }
 
-                info.triggeredName = observed.name;
-
-                let obn = this._observedByName[info.triggeredName];
-
-                if (!obn) {
-                    obn = this._observedByName[info.triggeredName] = {};
-                }
-
-                obn[uid] = info;
-
-                this._trigger(element, {
-                    name: observed.name,
-                    details: observed.details
-                });
+                info.prevName = observedName;
             }
+
+            let obn = this._observedByName[observedName];
+
+            if (!obn) {
+                obn = this._observedByName[observedName] = {};
+            }
+
+            obn[uid] = info;
+
+            this._waitConditional(observedName);
         } else if (info) {
-            if (info.triggeredName) {
-                const obn = this._observedByName[info.triggeredName];
+            const prevName = info.prevName;
+
+            if (prevName) {
+                const obn = this._observedByName[prevName];
 
                 if (obn && obn[uid]) {
                     if (Object.keys(obn).length > 1) {
                         delete obn[uid];
                     } else {
-                        delete this._observedByName[info.triggeredName];
+                        delete this._observedByName[prevName];
                     }
                 }
             }
@@ -308,59 +315,78 @@ export class ObservedElementAPI
         }
     }
 
-    private _trigger(val: HTMLElement, details: Types.ObservedElementProps): void {
-        this.trigger(val, details);
+    private _waitConditional(observedName: string): void {
+        const waitingElementKey = '_' + observedName;
+        const waitingAccessibleElementKey = 'a' + observedName;
+        const waitingFocusableElementKey = 'f' + observedName;
+        const waitingElement = this._waiting[waitingElementKey];
+        const waitingAccessibleElement = this._waiting[waitingAccessibleElementKey];
+        const waitingFocusableElement = this._waiting[waitingFocusableElementKey];
+        const win = this._win();
 
-        const name = details.name;
+        const resolve = (element: HTMLElement, key: string, waiting: ObservedWaiting, accessibility: Types.ObservedElementAccesibility) => {
+            const observed = getTabsterOnElement(this._tabster, element)?.observed;
 
-        if (name) {
-            const waitingElementKey = '_' + name;
-            const waitingAccessibleElementKey = 'a' + name;
-            const waitingFocusableElementKey = 'f' + name;
-            const waitingElement = this._waiting[waitingElementKey];
-            const waitingAccessibleElement = this._waiting[waitingAccessibleElementKey];
-            const waitingFocusableElement = this._waiting[waitingFocusableElementKey];
-            const win = this._win();
+            if (!observed || (observed.name !== observedName)) {
+                return;
+            }
 
-            const resolve = (key: string, waiting: ObservedWaiting) => {
-                if (waiting.timer) {
-                    win.clearTimeout(waiting.timer);
-                }
+            if (waiting.timer) {
+                win.clearTimeout(waiting.timer);
+            }
 
-                delete this._waiting[key];
+            delete this._waiting[key];
 
-                if (waiting.resolve) {
-                    waiting.resolve(val);
+            if (waiting.resolve) {
+                waiting.resolve(element);
+            }
+
+            this.trigger(element, {
+                name: observedName,
+                details: observed.details,
+                accessibility
+            });
+        };
+
+        if (waitingElement) {
+            const element = this.getElement(observedName);
+
+            if (element && documentContains(element.ownerDocument, element)) {
+                resolve(element, waitingElementKey, waitingElement, Types.ObservedElementAccesibilities.Any);
+            }
+        }
+
+        if (waitingAccessibleElement && !waitingAccessibleElement.conditionTimer) {
+            const resolveAccessible = () => {
+                const element = this.getElement(observedName);
+
+                if (element && documentContains(element.ownerDocument, element) && this._tabster.focusable.isAccessible(element)) {
+                    resolve(
+                        element,
+                        waitingAccessibleElementKey,
+                        waitingAccessibleElement,
+                        Types.ObservedElementAccesibilities.Accessible
+                    );
+                } else {
+                    waitingAccessibleElement.conditionTimer = win.setTimeout(resolveAccessible, _conditionCheckTimeout);
                 }
             };
 
-            if (waitingElement) {
-                resolve(waitingElementKey, waitingElement);
-            }
+            resolveAccessible();
+        }
 
-            if (waitingAccessibleElement && !waitingAccessibleElement.conditionTimer) {
-                const resolveAccessible = () => {
-                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isAccessible(val)) {
-                        resolve(waitingAccessibleElementKey, waitingAccessibleElement);
-                    } else {
-                        waitingAccessibleElement.conditionTimer = win.setTimeout(resolveAccessible, _conditionCheckTimeout);
-                    }
-                };
+        if (waitingFocusableElement && !waitingFocusableElement.conditionTimer) {
+            const resolveFocusable = () => {
+                const element = this.getElement(observedName);
 
-                resolveAccessible();
-            }
+                if (element && documentContains(element.ownerDocument, element) && this._tabster.focusable.isFocusable(element, true)) {
+                    resolve(element, waitingFocusableElementKey, waitingFocusableElement, Types.ObservedElementAccesibilities.Focusable);
+                } else {
+                    waitingFocusableElement.conditionTimer = win.setTimeout(resolveFocusable, _conditionCheckTimeout);
+                }
+            };
 
-            if (waitingFocusableElement && !waitingFocusableElement.conditionTimer) {
-                const resolveFocusable = () => {
-                    if (documentContains(val.ownerDocument, val) && this._tabster.focusable.isFocusable(val, true)) {
-                        resolve(waitingFocusableElementKey, waitingFocusableElement);
-                    } else {
-                        waitingFocusableElement.conditionTimer = win.setTimeout(resolveFocusable, _conditionCheckTimeout);
-                    }
-                };
-
-                resolveFocusable();
-            }
+            resolveFocusable();
         }
     }
 }

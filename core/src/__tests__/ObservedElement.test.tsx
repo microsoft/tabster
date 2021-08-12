@@ -119,4 +119,95 @@ describe('Focusable', () => {
                 expect(el?.textContent).toContain('Button2');
             });
     });
+
+    it('should wait for the element to become focusable when the element is already in the DOM', async () => {
+        const name = 'test';
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({ observed: { name } })}
+                        id='test-button'
+                        aria-hidden='true'
+                    >
+                        Button1
+                    </button>
+                </div>
+            )
+        )
+            .eval(name => {
+                ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
+                    name,
+                    100500
+                );
+            }, name)
+            .wait(500)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .eval(() => {
+                document.getElementById('test-button')?.removeAttribute('aria-hidden');
+            })
+            .wait(500)
+            .activeElement(el => {
+                expect(el?.textContent).toContain('Button1');
+            });
+    });
+
+    it('should wait for the element to become focusable when the element is already in the DOM, removed then added again', async () => {
+        const name = 'test3';
+        await new BroTest.BroTest(
+            (
+                <div id='root' {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({ observed: { name } })}
+                        id='test-button'
+                        aria-hidden='true'
+                    >
+                        Button1
+                    </button>
+                </div>
+            )
+        )
+            .eval(name => {
+                ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
+                    name,
+                    100500
+                );
+            }, name)
+            .wait(300)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .eval(() => {
+                const b = document.getElementById('test-button');
+                if (b && b.parentElement) {
+                    b.parentElement.removeChild(b);
+                }
+            })
+            .wait(300)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .eval(name => {
+                const b = document.createElement('button');
+                b.id = 'test-button-2';
+                b.innerText = 'CreatedButton';
+                b.setAttribute('aria-hidden', 'true');
+                b.setAttribute('data-tabster', `{"observed": {"name": "${ name }"}}`);
+                document.getElementById('root')?.appendChild(b);
+            }, name)
+            .wait(300)
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .eval(() => {
+                document.getElementById('test-button-2')?.removeAttribute('aria-hidden');
+            })
+            .wait(300)
+            .activeElement(el => {
+                expect(el?.attributes.id).toEqual('test-button-2');
+                expect(el?.textContent).toContain('CreatedButton');
+            });
+    });
 });

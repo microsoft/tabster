@@ -81,6 +81,10 @@ export interface ObservedElementProps {
     details?: any;
 }
 
+export interface ObservedElementDetails extends ObservedElementProps {
+    accessibility?: ObservedElementAccesibility;
+}
+
 export interface ObservedElementAccesibilities {
     Any: 0;
     Accessible: 1;
@@ -98,7 +102,7 @@ export interface ObservedElementAsyncRequest<T> {
     cancel(): void;
 }
 
-export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementProps> {
+export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementDetails> {
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
     waitElement(
         observedName: string,
