@@ -13,15 +13,6 @@ import {
     WeakHTMLElement
 } from './Utils';
 
-export interface MutationEventDetails {
-    root?: Types.Root;
-    modalizer?: Types.Modalizer;
-    groupper?: Types.Groupper;
-    observed?: HTMLElement;
-    removed?: boolean;
-    isMutation?: boolean;
-}
-
 export function observeMutations(
     doc: HTMLDocument,
     tabster: Types.TabsterInternal,

@@ -6,7 +6,7 @@
 import { getTabsterOnElement } from './Instance';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { documentContains, getElementUId, getPromise, TabsterPart, WeakHTMLElement } from './Utils';
+import { documentContains, getElementUId, getPromise, TabsterPart, triggerEvent, WeakHTMLElement } from './Utils';
 
 const _containerHistoryLength = 10;
 
@@ -310,7 +310,7 @@ function buildSelector(element: HTMLElement): string | undefined {
     return selector.join(' ');
 }
 
-export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserExtendedProps> implements Types.Deloser {
+export class Deloser extends TabsterPart<Types.DeloserProps> implements Types.Deloser {
     readonly uid: string;
     private _isActive = false;
     private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
@@ -321,10 +321,9 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         onDispose: (deloser: Deloser) => void,
-        basic?: Types.DeloserBasicProps,
-        extended?: Types.DeloserExtendedProps,
+        props: Types.DeloserProps
     ) {
-        super(tabster, element, basic, extended);
+        super(tabster, element, props);
 
         this.uid = getElementUId(tabster.getWindow, element);
         this._onDispose = onDispose;
@@ -342,8 +341,7 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
         this._isActive = false;
         this._snapshotIndex = 0;
 
-        this._basic = {};
-        this._extended = {};
+        this._props = {};
         this._history = [];
     }
 
@@ -423,7 +421,7 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
             return null;
         }
 
-        let restoreFocusOrder = this._basic.restoreFocusOrder;
+        let restoreFocusOrder = this._props.restoreFocusOrder;
         let available: HTMLElement | null = null;
 
         const ctx = RootAPI.getTabsterContext(this._tabster, element);
@@ -440,7 +438,7 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
         }
 
         if (restoreFocusOrder === undefined) {
-            restoreFocusOrder = root.getBasicProps().restoreFocusOrder;
+            restoreFocusOrder = root.getProps().restoreFocusOrder;
         }
 
         if (restoreFocusOrder === Types.RestoreFocusOrders.RootDefault) {
@@ -491,11 +489,7 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
     }
 
     customFocusLostHandler(element: HTMLElement): boolean {
-        if (this._extended.onFocusLost) {
-            return this._extended.onFocusLost(element, this.getActions());
-        }
-
-        return false;
+        return triggerEvent(element, Types.DeloserEventName, this.getActions());
     }
 
     private _findInHistory(): HTMLElement | null {
@@ -512,7 +506,7 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
                 if (this._tabster.focusable.isFocusable(e)) {
                     return e;
                 }
-            } else if (!this._basic.noSelectorCheck) {
+            } else if (!this._props.noSelectorCheck) {
                 // Element is not in the DOM, try to locate the node by it's
                 // selector. This might return not exactly the right node,
                 // but it would be easily fixable by having more detailed selectors.
@@ -564,6 +558,10 @@ export class Deloser extends TabsterPart<Types.DeloserBasicProps, Types.DeloserE
     }
 }
 
+function validateDeloserProps(props: Types.DeloserProps): void {
+    // TODO: Implement validation.
+}
+
 export class DeloserAPI implements Types.DeloserAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
@@ -577,12 +575,12 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _restoreFocusTimer: number | undefined;
     private _isRestoringFocus = false;
     private _isPaused = false;
-    private _autoDeloser: (Types.DeloserBasicProps & Types.DeloserExtendedProps) | undefined;
+    private _autoDeloser: (Types.DeloserProps) | undefined;
     private _autoDeloserInstance: Deloser | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
-        props?: { autoDeloser: Types.DeloserBasicProps & Types.DeloserExtendedProps }
+        props?: { autoDeloser: Types.DeloserProps }
     ) {
         this._tabster = tabster;
         this._win = (tabster as Types.TabsterInternal).getWindow;
@@ -634,10 +632,13 @@ export class DeloserAPI implements Types.DeloserAPI {
     static createDeloser: Types.DeloserConstructor = (
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.DeloserBasicProps,
-        extended?: Types.DeloserExtendedProps
+        props: Types.DeloserProps
     ): Types.Deloser => {
-        const deloser = new Deloser(tabster, element, (tabster.deloser as DeloserAPI)._onDeloserDispose, basic, extended);
+        if (__DEV__) {
+            validateDeloserProps(props);
+        }
+
+        const deloser = new Deloser(tabster, element, (tabster.deloser as DeloserAPI)._onDeloserDispose, props);
 
         if (element.contains(tabster.focusedElement.getFocusedElement() ?? null)) {
             (tabster.deloser as DeloserAPI)._activate(deloser);
@@ -789,7 +790,6 @@ export class DeloserAPI implements Types.DeloserAPI {
                         tabsteri,
                         body,
                         (tabsteri.deloser as DeloserAPI)._onDeloserDispose,
-                        autoDeloserProps,
                         autoDeloserProps
                     );
                 }

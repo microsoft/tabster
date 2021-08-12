@@ -516,25 +516,22 @@ export function setBasics(win: Window, basics: Types.InternalBasics): void {
 
 let _lastTabsterPartId = 0;
 
-export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterPart<B, E> {
+export abstract class TabsterPart<P, D = undefined> implements Types.TabsterPart<P> {
     protected _tabster: Types.TabsterInternal;
     protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _basic: Partial<B>;
-    protected _extended: Partial<E>;
+    protected _props: P;
 
     readonly id: string;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: B,
-        extended?: E
+        props: P
     ) {
         const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
-        this._basic = basic || {};
-        this._extended = extended || {};
+        this._props = { ...props };
         this.id = 'i' + ++_lastTabsterPartId;
     }
 
@@ -542,26 +539,12 @@ export abstract class TabsterPart<B, E, D = undefined> implements Types.TabsterP
         return this._element.get();
     }
 
-    getBasicProps(): Partial<B> {
-        return this._basic;
+    getProps(): P {
+        return this._props;
     }
 
-    getExtendedProps(): Partial<E> {
-        return this._extended;
-    }
-
-    setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void {
-        if (basic) {
-            this._basic = { ...basic };
-        } else if (basic === null) {
-            this._basic = {};
-        }
-
-        if (extended) {
-            this._extended = { ...extended };
-        } else if (extended === null) {
-            this._extended = {};
-        }
+    setProps(props: P): void {
+        this._props = { ...props };
     }
 }
 
@@ -661,4 +644,16 @@ export function getLastChild(container: HTMLElement): HTMLElement | null {
     }
 
     return lastChild;
+}
+
+export function triggerEvent<D>(target: HTMLElement, name: string, details: D): boolean {
+    const event = document.createEvent('HTMLEvents') as Types.TabsterEventWithDetails<D>;
+
+    event.initEvent(name, true, true);
+
+    event.details = details;
+
+    target.dispatchEvent(event);
+
+    return !event.defaultPrevented;
 }

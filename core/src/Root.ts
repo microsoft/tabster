@@ -34,20 +34,21 @@ interface DummyInputProps {
     isActive: boolean;
 }
 
-export class Root extends TabsterPart<Types.RootBasicProps, undefined> implements Types.Root {
+export class Root extends TabsterPart<Types.RootProps, undefined> implements Types.Root {
     readonly uid: string;
 
     private _dummyInputFirst: DummyInput<DummyInputProps> | undefined;
     private _dummyInputLast: DummyInput<DummyInputProps> | undefined;
     private _forgetFocusedGrouppers: () => void;
+    private _unobserve: (() => void) | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         forgetFocusedGrouppers: () => void,
-        basic?: Types.RootBasicProps
+        props: Types.RootProps
     ) {
-        super(tabster, element, basic);
+        super(tabster, element, props);
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
@@ -73,10 +74,16 @@ export class Root extends TabsterPart<Types.RootBasicProps, undefined> implement
         this._addDummyInputs();
 
         tabster.focusedElement.subscribe(this._onFocus);
+        this._observeMutations(element);
     }
 
     dispose(): void {
         this._tabster.focusedElement.unsubscribe(this._onFocus);
+
+        if (this._unobserve) {
+            this._unobserve();
+            this._unobserve = undefined;
+        }
 
         this._remove();
 
@@ -95,10 +102,6 @@ export class Root extends TabsterPart<Types.RootBasicProps, undefined> implement
         this._forgetFocusedGrouppers = () => {/**/};
     }
 
-    updateDummyInputs(): void {
-        this._addDummyInputs();
-    }
-
     moveOutWithDefaultAction(backwards: boolean): void {
         const first = this._dummyInputFirst;
         const last = this._dummyInputLast;
@@ -112,6 +115,22 @@ export class Root extends TabsterPart<Types.RootBasicProps, undefined> implement
                 nativeFocus(last.input);
             }
         }
+    }
+
+    private _observeMutations(element: HTMLElement): void {
+        if (this._unobserve || (typeof MutationObserver === 'undefined')) {
+            return;
+        }
+
+        let observer = new MutationObserver(mutations => {
+            this._addDummyInputs();
+        });
+
+        observer.observe(element, { childList: true });
+
+        this._unobserve = () => {
+            observer.disconnect();
+        };
     }
 
     private _onFocus = (e: HTMLElement | undefined) => {
@@ -219,16 +238,20 @@ export class Root extends TabsterPart<Types.RootBasicProps, undefined> implement
     }
 }
 
+function validateRootProps(props: Types.RootProps): void {
+    // TODO: Implement validation.
+}
+
 export class RootAPI implements Types.RootAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _forgetFocusedGrouppers: () => void;
-    private _autoRoot: Types.RootBasicProps | undefined;
+    private _autoRoot: Types.RootProps | undefined;
     private _autoRootInstance: Root | undefined;
     rootById: { [id: string]: Types.Root } = {};
 
-    constructor(tabster: Types.TabsterCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootBasicProps) {
+    constructor(tabster: Types.TabsterCore, forgetFocusedGrouppers: () => void, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
         this._win = (tabster as Types.TabsterInternal).getWindow;
         this._forgetFocusedGrouppers = forgetFocusedGrouppers;
@@ -266,9 +289,13 @@ export class RootAPI implements Types.RootAPI {
     static createRoot: Types.RootConstructor = (
         tabster: Types.TabsterInternal,
         element: HTMLElement,
-        basic?: Types.RootBasicProps
+        props: Types.RootProps
     ): Types.Root => {
-        return new Root(tabster, element, (tabster.root as RootAPI)._forgetFocusedGrouppers, basic) as Types.Root;
+        if (__DEV__) {
+            validateRootProps(props);
+        }
+
+        return new Root(tabster, element, (tabster.root as RootAPI)._forgetFocusedGrouppers, props) as Types.Root;
     }
 
     static getRootByUId(getWindow: Types.GetWindow, id: string): Types.Root | undefined {
@@ -365,10 +392,11 @@ export class RootAPI implements Types.RootAPI {
         }
 
         // No root element could be found, try to get an auto root
-        if (!root && (tabster.root as RootAPI)._autoRoot) {
+        if (!root) {
             const rootAPI = tabster.root as RootAPI;
+            const autoRoot = rootAPI._autoRoot;
 
-            if (!rootAPI._autoRootInstance) {
+            if (autoRoot && !rootAPI._autoRootInstance) {
                 const body = element.ownerDocument?.body;
 
                 if (body) {
@@ -376,7 +404,7 @@ export class RootAPI implements Types.RootAPI {
                         rootAPI._tabster as Types.TabsterInternal,
                         body,
                         rootAPI._forgetFocusedGrouppers,
-                        rootAPI._autoRoot
+                        autoRoot
                     );
                 }
             }

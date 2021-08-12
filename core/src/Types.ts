@@ -5,6 +5,9 @@
 
 export const TabsterAttributeName = 'data-tabster';
 export const TabsterDummyInputAttributeName = 'data-tabster-dummy';
+export const DeloserEventName = 'tabster:deloser';
+export const ModalizerEventName = 'tabster:modalizer';
+export const MoverEventName = 'tabster:mover';
 
 export interface InternalBasics {
     Promise?: PromiseConstructor;
@@ -12,12 +15,16 @@ export interface InternalBasics {
     WeakMap?: WeakMapConstructor;
 }
 
+export interface TabsterEventWithDetails<D> extends Event {
+    details: D;
+}
+
 export interface TabsterDOMAttribute {
     [TabsterAttributeName]: string | undefined;
 }
 
 export interface TabsterCoreProps {
-    autoRoot?: RootBasicProps;
+    autoRoot?: RootProps;
 }
 
 export interface TabsterCore {
@@ -62,20 +69,16 @@ export interface WeakHTMLElement<D = undefined> {
     getData(): D | undefined;
 }
 
-export interface TabsterPart<B, E> {
+export interface TabsterPart<P> {
     readonly id: string;
     getElement(): HTMLElement | undefined;
-    getBasicProps(): Partial<B>;
-    getExtendedProps(): Partial<E>;
-    setProps(basic?: Partial<B> | null, extended?: Partial<E> | null): void;
+    getProps(): P;
+    setProps(props: P): void;
 }
 
-export interface ObservedElementBasicProps {
+export interface ObservedElementProps {
     name: string;
     details?: any;
-}
-
-export interface ObservedElementExtendedProps {
 }
 
 export interface ObservedElementAccesibilities {
@@ -95,7 +98,7 @@ export interface ObservedElementAsyncRequest<T> {
     cancel(): void;
 }
 
-export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementBasicProps> {
+export interface ObservedElementAPI extends Subscribable<HTMLElement, ObservedElementProps> {
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): HTMLElement | null;
     waitElement(
         observedName: string,
@@ -158,7 +161,7 @@ export interface CrossOriginFocusedElementState extends Subscribable<CrossOrigin
         noAccessibleCheck?: boolean): Promise<boolean>;
 }
 
-export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementBasicProps> {
+export interface CrossOriginObservedElementState extends Subscribable<CrossOriginElement, ObservedElementProps> {
     getElement(observedName: string, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
     waitElement(observedName: string, timeout: number, accessibility?: ObservedElementAccesibility): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
@@ -213,16 +216,12 @@ export const RestoreFocusOrders: RestoreFocusOrders = {
     RootFirst: 4
 };
 
-export interface DeloserBasicProps {
+export interface DeloserProps {
     restoreFocusOrder?: RestoreFocusOrder;
     noSelectorCheck?: boolean;
 }
 
-export interface DeloserExtendedProps {
-    onFocusLost?(last: HTMLElement, actions: DeloserElementActions): boolean;
-}
-
-export interface Deloser extends TabsterPart<DeloserBasicProps, DeloserExtendedProps> {
+export interface Deloser extends TabsterPart<DeloserProps> {
     readonly uid: string;
     dispose(): void;
     isActive(): boolean;
@@ -241,8 +240,7 @@ export interface Deloser extends TabsterPart<DeloserBasicProps, DeloserExtendedP
 export type DeloserConstructor = (
     tabster: TabsterInternal,
     element: HTMLElement,
-    basic?: DeloserBasicProps,
-    extended?: DeloserExtendedProps
+    props: DeloserProps
 ) => Deloser;
 
 export interface DeloserAPI {
@@ -410,7 +408,7 @@ export type NextTabbable = {
     uncontrolled?: HTMLElement;
 };
 
-export interface MoverBasicProps {
+export interface MoverProps {
     direction?: MoverDirection;
     memorizeCurrent?: boolean;
     tabbable?: boolean;
@@ -438,11 +436,10 @@ export interface MoverBasicProps {
     disableHomeEndKeys?: boolean;
 }
 
-export interface MoverExtendedProps {
-    onChange?: (element: HTMLElement, state: MoverElementState) => void;
+export interface MoverEvent extends TabsterEventWithDetails<MoverElementState> {
 }
 
-export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> {
+export interface Mover extends TabsterPart<MoverProps> {
     readonly id: string;
     dispose(): void;
     setCurrent(element: HTMLElement | undefined): boolean;
@@ -456,8 +453,7 @@ export interface Mover extends TabsterPart<MoverBasicProps, MoverExtendedProps> 
 export type MoverConstructor = (
     tabster: TabsterInternal,
     element: HTMLElement,
-    basic?: MoverBasicProps,
-    extended?: MoverExtendedProps
+    props: MoverProps
 ) => Mover;
 
 export interface MoverAPI {
@@ -476,13 +472,11 @@ export const GroupperTabbabilities: GroupperTabbabilities = {
 };
 export type GroupperTabbability = GroupperTabbabilities[keyof GroupperTabbabilities];
 
-export interface GroupperBasicProps {
+export interface GroupperProps {
     tabbability?: GroupperTabbability;
 }
 
-export interface GroupperExtendedProps {}
-
-export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtendedProps> {
+export interface Groupper extends TabsterPart<GroupperProps> {
     readonly id: string;
     dispose(): void;
     makeUnlimited(isUnlimited: boolean): void;
@@ -495,8 +489,7 @@ export interface Groupper extends TabsterPart<GroupperBasicProps, GroupperExtend
 export type GroupperConstructor = (
     tabster: TabsterInternal,
     element: HTMLElement,
-    basic?: GroupperBasicProps,
-    extended?: GroupperExtendedProps
+    props: GroupperProps
 ) => Groupper;
 
 export interface GroupperAPI {
@@ -506,7 +499,7 @@ export interface GroupperInternalAPI {
     forgetUnlimitedGrouppers(): void;
 }
 
-export interface ModalizerBasicProps {
+export interface ModalizerProps {
     id: string;
     isOthersAccessible?: boolean;
     isAlwaysAccessible?: boolean;
@@ -514,12 +507,12 @@ export interface ModalizerBasicProps {
     isNoFocusDefault?: boolean;
 }
 
-export interface ModalizerExtendedProps {
-    onFocusIn?: () => void;
-    onFocusOut?: (before: boolean) => boolean;
+export type ModalizerEventDetails = { eventName: 'beforefocusout' };
+
+export interface ModalizerEvent extends TabsterEventWithDetails<ModalizerEventDetails> {
 }
 
-export interface Modalizer extends TabsterPart<ModalizerBasicProps, ModalizerExtendedProps> {
+export interface Modalizer extends TabsterPart<ModalizerProps> {
     readonly internalId: string;
     readonly userId: string;
     /**
@@ -537,31 +530,28 @@ export interface Modalizer extends TabsterPart<ModalizerBasicProps, ModalizerExt
      * @param active Whether the modalizer is active
      */
     setActive(active: boolean): void;
-    setFocused(focused: boolean): void;
 }
 
 export type ModalizerConstructor = (
     tabster: TabsterInternal,
     element: HTMLElement,
-    basic: ModalizerBasicProps,
-    extended?: ModalizerExtendedProps
+    props: ModalizerProps
 ) => Modalizer;
 
-export interface RootBasicProps {
+export interface RootProps {
     restoreFocusOrder?: RestoreFocusOrder;
 }
 
-export interface Root extends TabsterPart<RootBasicProps, undefined> {
+export interface Root extends TabsterPart<RootProps> {
     readonly uid: string;
     dispose(): void;
-    updateDummyInputs(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export type RootConstructor = (
     tabster: TabsterInternal,
     element: HTMLElement,
-    basic?: RootBasicProps
+    props: RootProps
 ) => Root;
 
 export interface GetTabsterContextOptions {
@@ -650,7 +640,7 @@ export interface UncontrolledOnElement {
 }
 
 export interface ObservedOnElement {
-    observed: ObservedElementBasicProps & ObservedElementExtendedProps;
+    observed: ObservedElementProps;
 }
 
 export interface OutlineOnElement {
@@ -658,14 +648,14 @@ export interface OutlineOnElement {
 }
 
 export type TabsterAttributeProps = Partial<{
-    deloser: DeloserBasicProps,
-    root: RootBasicProps,
+    deloser: DeloserProps,
+    root: RootProps,
     uncontrolled: UncontrolledOnElement['uncontrolled'],
-    modalizer: ModalizerBasicProps,
+    modalizer: ModalizerProps,
     focusable: FocusableProps,
-    groupper: GroupperBasicProps,
-    mover: MoverBasicProps,
-    observed: ObservedElementBasicProps,
+    groupper: GroupperProps,
+    mover: MoverProps,
+    observed: ObservedElementProps,
     outline: OutlinedElementProps
 }>;
 
