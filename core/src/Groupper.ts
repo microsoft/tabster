@@ -102,7 +102,7 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
             }
         }
 
-        return isParentActive ? this._isUnlimited : undefined;
+        return isParentActive ? (this._props.tabbability ? this._isUnlimited : false) : undefined;
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {
@@ -298,7 +298,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                     for (let e: HTMLElement | null = element; e; e = e.parentElement) {
                         const g = getTabsterOnElement(this._tabster, e)?.groupper;
 
-                        if (g?.isActive()) {
+                        if (g && (g.isActive() || !g.getProps().tabbability)) {
                             ge = g.getElement();
 
                             if (ge) {

@@ -19,11 +19,10 @@ describe('MoverGroupper', () => {
     >([
         ['Limited', Types.GroupperTabbabilities.Limited],
         ['LimitedTrapFocus', Types.GroupperTabbabilities.LimitedTrapFocus],
-        // TODO: Fix the unlimited scenarios.
-        // ['Unlimited', Types.GroupperTabbabilities.Unlimited],
-        // ['undefined', undefined]
+        ['Unlimited', Types.GroupperTabbabilities.Unlimited],
+        ['undefined', undefined]
     ])('should properly move the focus when focusable grouppers with %s tabbability are in mover', async (_, tabbability) => {
-        await new BroTest.BroTest(
+        let broTest = new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <div {...getTabsterAttribute({ mover: {} })}>
@@ -64,10 +63,26 @@ describe('MoverGroupper', () => {
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button1Button2');
             })
-            .pressTab()
+            .pressTab();
+
+        if (!tabbability) {
+            broTest = broTest
+                .activeElement(el => {
+                    expect(el?.textContent).toContain('Button1');
+                })
+                .pressTab()
+                .activeElement(el => {
+                    expect(el?.textContent).toContain('Button2');
+                })
+                .pressTab();
+        }
+
+        broTest = broTest
             .activeElement(el => {
                 expect(el?.textContent).toContain('Button7');
             });
+
+        await broTest;
     });
 
     it.each<
@@ -78,9 +93,8 @@ describe('MoverGroupper', () => {
     >([
         ['Limited', Types.GroupperTabbabilities.Limited],
         ['LimitedTrapFocus', Types.GroupperTabbabilities.LimitedTrapFocus],
-        // TODO: Fix the unlimited scenarios.
-        // ['Unlimited', Types.GroupperTabbabilities.Unlimited],
-        // ['undefined', undefined]
+        ['Unlimited', Types.GroupperTabbabilities.Unlimited],
+        ['undefined', undefined]
     ])('should properly move the focus when not focusable grouppers with %s tabbability are in mover', async (_, tabbability) => {
         await new BroTest.BroTest(
             (
