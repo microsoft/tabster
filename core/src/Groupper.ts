@@ -154,11 +154,16 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
                 };
 
                 if (isInside && (isActive !== true)) {
-                    const first = cached.first = this.getFirst();
-                    const focused = this._tabster.focusedElement.getFocusedElement();
+                    const first = this.getFirst();
 
-                    if (focused) {
-                        this.setFirst(groupperElement.contains(focused) ? undefined : first);
+                    if (first && state.acceptCondition(first)) {
+                        const focused = this._tabster.focusedElement.getFocusedElement();
+
+                        cached.first = first;
+
+                        if (focused) {
+                            this.setFirst(groupperElement.contains(focused) ? undefined : first);
+                        }
                     }
                 }
             }

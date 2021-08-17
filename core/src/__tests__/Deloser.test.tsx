@@ -25,12 +25,12 @@ describe('Deloser', () => {
             .pressTab()
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .removeElement()
             .wait(300)
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button3');
+                expect(el?.textContent).toEqual('Button3');
             });
     });
 
@@ -48,7 +48,7 @@ describe('Deloser', () => {
             .pressTab()
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .removeElement()
             .wait(300)
@@ -73,12 +73,12 @@ describe('Deloser', () => {
             .pressTab()
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .removeElement()
             .wait(300)
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -102,7 +102,7 @@ describe('Deloser', () => {
             .pressTab()
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .eval(
                 (attrName, tabsterAttr) => {
@@ -115,7 +115,50 @@ describe('Deloser', () => {
             .removeElement('#newDeloser')
             .wait(300)
             .activeElement(el => {
-                expect(el?.textContent).toBe('Button1');
+                expect(el?.textContent).toEqual('Button1');
+            });
+    });
+
+    it('should restore focus in the middle of a limited groupper', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                    >
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                    >
+                        <button className='button-4'>Button4</button>
+                        <button className='button-5'>Button5</button>
+                        <button className='button-6'>Button6</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button5');
+            })
+            .removeElement()
+            .wait(300)
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4');
             });
     });
 });
