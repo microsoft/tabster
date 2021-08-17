@@ -132,23 +132,23 @@ describe('Groupper tabbing forward and backwards', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -165,7 +165,7 @@ describe('Groupper tabbing forward and backwards', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
@@ -173,7 +173,7 @@ describe('Groupper tabbing forward and backwards', () => {
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab(true)
             .activeElement(el => {

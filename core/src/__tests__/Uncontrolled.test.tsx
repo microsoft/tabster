@@ -25,11 +25,11 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             });
     });
 
@@ -56,15 +56,15 @@ describe('Uncontrolled', () => {
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             });
     });
 
@@ -83,15 +83,15 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab()
             .activeElement(el => {
@@ -114,23 +114,23 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab(true)
             .activeElement(el => {
@@ -138,7 +138,7 @@ describe('Uncontrolled', () => {
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -159,31 +159,31 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button6');
+                expect(el?.textContent).toEqual('Button6');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -208,35 +208,35 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button5');
+                expect(el?.textContent).toEqual('Button5');
             })
             .pressRight()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button6');
+                expect(el?.textContent).toEqual('Button6');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab(true)
             .activeElement(el => {
@@ -267,31 +267,31 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button6');
+                expect(el?.textContent).toEqual('Button6');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -314,23 +314,23 @@ describe('Uncontrolled', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button6');
+                expect(el?.textContent).toEqual('Button6');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 });
