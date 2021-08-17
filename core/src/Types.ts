@@ -483,9 +483,11 @@ export interface GroupperProps {
 export interface Groupper extends TabsterPart<GroupperProps> {
     readonly id: string;
     dispose(): void;
-    makeUnlimited(isUnlimited: boolean): void;
-    isUnlimited(): boolean;
+    makeTabbable(isUnlimited: boolean): void;
+    shouldTabInside(): boolean;
     isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
+    setFirst(element: HTMLElement | undefined): void;
+    getFirst(): HTMLElement | undefined;
     findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(element: HTMLElement, state: FocusableAcceptElementState): number | undefined;
 }
@@ -500,7 +502,7 @@ export interface GroupperAPI {
 }
 
 export interface GroupperInternalAPI {
-    forgetUnlimitedGrouppers(): void;
+    forgetCurrentGrouppers(): void;
 }
 
 export interface ModalizerProps {

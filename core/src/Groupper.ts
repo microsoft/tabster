@@ -10,10 +10,11 @@ import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { TabsterPart } from './Utils';
+import { TabsterPart, WeakHTMLElement } from './Utils';
 
 export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
-    private _isUnlimited = false;
+    private _shouldTabInside = false;
+    private _first: WeakHTMLElement | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -21,7 +22,7 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
         props: Types.GroupperProps
     ) {
         super(tabster, element, props);
-        this.makeUnlimited(false);
+        this.makeTabbable(false);
     }
 
     dispose(): void {
@@ -32,6 +33,8 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
                 _setInformativeStyle(this._element, true);
             }
         }
+
+        delete this._first;
     }
 
     findNextTabbable(current: HTMLElement, prev?: boolean): Types.NextTabbable | null {
@@ -46,7 +49,7 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
         let uncontrolled: HTMLElement | undefined;
         const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
 
-        if (this._isUnlimited) {
+        if (this._shouldTabInside) {
             next = prev
                 ? tabster.focusable.findPrev({ container, currentElement: current, onUncontrolled })
                 : tabster.focusable.findNext({ container, currentElement: current, onUncontrolled });
@@ -76,16 +79,16 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
         };
     }
 
-    makeUnlimited(isUnlimited: boolean): void {
-        this._isUnlimited = isUnlimited;
+    makeTabbable(isTabbable: boolean): void {
+        this._shouldTabInside = isTabbable;
 
         if (__DEV__) {
-            _setInformativeStyle(this._element, !this._isUnlimited);
+            _setInformativeStyle(this._element, !this._shouldTabInside);
         }
     }
 
-    isUnlimited(): boolean {
-        return this._isUnlimited;
+    shouldTabInside(): boolean {
+        return this._shouldTabInside;
     }
 
     isActive(): boolean | undefined {
@@ -96,13 +99,38 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
             const g = getTabsterOnElement(this._tabster, e)?.groupper as (Groupper | undefined);
 
             if (g) {
-                if (!g._isUnlimited) {
+                if (!g._shouldTabInside) {
                     isParentActive = false;
                 }
             }
         }
 
-        return isParentActive ? (this._props.tabbability ? this._isUnlimited : false) : undefined;
+        return isParentActive ? (this._props.tabbability ? this._shouldTabInside : false) : undefined;
+    }
+
+    getFirst(): HTMLElement | undefined {
+        const groupperElement = this.getElement();
+        let first: HTMLElement | undefined;
+
+        if (groupperElement) {
+            first = this._first?.get();
+
+            if (!first) {
+                first = (this._tabster.focusable.isFocusable(groupperElement)
+                    ? groupperElement
+                    : this._tabster.focusable.findFirst({ container: groupperElement, ignoreUncontrolled: true })) || undefined;
+            }
+        }
+
+        return first;
+    }
+
+    setFirst(element: HTMLElement | undefined): void {
+        if (element) {
+            this._first = new WeakHTMLElement(this._tabster.getWindow, element);
+        } else {
+            delete this._first;
+        }
     }
 
     acceptElement(element: HTMLElement, state: Types.FocusableAcceptElementState): number | undefined {
@@ -126,14 +154,12 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
                 };
 
                 if (isInside && (isActive !== true)) {
-                    cached.first = state.acceptCondition(groupperElement)
-                        ? groupperElement
-                        : this._tabster.focusable.findElement({
-                            container: groupperElement,
-                            includeProgrammaticallyFocusable: state.includeProgrammaticallyFocusable,
-                            ignoreGroupper: state.ignoreGroupper,
-                            acceptCondition: state.acceptCondition,
-                        });
+                    const first = cached.first = this.getFirst();
+                    const focused = this._tabster.focusedElement.getFocusedElement();
+
+                    if (focused) {
+                        this.setFirst(groupperElement.contains(focused) ? undefined : first);
+                    }
                 }
             }
         }
@@ -158,7 +184,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
-    private _unlimited: { [id: string]: Types.Groupper } = {};
+    private _current: Record<string, Types.Groupper> = {};
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -179,6 +205,8 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
 
     protected dispose(): void {
         const win = this._win();
+
+        this._current = {};
 
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
@@ -207,32 +235,24 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
         return new Groupper(tabster, element, props);
     }
 
-    forgetUnlimitedGrouppers(): void {
-        this._unlimited = {};
+    forgetCurrentGrouppers(): void {
+        this._current = {};
     }
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
-            this._updateUnlimited(element, false, true);
+            this._updateCurrent(element, false, true);
         }
     }
 
     private _onMouseDown = (e: MouseEvent): void => {
         if (e.target) {
-            this._updateUnlimited(e.target as HTMLElement, true);
+            this._updateCurrent(e.target as HTMLElement, true);
         }
     }
 
-    private _updateUnlimited(element: HTMLElement, includeTarget?: boolean, checkTarget?: boolean): void {
-        for (let id of Object.keys(this._unlimited)) {
-            const groupper = this._unlimited[id];
-            const groupperContainer = groupper.getElement();
-
-            if (!groupperContainer?.contains(element)) {
-                groupper.makeUnlimited(false);
-                delete this._unlimited[id];
-            }
-        }
+    private _updateCurrent(element: HTMLElement, includeTarget?: boolean, checkTarget?: boolean): void {
+        const newIds: Record<string, true> = {};
 
         let isTarget = true;
 
@@ -240,18 +260,17 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
             const groupper = getTabsterOnElement(this._tabster, el)?.groupper;
 
             if (groupper) {
+                newIds[groupper.id] = true;
+
                 if (
                     isTarget &&
                     checkTarget &&
-                    !groupper.isUnlimited() &&
+                    !groupper.shouldTabInside() &&
                     (
-                        (
-                            (groupper.getProps().tabbability || Types.GroupperTabbabilities.Unlimited) ===
-                                Types.GroupperTabbabilities.Unlimited
-                        ) ||
+                        !groupper.getProps().tabbability ||
                         (
                             (el !== element) &&
-                            (this._tabster.focusable.isFocusable(el) || (element !== this._tabster.focusable.findFirst({ container: el })))
+                            (this._tabster.focusable.isFocusable(el) || (element !== groupper.getFirst()))
                         )
                     )
                 ) {
@@ -259,11 +278,21 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                 }
 
                 if (includeTarget || !isTarget) {
-                    this._unlimited[groupper.id] = groupper;
-                    groupper.makeUnlimited(true);
+                    this._current[groupper.id] = groupper;
+                    groupper.makeTabbable(true);
                 }
 
                 isTarget = false;
+            }
+        }
+
+        for (let id of Object.keys(this._current)) {
+            const groupper = this._current[id];
+
+            if (!(groupper.id in newIds)) {
+                groupper.makeTabbable(false);
+                groupper.setFirst(undefined);
+                delete this._current[id];
             }
         }
     }
@@ -290,7 +319,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                     next = this._tabster.focusable.findFirst({ container: groupperElement, ignoreGroupper: true });
 
                     if (next) {
-                        this._updateUnlimited(next);
+                        this._updateCurrent(next);
                     }
                 } else if (e.keyCode === Keys.Esc) {
                     let ge: HTMLElement | undefined;
@@ -302,7 +331,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                             ge = g.getElement();
 
                             if (ge) {
-                                g.makeUnlimited(false);
+                                g.makeTabbable(false);
 
                                 next = this._tabster.focusable.isFocusable(ge) ? ge : this._tabster.focusable.findFirst({ container: ge });
 
@@ -311,10 +340,6 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                                 }
                             }
                         }
-                    }
-
-                    if (ge) {
-                        this._updateUnlimited(ge);
                     }
                 }
 
