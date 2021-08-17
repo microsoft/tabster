@@ -45,41 +45,41 @@ describe('MoverGroupper', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1Button2');
+                expect(el?.textContent).toEqual('Button1Button2');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3Button4');
+                expect(el?.textContent).toEqual('Button3Button4');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button5Button6');
+                expect(el?.textContent).toEqual('Button5Button6');
             })
             .pressUp()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3Button4');
+                expect(el?.textContent).toEqual('Button3Button4');
             })
             .pressUp()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1Button2');
+                expect(el?.textContent).toEqual('Button1Button2');
             })
             .pressTab();
 
         if (!tabbability) {
             broTest = broTest
                 .activeElement(el => {
-                    expect(el?.textContent).toContain('Button1');
+                    expect(el?.textContent).toEqual('Button1');
                 })
                 .pressTab()
                 .activeElement(el => {
-                    expect(el?.textContent).toContain('Button2');
+                    expect(el?.textContent).toEqual('Button2');
                 })
                 .pressTab();
         }
 
         broTest = broTest
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button7');
+                expect(el?.textContent).toEqual('Button7');
             });
 
         await broTest;
@@ -116,27 +116,135 @@ describe('MoverGroupper', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressUp()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressUp()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
+            });
+    });
+
+    it('should move between grouppers inside mover with dynamically appearing first focusable', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <style>
+                        { '.groupper .hidden { display: none; }' }
+                        { '.groupper:focus-within .hidden { display: inline; }' }
+                    </style>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div className='groupper' {...getTabsterAttribute({ groupper: {} })}>
+                            <button className='hidden'>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </div>
+                        <div className='groupper' {...getTabsterAttribute({ groupper: {} })}>
+                            <button className='hidden'>Button4</button>
+                            <button>Button5</button>
+                            <button>Button6</button>
+                        </div>
+                    </div>
+                    <button>Button7</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button2');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button5');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button7');
+            });
+    });
+
+    it('should move between grouppers with focusable container inside mover with dynamically appearing first focusable', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <style>
+                        { '.groupper .hidden { display: none; }' }
+                        { '.groupper:focus-within .hidden { display: inline; }' }
+                    </style>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div tabIndex={0} className='groupper' {...getTabsterAttribute({ groupper: {} })}>
+                            <button className='hidden'>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </div>
+                        <div tabIndex={0} className='groupper' {...getTabsterAttribute({ groupper: {} })}>
+                            <button className='hidden'>Button4</button>
+                            <button>Button5</button>
+                            <button>Button6</button>
+                        </div>
+                    </div>
+                    <button>Button7</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4');
+            })
+            .pressEsc()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button7');
             });
     });
 });

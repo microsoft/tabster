@@ -49,18 +49,18 @@ describe('Mover', () => {
             .focusElement('#first')
             // move forward
             [next]()
-            .activeElement(el => expect(el?.textContent).toContain('2'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button2'))
             [next]()
-            .activeElement(el => expect(el?.textContent).toContain('3'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button3'))
             [next]()
-            .activeElement(el => expect(el?.textContent).toContain('4'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button4'))
             // move backwards
             [previous]()
-            .activeElement(el => expect(el?.textContent).toContain('3'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button3'))
             [previous]()
-            .activeElement(el => expect(el?.textContent).toContain('2'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button2'))
             [previous]()
-            .activeElement(el => expect(el?.textContent).toContain('1'));
+            .activeElement(el => expect(el?.textContent).toEqual('Button1'));
     });
 
     it.each<
@@ -85,10 +85,10 @@ describe('Mover', () => {
             await new BroTest.BroTest(getTestHtml(attr))
                 .focusElement('#first')
                 [previous]()
-                .activeElement(el => expect(el?.textContent).toContain('1'))
+                .activeElement(el => expect(el?.textContent).toEqual('Button1'))
                 .focusElement('#last')
                 [next]()
-                .activeElement(el => expect(el?.textContent).toContain('4'));
+                .activeElement(el => expect(el?.textContent).toEqual('Button4'));
         }
     );
 
@@ -115,10 +115,10 @@ describe('Mover', () => {
             await new BroTest.BroTest(getTestHtml(attr))
                 .focusElement('#first')
                 [previous]()
-                .activeElement(el => expect(el?.textContent).toContain('4'))
+                .activeElement(el => expect(el?.textContent).toEqual('Button4'))
                 .focusElement('#last')
                 [next]()
-                .activeElement(el => expect(el?.textContent).toContain('1'));
+                .activeElement(el => expect(el?.textContent).toEqual('Button1'));
         }
     );
 
@@ -134,18 +134,18 @@ describe('Mover', () => {
             .focusElement('#first')
             // move forward
             .pressTab()
-            .activeElement(el => expect(el?.textContent).toContain('2'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button2'))
             .pressTab()
-            .activeElement(el => expect(el?.textContent).toContain('3'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button3'))
             .pressTab()
-            .activeElement(el => expect(el?.textContent).toContain('4'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button4'))
             // move backwards
             .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toContain('3'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button3'))
             .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toContain('2'))
+            .activeElement(el => expect(el?.textContent).toEqual('Button2'))
             .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toContain('1'));
+            .activeElement(el => expect(el?.textContent).toEqual('Button1'));
     });
 
     it('should leave the mover using tab if navigation type is arrows only', async () => {
@@ -158,10 +158,10 @@ describe('Mover', () => {
         await new BroTest.BroTest(getTestHtml(attr))
             .focusElement('#last')
             .pressTab()
-            .activeElement(el => expect(el?.textContent).toContain('Ignore'))
+            .activeElement(el => expect(el?.textContent).toEqual('Ignore'))
             .focusElement('#first')
             .pressTab(true)
-            .activeElement(el => expect(el?.textContent).toContain('Ignore'));
+            .activeElement(el => expect(el?.textContent).toEqual('Ignore'));
     });
 });
 
@@ -206,7 +206,7 @@ describe('NestedMovers', () => {
         await new BroTest.BroTest(getTestHtml(attr, attr))
             .focusElement('#parentLast')
             .pressDown()
-            .activeElement(el => expect(el?.textContent).toContain('Nested1'));
+            .activeElement(el => expect(el?.textContent).toEqual('Nested1'));
     });
 
     it('should not move from from nested to parent mover with arrow keys', async () => {
@@ -219,7 +219,7 @@ describe('NestedMovers', () => {
         await new BroTest.BroTest(getTestHtml(attr, attr))
             .focusElement('#nestedFirst')
             .pressUp()
-            .activeElement(el => expect(el?.textContent).toContain('Nested1'));
+            .activeElement(el => expect(el?.textContent).toEqual('Nested1'));
     });
 
     it('should not move from from nested to parent mover with arrow keys with circular navigation', async () => {
@@ -233,10 +233,10 @@ describe('NestedMovers', () => {
         await new BroTest.BroTest(getTestHtml(attr, attr))
             .focusElement('#nestedLast')
             .pressDown()
-            .activeElement(el => expect(el?.textContent).toContain('Nested1'))
+            .activeElement(el => expect(el?.textContent).toEqual('Nested1'))
             .focusElement('#nestedFirst')
             .pressUp()
-            .activeElement(el => expect(el?.textContent).toContain('Nested4'));
+            .activeElement(el => expect(el?.textContent).toEqual('Nested4'));
     });
 });
 
@@ -263,31 +263,31 @@ describe('Mover memorizing current', () => {
             .pressTab()
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button6');
+                expect(el?.textContent).toEqual('Button6');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button4');
+                expect(el?.textContent).toEqual('Button4');
             });
     });
 
@@ -306,11 +306,11 @@ describe('Mover memorizing current', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
@@ -318,11 +318,11 @@ describe('Mover memorizing current', () => {
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressDown()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
@@ -330,7 +330,7 @@ describe('Mover memorizing current', () => {
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             });
     });
 });

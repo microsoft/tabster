@@ -21,7 +21,7 @@ describe('<iframe />', () => {
         )
         .pressTab()
         .activeElement(el => {
-            expect(el?.textContent).toContain('Button1');
+            expect(el?.textContent).toEqual('Button1');
         })
         .pressTab()
         .activeElement(el => {
@@ -29,7 +29,7 @@ describe('<iframe />', () => {
         })
         .pressTab()
         .activeElement(el => {
-            expect(el?.textContent).toContain('Button2');
+            expect(el?.textContent).toEqual('Button2');
         });
     });
 });

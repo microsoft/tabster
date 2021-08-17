@@ -47,15 +47,15 @@ describe('Root', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab()
             .activeElement(el => {
@@ -75,23 +75,23 @@ describe('Root', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button3');
+                expect(el?.textContent).toEqual('Button3');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             })
             .pressTab(true)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .pressTab(true)
             .activeElement(el => {
@@ -99,7 +99,7 @@ describe('Root', () => {
             })
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 });

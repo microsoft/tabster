@@ -32,7 +32,7 @@ describe('Focusable', () => {
         )
             .pressTab()
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             })
             .eval(name => {
                 return ((window as unknown) as WindowWithTabsterInternal).__tabsterInstance.observedElement?.requestFocus(
@@ -42,7 +42,7 @@ describe('Focusable', () => {
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             });
     });
 
@@ -67,7 +67,7 @@ describe('Focusable', () => {
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement(el => {
-                expect(el?.textContent).toContain(name);
+                expect(el?.textContent).toEqual(name);
             });
     });
 
@@ -116,7 +116,7 @@ describe('Focusable', () => {
                 expect(result[1]).toBe(true);
             })
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button2');
+                expect(el?.textContent).toEqual('Button2');
             });
     });
 
@@ -150,7 +150,7 @@ describe('Focusable', () => {
             })
             .wait(500)
             .activeElement(el => {
-                expect(el?.textContent).toContain('Button1');
+                expect(el?.textContent).toEqual('Button1');
             });
     });
 
@@ -207,7 +207,7 @@ describe('Focusable', () => {
             .wait(300)
             .activeElement(el => {
                 expect(el?.attributes.id).toEqual('test-button-2');
-                expect(el?.textContent).toContain('CreatedButton');
+                expect(el?.textContent).toEqual('CreatedButton');
             });
     });
 });
