@@ -313,15 +313,16 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
             let groupper = RootAPI.getTabsterContext(this._tabster, element)?.groupper;
 
             if (groupper) {
-                const groupperElement = groupper.getElement();
                 let next: HTMLElement | null | undefined;
 
                 if ((e.keyCode === Keys.Enter)) {
-                    if ((groupperElement !== element) || groupper.isActive()) {
+                    const groupperFirstFocusable = groupper.getFirst();
+
+                    if ((groupperFirstFocusable !== element) || groupper.isActive()) {
                         return;
                     }
 
-                    next = this._tabster.focusable.findFirst({ container: groupperElement, ignoreGroupper: true });
+                    next = this._tabster.focusable.findFirst({ container: groupperFirstFocusable, ignoreGroupper: true });
 
                     if (next) {
                         this._updateCurrent(next);

@@ -247,4 +247,136 @@ describe('MoverGroupper', () => {
                 expect(el?.textContent).toEqual('Button7');
             });
     });
+
+    it('should ignore uncontrolled inside groupper', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                            >
+                                <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </div>
+                                <button>Button3</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                            >
+                                <button {...getTabsterAttribute({ uncontrolled: {} })}>Button4</button>
+                                <button>Button5</button>
+                                <button>Button6</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button>Button7</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4');
+            })
+            .pressEsc()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button7');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1');
+            });
+    });
+
+    it('should ignore uncontrolled inside groupper with no tabindex on the container', async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}>
+                            <div tabIndex={0}>
+                                <button {...getTabsterAttribute({ uncontrolled: {} })}>Button1</button>
+                                <button>Button2</button>
+                                <button>Button3</button>
+                            </div>
+                        </div>
+                        <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}>
+                            <div tabIndex={0}>
+                                <button {...getTabsterAttribute({ uncontrolled: {} })}>Button4</button>
+                                <button>Button5</button>
+                                <button>Button6</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button>Button7</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressDown()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4');
+            })
+            .pressEsc()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button7');
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button4Button5Button6');
+            })
+            .pressUp()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1Button2Button3');
+            })
+            .pressEnter()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1');
+            });
+    });
 });
