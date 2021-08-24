@@ -343,10 +343,16 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
             }
+        } else if (ctx.groupper) {
+            state.nextGroupper = ctx.groupper.getElement();
+        } else if (ctx.mover) {
+            state.nextMover = ctx.mover.getElement();
         } else if (ctx.uncontrolled && !state.nextUncontrolled) {
-            state.nextUncontrolled = ctx.uncontrolled;
+            if (!ctx.groupper && !ctx.mover) {
+                state.nextUncontrolled = ctx.uncontrolled;
 
-            return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_REJECT;
+            }
         }
 
         // We assume iframes are focusable because native tab behaviour would tab inside

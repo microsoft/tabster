@@ -269,6 +269,8 @@ export interface FocusableAcceptElementState {
     found?: boolean;
     foundElement?: HTMLElement;
     nextUncontrolled?: HTMLElement;
+    nextGroupper?: HTMLElement;
+    nextMover?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
     ignoreGroupper?: boolean;
