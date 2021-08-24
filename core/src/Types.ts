@@ -567,18 +567,6 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
-
-    getAllGrouppersAndMovers?: boolean;
-}
-
-export interface TabsterContextGroupper {
-    isGroupper: true;
-    groupper: Groupper;
-}
-
-export interface TabsterContextMover {
-    isGroupper: false;
-    mover: Mover;
 }
 
 export interface TabsterContext {
@@ -587,7 +575,6 @@ export interface TabsterContext {
     groupper?: Groupper;
     mover?: Mover;
     isGroupperFirst?: boolean;
-    allGrouppersAndMovers?: (TabsterContextGroupper | TabsterContextMover)[];
     /**
      * Whether `dir='rtl'` is set on an ancestor
      */

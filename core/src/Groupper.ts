@@ -10,7 +10,7 @@ import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { TabsterPart, WeakHTMLElement } from './Utils';
+import { getLastChild, TabsterPart, WeakHTMLElement } from './Utils';
 
 export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
     private _shouldTabInside = false;
@@ -50,14 +50,33 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
         const onUncontrolled = (el: HTMLElement) => { uncontrolled = el; };
 
         if (this._shouldTabInside) {
-            next = prev
-                ? tabster.focusable.findPrev({ container, currentElement: current, onUncontrolled })
-                : tabster.focusable.findNext({ container, currentElement: current, onUncontrolled });
+            const groupperFirstFocusable = this.getFirst();
 
-            if (!uncontrolled && !next && (this._props.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
-                next = prev
-                    ? tabster.focusable.findLast({ container })
-                    : tabster.focusable.findFirst({ container });
+            if (groupperFirstFocusable) {
+                const findSiblingFrom = prev ? groupperFirstFocusable : getLastChild(groupperFirstFocusable);
+                let actualContainer: HTMLElement | null | undefined;
+
+                if (findSiblingFrom) {
+                    const firstFocusableSibling = prev
+                        ? tabster.focusable.findPrev({ container, currentElement: findSiblingFrom, ignoreUncontrolled: true })
+                        : tabster.focusable.findNext({ container, currentElement: findSiblingFrom, ignoreUncontrolled: true });
+
+                    actualContainer = firstFocusableSibling ? container : groupperFirstFocusable;
+                } else {
+                    actualContainer = container;
+                }
+
+                if (actualContainer) {
+                    next = prev
+                        ? tabster.focusable.findPrev({ container: actualContainer, currentElement: current, onUncontrolled })
+                        : tabster.focusable.findNext({ container: actualContainer, currentElement: current, onUncontrolled });
+
+                    if (!uncontrolled && !next && (this._props.tabbability === Types.GroupperTabbabilities.LimitedTrapFocus)) {
+                        next = prev
+                            ? tabster.focusable.findLast({ container: actualContainer })
+                            : tabster.focusable.findFirst({ container: actualContainer });
+                    }
+                }
             }
         }
 
@@ -328,22 +347,16 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                         this._updateCurrent(next);
                     }
                 } else if (e.keyCode === Keys.Esc) {
-                    let ge: HTMLElement | undefined;
-
                     for (let e: HTMLElement | null = element; e; e = e.parentElement) {
                         const g = getTabsterOnElement(this._tabster, e)?.groupper;
 
                         if (g && (g.isActive() || !g.getProps().tabbability)) {
-                            ge = g.getElement();
+                            g.makeTabbable(false);
 
-                            if (ge) {
-                                g.makeTabbable(false);
+                            next = g.getFirst();
 
-                                next = this._tabster.focusable.isFocusable(ge) ? ge : this._tabster.focusable.findFirst({ container: ge });
-
-                                if (next) {
-                                    break;
-                                }
+                            if (next) {
+                                break;
                             }
                         }
                     }

@@ -322,18 +322,32 @@ describe('MoverGroupper', () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
+                    <style>
+                        { '.groupper .hidden { display: none; }' }
+                        { '.groupper:focus-within .hidden { display: inline; }' }
+                    </style>
                     <div {...getTabsterAttribute({ mover: {} })}>
-                        <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}>
+                        <div
+                            className='groupper'
+                            {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                        >
                             <div tabIndex={0}>
-                                <button {...getTabsterAttribute({ uncontrolled: {} })}>Button1</button>
-                                <button>Button2</button>
+                                <div className='hidden' {...getTabsterAttribute({ uncontrolled: {} })}>
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </div>
                                 <button>Button3</button>
                             </div>
                         </div>
-                        <div {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}>
+                        <div
+                            className='groupper'
+                            {...getTabsterAttribute({ groupper: { tabbability: Types.GroupperTabbabilities.LimitedTrapFocus } })}
+                        >
                             <div tabIndex={0}>
-                                <button {...getTabsterAttribute({ uncontrolled: {} })}>Button4</button>
-                                <button>Button5</button>
+                                <div className='hidden' {...getTabsterAttribute({ uncontrolled: {} })}>
+                                    <button>Button4</button>
+                                    <button>Button5</button>
+                                </div>
                                 <button>Button6</button>
                             </div>
                         </div>
