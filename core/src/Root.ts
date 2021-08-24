@@ -320,7 +320,6 @@ export class RootAPI implements Types.RootAPI {
             return undefined;
         }
 
-        const getAllGrouppersAndMovers = options.getAllGrouppersAndMovers;
         const checkRtl = options.checkRtl;
         let root: Types.Root | undefined;
         let modalizer: Types.Modalizer | undefined;
@@ -329,7 +328,6 @@ export class RootAPI implements Types.RootAPI {
         let isGroupperFirst: boolean | undefined;
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
-        let allGrouppersAndMovers: Types.TabsterContext['allGrouppersAndMovers'] = getAllGrouppersAndMovers ? [] : undefined;
         let curElement: (Node | null) = element;
 
         while (curElement && (!root || checkRtl)) {
@@ -354,22 +352,6 @@ export class RootAPI implements Types.RootAPI {
 
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
-
-            if (getAllGrouppersAndMovers && allGrouppersAndMovers) {
-                if (curGroupper) {
-                    allGrouppersAndMovers.push({
-                        isGroupper: true,
-                        groupper: curGroupper
-                    });
-                }
-
-                if (curMover) {
-                    allGrouppersAndMovers.push({
-                        isGroupper: false,
-                        mover: curMover
-                    });
-                }
-            }
 
             if (!groupper && curGroupper) {
                 groupper = curGroupper;
@@ -418,7 +400,6 @@ export class RootAPI implements Types.RootAPI {
             groupper,
             mover,
             isGroupperFirst,
-            allGrouppersAndMovers,
             isRtl: checkRtl ? !!isRtl : undefined,
             uncontrolled
         } : undefined;

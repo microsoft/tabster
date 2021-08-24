@@ -561,29 +561,14 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        const ctx = RootAPI.getTabsterContext(tabster, focused, { checkRtl: true, getAllGrouppersAndMovers: true });
+        const ctx = RootAPI.getTabsterContext(tabster, focused, { checkRtl: true });
 
         if (!ctx || !ctx.mover) {
             return;
         }
 
         if (ctx.isGroupperFirst) {
-            const allGrouppersAndMovers = ctx.allGrouppersAndMovers!!!;
-            let grouppersCount = 0;
-
-            for (let gom of allGrouppersAndMovers) {
-                if (!gom.isGroupper) {
-                    break;
-                }
-
-                grouppersCount++;
-
-                if (gom.groupper.isActive()) {
-                    grouppersCount++;
-                }
-            }
-
-            if (grouppersCount !== 1) {
+            if (ctx.groupper && ctx.groupper.isActive()) {
                 return;
             }
         }
