@@ -53,6 +53,7 @@ export class KeyborgState {
         }
 
         this._isNavigatingWithKeyboard = isNavigatingWithKeyboard;
+
         for (let id of Object.keys(this.__keyborgCoreRefs)) {
             const ref = this.__keyborgCoreRefs[id];
             const keyborg = ref.deref();
