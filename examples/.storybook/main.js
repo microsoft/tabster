@@ -4,11 +4,12 @@ const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
 const version = require('../../core/package.json').version;
 
 module.exports = {
-  "stories": [
+  stories: [
     "../src/**/*.stories.mdx",
     "../src/**/*.stories.@(js|jsx|ts|tsx)"
   ],
-  "addons": [],
+  addons: ['@storybook/addon-docs'],
+
   webpackFinal: async (config, type) => {
     config.resolve.plugins.push(new TsconfigPathsPlugin({ extensions: config.resolve.extensions }));
 
@@ -16,7 +17,7 @@ module.exports = {
 
     config.plugins.push(new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
-      '__VERSION__': `'${version}'`,
+      __VERSION__: `'${version}'`,
     }));
 
     return config;

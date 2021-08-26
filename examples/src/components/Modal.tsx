@@ -4,20 +4,25 @@
  */
 
 import * as React from 'react';
-import { getCurrentTabster, getDeloser, getModalizer, Types as TabsterTypes } from 'tabster';
+import * as ReactDOM from 'react-dom';
+import { getCurrentTabster, getTabsterAttribute } from 'tabster';
 
 export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
-    private _div: HTMLDivElement | undefined;
-    private tabsterModalizer: TabsterTypes.ModalizerAPI | undefined = undefined;
-    private tabsterDeloser: TabsterTypes.DeloserAPI | undefined = undefined;
+    private portalNode: HTMLDivElement | undefined;
 
     constructor(props: {}) {
         super(props);
         this.state = { isVisible: false };
-        const tabsterInstance = getCurrentTabster(window);
-        if (tabsterInstance) {
-            this.tabsterModalizer = getModalizer(tabsterInstance);
-            this.tabsterDeloser = getDeloser(tabsterInstance);
+    }
+
+    componentDidMount() {
+        this.portalNode = document.createElement('div');
+        document.body.appendChild(this.portalNode);
+    }
+
+    componentWillUnmount() {
+        if (this.portalNode) {
+            this.portalNode.remove();
         }
     }
 
@@ -26,17 +31,24 @@ export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
             return null;
         }
 
-        return (
-            <div>
-                <div className='lightbox'></div>
-                <div ref={ this._onRef } aria-label='Modal' role='region' className='modal'>
-                    <h3>Piu piu</h3>
-                    <button onClick={ this._onBtnClick }>Close</button>
-                    &nbsp;or&nbsp;
-                    <button onClick={ this._onBtnClick }>Dismiss</button>
+        const modal = (
+            <div className='lightbox'>
+                <div ref={ this._onRef } aria-label='Modal' role='dialog' className='modal' {...getTabsterAttribute({ modalizer: { id: 'modal' }})}>
+                    <header>
+                        <h3>Modal dialog</h3>
+                    </header>
+                    <section>
+                        This modal dialog should trap focus, but let the user tab into the browser.
+                    </section>
+                    <footer>
+                        <button onClick={ this._onBtnClick }>Close</button>
+                        <button onClick={ this._onBtnClick }>Dismiss</button>
+                    </footer>
                 </div>
             </div>
         );
+
+        return ReactDOM.createPortal(modal, this.portalNode);
     }
 
     show() {
@@ -44,19 +56,9 @@ export class Modal extends React.PureComponent<{}, { isVisible: boolean }> {
     }
 
     private _onRef = (el: HTMLDivElement | null) => {
-        if (!this.tabsterModalizer || !this.tabsterDeloser) {
-            return;
-        }
-
-        if (el) {
-            this._div = el;
-            this.tabsterModalizer.add(el, { id: 'modal' });
-            this.tabsterDeloser.add(el);
-            this.tabsterModalizer.focus(el);
-        } else if (this._div) {
-            this.tabsterModalizer.remove(this._div);
-            this.tabsterDeloser.remove(this._div);
-            this._div = undefined;
+        const tabster = getCurrentTabster(window);
+        if (el && tabster) {
+            tabster.focusable.findFirst(el)?.focus();
         }
     }
 

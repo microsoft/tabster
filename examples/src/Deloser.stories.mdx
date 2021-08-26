@@ -1,0 +1,38 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+import LinkTo from '@storybook/addon-links/react';
+
+<Meta title="API/Deloser" />
+
+# Deloser
+
+The Deloser stores a history of focused elements to try and de-lose focus when the focused element disappears from the page.
+
+## Examples
+
+<LinkTo kind="examples/deloser">Go to examples</LinkTo>
+
+## Syntax
+
+```js
+getTabsterAttribute({
+    deloser: {}
+});
+```
+
+## Usage
+
+The Deloser API is not enabled by default when tabster is created.
+Once the Deloser API is initialized simply configure the `data-tabster` attribute to define a Deloser.
+
+```jsx
+import { getCurrentTabster, getDeloser, getTabsterAttribute } from 'tabster';
+
+const tabster = getCurrentTabster();
+getDeloser(tabster);
+
+const attr = getTabsterAttribute({
+	deloser: {},
+});
+
+const container = <div {...attr}>{children}</div>
+```

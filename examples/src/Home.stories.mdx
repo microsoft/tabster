@@ -1,0 +1,38 @@
+import { Meta, Story, Canvas, Source, SourceState } from "@storybook/addon-docs/blocks";
+import { Modal } from './components/Modal';
+
+<Meta title="Home" />
+
+> 🚧 This documentation is still under development. Not all features are fully documented.
+
+# Tabster
+
+**Tab**index on **ster**oids
+
+<Source code={"npm install --save tabster"} />
+
+Managing focus and the keyboard is hard. In a nutshell tabster will help you:
+
+* Implement common widget keyboarding patterns
+* Stop losing focus to `body` because an element disappeared
+* Manage groups of nested focusable elements
+* Reduce `focus()` calls in your codebase
+
+## Keyboard navigation
+
+<Canvas>
+    <Story id="examples-mover--arrow-navigation-vertical"/>
+</Canvas>
+
+## Modal dialog
+
+<Canvas>
+    <Story id="examples-modalizer--modal-dialog" />
+</Canvas>
+
+## (de)Losing focus
+
+<Canvas>
+    <Story id="examples-deloser--basic" />
+</Canvas>
+

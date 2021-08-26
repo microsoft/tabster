@@ -1,0 +1,45 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/Focusable/findNext" />
+
+# findNext
+
+Finds the next focusable element in the context (i.e. within) of a DOM element.
+
+## Syntax
+
+```js
+findNext(
+    current: HTMLElement,
+    context?: HTMLElement,
+    includeProgrammaticallyFocusable?: boolean,
+    ignoreGroupper?: boolean
+): HTMLElement | null;
+```
+
+## Usage
+
+```js
+const tabster = getCurrentTabster(window);
+
+const start = document.getElementById('start-element');
+tabster.focusable.findNext(start)
+```
+
+## Options
+
+### _current_
+
+The element to start from.
+
+### _context_
+
+Finds the focusable element within the context of another HTML element. Defaults to `document.body`
+
+### _includeProgramaticallyFocusable_
+
+Incudes items that have the attribute `tabindex="-1"` that can only be focused with javascript.
+
+### _ignoreGroupper_
+
+Ignores focusable [Grouppers](#) as valid focusable elements

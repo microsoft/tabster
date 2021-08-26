@@ -1,0 +1,59 @@
+import { Meta, Source } from "@storybook/addon-docs/blocks";
+
+<Meta title="API/createTabster" />
+
+# createTabster
+
+Creates a Tabster instance. The Tabster instance is global to the entire window.
+
+> A console warning will be emitted if you try to create a tabster instance if there is already one on the current window
+
+## Import
+
+```js
+// esm
+import { createTabster } from 'tabster';
+
+// commonjs
+const { createTabster } = require('tabster');
+```
+
+## Syntax
+
+```js
+createTabster(window);
+createTabster(window, options);
+```
+
+## Usage
+
+```js
+const tabster = createTabster(window, {/** options */});
+```
+
+## Options
+
+```ts
+interface TabsterCoreProps {
+    autoRoot?: RootBasicProps;
+}
+
+interface RootBasicProps {
+    restoreFocusOrder?: RestoreFocusOrder;
+}
+
+const RestoreFocusOrders = {
+    History: 0,
+    DeloserDefault: 1,
+    RootDefault: 2,
+    DeloserFirst: 3,
+    RootFirst: 4
+};
+```
+
+### _autoRoot_
+
+By providing this option during tabster creation, the root element is automatically defined to be `document.body`
+inside the window tabster is created.
+
+By using this you won't need to use [getTabsterAttribute](/?path=/story/api-gettabsterattribute--page) to choose your own root element.

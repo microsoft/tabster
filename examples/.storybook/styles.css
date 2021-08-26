@@ -1,0 +1,36 @@
+button {
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    min-width: 150px;
+}
+
+.modal {
+    padding: 12px;
+    position: fixed;
+    left: 20%;
+    top: 20%;
+    right: 20%;
+    bottom: 20%;
+
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .4);
+}
+
+.modal > footer {
+    margin-top: 20px;
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+}
+
+.lightbox {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, .2);
+}
