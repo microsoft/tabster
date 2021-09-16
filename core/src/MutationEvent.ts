@@ -16,16 +16,18 @@ import {
 export function observeMutations(
     doc: HTMLDocument,
     tabster: Types.TabsterInternal,
-    updateTabsterByAttribute: (tabster: Types.TabsterInternal, element: HTMLElementWithUID, dispose?: boolean) => void
+    updateTabsterByAttribute: (tabster: Types.TabsterInternal, element: HTMLElementWithUID, dispose?: boolean) => void,
+    syncState: boolean
 ): () => void {
     if (typeof MutationObserver === 'undefined') {
         return () => { /* Noop */ };
     }
 
-    let observer = new MutationObserver(mutations => {
-        const getWindow = tabster.getWindow;
-        let elementByUId: InstanceContext['elementByUId'] | undefined;
+    const getWindow = tabster.getWindow;
 
+    let elementByUId: InstanceContext['elementByUId'] | undefined;
+
+    const onMutation = (mutations: MutationRecord[]) => {
         for (let mutation of mutations) {
             const target = mutation.target;
             const removed = mutation.removedNodes;
@@ -45,46 +47,52 @@ export function observeMutations(
                 }
             }
         }
+    };
 
-        function updateTabsterElements(node: Node, removed?: boolean): void {
-            if (!elementByUId) {
-                elementByUId = getInstanceContext(getWindow).elementByUId;
-            }
-
-            processNode(node as HTMLElement, removed);
-
-            const walker = createElementTreeWalker(doc, node, (element: Node): number => {
-                return processNode(element as HTMLElement, removed);
-            });
-
-            if (walker) {
-                while (walker.nextNode()) { /* Iterating for the sake of calling processNode() callback. */ }
-            }
+    function updateTabsterElements(node: Node, removed?: boolean): void {
+        if (!elementByUId) {
+            elementByUId = getInstanceContext(getWindow).elementByUId;
         }
 
-        function processNode(element: HTMLElement, removed?: boolean): number {
-            if (!element.getAttribute) {
-                // It might actually be a text node.
-                return NodeFilter.FILTER_SKIP;
-            }
+        processNode(node as HTMLElement, removed);
 
-            const uid = (element as HTMLElementWithUID).__tabsterElementUID;
+        const walker = createElementTreeWalker(doc, node, (element: Node): number => {
+            return processNode(element as HTMLElement, removed);
+        });
 
-            if (uid) {
-                if (removed) {
-                    delete elementByUId!!![uid];
-                } else {
-                    elementByUId!!![uid] = new WeakHTMLElement(getWindow, element);
-                }
-            }
+        if (walker) {
+            while (walker.nextNode()) { /* Iterating for the sake of calling processNode() callback. */ }
+        }
+    }
 
-            if (getTabsterOnElement(tabster, element) || element.hasAttribute(Types.TabsterAttributeName)) {
-                updateTabsterByAttribute(tabster, element, removed);
-            }
-
+    function processNode(element: HTMLElement, removed?: boolean): number {
+        if (!element.getAttribute) {
+            // It might actually be a text node.
             return NodeFilter.FILTER_SKIP;
         }
-    });
+
+        const uid = (element as HTMLElementWithUID).__tabsterElementUID;
+
+        if (uid) {
+            if (removed) {
+                delete elementByUId!!![uid];
+            } else {
+                elementByUId!!![uid] ??= new WeakHTMLElement(getWindow, element);
+            }
+        }
+
+        if (getTabsterOnElement(tabster, element) || element.hasAttribute(Types.TabsterAttributeName)) {
+            updateTabsterByAttribute(tabster, element, removed);
+        }
+
+        return NodeFilter.FILTER_SKIP;
+    }
+
+    let observer = new MutationObserver(onMutation);
+
+    if (syncState) {
+        updateTabsterElements(getWindow().document.body);
+    }
 
     observer.observe(doc, { childList: true, subtree: true, attributes: true, attributeFilter: [Types.TabsterAttributeName] });
 
