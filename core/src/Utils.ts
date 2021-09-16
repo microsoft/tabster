@@ -239,6 +239,7 @@ export function createElementTreeWalker(doc: Document, root: Node, acceptNode: (
     // TypeScript isn't aware of IE11 behaving badly.
     const filter = (_isBrokenIE11 ? acceptNode : ({ acceptNode } as NodeFilter)) as any as NodeFilter;
 
+    // @ts-ignore: We still don't want to completely break IE11, so, entityReferenceExpansion argument is not optional.
     return doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, filter, false /* Last argument is not optional for IE11! */);
 }
 
