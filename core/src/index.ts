@@ -17,6 +17,7 @@ export {
     getObservedElement,
     getOutline,
     getCurrentTabster,
+    getInternal,
     overrideBasics,
     makeNoOp,
     isNoOp,

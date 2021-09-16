@@ -49,6 +49,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
+    internal: Types.InternalAPI;
 
     groupper?: Types.GroupperAPI;
     mover?: Types.MoverAPI;
@@ -82,10 +83,6 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
 
         const getWindow = this.getWindow;
 
-        if (win && win.document) {
-            this._unobserve = observeMutations(win.document, this, updateTabsterByAttribute);
-        }
-
         this.keyboardNavigation = new KeyboardNavigationState(getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
@@ -98,14 +95,29 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         };
         this.uncontrolled = new UncontrolledAPI(this);
 
+        this.internal = {
+            stopObserver: (): void => {
+                if (this._unobserve) {
+                    this._unobserve();
+                    delete this._unobserve;
+                }
+            },
+
+            resumeObserver: (syncState: boolean): void => {
+                if (!this._unobserve) {
+                    const doc = getWindow().document;
+                    this._unobserve = observeMutations(doc, this, updateTabsterByAttribute, syncState);
+                }
+            }
+        };
+
+        this.internal.resumeObserver(false);
+
         startFakeWeakRefsCleanup(getWindow);
     }
 
     protected dispose(): void {
-        if (this._unobserve) {
-            this._unobserve();
-            delete this._unobserve;
-        }
+        this.internal.stopObserver();
 
         const win = this._win;
 
@@ -367,6 +379,10 @@ export function getCrossOrigin(tabster: Types.TabsterCore): Types.CrossOriginAPI
     }
 
     return tabsterInternal.crossOrigin;
+}
+
+export function getInternal(tabster: Types.TabsterCore): Types.InternalAPI {
+    return (tabster as Types.TabsterInternal).internal;
 }
 
 export function disposeTabster(tabster: Types.TabsterCore): void {

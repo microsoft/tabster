@@ -695,6 +695,11 @@ export interface TabsterElementStorage {
 
 export type DisposeFunc = () => void;
 
+export interface InternalAPI {
+    stopObserver(): void;
+    resumeObserver(syncState: boolean): void;
+}
+
 export interface TabsterInternal extends TabsterCore {
     storageEntry(element: HTMLElement, addremove?: boolean): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
@@ -707,6 +712,7 @@ export interface TabsterInternal extends TabsterCore {
     observedElement?: ObservedElementAPI;
     crossOrigin?: CrossOriginAPI;
     uncontrolled: UncontrolledAPI;
+    internal: InternalAPI;
 
     groupperDispose?: DisposeFunc;
     moverDispose?: DisposeFunc;
