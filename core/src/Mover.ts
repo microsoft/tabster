@@ -477,10 +477,6 @@ export class MoverAPI implements Types.MoverAPI {
             validateMoverProps(props);
         }
 
-        if (!tabster.mover) {
-            throw new Error('Mover needs to be created with getMover before being used');
-        }
-
         const self = tabster.mover as MoverAPI;
         const newMover = new Mover(tabster, element, self._onMoverDispose, props);
         self._movers[newMover.id] = newMover;
