@@ -30,8 +30,6 @@ const _inputSelector = [
 const _isVisibleTimeout = 200;
 
 export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover {
-    private static _movers: Record<string, Mover> = {};
-
     private _unobserve: (() => void) | undefined;
     private _onChangeTimer: number | undefined;
     private _domChangedTimer: number | undefined;
@@ -43,15 +41,15 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
     private _updateVisibleTimer: number | undefined;
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
+    private _onDispose: (mover: Mover) => void;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
+        onDispose: (mover: Mover) => void,
         props: Types.MoverProps
     ) {
         super(tabster, element, props);
-
-        Mover._movers[this.id] = this;
 
         this._win = tabster.getWindow;
 
@@ -59,9 +57,12 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             this._observeState();
             this._domChangedTimer = tabster.getWindow().setTimeout(this._domChanged, 0);
         }
+
+        this._onDispose = onDispose;
     }
 
     dispose(): void {
+        this._onDispose(this);
         this._focusables = {};
 
         if (this._unobserve) {
@@ -85,8 +86,6 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             win.clearTimeout(this._onChangeTimer);
             this._onChangeTimer = undefined;
         }
-
-        delete Mover._movers[this.id];
     }
 
     setCurrent(element: HTMLElement | undefined): boolean {
@@ -259,7 +258,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
 
             this._focusables = newFocusables;
 
-            this._updateVisible(true);
+            this.updateVisible(true);
         }
     }
 
@@ -358,7 +357,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
         return undefined;
     }
 
-    private _updateVisible(updateParents: boolean): void {
+    updateVisible(updateParents: boolean): void {
         const element = this._element.get();
 
         if (this._updateVisibleTimer || !element) {
@@ -370,7 +369,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
                 const mover = getTabsterOnElement(this._tabster, e)?.mover;
 
                 if (mover) {
-                    (mover as unknown as Mover)._updateVisible(false);
+                    (mover as unknown as Mover).updateVisible(false);
                 }
             }
         }
@@ -404,25 +403,6 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             }
         }, 0);
     }
-
-    static updateVisible(scrolled: Node[]): void {
-        const containers: { [id: string]: Mover } = {};
-
-        for (let s of scrolled) {
-            for (let id of Object.keys(Mover._movers)) {
-                const container = Mover._movers[id];
-                const containerElement = container.getElement();
-
-                if (containerElement && s.contains(containerElement)) {
-                    containers[container.id] = container;
-                }
-            }
-        }
-
-        for (let id of Object.keys(containers)) {
-            containers[id]._updateVisible(false);
-        }
-    }
 }
 
 function validateMoverProps(props: Types.MoverProps): void {
@@ -435,11 +415,13 @@ export class MoverAPI implements Types.MoverAPI {
     private _win: Types.GetWindow;
     private _scrollTimer: number | undefined;
     private _scrollTargets: Node[] = [];
+    private _movers: Record<string, Mover>;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
         this._win = getWindow;
         this._initTimer = getWindow().setTimeout(this._init, 0);
+        this._movers = {};
 
         tabster.focusedElement.subscribe(this._onFocus);
     }
@@ -473,6 +455,13 @@ export class MoverAPI implements Types.MoverAPI {
         this._scrollTargets = [];
 
         win.removeEventListener('keydown', this._onKeyDown, true);
+
+        Object.keys(this._movers).forEach(moverId => {
+            if (this._movers[moverId]) {
+                this._movers[moverId].dispose();
+                delete this._movers[moverId];
+            }
+        });
     }
 
     static dispose(instance: Types.MoverAPI): void {
@@ -488,7 +477,14 @@ export class MoverAPI implements Types.MoverAPI {
             validateMoverProps(props);
         }
 
-        return new Mover(tabster, element, props);
+        const self = tabster.mover as MoverAPI;
+        const newMover = new Mover(tabster, element, self._onMoverDispose, props);
+        self._movers[newMover.id] = newMover;
+        return newMover;
+    }
+
+    private _onMoverDispose = (mover: Mover) => {
+        delete this._movers[mover.id];
     }
 
     private _onFocus = (e: HTMLElement | undefined): void => {
@@ -500,6 +496,25 @@ export class MoverAPI implements Types.MoverAPI {
                 break;
             }
         }
+    }
+
+    private _updateVisible(scrolled: Node[]): void {
+        const containers: { [id: string]: Mover } = {};
+
+        for (let s of scrolled) {
+            for (let id of Object.keys(this._movers)) {
+                const container = this._movers[id];
+                const containerElement = container.getElement();
+
+                if (containerElement && s.contains(containerElement)) {
+                    containers[container.id] = container;
+                }
+            }
+        }
+
+        for (let id of Object.keys(containers)) {
+            containers[id].updateVisible(false);
+        } 
     }
 
     private _onScroll = (e: UIEvent) => {
@@ -527,7 +542,7 @@ export class MoverAPI implements Types.MoverAPI {
         this._scrollTimer = win.setTimeout(() => {
             this._scrollTimer = undefined;
 
-            Mover.updateVisible(this._scrollTargets);
+            this._updateVisible(this._scrollTargets);
 
             this._scrollTargets = [];
         }, _isVisibleTimeout);
