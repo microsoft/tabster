@@ -18,7 +18,7 @@ module.exports = {
     devtool: 'source-map',
 
     devServer: {
-        port: 8080,
+        port: process.env.PORT ?? 8080,
         contentBase: path.join(__dirname, 'dist'),
         writeToDisk: true,
     },
