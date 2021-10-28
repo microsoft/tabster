@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from 'keyborg';
-
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
 import {
+    DummyInput,
+    DummyInputManager,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     isElementVisibleInContainer,
@@ -18,7 +18,7 @@ import {
     scrollIntoView,
     TabsterPart,
     triggerEvent,
-    WeakHTMLElement
+    WeakHTMLElement,
 } from './Utils';
 
 const _inputSelector = [
@@ -28,6 +28,35 @@ const _inputSelector = [
 ].join(', ');
 
 const _isVisibleTimeout = 200;
+
+class MoverDummyManager extends DummyInputManager {
+    private _tabster: Types.TabsterCore;
+    private _getMemorized: () => WeakHTMLElement | undefined;
+
+    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore, getMemorized: () => WeakHTMLElement | undefined) {
+        super(tabster, element);
+        this._tabster = tabster;
+        this._getMemorized = getMemorized;
+        this.firstDummy.onFocusIn = this._onFocusDummyInput;
+        this.lastDummy.onFocusIn = this._onFocusDummyInput;
+    }
+
+    private _onFocusDummyInput = (dummyInput: DummyInput) => {
+        const container = this._element.get();
+        if (container && !dummyInput.shouldMoveOut) {
+            let toFocus = dummyInput.isFirst
+                ? this._tabster.focusable.findFirst({ container }) 
+                : this._tabster.focusable.findLast({ container });
+
+            const memorized = this._getMemorized()?.get();
+            if (memorized) {
+                toFocus = memorized;
+            }
+
+            toFocus?.focus();
+        }
+    }
+}
 
 export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover {
     private _unobserve: (() => void) | undefined;
@@ -42,6 +71,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
+    public _dummyManagner: MoverDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -59,6 +89,8 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
         }
 
         this._onDispose = onDispose;
+        const getMemorized = () => props.memorizeCurrent ? this._current : undefined;
+        this._dummyManagner = new MoverDummyManager(this._element, tabster, getMemorized);
     }
 
     dispose(): void {
@@ -86,6 +118,8 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             win.clearTimeout(this._onChangeTimer);
             this._onChangeTimer = undefined;
         }
+
+        this._dummyManagner.dispose();
     }
 
     setCurrent(element: HTMLElement | undefined): boolean {
@@ -204,7 +238,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             return;
         }
 
-        let observer = new MutationObserver(mutations => {
+        let observer = new MutationObserver(() => {
             const win = this._win();
 
             if (this._domChangedTimer) {
@@ -560,13 +594,10 @@ export class MoverAPI implements Types.MoverAPI {
             case Keys.PageUp:
             case Keys.Home:
             case Keys.End:
+            case Keys.Tab:
                 break;
             default:
                 return;
-        }
-
-        if (e.shiftKey) {
-            return;
         }
 
         const tabster = this._tabster;
@@ -667,6 +698,8 @@ export class MoverAPI implements Types.MoverAPI {
             if (next) {
                 scrollIntoView(this._win, next, true);
             }
+        } else if (keyCode === Keys.Tab) {
+            next = FocusedElementState.findNextTabbable(tabster, ctx, focused, e.shiftKey)?.element;
         } else if (isGrid) {
             const fromRect = focused.getBoundingClientRect();
             let lastElement: HTMLElement | undefined;
@@ -735,7 +768,11 @@ export class MoverAPI implements Types.MoverAPI {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            nativeFocus(next);
+            next.focus();
+        } else {
+            if (keyCode === Keys.Tab) {
+                (mover as Mover)._dummyManagner.moveOutWithDefaultAction(e.shiftKey);
+            }
         }
     }
 

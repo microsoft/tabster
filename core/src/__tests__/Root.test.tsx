@@ -6,7 +6,7 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types as TabsterTypes } from '../Tabster';
 
-describe('Root', () => {
+xdescribe('Root', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });

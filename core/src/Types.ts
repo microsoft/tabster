@@ -553,7 +553,6 @@ export interface RootProps {
 export interface Root extends TabsterPart<RootProps> {
     readonly uid: string;
     dispose(): void;
-    moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export type RootConstructor = (
@@ -592,10 +591,6 @@ export interface UncontrolledAPI {
 }
 
 export interface ModalizerAPI {
-    /**
-     * Gets the currently active modalizer if it exists
-     */
-    getActiveModalizer(): Modalizer | undefined;
     /**
      * Activates a Modalizer and focuses the first or default element within
      *

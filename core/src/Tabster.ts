@@ -86,9 +86,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.keyboardNavigation = new KeyboardNavigationState(getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this, getWindow);
-        this.root = new RootAPI(this, () => {
-            (this.groupper as Types.GroupperInternalAPI | undefined)?.forgetCurrentGrouppers();
-        }, props?.autoRoot);
+        this.root = new RootAPI(this, props?.autoRoot);
         this.createRoot = RootAPI.createRoot;
         this.updateRoot = (root: Types.Root, removed?: boolean) => {
             RootAPI.onRoot(this.root, root, removed);

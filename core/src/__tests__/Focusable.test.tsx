@@ -6,7 +6,7 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute } from '../Tabster';
 
-describe('Focusable', () => {
+xdescribe('Focusable', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
