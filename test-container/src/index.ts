@@ -8,7 +8,7 @@ import {
     getObservedElement
 } from 'tabster';
 
-const tabster = createTabster(window);
+const tabster = createTabster(window, { controlTab: !__UNCONTROLLED__});
 console.log('created tabster');
 
 getModalizer(tabster)

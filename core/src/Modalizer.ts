@@ -283,7 +283,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
-    private _dummyManager: ModalizerAPIDummyManager;
+    private _dummyManager?: ModalizerAPIDummyManager;
     /** The currently active modalizer */
     public activeModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
@@ -299,7 +299,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         const documentBody = this._win().document.body;
-        this._dummyManager = new ModalizerAPIDummyManager(this, tabster, new WeakHTMLElement(this._win, documentBody));
+        if (!tabster.controlTab) {
+            this._dummyManager = new ModalizerAPIDummyManager(this, tabster, new WeakHTMLElement(this._win, documentBody));
+        }
     }
 
     private _init = (): void => {
@@ -310,7 +312,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     protected dispose(): void {
         const win = this._win();
-        this._dummyManager.dispose();
+        this._dummyManager?.dispose();
 
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
@@ -350,8 +352,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const modalizer = new Modalizer(
             tabster, element,
             self._onModalizerDispose,
-            self._dummyManager.moveOutWithDefaultAction,
-            self._dummyManager.setTabbable,
+            self._dummyManager?.moveOutWithDefaultAction ?? (() => null),
+            self._dummyManager?.setTabbable ?? (() => null),
             props,
         );
 

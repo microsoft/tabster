@@ -71,7 +71,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
-    public _dummyManagner: MoverDummyManager;
+    public _dummyManagner?: MoverDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -90,7 +90,9 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
 
         this._onDispose = onDispose;
         const getMemorized = () => props.memorizeCurrent ? this._current : undefined;
-        this._dummyManagner = new MoverDummyManager(this._element, tabster, getMemorized);
+        if (!tabster.controlTab) {
+            this._dummyManagner = new MoverDummyManager(this._element, tabster, getMemorized);
+        }
     }
 
     dispose(): void {
@@ -119,7 +121,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
             this._onChangeTimer = undefined;
         }
 
-        this._dummyManagner.dispose();
+        this._dummyManagner?.dispose();
     }
 
     setCurrent(element: HTMLElement | undefined): boolean {
@@ -698,7 +700,7 @@ export class MoverAPI implements Types.MoverAPI {
             if (next) {
                 scrollIntoView(this._win, next, true);
             }
-        } else if (keyCode === Keys.Tab) {
+        } else if (keyCode === Keys.Tab && !tabster.controlTab) {
             next = FocusedElementState.findNextTabbable(tabster, ctx, focused, e.shiftKey)?.element;
         } else if (isGrid) {
             const fromRect = focused.getBoundingClientRect();
@@ -771,7 +773,7 @@ export class MoverAPI implements Types.MoverAPI {
             next.focus();
         } else {
             if (keyCode === Keys.Tab) {
-                (mover as Mover)._dummyManagner.moveOutWithDefaultAction(e.shiftKey);
+                (mover as Mover)._dummyManagner?.moveOutWithDefaultAction(e.shiftKey);
             }
         }
     }

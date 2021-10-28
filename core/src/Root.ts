@@ -4,8 +4,9 @@
  */
 
 import { getTabsterOnElement } from './Instance';
+import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import * as Types from './Types';
-import { getElementUId, TabsterPart, WeakHTMLElement } from './Utils';
+import { DummyInput, DummyInputManager, getElementUId, TabsterPart, WeakHTMLElement } from './Utils';
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -25,10 +26,59 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
     }
 }
 
+class RootDummyManager extends DummyInputManager {
+    private _tabster: Types.TabsterCore;
+
+    constructor(tabster: Types.TabsterCore, element: WeakHTMLElement) {
+        super(tabster, element);
+        this._tabster = tabster;
+        this.firstDummy.onFocusIn = this._onDummyInputFocus;
+        this.lastDummy.onFocusIn = this._onDummyInputFocus;
+    }
+
+    setTabbable = (tabbable: boolean) => {
+        const tabIndex = tabbable ? 0 : -1;
+
+        if (this.firstDummy.input) {
+            this.firstDummy.input.tabIndex = tabIndex;
+        } 
+
+        if (this.lastDummy.input) {
+            this.lastDummy.input.tabIndex = tabIndex;
+        } 
+    }
+
+    private _onDummyInputFocus = (dummyInput: DummyInput): void => {
+        if (dummyInput.shouldMoveOut) {
+            // When we've reached the last focusable element, we want to let the browser
+            // to move the focus outside of the page. In order to do that we're synchronously
+            // calling focus() of the dummy input from the Tab key handler and allowing
+            // the default action to move the focus out.
+        } else {
+            // The only way a dummy input gets focused is during the keyboard navigation.
+            KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
+
+            const element = this._element.get();
+
+            if (element) {
+                let hasFocused = dummyInput.isFirst
+                    ? this._tabster.focusedElement.focusFirst({ container: element })
+                    : this._tabster.focusedElement.focusLast({ container: element });
+
+                if (hasFocused) {
+                    return;
+                }
+            }
+
+            dummyInput.input?.blur();
+        }
+    }
+}
+
 export class Root extends TabsterPart<Types.RootProps, undefined> implements Types.Root {
     readonly uid: string;
 
-    private _unobserve: (() => void) | undefined;
+    private _dummyManager?: RootDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -39,18 +89,35 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
+        if (tabster.controlTab) {
+            this._dummyManager = new RootDummyManager(tabster, this._element);
+        }
+        tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
 
     }
 
     dispose(): void {
-        if (this._unobserve) {
-            this._unobserve();
-            this._unobserve = undefined;
+        this._dummyManager?.dispose();
+        this._remove();
+    }
+
+    moveOutWithDefaultAction(backwards: boolean) {
+        this._dummyManager?.moveOutWithDefaultAction(backwards);
+    }
+
+    private _onFocus = (e: HTMLElement | undefined) => {
+        if (e) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, e);
+
+            if (!ctx || ctx.uncontrolled) {
+                this._dummyManager?.setTabbable(false);
+                return;
+            }
         }
 
-        this._remove();
+        this._dummyManager?.setTabbable(true);
     }
 
     private _add(): void {

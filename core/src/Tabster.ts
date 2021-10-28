@@ -49,6 +49,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     focusable: Types.FocusableAPI;
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
+    controlTab: boolean;
     internal: Types.InternalAPI;
 
     groupper?: Types.GroupperAPI;
@@ -92,6 +93,8 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
             RootAPI.onRoot(this.root, root, removed);
         };
         this.uncontrolled = new UncontrolledAPI(this);
+        this.controlTab = props?.controlTab ?? true;
+        console.log('controlledTab', this.controlTab);
 
         this.internal = {
             stopObserver: (): void => {

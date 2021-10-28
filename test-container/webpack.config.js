@@ -45,6 +45,7 @@ module.exports = {
         new webpack.DefinePlugin({
             '__DEV__': true,
             '__VERSION__': `'${version}'`,
+            '__UNCONTROLLED__': !!process.env.UNCONTROLLED,
         }),
         new HtmlWebpackPlugin({ title: 'Tabster Test' }),
         new CopyPlugin({

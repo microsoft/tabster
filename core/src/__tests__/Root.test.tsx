@@ -6,7 +6,9 @@
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types as TabsterTypes } from '../Tabster';
 
-xdescribe('Root', () => {
+const runIfControlled = !process.env.UNCONTROLLED ? describe : xdescribe;
+
+runIfControlled('Root', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });

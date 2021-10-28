@@ -25,9 +25,14 @@ export interface TabsterDOMAttribute {
 
 export interface TabsterCoreProps {
     autoRoot?: RootProps;
+    /**
+     * Allows all tab key presses under the tabster root to be controlled by tabster
+     * @default true
+     */
+    controlTab?: boolean;
 }
 
-export interface TabsterCore {
+export interface TabsterCore extends Pick<TabsterCoreProps, 'controlTab'> {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
@@ -553,6 +558,7 @@ export interface RootProps {
 export interface Root extends TabsterPart<RootProps> {
     readonly uid: string;
     dispose(): void;
+    moveOutWithDefaultAction(backwards: boolean): void;
 }
 
 export type RootConstructor = (

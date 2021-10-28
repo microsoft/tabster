@@ -28,3 +28,9 @@ jobs:
               run: |
                 npm run serve &
                 npm run test
+            - name: "Run tests (uncontrolled)"
+              run: |
+                npm run serve &
+                npm run test
+              env:
+                UNCONTROLLED: true

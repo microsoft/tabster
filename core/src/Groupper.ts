@@ -22,11 +22,6 @@ class GroupperDummyManager extends DummyInputManager {
         this.lastDummy.onFocusIn = this._onFocusDummyInput;
     }
 
-    dispose(): void {
-        this.firstDummy.dispose();
-        this.lastDummy.dispose();
-    }
-
     private _onFocusDummyInput = (dummyInput: DummyInput) => {
         const container = this._element.get();
         if (container && !dummyInput.shouldMoveOut) {
@@ -42,7 +37,7 @@ class GroupperDummyManager extends DummyInputManager {
 export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
     private _shouldTabInside = false;
     private _first: WeakHTMLElement | undefined;
-    public _dummyManager: GroupperDummyManager;
+    public _dummyManager?: GroupperDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -52,11 +47,14 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
         super(tabster, element, props);
         this.makeTabbable(false);
 
-        this._dummyManager = new GroupperDummyManager(this._element, tabster);
+        if (!tabster.controlTab) {
+            this._dummyManager = new GroupperDummyManager(this._element, tabster);
+        }
     }
 
     dispose(): void {
         const element = this._element.get();
+        this._dummyManager?.dispose();
 
         if (element) {
             if (__DEV__) {
@@ -392,7 +390,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                             }
                         }
                     }
-                } else if (e.keyCode === Keys.Tab) {
+                } else if (e.keyCode === Keys.Tab && !this._tabster.controlTab) {
                     next = FocusedElementState.findNextTabbable(this._tabster, ctx, element, isPrev)?.element;
                 }
 
@@ -401,7 +399,7 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
 
                     nativeFocus(next);
                 } else {
-                    (groupper as Groupper)._dummyManager.moveOutWithDefaultAction(isPrev);
+                    (groupper as Groupper)._dummyManager?.moveOutWithDefaultAction(isPrev);
                 }
             }
         }
