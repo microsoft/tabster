@@ -19,7 +19,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "tabster": ["../core/src/index.ts"]
+      "tabster": ["tabster/src/index.ts"]
     },
     "baseUrl": "."
   },
