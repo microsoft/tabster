@@ -71,7 +71,7 @@ export class Mover extends TabsterPart<Types.MoverProps> implements Types.Mover 
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
-    public _dummyManagner?: MoverDummyManager;
+    _dummyManagner?: MoverDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,

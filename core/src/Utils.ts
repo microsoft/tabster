@@ -564,10 +564,10 @@ export type DummyInputFocusCallback = (dummyInput: DummyInput) => void;
 export class DummyInput {
     private _isPhantom: DummyInputProps['isPhantom'];
 
-    public input: HTMLDivElement | undefined;
+    input: HTMLDivElement | undefined;
     /** Flag that indicates focus is leaving the boundary of the dummy input */
-    public shouldMoveOut?: boolean;
-    public isFirst: DummyInputProps['isFirst'];
+    shouldMoveOut?: boolean;
+    isFirst: DummyInputProps['isFirst'];
     /** Called when the input is focused */
     onFocusIn?: DummyInputFocusCallback;
     /** Called when the input is blurred */

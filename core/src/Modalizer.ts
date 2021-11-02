@@ -285,7 +285,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _initTimer: number | undefined;
     private _dummyManager?: ModalizerAPIDummyManager;
     /** The currently active modalizer */
-    public activeModalizer: Types.Modalizer | undefined;
+    activeModalizer: Types.Modalizer | undefined;
     private _focusOutTimer: number | undefined;
     private _restoreModalizerFocusTimer: number | undefined;
     /**

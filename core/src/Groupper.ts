@@ -37,7 +37,7 @@ class GroupperDummyManager extends DummyInputManager {
 export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
     private _shouldTabInside = false;
     private _first: WeakHTMLElement | undefined;
-    public _dummyManager?: GroupperDummyManager;
+    _dummyManager?: GroupperDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,

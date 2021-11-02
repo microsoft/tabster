@@ -5,8 +5,7 @@
 
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute } from '../Tabster';
-
-const runIfControlled = !process.env.UNCONTROLLED ? describe : xdescribe;
+import { runIfControlled } from './test-utils';
 
 runIfControlled('Uncontrolled', () => {
     beforeAll(async () => {
