@@ -5,8 +5,9 @@
 
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types as TabsterTypes } from '../Tabster';
+import { runIfControlled } from './test-utils';
 
-describe('Root', () => {
+runIfControlled('Root', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });

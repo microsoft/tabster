@@ -550,28 +550,32 @@ export abstract class TabsterPart<P, D = undefined> implements Types.TabsterPart
 }
 
 export interface DummyInputProps {
+    /** The input is created to be used only once and autoremoved when focused. */
+    isPhantom?: boolean; 
+    /** Whether the input is before or after the content it is guarding  */
     isFirst: boolean;
-    focusin?: (e: FocusEvent) => void;
-    focusout?: (e: FocusEvent) => void;
-    isPhantom?: boolean; // The input is created to be used only once and autoremoved when focused.
 }
 
-export type DummyInputFocusCallback<P> = (input: HTMLDivElement, props: P) => void;
+export type DummyInputFocusCallback = (dummyInput: DummyInput) => void;
 
-export class DummyInput<P> {
-    private _onFocusIn: DummyInputFocusCallback<P> | undefined;
-    private _onFocusOut: DummyInputFocusCallback<P> | undefined;
-    private _isPhantom: boolean;
+/**
+ * Dummy HTML elements that are used as focus sentinels for the DOM enclosed within them
+ */
+export class DummyInput {
+    private _isPhantom: DummyInputProps['isPhantom'];
 
     input: HTMLDivElement | undefined;
-    props: P;
+    /** Flag that indicates focus is leaving the boundary of the dummy input */
+    shouldMoveOut?: boolean;
+    isFirst: DummyInputProps['isFirst'];
+    /** Called when the input is focused */
+    onFocusIn?: DummyInputFocusCallback;
+    /** Called when the input is blurred */
+    onFocusOut?: DummyInputFocusCallback;
 
     constructor(
         getWindow: Types.GetWindow,
-        isPhantom: boolean,
-        focusIn: DummyInputFocusCallback<P>,
-        focusOut: DummyInputFocusCallback<P>,
-        props: P
+        props: DummyInputProps
     ) {
         const input = getWindow().document.createElement('div');
 
@@ -594,10 +598,8 @@ export class DummyInput<P> {
         makeFocusIgnored(input);
 
         this.input = input;
-        this._isPhantom = isPhantom;
-        this._onFocusIn = focusIn;
-        this._onFocusOut = focusOut;
-        this.props = props;
+        this.isFirst = props.isFirst;
+        this._isPhantom = props.isPhantom ?? false;
 
         input.addEventListener('focusin', this._focusIn);
         input.addEventListener('focusout', this._focusOut);
@@ -610,8 +612,8 @@ export class DummyInput<P> {
             return;
         }
 
-        delete this._onFocusIn;
-        delete this._onFocusOut;
+        delete this.onFocusIn;
+        delete this.onFocusOut;
         delete this.input;
 
         input.removeEventListener('focusin', this._focusIn);
@@ -621,19 +623,109 @@ export class DummyInput<P> {
     }
 
     private _focusIn = (e: FocusEvent): void => {
-        if (this._onFocusIn && this.input) {
-            this._onFocusIn(this.input, this.props);
+        if (this.onFocusIn && this.input) {
+            this.onFocusIn(this);
         }
     }
 
     private _focusOut = (e: FocusEvent): void => {
-        if (this._onFocusOut && this.input) {
-            this._onFocusOut(this.input, this.props);
+        this.shouldMoveOut = false;
+
+        if (this.onFocusOut && this.input) {
+            this.onFocusOut(this);
         }
 
         if (this._isPhantom) {
             this.dispose();
         }
+    }
+}
+
+/**
+ * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
+ */
+export class DummyInputManager {
+    private _unobserve: (() => void) | undefined;
+    protected _element: WeakHTMLElement;
+    protected firstDummy: DummyInput;
+    protected lastDummy: DummyInput;
+
+    constructor(tabster: Types.TabsterCore, element: WeakHTMLElement ) {
+        const win = (tabster as Types.TabsterInternal).getWindow;
+        this.firstDummy = new DummyInput(win, { isFirst: true });
+        this.lastDummy = new DummyInput(win, { isFirst: false });
+        this._element = element;
+        this._addDummyInputs();
+        this._observeMutations(win);
+    }
+
+    dispose(): void {
+        this.firstDummy.dispose();
+        this.lastDummy.dispose();
+    }
+
+    /**
+     * Prepares to move focus out of the given element by focusing
+     * one of the dummy inputs and setting the `shouldMoveOut` flag
+     * @param backwards focus moving to an element behind the given element
+     */
+    moveOutWithDefaultAction = (backwards: boolean): void => {
+        const first = this.firstDummy;
+        const last = this.lastDummy;
+
+        if (first?.input && last?.input) {
+            if (backwards) {
+                first.shouldMoveOut = true;
+                first.input.focus();
+            } else {
+                last.shouldMoveOut = true;
+                last.input.focus();
+            }
+        }
+    }
+
+    /**
+     * Adds dummy inputs as the first and last child of the given element
+     * Called each time the children under the element is mutated
+     */
+    private _addDummyInputs() {
+        const element = this._element.get();
+        const dif = this.firstDummy?.input;
+        const dil = this.lastDummy?.input;
+
+        if (!element || !dif || !dil) {
+            return;
+        }
+
+        if (element.lastElementChild !== dil) {
+            element.appendChild(dil);
+        }
+
+        const firstElementChild = element.firstElementChild;
+
+        if (firstElementChild && (firstElementChild !== dif)) {
+            element.insertBefore(dif, firstElementChild);
+        } 
+    }
+
+    /**
+     * Creates a mutation observer to ensure that on DOM changes, the dummy inputs
+     * stay as the first and last child elements
+     */
+    private _observeMutations(win: Types.GetWindow): void {
+        if (this._unobserve) {
+            return;
+        }
+
+        const observer = new MutationObserver(() => {
+            this._addDummyInputs();
+        });
+
+        observer.observe(win().document.body, { childList: true });
+
+        this._unobserve = () => {
+            observer.disconnect();
+        };
     }
 }
 

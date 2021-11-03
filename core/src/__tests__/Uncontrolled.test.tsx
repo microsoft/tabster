@@ -5,8 +5,9 @@
 
 import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute } from '../Tabster';
+import { runIfControlled } from './test-utils';
 
-describe('Uncontrolled', () => {
+runIfControlled('Uncontrolled', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });

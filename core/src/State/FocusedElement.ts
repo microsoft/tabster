@@ -44,7 +44,9 @@ export class FocusedElementState
         // Add these event listeners as capture - we want Tabster to run before user event handlers
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener('focusout', this._onFocusOut, true);
-        win.addEventListener('keydown', this._onKeyDown, true);
+        if (this._tabster.controlTab) {
+            win.addEventListener('keydown', this._onKeyDown, true);
+        }
     }
 
     protected dispose(): void {
@@ -59,7 +61,9 @@ export class FocusedElementState
 
         win.document.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.removeEventListener('focusout', this._onFocusOut, true);
-        win.removeEventListener('keydown', this._onKeyDown, true);
+        if (this._tabster.controlTab) {
+            win.addEventListener('keydown', this._onKeyDown, true);
+        }
 
         delete FocusedElementState._lastResetElement;
 
@@ -330,7 +334,11 @@ export class FocusedElementState
         return next;
     }
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
+    private _validateFocusedElement = (element: HTMLElement): void => {
+        // TODO: Make sure this is not needed anymore and write tests.
+    }
+
+     private _onKeyDown = (e: KeyboardEvent): void => {
         if (e.keyCode !== Keys.Tab) {
             return;
         }
@@ -393,12 +401,8 @@ export class FocusedElementState
         }
     }
 
-    private _validateFocusedElement = (element: HTMLElement): void => {
-        // TODO: Make sure this is not needed anymore and write tests.
-    }
-
     private _moveToUncontrolled(uncontrolled: HTMLElement, isPrev: boolean): void {
-        const dummy: DummyInput<undefined> = new DummyInput(this._win, true, () => {/**/}, () => {/**/}, undefined);
+        const dummy: DummyInput = new DummyInput(this._win, { isPhantom: true, isFirst: true });
         const input = dummy.input;
 
         if (input) {

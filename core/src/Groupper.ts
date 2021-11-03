@@ -10,11 +10,34 @@ import { getTabsterOnElement } from './Instance';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
-import { getLastChild, TabsterPart, WeakHTMLElement } from './Utils';
+import { DummyInput, DummyInputManager, getLastChild, TabsterPart, WeakHTMLElement } from './Utils';
+
+class GroupperDummyManager extends DummyInputManager {
+    private _tabster: Types.TabsterCore;
+
+    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
+        super(tabster, element);
+        this._tabster = tabster;
+        this.firstDummy.onFocusIn = this._onFocusDummyInput;
+        this.lastDummy.onFocusIn = this._onFocusDummyInput;
+    }
+
+    private _onFocusDummyInput = (dummyInput: DummyInput) => {
+        const container = this._element.get();
+        if (container && !dummyInput.shouldMoveOut) {
+            if (dummyInput.isFirst) {
+                this._tabster.focusedElement.focusFirst({ container });
+            } else {
+                this._tabster.focusedElement.focusLast({ container });
+            }
+        }
+    }
+}
 
 export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.Groupper {
     private _shouldTabInside = false;
     private _first: WeakHTMLElement | undefined;
+    _dummyManager?: GroupperDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -23,10 +46,15 @@ export class Groupper extends TabsterPart<Types.GroupperProps> implements Types.
     ) {
         super(tabster, element, props);
         this.makeTabbable(false);
+
+        if (!tabster.controlTab) {
+            this._dummyManager = new GroupperDummyManager(this._element, tabster);
+        }
     }
 
     dispose(): void {
         const element = this._element.get();
+        this._dummyManager?.dispose();
 
         if (element) {
             if (__DEV__) {
@@ -322,16 +350,18 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
-        if ((e.keyCode !== Keys.Enter) && (e.keyCode !== Keys.Esc)) {
+        if ((e.keyCode !== Keys.Enter) && (e.keyCode !== Keys.Esc) && (e.keyCode !== Keys.Tab)) {
             return;
         }
 
+        let isPrev = e.shiftKey;
         const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            let groupper = RootAPI.getTabsterContext(this._tabster, element)?.groupper;
+            let ctx = RootAPI.getTabsterContext(this._tabster, element);
+            let groupper = ctx?.groupper;
 
-            if (groupper) {
+            if (ctx && groupper) {
                 let next: HTMLElement | null | undefined;
 
                 if ((e.keyCode === Keys.Enter)) {
@@ -360,12 +390,16 @@ export class GroupperAPI implements Types.GroupperAPI, Types.GroupperInternalAPI
                             }
                         }
                     }
+                } else if (e.keyCode === Keys.Tab && !this._tabster.controlTab) {
+                    next = FocusedElementState.findNextTabbable(this._tabster, ctx, element, isPrev)?.element;
                 }
 
                 if (next) {
                     e.preventDefault();
 
                     nativeFocus(next);
+                } else {
+                    (groupper as Groupper)._dummyManager?.moveOutWithDefaultAction(isPrev);
                 }
             }
         }

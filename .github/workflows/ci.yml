@@ -16,10 +16,10 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Use Node.js 10
+            - name: Use Node.js 14
               uses: actions/setup-node@v1
               with:
-                  node-version: 10.x
+                  node-version: 14.x
 
             - run: npm install
             - run: npm run bootstrap
@@ -28,3 +28,12 @@ jobs:
               run: |
                 npm run serve &
                 npm run test
+              env:
+                PORT: 3000
+            - name: "Run tests (uncontrolled)"
+              run: |
+                npm run serve &
+                npm run test
+              env:
+                UNCONTROLLED: true
+                PORT: 4000
