@@ -662,6 +662,7 @@ export class DummyInputManager {
     dispose(): void {
         this.firstDummy.dispose();
         this.lastDummy.dispose();
+        this._unobserve?.();
     }
 
     /**
