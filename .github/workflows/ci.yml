@@ -30,6 +30,11 @@ jobs:
                 npm run test
               env:
                 PORT: 3000
+            - name: "Rebuild test container (uncontrolled)"
+              run: |
+                npm run build:test-container
+              env:
+                UNCONTROLLED: 'true'
             - name: "Run tests (uncontrolled)"
               run: |
                 npm run serve &

@@ -8,7 +8,7 @@
     "clean": "rimraf dist",
     "build": "npx webpack",
     "start": "npx webpack serve",
-    "serve": "npm run build && npx http-serve dist",
+    "serve": "npx http-serve dist",
     "tslint": "echo noop",
     "tslint:check": "echo noop",
     "prepare": "npm run build"
