@@ -3,7 +3,7 @@
   "scripts": {
     "bootstrap": "npm run clean && lerna bootstrap --no-ci && npx simple-git-hooks",
     "build": "lerna exec -- npm run build",
-    "build:test:container": "lerna exec --scope test-container -- npm run build",
+    "build:test": "lerna exec --scope test-container -- npm run build",
     "clean": "lerna exec -- npm run clean && lerna clean --yes",
     "start": "lerna exec --scope examples -- npm run start",
     "serve": "lerna exec --scope test-container -- npm run serve",
