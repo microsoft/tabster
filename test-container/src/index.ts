@@ -10,6 +10,7 @@ import {
 
 const tabster = createTabster(window, { controlTab: !__UNCONTROLLED__});
 console.log('created tabster');
+document.body.setAttribute('data-uncontrolled', __UNCONTROLLED__.toString());
 
 getModalizer(tabster)
 console.log('created modalizer')

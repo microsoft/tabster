@@ -111,6 +111,10 @@ runIfUnControlled('DummyInputManager', () => {
       );
 
       await new BroTest.BroTest(testHtml)
+      .eval(() => {
+        return document.body.getAttribute('data-uncontrolled');
+      })
+      .check((attr: string) => expect(attr).toEqual('true'))
       .eval((modalizerAPIId) => {
         document.body.setAttribute('id', modalizerAPIId);
       }, modalizerAPIId)
