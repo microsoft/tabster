@@ -721,11 +721,14 @@ export class DummyInputManager {
             this._addDummyInputs();
         });
 
-        observer.observe(win().document.body, { childList: true });
+        const element = this._element.get();
+        if (element) {
+            observer.observe(element, { childList: true });
 
-        this._unobserve = () => {
-            observer.disconnect();
-        };
+            this._unobserve = () => {
+                observer.disconnect();
+            };
+        }
     }
 }
 
