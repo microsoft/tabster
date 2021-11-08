@@ -32,7 +32,7 @@ jobs:
                 PORT: 3000
             - name: "Run tests (uncontrolled)"
               run: |
-                npm run start &
+                npm run serve &
                 npm run test
               env:
                 UNCONTROLLED: 'true'

@@ -31,7 +31,7 @@ declare var __tabsterInstance: any;
 
 export async function bootstrapTabsterPage() {
     // TODO configure this easier
-    await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`);
+    await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`, { timeout: 10000 });
     await expect(page.title()).resolves.toMatch('Tabster Test');
 
     // Waiting for the test app to set Tabster up.
