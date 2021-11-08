@@ -35,5 +35,5 @@ jobs:
                 npm run serve &
                 npm run test
               env:
-                UNCONTROLLED: true
+                UNCONTROLLED: 'true'
                 PORT: 4000
