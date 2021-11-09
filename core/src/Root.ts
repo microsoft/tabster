@@ -6,7 +6,7 @@
 import { getTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import * as Types from './Types';
-import { DummyInput, DummyInputManager, getElementUId, TabsterPart, WeakHTMLElement } from './Utils';
+import { DummyInput, DummyInputManager, getElementUId, TabsterPart, triggerEvent, WeakHTMLElement } from './Utils';
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -28,10 +28,12 @@ function _setInformativeStyle(weakElement: WeakHTMLElement, remove: boolean, id?
 
 class RootDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
+    private _setFocused: (focused: boolean, fromAdjacent?: boolean) => void;
 
-    constructor(tabster: Types.TabsterCore, element: WeakHTMLElement) {
+    constructor(tabster: Types.TabsterCore, element: WeakHTMLElement, setFocused: (focused: boolean, fromAdjacent?: boolean) => void) {
         super(tabster, element);
         this._tabster = tabster;
+        this._setFocused = setFocused;
         this.firstDummy.onFocusIn = this._onDummyInputFocus;
         this.lastDummy.onFocusIn = this._onDummyInputFocus;
     }
@@ -41,11 +43,11 @@ class RootDummyManager extends DummyInputManager {
 
         if (this.firstDummy.input) {
             this.firstDummy.input.tabIndex = tabIndex;
-        } 
+        }
 
         if (this.lastDummy.input) {
             this.lastDummy.input.tabIndex = tabIndex;
-        } 
+        }
     }
 
     private _onDummyInputFocus = (dummyInput: DummyInput): void => {
@@ -54,6 +56,7 @@ class RootDummyManager extends DummyInputManager {
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing
             // the default action to move the focus out.
+            this._setFocused(false, true);
         } else {
             // The only way a dummy input gets focused is during the keyboard navigation.
             KeyboardNavigationState.setVal(this._tabster.keyboardNavigation, true);
@@ -61,6 +64,8 @@ class RootDummyManager extends DummyInputManager {
             const element = this._element.get();
 
             if (element) {
+                this._setFocused(true, true);
+
                 let hasFocused = dummyInput.isFirst
                     ? this._tabster.focusedElement.focusFirst({ container: element })
                     : this._tabster.focusedElement.focusLast({ container: element });
@@ -79,6 +84,7 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
     readonly uid: string;
 
     private _dummyManager?: RootDummyManager;
+    private _isFocused = false;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -90,7 +96,7 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
         if (tabster.controlTab) {
-            this._dummyManager = new RootDummyManager(tabster, this._element);
+            this._dummyManager = new RootDummyManager(tabster, this._element, this._setFocused);
         }
         tabster.focusedElement.subscribe(this._onFocus);
 
@@ -107,9 +113,31 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
         this._dummyManager?.moveOutWithDefaultAction(backwards);
     }
 
+    private _setFocused = (hasFocused: boolean, fromAdjacent?: boolean): void => {
+        if (this._isFocused === hasFocused) {
+            return;
+        }
+
+        this._isFocused = hasFocused;
+
+        const element = this._element.get();
+
+        if (element) {
+            triggerEvent<Types.RootFocusEventDetails>(
+                this._tabster.root.eventTarget,
+                hasFocused ? 'focus' : 'blur',
+                { element, fromAdjacent }
+            );
+        }
+    }
+
     private _onFocus = (e: HTMLElement | undefined) => {
         if (e) {
             const ctx = RootAPI.getTabsterContext(this._tabster, e);
+
+            if (ctx) {
+                this._setFocused(ctx.root.getElement() === this._element.get());
+            }
 
             if (!ctx || ctx.uncontrolled) {
                 this._dummyManager?.setTabbable(false);
@@ -144,12 +172,14 @@ export class RootAPI implements Types.RootAPI {
     private _autoRoot: Types.RootProps | undefined;
     private _autoRootInstance: Root | undefined;
     rootById: { [id: string]: Types.Root } = {};
+    eventTarget: EventTarget;
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
         this._win = (tabster as Types.TabsterInternal).getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
+        this.eventTarget = new EventTarget();
     }
 
     private _init = (): void => {
