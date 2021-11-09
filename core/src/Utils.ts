@@ -551,7 +551,7 @@ export abstract class TabsterPart<P, D = undefined> implements Types.TabsterPart
 
 export interface DummyInputProps {
     /** The input is created to be used only once and autoremoved when focused. */
-    isPhantom?: boolean; 
+    isPhantom?: boolean;
     /** Whether the input is before or after the content it is guarding  */
     isFirst: boolean;
 }
@@ -706,7 +706,7 @@ export class DummyInputManager {
 
         if (firstElementChild && (firstElementChild !== dif)) {
             element.insertBefore(dif, firstElementChild);
-        } 
+        }
     }
 
     /**
@@ -743,7 +743,7 @@ export function getLastChild(container: HTMLElement): HTMLElement | null {
     return lastChild;
 }
 
-export function triggerEvent<D>(target: HTMLElement, name: string, details: D): boolean {
+export function triggerEvent<D>(target: HTMLElement | EventTarget, name: string, details: D): boolean {
     const event = document.createEvent('HTMLEvents') as Types.TabsterEventWithDetails<D>;
 
     event.initEvent(name, true, true);

@@ -7,6 +7,17 @@ import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types as TabsterTypes } from '../Tabster';
 import { runIfControlled } from './test-utils';
 
+interface WindowWithTabsterInternalAndFocusState extends Window {
+    __tabsterInstance: TabsterTypes.TabsterInternal;
+    __tabsterFocusedRoot?: {
+        events: {
+            elementId?: string;
+            type: 'focus' | 'blur';
+            fromAdjacent?: boolean;
+        }[];
+    };
+}
+
 runIfControlled('Root', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
@@ -101,6 +112,122 @@ runIfControlled('Root', () => {
             .pressTab()
             .activeElement(el => {
                 expect(el?.textContent).toEqual('Button1');
+            });
+    });
+
+    it('should trigger root focus events', async () => {
+        await new BroTest.BroTest(
+            (
+                <div id='root' {...getTabsterAttribute({ root: {} })}>
+                    <button id='button1'>Button1</button>
+                    <button>Button2</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const win  = (window as unknown) as WindowWithTabsterInternalAndFocusState;
+
+                const focusedRoot: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot'] = win.__tabsterFocusedRoot = {
+                    events: []
+                };
+
+                const tabster = win.__tabsterInstance;
+
+                tabster.root.eventTarget.addEventListener(
+                    'focus',
+                    (e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>) => {
+                        if (e.details.element.id) {
+                            focusedRoot.events.push({
+                                elementId: e.details.element.id,
+                                type: 'focus',
+                                fromAdjacent: e.details.fromAdjacent
+                            });
+                        }
+                    }
+                );
+
+                tabster.root.eventTarget.addEventListener(
+                    'blur',
+                    (e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>) => {
+                        if (e.details.element.id) {
+                            focusedRoot.events.push({
+                                elementId: e.details.element.id,
+                                type: 'blur',
+                                fromAdjacent: e.details.fromAdjacent
+                            });
+                        }
+                    }
+                );
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1');
+            })
+            .eval(() => {
+                return ((window as unknown) as WindowWithTabsterInternalAndFocusState).__tabsterFocusedRoot;
+            })
+            .check((res: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot']) => {
+                expect(res).toEqual({ events: [{ elementId: 'root', fromAdjacent: true, type: 'focus' }] });
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button2');
+            })
+            .pressTab()
+            .activeElement(el => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .eval(() => {
+                return ((window as unknown) as WindowWithTabsterInternalAndFocusState).__tabsterFocusedRoot;
+            })
+            .check((res: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot']) => {
+                expect(res).toEqual({ events: [
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' }
+                ] });
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button2');
+            })
+            .eval(() => {
+                return ((window as unknown) as WindowWithTabsterInternalAndFocusState).__tabsterFocusedRoot;
+            })
+            .check((res: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot']) => {
+                expect(res).toEqual({ events: [
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' },
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' }
+                ] });
+            })
+            .pressTab(true)
+            .activeElement(el => {
+                expect(el?.textContent).toEqual('Button1');
+            })
+            .pressTab(true)
+            .eval(() => {
+                return ((window as unknown) as WindowWithTabsterInternalAndFocusState).__tabsterFocusedRoot;
+            })
+            .check((res: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot']) => {
+                expect(res).toEqual({ events: [
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' },
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' }
+                ] });
+            })
+            .eval(() => {
+                document.getElementById('button1')?.focus();
+                return ((window as unknown) as WindowWithTabsterInternalAndFocusState).__tabsterFocusedRoot;
+            })
+            .check((res: WindowWithTabsterInternalAndFocusState['__tabsterFocusedRoot']) => {
+                expect(res).toEqual({ events: [
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' },
+                    { elementId: 'root', fromAdjacent: true, type: 'focus' },
+                    { elementId: 'root', fromAdjacent: true, type: 'blur' },
+                    { elementId: 'root', type: 'focus' }
+                ] });
             });
     });
 });

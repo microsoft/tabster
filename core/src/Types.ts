@@ -590,7 +590,13 @@ export interface TabsterContext {
     uncontrolled?: HTMLElement;
 }
 
+export interface RootFocusEventDetails {
+    element: HTMLElement;
+    fromAdjacent?: boolean;
+}
+
 export interface RootAPI {
+    eventTarget: EventTarget;
 }
 
 export interface UncontrolledAPI {
