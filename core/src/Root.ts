@@ -95,13 +95,10 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
-        if (tabster.controlTab) {
-            this._dummyManager = new RootDummyManager(tabster, this._element, this._setFocused);
-        }
+        this._dummyManager = new RootDummyManager(tabster, this._element, this._setFocused);
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
-
     }
 
     dispose(): void {
@@ -143,6 +140,8 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
                 this._dummyManager?.setTabbable(false);
                 return;
             }
+        } else {
+            this._setFocused(false);
         }
 
         this._dummyManager?.setTabbable(true);
