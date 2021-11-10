@@ -1,7 +1,7 @@
 {
   "name": "tabster-react-demo",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A demo React project",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -33,6 +33,6 @@
     "@types/react-dom": "^17.0.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "tabster": "^1.0.4"
+    "tabster": "^1.0.5"
   }
 }
