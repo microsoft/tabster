@@ -85,6 +85,7 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
 
     private _dummyManager?: RootDummyManager;
     private _isFocused = false;
+    private _setFocusedTimer: number | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -102,6 +103,10 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
     }
 
     dispose(): void {
+        if (this._setFocusedTimer) {
+            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
+            delete this._setFocusedTimer;
+        }
         this._dummyManager?.dispose();
         this._remove();
     }
@@ -111,20 +116,36 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
     }
 
     private _setFocused = (hasFocused: boolean, fromAdjacent?: boolean): void => {
+        if (this._setFocusedTimer) {
+            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
+            delete this._setFocusedTimer;
+        }
+
         if (this._isFocused === hasFocused) {
             return;
         }
 
-        this._isFocused = hasFocused;
-
         const element = this._element.get();
 
         if (element) {
-            triggerEvent<Types.RootFocusEventDetails>(
-                this._tabster.root.eventTarget,
-                hasFocused ? 'focus' : 'blur',
-                { element, fromAdjacent }
-            );
+            if (hasFocused) {
+                this._isFocused = true;
+                triggerEvent<Types.RootFocusEventDetails>(
+                    this._tabster.root.eventTarget,
+                    'focus',
+                    { element, fromAdjacent }
+                );
+            } else {
+                this._setFocusedTimer = this._tabster.getWindow().setTimeout(() => {
+                    delete this._setFocusedTimer;
+                    this._isFocused = false;
+                    triggerEvent<Types.RootFocusEventDetails>(
+                        this._tabster.root.eventTarget,
+                        'blur',
+                        { element, fromAdjacent }
+                    );
+                }, 0);
+            }
         }
     }
 
