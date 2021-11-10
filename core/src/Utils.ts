@@ -656,7 +656,12 @@ export class DummyInputManager {
         this.lastDummy = new DummyInput(win, { isFirst: false });
         this._element = element;
         this._addDummyInputs();
-        this._observeMutations(win);
+
+        // older versions of testing frameworks like JSDOM don't support MutationObserver
+        // https://github.com/jsdom/jsdom/issues/639
+        if (process.env.NODE_ENV !== 'test') {
+            this._observeMutations(win);
+        }
     }
 
     dispose(): void {
