@@ -96,7 +96,9 @@ export class Root extends TabsterPart<Types.RootProps, undefined> implements Typ
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
-        this._dummyManager = new RootDummyManager(tabster, this._element, this._setFocused);
+        if (tabster.controlTab) {
+            this._dummyManager = new RootDummyManager(tabster, this._element, this._setFocused);
+        }
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
