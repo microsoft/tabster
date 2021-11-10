@@ -659,7 +659,9 @@ export class DummyInputManager {
 
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639
-        if (process.env.NODE_ENV !== 'test') {
+        // use this way of getting NODE_ENV because tsdx does not support a test environment
+        // https://github.com/jaredpalmer/tsdx/issues/167
+        if (typeof process === 'undefined' || process.env["NODE_ENV"] !== "test") {
             this._observeMutations(win);
         }
     }

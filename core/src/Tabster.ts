@@ -94,7 +94,6 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         };
         this.uncontrolled = new UncontrolledAPI(this);
         this.controlTab = props?.controlTab ?? true;
-        console.log('controlledTab', this.controlTab);
 
         this.internal = {
             stopObserver: (): void => {
