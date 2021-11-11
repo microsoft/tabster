@@ -25,12 +25,11 @@ class GroupperDummyManager extends DummyInputManager {
     private _onFocusDummyInput = (dummyInput: DummyInput) => {
         const container = this._element.get();
         if (container && !dummyInput.shouldMoveOut) {
-            const findFn = dummyInput.isFirst ? 'findFirst' : 'findLast';
-            const toFocus = this._tabster.focusable[findFn]({ container });
-
-            if (toFocus) {
-                nativeFocus(toFocus);
-            }
+           if (dummyInput.isFirst) {
+                this._tabster.focusedElement.focusFirst({ container });
+            } else {
+                this._tabster.focusedElement.focusLast({ container });
+            } 
         }
     }
 }
