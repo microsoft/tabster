@@ -37,7 +37,7 @@ async function goToPageWithRetry(url: string, times: number) {
     try {
         await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`);
     } catch(err) {
-        console.error('failed to connect to test page')
+        console.error('failed to connect to test page', url)
         console.error(err);
         await new Promise((res, rej) => setTimeout(res, 3000));
         await goToPageWithRetry(url, times - 1);
