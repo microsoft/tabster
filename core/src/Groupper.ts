@@ -25,7 +25,7 @@ class GroupperDummyManager extends DummyInputManager {
     private _onFocusDummyInput = (dummyInput: DummyInput) => {
         const container = this._element.get();
         if (container && !dummyInput.shouldMoveOut) {
-           if (dummyInput.isFirst) {
+            if (dummyInput.isFirst) {
                 this._tabster.focusedElement.focusFirst({ container });
             } else {
                 this._tabster.focusedElement.focusLast({ container });
