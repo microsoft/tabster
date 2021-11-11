@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from 'keyborg';
 import { getTabsterOnElement } from './Instance';
 import { KeyboardNavigationState } from './State/KeyboardNavigation';
 import * as Types from './Types';
@@ -66,11 +67,10 @@ class RootDummyManager extends DummyInputManager {
             if (element) {
                 this._setFocused(true, true);
 
-                let hasFocused = dummyInput.isFirst
-                    ? this._tabster.focusedElement.focusFirst({ container: element })
-                    : this._tabster.focusedElement.focusLast({ container: element });
-
-                if (hasFocused) {
+                const findFn = dummyInput.isFirst ? 'findFirst' : 'findLast';
+                const toFocus = this._tabster.focusable[findFn]({ container: element });
+                if (toFocus) {
+                    nativeFocus(toFocus);
                     return;
                 }
             }

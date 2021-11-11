@@ -20,6 +20,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from './Utils';
+import { nativeFocus } from 'keyborg';
 
 const _inputSelector = [
     'input',
@@ -53,7 +54,9 @@ class MoverDummyManager extends DummyInputManager {
                 toFocus = memorized;
             }
 
-            toFocus?.focus();
+            if (toFocus) {
+                nativeFocus(toFocus);
+            }
         }
     }
 }
@@ -770,7 +773,7 @@ export class MoverAPI implements Types.MoverAPI {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            next.focus();
+            nativeFocus(next);
         } else {
             if (keyCode === Keys.Tab) {
                 (mover as Mover)._dummyManagner?.moveOutWithDefaultAction(e.shiftKey);
