@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
-import { getTabsterAttribute } from "../Tabster";
-import { WindowWithTabsterInternal } from "./test-utils";
+import * as BroTest from '../../testing/BroTest';
+import { getTabsterAttribute } from '../Tabster';
+import { WindowWithTabsterInternal } from './test-utils';
 
-describe("keyboard navigation state", () => {
+describe('keyboard navigation state', () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage();
     });
@@ -16,7 +16,7 @@ describe("keyboard navigation state", () => {
         // reset the keyboard navigation state with a mousedown event
         new BroTest.BroTest(<div />).eval(() => {
             document.body.dispatchEvent(
-                new MouseEvent("mousedown", {
+                new MouseEvent('mousedown', {
                     clientX: 100,
                     clientY: 100,
                     screenX: 100,
@@ -32,7 +32,7 @@ describe("keyboard navigation state", () => {
         return win.__tabsterInstance.keyboardNavigation.isNavigatingWithKeyboard();
     };
 
-    it("should be true when navigating inside a Mover", async () => {
+    it('should be true when navigating inside a Mover', async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -53,7 +53,7 @@ describe("keyboard navigation state", () => {
             .check((isNavigatingWIthKeyboard: boolean) => {
                 expect(isNavigatingWIthKeyboard).toBe(false);
             })
-            .focusElement("button")
+            .focusElement('button')
             .eval(getKeyboardNavigationState)
             .check((isNavigatingWIthKeyboard: boolean) => {
                 expect(isNavigatingWIthKeyboard).toBe(false);
@@ -65,21 +65,21 @@ describe("keyboard navigation state", () => {
             });
     });
 
-    it("should be true after pressing Enter key on a groupper", async () => {
+    it('should be true after pressing Enter key on a groupper', async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const groupperAttr = getTabsterAttribute({ groupper: {} });
 
         await new BroTest.BroTest(
             (
                 <div {...rootAttr}>
-                    <div id="groupper" tabIndex={0} {...groupperAttr}>
+                    <div id='groupper' tabIndex={0} {...groupperAttr}>
                         <button>Foo</button>
                         <button>Bar</button>
                     </div>
                 </div>
             )
         )
-            .focusElement("#groupper")
+            .focusElement('#groupper')
             .eval(getKeyboardNavigationState)
             .check((keyboardNavgationState: boolean) => {
                 expect(keyboardNavgationState).toBe(false);

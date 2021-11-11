@@ -7,7 +7,7 @@ import * as BroTest from '../../testing/BroTest';
 import { getTabsterAttribute, Types as TabsterTypes } from '../Tabster';
 import { runIfControlled, WindowWithTabsterInternal } from './test-utils';
 
-interface WindowWithTabsterInternalAndFocusState extends WindowWithTabsterInternal{
+interface WindowWithTabsterInternalAndFocusState extends WindowWithTabsterInternal {
     __tabsterFocusedRoot?: {
         events: {
             elementId?: string;

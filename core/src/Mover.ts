@@ -5,6 +5,7 @@
 
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement } from './Instance';
+import { nativeFocus } from 'keyborg';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';
@@ -20,7 +21,6 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from './Utils';
-import { nativeFocus } from 'keyborg';
 
 const _inputSelector = [
     'input',
