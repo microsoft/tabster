@@ -72,7 +72,7 @@ class RootDummyManager extends DummyInputManager {
 
                 if (hasFocused) {
                     return;
-                } 
+                }
             }
 
             dummyInput.input?.blur();
