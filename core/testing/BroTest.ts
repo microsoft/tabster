@@ -29,9 +29,25 @@ export function createElementString(tagName: string, attributes: {[name: string]
 
 declare var __tabsterInstance: any;
 
+async function goToPageWithRetry(url: string, times: number) {
+    if (times == 0) {
+        throw new Error('Failed to connect to the page after multiple retries');
+    }
+
+    try {
+        await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`);
+    } catch(err) {
+        console.error('failed to connect to test page')
+        console.error(err);
+        await new Promise((res, rej) => setTimeout(res, 3000));
+        await goToPageWithRetry(url, times - 1);
+    }
+}
+
 export async function bootstrapTabsterPage() {
     // TODO configure this easier
-    await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`);
+    const url = `http://localhost:${process.env.PORT ?? '8080'}`;
+    await goToPageWithRetry(url, 4);
     await expect(page.title()).resolves.toMatch('Tabster Test');
 
     // Waiting for the test app to set Tabster up.
