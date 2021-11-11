@@ -29,7 +29,7 @@ class GroupperDummyManager extends DummyInputManager {
                 this._tabster.focusedElement.focusFirst({ container });
             } else {
                 this._tabster.focusedElement.focusLast({ container });
-            } 
+            }
         }
     }
 }
