@@ -58,6 +58,10 @@ export interface KeyborgFocusInEvent extends Event {
 
 /**
  * Guarantees that the native `focus` will be used
+ * Use this when trying to simulate a native keyboard focus since it does not
+ * the programmatic focus flag.
+ * 
+ * ⚠️⚠️ This focus will always activate the keyboard navigation state.
  */
 export function nativeFocus(element: HTMLElement): void {
     const focus = element.focus as KeyborgFocus;
