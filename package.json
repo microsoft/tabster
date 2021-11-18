@@ -21,8 +21,7 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "clean": "rimraf dist",
-    "prepare": "npm run build"
+    "clean": "rimraf dist"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.4.0",
