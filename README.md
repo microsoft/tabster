@@ -1,7 +1,7 @@
 # Keyborg
 
-Keyborg is a library that tracks the state of keyboard input on a web page through focus events. It does not do anything invasive
-to the DOM but provides an event subscription system that allows users to choose how they want to react to changes in focus.
+Keyborg is a library that tracks the state of keyboard input on a web page through focus events. **It does not do anything invasive
+to the DOM** but provides an event subscription system that allows users to choose how they want to react to changes in focus.
 
 ## Getting started
 
