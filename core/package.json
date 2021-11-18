@@ -1,6 +1,6 @@
 {
   "name": "tabster",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Focus Management Tools for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -22,6 +22,9 @@
     "tslint:check": "tslint --project tsconfig.json",
     "prepare": "npm run build",
     "test": "jest"
+  },
+  "dependencies": {
+    "tslib": "^2.1.0"
   },
   "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
