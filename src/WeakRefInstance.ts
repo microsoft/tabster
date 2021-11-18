@@ -23,7 +23,7 @@ export class WeakRefInstance<T extends Disposable | object> {
   private _instance?: T;
 
   constructor(instance: T) {
-    if (_canUseWeakRef && typeof instance === 'object') {
+    if (_canUseWeakRef && typeof instance === "object") {
       this._weakRef = new WeakRef(instance);
     } else {
       this._instance = instance;
