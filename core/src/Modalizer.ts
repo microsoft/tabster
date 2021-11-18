@@ -4,7 +4,7 @@
  */
 
 import { augmentAttribute } from './Instance';
-import { nativeFocus } from 'keyborg';
+import { nativeFocus } from './Keyborg';
 import { Keys } from './Keys';
 import { RootAPI } from './Root';
 import * as Types from './Types';

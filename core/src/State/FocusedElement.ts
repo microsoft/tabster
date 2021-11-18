@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from 'keyborg';
+import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from '../Keyborg';
 
 import { Keys } from '../Keys';
 import { RootAPI } from '../Root';

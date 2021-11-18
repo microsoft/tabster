@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from 'keyborg';
+import { nativeFocus } from './Keyborg';
 
 import { FocusedElementState } from './State/FocusedElement';
 import { getTabsterOnElement } from './Instance';
