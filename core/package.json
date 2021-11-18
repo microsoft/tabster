@@ -24,6 +24,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "keyborg": "^1.0.7",
     "tslib": "^2.1.0"
   },
   "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",

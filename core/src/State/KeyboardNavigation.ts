@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createKeyborg, disposeKeyborg, Keyborg } from '../Keyborg';
+import { createKeyborg, disposeKeyborg, Keyborg } from 'keyborg';
 
 import { Subscribable } from './Subscribable';
 import * as Types from '../Types';

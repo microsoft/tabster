@@ -23,5 +23,3 @@ export {
     isNoOp,
     Types
 } from './Tabster';
-
-export * from './Keyborg';
