@@ -19,10 +19,9 @@
     "build": "npm run clean && tsdx build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "clean": "rimraf dist",
-    "prepare": "npm run build"
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "clean": "rimraf dist"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.4.0",
