@@ -1,13 +1,19 @@
-# Keyborg
+# Keyborg ⌨️🤖
 
-Keyborg is a library that tracks the state of keyboard input on a web page through focus events. **It does not do anything invasive
-to the DOM** but provides an event subscription system that allows users to choose how they want to react to changes in focus.
+Keyborg is a library that tracks the state of current keyboard input on a web page through focus events.
+
+**It does not do anything invasive to the DOM** but provides an event subscription system that allows users to choose how they want to react to changes in focus.
 
 ## Getting started
 
 ### Installation
 
-> npm install --save keyborg
+```bash
+# NPM
+npm install --save keyborg
+# Yarn
+yarn add keyborg
+```
 
 ### Usage
 
@@ -20,9 +26,9 @@ const keyborg = createKeyborg(window);
 // This is called every time the keyboard input state changes
 const handler = (isUsingKeyboard) => {
   if (isUsingKeyboard) {
-    document.addAttribute("data-is-keyboard", "true");
+    document.body.setAttribute("data-is-keyboard", "true");
   } else {
-    document.removeAttribute("data-is-keyboard");
+    document.body.removeAttribute("data-is-keyboard");
   }
 };
 
