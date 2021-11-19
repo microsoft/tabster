@@ -1,0 +1,12 @@
+{
+    "presets": ["@babel/preset-react", "@babel/preset-typescript"],
+    "plugins": [
+        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-proposal-optional-chaining",
+        "@babel/plugin-transform-typescript",
+        [
+            "@babel/plugin-transform-react-jsx",
+            { "pragma": "BroTest.createElementString" }
+        ]
+    ]
+}
