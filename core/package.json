@@ -23,8 +23,9 @@
     "tslint:check": "tslint --project tsconfig.json",
     "test": "jest",
     "prepare": "npm run build",
+    "serve": "npx http-serve storybook-static",
     "start": "npm run storybook",
-    "storybook": "start-storybook -p 6006"
+    "storybook": "start-storybook -p 8080"
   },
   "dependencies": {
     "keyborg": "^1.0.7",

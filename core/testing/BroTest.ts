@@ -35,7 +35,7 @@ async function goToPageWithRetry(url: string, times: number) {
     }
 
     try {
-        await page.goto(`http://localhost:${process.env.PORT ?? '8080'}`);
+        await page.goto(url);
     } catch (err) {
         console.error('failed to connect to test page', url);
         console.error(err);
@@ -46,9 +46,9 @@ async function goToPageWithRetry(url: string, times: number) {
 
 export async function bootstrapTabsterPage() {
     // TODO configure this easier
-    const url = `http://localhost:${process.env.PORT ?? '8080'}`;
+    const url = 'http://localhost:8080/iframe.html?id=testcontainer--test-container&args=&viewMode=story';
     await goToPageWithRetry(url, 4);
-    await expect(page.title()).resolves.toMatch('Tabster Test');
+    await expect(page.title()).resolves.toMatch('Storybook');
 
     // Waiting for the test app to set Tabster up.
     await page.evaluate(() => {
