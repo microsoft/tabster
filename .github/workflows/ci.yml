@@ -28,17 +28,14 @@ jobs:
               run: |
                 npm run serve &
                 npm run test
-              env:
-                PORT: 3000
             - name: "Rebuild test container (uncontrolled)"
               run: |
-                npm run build:test
+                npm run build
               env:
-                UNCONTROLLED: 'true'
+                STORYBOOK_UNCONTROLLED: 'true'
             - name: "Run tests (uncontrolled)"
               run: |
                 npm run serve &
                 npm run test
               env:
-                UNCONTROLLED: 'true'
-                PORT: 4000
+                STORYBOOK_UNCONTROLLED: 'true'
