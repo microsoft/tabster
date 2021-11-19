@@ -16,30 +16,37 @@
     "url": "git+https://github.com/microsoft/tabster"
   },
   "scripts": {
-    "build": "npm run tslint && npm run clean && tsdx build",
+    "build": "npm run tslint && npm run clean && tsdx build && npm run build-storybook",
+    "build-storybook": "build-storybook",
     "clean": "rimraf dist",
     "tslint": "tslint --project tsconfig.json --fix || true",
     "tslint:check": "tslint --project tsconfig.json",
+    "test": "jest",
     "prepare": "npm run build",
-    "test": "jest"
+    "start": "npm run storybook",
+    "storybook": "start-storybook -p 6006"
   },
   "dependencies": {
     "keyborg": "^1.0.7",
     "tslib": "^2.1.0"
   },
-  "//": "core-js needs to be present for storybook: https://github.com/storybookjs/storybook/blob/master/MIGRATION.md#core-js-dependency-errors",
   "devDependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
     "@babel/plugin-transform-react-jsx": "^7.12.7",
-    "@babel/plugin-transform-typescript": "^7.12.1",
+    "@babel/plugin-transform-typescript": "^7.16.0",
     "@babel/preset-react": "^7.12.7",
     "@babel/preset-typescript": "^7.12.7",
+    "@storybook/addon-actions": "^6.3.12",
+    "@storybook/addon-essentials": "^6.3.12",
+    "@storybook/addon-links": "^6.3.12",
+    "@storybook/html": "^6.3.12",
     "@types/expect-puppeteer": "^4.4.5",
     "@types/jest": "^26.0.16",
     "@types/jest-environment-puppeteer": "^4.4.0",
     "@types/puppeteer": "^5.4.0",
     "@types/react": "^17.0.0",
-    "core-js": "^3.9.1",
+    "babel-loader": "^8.2.3",
     "jest": "^26.6.3",
     "jest-puppeteer": "^4.4.0",
     "lint": "^1.0.0-alpha.0",
