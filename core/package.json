@@ -17,13 +17,14 @@
   },
   "scripts": {
     "build": "npm run tslint && npm run clean && tsdx build && npm run build-storybook",
+    "build-storybook": "build-storybook",
     "clean": "rimraf dist",
     "tslint": "tslint --project tsconfig.json --fix || true",
     "tslint:check": "tslint --project tsconfig.json",
     "test": "jest",
-    "storybook": "start-storybook -p 6006",
+    "prepare": "npm run build",
     "start": "npm run storybook",
-    "build-storybook": "build-storybook"
+    "storybook": "start-storybook -p 6006"
   },
   "dependencies": {
     "keyborg": "^1.0.7",
