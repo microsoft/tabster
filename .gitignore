@@ -17,3 +17,6 @@ storybook-static
 .DS_STORE
 .idea/*
 .vs
+
+/dist
+/.rts2*

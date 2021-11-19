@@ -1,9 +1,0 @@
-.mover-wrapper {
-  display: flex;
-  flex-direction: column;
-  width: 200px;
-}
-
-.mover-item {
-  margin: 0;
-}
