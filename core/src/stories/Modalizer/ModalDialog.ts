@@ -4,7 +4,7 @@
  */
 
 import './modalizer.css';
-import { getTabsterAttribute, Types as TabsterTypes } from '../..';
+import { getCurrentTabster, getTabsterAttribute, Types as TabsterTypes } from '../..';
 
 export interface ModalDialogProps extends TabsterTypes.ModalizerProps {}
 
@@ -17,29 +17,48 @@ export const createModalDialog = (props: ModalDialogProps) => {
         isOthersAccessible,
     } = props;
 
+    const tabster = getCurrentTabster(window);
+
     const dialog = document.createElement('div');
     dialog.classList.add('lightbox');
     dialog.classList.add('hidden');
     dialog.innerHTML = `
       <div aria-label="Modal" role="region" class="modal">
         <h3>Modal dialog</h3>
-        <div>
+        <div class="modal-body">
           This is a modal dialog powered by Tabster 
+
+          <button>Focusable item</button>
+          <button>Focusable item</button>
+          <button>Focusable item</button>
         </div>
       <div class="button-group" />
     `;
 
+    const openDialog = () => {
+        dialog.classList.remove('hidden');
+        const firstFocusable = tabster?.focusable.findFirst({ container: dialog });
+        firstFocusable?.focus();
+    };
+
+    const closeDialog = () => dialog.classList.add('hidden');
+
     const rootBtn = document.createElement('button');
     rootBtn.innerHTML = 'Open modal dialog';
     rootBtn.addEventListener('click', () => {
-        console.log(dialog);
-        dialog.classList.remove('hidden');
+        openDialog();
     });
 
     const closeButton = document.createElement('button');
     closeButton.innerHTML = 'Close dialog';
     closeButton.addEventListener('click', () => {
-        dialog.classList.add('hidden');
+        closeDialog();
+    });
+
+    const dismissButton = closeButton.cloneNode() as HTMLButtonElement;
+    dismissButton.innerHTML = 'Dismiss dialog';
+    dismissButton.addEventListener('click', () => {
+        closeDialog();
     });
 
     const isDialogOpen = () => !dialog.classList.contains('hidden');
@@ -50,13 +69,13 @@ export const createModalDialog = (props: ModalDialogProps) => {
             !dialog.firstElementChild?.contains(e.target as HTMLElement) &&
             !rootBtn.contains(e.target as HTMLElement)
         ) {
-            dialog.classList.add('hidden');
+            closeDialog();
         }
     });
 
     document.addEventListener('keydown', (e) => {
         if (isDialogOpen() && e.key === 'Escape') {
-            dialog.classList.add('hidden');
+            closeDialog();
         }
     });
 
@@ -64,6 +83,7 @@ export const createModalDialog = (props: ModalDialogProps) => {
     wrapper.appendChild(rootBtn);
     wrapper.appendChild(dialog);
     dialog.querySelector('.button-group')?.appendChild(closeButton);
+    dialog.querySelector('.button-group')?.appendChild(dismissButton);
 
     const attr = getTabsterAttribute(
         {

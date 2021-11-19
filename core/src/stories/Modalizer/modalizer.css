@@ -20,9 +20,18 @@
     background: #fff;
     border: 1px solid rgba(0, 0, 0, .4);
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
 }
 
 .button-group {
   display: flex;
+  margin-left: auto;
+  margin-top: auto;
   gap: 10px;
 }
