@@ -82,7 +82,9 @@ export class Modalizer
         this._onDispose = onDispose;
         this._moveOutWithDefault = moveOutWithDefault;
         this._onActiveChange = onActiveChange;
-        element.addEventListener("keydown", this._onKeyDown);
+        if (!tabster.controlTab) {
+            element.addEventListener("keydown", this._onKeyDown);
+        }
 
         const parentElement = element.parentElement;
         if (parentElement) {
@@ -282,6 +284,7 @@ export class Modalizer
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateModalizerProps(props: Types.ModalizerProps): void {
     // TODO: Implement validation.
 }

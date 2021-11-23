@@ -11,3 +11,35 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Setup
+
+-   npm install
+
+## Available commands
+
+### build
+
+`npm run build` - builds codebase.
+
+### start
+
+`npm start` - runs storybook.
+
+`npm start:storybook` - to run storybook in the uncontrolled codepath of tabster.
+
+### test
+
+`npm run test` - to run all tests
+
+`npm run test:uncontrolled` - to run all tests in the uncontrolled codepath of tabster.
+
+Tests need to be run in browser, so make sure storybook is running before running tests.
+
+### format
+
+`npm run format` - to use prettier to format the codebase.
+
+### lint
+
+`npm run lint` - runs eslint on the codebase.
