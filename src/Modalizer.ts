@@ -284,6 +284,7 @@ export class Modalizer
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateModalizerProps(props: Types.ModalizerProps): void {
     // TODO: Implement validation.
 }
