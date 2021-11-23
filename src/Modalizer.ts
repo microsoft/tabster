@@ -83,7 +83,7 @@ export class Modalizer
         this._moveOutWithDefault = moveOutWithDefault;
         this._onActiveChange = onActiveChange;
         if (!tabster.controlTab) {
-         element.addEventListener("keydown", this._onKeyDown);
+            element.addEventListener("keydown", this._onKeyDown);
         }
 
         const parentElement = element.parentElement;
