@@ -20,3 +20,4 @@ storybook-static
 
 /dist
 /.rts2*
+*.tsbuildinfo
