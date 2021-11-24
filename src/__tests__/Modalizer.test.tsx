@@ -23,6 +23,7 @@ describe("Modalizer", () => {
                 <div aria-label="modal" id="modal" {...modalizerAttr}>
                     <button id="foo">Foo</button>
                     <button>Bar</button>
+                    <button>Baz</button>
                 </div>
             </div>
         );
@@ -85,7 +86,11 @@ describe("Modalizer", () => {
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toBe("Bar"))
             .pressTab()
+            .activeElement((el) => expect(el?.textContent).toBe("Baz"))
+            .pressTab()
             .activeElement((el) => expect(el).toBeNull())
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toBe("Baz"))
             .pressTab(true)
             .activeElement((el) => expect(el?.textContent).toBe("Bar"))
             .pressTab(true)

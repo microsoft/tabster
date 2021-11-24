@@ -25,9 +25,11 @@
         "lint": "eslint src/ --fix",
         "lint:check": "eslint src/",
         "test": "jest",
+        "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
         "prepublishOnly": "npm run build",
         "serve": "npx http-serve storybook-static",
         "start": "npm run storybook",
+        "start:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm run storybook",
         "storybook": "start-storybook -p 8080"
     },
     "dependencies": {
