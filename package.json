@@ -18,6 +18,7 @@
     "scripts": {
         "build": "npm run clean && tsdx build && npm run build-storybook",
         "build-storybook": "build-storybook",
+        "bundle-size": "npm run build && bundle-size measure",
         "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
@@ -27,8 +28,7 @@
         "prepublishOnly": "npm run build",
         "serve": "npx http-serve storybook-static",
         "start": "npm run storybook",
-        "storybook": "start-storybook -p 8080",
-        "bundle-size": "npm run build && bundle-size measure"
+        "storybook": "start-storybook -p 8080"
     },
     "dependencies": {
         "keyborg": "^1.0.7",
