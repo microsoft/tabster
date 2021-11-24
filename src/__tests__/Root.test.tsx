@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
 import { getTabsterAttribute, Types as TabsterTypes } from "../Tabster";
-import { runIfControlled, WindowWithTabsterInternal } from "./test-utils";
+import * as BroTest from "./utils/BroTest";
+import { runIfControlled, WindowWithTabsterInternal } from "./utils/test-utils";
 
 interface WindowWithTabsterInternalAndFocusState
     extends WindowWithTabsterInternal {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
 import { getTabsterAttribute, Types } from "../Tabster";
+import * as BroTest from "./utils/BroTest";
 
 interface WindowWithTabsterInternal extends Window {
     __tabsterInstance: Types.TabsterInternal;
