@@ -1,7 +1,7 @@
 module.exports = (api) => {
     const isTest = api.env("test");
 
-    const preset = isTest
+    const presetEnv = isTest
         ? ["@babel/preset-env", { targets: { node: "current" } }]
         : [
               "@babel/preset-env",
@@ -13,7 +13,7 @@ module.exports = (api) => {
           ];
 
     return {
-        presets: ["@babel/preset-typescript", preset],
+        presets: ["@babel/preset-typescript", presetEnv],
         plugins: [
             [
                 "@babel/plugin-transform-react-jsx",

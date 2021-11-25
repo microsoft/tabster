@@ -19,7 +19,7 @@ const config = {
         { file: pkg.main, format: "cjs", sourcemap: true },
         { file: pkg.module, format: "es", sourcemap: true },
     ],
-    external: ["tslib", "core-js", "keyborg"],
+    external: ["tslib", "keyborg"],
     plugins: [
         typescript(),
         babel({
