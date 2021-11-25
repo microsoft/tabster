@@ -4,7 +4,7 @@
  */
 
 import "./groupper.css";
-import { getTabsterAttribute, Types as TabsterTypes } from "../..";
+import { getTabsterAttribute, Types as TabsterTypes } from "../../src";
 
 export type FocusableContainerProps = TabsterTypes.GroupperProps;
 

@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "noEmit": true
+    },
+    "files": [
+        "./rollup.config.js",
+        "./jest-puppeteer.config.js",
+        "./babel.config.js",
+        "./bundle-size.config.js"
+    ]
+}

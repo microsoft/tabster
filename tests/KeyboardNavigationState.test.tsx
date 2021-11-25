@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterAttribute } from "../Tabster";
+import { getTabsterAttribute } from "../src";
 import * as BroTest from "./utils/BroTest";
 import { WindowWithTabsterInternal } from "./utils/test-utils";
 
