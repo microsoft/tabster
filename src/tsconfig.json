@@ -1,8 +1,11 @@
 {
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
+        "baseUrl": ".",
+        "rootDir": ".",
         "target": "ES5",
-        "outDir": "../dist"
+        "outDir": "../dist",
+        "sourceMap": true
     },
     "include": ["./**/*.ts"]
 }

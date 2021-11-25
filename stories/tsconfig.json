@@ -1,6 +1,7 @@
 {
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
+        "baseUrl": ".",
         "target": "ESNext",
         "outDir": "../dist/__stories__"
     },

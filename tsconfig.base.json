@@ -2,6 +2,7 @@
     "compilerOptions": {
         "declaration": true,
         "composite": true,
+        "incremental": true,
         "noResolve": false,
         "module": "ES2015",
         "moduleResolution": "Node",

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EvaluateFn, SerializableOrJSHandle } from "puppeteer";
+import { EvaluateFn, SerializableOrJSHandle, Page } from "puppeteer";
+
+declare const page: Page;
 
 function buildAttributesString(attributes: { [name: string]: string }): string {
     const nameOverrides: { [name: string]: string } = {

@@ -1,8 +1,9 @@
 {
+    "extends": "./tsconfig.base.json",
     "references": [
         { "path": "src" },
         { "path": "stories" },
-        { "path": "tests" },
-        { "path": "./tsconfig.eslint.json" }
-    ]
+        { "path": "tests" }
+    ],
+    "exclude": ["node_modules", "dist"]
 }
