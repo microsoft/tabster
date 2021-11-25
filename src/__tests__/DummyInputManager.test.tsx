@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
 import { getTabsterAttribute, Types } from "../Tabster";
-import { runIfUnControlled } from "./test-utils";
+import * as BroTest from "./utils/BroTest";
+import { runIfUnControlled } from "./utils/test-utils";
 
 runIfUnControlled("DummyInputManager", () => {
     beforeAll(async () => {

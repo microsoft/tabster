@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
 import { getTabsterAttribute } from "../Tabster";
-import { WindowWithTabsterInternal } from "./test-utils";
+import * as BroTest from "./utils/BroTest";
+import { WindowWithTabsterInternal } from "./utils/test-utils";
 
 describe("keyboard navigation state", () => {
     beforeAll(async () => {

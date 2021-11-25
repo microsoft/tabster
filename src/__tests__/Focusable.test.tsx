@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as BroTest from "../../testing/BroTest";
 import { getTabsterAttribute } from "../Tabster";
-import { runIfControlled } from "./test-utils";
+import * as BroTest from "./utils/BroTest";
+import { runIfControlled } from "./utils/test-utils";
 
 runIfControlled("Focusable", () => {
     beforeAll(async () => {

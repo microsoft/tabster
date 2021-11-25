@@ -2,6 +2,6 @@
     "preset": "jest-puppeteer",
     "testEnvironment": "jest-environment-puppeteer",
     "transform": { "^.+\\.(ts|tsx|js|jsx)?$": "babel-jest" },
-    "testPathIgnorePatterns": ["test-utils"],
+    "testPathIgnorePatterns": ["utils"],
     "rootDir": "src"
 }

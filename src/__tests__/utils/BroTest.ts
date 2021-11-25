@@ -39,7 +39,7 @@ export function createElementString(
     }>${children.join("")}</${tagName}>`;
 }
 
-declare var __tabsterInstance: any;
+declare let __tabsterInstance: any;
 
 async function goToPageWithRetry(url: string, times: number) {
     if (times === 0) {
@@ -235,7 +235,7 @@ export class BroTest implements PromiseLike<undefined> {
     /**
      * @param time - in milliseconds
      */
-    debug(time: number = 3600000) {
+    debug(time = 3600000) {
         jest.setTimeout(time);
         return this.wait(time);
     }
@@ -339,7 +339,7 @@ export class BroTest implements PromiseLike<undefined> {
                     if (ae && ae !== document.body) {
                         const attributes: BrowserElement["attributes"] = {};
 
-                        for (let name of ae.getAttributeNames()) {
+                        for (const name of ae.getAttributeNames()) {
                             const val = ae.getAttribute(name);
 
                             if (val !== null) {
@@ -365,7 +365,7 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    removeElement(selector?: string, async: boolean = false) {
+    removeElement(selector?: string, async = false) {
         this._chain.push(
             new BroTestItemCallback(async () => {
                 await page.evaluate(
