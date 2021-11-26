@@ -9,8 +9,14 @@
         "prettier"
     ],
     "parser": "@typescript-eslint/parser",
+    "ignorePatterns": "*.config.js",
     "parserOptions": {
-        "project": "tsconfig.json",
+        "projects": [
+            "src/tsconfig.lib.json",
+            "tests/tsconfig.spec.json",
+            "stories/tsconfig.stories.json",
+            "tsconfig.json"
+        ],
         "sourceType": "module"
     },
     "plugins": [

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterAttribute } from "../Tabster";
+import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("<iframe />", () => {

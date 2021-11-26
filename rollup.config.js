@@ -21,7 +21,12 @@ const config = {
     ],
     external: ["tslib", "keyborg"],
     plugins: [
-        typescript(),
+        typescript({
+            tsconfig: "src/tsconfig.lib.json",
+            tsconfigOverride: {
+                compilerOptions: { emitDeclarationOnly: false },
+            },
+        }),
         babel({
             babelHelpers: "bundled",
             extensions,
@@ -31,7 +36,6 @@ const config = {
         replace({
             preventAssignment: true,
             __DEV__: `process.env.NODE_ENV === 'development'`,
-            __TEST__: `process.env.NODE_ENV === 'test'`,
             __VERSION__: JSON.stringify(pkg.version),
         }),
         commonjs({ extensions }),

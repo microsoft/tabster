@@ -8,7 +8,7 @@ import {
     getCurrentTabster,
     getTabsterAttribute,
     Types as TabsterTypes,
-} from "../..";
+} from "tabster";
 
 export type ModalDialogProps = TabsterTypes.ModalizerProps;
 
@@ -30,7 +30,7 @@ export const createModalDialog = (props: ModalDialogProps) => {
       <div aria-label="Modal" role="region" class="modal">
         <h3>Modal dialog</h3>
         <div class="modal-body">
-          This is a modal dialog powered by Tabster 
+          This is a modal dialog powered by Tabster
 
           <button>Focusable item</button>
           <button>Focusable item</button>

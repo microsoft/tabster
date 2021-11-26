@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "composite": true,
+        "incremental": true,
+        "noResolve": false,
+        "module": "ES2015",
+        "moduleResolution": "Node",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": ["ES5", "ES2015.Iterable", "DOM", "ESNext"],
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths": {
+            "tabster": ["src/"]
+        }
+    },
+    "exclude": ["dist", "node_modules"]
+}

@@ -4,7 +4,7 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { Types as TabsterTypes } from "../..";
+import { Types as TabsterTypes } from "tabster";
 import { createBasicMover, MoverProps } from "./Mover";
 
 export default {

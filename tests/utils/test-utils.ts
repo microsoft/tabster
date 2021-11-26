@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TabsterInternal } from "../../Types";
+import { TabsterInternal } from "../../src/Types";
 
 export const runIfControlled = !process.env.STORYBOOK_UNCONTROLLED
     ? describe

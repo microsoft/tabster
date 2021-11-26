@@ -1,2 +1,4 @@
 /tsconfig.json
 /tslint.json
+dist/__stories__/
+dist/__tests__/
