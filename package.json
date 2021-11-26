@@ -23,7 +23,7 @@
         "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "lint": "eslint src/ --fix",
+        "lint": "eslint . --fix",
         "lint:check": "eslint src/",
         "test": "jest",
         "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
