@@ -12,3 +12,5 @@ export {
   KeyborgFocusInEvent,
   KeyborgFocusInEventDetails,
 } from "./FocusEvent";
+
+export const version = __VERSION__;

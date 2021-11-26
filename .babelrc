@@ -1,0 +1,14 @@
+{
+  "presets": [
+    "@babel/preset-typescript",
+    [
+      "@babel/preset-env",
+      {
+        "modules": false,
+        "loose": true,
+        "forceAllTransforms": true
+      }
+    ]
+  ],
+  "plugins": ["babel-plugin-annotate-pure-calls"]
+}

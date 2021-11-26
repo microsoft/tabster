@@ -2,8 +2,8 @@
   "compilerOptions": {
     "declaration": true,
     "noResolve": false,
-    "module": "es2015",
-    "target": "es5",
+    "module": "ES2015",
+    "target": "ES5",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -13,10 +13,8 @@
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist/",
-    "lib": ["es5", "es2015.iterable", "dom", "esnext"]
+    "lib": ["ES5", "ES2015.Iterable", "DOM", "ESNext"]
   },
-
   "include": ["./src/**/*"],
-
   "exclude": ["dist", "node_modules"]
 }
