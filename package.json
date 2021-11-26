@@ -5,9 +5,9 @@
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
     "sideEffects": false,
-    "main": "./dist/index.js",
-    "module": "./dist/tabster.esm.js",
-    "typings": "./dist/index.d.ts",
+    "main": "./lib-commonjs/index.js",
+    "module": "./lib/tabster.esm.js",
+    "typings": "./lib/index.d.ts",
     "files": [
         "dist"
     ],
