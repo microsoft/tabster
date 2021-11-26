@@ -6,5 +6,5 @@
         "outDir": "../dist/__stories__"
     },
     "include": ["./**/*.ts", "./**/*.tsx"],
-    "references": [{ "path": "../src" }]
+    "references": [{ "path": "../src/tsconfig.lib.json" }]
 }

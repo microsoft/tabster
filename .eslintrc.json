@@ -12,9 +12,9 @@
     "ignorePatterns": "*.config.js",
     "parserOptions": {
         "projects": [
-            "src/tsconfig.json",
-            "tests/tsconfig.json",
-            "stories/tsconfig.json",
+            "src/tsconfig.lib.json",
+            "tests/tsconfig.spec.json",
+            "stories/tsconfig.stories.json",
             "tsconfig.json"
         ],
         "sourceType": "module"

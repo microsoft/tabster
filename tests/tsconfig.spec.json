@@ -9,5 +9,5 @@
         "types": ["jest", "react"]
     },
     "include": ["./**/*.ts", "./**/*.tsx"],
-    "references": [{ "path": "../src" }]
+    "references": [{ "path": "../src/tsconfig.lib.json" }]
 }
