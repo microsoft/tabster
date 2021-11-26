@@ -1,5 +1,7 @@
 # Ignore artifacts:
 dist
+lib
+lib-commonjs
 node_modules
 storybook-static
 *.yml
