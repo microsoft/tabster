@@ -92,7 +92,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         this.updateRoot = (root: Types.Root, removed?: boolean) => {
             RootAPI.onRoot(this.root, root, removed);
         };
-        this.uncontrolled = new UncontrolledAPI(this);
+        this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;
 
         this.internal = {
