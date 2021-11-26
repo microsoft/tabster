@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterAttribute, Types } from "../src";
+import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("Mover", () => {

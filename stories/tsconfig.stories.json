@@ -1,10 +1,9 @@
 {
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
-        "baseUrl": ".",
         "target": "ESNext",
         "outDir": "../dist/__stories__"
     },
-    "include": ["./**/*.ts", "./**/*.tsx"],
+    "include": ["**/*.ts", "**/*.tsx"],
     "references": [{ "path": "../src/tsconfig.lib.json" }]
 }

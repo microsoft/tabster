@@ -2,6 +2,9 @@
     "preset": "jest-puppeteer",
     "testEnvironment": "jest-environment-puppeteer",
     "transform": { "^.+\\.(ts|tsx|js|jsx)?$": "babel-jest" },
+    "moduleNameMapper": {
+        "tabster": "<rootDir>/../src/"
+    },
     "testPathIgnorePatterns": ["utils"],
     "rootDir": "tests"
 }

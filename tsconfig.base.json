@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "declaration": true,
+        "emitDeclarationOnly": true,
         "composite": true,
         "incremental": true,
         "noResolve": false,
@@ -15,7 +16,11 @@
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
         "lib": ["ES5", "ES2015.Iterable", "DOM", "ESNext"],
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths": {
+            "tabster": ["src/"]
+        }
     },
     "exclude": ["dist", "node_modules"]
 }

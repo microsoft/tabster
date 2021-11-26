@@ -4,6 +4,5 @@
         { "path": "src/tsconfig.lib.json" },
         { "path": "stories/tsconfig.stories.json" },
         { "path": "tests/tsconfig.spec.json" }
-    ],
-    "exclude": ["node_modules", "dist"]
+    ]
 }

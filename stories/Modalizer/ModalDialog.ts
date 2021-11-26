@@ -8,7 +8,7 @@ import {
     getCurrentTabster,
     getTabsterAttribute,
     Types as TabsterTypes,
-} from "../../src";
+} from "tabster";
 
 export type ModalDialogProps = TabsterTypes.ModalizerProps;
 

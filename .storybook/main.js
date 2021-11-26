@@ -1,5 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const version = require("../package.json").version;
 
 module.exports = {
@@ -18,6 +19,14 @@ module.exports = {
                 __VERSION__: `'${version}'`,
             })
         );
+
+        const tsConfigPathsPlugin = new TsconfigPathsPlugin();
+
+        if (config.resolve.plugins) {
+            config.resolve.plugins.push(tsConfigPathsPlugin);
+        } else {
+            config.resolve.plugins = [tsConfigPathsPlugin];
+        }
 
         return config;
     },

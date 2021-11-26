@@ -21,7 +21,12 @@ const config = {
     ],
     external: ["tslib", "keyborg"],
     plugins: [
-        typescript({ tsconfig: "src/tsconfig.lib.json" }),
+        typescript({
+            tsconfig: "src/tsconfig.lib.json",
+            tsconfigOverride: {
+                compilerOptions: { emitDeclarationOnly: false },
+            },
+        }),
         babel({
             babelHelpers: "bundled",
             extensions,

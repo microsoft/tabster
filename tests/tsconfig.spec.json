@@ -1,13 +1,12 @@
 {
-    "extends": "../tsconfig.base.json",
+    "extends": "../tsconfig.json",
     "compilerOptions": {
-        "baseUrl": ".",
         "target": "ESNext",
         "outDir": "../dist/__tests__",
         "jsx": "react",
         "jsxFactory": "BroTest.createElementString",
-        "types": ["jest", "react"]
+        "types": ["jest", "react"],
     },
-    "include": ["./**/*.ts", "./**/*.tsx"],
-    "references": [{ "path": "../src/tsconfig.lib.json" }]
+    "references": [{ "path": "../src/tsconfig.lib.json" }],
+    "include": ["**/*.ts", "**/*.tsx"],
 }
