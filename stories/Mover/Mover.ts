@@ -4,7 +4,7 @@
  */
 
 import "./mover.css";
-import { getTabsterAttribute, Types as TabsterTypes } from "../..";
+import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
 
 export type MoverProps = TabsterTypes.MoverProps;
 

@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "declaration": true,
-        "emitDeclarationOnly": true,
         "composite": true,
         "incremental": true,
         "noResolve": false,
