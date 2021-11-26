@@ -414,6 +414,7 @@ export class FocusedElementState
         return next;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private _validateFocusedElement = (element: HTMLElement): void => {
         // TODO: Make sure this is not needed anymore and write tests.
     };

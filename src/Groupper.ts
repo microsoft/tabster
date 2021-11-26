@@ -301,6 +301,7 @@ export class Groupper
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateGroupperProps(props: Types.GroupperProps): void {
     // TODO: Implement validation.
 }

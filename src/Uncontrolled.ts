@@ -10,7 +10,7 @@ import * as Types from "./Types";
  * i.e. Tabster will not control focus events within an uncontrolled area
  */
 export class UncontrolledAPI implements Types.UncontrolledAPI {
-    constructor(tabster: Types.TabsterCore) {
+    constructor() {
         /**/
     }
 }

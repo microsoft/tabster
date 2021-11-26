@@ -85,11 +85,11 @@ export function observeMutations(
 
         const uid = (element as HTMLElementWithUID).__tabsterElementUID;
 
-        if (uid) {
+        if (uid && elementByUId) {
             if (removed) {
-                delete elementByUId![uid];
+                delete elementByUId[uid];
             } else {
-                elementByUId![uid] ??= new WeakHTMLElement(getWindow, element);
+                elementByUId[uid] ??= new WeakHTMLElement(getWindow, element);
             }
         }
 

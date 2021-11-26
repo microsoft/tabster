@@ -507,6 +507,7 @@ export class Mover
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateMoverProps(props: Types.MoverProps): void {
     // TODO: Implement validation.
 }

@@ -217,6 +217,7 @@ export class Root
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateRootProps(props: Types.RootProps): void {
     // TODO: Implement validation.
 }

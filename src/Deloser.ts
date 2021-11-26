@@ -644,6 +644,7 @@ export class Deloser
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function validateDeloserProps(props: Types.DeloserProps): void {
     // TODO: Implement validation.
 }

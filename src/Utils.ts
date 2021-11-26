@@ -41,7 +41,7 @@ export interface InstanceContext {
     };
     lastContainerBoundingRectCacheId: number;
     containerBoundingRectCacheTimer?: number;
-    fakeWeakRefs: TabsterWeakRef<any>[];
+    fakeWeakRefs: TabsterWeakRef<unknown>[];
     fakeWeakRefsTimer?: number;
     fakeWeakRefsStarted: boolean;
 }
@@ -270,7 +270,7 @@ export function createElementTreeWalker(
     // TypeScript isn't aware of IE11 behaving badly.
     const filter = (_isBrokenIE11
         ? acceptNode
-        : ({ acceptNode } as NodeFilter)) as any as NodeFilter;
+        : ({ acceptNode } as NodeFilter)) as unknown as NodeFilter;
 
     return doc.createTreeWalker(
         root,
@@ -583,7 +583,7 @@ export function getPromise(getWindow: GetWindow): PromiseConstructor {
     throw new Error("No Promise defined.");
 }
 
-export function getWeakRef<T>(
+export function getWeakRef(
     context: InstanceContext
 ): WeakRefConstructor | undefined {
     return context.basics.WeakRef;
@@ -716,13 +716,13 @@ export class DummyInput {
         input.parentElement?.removeChild(input);
     }
 
-    private _focusIn = (e: FocusEvent): void => {
+    private _focusIn = (): void => {
         if (this.onFocusIn && this.input) {
             this.onFocusIn(this);
         }
     };
 
-    private _focusOut = (e: FocusEvent): void => {
+    private _focusOut = (): void => {
         this.shouldMoveOut = false;
 
         if (this.onFocusOut && this.input) {
@@ -759,7 +759,7 @@ export class DummyInputManager {
             typeof process === "undefined" ||
             process.env["NODE_ENV"] !== "test"
         ) {
-            this._observeMutations(win);
+            this._observeMutations();
         }
     }
 
@@ -817,7 +817,7 @@ export class DummyInputManager {
      * Creates a mutation observer to ensure that on DOM changes, the dummy inputs
      * stay as the first and last child elements
      */
-    private _observeMutations(win: Types.GetWindow): void {
+    private _observeMutations(): void {
         if (this._unobserve) {
             return;
         }
