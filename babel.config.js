@@ -8,7 +8,6 @@ module.exports = (api) => {
               {
                   modules: false,
                   loose: true,
-                  forceAllTransforms: true,
               },
           ];
 
