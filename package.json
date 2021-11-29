@@ -5,9 +5,9 @@
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
   "sideEffects": false,
-  "main": "./dist/index.js",
-  "module": "./dist/keyborg.esm.js",
-  "typings": "./dist/index.d.ts",
+  "main": "./lib-commonjs/index.js",
+  "module": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "files": [
     "dist"
   ],
@@ -37,6 +37,7 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
+    "ci-info": "^3.3.0",
     "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-header": "^3.1.1",
