@@ -22,6 +22,8 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "prepublishOnly": "npm run lint && npm run format && npm run build",
+    "release": "release-it",
     "clean": "rimraf dist"
   },
   "devDependencies": {
@@ -44,6 +46,7 @@
     "eslint-plugin-import": "^2.25.3",
     "node-fetch": "^2.6.6",
     "prettier": "^2.4.1",
+    "release-it": "^14.11.8",
     "rimraf": "^3.0.2",
     "rollup": "^2.60.1",
     "rollup-plugin-sourcemaps": "^0.6.3",
