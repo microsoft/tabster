@@ -24,7 +24,7 @@
     "format:fix": "prettier --write .",
     "prepublishOnly": "npm run lint && npm run format && npm run build",
     "release": "release-it",
-    "clean": "rimraf dist"
+    "clean": "rimraf lib && rimraf lib-commonjs"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",
