@@ -9,7 +9,8 @@
     "module": "./lib/index.js",
     "typings": "./lib/index.d.ts",
     "files": [
-        "dist"
+        "lib",
+        "lib-commonjs"
     ],
     "repository": {
         "type": "git",
