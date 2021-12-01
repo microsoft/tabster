@@ -6,7 +6,7 @@
     "license": "MIT",
     "sideEffects": false,
     "main": "./lib-commonjs/index.js",
-    "module": "./lib/tabster.esm.js",
+    "module": "./lib/index.js",
     "typings": "./lib/index.d.ts",
     "files": [
         "dist"
