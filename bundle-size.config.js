@@ -7,7 +7,7 @@ module.exports = {
       resolve: {
         ...config.resolve,
         alias: {
-          keyborg: path.resolve(__dirname, "./lib/index.js"),
+          keyborg: path.resolve(__dirname, "./dist/keyborg.esm.js"),
         },
       },
     };
