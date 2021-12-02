@@ -18,7 +18,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && rollup -c",
-    "bundle-size": "bundle-size measure",
+    "bundle-size": "npm run build && bundle-size measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "lint": "eslint src/",
