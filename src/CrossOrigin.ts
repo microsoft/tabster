@@ -414,7 +414,9 @@ class FocusElementTransaction extends CrossOriginTransaction<
 > {
     type = CrossOriginTransactionTypes.FocusElement;
 
-    static shouldSelfRespond = () => true;
+    static shouldSelfRespond() {
+        return true;
+    }
 
     static shouldForward(
         tabster: Types.TabsterCore,
@@ -734,7 +736,9 @@ class GetElementTransaction extends CrossOriginTransaction<
 > {
     type = CrossOriginTransactionTypes.GetElement;
 
-    static shouldSelfRespond = () => true;
+    static shouldSelfRespond() {
+        return true;
+    }
 
     static findElement(
         tabster: Types.TabsterCore,
