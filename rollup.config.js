@@ -16,20 +16,8 @@ const extensions = [".ts"];
 const config = {
     input: "./src/index.ts",
     output: [
-        {
-            dir: "lib-commonjs",
-            format: "cjs",
-            sourcemap: true,
-            preserveModules: true,
-            preserveModulesRoot: "src",
-        },
-        {
-            dir: "lib",
-            format: "es",
-            sourcemap: true,
-            preserveModules: true,
-            preserveModulesRoot: "src",
-        },
+        { file: pkg.main, format: "cjs", sourcemap: true },
+        { file: pkg.module, format: "es", sourcemap: true },
     ],
     external: ["tslib", "keyborg"],
     plugins: [

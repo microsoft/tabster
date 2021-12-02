@@ -5,12 +5,11 @@
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
     "sideEffects": false,
-    "main": "./lib-commonjs/index.js",
-    "module": "./lib/index.js",
-    "typings": "./lib/index.d.ts",
+    "main": "dist/tabster.cjs.js",
+    "module": "dist/tabster.esm.js",
+    "typings": "dist/index.d.ts",
     "files": [
-        "lib",
-        "lib-commonjs"
+        "dist"
     ],
     "repository": {
         "type": "git",

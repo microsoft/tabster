@@ -7,7 +7,7 @@ module.exports = {
             resolve: {
                 ...config.resolve,
                 alias: {
-                    tabster: path.resolve(__dirname, "./lib/index.js"),
+                    tabster: path.resolve(__dirname, "dist/tabster.esm.js"),
                 },
             },
         };
