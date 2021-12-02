@@ -20,7 +20,7 @@
         "build-bundle": "rollup -c",
         "build-storybook": "build-storybook",
         "bundle-size": "npm run build-bundle && bundle-size measure",
-        "clean": "rimraf dist && rimraf lib && rimraf lib-commonjs",
+        "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint src/ --fix",
