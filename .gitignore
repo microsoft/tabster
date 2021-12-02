@@ -13,7 +13,6 @@ storybook-static
 
 # Miscellaneous user files
 *.user
-.vscode
 .DS_STORE
 .idea/*
 .vs
