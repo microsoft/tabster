@@ -5,27 +5,26 @@
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
   "sideEffects": false,
-  "main": "./lib-commonjs/index.js",
-  "module": "./lib/index.js",
-  "typings": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/keyborg.esm.js",
+  "typings": "./dist/index.d.ts",
   "files": [
-    "lib",
-    "lib-commonjs"
+    "dist"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
+    "clean": "rimraf dist",
     "build": "npm run clean && rollup -c",
     "bundle-size": "bundle-size measure",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
     "prepublishOnly": "npm run lint && npm run format && npm run build",
-    "release": "release-it",
-    "clean": "rimraf lib && rimraf lib-commonjs"
+    "release": "release-it"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",

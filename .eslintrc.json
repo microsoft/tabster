@@ -11,9 +11,7 @@
   "ignorePatterns": [
     "*.config.js",
     "dist",
-    "node_modules",
-    "lib",
-    "lib-commonjs"
+    "node_modules"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {

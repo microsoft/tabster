@@ -2,5 +2,3 @@
 dist
 node_modules
 *.yml
-lib
-lib-commonjs
