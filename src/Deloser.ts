@@ -716,11 +716,11 @@ export class DeloserAPI implements Types.DeloserAPI {
         (instance as DeloserAPI).dispose();
     }
 
-    static createDeloser: Types.DeloserConstructor = (
+    static createDeloser(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         props: Types.DeloserProps
-    ): Types.Deloser => {
+    ): Types.Deloser {
         if (__DEV__) {
             validateDeloserProps(props);
         }
@@ -739,7 +739,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         return deloser;
-    };
+    }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
         for (let e: HTMLElement | null = element; e; e = e.parentElement) {

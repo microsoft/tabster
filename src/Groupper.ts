@@ -351,17 +351,17 @@ export class GroupperAPI
         (instance as GroupperAPI).dispose();
     }
 
-    static createGroupper: Types.GroupperConstructor = (
+    static createGroupper(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         props: Types.GroupperProps
-    ): Types.Groupper => {
+    ): Types.Groupper {
         if (__DEV__) {
             validateGroupperProps(props);
         }
 
         return new Groupper(tabster, element, props);
-    };
+    }
 
     forgetCurrentGrouppers(): void {
         this._current = {};

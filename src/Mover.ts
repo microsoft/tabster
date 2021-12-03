@@ -571,11 +571,11 @@ export class MoverAPI implements Types.MoverAPI {
         (instance as MoverAPI).dispose();
     }
 
-    static createMover: Types.MoverConstructor = (
+    static createMover(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         props: Types.MoverProps
-    ): Types.Mover => {
+    ): Types.Mover {
         if (__DEV__) {
             validateMoverProps(props);
         }
@@ -589,7 +589,7 @@ export class MoverAPI implements Types.MoverAPI {
         );
         self._movers[newMover.id] = newMover;
         return newMover;
-    };
+    }
 
     private _onMoverDispose = (mover: Mover) => {
         delete this._movers[mover.id];
