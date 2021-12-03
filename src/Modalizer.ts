@@ -405,11 +405,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         (instance as ModalizerAPI).dispose();
     }
 
-    static createModalizer: Types.ModalizerConstructor = (
+    static createModalizer(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         props: Types.ModalizerProps
-    ): Types.Modalizer => {
+    ): Types.Modalizer {
         if (__DEV__) {
             validateModalizerProps(props);
         }
@@ -440,7 +440,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         return modalizer;
-    };
+    }
 
     private _onModalizerDispose = (modalizer: Modalizer) => {
         modalizer.setActive(false);

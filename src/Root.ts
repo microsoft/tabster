@@ -264,17 +264,17 @@ export class RootAPI implements Types.RootAPI {
         (instance as RootAPI).dispose();
     }
 
-    static createRoot: Types.RootConstructor = (
+    static createRoot(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
         props: Types.RootProps
-    ): Types.Root => {
+    ): Types.Root {
         if (__DEV__) {
             validateRootProps(props);
         }
 
         return new Root(tabster, element, props) as Types.Root;
-    };
+    }
 
     static getRootByUId(
         getWindow: Types.GetWindow,
