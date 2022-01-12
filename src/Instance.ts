@@ -59,6 +59,7 @@ export function updateTabsterByAttribute(
     }
 
     if (!entry) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         entry = (tabster as Types.TabsterInternal).storageEntry(element, true)!;
     }
 
@@ -270,6 +271,7 @@ export function augmentAttribute(
     name: string,
     value?: string | null // Restore original value when undefined.
 ): void {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const entry = (tabster as Types.TabsterInternal).storageEntry(
         element,
         true

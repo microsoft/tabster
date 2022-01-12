@@ -91,6 +91,7 @@ export interface TabsterPart<P> {
 
 export interface ObservedElementProps {
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: any;
 }
 
@@ -175,10 +176,12 @@ export interface CrossOriginTransactionData<I, O> {
 }
 
 export type CrossOriginTransactionSend = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: CrossOriginTransactionData<any, any>
 ) => void;
 
 export interface CrossOriginMessage {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: CrossOriginTransactionData<any, any>;
     send: CrossOriginTransactionSend;
 }

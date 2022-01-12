@@ -4,6 +4,9 @@ const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const version = require("../package.json").version;
 
 module.exports = {
+    core: {
+        builder: "webpack5",
+    },
     stories: [
         "../stories/**/*.stories.mdx",
         "../stories/**/*.stories.@(js|jsx|ts|tsx)",

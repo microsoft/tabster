@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EvaluateFn, SerializableOrJSHandle, Page } from "puppeteer";
+import { EvaluateFn, SerializableOrJSHandle, Page, KeyInput } from "puppeteer";
 
 declare const page: Page;
 
@@ -63,7 +63,7 @@ export async function bootstrapTabsterPage() {
     const url =
         "http://localhost:8080/iframe.html?id=testcontainer--test-container&args=&viewMode=story";
     await goToPageWithRetry(url, 4);
-    await expect(page.title()).resolves.toMatch("Storybook");
+    await expect(page.title()).resolves.toMatch("Webpack App");
 
     // Waiting for the test app to set Tabster up.
     await page.evaluate(() => {
@@ -264,7 +264,7 @@ export class BroTest implements PromiseLike<undefined> {
     }
 
     press(
-        key: string,
+        key: KeyInput,
         options?:
             | { text?: string | undefined; delay?: number | undefined }
             | undefined
@@ -278,7 +278,7 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    private _pressKey(key: string, shift?: boolean) {
+    private _pressKey(key: KeyInput, shift?: boolean) {
         this._chain.push(
             new BroTestItemCallback(async () => {
                 if (shift) {

@@ -46,6 +46,7 @@ interface CrossOriginInstanceContext {
 
 interface KnownTargets {
     [id: string]: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         send: (payload: Types.CrossOriginTransactionData<any, any>) => void;
         last?: number;
     };
@@ -619,6 +620,7 @@ class StateTransaction extends CrossOriginTransaction<
             }
 
             CrossOriginFocusedElementState.setVal(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (tabster as Types.TabsterInternal).crossOrigin!.focusedElement,
                 element,
                 {
@@ -644,6 +646,7 @@ class StateTransaction extends CrossOriginTransaction<
                 context.focusOwnerTimestamp < timestamp)
         ) {
             CrossOriginFocusedElementState.setVal(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (tabster as Types.TabsterInternal).crossOrigin!.focusedElement,
                 undefined,
                 {}
@@ -662,6 +665,7 @@ class StateTransaction extends CrossOriginTransaction<
 
         if (name && element) {
             CrossOriginObservedElementState.trigger(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (tabster as Types.TabsterInternal).crossOrigin!.observedElement,
                 element,
                 { name, details: beginData.observedDetails }
@@ -722,6 +726,7 @@ class StateTransaction extends CrossOriginTransaction<
     ): Promise<true> {
         if (context.origOutlineSetup) {
             context.origOutlineSetup.call(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (tabster as Types.TabsterInternal).outline!,
                 props
             );
@@ -765,6 +770,7 @@ class GetElementTransaction extends CrossOriginTransaction<
                 const ref = getInstanceContext(getOwner).elementByUId[data.uid];
                 element = ref && ref.get();
             } else if (data.observedName) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 element = (
                     tabster as Types.TabsterInternal
                 ).observedElement!.getElement(data.observedName);
@@ -834,11 +840,12 @@ class GetElementTransaction extends CrossOriginTransaction<
                 const e: {
                     element?: HTMLElement | null;
                     crossOrigin?: CrossOriginElementDataOut;
-                } = await new (getPromise(getOwner))((resolve, reject) => {
+                } = await new (getPromise(getOwner))((resolve) => {
                     let isWaitElementResolved = false;
                     let isForwardResolved = false;
                     let isResolved = false;
 
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     (tabster as Types.TabsterInternal)
                         .observedElement!.waitElement(
                             name,
@@ -950,6 +957,7 @@ class CrossOriginTransactions {
     private _ownerUId: string;
     private _knownTargets: KnownTargets = {};
     private _transactions: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [id: string]: CrossOriginTransactionWrapper<any, any>;
     } = {};
     private _tabster: Types.TabsterCore;
@@ -1013,6 +1021,7 @@ class CrossOriginTransactions {
                         owner.parent.postMessage
                     ) {
                         this.sendUp = (
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             data: Types.CrossOriginTransactionData<any, any>
                         ) => {
                             owner.parent.postMessage(JSON.stringify(data), "*");
@@ -1161,7 +1170,9 @@ class CrossOriginTransactions {
     }
 
     forwardTransaction(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: Types.CrossOriginTransactionData<any, any>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         const owner = this._owner;
         let targetId = data.target;
@@ -1216,6 +1227,7 @@ class CrossOriginTransactions {
 
     private _getTransactionClass(
         type: Types.CrossOriginTransactionType
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): CrossOriginTransactionClass<any, any> | null {
         switch (type) {
             case CrossOriginTransactionTypes.Bootstrap:
@@ -1240,6 +1252,7 @@ class CrossOriginTransactions {
             return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data: Types.CrossOriginTransactionData<any, any> = e.data;
         let transactionId: string;
 
@@ -1285,6 +1298,7 @@ class CrossOriginTransactions {
                     forwardResult,
                     false
                 ).then((r) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const response: Types.CrossOriginTransactionData<any, any> =
                         {
                             transaction: data.transaction,
@@ -1403,6 +1417,7 @@ class CrossOriginTransactions {
             return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const send = (data: Types.CrossOriginTransactionData<any, any>) => {
             if (e.source && e.source.postMessage) {
                 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -1452,6 +1467,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return (
             this._tabster as Types.TabsterInternal
         ).crossOrigin!.focusedElement.focus(
@@ -1622,7 +1638,8 @@ export class CrossOriginObservedElementState
             Types.ObservedElementAccesibilities.Focusable
         ).then((element) =>
             this._lastRequestFocusId === requestId && element
-                ? (
+                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  (
                       this._tabster as Types.TabsterInternal
                   ).crossOrigin!.focusedElement.focus(element, true)
                 : false
@@ -1695,14 +1712,17 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._onKeyboardNavigationStateChanged
         );
         tabster.focusedElement.subscribe(this._onFocus);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         (tabster as Types.TabsterInternal).observedElement!.subscribe(
             this._onObserved
         );
 
         if (!this._ctx.origOutlineSetup) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this._ctx.origOutlineSetup = (
                 tabster as Types.TabsterInternal
             ).outline!.setup;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (tabster as Types.TabsterInternal).outline!.setup =
                 this._outlineSetup;
         }
@@ -1768,10 +1788,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         }
     };
 
-    private _onFocus = (
-        element: HTMLElementWithUID | undefined,
-        details: Types.FocusedElementDetails
-    ): void => {
+    private _onFocus = (element: HTMLElementWithUID | undefined): void => {
         const win = this._win();
 
         const ownerUId = getWindowUId(win);
