@@ -16,8 +16,9 @@
         "url": "git+https://github.com/microsoft/tabster"
     },
     "scripts": {
-        "build": "npm run clean && npm run build-bundle && npm run build-storybook",
+        "build": "npm run clean && npm run build-bundle && npm run build-docs && npm run build-storybook",
         "build-bundle": "rollup -c",
+        "build-docs": "cd docs && npm run clear && npm run build",
         "build-storybook": "build-storybook",
         "bundle-size": "npm run build-bundle && bundle-size measure",
         "clean": "rimraf dist",
@@ -27,9 +28,12 @@
         "lint:check": "eslint src/",
         "test": "jest",
         "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
+        "postinstall": "cd docs && npm install",
         "prepublishOnly": "npm run build",
         "serve": "npx http-serve storybook-static",
+        "serve-docs": "cd docs && npm run serve",
         "start": "npm run storybook",
+        "start-docs": "cd docs && npm run start",
         "start:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm run storybook",
         "storybook": "start-storybook -p 8080",
         "type-check": "npm run type-check:lib && npm run type-check:tests && npm run type-check:stories",
