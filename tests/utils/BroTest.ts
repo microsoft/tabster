@@ -63,7 +63,7 @@ export async function bootstrapTabsterPage() {
     const url =
         "http://localhost:8080/iframe.html?id=testcontainer--test-container&args=&viewMode=story";
     await goToPageWithRetry(url, 4);
-    await expect(page.title()).resolves.toMatch("Storybook");
+    await expect(page.title()).resolves.toMatch("Webpack App");
 
     // Waiting for the test app to set Tabster up.
     await page.evaluate(() => {
