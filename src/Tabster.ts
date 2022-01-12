@@ -492,6 +492,7 @@ export function setTabsterAttribute(
         const value = newProps[key];
 
         if (value) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             props[key] = value as any;
         } else {
             delete props[key];

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EvaluateFn, SerializableOrJSHandle, Page } from "puppeteer";
+import { EvaluateFn, SerializableOrJSHandle, Page, KeyInput } from "puppeteer";
 
 declare const page: Page;
 
@@ -264,7 +264,7 @@ export class BroTest implements PromiseLike<undefined> {
     }
 
     press(
-        key: string,
+        key: KeyInput,
         options?:
             | { text?: string | undefined; delay?: number | undefined }
             | undefined
@@ -278,7 +278,7 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    private _pressKey(key: string, shift?: boolean) {
+    private _pressKey(key: KeyInput, shift?: boolean) {
         this._chain.push(
             new BroTestItemCallback(async () => {
                 if (shift) {
