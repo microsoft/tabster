@@ -18,7 +18,7 @@
     "scripts": {
         "build": "npm run clean && npm run build-bundle && npm run build-storybook",
         "build-bundle": "rollup -c",
-        "build-docs": "cd docs && && npm install && npm run build",
+        "build-docs": "cd docs && npm install && npm run build",
         "build-storybook": "build-storybook",
         "bundle-size": "npm run build-bundle && bundle-size measure",
         "clean": "rimraf dist",
