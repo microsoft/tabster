@@ -39,7 +39,7 @@
         "type-check:stories": "tsc -b stories/tsconfig.stories.json"
     },
     "dependencies": {
-        "keyborg": "^1.1.0-alpha.4",
+        "keyborg": "^1.1.0",
         "tslib": "^2.1.0"
     },
     "devDependencies": {
