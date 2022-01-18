@@ -28,7 +28,6 @@
         "lint:check": "eslint src/",
         "test": "jest",
         "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
-        "postinstall": "cd docs && npm install",
         "prepublishOnly": "npm run build",
         "release": "release-it",
         "serve": "npx http-serve storybook-static",
