@@ -184,6 +184,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         const outlineElements = this._getDOM(target);
 
         if (target.ownerDocument && outlineElements) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fsElement: HTMLElement | null = (target.ownerDocument as any)[
                 _fullScreenElementName
             ];

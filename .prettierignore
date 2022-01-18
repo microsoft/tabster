@@ -2,4 +2,7 @@
 dist
 node_modules
 storybook-static
+docs/build
+docs/.docusaurus
+docs/.cache-loader
 *.yml
