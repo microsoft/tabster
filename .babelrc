@@ -5,8 +5,7 @@
       "@babel/preset-env",
       {
         "modules": false,
-        "loose": true,
-        "forceAllTransforms": true
+        "loose": true
       }
     ]
   ],

@@ -1,6 +1,6 @@
 {
   "name": "keyborg",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Keyboard Navigation Detection for Web",
   "author": "Marat Abdullin <marata@microsoft.com>",
   "license": "MIT",
@@ -16,13 +16,15 @@
     "url": "git+https://github.com/microsoft/keyborg"
   },
   "scripts": {
+    "clean": "rimraf dist",
     "build": "npm run clean && rollup -c",
-    "bundle-size": "bundle-size measure",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
+    "bundle-size": "npm run build && bundle-size measure",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "clean": "rimraf dist"
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "prepublishOnly": "npm run lint && npm run format && npm run build",
+    "release": "release-it --verbose"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",
@@ -37,12 +39,14 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
+    "ci-info": "^3.3.0",
     "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-import": "^2.25.3",
     "node-fetch": "^2.6.6",
     "prettier": "^2.4.1",
+    "release-it": "^14.11.8",
     "rimraf": "^3.0.2",
     "rollup": "^2.60.1",
     "rollup-plugin-sourcemaps": "^0.6.3",

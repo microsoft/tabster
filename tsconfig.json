@@ -3,7 +3,7 @@
     "declaration": true,
     "noResolve": false,
     "module": "ES2015",
-    "target": "ES5",
+    "target": "ES2019",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -13,7 +13,7 @@
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist/",
-    "lib": ["ES5", "ES2015.Iterable", "DOM", "ESNext"]
+    "lib": ["DOM", "ESNext"]
   },
   "include": ["./src/**/*"],
   "exclude": ["dist", "node_modules"]

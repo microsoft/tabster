@@ -8,7 +8,7 @@
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "ignorePatterns": "*.config.js",
+  "ignorePatterns": ["*.config.js", "dist", "node_modules"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "tsconfig.json",
