@@ -1,6 +1,6 @@
 {
     "name": "tabster",
-    "version": "1.0.7",
+    "version": "1.1.0",
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
@@ -30,6 +30,7 @@
         "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
         "postinstall": "cd docs && npm install",
         "prepublishOnly": "npm run build",
+        "release": "release-it",
         "serve": "npx http-serve storybook-static",
         "serve-docs": "cd docs && npm run serve",
         "start": "npm run storybook",
@@ -42,7 +43,7 @@
         "type-check:stories": "tsc -b stories/tsconfig.stories.json"
     },
     "dependencies": {
-        "keyborg": "^1.0.7",
+        "keyborg": "^1.1.0",
         "tslib": "^2.3.1"
     },
     "devDependencies": {
@@ -84,6 +85,7 @@
         "jest-puppeteer": "^6.0.3",
         "prettier": "^2.5.1",
         "puppeteer": "^13.0.1",
+        "release-it": "^14.11.8",
         "rimraf": "^3.0.2",
         "rollup": "^2.63.0",
         "rollup-plugin-sourcemaps": "^0.6.3",

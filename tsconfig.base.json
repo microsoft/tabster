@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "declaration": true,
-        "emitDeclarationOnly": true,
         "composite": true,
         "incremental": true,
         "noResolve": false,
@@ -15,7 +14,7 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
-        "lib": ["ES5", "ES2015.Iterable", "DOM", "ESNext"],
+        "lib": ["DOM", "ESNext"],
         "esModuleInterop": true,
         "baseUrl": ".",
         "paths": {
