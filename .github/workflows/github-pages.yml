@@ -32,15 +32,6 @@ jobs:
 
                   clean: true
 
-            - name: Deploy docs
-              uses: JamesIves/github-pages-deploy-action@4.1.1
-              with:
-                  branch: gh-pages
-                  folder: docs/build
-                  target-folder: /
-
-                  clean: true
-
             - name: Deploy storybook
               uses: JamesIves/github-pages-deploy-action@4.1.1
               with:
