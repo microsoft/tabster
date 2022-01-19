@@ -9,7 +9,7 @@
         "prettier"
     ],
     "parser": "@typescript-eslint/parser",
-    "ignorePatterns": "*.config.js",
+    "ignorePatterns": ["*.config.js", "dist", "node_modules"],
     "parserOptions": {
         "projects": [
             "src/tsconfig.lib.json",
