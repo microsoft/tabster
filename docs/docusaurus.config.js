@@ -44,6 +44,12 @@ const config = {
                 items: [
                     {
                         type: "doc",
+                        docId: "concept",
+                        position: "left",
+                        label: "Concept",
+                    },
+                    {
+                        type: "doc",
                         docId: "core",
                         position: "left",
                         label: "Core",
@@ -71,6 +77,18 @@ const config = {
                         docId: "modalizer",
                         position: "left",
                         label: "Modalizer",
+                    },
+                    {
+                        type: "doc",
+                        docId: "observed",
+                        position: "left",
+                        label: "Observed",
+                    },
+                    {
+                        type: "doc",
+                        docId: "outline",
+                        position: "left",
+                        label: "Outline",
                     },
 
                     {
