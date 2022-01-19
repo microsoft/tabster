@@ -12,8 +12,10 @@ export default function Home(): JSX.Element {
     const { siteConfig } = useDocusaurusContext();
     return (
         <Layout>
-            <h2>{siteConfig.title}</h2>
-            <main className={styles.dragons}>Here be dragons.</main>
+            <main className={styles.dragons}>
+                <h1>{siteConfig.title}</h1>
+                Here be dragons.
+            </main>
         </Layout>
     );
 }

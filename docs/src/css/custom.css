@@ -7,6 +7,10 @@
     --ifm-color-primary-lighter: rgb(102, 212, 189);
     --ifm-color-primary-lightest: rgb(146, 224, 208);
     --ifm-code-font-size: 95%;
+    --ifm-font-family-base: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    --ifm-heading-font-family: "Palatino Linotype", "Book Antiqua", Palatino,
+        serif;
+    --ifm-font-size-base: 120%;
 }
 
 .docusaurus-highlight-code-line {
