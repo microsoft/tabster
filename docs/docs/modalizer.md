@@ -31,4 +31,4 @@ getModalizer(tabsterCore);
 
 ## Examples
 
-[See a basic Modalizer example in the Storybook](/storybook/?path=/story/modalizer).
+[See a basic Modalizer example in the Storybook](https://tabster.io/storybook/?path=/story/modalizer).
