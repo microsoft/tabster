@@ -109,4 +109,4 @@ As the name says, we can disable Home/End keys if needed.
 
 ## Examples
 
-[See a few Mover examples in the Storybook](/storybook/?path=/story/mover).
+[See a few Mover examples in the Storybook](https://tabster.io/storybook/?path=/story/mover).

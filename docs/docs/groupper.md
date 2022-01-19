@@ -56,4 +56,4 @@ will be trapped inside the groupper.
 
 ## Examples
 
-[See a few Groupper examples in the Storybook](/storybook/?path=/story/groupper).
+[See a few Groupper examples in the Storybook](https://tabster.io/storybook/?path=/story/groupper).
