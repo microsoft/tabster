@@ -374,7 +374,10 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (state.from && !state.ignoreGroupper) {
-            const fromGroupper = getTabsterOnElement(this._tabster, state.from)?.groupper;
+            const fromGroupper = getTabsterOnElement(
+                this._tabster,
+                state.from
+            )?.groupper;
 
             if (fromGroupper) {
                 if (fromGroupper.getElement()?.contains(element)) {
@@ -385,7 +388,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                     if (!ctx.mover || !ctx.isGroupperFirst) {
                         const foundElement = ctx.groupper.getElement();
 
-                        if (foundElement && state.acceptCondition(foundElement)) {
+                        if (
+                            foundElement &&
+                            state.acceptCondition(foundElement)
+                        ) {
                             state.found = true;
                             state.foundElement = foundElement;
                         }
