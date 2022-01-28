@@ -373,6 +373,29 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_SKIP;
         }
 
+        if (state.from && !state.ignoreGroupper) {
+            const fromGroupper = getTabsterOnElement(this._tabster, state.from)?.groupper;
+
+            if (fromGroupper) {
+                if (fromGroupper.getElement()?.contains(element)) {
+                    if (fromGroupper.getProps().tabbability) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                } else if (!state.isForward && ctx.groupper) {
+                    if (!ctx.mover || !ctx.isGroupperFirst) {
+                        const foundElement = ctx.groupper.getElement();
+
+                        if (foundElement && state.acceptCondition(foundElement)) {
+                            state.found = true;
+                            state.foundElement = foundElement;
+                        }
+
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            }
+        }
+
         if (state.ignoreUncontrolled) {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
