@@ -390,7 +390,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         // We assume iframes are focusable because native tab behaviour would tab inside
-        if (element.tagName === "IFRAME") {
+        if (element.tagName === "IFRAME" || element.tagName === "WEBVIEW") {
             return NodeFilter.FILTER_ACCEPT;
         }
 
