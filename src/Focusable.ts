@@ -373,35 +373,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_SKIP;
         }
 
-        if (state.from && !state.ignoreGroupper) {
-            const fromGroupper = getTabsterOnElement(
-                this._tabster,
-                state.from
-            )?.groupper;
-
-            if (fromGroupper) {
-                if (fromGroupper.getElement()?.contains(element)) {
-                    if (fromGroupper.getProps().tabbability) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                } else if (!state.isForward && ctx.groupper) {
-                    if (!ctx.mover || !ctx.isGroupperFirst) {
-                        const foundElement = ctx.groupper.getElement();
-
-                        if (
-                            foundElement &&
-                            state.acceptCondition(foundElement)
-                        ) {
-                            state.found = true;
-                            state.foundElement = foundElement;
-                        }
-
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                }
-            }
-        }
-
         if (state.ignoreUncontrolled) {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
@@ -428,11 +399,31 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (!state.ignoreGroupper) {
-            let groupper: Types.Groupper | undefined;
-            let mover: Types.Mover | undefined;
-            groupper = ctx.groupper;
-            mover = ctx.mover;
-            const isGroupperFirst = ctx.isGroupperFirst;
+            let groupper: Types.Groupper | undefined = ctx.groupper;
+            let mover: Types.Mover | undefined = ctx.mover;
+            let isGroupperFirst = ctx.isGroupperFirst;
+
+            if (mover) {
+                // Avoid falling into the nested Mover.
+                const fromCtx = state.from
+                    ? RootAPI.getTabsterContext(this._tabster, state.from)
+                    : undefined;
+                const fromMover = fromCtx?.mover;
+                const moverElement = mover.getElement();
+                const fromMoverElement = fromMover?.getElement();
+
+                if (
+                    mover !== fromMover &&
+                    moverElement &&
+                    fromMoverElement &&
+                    fromMoverElement.contains(moverElement)
+                ) {
+                    mover = fromMover;
+                    isGroupperFirst = !groupper
+                        ?.getElement()
+                        ?.contains(fromMoverElement);
+                }
+            }
 
             if (groupper && isGroupperFirst) {
                 mover = undefined;
