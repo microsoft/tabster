@@ -258,6 +258,10 @@ describe("MoverGroupper", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
             })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
             .pressEsc()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4Button5Button6");
@@ -471,6 +475,238 @@ describe("MoverGroupper", () => {
             .pressEnter()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it("should move properly in the nested mover/groupper/mover scenario", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div {...getTabsterAttribute({ mover: {} })}>
+                                <button>Button1</button>
+                                <button>Button2</button>
+                                <button>Button3</button>
+                            </div>
+                        </div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div {...getTabsterAttribute({ mover: {} })}>
+                                <button>Button4</button>
+                                <button>Button5</button>
+                                <button>Button6</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4Button5Button6");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4Button5Button6");
+            });
+    });
+
+    it("should move properly in the nested mover/groupper/mover/groupper/mover scenario", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div {...getTabsterAttribute({ mover: {} })}>
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <div
+                                        {...getTabsterAttribute({ mover: {} })}
+                                    >
+                                        <button>Button1</button>
+                                        <button>Button2</button>
+                                        <button>Button3</button>
+                                    </div>
+                                </div>
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <div
+                                        {...getTabsterAttribute({ mover: {} })}
+                                    >
+                                        <button>Button4</button>
+                                        <button>Button5</button>
+                                        <button>Button6</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div {...getTabsterAttribute({ mover: {} })}>
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <div
+                                        {...getTabsterAttribute({ mover: {} })}
+                                    >
+                                        <button>Button7</button>
+                                        <button>Button8</button>
+                                        <button>Button9</button>
+                                    </div>
+                                </div>
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <div
+                                        {...getTabsterAttribute({ mover: {} })}
+                                    >
+                                        <button>Button10</button>
+                                        <button>Button11</button>
+                                        <button>Button12</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Button1Button2Button3Button4Button5Button6"
+                );
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Button7Button8Button9Button10Button11Button12"
+                );
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Button1Button2Button3Button4Button5Button6"
+                );
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4Button5Button6");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4Button5Button6");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Button1Button2Button3Button4Button5Button6"
+                );
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
             });
     });
 });
