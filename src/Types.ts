@@ -321,6 +321,7 @@ export interface FocusableProps {
 export interface FocusableAcceptElementState {
     container: HTMLElement;
     from: HTMLElement | null;
+    fromCtx?: TabsterContext;
     isForward: boolean;
     found?: boolean;
     foundElement?: HTMLElement;
@@ -632,6 +633,10 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
+    /**
+     * Return all grouppers and movers walking up the DOM from the context element.
+     */
+    allMoversGrouppers?: boolean;
 }
 
 export interface TabsterContext {
@@ -648,6 +653,10 @@ export interface TabsterContext {
      * The uncontrolled container of this element (if any).
      */
     uncontrolled?: HTMLElement;
+    allMoversGrouppers?: (
+        | { isMover: true; mover: Mover }
+        | { isMover: false; groupper: Groupper }
+    )[];
 }
 
 export interface RootFocusEventDetails {

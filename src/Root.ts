@@ -311,6 +311,11 @@ export class RootAPI implements Types.RootAPI {
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
         let curElement: Node | null = element;
+        let allMoversGrouppers: Types.TabsterContext["allMoversGrouppers"];
+
+        if (!allMoversGrouppers && options.allMoversGrouppers) {
+            allMoversGrouppers = [];
+        }
 
         while (curElement && (!root || checkRtl)) {
             const tabsterOnElement = getTabsterOnElement(
@@ -337,6 +342,22 @@ export class RootAPI implements Types.RootAPI {
 
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
+
+            if (allMoversGrouppers) {
+                if (curMover) {
+                    allMoversGrouppers.unshift({
+                        isMover: true,
+                        mover: curMover,
+                    });
+                }
+
+                if (curGroupper) {
+                    allMoversGrouppers.unshift({
+                        isMover: false,
+                        groupper: curGroupper,
+                    });
+                }
+            }
 
             if (!groupper && curGroupper) {
                 groupper = curGroupper;
@@ -387,6 +408,7 @@ export class RootAPI implements Types.RootAPI {
                   isGroupperFirst,
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
+                  allMoversGrouppers,
               }
             : undefined;
     }

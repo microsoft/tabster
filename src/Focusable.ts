@@ -366,7 +366,9 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_ACCEPT;
         }
 
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
+        const ctx = RootAPI.getTabsterContext(this._tabster, element, {
+            allMoversGrouppers: true,
+        });
 
         // Tabster is opt in, if it is not managed, don't try and get do anything special
         if (!ctx) {
@@ -399,14 +401,70 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (!state.ignoreGroupper) {
+            const from = state.from;
+            let fromCtx = state.fromCtx;
+
+            if (from && !fromCtx) {
+                fromCtx = state.fromCtx = RootAPI.getTabsterContext(
+                    this._tabster,
+                    from
+                );
+            }
+
             let groupper: Types.Groupper | undefined = ctx.groupper;
             let mover: Types.Mover | undefined = ctx.mover;
             let isGroupperFirst = ctx.isGroupperFirst;
 
+            if (
+                !state.isForward &&
+                ctx.allMoversGrouppers &&
+                (!fromCtx || (!fromCtx.groupper && !fromCtx.mover))
+            ) {
+                let topMover: Types.Mover | undefined;
+                let topGroupper: Types.Groupper | undefined;
+
+                for (const gm of ctx.allMoversGrouppers) {
+                    if (!topMover && gm.isMover) {
+                        topMover = gm.mover;
+                    }
+
+                    const g = !gm.isMover && gm.groupper;
+
+                    if (g && groupper && !topGroupper && g !== groupper) {
+                        const groupperElement = groupper.getElement();
+
+                        topGroupper = g;
+
+                        if (
+                            groupperElement &&
+                            g.getElement()?.contains(groupperElement)
+                        ) {
+                            groupper = gm.groupper;
+                        }
+                    }
+                }
+
+                if (topMover) {
+                    mover = topMover;
+                }
+
+                if (topGroupper) {
+                    groupper = topGroupper;
+                }
+
+                if (mover && groupper) {
+                    const el = mover.getElement();
+
+                    isGroupperFirst =
+                        el && !groupper.getElement()?.contains(el);
+                }
+            }
+
             if (mover) {
                 // Avoid falling into the nested Mover.
-                const fromCtx = state.from
-                    ? RootAPI.getTabsterContext(this._tabster, state.from)
+                const from = state.from;
+                const fromCtx = from
+                    ? RootAPI.getTabsterContext(this._tabster, from)
                     : undefined;
                 const fromMover = fromCtx?.mover;
                 const moverElement = mover.getElement();
@@ -419,9 +477,9 @@ export class FocusableAPI implements Types.FocusableAPI {
                     fromMoverElement.contains(moverElement)
                 ) {
                     mover = fromMover;
-                    isGroupperFirst = !groupper
-                        ?.getElement()
-                        ?.contains(fromMoverElement);
+                    isGroupperFirst =
+                        groupper &&
+                        !groupper.getElement()?.contains(fromMoverElement);
                 }
             }
 
