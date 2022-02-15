@@ -50,6 +50,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     controlTab: boolean;
+    rootDummyInputs: boolean;
     internal: Types.InternalAPI;
 
     groupper?: Types.GroupperAPI;
@@ -94,6 +95,7 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         };
         this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;
+        this.rootDummyInputs = !!props?.rootDummyInputs;
 
         this.internal = {
             stopObserver: (): void => {

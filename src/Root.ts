@@ -121,13 +121,15 @@ export class Root
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
-        if (tabster.controlTab) {
+
+        if (tabster.controlTab || tabster.rootDummyInputs) {
             this._dummyManager = new RootDummyManager(
                 tabster,
                 this._element,
                 this._setFocused
             );
         }
+
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();

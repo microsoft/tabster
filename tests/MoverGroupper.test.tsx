@@ -653,6 +653,13 @@ describe("MoverGroupper", () => {
                                         <button>Button11</button>
                                         <button>Button12</button>
                                     </div>
+                                    <div
+                                        {...getTabsterAttribute({
+                                            uncontrolled: {},
+                                        })}
+                                    >
+                                        <button>Button13</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -669,7 +676,7 @@ describe("MoverGroupper", () => {
             .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual(
-                    "Button7Button8Button9Button10Button11Button12"
+                    "Button7Button8Button9Button10Button11Button12Button13"
                 );
             })
             .pressUp()
@@ -707,6 +714,12 @@ describe("MoverGroupper", () => {
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Button7Button8Button9Button10Button11Button12Button13"
+                );
             });
     });
 });

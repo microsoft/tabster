@@ -41,3 +41,16 @@ jobs:
                 npm run test
               env:
                 STORYBOOK_UNCONTROLLED: 'true'
+            - name: "Rebuild test container (root-dummy-inputs)"
+              run: |
+                npm run build
+              env:
+                STORYBOOK_UNCONTROLLED: 'true'
+                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+            - name: "Run tests (root-dummy-inputs)"
+              run: |
+                npm run serve &
+                npm run test
+              env:
+                STORYBOOK_UNCONTROLLED: 'true'
+                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'

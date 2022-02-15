@@ -30,9 +30,15 @@ export interface TabsterCoreProps {
      * @default true
      */
     controlTab?: boolean;
+    /**
+     * When controlTab is false, Root doesn't have dummy inputs by default.
+     * This option allows to enable dummy inputs on Root.
+     */
+    rootDummyInputs?: boolean;
 }
 
-export interface TabsterCore extends Pick<TabsterCoreProps, "controlTab"> {
+export interface TabsterCore
+    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs"> {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
