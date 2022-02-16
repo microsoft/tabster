@@ -60,8 +60,9 @@ async function goToPageWithRetry(url: string, times: number) {
 
 export async function bootstrapTabsterPage() {
     // TODO configure this easier
+    const port = parseInt(process.env.PORT || '0', 10) || 8080;
     const url =
-        "http://localhost:8080/iframe.html?id=testcontainer--test-container&args=&viewMode=story";
+        `http://localhost:${port}/iframe.html?id=testcontainer--test-container&args=&viewMode=story`;
     await goToPageWithRetry(url, 4);
     await expect(page.title()).resolves.toMatch("Webpack App");
 
