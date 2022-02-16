@@ -781,9 +781,11 @@ export class DummyInputManager {
         if (first?.input && last?.input) {
             if (backwards) {
                 first.shouldMoveOut = true;
+                first.input.tabIndex = 0;
                 first.input.focus();
             } else {
                 last.shouldMoveOut = true;
+                last.input.tabIndex = 0;
                 last.input.focus();
             }
         }
