@@ -14,7 +14,7 @@ describe("keyboard navigation state", () => {
 
     afterEach(async () => {
         // reset the keyboard navigation state with a mousedown event
-        new BroTest.BroTest(<div />).eval(() => {
+        await new BroTest.BroTest(<div />).eval(() => {
             document.body.dispatchEvent(
                 new MouseEvent("mousedown", {
                     clientX: 100,
