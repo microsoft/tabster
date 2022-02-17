@@ -63,23 +63,22 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, moverId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, moverId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .wait(1)
                 .check(checkDummy);
         });
 
@@ -104,23 +103,22 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, groupperId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, groupperId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .wait(1)
                 .check(checkDummy);
         });
 
@@ -144,28 +142,28 @@ runIfUnControlled("DummyInputManager", () => {
                 .eval((modalizerAPIId) => {
                     document.body.setAttribute("id", modalizerAPIId);
                 }, modalizerAPIId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, modalizerAPIId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, modalizerAPIId)
+                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .wait(1)
                 .check(checkDummy);
         });
     });
