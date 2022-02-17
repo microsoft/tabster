@@ -740,14 +740,16 @@ export class DummyInput {
  */
 export class DummyInputManager {
     private _unobserve: (() => void) | undefined;
+    private _addTimer:  number | undefined;
+    private _getWindow: Types.GetWindow
     protected _element: WeakHTMLElement;
     protected firstDummy: DummyInput;
     protected lastDummy: DummyInput;
 
     constructor(tabster: Types.TabsterCore, element: WeakHTMLElement) {
-        const win = (tabster as Types.TabsterInternal).getWindow;
-        this.firstDummy = new DummyInput(win, { isFirst: true });
-        this.lastDummy = new DummyInput(win, { isFirst: false });
+        this._getWindow = (tabster as Types.TabsterInternal).getWindow;
+        this.firstDummy = new DummyInput(this._getWindow, { isFirst: true });
+        this.lastDummy = new DummyInput(this._getWindow, { isFirst: false });
         this._element = element;
         this._addDummyInputs();
 
@@ -764,6 +766,11 @@ export class DummyInputManager {
     }
 
     dispose(): void {
+        if (this._addTimer) {
+            this._getWindow().clearTimeout(this._addTimer);
+            delete this._addTimer;
+        }
+
         this.firstDummy.dispose();
         this.lastDummy.dispose();
         this._unobserve?.();
@@ -796,23 +803,33 @@ export class DummyInputManager {
      * Called each time the children under the element is mutated
      */
     private _addDummyInputs() {
-        const element = this._element.get();
-        const dif = this.firstDummy?.input;
-        const dil = this.lastDummy?.input;
+        const win = this._getWindow();
 
-        if (!element || !dif || !dil) {
-            return;
+        if (this._addTimer) {
+            win.clearTimeout(this._addTimer);
         }
 
-        if (element.lastElementChild !== dil) {
-            element.appendChild(dil);
-        }
+        this._addTimer = win.setTimeout(() => {
+            delete this._addTimer;
 
-        const firstElementChild = element.firstElementChild;
+            const element = this._element.get();
+            const dif = this.firstDummy?.input;
+            const dil = this.lastDummy?.input;
 
-        if (firstElementChild && firstElementChild !== dif) {
-            element.insertBefore(dif, firstElementChild);
-        }
+            if (!element || !dif || !dil) {
+                return;
+            }
+
+            if (element.lastElementChild !== dil) {
+                element.appendChild(dil);
+            }
+
+            const firstElementChild = element.firstElementChild;
+
+            if (firstElementChild && firstElementChild !== dif) {
+                element.insertBefore(dif, firstElementChild);
+            }
+        }, 0);
     }
 
     /**
