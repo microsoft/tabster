@@ -63,6 +63,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, moverId)
                 .eval(
@@ -70,6 +71,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, moverId)
                 .eval(
@@ -77,6 +79,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
+                .wait(1)
                 .check(checkDummy);
         });
 
@@ -101,6 +104,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, groupperId)
                 .eval(
@@ -108,6 +112,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, groupperId)
                 .eval(
@@ -115,6 +120,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
+                .wait(1)
                 .check(checkDummy);
         });
 
@@ -143,6 +149,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(appendElement, modalizerAPIId)
                 .eval(
@@ -150,6 +157,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
+                .wait(1)
                 .check(checkDummy)
                 .eval(prependElement, modalizerAPIId)
                 .eval(
@@ -157,6 +165,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
+                .wait(1)
                 .check(checkDummy);
         });
     });

@@ -55,6 +55,6 @@ jobs:
                 npm run serve &
                 npm run test
               env:
-                PORT: '8083'
+                PORT: '8082'
                 STORYBOOK_UNCONTROLLED: 'true'
                 STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
