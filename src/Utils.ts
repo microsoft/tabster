@@ -740,8 +740,8 @@ export class DummyInput {
  */
 export class DummyInputManager {
     private _unobserve: (() => void) | undefined;
-    private _addTimer:  number | undefined;
-    private _getWindow: Types.GetWindow
+    private _addTimer: number | undefined;
+    private _getWindow: Types.GetWindow;
     protected _element: WeakHTMLElement;
     protected firstDummy: DummyInput;
     protected lastDummy: DummyInput;
