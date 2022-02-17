@@ -366,9 +366,13 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_ACCEPT;
         }
 
-        const ctx = RootAPI.getTabsterContext(this._tabster, element, {
-            allMoversGrouppers: true,
-        });
+        const ctx = (state.currentCtx = RootAPI.getTabsterContext(
+            this._tabster,
+            element,
+            {
+                allMoversGrouppers: true,
+            }
+        ));
 
         // Tabster is opt in, if it is not managed, don't try and get do anything special
         if (!ctx) {

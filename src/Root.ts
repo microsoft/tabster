@@ -328,6 +328,7 @@ export class RootAPI implements Types.RootAPI {
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
         let mover: Types.Mover | undefined;
+        let isExcludedFromMover = false;
         let isGroupperFirst: boolean | undefined;
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
@@ -359,6 +360,14 @@ export class RootAPI implements Types.RootAPI {
 
             if (tabsterOnElement.uncontrolled) {
                 uncontrolled = curElement as HTMLElement;
+            }
+
+            if (
+                !mover &&
+                tabsterOnElement.focusable?.excludeFromMover &&
+                !groupper
+            ) {
+                isExcludedFromMover = true;
             }
 
             const curGroupper = tabsterOnElement.groupper;
@@ -430,6 +439,7 @@ export class RootAPI implements Types.RootAPI {
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
                   allMoversGrouppers,
+                  isExcludedFromMover,
               }
             : undefined;
     }

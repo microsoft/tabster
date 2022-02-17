@@ -380,3 +380,165 @@ describe("Mover memorizing current", () => {
             });
     });
 });
+
+describe("Mover with excluded part", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should handle excluded part of Mover", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button0</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { tabbable: true, cyclic: true },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <div
+                            {...getTabsterAttribute({
+                                focusable: { excludeFromMover: true },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                    <button>Button7</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button0");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            });
+    });
+
+    it("should memorize current element and move to it when tabbing from outside of the page", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});
