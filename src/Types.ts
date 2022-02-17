@@ -319,13 +319,18 @@ export interface FocusableProps {
     isDefault?: boolean;
     isIgnored?: boolean;
     /**
-     * Do not determine an element's focusability based on aria-disabled
+     * Do not determine an element's focusability based on aria-disabled.
      */
     ignoreAriaDisabled?: boolean;
+    /**
+     * Exclude element (and all subelements) from Mover navigation.
+     */
+    excludeFromMover?: boolean;
 }
 
 export interface FocusableAcceptElementState {
     container: HTMLElement;
+    currentCtx?: TabsterContext;
     from: HTMLElement | null;
     fromCtx?: TabsterContext;
     isForward: boolean;
@@ -663,6 +668,7 @@ export interface TabsterContext {
         | { isMover: true; mover: Mover }
         | { isMover: false; groupper: Groupper }
     )[];
+    isExcludedFromMover?: boolean;
 }
 
 export interface RootFocusEventDetails {

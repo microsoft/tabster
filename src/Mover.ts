@@ -77,6 +77,8 @@ export class Mover
     private _focusables: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
+    private _isFindingTabbable = false;
+
     _dummyManagner?: MoverDummyManager;
 
     constructor(
@@ -99,6 +101,7 @@ export class Mover
         this._onDispose = onDispose;
         const getMemorized = () =>
             props.memorizeCurrent ? this._current : undefined;
+
         if (!tabster.controlTab) {
             this._dummyManagner = new MoverDummyManager(
                 this._element,
@@ -162,6 +165,7 @@ export class Mover
         const container = this.getElement();
 
         if (!container || !container.contains(current)) {
+            this._isFindingTabbable = false;
             return null;
         }
 
@@ -172,6 +176,8 @@ export class Mover
         const onUncontrolled = (el: HTMLElement) => {
             uncontrolled = el;
         };
+
+        this._isFindingTabbable = true;
 
         if (this._props.tabbable) {
             next = prev
@@ -201,15 +207,22 @@ export class Mover
                         (prev
                             ? container
                             : focusable.findLast({ container })) || container;
-                    return FocusedElementState.findNextTabbable(
+
+                    const ret = FocusedElementState.findNextTabbable(
                         tabster,
                         parentCtx,
                         from,
                         prev
                     );
+
+                    this._isFindingTabbable = false;
+
+                    return ret;
                 }
             }
         }
+
+        this._isFindingTabbable = false;
 
         return {
             element: next,
@@ -222,6 +235,10 @@ export class Mover
         state: Types.FocusableAcceptElementState
     ): number | undefined {
         const { memorizeCurrent, visibilityAware } = this._props;
+
+        if (state.currentCtx?.isExcludedFromMover && !this._isFindingTabbable) {
+            return NodeFilter.FILTER_REJECT;
+        }
 
         if (memorizeCurrent || visibilityAware) {
             const container = this.getElement();
@@ -689,7 +706,7 @@ export class MoverAPI implements Types.MoverAPI {
             checkRtl: true,
         });
 
-        if (!ctx || !ctx.mover) {
+        if (!ctx || !ctx.mover || ctx.isExcludedFromMover) {
             return;
         }
 
