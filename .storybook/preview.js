@@ -23,10 +23,17 @@ export const decorators = [
     (Story) => {
         if (!getCurrentTabster(window)) {
             const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
-            const tabster = createTabster(window, { autoRoot: {}, controlTab });
+            const rootDummyInputs = process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
+            const tabster = createTabster(window, {
+                autoRoot: {},
+                controlTab,
+                rootDummyInputs,
+            });
             console.log(
                 "created tabster",
-                `as ${controlTab ? "controlled" : "uncontrolled"}`
+                `as ${
+                    controlTab ? "controlled" : "uncontrolled"
+                }, root dummy inputs ${rootDummyInputs}`
             );
             getModalizer(tabster);
             console.log("created modalizer");

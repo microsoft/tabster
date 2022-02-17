@@ -30,6 +30,8 @@ jobs:
               run: |
                 npm run serve &
                 npm run test
+              env:
+                PORT: '8080'
             - name: "Rebuild test container (uncontrolled)"
               run: |
                 npm run build
@@ -40,4 +42,19 @@ jobs:
                 npm run serve &
                 npm run test
               env:
+                PORT: '8081'
                 STORYBOOK_UNCONTROLLED: 'true'
+            - name: "Rebuild test container (root-dummy-inputs)"
+              run: |
+                npm run build
+              env:
+                STORYBOOK_UNCONTROLLED: 'true'
+                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+            - name: "Run tests (root-dummy-inputs)"
+              run: |
+                npm run serve &
+                npm run test
+              env:
+                PORT: '8082'
+                STORYBOOK_UNCONTROLLED: 'true'
+                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'

@@ -111,6 +111,7 @@ export class Root
     private _dummyManager?: RootDummyManager;
     private _isFocused = false;
     private _setFocusedTimer: number | undefined;
+    private _setTabbableTimer: number | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -121,23 +122,33 @@ export class Root
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
-        if (tabster.controlTab) {
+
+        if (tabster.controlTab || tabster.rootDummyInputs) {
             this._dummyManager = new RootDummyManager(
                 tabster,
                 this._element,
                 this._setFocused
             );
         }
+
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
     }
 
     dispose(): void {
+        const win = this._tabster.getWindow();
+
         if (this._setFocusedTimer) {
-            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
+            win.clearTimeout(this._setFocusedTimer);
             delete this._setFocusedTimer;
         }
+
+        if (this._setTabbableTimer) {
+            win.clearTimeout(this._setTabbableTimer);
+            delete this._setTabbableTimer;
+        }
+
         this._dummyManager?.dispose();
         this._remove();
     }
@@ -186,6 +197,13 @@ export class Root
     };
 
     private _onFocus = (e: HTMLElement | undefined) => {
+        const win = this._tabster.getWindow();
+
+        if (this._setTabbableTimer) {
+            win.clearTimeout(this._setTabbableTimer);
+            delete this._setTabbableTimer;
+        }
+
         if (e) {
             const ctx = RootAPI.getTabsterContext(this._tabster, e);
 
@@ -193,7 +211,7 @@ export class Root
                 this._setFocused(ctx.root.getElement() === this._element.get());
             }
 
-            if (!ctx || ctx.uncontrolled) {
+            if (!ctx || ctx.uncontrolled || this._tabster.rootDummyInputs) {
                 this._dummyManager?.setTabbable(false);
                 return;
             }
@@ -201,7 +219,10 @@ export class Root
             this._setFocused(false);
         }
 
-        this._dummyManager?.setTabbable(true);
+        this._setTabbableTimer = win.setTimeout(() => {
+            delete this._setTabbableTimer;
+            this._dummyManager?.setTabbable(true);
+        }, 0);
     };
 
     private _add(): void {
