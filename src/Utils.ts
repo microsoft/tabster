@@ -766,12 +766,16 @@ export class DummyInputManager {
     }
 
     dispose(): void {
+        if (this._unobserve) {
+            this._unobserve();
+            delete this._unobserve;
+        }
+
         if (this._addTimer) {
             this._getWindow().clearTimeout(this._addTimer);
             delete this._addTimer;
         }
 
-        this._unobserve?.();
         this.firstDummy.dispose();
         this.lastDummy.dispose();
     }
@@ -803,13 +807,11 @@ export class DummyInputManager {
      * Called each time the children under the element is mutated
      */
     private _addDummyInputs() {
-        const win = this._getWindow();
-
         if (this._addTimer) {
-            win.clearTimeout(this._addTimer);
+            return;
         }
 
-        this._addTimer = win.setTimeout(() => {
+        this._addTimer = this._getWindow().setTimeout(() => {
             delete this._addTimer;
 
             const element = this._element.get();
@@ -842,7 +844,9 @@ export class DummyInputManager {
         }
 
         const observer = new MutationObserver(() => {
-            this._addDummyInputs();
+            if (this._unobserve) {
+                this._addDummyInputs();
+            }
         });
 
         const element = this._element.get();
