@@ -771,9 +771,9 @@ export class DummyInputManager {
             delete this._addTimer;
         }
 
+        this._unobserve?.();
         this.firstDummy.dispose();
         this.lastDummy.dispose();
-        this._unobserve?.();
     }
 
     /**
