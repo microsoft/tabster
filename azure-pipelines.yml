@@ -4,15 +4,12 @@
 
 variables:
   - group: 'Github and NPM secrets'
-  - template: .devops/templates/variables.yml
-    parameters:
-      skipComponentGovernanceDetection: false
   - group: InfoSec-SecurityResults
   - name: tags
     value: production,externalfacing
 
 jobs:
-- job: Job_2
+- job: Compliance
   displayName: Compliance checks
   pool:
     name: uifabric-windows-2019-small
@@ -47,8 +44,9 @@ jobs:
   - task: PostAnalysis@2
     displayName: Guardian Break
 
-- job: Job_1
+- job: Release
   displayName: Release
+  dependsOn: Compliance
 
   pool:
     name: 1ES-Host-Ubuntu
