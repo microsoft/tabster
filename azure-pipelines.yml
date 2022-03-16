@@ -64,7 +64,7 @@ jobs:
     condition: eq(variables.prerelease, true)
     continueOnError: true
     inputs:
-      script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci --verbose
+      script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci -VV
     env:
         NPM_TOKEN: $(npmToken)
 
