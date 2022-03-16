@@ -98,3 +98,5 @@ jobs:
     condition: eq(variables.prerelease, true)
     inputs:
       script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+    env:
+        NPM_TOKEN: $(npmToken)
