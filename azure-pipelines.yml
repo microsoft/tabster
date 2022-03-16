@@ -58,7 +58,9 @@ jobs:
   - task: CmdLine@2
     displayName: Re-attach head
     inputs:
-      script: git checkout "${BUILD_SOURCEBRANCH//refs\/heads\/}"
+      - script: |
+        git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
+        git pull
 
   - task: NodeTool@0
     displayName: Use Node 14.x
