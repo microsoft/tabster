@@ -9,41 +9,6 @@ variables:
     value: production,externalfacing
 
 jobs:
-- job: Compliance
-  displayName: Compliance checks
-  pool:
-    name: uifabric-windows-2019-small
-  steps:
-  - checkout: self
-    clean: true
-
-  - task: UseDotNet@2
-    displayName: Use .NET Core sdk 3.x
-    inputs:
-      version: 3.x
-
-  - task: CredScan@3
-    displayName: Run Credential Scanner
-    inputs:
-      debugMode: false
-      folderSuppression: false
-
-  - task: ESLint@1
-    displayName: Run ESLint
-
-  - task: PublishSecurityAnalysisLogs@3
-    displayName: Publish Guardian Artifacts
-
-  - task: AssetRetention@3
-    displayName: ARtifact Retention Orchestrator Workflow (ARROW)
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-    inputs:
-      ArrowServiceConnection: dd6a5756-fb5f-4a28-98b6-a525d1421299
-      IsShipped: true
-
-  - task: PostAnalysis@2
-    displayName: Guardian Break
-
 - job: Release
   displayName: Release
   dependsOn: Compliance
@@ -102,3 +67,9 @@ jobs:
       script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
     env:
         NPM_TOKEN: $(npmToken)
+
+  - task: CmdLine@2
+    displayName: pull
+    condition: eq(variables.prerelease, false)
+    inputs:
+      script: 'git pull'
