@@ -90,9 +90,13 @@ jobs:
     condition: eq(variables.prerelease, false)
     inputs:
       script: 'npm run release -- $(publishVersion) --ci '
+    env:
+        NPM_TOKEN: $(npmToken)
 
   - task: CmdLine@2
     displayName: Publish (prerelease)
     condition: eq(variables.prerelease, true)
     inputs:
       script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+    env:
+        NPM_TOKEN: $(npmToken)
