@@ -62,6 +62,7 @@ jobs:
   - task: CmdLine@2
     displayName: Publish (prerelease)
     condition: eq(variables.prerelease, true)
+    continueOnError: true
     inputs:
       script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
     env:
