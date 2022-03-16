@@ -58,7 +58,7 @@ jobs:
   - task: CmdLine@2
     displayName: Re-attach head
     inputs:
-      - script: |
+      script: |
         git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
         git pull
 
