@@ -106,7 +106,7 @@ const config = {
             },
         }),
 
-    themes: ['@docusaurus/theme-live-codeblock'],
+    themes: ["@docusaurus/theme-live-codeblock"],
 };
 
 module.exports = config;
