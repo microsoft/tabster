@@ -11,6 +11,12 @@
     --ifm-heading-font-family: "Palatino Linotype", "Book Antiqua", Palatino,
         serif;
     --ifm-font-size-base: 120%;
+    --ifm-background-color: rgb(255, 255, 255);
+    --ifm-background-color-semi-transparent: rgb(127, 127, 127, 0.03);
+}
+
+html[data-theme="dark"]:root {
+    --ifm-background-color-semi-transparent: rgb(127, 127, 127, 0.2);
 }
 
 .docusaurus-highlight-code-line {
@@ -22,4 +28,35 @@
 
 html[data-theme="dark"] .docusaurus-highlight-code-line {
     background-color: rgba(0, 0, 0, 0.3);
+}
+
+.main-wrapper {
+    background-image: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.4),
+            var(--ifm-background-color)
+        ),
+        linear-gradient(
+            to left,
+            rgba(255, 255, 255, 0.4),
+            var(--ifm-background-color)
+        ),
+        url("/img/catsleft.png"), url("/img/catsright.png");
+    background-position: top left, top right;
+    background-size: 10%;
+    background-repeat: repeat-y;
+}
+
+html[data-theme="dark"] .main-wrapper {
+    background-image: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.4),
+            var(--ifm-background-color)
+        ),
+        linear-gradient(
+            to left,
+            rgba(0, 0, 0, 0.4),
+            var(--ifm-background-color)
+        ),
+        url("/img/catsleft.png"), url("/img/catsright.png");
 }

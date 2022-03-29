@@ -3,7 +3,62 @@ h2 {
     margin: 100px;
 }
 
-.dragons {
-    margin: 100px;
+.main {
+    margin: 40px 100px;
     text-align: center;
+}
+
+.motto {
+    display: block;
+}
+
+.sections {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    margin: 20px 0 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sections li {
+    display: inline-block;
+    border: 1px solid var(--ifm-color-primary-lightest);
+    background-color: var(--ifm-background-color-semi-transparent);
+    margin: 10px;
+    border-radius: 10px;
+    flex: 0 30%;
+    padding: 0;
+}
+
+.sections li:hover {
+    background-color: var(--ifm-color-primary-lightest);
+}
+
+.sections a {
+    display: block;
+    color: var(--ifm-font-color-base);
+}
+
+.sections a:hover {
+    text-decoration: none;
+    color: var(--ifm-color-primary-darkest);
+}
+
+.sections h2 {
+    margin: 0 10px;
+    padding: 0;
+    font-size: 24px;
+    font-weight: 200;
+}
+
+.sections p {
+    margin: 0 10px;
+    padding: 5px 0;
+}
+
+.copyright {
+    text-align: center;
+    margin: 0;
+    padding: 10px;
 }

@@ -12,7 +12,7 @@ const config = {
     baseUrl: "/",
     onBrokenLinks: "throw",
     onBrokenMarkdownLinks: "warn",
-    favicon: "img/favicon.ico",
+    favicon: "img/favicon.png",
     organizationName: "microsoft",
     projectName: "tabster",
 
@@ -39,7 +39,7 @@ const config = {
                 title: "Tabster",
                 logo: {
                     alt: "Tabster Logo",
-                    src: "img/logo.svg",
+                    src: "img/favicon.png",
                 },
                 items: [
                     {
@@ -90,6 +90,12 @@ const config = {
                         position: "left",
                         label: "Outline",
                     },
+                    {
+                        type: "doc",
+                        docId: "more",
+                        position: "left",
+                        label: "More",
+                    },
 
                     {
                         href: "https://github.com/microsoft/tabster",
@@ -99,6 +105,8 @@ const config = {
                 ],
             },
         }),
+
+    themes: ['@docusaurus/theme-live-codeblock'],
 };
 
 module.exports = config;
