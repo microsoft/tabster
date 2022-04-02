@@ -1,4 +1,4 @@
-# Concept <img src="/img/catconcept.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# Concept <img src="/img/catconcept.png" className="image image_header" />
 
 ## About
 

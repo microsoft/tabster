@@ -1,4 +1,4 @@
-# Deloser <img src="/img/catdeloser.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# Deloser <img src="/img/catdeloser.png" className="image image_header" />
 
 ## About
 

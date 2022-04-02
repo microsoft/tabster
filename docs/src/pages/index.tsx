@@ -8,9 +8,6 @@ import Layout from "@theme/Layout";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import styles from "./index.module.css";
 
-const ImageWidth = 166;
-const ImageHeight = 128;
-
 export default function Home(): JSX.Element {
     const { siteConfig } = useDocusaurusContext();
     return (
@@ -19,8 +16,7 @@ export default function Home(): JSX.Element {
                 <h1>{siteConfig.title}</h1>
                 <img
                     src="/img/tabster.png"
-                    width={328}
-                    height={254}
+                    className="image image_logo"
                     alt="Tabster"
                 />
                 <em className={styles.motto}>Tabindex on steroids.</em>
@@ -33,8 +29,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/concept">
                             <img
                                 src="/img/catconcept.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Concept"
                             />
                             <h2>Concept</h2>
@@ -45,8 +40,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/core">
                             <img
                                 src="/img/catcore.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Core"
                             />
                             <h2>Core</h2>
@@ -57,8 +51,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/mover">
                             <img
                                 src="/img/catmover.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Mover"
                             />
                             <h2>Mover</h2>
@@ -69,8 +62,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/groupper">
                             <img
                                 src="/img/catgroupper.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Groupper"
                             />
                             <h2>Groupper</h2>
@@ -81,8 +73,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/deloser">
                             <img
                                 src="/img/catdeloser.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Deloser"
                             />
                             <h2>Deloser</h2>
@@ -93,8 +84,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/modalizer">
                             <img
                                 src="/img/catmodalizer.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Modalizer"
                             />
                             <h2>Modalizer</h2>
@@ -105,8 +95,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/observed">
                             <img
                                 src="/img/catobserved.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Observed"
                             />
                             <h2>Observed</h2>
@@ -117,8 +106,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/outline">
                             <img
                                 src="/img/catoutline.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="Outline"
                             />
                             <h2>Outline</h2>
@@ -129,8 +117,7 @@ export default function Home(): JSX.Element {
                         <a href="/docs/more">
                             <img
                                 src="/img/catmore.png"
-                                width={ImageWidth}
-                                height={ImageHeight}
+                                className="image"
                                 alt="More"
                             />
                             <h2>More</h2>

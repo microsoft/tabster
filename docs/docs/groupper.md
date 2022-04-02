@@ -1,4 +1,4 @@
-# Groupper <img src="/img/catgroupper.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# Groupper <img src="/img/catgroupper.png" className="image image_header" />
 
 ## About
 
