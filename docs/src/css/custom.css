@@ -60,3 +60,18 @@ html[data-theme="dark"] .main-wrapper {
         ),
         url("/img/catsleft.png"), url("/img/catsright.png");
 }
+
+.image {
+    width: 100%;
+    max-width: 166px;
+    max-height: 128px;
+}
+
+.image_logo {
+    max-width: 328px;
+    max-height: 254px;
+}
+
+.image_header {
+    vertical-align: -40px;
+}

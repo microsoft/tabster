@@ -1,4 +1,4 @@
-# Observed Element <img src="/img/catobserved.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# Observed Element <img src="/img/catobserved.png" className="image image_header" />
 
 ## About
 

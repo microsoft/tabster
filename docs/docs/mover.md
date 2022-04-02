@@ -1,4 +1,4 @@
-# Mover <img src="/img/catmover.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# Mover <img src="/img/catmover.png" className="image image_header" />
 
 ## About
 

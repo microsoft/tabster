@@ -1,3 +1,3 @@
-# More <img src="/img/catmore.png" width="166" height="128" style={{"vertical-align": "-40px"}} />
+# More <img src="/img/catmore.png" className="image image_header" />
 
 Here be dragons.

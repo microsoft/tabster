@@ -29,6 +29,7 @@ h2 {
     border-radius: 10px;
     flex: 0 30%;
     padding: 0;
+    min-width: 200px;
 }
 
 .sections li:hover {
