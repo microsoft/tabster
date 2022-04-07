@@ -44,9 +44,10 @@ const config = [
         ],
     },
     {
-        // path to your declaration files root
         input: "./dist/dts/index.d.ts",
         output: [{ file: "dist/index.d.ts", format: "es" }],
+        // rolls up all dts files into a single dts file
+        // so that internal types don't leak
         plugins: [dts()],
     },
 ];
