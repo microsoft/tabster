@@ -4,7 +4,7 @@ import sourceMaps from "rollup-plugin-sourcemaps";
 import { babel } from "@rollup/plugin-babel";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
-import typescript from "rollup-plugin-typescript2";
+import typescript from "@rollup/plugin-typescript";
 import dts from "rollup-plugin-dts";
 
 import pkg from "./package.json";
@@ -24,14 +24,8 @@ const config = [
         external: ["tslib", "keyborg"],
         plugins: [
             typescript({
-                useTsconfigDeclarationDir: true,
-                tsconfig: "src/tsconfig.lib.json",
-                tsconfigOverride: {
-                    compilerOptions: {
-                        // https://github.com/ezolenko/rollup-plugin-typescript2/issues/268
-                        emitDeclarationOnly: true,
-                    },
-                },
+                tsconfig: "./src/tsconfig.lib.json",
+                emitDeclarationOnly: true,
             }),
             babel({
                 babelHelpers: "bundled",

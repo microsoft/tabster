@@ -19,3 +19,5 @@ storybook-static
 
 /dist
 /.rts2*
+/.rollup.cache
+

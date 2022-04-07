@@ -2,7 +2,8 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "target": "ES2019",
-        "outDir": "../dist",
+        "outDir": "dist",
+        "declarationDir": "dts",
         "sourceMap": true
     },
     "include": ["**/*.ts"]
