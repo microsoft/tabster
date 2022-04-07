@@ -18,7 +18,6 @@ export {
     getOutline,
     getCurrentTabster,
     getInternal,
-    overrideBasics,
     makeNoOp,
     isNoOp,
     Types,
