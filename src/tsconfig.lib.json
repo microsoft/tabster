@@ -3,6 +3,7 @@
     "compilerOptions": {
         "target": "ES2019",
         "outDir": "../dist",
+        "declarationDir": "../dist/dts",
         "sourceMap": true
     },
     "include": ["**/*.ts"]

@@ -24,7 +24,6 @@ import {
     createElementTreeWalker,
     createWeakMap,
     disposeInstanceContext,
-    setBasics as overrideBasics,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
 } from "./Utils";
@@ -253,8 +252,6 @@ class Tabster implements Types.TabsterCore, Types.TabsterInternal {
         cleanupFakeWeakRefs(tabster.getWindow, true);
     }
 }
-
-export { overrideBasics };
 
 export function forceCleanup(tabster: Tabster): void {
     // The only legit case for calling this method is when you've completely removed

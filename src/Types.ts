@@ -9,12 +9,6 @@ export const DeloserEventName = "tabster:deloser";
 export const ModalizerEventName = "tabster:modalizer";
 export const MoverEventName = "tabster:mover";
 
-export interface InternalBasics {
-    Promise?: PromiseConstructor;
-    WeakRef?: WeakRefConstructor;
-    WeakMap?: WeakMapConstructor;
-}
-
 export interface TabsterEventWithDetails<D> extends Event {
     details: D;
 }
