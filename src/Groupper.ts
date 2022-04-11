@@ -13,31 +13,28 @@ import * as Types from "./Types";
 import {
     DummyInput,
     DummyInputManager,
+    DummyInputManagerPriorities,
     getLastChild,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-
     constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
-        super(tabster, element);
-        this._tabster = tabster;
-        this.firstDummy.onFocusIn = this._onFocusDummyInput;
-        this.lastDummy.onFocusIn = this._onFocusDummyInput;
-    }
+        super(tabster, element, DummyInputManagerPriorities.Groupper);
 
-    private _onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = this._element.get();
-        if (container && !dummyInput.shouldMoveOut) {
-            if (dummyInput.isFirst) {
-                this._tabster.focusedElement.focusFirst({ container });
-            } else {
-                this._tabster.focusedElement.focusLast({ container });
+        this._setHandlers((dummyInput: DummyInput) => {
+            const container = element.get();
+
+            if (container && !dummyInput.shouldMoveOut) {
+                if (dummyInput.isFirst) {
+                    tabster.focusedElement.focusFirst({ container });
+                } else {
+                    tabster.focusedElement.focusLast({ container });
+                }
             }
-        }
-    };
+        });
+    }
 }
 
 export class Groupper
@@ -502,6 +499,7 @@ export class GroupperAPI
 
                 if (next) {
                     e.preventDefault();
+                    e.stopImmediatePropagation();
 
                     nativeFocus(next);
                 } else {

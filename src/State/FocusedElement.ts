@@ -488,6 +488,8 @@ export class FocusedElementState
             // For iframes just allow normal Tab behaviour
             if (nextElement.tagName !== "IFRAME") {
                 e.preventDefault();
+                e.stopImmediatePropagation();
+
                 nativeFocus(nextElement);
             }
         } else {

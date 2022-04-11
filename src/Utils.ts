@@ -655,7 +655,7 @@ export abstract class TabsterPart<P, D = undefined>
 export interface DummyInputProps {
     /** The input is created to be used only once and autoremoved when focused. */
     isPhantom?: boolean;
-    /** Whether the input is before or after the content it is guarding  */
+    /** Whether the input is before or after the content it is guarding.  */
     isFirst: boolean;
 }
 
@@ -741,21 +741,132 @@ export class DummyInput {
     };
 }
 
+interface HTMLElementWithDummyInputs extends HTMLElement {
+    __tabsterDummy?: DummyInputManagerCore;
+}
+
+export const DummyInputManagerPriorities = {
+    Root: 1,
+    Modalizer: 2,
+    Mover: 3,
+    Groupper: 4,
+};
+
+export class DummyInputManager {
+    private _instance?: DummyInputManagerCore;
+    private _onFocusIn?: (dummyInput: DummyInput) => void;
+    private _onFocusOut?: (dummyInput: DummyInput) => void;
+    protected _element: WeakHTMLElement;
+
+    moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
+
+    constructor(
+        tabster: Types.TabsterCore,
+        element: WeakHTMLElement,
+        priority: number
+    ) {
+        this._element = element;
+
+        this._instance = new DummyInputManagerCore(
+            tabster,
+            element,
+            this,
+            priority
+        );
+
+        this.moveOutWithDefaultAction = (backwards: boolean) => {
+            this._instance?.moveOutWithDefaultAction(backwards);
+        };
+    }
+
+    protected _setHandlers(
+        onFocusIn?: (dummyInput: DummyInput) => void,
+        onFocusOut?: (dummyInput: DummyInput) => void
+    ): void {
+        this._onFocusIn = onFocusIn;
+        this._onFocusOut = onFocusOut;
+    }
+
+    getHandler(isIn: boolean): ((dummyInput: DummyInput) => void) | undefined {
+        return isIn ? this._onFocusIn : this._onFocusOut;
+    }
+
+    setTabbable(tabbable: boolean) {
+        this._instance?.setTabbable(this, tabbable);
+    }
+
+    dispose(): void {
+        if (this._instance) {
+            this._instance.dispose(this);
+            delete this._instance;
+        }
+
+        delete this._onFocusIn;
+        delete this._onFocusOut;
+    }
+}
+
+interface DummyInputWrapper {
+    manager: DummyInputManager;
+    priority: number;
+    tabbable: boolean;
+}
+
 /**
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
-export class DummyInputManager {
+class DummyInputManagerCore {
     private _unobserve: (() => void) | undefined;
     private _addTimer: number | undefined;
     private _getWindow: Types.GetWindow;
-    protected _element: WeakHTMLElement;
-    protected firstDummy: DummyInput;
-    protected lastDummy: DummyInput;
+    private _wrappers: DummyInputWrapper[] = [];
+    protected _element: WeakHTMLElement | undefined;
+    protected firstDummy: DummyInput | undefined;
+    protected lastDummy: DummyInput | undefined;
 
-    constructor(tabster: Types.TabsterCore, element: WeakHTMLElement) {
+    constructor(
+        tabster: Types.TabsterCore,
+        element: WeakHTMLElement,
+        manager: DummyInputManager,
+        priority: number
+    ) {
+        const el = element.get() as HTMLElementWithDummyInputs;
+
+        if (!el) {
+            throw new Error("No element");
+        }
+
         this._getWindow = (tabster as Types.TabsterInternal).getWindow;
-        this.firstDummy = new DummyInput(this._getWindow, { isFirst: true });
-        this.lastDummy = new DummyInput(this._getWindow, { isFirst: false });
+
+        const instance = el.__tabsterDummy;
+
+        (instance || this)._wrappers.push({
+            manager,
+            priority,
+            tabbable: true,
+        });
+
+        if (instance) {
+            return instance;
+        }
+
+        el.__tabsterDummy = this;
+
+        this._getWindow = (tabster as Types.TabsterInternal).getWindow;
+
+        this.firstDummy = new DummyInput(this._getWindow, {
+            isFirst: true,
+        });
+
+        this.lastDummy = new DummyInput(this._getWindow, {
+            isFirst: false,
+        });
+
+        this.firstDummy.onFocusIn = this._onFocusIn;
+        this.firstDummy.onFocusOut = this._onFocusOut;
+        this.lastDummy.onFocusIn = this._onFocusIn;
+        this.lastDummy.onFocusOut = this._onFocusOut;
+
         this._element = element;
         this._addDummyInputs();
 
@@ -771,20 +882,42 @@ export class DummyInputManager {
         }
     }
 
-    dispose(): void {
-        if (this._unobserve) {
-            this._unobserve();
-            delete this._unobserve;
-        }
+    dispose(manager: DummyInputManager, force?: boolean): void {
+        const wrappers = (this._wrappers = this._wrappers.filter(
+            (w) => w.manager !== manager && !force
+        ));
 
-        if (this._addTimer) {
-            this._getWindow().clearTimeout(this._addTimer);
-            delete this._addTimer;
-        }
+        if (wrappers.length === 0) {
+            if (this._unobserve) {
+                this._unobserve();
+                delete this._unobserve;
+            }
 
-        this.firstDummy.dispose();
-        this.lastDummy.dispose();
+            if (this._addTimer) {
+                this._getWindow().clearTimeout(this._addTimer);
+                delete this._addTimer;
+            }
+
+            this.firstDummy?.dispose();
+            this.lastDummy?.dispose();
+        }
     }
+
+    private _onFocus(isIn: boolean, dummyInput: DummyInput): void {
+        const wrapper = this._getCurrent();
+
+        if (wrapper) {
+            wrapper.manager.getHandler(isIn)?.(dummyInput);
+        }
+    }
+
+    private _onFocusIn = (dummyInput: DummyInput): void => {
+        this._onFocus(true, dummyInput);
+    };
+
+    private _onFocusOut = (dummyInput: DummyInput): void => {
+        this._onFocus(false, dummyInput);
+    };
 
     /**
      * Prepares to move focus out of the given element by focusing
@@ -808,6 +941,45 @@ export class DummyInputManager {
         }
     };
 
+    setTabbable = (manager: DummyInputManager, tabbable: boolean) => {
+        for (const w of this._wrappers) {
+            if (w.manager === manager) {
+                w.tabbable = tabbable;
+                break;
+            }
+        }
+
+        const wrapper = this._getCurrent();
+
+        if (wrapper) {
+            const tabIndex = wrapper.tabbable ? 0 : -1;
+
+            let input = this.firstDummy?.input;
+
+            if (input) {
+                input.tabIndex = tabIndex;
+            }
+
+            input = this.lastDummy?.input;
+
+            if (input) {
+                input.tabIndex = tabIndex;
+            }
+        }
+    };
+
+    private _getCurrent(): DummyInputWrapper | undefined {
+        this._wrappers.sort((a, b) => {
+            if (a.tabbable !== b.tabbable) {
+                return a.tabbable ? -1 : 1;
+            }
+
+            return a.priority - b.priority;
+        });
+
+        return this._wrappers[0];
+    }
+
     /**
      * Adds dummy inputs as the first and last child of the given element
      * Called each time the children under the element is mutated
@@ -820,7 +992,7 @@ export class DummyInputManager {
         this._addTimer = this._getWindow().setTimeout(() => {
             delete this._addTimer;
 
-            const element = this._element.get();
+            const element = this._element?.get();
             const dif = this.firstDummy?.input;
             const dil = this.lastDummy?.input;
 
@@ -855,7 +1027,8 @@ export class DummyInputManager {
             }
         });
 
-        const element = this._element.get();
+        const element = this._element?.get();
+
         if (element) {
             observer.observe(element, { childList: true });
 
