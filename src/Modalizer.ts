@@ -12,6 +12,7 @@ import {
     createElementTreeWalker,
     DummyInput,
     DummyInputManager,
+    DummyInputManagerPriorities,
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
@@ -130,6 +131,8 @@ export class Modalizer
 
         if (next) {
             e.preventDefault();
+            e.stopImmediatePropagation();
+
             nativeFocus(next);
         } else if (!this._props.isOthersAccessible) {
             this._moveOutWithDefault(isPrev);
@@ -301,12 +304,13 @@ class ModalizerAPIDummyManager extends DummyInputManager {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement
     ) {
-        super(tabster, element);
+        super(tabster, element, DummyInputManagerPriorities.Modalizer);
+
         this._modalizerAPI = modalizerAPI;
         this._tabster = tabster;
-        this.firstDummy.onFocusIn = this._onFocusDummyInput;
-        this.lastDummy.onFocusIn = this._onFocusDummyInput;
         this.setTabbable(false);
+
+        this._setHandlers(this._onFocusDummyInput);
     }
 
     private _onFocusDummyInput = (dummyInput: DummyInput) => {
@@ -325,18 +329,6 @@ class ModalizerAPIDummyManager extends DummyInputManager {
         });
         if (next) {
             this._tabster.focusedElement.focus(next);
-        }
-    };
-
-    setTabbable = (tabbable: boolean) => {
-        const tabIndex = tabbable ? 0 : -1;
-
-        if (this.firstDummy.input) {
-            this.firstDummy.input.tabIndex = tabIndex;
-        }
-
-        if (this.lastDummy.input) {
-            this.lastDummy.input.tabIndex = tabIndex;
         }
     };
 }
