@@ -31,7 +31,7 @@ export interface TabsterDOMRect {
 
 export interface InstanceContext {
     elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> };
-    basics: Types.InternalBasics;
+    basics: InternalBasics;
     WeakRef?: WeakRefConstructor;
     containerBoundingRectCache: {
         [id: string]: {
@@ -589,10 +589,16 @@ export function getWeakRef(
     return context.basics.WeakRef;
 }
 
-export function setBasics(win: Window, basics: Types.InternalBasics): void {
+interface InternalBasics {
+    Promise?: PromiseConstructor;
+    WeakRef?: WeakRefConstructor;
+    WeakMap?: WeakMapConstructor;
+}
+
+export function setBasics(win: Window, basics: InternalBasics): void {
     const context = getInstanceContext(() => win);
 
-    let key: keyof Types.InternalBasics;
+    let key: keyof InternalBasics;
 
     key = "Promise";
     if (key in basics) {
