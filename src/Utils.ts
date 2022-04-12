@@ -852,8 +852,6 @@ class DummyInputManagerCore {
 
         el.__tabsterDummy = this;
 
-        this._getWindow = (tabster as Types.TabsterInternal).getWindow;
-
         this.firstDummy = new DummyInput(this._getWindow, {
             isFirst: true,
         });
