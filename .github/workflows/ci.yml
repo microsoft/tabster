@@ -16,10 +16,10 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Use Node.js 14
+            - name: Use Node.js 16
               uses: actions/setup-node@v1
               with:
-                  node-version: 14.x
+                  node-version: 16.x
 
             - run: npm install
             - run: npm run type-check
@@ -58,3 +58,7 @@ jobs:
                 PORT: '8082'
                 STORYBOOK_UNCONTROLLED: 'true'
                 STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+            - name: "Check for unstaged changes"
+              run: |
+                git status --porcelain
+                git diff-index --quiet HEAD -- || exit 1 

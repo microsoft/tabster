@@ -63,9 +63,9 @@ jobs:
         git pull
 
   - task: NodeTool@0
-    displayName: Use Node 14.x
+    displayName: Use Node 16.x
     inputs:
-      versionSpec: 14.x
+      versionSpec: 16.x
 
   - task: Npm@1
     displayName: npm install
