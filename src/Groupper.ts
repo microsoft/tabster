@@ -13,31 +13,28 @@ import * as Types from "./Types";
 import {
     DummyInput,
     DummyInputManager,
+    DummyInputManagerPriorities,
     getLastChild,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-
     constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
-        super(tabster, element);
-        this._tabster = tabster;
-        this.firstDummy.onFocusIn = this._onFocusDummyInput;
-        this.lastDummy.onFocusIn = this._onFocusDummyInput;
-    }
+        super(tabster, element, DummyInputManagerPriorities.Groupper);
 
-    private _onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = this._element.get();
-        if (container && !dummyInput.shouldMoveOut) {
-            if (dummyInput.isFirst) {
-                this._tabster.focusedElement.focusFirst({ container });
-            } else {
-                this._tabster.focusedElement.focusLast({ container });
+        this._setHandlers((dummyInput: DummyInput) => {
+            const container = element.get();
+
+            if (container && !dummyInput.shouldMoveOut) {
+                if (dummyInput.isFirst) {
+                    tabster.focusedElement.focusFirst({ container });
+                } else {
+                    tabster.focusedElement.focusLast({ container });
+                }
             }
-        }
-    };
+        });
+    }
 }
 
 export class Groupper
@@ -46,15 +43,20 @@ export class Groupper
 {
     private _shouldTabInside = false;
     private _first: WeakHTMLElement | undefined;
+    private _onDispose: (groupper: Groupper) => void;
+
     _dummyManager?: GroupperDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
+        onDispose: (groupper: Groupper) => void,
         props: Types.GroupperProps
     ) {
         super(tabster, element, props);
         this.makeTabbable(false);
+
+        this._onDispose = onDispose;
 
         if (!tabster.controlTab) {
             this._dummyManager = new GroupperDummyManager(
@@ -65,6 +67,8 @@ export class Groupper
     }
 
     dispose(): void {
+        this._onDispose(this);
+
         const element = this._element.get();
         this._dummyManager?.dispose();
 
@@ -313,6 +317,7 @@ export class GroupperAPI
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
+    private _grouppers: Record<string, Types.Groupper> = {};
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -345,6 +350,13 @@ export class GroupperAPI
 
         win.document.removeEventListener("mousedown", this._onMouseDown, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
+
+        Object.keys(this._grouppers).forEach((groupperId) => {
+            if (this._grouppers[groupperId]) {
+                this._grouppers[groupperId].dispose();
+                delete this._grouppers[groupperId];
+            }
+        });
     }
 
     static dispose(instance: Types.GroupperAPI): void {
@@ -360,12 +372,27 @@ export class GroupperAPI
             validateGroupperProps(props);
         }
 
-        return new Groupper(tabster, element, props);
+        const self = tabster.groupper as GroupperAPI;
+
+        const newGroupper = new Groupper(
+            tabster,
+            element,
+            self._onGroupperDispose,
+            props
+        );
+
+        self._grouppers[newGroupper.id] = newGroupper;
+
+        return newGroupper;
     }
 
     forgetCurrentGrouppers(): void {
         this._current = {};
     }
+
+    private _onGroupperDispose = (groupper: Groupper) => {
+        delete this._grouppers[groupper.id];
+    };
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
@@ -502,6 +529,7 @@ export class GroupperAPI
 
                 if (next) {
                     e.preventDefault();
+                    e.stopImmediatePropagation();
 
                     nativeFocus(next);
                 } else {

@@ -12,6 +12,7 @@ import * as Types from "./Types";
 import {
     DummyInput,
     DummyInputManager,
+    DummyInputManagerPriorities,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     isElementVisibleInContainer,
@@ -35,11 +36,12 @@ class MoverDummyManager extends DummyInputManager {
         tabster: Types.TabsterCore,
         getMemorized: () => WeakHTMLElement | undefined
     ) {
-        super(tabster, element);
+        super(tabster, element, DummyInputManagerPriorities.Mover);
+
         this._tabster = tabster;
         this._getMemorized = getMemorized;
-        this.firstDummy.onFocusIn = this._onFocusDummyInput;
-        this.lastDummy.onFocusIn = this._onFocusDummyInput;
+
+        this._setHandlers(this._onFocusDummyInput);
     }
 
     private _onFocusDummyInput = (dummyInput: DummyInput) => {

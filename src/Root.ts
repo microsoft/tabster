@@ -9,6 +9,7 @@ import * as Types from "./Types";
 import {
     DummyInput,
     DummyInputManager,
+    DummyInputManagerPriorities,
     getElementUId,
     TabsterPart,
     triggerEvent,
@@ -46,24 +47,13 @@ class RootDummyManager extends DummyInputManager {
         element: WeakHTMLElement,
         setFocused: (focused: boolean, fromAdjacent?: boolean) => void
     ) {
-        super(tabster, element);
+        super(tabster, element, DummyInputManagerPriorities.Root);
+
+        this._setHandlers(this._onDummyInputFocus);
+
         this._tabster = tabster;
         this._setFocused = setFocused;
-        this.firstDummy.onFocusIn = this._onDummyInputFocus;
-        this.lastDummy.onFocusIn = this._onDummyInputFocus;
     }
-
-    setTabbable = (tabbable: boolean) => {
-        const tabIndex = tabbable ? 0 : -1;
-
-        if (this.firstDummy.input) {
-            this.firstDummy.input.tabIndex = tabIndex;
-        }
-
-        if (this.lastDummy.input) {
-            this.lastDummy.input.tabIndex = tabIndex;
-        }
-    };
 
     private _onDummyInputFocus = (dummyInput: DummyInput): void => {
         if (dummyInput.shouldMoveOut) {
