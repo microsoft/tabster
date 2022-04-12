@@ -43,15 +43,20 @@ export class Groupper
 {
     private _shouldTabInside = false;
     private _first: WeakHTMLElement | undefined;
+    private _onDispose: (groupper: Groupper) => void;
+
     _dummyManager?: GroupperDummyManager;
 
     constructor(
         tabster: Types.TabsterInternal,
         element: HTMLElement,
+        onDispose: (groupper: Groupper) => void,
         props: Types.GroupperProps
     ) {
         super(tabster, element, props);
         this.makeTabbable(false);
+
+        this._onDispose = onDispose;
 
         if (!tabster.controlTab) {
             this._dummyManager = new GroupperDummyManager(
@@ -62,6 +67,8 @@ export class Groupper
     }
 
     dispose(): void {
+        this._onDispose(this);
+
         const element = this._element.get();
         this._dummyManager?.dispose();
 
@@ -310,6 +317,7 @@ export class GroupperAPI
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
+    private _grouppers: Record<string, Types.Groupper> = {};
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -342,6 +350,13 @@ export class GroupperAPI
 
         win.document.removeEventListener("mousedown", this._onMouseDown, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
+
+        Object.keys(this._grouppers).forEach((groupperId) => {
+            if (this._grouppers[groupperId]) {
+                this._grouppers[groupperId].dispose();
+                delete this._grouppers[groupperId];
+            }
+        });
     }
 
     static dispose(instance: Types.GroupperAPI): void {
@@ -357,12 +372,27 @@ export class GroupperAPI
             validateGroupperProps(props);
         }
 
-        return new Groupper(tabster, element, props);
+        const self = tabster.groupper as GroupperAPI;
+
+        const newGroupper = new Groupper(
+            tabster,
+            element,
+            self._onGroupperDispose,
+            props
+        );
+
+        self._grouppers[newGroupper.id] = newGroupper;
+
+        return newGroupper;
     }
 
     forgetCurrentGrouppers(): void {
         this._current = {};
     }
+
+    private _onGroupperDispose = (groupper: Groupper) => {
+        delete this._grouppers[groupper.id];
+    };
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
