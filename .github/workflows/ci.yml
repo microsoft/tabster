@@ -61,3 +61,6 @@ jobs:
             - name: Check for uncommitted changes
               id: check-changes
               uses: mskri/check-uncommitted-changes-action@v1.0.1
+            - name: Print uncommitted changes
+              if: steps.check-changes.outputs.changes != ''
+              run: echo "There are uncommitted changes"
