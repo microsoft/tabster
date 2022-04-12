@@ -58,3 +58,6 @@ jobs:
                 PORT: '8082'
                 STORYBOOK_UNCONTROLLED: 'true'
                 STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+            - name: Check for uncommitted changes
+                id: check-changes
+                uses: mskri/check-uncommitted-changes-action@v1.0.1
