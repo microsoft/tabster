@@ -21,3 +21,5 @@ dist/
 dts/
 /.rts2*
 /.rollup.cache
+
+.npmrc
