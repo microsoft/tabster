@@ -49,7 +49,7 @@ export class ObservedElementAPI
     constructor(tabster: Types.TabsterCore) {
         super();
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 

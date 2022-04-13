@@ -31,15 +31,6 @@ export interface TabsterCoreProps {
     rootDummyInputs?: boolean;
 }
 
-export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs"> {
-    keyboardNavigation: KeyboardNavigationState;
-    focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
-    root: RootAPI;
-    uncontrolled: UncontrolledAPI;
-}
-
 export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;
 
@@ -298,7 +289,7 @@ export interface Deloser extends TabsterPart<DeloserProps> {
 }
 
 export type DeloserConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: DeloserProps
 ) => Deloser;
@@ -525,7 +516,7 @@ export interface Mover extends TabsterPart<MoverProps> {
 }
 
 export type MoverConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: MoverProps
 ) => Mover;
@@ -567,7 +558,7 @@ export interface Groupper extends TabsterPart<GroupperProps> {
 }
 
 export type GroupperConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: GroupperProps
 ) => Groupper;
@@ -612,7 +603,7 @@ export interface Modalizer extends TabsterPart<ModalizerProps> {
 }
 
 export type ModalizerConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: ModalizerProps
 ) => Modalizer;
@@ -628,7 +619,7 @@ export interface Root extends TabsterPart<RootProps> {
 }
 
 export type RootConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: RootProps
 ) => Root;
@@ -786,45 +777,77 @@ export interface InternalAPI {
     resumeObserver(syncState: boolean): void;
 }
 
-export interface TabsterInternal extends TabsterCore {
+export interface TabsterCore
+    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs"> {
     storageEntry(
         element: HTMLElement,
         addremove?: boolean
     ): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
-    groupper?: GroupperAPI;
-    mover?: MoverAPI;
-    outline?: OutlineAPI;
-    deloser?: DeloserAPI;
-    modalizer?: ModalizerAPI;
-    observedElement?: ObservedElementAPI;
-    crossOrigin?: CrossOriginAPI;
+    keyboardNavigation: KeyboardNavigationState;
+    focusedElement: FocusedElementState;
+    focusable: FocusableAPI;
+    root: RootAPI;
     uncontrolled: UncontrolledAPI;
+
+    /** @internal */
+    groupper?: GroupperAPI;
+    /** @internal */
+    mover?: MoverAPI;
+    /** @internal */
+    outline?: OutlineAPI;
+    /** @internal */
+    deloser?: DeloserAPI;
+    /** @internal */
+    modalizer?: ModalizerAPI;
+    /** @internal */
+    observedElement?: ObservedElementAPI;
+    /** @internal */
+    crossOrigin?: CrossOriginAPI;
+    /** @internal */
     internal: InternalAPI;
 
+    /** @internal */
     groupperDispose?: DisposeFunc;
+    /** @internal */
     moverDispose?: DisposeFunc;
+    /** @internal */
     outlineDispose?: DisposeFunc;
+    /** @internal */
     rootDispose?: DisposeFunc;
+    /** @internal */
     deloserDispose?: DisposeFunc;
+    /** @internal */
     modalizerDispose?: DisposeFunc;
+    /** @internal */
     observedElementDispose?: DisposeFunc;
+    /** @internal */
     crossOriginDispose?: DisposeFunc;
 
+    /** @internal */
     createRoot: RootConstructor;
+    /** @internal */
     updateRoot: (root: Root, removed?: boolean) => void;
+    /** @internal */
     createGroupper?: GroupperConstructor;
+    /** @internal */
     createMover?: MoverConstructor;
+    /** @internal */
     createDeloser?: DeloserConstructor;
+    /** @internal */
     createModalizer?: ModalizerConstructor;
+    /** @internal */
     updateObserved?: (element: HTMLElement) => void;
+    /** @internal */
     updateModalizer?: (modalizer: Modalizer, removed?: boolean) => void;
 
     // The version of the tabster package this instance is on
+    /** @internal */
     _version: string;
 
     // No operation flag for the debugging purposes
+    /** @internal */
     _noop: boolean;
 }
 

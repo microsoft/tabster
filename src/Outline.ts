@@ -89,7 +89,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
