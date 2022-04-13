@@ -78,13 +78,13 @@ export function updateTabsterByAttribute(
                 const root = tabsterOnElement[key];
 
                 if (root) {
-                    tabster.updateRoot(root, true);
+                    tabster.root.onRoot(root, true);
                 }
             } else if (key === "modalizer") {
                 const modalizer = tabsterOnElement.modalizer;
 
-                if (tabster.updateModalizer && modalizer) {
-                    tabster.updateModalizer(modalizer, true);
+                if (tabster.modalizer && modalizer) {
+                    tabster.modalizer.updateModalizer(modalizer, true);
                 }
             }
 
@@ -104,8 +104,10 @@ export function updateTabsterByAttribute(
 
                 case "observed":
                     delete tabsterOnElement[key];
-                    if (tabster.updateObserved) {
-                        tabster.updateObserved(element);
+                    if (tabster.observedElement) {
+                        tabster.observedElement.onObservedElementUpdate(
+                            element
+                        );
                     }
                     break;
 
@@ -128,12 +130,12 @@ export function updateTabsterByAttribute(
                         newTabsterProps.deloser as Types.DeloserProps
                     );
                 } else {
-                    if (tabster.createDeloser) {
-                        tabsterOnElement.deloser = tabster.createDeloser(
-                            tabster,
-                            element,
-                            newTabsterProps.deloser as Types.DeloserProps
-                        );
+                    if (tabster.deloser) {
+                        tabsterOnElement.deloser =
+                            tabster.deloser.createDeloser(
+                                element,
+                                newTabsterProps.deloser as Types.DeloserProps
+                            );
                     } else if (__DEV__) {
                         console.error(
                             "Deloser API used before initializing, please call `getDeloser()`"
@@ -148,13 +150,12 @@ export function updateTabsterByAttribute(
                         newTabsterProps.root as Types.RootProps
                     );
                 } else {
-                    tabsterOnElement.root = tabster.createRoot(
-                        tabster,
+                    tabsterOnElement.root = tabster.root.createRoot(
                         element,
                         newTabsterProps.root as Types.RootProps
                     );
                 }
-                tabster.updateRoot(tabsterOnElement.root);
+                tabster.root.onRoot(tabsterOnElement.root);
                 break;
 
             case "modalizer":
@@ -163,12 +164,12 @@ export function updateTabsterByAttribute(
                         newTabsterProps.modalizer as Types.ModalizerProps
                     );
                 } else {
-                    if (tabster.createModalizer) {
-                        tabsterOnElement.modalizer = tabster.createModalizer(
-                            tabster,
-                            element,
-                            newTabsterProps.modalizer as Types.ModalizerProps
-                        );
+                    if (tabster.modalizer) {
+                        tabsterOnElement.modalizer =
+                            tabster.modalizer.createModalizer(
+                                element,
+                                newTabsterProps.modalizer as Types.ModalizerProps
+                            );
                     } else if (__DEV__) {
                         console.error(
                             "Modalizer API used before initializing, please call `getModalizer()`"
@@ -187,12 +188,12 @@ export function updateTabsterByAttribute(
                         newTabsterProps.groupper as Types.GroupperProps
                     );
                 } else {
-                    if (tabster.createGroupper) {
-                        tabsterOnElement.groupper = tabster.createGroupper(
-                            tabster,
-                            element,
-                            newTabsterProps.groupper as Types.GroupperProps
-                        );
+                    if (tabster.groupper) {
+                        tabsterOnElement.groupper =
+                            tabster.groupper.createGroupper(
+                                element,
+                                newTabsterProps.groupper as Types.GroupperProps
+                            );
                     } else if (__DEV__) {
                         console.error(
                             "Groupper API used before initializing, please call `getGroupper()`"
@@ -207,9 +208,8 @@ export function updateTabsterByAttribute(
                         newTabsterProps.mover as Types.MoverProps
                     );
                 } else {
-                    if (tabster.createMover) {
-                        tabsterOnElement.mover = tabster.createMover(
-                            tabster,
+                    if (tabster.mover) {
+                        tabsterOnElement.mover = tabster.mover.createMover(
                             element,
                             newTabsterProps.mover as Types.MoverProps
                         );
@@ -222,9 +222,9 @@ export function updateTabsterByAttribute(
                 break;
 
             case "observed":
-                if (tabster.updateObserved) {
+                if (tabster.observedElement) {
                     tabsterOnElement.observed = newTabsterProps.observed;
-                    tabster.updateObserved(element);
+                    tabster.observedElement.onObservedElementUpdate(element);
                 } else if (__DEV__) {
                     console.error(
                         "ObservedElement API used before initializing, please call `getObservedElement()`"

@@ -32,12 +32,8 @@ export class FocusableAPI implements Types.FocusableAPI {
         this._win = getWindow;
     }
 
-    protected dispose(): void {
+    dispose(): void {
         /**/
-    }
-
-    static dispose(instance: Types.FocusableAPI): void {
-        (instance as FocusableAPI).dispose();
     }
 
     private _getBody(): HTMLElement | undefined {

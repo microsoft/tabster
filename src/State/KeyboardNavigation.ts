@@ -20,7 +20,7 @@ export class KeyboardNavigationState
         this._keyborg.subscribe(this._onChange);
     }
 
-    protected dispose(): void {
+    dispose(): void {
         super.dispose();
 
         if (this._keyborg) {
@@ -35,10 +35,6 @@ export class KeyboardNavigationState
     private _onChange = (isNavigatingWithKeyboard: boolean) => {
         this.setVal(isNavigatingWithKeyboard, undefined);
     };
-
-    static dispose(instance: Types.KeyboardNavigationState): void {
-        (instance as KeyboardNavigationState).dispose();
-    }
 
     static setVal(instance: Types.KeyboardNavigationState, val: boolean): void {
         (instance as KeyboardNavigationState)._keyborg?.setVal(val);
