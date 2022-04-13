@@ -50,7 +50,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        const getWindow = (this._tabster as Types.TabsterInternal).getWindow;
+        const getWindow = this._tabster.getWindow;
         return getPromise(getWindow).resolve(this._deloser.resetFocus());
     }
 }
@@ -362,7 +362,7 @@ export class Deloser
     private _onDispose: (deloser: Deloser) => void;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (deloser: Deloser) => void,
         props: Types.DeloserProps
@@ -670,7 +670,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         props?: { autoDeloser: Types.DeloserProps }
     ) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._history = new DeloserHistory(tabster);
         this._initTimer = this._win().setTimeout(this._init, 0);
 
@@ -717,7 +717,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     static createDeloser(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         props: Types.DeloserProps
     ): Types.Deloser {
@@ -878,8 +878,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             }
         }
 
-        const tabsteri = tabster as Types.TabsterInternal;
-        const deloserAPI = tabsteri.deloser && (tabsteri.deloser as DeloserAPI);
+        const deloserAPI = tabster.deloser && (tabster.deloser as DeloserAPI);
 
         if (deloserAPI) {
             if (deloserAPI._autoDeloserInstance) {
@@ -893,9 +892,9 @@ export class DeloserAPI implements Types.DeloserAPI {
 
                 if (body) {
                     deloserAPI._autoDeloserInstance = new Deloser(
-                        tabsteri,
+                        tabster,
                         body,
-                        (tabsteri.deloser as DeloserAPI)._onDeloserDispose,
+                        (tabster.deloser as DeloserAPI)._onDeloserDispose,
                         autoDeloserProps
                     );
                 }

@@ -594,7 +594,7 @@ class StateTransaction extends CrossOriginTransaction<
             transactions.ctx.focusOwnerTimestamp = timestamp;
 
             if (!isSelfResponse && beginData.rootUId && beginData.deloserUId) {
-                const deloserAPI = (tabster as Types.TabsterInternal).deloser;
+                const deloserAPI = tabster.deloser;
 
                 if (deloserAPI) {
                     const history = DeloserAPI.getHistory(deloserAPI);
@@ -621,7 +621,7 @@ class StateTransaction extends CrossOriginTransaction<
 
             CrossOriginFocusedElementState.setVal(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (tabster as Types.TabsterInternal).crossOrigin!.focusedElement,
+                tabster.crossOrigin!.focusedElement,
                 element,
                 {
                     isFocusedProgrammatically:
@@ -647,7 +647,7 @@ class StateTransaction extends CrossOriginTransaction<
         ) {
             CrossOriginFocusedElementState.setVal(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (tabster as Types.TabsterInternal).crossOrigin!.focusedElement,
+                tabster.crossOrigin!.focusedElement,
                 undefined,
                 {}
             );
@@ -666,7 +666,7 @@ class StateTransaction extends CrossOriginTransaction<
         if (name && element) {
             CrossOriginObservedElementState.trigger(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (tabster as Types.TabsterInternal).crossOrigin!.observedElement,
+                tabster.crossOrigin!.observedElement,
                 element,
                 { name, details: beginData.observedDetails }
             );
@@ -689,7 +689,7 @@ class StateTransaction extends CrossOriginTransaction<
 
         return forwardResult.then(() => {
             if (deadUId === transactions.ctx.focusOwner) {
-                const deloserAPI = (tabster as Types.TabsterInternal).deloser;
+                const deloserAPI = tabster.deloser;
 
                 if (deloserAPI) {
                     DeloserAPI.forceRestoreFocus(deloserAPI);
@@ -727,7 +727,7 @@ class StateTransaction extends CrossOriginTransaction<
         if (context.origOutlineSetup) {
             context.origOutlineSetup.call(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (tabster as Types.TabsterInternal).outline!,
+                tabster.outline!,
                 props
             );
         }
@@ -771,9 +771,9 @@ class GetElementTransaction extends CrossOriginTransaction<
                 element = ref && ref.get();
             } else if (data.observedName) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                element = (
-                    tabster as Types.TabsterInternal
-                ).observedElement!.getElement(data.observedName);
+                element = tabster.observedElement!.getElement(
+                    data.observedName
+                );
             }
         }
 
@@ -846,7 +846,7 @@ class GetElementTransaction extends CrossOriginTransaction<
                     let isResolved = false;
 
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (tabster as Types.TabsterInternal)
+                    tabster
                         .observedElement!.waitElement(
                             name,
                             timeout,
@@ -922,7 +922,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<
         const begin = !forwardRet && data.beginData;
         const uid = begin && begin.deloserUId;
         const deloser = uid && transactions.ctx.deloserByUId[uid];
-        const deloserAPI = (tabster as Types.TabsterInternal).deloser;
+        const deloserAPI = tabster.deloser;
 
         if (begin && deloser && deloserAPI) {
             const history = DeloserAPI.getHistory(deloserAPI);
@@ -1397,8 +1397,7 @@ class CrossOriginTransactions {
                     force: true,
                 });
 
-                const deloserAPI = (this._tabster as Types.TabsterInternal)
-                    .deloser;
+                const deloserAPI = this._tabster.deloser;
 
                 if (deloserAPI) {
                     DeloserAPI.forceRestoreFocus(deloserAPI);
@@ -1468,9 +1467,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
         noAccessibleCheck?: boolean
     ): Promise<boolean> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return (
-            this._tabster as Types.TabsterInternal
-        ).crossOrigin!.focusedElement.focus(
+        return this._tabster.crossOrigin!.focusedElement.focus(
             this,
             noFocusedProgrammaticallyFlag,
             noAccessibleCheck
@@ -1639,9 +1636,7 @@ export class CrossOriginObservedElementState
         ).then((element) =>
             this._lastRequestFocusId === requestId && element
                 ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  (
-                      this._tabster as Types.TabsterInternal
-                  ).crossOrigin!.focusedElement.focus(element, true)
+                  this._tabster.crossOrigin!.focusedElement.focus(element, true)
                 : false
         );
     }
@@ -1668,7 +1663,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._ctx = {
             ignoreKeyboardNavigationStateUpdate: false,
             deloserByUId: {},
@@ -1713,18 +1708,13 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         );
         tabster.focusedElement.subscribe(this._onFocus);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        (tabster as Types.TabsterInternal).observedElement!.subscribe(
-            this._onObserved
-        );
+        tabster.observedElement!.subscribe(this._onObserved);
 
         if (!this._ctx.origOutlineSetup) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this._ctx.origOutlineSetup = (
-                tabster as Types.TabsterInternal
-            ).outline!.setup;
+            this._ctx.origOutlineSetup = tabster.outline!.setup;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (tabster as Types.TabsterInternal).outline!.setup =
-                this._outlineSetup;
+            tabster.outline!.setup = this._outlineSetup;
         }
 
         this._transactions
@@ -1763,9 +1753,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._onKeyboardNavigationStateChanged
         );
         tabster.focusedElement.unsubscribe(this._onFocus);
-        (tabster as Types.TabsterInternal).observedElement?.unsubscribe(
-            this._onObserved
-        );
+        tabster.observedElement?.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
         CrossOriginFocusedElementState.dispose(this.focusedElement);

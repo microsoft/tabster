@@ -105,7 +105,7 @@ export class Root
     private _onDispose: (root: Root) => void;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (root: Root) => void,
         props: Types.RootProps
@@ -251,7 +251,7 @@ export class RootAPI implements Types.RootAPI {
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
         this.eventTarget = new EventTarget();
@@ -290,7 +290,7 @@ export class RootAPI implements Types.RootAPI {
     }
 
     static createRoot(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         props: Types.RootProps
     ): Types.Root {
@@ -434,7 +434,7 @@ export class RootAPI implements Types.RootAPI {
 
                 if (body) {
                     rootAPI._autoRootInstance = new Root(
-                        rootAPI._tabster as Types.TabsterInternal,
+                        rootAPI._tabster,
                         body,
                         rootAPI._onRootDispose,
                         autoRoot

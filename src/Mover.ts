@@ -84,7 +84,7 @@ export class Mover
     _dummyManagner?: MoverDummyManager;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (mover: Mover) => void,
         props: Types.MoverProps
@@ -591,7 +591,7 @@ export class MoverAPI implements Types.MoverAPI {
     }
 
     static createMover(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         props: Types.MoverProps
     ): Types.Mover {

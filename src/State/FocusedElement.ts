@@ -23,7 +23,7 @@ export class FocusedElementState
 {
     private static _lastResetElement: WeakHTMLElement | undefined;
 
-    private _tabster: Types.TabsterInternal;
+    private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _nextVal:
@@ -34,7 +34,7 @@ export class FocusedElementState
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
 
-    constructor(tabster: Types.TabsterInternal, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
 
         this._tabster = tabster;

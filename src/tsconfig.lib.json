@@ -4,6 +4,7 @@
         "target": "ES2019",
         "outDir": "../dist",
         "declarationDir": "../dist/dts",
+        "stripInternal": true,
         "sourceMap": true
     },
     "include": ["**/*.ts"]

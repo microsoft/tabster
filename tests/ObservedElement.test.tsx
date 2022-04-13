@@ -6,8 +6,8 @@
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
-interface WindowWithTabsterInternal extends Window {
-    __tabsterInstance: Types.TabsterInternal;
+interface WindowWithTabsterCore extends Window {
+    __tabsterInstance: Types.TabsterCore;
 }
 
 describe("Focusable", () => {
@@ -36,7 +36,7 @@ describe("Focusable", () => {
             })
             .eval((name) => {
                 return (
-                    window as unknown as WindowWithTabsterInternal
+                    window as unknown as WindowWithTabsterCore
                 ).__tabsterInstance.observedElement?.requestFocus(name, 0)
                     .result;
             }, name)
@@ -53,7 +53,7 @@ describe("Focusable", () => {
         )
             .eval((name) => {
                 const request = (
-                    window as unknown as WindowWithTabsterInternal
+                    window as unknown as WindowWithTabsterCore
                 ).__tabsterInstance.observedElement?.requestFocus(
                     name,
                     5000
@@ -81,7 +81,7 @@ describe("Focusable", () => {
             .eval(() => {
                 return new Promise((resolve) => {
                     const request1 = (
-                        window as unknown as WindowWithTabsterInternal
+                        window as unknown as WindowWithTabsterCore
                     ).__tabsterInstance.observedElement?.requestFocus(
                         "button1",
                         10005000
@@ -89,7 +89,7 @@ describe("Focusable", () => {
 
                     setTimeout(() => {
                         const request2 = (
-                            window as unknown as WindowWithTabsterInternal
+                            window as unknown as WindowWithTabsterCore
                         ).__tabsterInstance.observedElement?.requestFocus(
                             "button2",
                             10005000
@@ -154,7 +154,7 @@ describe("Focusable", () => {
         )
             .eval((name) => {
                 (
-                    window as unknown as WindowWithTabsterInternal
+                    window as unknown as WindowWithTabsterCore
                 ).__tabsterInstance.observedElement?.requestFocus(name, 100500);
             }, name)
             .wait(500)
@@ -189,7 +189,7 @@ describe("Focusable", () => {
         )
             .eval((name) => {
                 (
-                    window as unknown as WindowWithTabsterInternal
+                    window as unknown as WindowWithTabsterCore
                 ).__tabsterInstance.observedElement?.requestFocus(name, 100500);
             }, name)
             .wait(300)
