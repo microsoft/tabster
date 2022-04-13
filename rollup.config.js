@@ -30,6 +30,7 @@ const config = [
                     compilerOptions: {
                         // https://github.com/ezolenko/rollup-plugin-typescript2/issues/268
                         emitDeclarationOnly: false,
+                        stripInternal: true,
                     },
                 },
             }),
