@@ -820,21 +820,7 @@ export interface InternalAPI {
     resumeObserver(syncState: boolean): void;
 }
 
-export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
-        Disposable {
-    storageEntry(
-        element: HTMLElement,
-        addremove?: boolean
-    ): TabsterElementStorageEntry | undefined;
-    getWindow: GetWindow;
-
-    keyboardNavigation: KeyboardNavigationState;
-    focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
-    root: RootAPI;
-    uncontrolled: UncontrolledAPI;
-
+interface TabsterCoreInternal {
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */
@@ -859,7 +845,29 @@ export interface TabsterCore
     // No operation flag for the debugging purposes
     /** @internal */
     _noop: boolean;
+
+    /** @internal */
+    storageEntry(
+        element: HTMLElement,
+        addremove?: boolean
+    ): TabsterElementStorageEntry | undefined;
+    /** @internal */
+    getWindow: GetWindow;
 }
+
+export interface TabsterCorePublic {
+    keyboardNavigation: KeyboardNavigationState;
+    focusedElement: FocusedElementState;
+    focusable: FocusableAPI;
+    root: RootAPI;
+    uncontrolled: UncontrolledAPI;
+}
+
+export interface TabsterCore
+    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+        Disposable,
+        TabsterCoreInternal,
+        TabsterCorePublic {}
 
 export interface TabsterCompat {
     attributeTransform?: <P>(old: P) => TabsterAttributeProps;
