@@ -853,21 +853,31 @@ interface TabsterCoreInternal {
     ): TabsterElementStorageEntry | undefined;
     /** @internal */
     getWindow: GetWindow;
+
+    /** @internal */
+    createWrapper(): Tabster;
+    /** @internal */
+    disposeWrapper(wrapper: Tabster): void;
+    /** @internal */
+    forceCleanup(): void;
 }
 
-export interface TabsterCorePublic {
+export interface Tabster extends Disposable {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
     root: RootAPI;
     uncontrolled: UncontrolledAPI;
+
+    /** @internal */
+    core: TabsterCore;
 }
 
 export interface TabsterCore
     extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
         Disposable,
         TabsterCoreInternal,
-        TabsterCorePublic {}
+        Omit<Tabster, "core"> {}
 
 export interface TabsterCompat {
     attributeTransform?: <P>(old: P) => TabsterAttributeProps;

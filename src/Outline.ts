@@ -24,25 +24,6 @@ const defaultProps: Types.OutlineProps = {
 
 let _props: Types.OutlineProps = defaultProps;
 
-let _fullScreenEventName: string | undefined;
-let _fullScreenElementName: string | undefined;
-
-if (typeof document !== "undefined") {
-    if ("onfullscreenchange" in document) {
-        _fullScreenEventName = "fullscreenchange";
-        _fullScreenElementName = "fullscreenElement";
-    } else if ("onwebkitfullscreenchange" in document) {
-        _fullScreenEventName = "webkitfullscreenchange";
-        _fullScreenElementName = "webkitFullscreenElement";
-    } else if ("onmozfullscreenchange" in document) {
-        _fullScreenEventName = "mozfullscreenchange";
-        _fullScreenElementName = "mozFullScreenElement";
-    } else if ("onmsfullscreenchange" in document) {
-        _fullScreenEventName = "msfullscreenchange";
-        _fullScreenElementName = "msFullscreenElement";
-    }
-}
-
 class OutlinePosition {
     public left: number;
     public top: number;
@@ -86,11 +67,29 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _curOutlineElements: Types.OutlineElements | undefined;
     private _allOutlineElements: Types.OutlineElements[] = [];
     private _fullScreenElement: HTMLElement | undefined;
+    private _fullScreenEventName: string | undefined;
+    private _fullScreenElementName: string | undefined;
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
+
+        if (typeof document !== "undefined") {
+            if ("onfullscreenchange" in document) {
+                this._fullScreenEventName = "fullscreenchange";
+                this._fullScreenElementName = "fullscreenElement";
+            } else if ("onwebkitfullscreenchange" in document) {
+                this._fullScreenEventName = "webkitfullscreenchange";
+                this._fullScreenElementName = "webkitFullscreenElement";
+            } else if ("onmozfullscreenchange" in document) {
+                this._fullScreenEventName = "mozfullscreenchange";
+                this._fullScreenElementName = "mozFullScreenElement";
+            } else if ("onmsfullscreenchange" in document) {
+                this._fullScreenEventName = "msfullscreenchange";
+                this._fullScreenElementName = "msFullscreenElement";
+            }
+        }
     }
 
     private _init = (): void => {
@@ -105,9 +104,9 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         win.addEventListener("scroll", this._onScroll, true); // Capture!
 
-        if (_fullScreenEventName) {
+        if (this._fullScreenEventName) {
             win.document.addEventListener(
-                _fullScreenEventName,
+                this._fullScreenEventName,
                 this._onFullScreenChanged
             );
         }
@@ -153,9 +152,9 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         win.removeEventListener("scroll", this._onScroll, true);
 
-        if (_fullScreenEventName) {
+        if (this._fullScreenEventName) {
             win.document.removeEventListener(
-                _fullScreenEventName,
+                this._fullScreenEventName,
                 this._onFullScreenChanged
             );
         }
@@ -172,7 +171,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _onFullScreenChanged = (e: Event): void => {
-        if (!_fullScreenElementName || !e.target) {
+        if (!this._fullScreenElementName || !e.target) {
             return;
         }
 
@@ -182,7 +181,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         if (target.ownerDocument && outlineElements) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fsElement: HTMLElement | null = (target.ownerDocument as any)[
-                _fullScreenElementName
+                this._fullScreenElementName
             ];
 
             if (fsElement) {
