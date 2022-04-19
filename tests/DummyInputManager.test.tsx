@@ -13,16 +13,34 @@ runIfUnControlled("DummyInputManager", () => {
     });
     describe("should update dummy inputs when DOM children update for", () => {
         const evaluateDummy = (dummyAttribute: string, elementId: string) => {
-            const mover = document.getElementById(elementId) as HTMLElement;
+            const element = document.getElementById(elementId) as HTMLElement;
+
             return {
-                first: mover.firstElementChild?.hasAttribute(dummyAttribute),
-                last: mover.lastElementChild?.hasAttribute(dummyAttribute),
+                first: !!element.firstElementChild?.hasAttribute(
+                    dummyAttribute
+                ),
+                last: !!element.lastElementChild?.hasAttribute(dummyAttribute),
+                prev: !!element.previousElementSibling?.hasAttribute(
+                    dummyAttribute
+                ),
+                next: !!element.nextElementSibling?.hasAttribute(
+                    dummyAttribute
+                ),
             };
         };
 
-        const checkDummy = (res: ReturnType<typeof evaluateDummy>) => {
+        const checkDummyInside = (res: ReturnType<typeof evaluateDummy>) => {
             expect(res.first).toBe(true);
             expect(res.last).toBe(true);
+            expect(res.prev).toBe(false);
+            expect(res.next).toBe(false);
+        };
+
+        const checkDummyOutside = (res: ReturnType<typeof evaluateDummy>) => {
+            expect(res.first).toBe(false);
+            expect(res.last).toBe(false);
+            expect(res.prev).toBe(true);
+            expect(res.next).toBe(true);
         };
 
         const appendElement = (elementId: string) => {
@@ -49,11 +67,13 @@ runIfUnControlled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div {...attr} id={moverId}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                    <button>Button4</button>
+                <div>
+                    <div {...attr} id={moverId}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
                 </div>
             );
 
@@ -63,7 +83,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(appendElement, moverId)
                 .wait(1)
                 .eval(
@@ -71,7 +91,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(prependElement, moverId)
                 .wait(1)
                 .eval(
@@ -79,7 +99,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     moverId
                 )
-                .check(checkDummy);
+                .check(checkDummyInside);
         });
 
         it("groupper", async () => {
@@ -89,11 +109,13 @@ runIfUnControlled("DummyInputManager", () => {
             const groupperId = "groupper";
 
             const testHtml = (
-                <div {...attr} id={groupperId}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                    <button>Button4</button>
+                <div>
+                    <div {...attr} id={groupperId}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
                 </div>
             );
 
@@ -103,7 +125,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(appendElement, groupperId)
                 .wait(1)
                 .eval(
@@ -111,7 +133,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(prependElement, groupperId)
                 .wait(1)
                 .eval(
@@ -119,7 +141,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummy);
+                .check(checkDummyInside);
         });
 
         it("modalizerAPI", async () => {
@@ -130,11 +152,13 @@ runIfUnControlled("DummyInputManager", () => {
             const modalizerAPIId = "modalizerAPI";
 
             const testHtml = (
-                <div {...attr}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                    <button>Button4</button>
+                <div>
+                    <div {...attr}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
                 </div>
             );
 
@@ -148,7 +172,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(appendElement, modalizerAPIId)
                 .wait(1)
                 .eval(
@@ -156,7 +180,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .check(checkDummy)
+                .check(checkDummyInside)
                 .eval(prependElement, modalizerAPIId)
                 .wait(1)
                 .eval(
@@ -164,7 +188,53 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     modalizerAPIId
                 )
-                .check(checkDummy);
+                .check(checkDummyInside);
         });
+
+        it.each<["ol" | "ul" | "table"]>([["ol"], ["ul"], ["table"]])(
+            "should add dummy inputs outside of the container for <ol>, <ul> and <table>",
+            async (tagName) => {
+                const attr = getTabsterAttribute({
+                    mover: {},
+                });
+                const containerId = "outside";
+                const Tag = tagName;
+                const testHtml = (
+                    <div>
+                        <Tag {...attr} id={containerId}>
+                            <li>
+                                <button>Button1</button>
+                            </li>
+                            <li>
+                                <button>Button2</button>
+                            </li>
+                        </Tag>
+                    </div>
+                );
+                await new BroTest.BroTest(testHtml)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyOutside)
+                    .eval(appendElement, containerId)
+                    .wait(1)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyOutside)
+                    .eval(prependElement, containerId)
+                    .wait(1)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyOutside);
+            }
+        );
     });
 });
