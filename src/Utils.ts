@@ -666,6 +666,8 @@ export type DummyInputFocusCallback = (dummyInput: DummyInput) => void;
  */
 export class DummyInput {
     private _isPhantom: DummyInputProps["isPhantom"];
+    private _disposeTimer: number | undefined;
+    private _clearDisposeTimeout: (() => void) | undefined;
 
     input: HTMLElement | undefined;
     /** Flag that indicates focus is leaving the boundary of the dummy input */
@@ -677,10 +679,12 @@ export class DummyInput {
     onFocusOut?: DummyInputFocusCallback;
 
     constructor(getWindow: Types.GetWindow, props: DummyInputProps) {
-        const input = getWindow().document.createElement("i");
+        const win = getWindow();
+        const input = win.document.createElement("i");
 
         input.tabIndex = 0;
         input.setAttribute("role", "none");
+
         input.setAttribute(Types.TabsterDummyInputAttributeName, "");
         input.setAttribute("aria-hidden", "true");
 
@@ -703,9 +707,29 @@ export class DummyInput {
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
+
+        if (this._isPhantom) {
+            this._disposeTimer = win.setTimeout(() => {
+                delete this._disposeTimer;
+                this.dispose();
+            }, 0);
+
+            this._clearDisposeTimeout = () => {
+                if (this._disposeTimer) {
+                    win.clearTimeout(this._disposeTimer);
+                    delete this._disposeTimer;
+                }
+
+                delete this._clearDisposeTimeout;
+            };
+        }
     }
 
     dispose(): void {
+        if (this._clearDisposeTimeout) {
+            this._clearDisposeTimeout();
+        }
+
         const input = this.input;
 
         if (!input) {
