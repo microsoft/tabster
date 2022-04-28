@@ -721,7 +721,7 @@ export class DummyInput {
                 }
 
                 delete this._clearDisposeTimeout;
-            }
+            };
         }
     }
 
