@@ -69,7 +69,7 @@ export class Modalizer
     private _onActiveChange: (active: boolean) => void;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
         moveOutWithDefault: (backwards: boolean) => void,
@@ -349,7 +349,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         const documentBody = this._win().document.body;
@@ -398,7 +398,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     static createModalizer(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         props: Types.ModalizerProps
     ): Types.Modalizer {
@@ -406,8 +406,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             validateModalizerProps(props);
         }
 
-        const self = (tabster as Types.TabsterInternal)
-            .modalizer as ModalizerAPI;
+        const self = tabster.modalizer as ModalizerAPI;
         const modalizer = new Modalizer(
             tabster,
             element,
@@ -497,7 +496,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     static updateModalizer(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         modalizer: Types.Modalizer,
         removed?: boolean
     ): void {

@@ -48,7 +48,7 @@ export class Groupper
     _dummyManager?: GroupperDummyManager;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (groupper: Groupper) => void,
         props: Types.GroupperProps
@@ -364,7 +364,7 @@ export class GroupperAPI
     }
 
     static createGroupper(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         props: Types.GroupperProps
     ): Types.Groupper {

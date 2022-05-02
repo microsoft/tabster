@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TabsterInternal } from "../../src/Types";
+import { TabsterCore } from "../../src/Types";
 
 export const runIfControlled = !process.env.STORYBOOK_UNCONTROLLED
     ? describe
@@ -14,6 +14,6 @@ export const runIfUnControlled =
         ? describe
         : xdescribe;
 
-export interface WindowWithTabsterInternal extends Window {
-    __tabsterInstance: TabsterInternal;
+export interface WindowWithTabsterCore extends Window {
+    __tabsterInstance: TabsterCore;
 }

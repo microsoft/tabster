@@ -9,11 +9,11 @@ export function getTabsterOnElement(
     tabster: Types.TabsterCore,
     element: HTMLElement
 ): Types.TabsterOnElement | undefined {
-    return (tabster as Types.TabsterInternal).storageEntry(element)?.tabster;
+    return tabster.storageEntry(element)?.tabster;
 }
 
 export function updateTabsterByAttribute(
-    tabster: Types.TabsterInternal,
+    tabster: Types.TabsterCore,
     element: HTMLElement,
     dispose?: boolean
 ): void {
@@ -21,9 +21,8 @@ export function updateTabsterByAttribute(
         dispose || tabster._noop
             ? undefined
             : element.getAttribute(Types.TabsterAttributeName);
-    const tabsteri = tabster as Types.TabsterInternal;
 
-    let entry = tabsteri.storageEntry(element);
+    let entry = tabster.storageEntry(element);
     let newAttr: Types.TabsterAttributeOnElement | undefined;
 
     if (newAttrValue) {
@@ -60,7 +59,7 @@ export function updateTabsterByAttribute(
 
     if (!entry) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        entry = (tabster as Types.TabsterInternal).storageEntry(element, true)!;
+        entry = tabster.storageEntry(element, true)!;
     }
 
     if (!entry.tabster) {
@@ -79,13 +78,13 @@ export function updateTabsterByAttribute(
                 const root = tabsterOnElement[key];
 
                 if (root) {
-                    tabsteri.updateRoot(root, true);
+                    tabster.updateRoot(root, true);
                 }
             } else if (key === "modalizer") {
                 const modalizer = tabsterOnElement.modalizer;
 
-                if (tabsteri.updateModalizer && modalizer) {
-                    tabsteri.updateModalizer(modalizer, true);
+                if (tabster.updateModalizer && modalizer) {
+                    tabster.updateModalizer(modalizer, true);
                 }
             }
 
@@ -105,8 +104,8 @@ export function updateTabsterByAttribute(
 
                 case "observed":
                     delete tabsterOnElement[key];
-                    if (tabsteri.updateObserved) {
-                        tabsteri.updateObserved(element);
+                    if (tabster.updateObserved) {
+                        tabster.updateObserved(element);
                     }
                     break;
 
@@ -129,9 +128,9 @@ export function updateTabsterByAttribute(
                         newTabsterProps.deloser as Types.DeloserProps
                     );
                 } else {
-                    if (tabsteri.createDeloser) {
-                        tabsterOnElement.deloser = tabsteri.createDeloser(
-                            tabsteri,
+                    if (tabster.createDeloser) {
+                        tabsterOnElement.deloser = tabster.createDeloser(
+                            tabster,
                             element,
                             newTabsterProps.deloser as Types.DeloserProps
                         );
@@ -149,13 +148,13 @@ export function updateTabsterByAttribute(
                         newTabsterProps.root as Types.RootProps
                     );
                 } else {
-                    tabsterOnElement.root = tabsteri.createRoot(
-                        tabsteri,
+                    tabsterOnElement.root = tabster.createRoot(
+                        tabster,
                         element,
                         newTabsterProps.root as Types.RootProps
                     );
                 }
-                tabsteri.updateRoot(tabsterOnElement.root);
+                tabster.updateRoot(tabsterOnElement.root);
                 break;
 
             case "modalizer":
@@ -164,9 +163,9 @@ export function updateTabsterByAttribute(
                         newTabsterProps.modalizer as Types.ModalizerProps
                     );
                 } else {
-                    if (tabsteri.createModalizer) {
-                        tabsterOnElement.modalizer = tabsteri.createModalizer(
-                            tabsteri,
+                    if (tabster.createModalizer) {
+                        tabsterOnElement.modalizer = tabster.createModalizer(
+                            tabster,
                             element,
                             newTabsterProps.modalizer as Types.ModalizerProps
                         );
@@ -188,9 +187,9 @@ export function updateTabsterByAttribute(
                         newTabsterProps.groupper as Types.GroupperProps
                     );
                 } else {
-                    if (tabsteri.createGroupper) {
-                        tabsterOnElement.groupper = tabsteri.createGroupper(
-                            tabsteri,
+                    if (tabster.createGroupper) {
+                        tabsterOnElement.groupper = tabster.createGroupper(
+                            tabster,
                             element,
                             newTabsterProps.groupper as Types.GroupperProps
                         );
@@ -208,9 +207,9 @@ export function updateTabsterByAttribute(
                         newTabsterProps.mover as Types.MoverProps
                     );
                 } else {
-                    if (tabsteri.createMover) {
-                        tabsterOnElement.mover = tabsteri.createMover(
-                            tabsteri,
+                    if (tabster.createMover) {
+                        tabsterOnElement.mover = tabster.createMover(
+                            tabster,
                             element,
                             newTabsterProps.mover as Types.MoverProps
                         );
@@ -223,9 +222,9 @@ export function updateTabsterByAttribute(
                 break;
 
             case "observed":
-                if (tabsteri.updateObserved) {
+                if (tabster.updateObserved) {
                     tabsterOnElement.observed = newTabsterProps.observed;
-                    tabsteri.updateObserved(element);
+                    tabster.updateObserved(element);
                 } else if (__DEV__) {
                     console.error(
                         "ObservedElement API used before initializing, please call `getObservedElement()`"
@@ -238,7 +237,7 @@ export function updateTabsterByAttribute(
                 break;
 
             case "outline":
-                if (tabsteri.outline) {
+                if (tabster.outline) {
                     tabsterOnElement.outline = newTabsterProps.outline;
                 } else if (__DEV__) {
                     console.error(
@@ -261,7 +260,7 @@ export function updateTabsterByAttribute(
             delete entry.tabster;
             delete entry.attr;
         }
-        tabsteri.storageEntry(element, false);
+        tabster.storageEntry(element, false);
     }
 }
 
@@ -272,10 +271,7 @@ export function augmentAttribute(
     value?: string | null // Restore original value when undefined.
 ): void {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const entry = (tabster as Types.TabsterInternal).storageEntry(
-        element,
-        true
-    )!;
+    const entry = tabster.storageEntry(element, true)!;
 
     if (!entry.aug) {
         if (value === undefined) {
@@ -311,6 +307,6 @@ export function augmentAttribute(
 
     if (value === undefined && Object.keys(entry.aug).length === 0) {
         delete entry.aug;
-        (tabster as Types.TabsterInternal).storageEntry(element, false);
+        tabster.storageEntry(element, false);
     }
 }
