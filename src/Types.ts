@@ -855,9 +855,9 @@ interface TabsterCoreInternal {
     getWindow: GetWindow;
 
     /** @internal */
-    createWrapper(): Tabster;
+    createTabster(): Tabster;
     /** @internal */
-    disposeWrapper(wrapper: Tabster): void;
+    disposeTabster(wrapper: Tabster): void;
     /** @internal */
     forceCleanup(): void;
 }

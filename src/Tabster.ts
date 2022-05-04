@@ -48,7 +48,7 @@ class Tabster implements Types.Tabster {
     }
 
     dispose() {
-        this.core.disposeWrapper(this);
+        this.core.disposeTabster(this);
     }
 }
 
@@ -125,13 +125,13 @@ class TabsterCore implements Types.TabsterCore {
         startFakeWeakRefsCleanup(getWindow);
     }
 
-    createWrapper(): Types.Tabster {
+    createTabster(): Types.Tabster {
         const wrapper = new Tabster(this);
         this._wrappers.add(wrapper);
         return wrapper;
     }
 
-    disposeWrapper(wrapper: Types.Tabster) {
+    disposeTabster(wrapper: Types.Tabster) {
         this._wrappers.delete(wrapper);
 
         if (this._wrappers.size === 0) {
@@ -256,12 +256,12 @@ export function createTabster(
             );
         }
 
-        return tabster.createWrapper();
+        return tabster.createTabster();
     }
 
     tabster = new TabsterCore(win, props);
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
-    return tabster.createWrapper();
+    return tabster.createTabster();
 }
 
 /**
