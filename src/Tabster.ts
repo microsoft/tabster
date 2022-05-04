@@ -30,7 +30,7 @@ import {
 
 export { Types };
 
-class TabsterWrapper implements Types.Tabster {
+class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
     focusable: Types.FocusableAPI;
@@ -55,13 +55,13 @@ class TabsterWrapper implements Types.Tabster {
 /**
  * Extends Window to include an internal Tabster instance.
  */
-class Tabster implements Types.TabsterCore {
+class TabsterCore implements Types.TabsterCore {
     private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     private _unobserve: (() => void) | undefined;
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
-    private _wrappers: Set<TabsterWrapper> = new Set<TabsterWrapper>();
+    private _wrappers: Set<Tabster> = new Set<Tabster>();
 
     _version: string = __VERSION__;
     _noop = false;
@@ -126,7 +126,7 @@ class Tabster implements Types.TabsterCore {
     }
 
     createWrapper(): Types.Tabster {
-        const wrapper = new TabsterWrapper(this);
+        const wrapper = new Tabster(this);
         this._wrappers.add(wrapper);
         return wrapper;
     }
@@ -259,7 +259,7 @@ export function createTabster(
         return tabster.createWrapper();
     }
 
-    tabster = new Tabster(win, props);
+    tabster = new TabsterCore(win, props);
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
     return tabster.createWrapper();
 }
@@ -452,7 +452,7 @@ export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
 }
 
 export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
-    const self = tabster as Tabster;
+    const self = tabster as TabsterCore;
 
     if (self._noop !== noop) {
         self._noop = noop;
@@ -488,5 +488,5 @@ export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
 }
 
 export function isNoOp(tabster: Types.TabsterCore): boolean {
-    return (tabster as Tabster)._noop;
+    return (tabster as TabsterCore)._noop;
 }
