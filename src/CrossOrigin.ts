@@ -1489,10 +1489,6 @@ export class CrossOriginFocusedElementState
         this._transactions = transactions;
     }
 
-    dispose() {
-        super.dispose();
-    }
-
     async focus(
         element: Types.CrossOriginElement,
         noFocusedProgrammaticallyFlag?: boolean,
@@ -1582,10 +1578,6 @@ export class CrossOriginObservedElementState
         super();
         this._tabster = tabster;
         this._transactions = transactions;
-    }
-
-    dispose() {
-        super.dispose();
     }
 
     async getElement(
