@@ -55,7 +55,7 @@ export class FocusedElementState
         }
     };
 
-    protected dispose(): void {
+    dispose(): void {
         super.dispose();
 
         const win = this._win();
@@ -79,10 +79,6 @@ export class FocusedElementState
 
         delete this._nextVal;
         delete this._lastVal;
-    }
-
-    static dispose(instance: Types.FocusedElementState): void {
-        (instance as FocusedElementState).dispose();
     }
 
     static forgetMemorized(

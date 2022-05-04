@@ -686,7 +686,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         if (this._initTimer) {
@@ -712,12 +712,7 @@ export class DeloserAPI implements Types.DeloserAPI {
         delete this._curDeloser;
     }
 
-    static dispose(instance: Types.DeloserAPI): void {
-        (instance as DeloserAPI).dispose();
-    }
-
-    static createDeloser(
-        tabster: Types.TabsterCore,
+    createDeloser(
         element: HTMLElement,
         props: Types.DeloserProps
     ): Types.Deloser {
@@ -726,16 +721,18 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         const deloser = new Deloser(
-            tabster,
+            this._tabster,
             element,
-            (tabster.deloser as DeloserAPI)._onDeloserDispose,
+            this._onDeloserDispose,
             props
         );
 
         if (
-            element.contains(tabster.focusedElement.getFocusedElement() ?? null)
+            element.contains(
+                this._tabster.focusedElement.getFocusedElement() ?? null
+            )
         ) {
-            (tabster.deloser as DeloserAPI)._activate(deloser);
+            this._activate(deloser);
         }
 
         return deloser;

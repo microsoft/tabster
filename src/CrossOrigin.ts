@@ -1489,14 +1489,6 @@ export class CrossOriginFocusedElementState
         this._transactions = transactions;
     }
 
-    protected dispose() {
-        super.dispose();
-    }
-
-    static dispose(instance: Types.CrossOriginFocusedElementState) {
-        (instance as CrossOriginFocusedElementState).dispose();
-    }
-
     async focus(
         element: Types.CrossOriginElement,
         noFocusedProgrammaticallyFlag?: boolean,
@@ -1586,14 +1578,6 @@ export class CrossOriginObservedElementState
         super();
         this._tabster = tabster;
         this._transactions = transactions;
-    }
-
-    protected dispose() {
-        super.dispose();
-    }
-
-    static dispose(instance: Types.CrossOriginObservedElementState) {
-        (instance as CrossOriginObservedElementState).dispose();
     }
 
     async getElement(
@@ -1741,7 +1725,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             });
     };
 
-    protected dispose(): void {
+    dispose(): void {
         if (this._initTimer) {
             this._win().clearTimeout(this._initTimer);
             this._initTimer = undefined;
@@ -1756,14 +1740,10 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         tabster.observedElement?.unsubscribe(this._onObserved);
 
         this._transactions.dispose();
-        CrossOriginFocusedElementState.dispose(this.focusedElement);
-        CrossOriginObservedElementState.dispose(this.observedElement);
+        this.focusedElement.dispose();
+        this.observedElement.dispose();
 
         this._ctx.deloserByUId = {};
-    }
-
-    static dispose(instance: Types.CrossOriginAPI) {
-        (instance as CrossOriginAPI).dispose();
     }
 
     private _onKeyboardNavigationStateChanged = (value: boolean): void => {

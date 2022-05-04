@@ -11,7 +11,7 @@ export abstract class Subscribable<A, B = undefined>
     protected _val: A | undefined;
     private _callbacks: Types.SubscribableCallback<A, B>[] = [];
 
-    protected dispose(): void {
+    dispose(): void {
         this._callbacks = [];
         delete this._val;
     }

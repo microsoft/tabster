@@ -58,7 +58,7 @@ export class ObservedElementAPI
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         if (this._initTimer) {
@@ -116,10 +116,6 @@ export class ObservedElementAPI
 
             delete this._waiting[key];
         }
-    }
-
-    static dispose(instance: Types.ObservedElementAPI): void {
-        (instance as ObservedElementAPI).dispose();
     }
 
     /**
