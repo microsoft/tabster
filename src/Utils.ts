@@ -662,8 +662,10 @@ export type DummyInputFocusCallback = (dummyInput: DummyInput) => void;
  */
 export class DummyInput {
     private _isPhantom: DummyInputProps["isPhantom"];
+    private _disposeTimer: number | undefined;
+    private _clearDisposeTimeout: (() => void) | undefined;
 
-    input: HTMLDivElement | undefined;
+    input: HTMLElement | undefined;
     /** Flag that indicates focus is leaving the boundary of the dummy input */
     shouldMoveOut?: boolean;
     isFirst: DummyInputProps["isFirst"];
@@ -673,22 +675,24 @@ export class DummyInput {
     onFocusOut?: DummyInputFocusCallback;
 
     constructor(getWindow: Types.GetWindow, props: DummyInputProps) {
-        const input = getWindow().document.createElement("div");
+        const win = getWindow();
+        const input = win.document.createElement("i");
 
         input.tabIndex = 0;
         input.setAttribute("role", "none");
+
         input.setAttribute(Types.TabsterDummyInputAttributeName, "");
         input.setAttribute("aria-hidden", "true");
 
         const style = input.style;
-        style.position = "fixed";
+        style.position = "absolute";
         style.width = style.height = "1px";
-        style.left = style.top = "-100500px";
-        style.opacity = "0";
+        style.opacity = "0.001";
         style.zIndex = "-1";
+        style.setProperty("content-visibility", "hidden");
 
-        if (__DEV__) {
-            style.setProperty("--tabster-dummy-input", "yes");
+        if (!props.isFirst) {
+            style.transform = "translate(-1px, -1px)";
         }
 
         makeFocusIgnored(input);
@@ -699,9 +703,29 @@ export class DummyInput {
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
+
+        if (this._isPhantom) {
+            this._disposeTimer = win.setTimeout(() => {
+                delete this._disposeTimer;
+                this.dispose();
+            }, 0);
+
+            this._clearDisposeTimeout = () => {
+                if (this._disposeTimer) {
+                    win.clearTimeout(this._disposeTimer);
+                    delete this._disposeTimer;
+                }
+
+                delete this._clearDisposeTimeout;
+            };
+        }
     }
 
     dispose(): void {
+        if (this._clearDisposeTimeout) {
+            this._clearDisposeTimeout();
+        }
+
         const input = this.input;
 
         if (!input) {
@@ -816,9 +840,10 @@ class DummyInputManagerCore {
     private _addTimer: number | undefined;
     private _getWindow: Types.GetWindow;
     private _wrappers: DummyInputWrapper[] = [];
-    protected _element: WeakHTMLElement | undefined;
-    protected firstDummy: DummyInput | undefined;
-    protected lastDummy: DummyInput | undefined;
+    private _element: WeakHTMLElement | undefined;
+    private _isOutside = false;
+    private _firstDummy: DummyInput | undefined;
+    private _lastDummy: DummyInput | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -848,21 +873,27 @@ class DummyInputManagerCore {
 
         el.__tabsterDummy = this;
 
-        this.firstDummy = new DummyInput(this._getWindow, {
+        this._firstDummy = new DummyInput(this._getWindow, {
             isFirst: true,
         });
 
-        this.lastDummy = new DummyInput(this._getWindow, {
+        this._lastDummy = new DummyInput(this._getWindow, {
             isFirst: false,
         });
 
-        this.firstDummy.onFocusIn = this._onFocusIn;
-        this.firstDummy.onFocusOut = this._onFocusOut;
-        this.lastDummy.onFocusIn = this._onFocusIn;
-        this.lastDummy.onFocusOut = this._onFocusOut;
+        this._firstDummy.onFocusIn = this._onFocusIn;
+        this._firstDummy.onFocusOut = this._onFocusOut;
+        this._lastDummy.onFocusIn = this._onFocusIn;
+        this._lastDummy.onFocusOut = this._onFocusOut;
 
         this._element = element;
         this._addDummyInputs();
+
+        // Some elements allow only specific types of direct descendants and we need to
+        // put our dummy inputs outside of the element.
+        const tagName = element.get()?.tagName;
+        this._isOutside =
+            tagName === "UL" || tagName === "OL" || tagName === "TABLE";
 
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639
@@ -892,8 +923,8 @@ class DummyInputManagerCore {
                 delete this._addTimer;
             }
 
-            this.firstDummy?.dispose();
-            this.lastDummy?.dispose();
+            this._firstDummy?.dispose();
+            this._lastDummy?.dispose();
         }
     }
 
@@ -919,8 +950,8 @@ class DummyInputManagerCore {
      * @param backwards focus moving to an element behind the given element
      */
     moveOutWithDefaultAction = (backwards: boolean): void => {
-        const first = this.firstDummy;
-        const last = this.lastDummy;
+        const first = this._firstDummy;
+        const last = this._lastDummy;
 
         if (first?.input && last?.input) {
             if (backwards) {
@@ -948,13 +979,13 @@ class DummyInputManagerCore {
         if (wrapper) {
             const tabIndex = wrapper.tabbable ? 0 : -1;
 
-            let input = this.firstDummy?.input;
+            let input = this._firstDummy?.input;
 
             if (input) {
                 input.tabIndex = tabIndex;
             }
 
-            input = this.lastDummy?.input;
+            input = this._lastDummy?.input;
 
             if (input) {
                 input.tabIndex = tabIndex;
@@ -987,21 +1018,37 @@ class DummyInputManagerCore {
             delete this._addTimer;
 
             const element = this._element?.get();
-            const dif = this.firstDummy?.input;
-            const dil = this.lastDummy?.input;
+            const dif = this._firstDummy?.input;
+            const dil = this._lastDummy?.input;
 
             if (!element || !dif || !dil) {
                 return;
             }
 
-            if (element.lastElementChild !== dil) {
-                element.appendChild(dil);
-            }
+            if (this._isOutside) {
+                const elementParent = element.parentElement;
 
-            const firstElementChild = element.firstElementChild;
+                if (elementParent) {
+                    const nextSibling = element.nextElementSibling;
 
-            if (firstElementChild && firstElementChild !== dif) {
-                element.insertBefore(dif, firstElementChild);
+                    if (nextSibling !== dil) {
+                        elementParent.insertBefore(dil, nextSibling);
+                    }
+
+                    if (element.previousElementSibling !== dif) {
+                        elementParent.insertBefore(dif, element);
+                    }
+                }
+            } else {
+                if (element.lastElementChild !== dil) {
+                    element.appendChild(dil);
+                }
+
+                const firstElementChild = element.firstElementChild;
+
+                if (firstElementChild && firstElementChild !== dif) {
+                    element.insertBefore(dif, firstElementChild);
+                }
             }
         }, 0);
     }
@@ -1022,9 +1069,12 @@ class DummyInputManagerCore {
         });
 
         const element = this._element?.get();
+        const actualElement = this._isOutside
+            ? element?.parentElement
+            : element;
 
-        if (element) {
-            observer.observe(element, { childList: true });
+        if (actualElement) {
+            observer.observe(actualElement, { childList: true });
 
             this._unobserve = () => {
                 observer.disconnect();
