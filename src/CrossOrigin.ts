@@ -1489,13 +1489,6 @@ export class CrossOriginFocusedElementState
         this._transactions = transactions;
     }
 
-<<<<<<< HEAD
-    dispose() {
-        super.dispose();
-    }
-
-=======
->>>>>>> master
     async focus(
         element: Types.CrossOriginElement,
         noFocusedProgrammaticallyFlag?: boolean,

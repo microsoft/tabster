@@ -5,7 +5,7 @@
 
 import "./modalizer.css";
 import {
-    getCurrentTabster,
+    createTabster,
     getTabsterAttribute,
     Types as TabsterTypes,
 } from "tabster";
@@ -21,7 +21,7 @@ export const createModalDialog = (props: ModalDialogProps) => {
         isOthersAccessible,
     } = props;
 
-    const tabster = getCurrentTabster(window);
+    const tabster = createTabster(window);
 
     const dialog = document.createElement("div");
     dialog.classList.add("lightbox");
