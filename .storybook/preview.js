@@ -1,5 +1,6 @@
 import {
     createTabster,
+    disposeTabster,
     getDeloser,
     getGroupper,
     getModalizer,
@@ -45,6 +46,9 @@ export const decorators = [
         console.log("created groupper");
         getObservedElement(tabster);
         console.log("created observed");
+
+        window.createTabster = createTabster;
+        window.disposeTabster = disposeTabster;
 
         return Story();
     },
