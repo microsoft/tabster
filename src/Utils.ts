@@ -746,9 +746,12 @@ export class DummyInput {
         input.parentElement?.removeChild(input);
     }
 
-    setTop(top: number): void {
-        if (this.input) {
-            this.input.style.top = `${top}px`;
+    setTopLeft(top: number, left: number): void {
+        const style = this.input?.style;
+
+        if (style) {
+            style.top = `${top}px`;
+            style.left = `${left}px`;
         }
     }
 
@@ -1128,6 +1131,7 @@ class DummyInputManagerCore {
         const transformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
         const newTransformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
         let scrollTop = 0;
+        let scrollLeft = 0;
 
         for (const el of transformElements) {
             transformElementsMap.set(el, el);
@@ -1153,6 +1157,7 @@ class DummyInputManagerCore {
                 newTransformElementsMap.set(el, el);
 
                 scrollTop += el.scrollTop;
+                scrollLeft += el.scrollLeft;
             }
         }
 
@@ -1164,8 +1169,8 @@ class DummyInputManagerCore {
 
         this._transformElements = newTransformElements;
 
-        this._firstDummy?.setTop(scrollTop);
-        this._lastDummy?.setTop(scrollTop);
+        this._firstDummy?.setTopLeft(scrollTop, scrollLeft);
+        this._lastDummy?.setTopLeft(scrollTop, scrollLeft);
     }
 }
 
