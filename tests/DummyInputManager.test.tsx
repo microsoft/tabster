@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { runIfUnControlled } from "./utils/test-utils";
@@ -100,6 +101,102 @@ runIfUnControlled("DummyInputManager", () => {
                     moverId
                 )
                 .check(checkDummyInside);
+        });
+
+        it("mover should not scroll when the dummy inputs are focused", async () => {
+            const attr = getTabsterAttribute({
+                mover: {
+                    direction: Types.MoverDirections.Vertical,
+                    cyclic: true,
+                    memorizeCurrent: true,
+                },
+            });
+
+            const scrollId = "scroll";
+            const moverId = "mover";
+
+            const testHtml = (
+                <div>
+                    <button>Button1</button>
+                    <div
+                        id={scrollId}
+                        style={{
+                            transform: "translate3d(0px, 0px, 0px)",
+                            height: "200px",
+                            overflow: "scroll",
+                        }}
+                    >
+                        <ul {...attr} id={moverId}>
+                            <li>
+                                <button>Button2</button>
+                            </li>
+                            <li style={{ paddingTop: "500px" }}>
+                                <button>Button3</button>
+                            </li>
+                            <li style={{ paddingBottom: "500px" }}>
+                                <button>Button4</button>
+                            </li>
+                            <li>
+                                <button>Button5</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            );
+
+            const evaluateScrollTop = (scrollableId: string) => {
+                const element = document.getElementById(
+                    scrollableId
+                ) as HTMLElement;
+                return element.scrollTop;
+            };
+
+            let lastScrollTop = 0;
+
+            await new BroTest.BroTest(testHtml)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    moverId
+                )
+                .check(checkDummyOutside)
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Button2"))
+                .pressDown()
+                .activeElement((el) => expect(el?.textContent).toBe("Button3"))
+                .eval(evaluateScrollTop, scrollId)
+                .check((scrollTop: number | undefined) => {
+                    expect(scrollTop).toBeGreaterThan(0);
+                    lastScrollTop = scrollTop || 0;
+                })
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Button6"))
+                .eval(evaluateScrollTop, scrollId)
+                .check((scrollTop: number | undefined) => {
+                    expect(scrollTop).toBe(lastScrollTop);
+                })
+                .pressTab(true)
+                .activeElement((el) => expect(el?.textContent).toBe("Button3"))
+                .eval(evaluateScrollTop, scrollId)
+                .check((scrollTop: number | undefined) => {
+                    expect(scrollTop).toBe(lastScrollTop);
+                })
+                .pressDown()
+                .pressDown()
+                .activeElement((el) => expect(el?.textContent).toBe("Button5"))
+                .eval(evaluateScrollTop, scrollId)
+                .check((scrollTop: number | undefined) => {
+                    expect(scrollTop).toBeGreaterThan(0);
+                    lastScrollTop = scrollTop || 0;
+                })
+                .pressTab(true)
+                .activeElement((el) => expect(el?.textContent).toBe("Button1"))
+                .eval(evaluateScrollTop, scrollId)
+                .check((scrollTop: number | undefined) => {
+                    expect(scrollTop).toBe(lastScrollTop);
+                });
         });
 
         it("groupper", async () => {

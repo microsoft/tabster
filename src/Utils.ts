@@ -689,14 +689,14 @@ export class DummyInput {
         input.setAttribute("aria-hidden", "true");
 
         const style = input.style;
-        style.position = "absolute";
+        style.position = "fixed";
         style.width = style.height = "1px";
         style.opacity = "0.001";
         style.zIndex = "-1";
         style.setProperty("content-visibility", "hidden");
 
         if (!props.isFirst) {
-            style.transform = "translate(-1px, -1px)";
+            style.transform = "translate(-1px, 0)";
         }
 
         makeFocusIgnored(input);
@@ -744,6 +744,12 @@ export class DummyInput {
         input.removeEventListener("focusout", this._focusOut);
 
         input.parentElement?.removeChild(input);
+    }
+
+    setTop(top: number): void {
+        if (this.input) {
+            this.input.style.top = `${top}px`;
+        }
     }
 
     private _focusIn = (): void => {
@@ -848,6 +854,8 @@ class DummyInputManagerCore {
     private _isOutside = false;
     private _firstDummy: DummyInput | undefined;
     private _lastDummy: DummyInput | undefined;
+    private _transformElements: HTMLElement[] = [];
+    private _scrollFrame: number | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -922,8 +930,20 @@ class DummyInputManagerCore {
                 delete this._unobserve;
             }
 
+            for (const el of this._transformElements) {
+                el.removeEventListener("scroll", this._addTransformOffsets);
+            }
+            this._transformElements = [];
+
+            const win = this._getWindow();
+
+            if (this._scrollFrame) {
+                win.cancelAnimationFrame(this._scrollFrame);
+                delete this._scrollFrame;
+            }
+
             if (this._addTimer) {
-                this._getWindow().clearTimeout(this._addTimer);
+                win.clearTimeout(this._addTimer);
                 delete this._addTimer;
             }
 
@@ -1054,6 +1074,8 @@ class DummyInputManagerCore {
                     element.insertBefore(dif, firstElementChild);
                 }
             }
+
+            this._addTransformOffsets();
         }, 0);
     }
 
@@ -1084,6 +1106,66 @@ class DummyInputManagerCore {
                 observer.disconnect();
             };
         }
+    }
+
+    private _addTransformOffsets = (): void => {
+        const win = this._getWindow();
+
+        if (this._scrollFrame) {
+            win.cancelAnimationFrame(this._scrollFrame);
+        }
+
+        this._scrollFrame = win.requestAnimationFrame(() => {
+            delete this._scrollFrame;
+            this._reallyAddTransformOffsets();
+        });
+    };
+
+    private _reallyAddTransformOffsets(): void {
+        const from = this._firstDummy?.input || this._lastDummy?.input;
+        const transformElements = this._transformElements;
+        const newTransformElements: HTMLElement[] = [];
+        const transformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
+        const newTransformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
+        let scrollTop = 0;
+
+        for (const el of transformElements) {
+            transformElementsMap.set(el, el);
+        }
+
+        const win = this._getWindow();
+
+        for (
+            let element: HTMLElement | undefined | null = from;
+            element;
+            element = element.parentElement
+        ) {
+            const transform = win.getComputedStyle(element).transform;
+            if (transform && transform !== "none") {
+                let el = transformElementsMap.get(element);
+
+                if (!el) {
+                    el = element;
+                    el.addEventListener("scroll", this._addTransformOffsets);
+                }
+
+                newTransformElements.push(el);
+                newTransformElementsMap.set(el, el);
+
+                scrollTop += el.scrollTop;
+            }
+        }
+
+        for (const el of transformElements) {
+            if (!newTransformElementsMap.get(el)) {
+                el.removeEventListener("scroll", this._addTransformOffsets);
+            }
+        }
+
+        this._transformElements = newTransformElements;
+
+        this._firstDummy?.setTop(scrollTop);
+        this._lastDummy?.setTop(scrollTop);
     }
 }
 

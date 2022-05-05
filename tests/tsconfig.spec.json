@@ -4,7 +4,6 @@
         "target": "ESNext",
         "outDir": "../dist/__tests__",
         "jsx": "react",
-        "jsxFactory": "BroTest.createElementString",
         "types": ["jest", "react"]
     },
     "references": [{ "path": "../src/tsconfig.lib.json" }],

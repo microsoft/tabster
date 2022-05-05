@@ -466,10 +466,6 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (mover) {
                 // Avoid falling into the nested Mover.
-                const from = state.from;
-                const fromCtx = from
-                    ? RootAPI.getTabsterContext(this._tabster, from)
-                    : undefined;
                 const fromMover = fromCtx?.mover;
                 const moverElement = mover.getElement();
                 const fromMoverElement = fromMover?.getElement();
