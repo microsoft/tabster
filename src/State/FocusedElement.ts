@@ -4,7 +4,6 @@
  */
 
 import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from "keyborg";
-import { Modalizer } from "src/Modalizer";
 
 import { Keys } from "../Keys";
 import { RootAPI } from "../Root";
