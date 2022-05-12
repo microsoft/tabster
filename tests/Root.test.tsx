@@ -6,10 +6,9 @@
 import * as React from "react";
 import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled, WindowWithTabsterInternal } from "./utils/test-utils";
+import { runIfControlled, WindowWithTabsterCore } from "./utils/test-utils";
 
-interface WindowWithTabsterInternalAndFocusState
-    extends WindowWithTabsterInternal {
+interface WindowWithTabsterCoreAndFocusState extends WindowWithTabsterCore {
     __tabsterFocusedRoot?: {
         events: {
             elementId?: string;
@@ -131,9 +130,9 @@ runIfControlled("Root", () => {
         )
             .eval(() => {
                 const win =
-                    window as unknown as WindowWithTabsterInternalAndFocusState;
+                    window as unknown as WindowWithTabsterCoreAndFocusState;
 
-                const focusedRoot: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"] =
+                const focusedRoot: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"] =
                     (win.__tabsterFocusedRoot = {
                         events: [],
                     });
@@ -175,13 +174,12 @@ runIfControlled("Root", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval(() => {
-                return (
-                    window as unknown as WindowWithTabsterInternalAndFocusState
-                ).__tabsterFocusedRoot;
+                return (window as unknown as WindowWithTabsterCoreAndFocusState)
+                    .__tabsterFocusedRoot;
             })
             .check(
                 (
-                    res: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"]
+                    res: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"]
                 ) => {
                     expect(res).toEqual({
                         events: [
@@ -203,13 +201,12 @@ runIfControlled("Root", () => {
                 expect(el?.textContent).toBeUndefined();
             })
             .eval(() => {
-                return (
-                    window as unknown as WindowWithTabsterInternalAndFocusState
-                ).__tabsterFocusedRoot;
+                return (window as unknown as WindowWithTabsterCoreAndFocusState)
+                    .__tabsterFocusedRoot;
             })
             .check(
                 (
-                    res: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"]
+                    res: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"]
                 ) => {
                     expect(res).toEqual({
                         events: [
@@ -232,13 +229,12 @@ runIfControlled("Root", () => {
                 expect(el?.textContent).toEqual("Button2");
             })
             .eval(() => {
-                return (
-                    window as unknown as WindowWithTabsterInternalAndFocusState
-                ).__tabsterFocusedRoot;
+                return (window as unknown as WindowWithTabsterCoreAndFocusState)
+                    .__tabsterFocusedRoot;
             })
             .check(
                 (
-                    res: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"]
+                    res: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"]
                 ) => {
                     expect(res).toEqual({
                         events: [
@@ -267,13 +263,12 @@ runIfControlled("Root", () => {
             })
             .pressTab(true)
             .eval(() => {
-                return (
-                    window as unknown as WindowWithTabsterInternalAndFocusState
-                ).__tabsterFocusedRoot;
+                return (window as unknown as WindowWithTabsterCoreAndFocusState)
+                    .__tabsterFocusedRoot;
             })
             .check(
                 (
-                    res: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"]
+                    res: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"]
                 ) => {
                     expect(res).toEqual({
                         events: [
@@ -303,13 +298,12 @@ runIfControlled("Root", () => {
             )
             .eval(() => {
                 document.getElementById("button1")?.focus();
-                return (
-                    window as unknown as WindowWithTabsterInternalAndFocusState
-                ).__tabsterFocusedRoot;
+                return (window as unknown as WindowWithTabsterCoreAndFocusState)
+                    .__tabsterFocusedRoot;
             })
             .check(
                 (
-                    res: WindowWithTabsterInternalAndFocusState["__tabsterFocusedRoot"]
+                    res: WindowWithTabsterCoreAndFocusState["__tabsterFocusedRoot"]
                 ) => {
                     expect(res).toEqual({
                         events: [

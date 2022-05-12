@@ -105,7 +105,7 @@ export class Root
     private _onDispose: (root: Root) => void;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (root: Root) => void,
         props: Types.RootProps
@@ -251,7 +251,7 @@ export class RootAPI implements Types.RootAPI {
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
         this.eventTarget = new EventTarget();
@@ -261,7 +261,7 @@ export class RootAPI implements Types.RootAPI {
         this._initTimer = undefined;
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         if (this._autoRootInstance) {
@@ -285,29 +285,19 @@ export class RootAPI implements Types.RootAPI {
         this.rootById = {};
     }
 
-    static dispose(instance: Types.RootAPI): void {
-        (instance as RootAPI).dispose();
-    }
-
-    static createRoot(
-        tabster: Types.TabsterInternal,
-        element: HTMLElement,
-        props: Types.RootProps
-    ): Types.Root {
+    createRoot(element: HTMLElement, props: Types.RootProps): Types.Root {
         if (__DEV__) {
             validateRootProps(props);
         }
 
-        const self = tabster.root as RootAPI;
-
         const newRoot = new Root(
-            tabster,
+            this._tabster,
             element,
-            self._onRootDispose,
+            this._onRootDispose,
             props
         ) as Types.Root;
 
-        self._roots[newRoot.id] = newRoot;
+        this._roots[newRoot.id] = newRoot;
 
         return newRoot;
     }
@@ -434,7 +424,7 @@ export class RootAPI implements Types.RootAPI {
 
                 if (body) {
                     rootAPI._autoRootInstance = new Root(
-                        rootAPI._tabster as Types.TabsterInternal,
+                        rootAPI._tabster,
                         body,
                         rootAPI._onRootDispose,
                         autoRoot
@@ -460,15 +450,11 @@ export class RootAPI implements Types.RootAPI {
             : undefined;
     }
 
-    static onRoot(
-        instance: Types.RootAPI,
-        root: Types.Root,
-        removed?: boolean
-    ): void {
+    onRoot(root: Types.Root, removed?: boolean): void {
         if (removed) {
-            delete (instance as RootAPI).rootById[root.uid];
+            delete this.rootById[root.uid];
         } else {
-            (instance as RootAPI).rootById[root.uid] = root;
+            this.rootById[root.uid] = root;
         }
     }
 

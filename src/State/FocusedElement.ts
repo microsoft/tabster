@@ -23,7 +23,7 @@ export class FocusedElementState
 {
     private static _lastResetElement: WeakHTMLElement | undefined;
 
-    private _tabster: Types.TabsterInternal;
+    private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _nextVal:
@@ -34,7 +34,7 @@ export class FocusedElementState
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
 
-    constructor(tabster: Types.TabsterInternal, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
 
         this._tabster = tabster;
@@ -53,7 +53,7 @@ export class FocusedElementState
         win.addEventListener("keydown", this._onKeyDown, true);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         super.dispose();
 
         const win = this._win();
@@ -75,10 +75,6 @@ export class FocusedElementState
 
         delete this._nextVal;
         delete this._lastVal;
-    }
-
-    static dispose(instance: Types.FocusedElementState): void {
-        (instance as FocusedElementState).dispose();
     }
 
     static forgetMemorized(

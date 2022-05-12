@@ -85,7 +85,7 @@ export class Mover
     dummyManager: MoverDummyManager | undefined;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (mover: Mover) => void,
         props: Types.MoverProps
@@ -557,7 +557,7 @@ export class MoverAPI implements Types.MoverAPI {
         win.addEventListener("keydown", this._onKeyDown, true);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
@@ -586,27 +586,18 @@ export class MoverAPI implements Types.MoverAPI {
         });
     }
 
-    static dispose(instance: Types.MoverAPI): void {
-        (instance as MoverAPI).dispose();
-    }
-
-    static createMover(
-        tabster: Types.TabsterInternal,
-        element: HTMLElement,
-        props: Types.MoverProps
-    ): Types.Mover {
+    createMover(element: HTMLElement, props: Types.MoverProps): Types.Mover {
         if (__DEV__) {
             validateMoverProps(props);
         }
 
-        const self = tabster.mover as MoverAPI;
         const newMover = new Mover(
-            tabster,
+            this._tabster,
             element,
-            self._onMoverDispose,
+            this._onMoverDispose,
             props
         );
-        self._movers[newMover.id] = newMover;
+        this._movers[newMover.id] = newMover;
         return newMover;
     }
 

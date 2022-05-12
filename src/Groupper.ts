@@ -48,7 +48,7 @@ export class Groupper
     dummyManager: GroupperDummyManager | undefined;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (groupper: Groupper) => void,
         props: Types.GroupperProps
@@ -310,9 +310,7 @@ function validateGroupperProps(props: Types.GroupperProps): void {
     // TODO: Implement validation.
 }
 
-export class GroupperAPI
-    implements Types.GroupperAPI, Types.GroupperInternalAPI
-{
+export class GroupperAPI implements Types.GroupperAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
@@ -336,7 +334,7 @@ export class GroupperAPI
         win.addEventListener("keydown", this._onKeyDown, true);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         this._current = {};
@@ -359,29 +357,19 @@ export class GroupperAPI
         });
     }
 
-    static dispose(instance: Types.GroupperAPI): void {
-        (instance as GroupperAPI).dispose();
-    }
-
-    static createGroupper(
-        tabster: Types.TabsterInternal,
-        element: HTMLElement,
-        props: Types.GroupperProps
-    ): Types.Groupper {
+    createGroupper(element: HTMLElement, props: Types.GroupperProps) {
         if (__DEV__) {
             validateGroupperProps(props);
         }
 
-        const self = tabster.groupper as GroupperAPI;
-
         const newGroupper = new Groupper(
-            tabster,
+            this._tabster,
             element,
-            self._onGroupperDispose,
+            this._onGroupperDispose,
             props
         );
 
-        self._grouppers[newGroupper.id] = newGroupper;
+        this._grouppers[newGroupper.id] = newGroupper;
 
         return newGroupper;
     }

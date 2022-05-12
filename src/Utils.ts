@@ -621,17 +621,13 @@ let _lastTabsterPartId = 0;
 export abstract class TabsterPart<P, D = undefined>
     implements Types.TabsterPart<P>
 {
-    protected _tabster: Types.TabsterInternal;
+    protected _tabster: Types.TabsterCore;
     protected _element: WeakHTMLElement<HTMLElement, D>;
     protected _props: P;
 
     readonly id: string;
 
-    constructor(
-        tabster: Types.TabsterInternal,
-        element: HTMLElement,
-        props: P
-    ) {
+    constructor(tabster: Types.TabsterCore, element: HTMLElement, props: P) {
         const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
@@ -868,7 +864,7 @@ class DummyInputManagerCore {
             throw new Error("No element");
         }
 
-        this._getWindow = (tabster as Types.TabsterInternal).getWindow;
+        this._getWindow = tabster.getWindow;
 
         const instance = el.__tabsterDummy;
 

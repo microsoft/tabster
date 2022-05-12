@@ -31,15 +31,6 @@ export interface TabsterCoreProps {
     rootDummyInputs?: boolean;
 }
 
-export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs"> {
-    keyboardNavigation: KeyboardNavigationState;
-    focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
-    root: RootAPI;
-    uncontrolled: UncontrolledAPI;
-}
-
 export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;
 
@@ -48,12 +39,19 @@ export type SubscribableCallback<A, B = undefined> = (
     details: B
 ) => void;
 
+export interface Disposable {
+    /** @internal */
+    dispose(): void;
+}
+
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
     unsubscribe(callback: SubscribableCallback<A, B>): void;
 }
 
-export interface KeyboardNavigationState extends Subscribable<boolean> {
+export interface KeyboardNavigationState
+    extends Subscribable<boolean>,
+        Disposable {
     isNavigatingWithKeyboard(): boolean;
 }
 
@@ -63,7 +61,8 @@ export interface FocusedElementDetails {
 }
 
 export interface FocusedElementState
-    extends Subscribable<HTMLElement | undefined, FocusedElementDetails> {
+    extends Subscribable<HTMLElement | undefined, FocusedElementDetails>,
+        Disposable {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
     focus(
@@ -117,8 +116,15 @@ export interface ObservedElementAsyncRequest<T> {
     cancel(): void;
 }
 
+interface ObservedElementAPIInternal {
+    /** @internal */
+    onObservedElementUpdate(element: HTMLElement): void;
+}
+
 export interface ObservedElementAPI
-    extends Subscribable<HTMLElement, ObservedElementDetails> {
+    extends Subscribable<HTMLElement, ObservedElementDetails>,
+        Disposable,
+        ObservedElementAPIInternal {
     getElement(
         observedName: string,
         accessibility?: ObservedElementAccesibility
@@ -187,10 +193,8 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState
-    extends Subscribable<
-        CrossOriginElement | undefined,
-        FocusedElementDetails
-    > {
+    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails>,
+        Disposable {
     focus(
         element: CrossOriginElement,
         noFocusedProgrammaticallyFlag?: boolean,
@@ -212,7 +216,8 @@ export interface CrossOriginFocusedElementState
 }
 
 export interface CrossOriginObservedElementState
-    extends Subscribable<CrossOriginElement, ObservedElementProps> {
+    extends Subscribable<CrossOriginElement, ObservedElementProps>,
+        Disposable {
     getElement(
         observedName: string,
         accessibility?: ObservedElementAccesibility
@@ -233,6 +238,7 @@ export interface CrossOriginAPI {
         sendUp?: CrossOriginTransactionSend | null
     ): (msg: CrossOriginMessage) => void;
     isSetUp(): boolean;
+    dispose(): void;
 }
 
 export interface OutlineProps {
@@ -247,7 +253,7 @@ export interface OutlinedElementProps {
     isIgnored?: boolean;
 }
 
-export interface OutlineAPI {
+export interface OutlineAPI extends Disposable {
     setup(props?: Partial<OutlineProps>): void;
 }
 
@@ -298,12 +304,16 @@ export interface Deloser extends TabsterPart<DeloserProps> {
 }
 
 export type DeloserConstructor = (
-    tabster: TabsterInternal,
     element: HTMLElement,
     props: DeloserProps
 ) => Deloser;
 
-export interface DeloserAPI {
+interface DeloserInterfaceInternal {
+    /** @internal */
+    createDeloser(element: HTMLElement, props: DeloserProps): Deloser;
+}
+
+export interface DeloserAPI extends DeloserInterfaceInternal, Disposable {
     getActions(element: HTMLElement): DeloserElementActions | undefined;
     pause(): void;
     resume(restore?: boolean): void;
@@ -420,7 +430,7 @@ export type FindAllProps = Pick<
     | "ignoreAccessibiliy"
 > & { container: HTMLElement; skipDefaultCheck?: boolean };
 
-export interface FocusableAPI {
+export interface FocusableAPI extends Disposable {
     getProps(element: HTMLElement): FocusableProps;
 
     isFocusable(
@@ -530,13 +540,18 @@ export interface Mover extends TabsterPart<MoverProps> {
 }
 
 export type MoverConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: MoverProps
 ) => Mover;
 
+interface MoverAPIInternal {
+    /** @internal */
+    createMover(element: HTMLElement, props: MoverProps): Mover;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MoverAPI {}
+export interface MoverAPI extends MoverAPIInternal, Disposable {}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;
@@ -573,15 +588,20 @@ export interface Groupper extends TabsterPart<GroupperProps> {
 }
 
 export type GroupperConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: GroupperProps
 ) => Groupper;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface GroupperAPI {}
+export interface GroupperAPIInternal {
+    /** @internal */
+    createGroupper(element: HTMLElement, props: GroupperProps): Groupper;
+}
 
-export interface GroupperInternalAPI {
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface GroupperAPI extends GroupperAPIInternal, Disposable {}
+
+export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
 }
 
@@ -618,7 +638,7 @@ export interface Modalizer extends TabsterPart<ModalizerProps> {
 }
 
 export type ModalizerConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: ModalizerProps
 ) => Modalizer;
@@ -634,7 +654,7 @@ export interface Root extends TabsterPart<RootProps> {
 }
 
 export type RootConstructor = (
-    tabster: TabsterInternal,
+    tabster: TabsterCore,
     element: HTMLElement,
     props: RootProps
 ) => Root;
@@ -676,14 +696,28 @@ export interface RootFocusEventDetails {
     fromAdjacent?: boolean;
 }
 
-export interface RootAPI {
+interface RootAPIInternal {
+    /**@internal*/
+    createRoot(element: HTMLElement, props: RootProps): Root;
+    /**@internal*/
+    onRoot(root: Root, removed?: boolean): void;
+}
+
+export interface RootAPI extends Disposable, RootAPIInternal {
     eventTarget: EventTarget;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UncontrolledAPI {}
 
-export interface ModalizerAPI {
+interface ModalizerAPIInternal {
+    /** @internal */
+    createModalizer(element: HTMLElement, props: ModalizerProps): Modalizer;
+    /** @internal */
+    updateModalizer: (modalizer: Modalizer, removed?: boolean) => void;
+}
+
+export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
     /**
      * Activates a Modalizer and focuses the first or default element within
      *
@@ -792,45 +826,44 @@ export interface InternalAPI {
     resumeObserver(syncState: boolean): void;
 }
 
-export interface TabsterInternal extends TabsterCore {
+export interface TabsterCore
+    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+        Disposable {
     storageEntry(
         element: HTMLElement,
         addremove?: boolean
     ): TabsterElementStorageEntry | undefined;
     getWindow: GetWindow;
 
-    groupper?: GroupperAPI;
-    mover?: MoverAPI;
-    outline?: OutlineAPI;
-    deloser?: DeloserAPI;
-    modalizer?: ModalizerAPI;
-    observedElement?: ObservedElementAPI;
-    crossOrigin?: CrossOriginAPI;
+    keyboardNavigation: KeyboardNavigationState;
+    focusedElement: FocusedElementState;
+    focusable: FocusableAPI;
+    root: RootAPI;
     uncontrolled: UncontrolledAPI;
+
+    /** @internal */
+    groupper?: GroupperAPI;
+    /** @internal */
+    mover?: MoverAPI;
+    /** @internal */
+    outline?: OutlineAPI;
+    /** @internal */
+    deloser?: DeloserAPI;
+    /** @internal */
+    modalizer?: ModalizerAPI;
+    /** @internal */
+    observedElement?: ObservedElementAPI;
+    /** @internal */
+    crossOrigin?: CrossOriginAPI;
+    /** @internal */
     internal: InternalAPI;
 
-    groupperDispose?: DisposeFunc;
-    moverDispose?: DisposeFunc;
-    outlineDispose?: DisposeFunc;
-    rootDispose?: DisposeFunc;
-    deloserDispose?: DisposeFunc;
-    modalizerDispose?: DisposeFunc;
-    observedElementDispose?: DisposeFunc;
-    crossOriginDispose?: DisposeFunc;
-
-    createRoot: RootConstructor;
-    updateRoot: (root: Root, removed?: boolean) => void;
-    createGroupper?: GroupperConstructor;
-    createMover?: MoverConstructor;
-    createDeloser?: DeloserConstructor;
-    createModalizer?: ModalizerConstructor;
-    updateObserved?: (element: HTMLElement) => void;
-    updateModalizer?: (modalizer: Modalizer, removed?: boolean) => void;
-
     // The version of the tabster package this instance is on
+    /** @internal */
     _version: string;
 
     // No operation flag for the debugging purposes
+    /** @internal */
     _noop: boolean;
 }
 

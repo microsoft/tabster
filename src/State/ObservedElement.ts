@@ -49,7 +49,7 @@ export class ObservedElementAPI
     constructor(tabster: Types.TabsterCore) {
         super();
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
@@ -58,7 +58,7 @@ export class ObservedElementAPI
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         if (this._initTimer) {
@@ -116,10 +116,6 @@ export class ObservedElementAPI
 
             delete this._waiting[key];
         }
-    }
-
-    static dispose(instance: Types.ObservedElementAPI): void {
-        (instance as ObservedElementAPI).dispose();
     }
 
     /**

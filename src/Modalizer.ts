@@ -69,7 +69,7 @@ export class Modalizer
     private _onActiveChange: (active: boolean) => void;
 
     constructor(
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
         moveOutWithDefault: (backwards: boolean) => void,
@@ -349,7 +349,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         const documentBody = this._win().document.body;
@@ -368,7 +368,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
         this._dummyManager?.dispose();
 
@@ -393,12 +393,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         delete this.activeModalizer;
     }
 
-    static dispose(instance: Types.ModalizerAPI): void {
-        (instance as ModalizerAPI).dispose();
-    }
-
-    static createModalizer(
-        tabster: Types.TabsterInternal,
+    createModalizer(
         element: HTMLElement,
         props: Types.ModalizerProps
     ): Types.Modalizer {
@@ -406,29 +401,29 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             validateModalizerProps(props);
         }
 
-        const self = (tabster as Types.TabsterInternal)
-            .modalizer as ModalizerAPI;
         const modalizer = new Modalizer(
-            tabster,
+            this._tabster,
             element,
-            self._onModalizerDispose,
-            self._dummyManager?.moveOutWithDefaultAction ?? (() => null),
-            self._dummyManager?.setTabbable ?? (() => null),
+            this._onModalizerDispose,
+            this._dummyManager?.moveOutWithDefaultAction ?? (() => null),
+            this._dummyManager?.setTabbable ?? (() => null),
             props
         );
 
-        self._modalizers[props.id] = modalizer;
+        this._modalizers[props.id] = modalizer;
 
         // Adding a modalizer which is already focused, activate it
         if (
-            element.contains(tabster.focusedElement.getFocusedElement() ?? null)
+            element.contains(
+                this._tabster.focusedElement.getFocusedElement() ?? null
+            )
         ) {
-            const prevModalizer = self.activeModalizer;
+            const prevModalizer = this.activeModalizer;
             if (prevModalizer) {
                 prevModalizer.setActive(false);
             }
-            self.activeModalizer = modalizer;
-            self.activeModalizer.setActive(true);
+            this.activeModalizer = modalizer;
+            this.activeModalizer.setActive(true);
         }
 
         return modalizer;
@@ -496,22 +491,16 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         return false;
     }
 
-    static updateModalizer(
-        tabster: Types.TabsterInternal,
-        modalizer: Types.Modalizer,
-        removed?: boolean
-    ): void {
-        if (removed && tabster.modalizer) {
-            const self = tabster.modalizer as ModalizerAPI;
-
+    updateModalizer(modalizer: Types.Modalizer, removed?: boolean): void {
+        if (removed) {
             if (modalizer.isActive()) {
                 modalizer.setActive(false);
             }
 
-            delete self._modalizers[modalizer.userId];
+            delete this._modalizers[modalizer.userId];
 
-            if (self.activeModalizer === modalizer) {
-                self.activeModalizer = undefined;
+            if (this.activeModalizer === modalizer) {
+                this.activeModalizer = undefined;
             }
         }
     }

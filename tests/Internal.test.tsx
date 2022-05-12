@@ -7,8 +7,8 @@ import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
-interface WindowWithTabsterInternal extends Window {
-    __tabsterInstance: Types.TabsterInternal;
+interface WindowWithTabsterCore extends Window {
+    __tabsterInstance: Types.TabsterCore;
 }
 
 describe("Internal", () => {
@@ -35,12 +35,12 @@ describe("Internal", () => {
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval(() => {
-                const tabster = (window as unknown as WindowWithTabsterInternal)
+                const tabster = (window as unknown as WindowWithTabsterCore)
                     .__tabsterInstance;
                 tabster.internal.stopObserver();
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterInternal)
+                const tabster = (window as unknown as WindowWithTabsterCore)
                     .__tabsterInstance;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
@@ -59,7 +59,7 @@ describe("Internal", () => {
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterInternal)
+                const tabster = (window as unknown as WindowWithTabsterCore)
                     .__tabsterInstance;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
@@ -73,12 +73,12 @@ describe("Internal", () => {
                 expect(res).toEqual("true-false");
             })
             .eval(() => {
-                const tabster = (window as unknown as WindowWithTabsterInternal)
+                const tabster = (window as unknown as WindowWithTabsterCore)
                     .__tabsterInstance;
                 tabster.internal.resumeObserver(true);
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterInternal)
+                const tabster = (window as unknown as WindowWithTabsterCore)
                     .__tabsterInstance;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");

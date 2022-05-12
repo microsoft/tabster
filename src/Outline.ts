@@ -89,7 +89,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = (tabster as Types.TabsterInternal).getWindow;
+        this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
     }
 
@@ -133,7 +133,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
     }
 
-    protected dispose(): void {
+    dispose(): void {
         const win = this._win();
 
         if (this._initTimer) {
@@ -169,10 +169,6 @@ export class OutlineAPI implements Types.OutlineAPI {
         delete this._curPos;
         delete this._curOutlineElements;
         delete this._fullScreenElement;
-    }
-
-    static dispose(instance: Types.OutlineAPI): void {
-        (instance as OutlineAPI).dispose();
     }
 
     private _onFullScreenChanged = (e: Event): void => {

@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { WindowWithTabsterInternal } from "./utils/test-utils";
+import { WindowWithTabsterCore } from "./utils/test-utils";
 
 describe("keyboard navigation state", () => {
     beforeAll(async () => {
@@ -29,7 +29,7 @@ describe("keyboard navigation state", () => {
     });
 
     const getKeyboardNavigationState = () => {
-        const win = window as unknown as WindowWithTabsterInternal;
+        const win = window as unknown as WindowWithTabsterCore;
         return win.__tabsterInstance.keyboardNavigation.isNavigatingWithKeyboard();
     };
 

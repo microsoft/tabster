@@ -15,9 +15,9 @@ import {
 
 export function observeMutations(
     doc: HTMLDocument,
-    tabster: Types.TabsterInternal,
+    tabster: Types.TabsterCore,
     updateTabsterByAttribute: (
-        tabster: Types.TabsterInternal,
+        tabster: Types.TabsterCore,
         element: HTMLElementWithUID,
         dispose?: boolean
     ) => void,
