@@ -50,9 +50,7 @@ export class FocusedElementState
         // Add these event listeners as capture - we want Tabster to run before user event handlers
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener("focusout", this._onFocusOut, true);
-        if (this._tabster.controlTab) {
-            win.addEventListener("keydown", this._onKeyDown, true);
-        }
+        win.addEventListener("keydown", this._onKeyDown, true);
     };
 
     protected dispose(): void {
@@ -71,9 +69,7 @@ export class FocusedElementState
             true
         );
         win.document.removeEventListener("focusout", this._onFocusOut, true);
-        if (this._tabster.controlTab) {
-            win.addEventListener("keydown", this._onKeyDown, true);
-        }
+        win.removeEventListener("keydown", this._onKeyDown, true);
 
         delete FocusedElementState._lastResetElement;
 
@@ -434,11 +430,12 @@ export class FocusedElementState
             return;
         }
 
+        const controlTab = this._tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(this._tabster, curElement, {
             checkRtl: true,
         });
 
-        if (!ctx) {
+        if (!ctx || (!controlTab && !ctx.mover && !ctx.groupper)) {
             return;
         }
 
@@ -450,7 +447,15 @@ export class FocusedElementState
             isPrev
         );
 
-        if (!next) {
+        if (!next || (!controlTab && !next.element)) {
+            if (!controlTab) {
+                if (ctx.mover && (!ctx.groupper || ctx.isGroupperFirst)) {
+                    ctx.mover.dummyManager?.moveOutWithDefaultAction(isPrev);
+                } else if (ctx.groupper) {
+                    ctx.groupper.dummyManager?.moveOutWithDefaultAction(isPrev);
+                }
+            }
+
             return;
         }
 
@@ -461,6 +466,7 @@ export class FocusedElementState
                 // We have met an uncontrolled area, just allow default action.
                 this._moveToUncontrolled(uncontrolled, isPrev);
             }
+
             return;
         }
 

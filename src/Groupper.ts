@@ -45,7 +45,7 @@ export class Groupper
     private _first: WeakHTMLElement | undefined;
     private _onDispose: (groupper: Groupper) => void;
 
-    _dummyManager?: GroupperDummyManager;
+    dummyManager: GroupperDummyManager | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -59,7 +59,7 @@ export class Groupper
         this._onDispose = onDispose;
 
         if (!tabster.controlTab) {
-            this._dummyManager = new GroupperDummyManager(
+            this.dummyManager = new GroupperDummyManager(
                 this._element,
                 tabster
             );
@@ -70,7 +70,7 @@ export class Groupper
         this._onDispose(this);
 
         const element = this._element.get();
-        this._dummyManager?.dispose();
+        this.dummyManager?.dispose();
 
         if (element) {
             if (__DEV__) {
@@ -458,15 +458,10 @@ export class GroupperAPI
     }
 
     private _onKeyDown = (e: KeyboardEvent): void => {
-        if (
-            e.keyCode !== Keys.Enter &&
-            e.keyCode !== Keys.Esc &&
-            e.keyCode !== Keys.Tab
-        ) {
+        if (e.keyCode !== Keys.Enter && e.keyCode !== Keys.Esc) {
             return;
         }
 
-        const isPrev = e.shiftKey;
         const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {
@@ -515,16 +510,6 @@ export class GroupperAPI
                             }
                         }
                     }
-                } else if (
-                    e.keyCode === Keys.Tab &&
-                    !this._tabster.controlTab
-                ) {
-                    next = FocusedElementState.findNextTabbable(
-                        this._tabster,
-                        ctx,
-                        element,
-                        isPrev
-                    )?.element;
                 }
 
                 if (next) {
@@ -532,10 +517,6 @@ export class GroupperAPI
                     e.stopImmediatePropagation();
 
                     nativeFocus(next);
-                } else {
-                    (
-                        groupper as Groupper
-                    )._dummyManager?.moveOutWithDefaultAction(isPrev);
                 }
             }
         }

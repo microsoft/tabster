@@ -14,6 +14,7 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
+    getLastChild,
     isElementVerticallyVisibleInContainer,
     isElementVisibleInContainer,
     matchesSelector,
@@ -81,7 +82,7 @@ export class Mover
     private _onDispose: (mover: Mover) => void;
     private _isFindingTabbable = false;
 
-    _dummyManagner?: MoverDummyManager;
+    dummyManager: MoverDummyManager | undefined;
 
     constructor(
         tabster: Types.TabsterInternal,
@@ -105,7 +106,7 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this._dummyManagner = new MoverDummyManager(
+            this.dummyManager = new MoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized
@@ -139,7 +140,7 @@ export class Mover
             this._onChangeTimer = undefined;
         }
 
-        this._dummyManagner?.dispose();
+        this.dummyManager?.dispose();
     }
 
     setCurrent(element: HTMLElement | undefined): boolean {
@@ -205,10 +206,9 @@ export class Mover
                 );
 
                 if (parentCtx) {
-                    const from =
-                        (prev
-                            ? container
-                            : focusable.findLast({ container })) || container;
+                    const from = prev
+                        ? container
+                        : getLastChild(container) || container;
 
                     const ret = FocusedElementState.findNextTabbable(
                         tabster,
@@ -691,7 +691,6 @@ export class MoverAPI implements Types.MoverAPI {
             case Keys.PageUp:
             case Keys.Home:
             case Keys.End:
-            case Keys.Tab:
                 break;
             default:
                 return;
@@ -826,13 +825,6 @@ export class MoverAPI implements Types.MoverAPI {
             if (next) {
                 scrollIntoView(this._win, next, true);
             }
-        } else if (keyCode === Keys.Tab && !tabster.controlTab) {
-            next = FocusedElementState.findNextTabbable(
-                tabster,
-                ctx,
-                focused,
-                e.shiftKey
-            )?.element;
         } else if (isGrid) {
             const fromRect = focused.getBoundingClientRect();
             let lastElement: HTMLElement | undefined;
@@ -907,12 +899,6 @@ export class MoverAPI implements Types.MoverAPI {
             e.stopImmediatePropagation();
 
             nativeFocus(next);
-        } else {
-            if (keyCode === Keys.Tab) {
-                (mover as Mover)._dummyManagner?.moveOutWithDefaultAction(
-                    e.shiftKey
-                );
-            }
         }
     };
 

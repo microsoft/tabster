@@ -695,10 +695,6 @@ export class DummyInput {
         style.zIndex = "-1";
         style.setProperty("content-visibility", "hidden");
 
-        if (!props.isFirst) {
-            style.transform = "translate(-1px, 0)";
-        }
-
         makeFocusIgnored(input);
 
         this.input = input;

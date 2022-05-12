@@ -444,6 +444,10 @@ export interface FocusableAPI {
     findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 
+export interface DummyInputManager {
+    moveOutWithDefaultAction: (backwards: boolean) => void;
+}
+
 export interface Visibilities {
     Invisible: 0;
     PartiallyVisible: 1;
@@ -512,6 +516,7 @@ export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
 
 export interface Mover extends TabsterPart<MoverProps> {
     readonly id: string;
+    readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
     setCurrent(element: HTMLElement | undefined): boolean;
     getCurrent(): HTMLElement | null;
@@ -553,6 +558,7 @@ export interface GroupperProps {
 
 export interface Groupper extends TabsterPart<GroupperProps> {
     readonly id: string;
+    readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
     makeTabbable(isUnlimited: boolean): void;
     shouldTabInside(): boolean;
