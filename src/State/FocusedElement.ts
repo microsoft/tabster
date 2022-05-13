@@ -483,7 +483,7 @@ export class FocusedElementState
             if (
                 !nextElement &&
                 ctx.modalizer.isActive() &&
-                ctx.modalizer.getProps().circular
+                ctx.modalizer.getProps().isTrapped
             ) {
                 const findFn = isPrev ? "findLast" : "findFirst";
                 nextElement = this._tabster.focusable[findFn]({

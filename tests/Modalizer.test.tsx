@@ -152,7 +152,7 @@ describe("Modalizer", () => {
         });
 
         it("should implement circular focus trap", async () => {
-            await new BroTest.BroTest(getTestHtml({ circular: true }))
+            await new BroTest.BroTest(getTestHtml({ isTrapped: true }))
                 .focusElement("#foo")
                 .pressTab()
                 .activeElement((el) => expect(el?.attributes.id).toBe("bar"))

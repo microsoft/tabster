@@ -132,7 +132,7 @@ export class Modalizer
         }
 
         // circular focus trap for modalizer
-        if (!next && this._props.circular) {
+        if (!next && this._props.isTrapped) {
             findFn = isPrev ? "findLast" : "findFirst";
             next = this._tabster.focusable[findFn]({
                 container: this.getElement(),

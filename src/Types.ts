@@ -606,7 +606,7 @@ export interface ModalizerProps {
     isNoFocusFirst?: boolean;
     isNoFocusDefault?: boolean;
     /** A focus trap variant, keeps focus inside the modal when tabbing */
-    circular?: boolean;
+    isTrapped?: boolean;
 }
 
 export type ModalizerEventDetails = { eventName: "beforefocusout" };
