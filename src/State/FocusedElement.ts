@@ -460,7 +460,7 @@ export class FocusedElementState
             return;
         }
 
-        const nextElement = next.element;
+        let nextElement = next.element;
 
         if (ctx.modalizer) {
             const nextElementCtx =
@@ -477,6 +477,18 @@ export class FocusedElementState
 
                     return;
                 }
+            }
+
+            // circular focus trap for modalizer
+            if (
+                !nextElement &&
+                ctx.modalizer.isActive() &&
+                ctx.modalizer.getProps().isTrapped
+            ) {
+                const findFn = isPrev ? "findLast" : "findFirst";
+                nextElement = this._tabster.focusable[findFn]({
+                    container: ctx.modalizer.getElement(),
+                });
             }
         }
 
