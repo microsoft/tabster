@@ -388,11 +388,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             state.nextGroupper = ctx.groupper.getElement();
         } else if (ctx.mover) {
             state.nextMover = ctx.mover.getElement();
-        } else if (
-            ctx.uncontrolled &&
-            !state.nextUncontrolled &&
-            this._tabster.controlTab
-        ) {
+        } else if (ctx.uncontrolled && !state.nextUncontrolled) {
             if (!ctx.groupper && !ctx.mover) {
                 state.nextUncontrolled = ctx.uncontrolled;
                 return NodeFilter.FILTER_REJECT;
@@ -494,7 +490,8 @@ export class FocusableAPI implements Types.FocusableAPI {
                 from &&
                 (
                     from as Types.HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get() === mover.getElement()
+                ).__tabsterDummyContainer?.get() === mover.getElement() &&
+                !mover.getElement()?.contains(from)
             ) {
                 isGroupperFirst = false;
             }
