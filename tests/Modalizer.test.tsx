@@ -23,8 +23,8 @@ describe("Modalizer", () => {
                 </div>
                 <div aria-label="modal" id="modal" {...modalizerAttr}>
                     <button id="foo">Foo</button>
-                    <button>Bar</button>
-                    <button>Baz</button>
+                    <button id="bar">Bar</button>
+                    <button id="baz">Baz</button>
                 </div>
             </div>
         );
@@ -148,6 +148,17 @@ describe("Modalizer", () => {
         it("should allow focus into modalizer", async () => {
             await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
                 .focusElement("#outside")
+                .pressTab()
+                .activeElement((el) => expect(el?.attributes.id).toBe("foo"));
+        });
+
+        it("should implement circular focus trap", async () => {
+            await new BroTest.BroTest(getTestHtml({ isTrapped: true }))
+                .focusElement("#foo")
+                .pressTab()
+                .activeElement((el) => expect(el?.attributes.id).toBe("bar"))
+                .pressTab()
+                .activeElement((el) => expect(el?.attributes.id).toBe("baz"))
                 .pressTab()
                 .activeElement((el) => expect(el?.attributes.id).toBe("foo"));
         });
