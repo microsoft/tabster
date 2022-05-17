@@ -368,24 +368,38 @@ export class FocusedElementState
             }
         }
 
+        const callFindNext = (what: Types.Groupper | Types.Mover) => {
+            next = what.findNextTabbable(current, prev);
+        };
+
         if (ctx.groupper && ctx.mover) {
-            if (ctx.isGroupperFirst) {
-                next = ctx.groupper.findNextTabbable(current, prev);
+            let isGroupperFirst = ctx.isGroupperFirst;
+
+            if (isGroupperFirst) {
+                const fromCtx = RootAPI.getTabsterContext(tabster, current);
+
+                if (fromCtx?.groupper !== ctx.groupper) {
+                    isGroupperFirst = false;
+                }
+            }
+
+            if (isGroupperFirst) {
+                callFindNext(ctx.groupper);
 
                 if (next === null) {
-                    next = ctx.mover.findNextTabbable(current, prev);
+                    callFindNext(ctx.mover);
                 }
             } else {
-                next = ctx.mover.findNextTabbable(current, prev);
+                callFindNext(ctx.mover);
 
                 if (next === null) {
-                    next = ctx.groupper.findNextTabbable(current, prev);
+                    callFindNext(ctx.groupper);
                 }
             }
         } else if (ctx.groupper) {
-            next = ctx.groupper.findNextTabbable(current, prev);
+            callFindNext(ctx.groupper);
         } else if (ctx.mover) {
-            next = ctx.mover.findNextTabbable(current, prev);
+            callFindNext(ctx.mover);
         } else {
             let uncontrolled: HTMLElement | undefined;
             const onUncontrolled = (el: HTMLElement) => {

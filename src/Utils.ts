@@ -674,7 +674,11 @@ export class DummyInput {
     /** Called when the input is blurred */
     onFocusOut?: DummyInputFocusCallback;
 
-    constructor(getWindow: Types.GetWindow, props: DummyInputProps) {
+    constructor(
+        getWindow: Types.GetWindow,
+        props: DummyInputProps,
+        element?: WeakHTMLElement
+    ) {
         const win = getWindow();
         const input = win.document.createElement("i");
 
@@ -699,6 +703,9 @@ export class DummyInput {
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
+
+        (input as Types.HTMLElementWithDummyContainer).__tabsterDummyContainer =
+            element;
 
         if (this._isPhantom) {
             this._disposeTimer = win.setTimeout(() => {
@@ -734,6 +741,9 @@ export class DummyInput {
 
         input.removeEventListener("focusin", this._focusIn);
         input.removeEventListener("focusout", this._focusOut);
+
+        delete (input as Types.HTMLElementWithDummyContainer)
+            .__tabsterDummyContainer;
 
         input.parentElement?.removeChild(input);
     }
@@ -880,13 +890,21 @@ class DummyInputManagerCore {
 
         el.__tabsterDummy = this;
 
-        this._firstDummy = new DummyInput(this._getWindow, {
-            isFirst: true,
-        });
+        this._firstDummy = new DummyInput(
+            this._getWindow,
+            {
+                isFirst: true,
+            },
+            element
+        );
 
-        this._lastDummy = new DummyInput(this._getWindow, {
-            isFirst: false,
-        });
+        this._lastDummy = new DummyInput(
+            this._getWindow,
+            {
+                isFirst: false,
+            },
+            element
+        );
 
         this._firstDummy.onFocusIn = this._onFocusIn;
         this._firstDummy.onFocusOut = this._onFocusOut;

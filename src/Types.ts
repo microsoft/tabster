@@ -355,6 +355,7 @@ export interface FocusableAcceptElementState {
             first?: HTMLElement | null;
         };
     };
+    isFindAll?: boolean;
 }
 
 export interface FindFocusableProps {
@@ -454,6 +455,10 @@ export interface FocusableAPI extends Disposable {
     findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 
+export interface HTMLElementWithDummyContainer extends HTMLElement {
+    __tabsterDummyContainer?: WeakHTMLElement;
+}
+
 export interface DummyInputManager {
     moveOutWithDefaultAction: (backwards: boolean) => void;
 }
@@ -531,7 +536,6 @@ export interface Mover extends TabsterPart<MoverProps> {
     setCurrent(element: HTMLElement | undefined): boolean;
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
-    forceUpdate(): void;
     findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
     acceptElement(
         element: HTMLElement,
