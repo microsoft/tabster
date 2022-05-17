@@ -11,6 +11,7 @@ import {
     getLastChild,
     matchesSelector,
     shouldIgnoreFocus,
+    HTMLElementWithDummyContainer,
 } from "./Utils";
 
 const _focusableSelector = [
@@ -220,6 +221,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreUncontrolled,
             ignoreAccessibiliy,
             grouppers: {},
+            isFindAll: true,
         };
 
         const walker = createElementTreeWalker(
@@ -237,6 +239,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const foundNodes: HTMLElement[] = [];
         let node: Node | null;
+
         while ((node = walker.nextNode())) {
             foundNodes.push(node as HTMLElement);
         }
@@ -268,7 +271,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             !container.ownerDocument ||
             (currentElement &&
                 container !== currentElement &&
-                !container.contains(currentElement))
+                !container.contains(currentElement) &&
+                (
+                    currentElement as HTMLElementWithDummyContainer
+                )?.__tabsterDummyContainer?.get() !== container)
         ) {
             return null;
         }
@@ -386,7 +392,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         } else if (ctx.uncontrolled && !state.nextUncontrolled) {
             if (!ctx.groupper && !ctx.mover) {
                 state.nextUncontrolled = ctx.uncontrolled;
-
                 return NodeFilter.FILTER_REJECT;
             }
         }
@@ -462,10 +467,6 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (mover) {
                 // Avoid falling into the nested Mover.
-                const from = state.from;
-                const fromCtx = from
-                    ? RootAPI.getTabsterContext(this._tabster, from)
-                    : undefined;
                 const fromMover = fromCtx?.mover;
                 const moverElement = mover.getElement();
                 const fromMoverElement = fromMover?.getElement();
@@ -481,6 +482,19 @@ export class FocusableAPI implements Types.FocusableAPI {
                         groupper &&
                         !groupper.getElement()?.contains(fromMoverElement);
                 }
+            }
+
+            if (
+                mover &&
+                groupper &&
+                isGroupperFirst &&
+                from &&
+                (
+                    from as HTMLElementWithDummyContainer
+                ).__tabsterDummyContainer?.get() === mover.getElement() &&
+                !mover.getElement()?.contains(from)
+            ) {
+                isGroupperFirst = false;
             }
 
             if (groupper && isGroupperFirst) {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 

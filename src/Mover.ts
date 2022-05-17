@@ -14,18 +14,17 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
+    getLastChild,
     isElementVerticallyVisibleInContainer,
-    isElementVisibleInContainer,
     matchesSelector,
     scrollIntoView,
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
+    HTMLElementWithDummyContainer,
 } from "./Utils";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
-
-const _isVisibleTimeout = 200;
 
 class MoverDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
@@ -46,10 +45,21 @@ class MoverDummyManager extends DummyInputManager {
 
     private _onFocusDummyInput = (dummyInput: DummyInput) => {
         const container = this._element.get();
-        if (container && !dummyInput.shouldMoveOut) {
-            let toFocus = dummyInput.isFirst
-                ? this._tabster.focusable.findFirst({ container })
-                : this._tabster.focusable.findLast({ container });
+        const input = dummyInput.input;
+
+        if (container && !dummyInput.shouldMoveOut && input) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, container);
+
+            let toFocus: HTMLElement | null | undefined;
+
+            if (ctx) {
+                toFocus = FocusedElementState.findNextTabbable(
+                    this._tabster,
+                    ctx,
+                    input,
+                    !dummyInput.isFirst
+                )?.element;
+            }
 
             const memorized = this._getMemorized()?.get();
             if (memorized) {
@@ -68,20 +78,19 @@ export class Mover
     implements Types.Mover
 {
     private _unobserve: (() => void) | undefined;
+    private _intersectionObserver: IntersectionObserver | undefined;
     private _onChangeTimer: number | undefined;
     private _domChangedTimer: number | undefined;
     private _current: WeakHTMLElement | undefined;
     private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
-    private _prevVisible: Record<string, Types.Visibility> = {};
-    private _hasFullyVisible = false;
-    private _updateVisibleTimer: number | undefined;
-    private _focusables: Record<string, WeakHTMLElement> = {};
+    private _fullyVisible: string | undefined;
+    private _focusable: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
     private _isFindingTabbable = false;
 
-    _dummyManagner?: MoverDummyManager;
+    dummyManager: MoverDummyManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -94,6 +103,10 @@ export class Mover
         this._win = tabster.getWindow;
 
         if (this._props.trackState || this._props.visibilityAware) {
+            this._intersectionObserver = new IntersectionObserver(
+                this._onIntersection,
+                { threshold: [0, 0.25, 0.5, 0.75, 1] }
+            );
             this._observeState();
             this._domChangedTimer = tabster
                 .getWindow()
@@ -105,7 +118,7 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this._dummyManagner = new MoverDummyManager(
+            this.dummyManager = new MoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized
@@ -115,31 +128,34 @@ export class Mover
 
     dispose(): void {
         this._onDispose(this);
-        this._focusables = {};
+        this._focusable = {};
+
+        if (this._intersectionObserver) {
+            this._intersectionObserver.disconnect();
+            delete this._intersectionObserver;
+        }
+
+        delete this._current;
+        delete this._fullyVisible;
 
         if (this._unobserve) {
             this._unobserve();
-            this._unobserve = undefined;
+            delete this._unobserve;
         }
 
         const win = this._win();
 
-        if (this._updateVisibleTimer) {
-            win.clearTimeout(this._updateVisibleTimer);
-            this._updateVisibleTimer = undefined;
-        }
-
         if (this._domChangedTimer) {
             win.clearTimeout(this._domChangedTimer);
-            this._domChangedTimer = undefined;
+            delete this._domChangedTimer;
         }
 
         if (this._onChangeTimer) {
             win.clearTimeout(this._onChangeTimer);
-            this._onChangeTimer = undefined;
+            delete this._onChangeTimer;
         }
 
-        this._dummyManagner?.dispose();
+        this.dummyManager?.dispose();
     }
 
     setCurrent(element: HTMLElement | undefined): boolean {
@@ -165,8 +181,13 @@ export class Mover
         prev?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
+        const currentIsDummy =
+            container &&
+            (
+                current as HTMLElementWithDummyContainer
+            )?.__tabsterDummyContainer?.get() === container;
 
-        if (!container || !container.contains(current)) {
+        if (!container || (!container.contains(current) && !currentIsDummy)) {
             this._isFindingTabbable = false;
             return null;
         }
@@ -181,7 +202,7 @@ export class Mover
 
         this._isFindingTabbable = true;
 
-        if (this._props.tabbable) {
+        if (this._props.tabbable || currentIsDummy) {
             next = prev
                 ? focusable.findPrev({
                       currentElement: current,
@@ -205,10 +226,9 @@ export class Mover
                 );
 
                 if (parentCtx) {
-                    const from =
-                        (prev
-                            ? container
-                            : focusable.findLast({ container })) || container;
+                    const from = prev
+                        ? container
+                        : getLastChild(container) || container;
 
                     const ret = FocusedElementState.findNextTabbable(
                         tabster,
@@ -236,6 +256,10 @@ export class Mover
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number | undefined {
+        if (state.isFindAll) {
+            return undefined;
+        }
+
         const { memorizeCurrent, visibilityAware } = this._props;
 
         if (state.currentCtx?.isExcludedFromMover && !this._isFindingTabbable) {
@@ -258,15 +282,22 @@ export class Mover
                     }
                 }
 
-                if (visibilityAware && !container.contains(state.from)) {
-                    const visible = Object.keys(this._visible);
+                if (
+                    visibilityAware &&
+                    (!container.contains(state.from) ||
+                        (this._isFindingTabbable &&
+                            (
+                                state.from as HTMLElementWithDummyContainer
+                            )?.__tabsterDummyContainer?.get() === container))
+                ) {
+                    const focusable = Object.keys(this._focusable);
                     let found: HTMLElement | undefined;
 
                     if (!state.isForward) {
-                        visible.reverse();
+                        focusable.reverse();
                     }
 
-                    for (const id of visible) {
+                    for (const id of focusable) {
                         const visibility = this._visible[id];
 
                         if (
@@ -275,9 +306,9 @@ export class Mover
                                 Types.Visibilities.PartiallyVisible &&
                                 (visibilityAware ===
                                     Types.Visibilities.PartiallyVisible ||
-                                    !this._hasFullyVisible))
+                                    !this._fullyVisible))
                         ) {
-                            found = this._focusables[id]?.get();
+                            found = this._focusable[id]?.get();
 
                             if (found && state.acceptCondition(found)) {
                                 state.found = true;
@@ -292,6 +323,46 @@ export class Mover
 
         return undefined;
     }
+
+    private _onIntersection = (entries: IntersectionObserverEntry[]): void => {
+        for (const entry of entries) {
+            const el = entry.target as HTMLElement;
+            const id = getElementUId(this._win, el);
+
+            let newVisibility: Types.Visibility | undefined;
+            let fullyVisible = this._fullyVisible;
+
+            if (entry.intersectionRatio >= 0.25) {
+                newVisibility =
+                    entry.intersectionRatio >= 0.75
+                        ? Types.Visibilities.Visible
+                        : Types.Visibilities.PartiallyVisible;
+
+                if (newVisibility === Types.Visibilities.Visible) {
+                    fullyVisible = id;
+                }
+            }
+
+            if (this._visible[id] !== newVisibility) {
+                if (newVisibility === undefined) {
+                    delete this._visible[id];
+
+                    if (fullyVisible === id) {
+                        delete this._fullyVisible;
+                    }
+                } else {
+                    this._visible[id] = newVisibility;
+                    this._fullyVisible = fullyVisible;
+                }
+
+                const state = this.getState(el);
+
+                if (state) {
+                    triggerEvent(el, Types.MoverEventName, state);
+                }
+            }
+        }
+    };
 
     private _observeState(): void {
         const element = this.getElement();
@@ -311,7 +382,7 @@ export class Mover
                 win.clearTimeout(this._domChangedTimer);
             }
 
-            this._domChangedTimer = win.setTimeout(this._domChanged, 0);
+            this._domChangedTimer = win.setTimeout(this._domChanged, 100);
         });
 
         observer.observe(element, {
@@ -336,7 +407,7 @@ export class Mover
                 container: element,
             });
             const newFocusables: Record<string, WeakHTMLElement> = {};
-            const prevFocusables = this._focusables;
+            const prevFocusables = this._focusable;
 
             for (let i = 0; i < elements.length; i++) {
                 const el = elements[i];
@@ -345,6 +416,7 @@ export class Mover
 
                 if (!weakEl) {
                     weakEl = new WeakHTMLElement(this._win, el);
+                    this._intersectionObserver?.observe(el);
                 }
 
                 newFocusables[id] = weakEl;
@@ -357,6 +429,10 @@ export class Mover
                     delete prevFocusables[id];
                     delete this._visible[id];
 
+                    if (prevFocusable) {
+                        this._intersectionObserver?.unobserve(prevFocusable);
+                    }
+
                     if (
                         prevFocusable &&
                         this._current?.get() === prevFocusable
@@ -366,15 +442,9 @@ export class Mover
                 }
             }
 
-            this._focusables = newFocusables;
-
-            this.updateVisible(true);
+            this._focusable = newFocusables;
         }
     };
-
-    forceUpdate(): void {
-        this._processOnChange(true);
-    }
 
     private _processOnChange(force?: boolean): void {
         if (this._onChangeTimer && !force) {
@@ -392,30 +462,6 @@ export class Mover
                 this._prevCurrent = this._current;
             }
 
-            if (this._visible !== this._prevVisible) {
-                this._hasFullyVisible = false;
-
-                for (const id of Object.keys(this._visible)) {
-                    const visibility = this._visible[id];
-
-                    if (visibility !== this._prevVisible[id]) {
-                        changed.push(this._focusables[id]);
-                    }
-
-                    if (visibility === Types.Visibilities.Visible) {
-                        this._hasFullyVisible = true;
-                    }
-                }
-
-                for (const id of Object.keys(this._prevVisible)) {
-                    if (this._visible[id] !== this._prevVisible[id]) {
-                        changed.push(this._focusables[id]);
-                    }
-                }
-
-                this._prevVisible = this._visible;
-            }
-
             const processed: Record<string, boolean> = {};
 
             for (const weak of changed) {
@@ -425,7 +471,7 @@ export class Mover
                 if (id && !processed[id]) {
                     processed[id] = true;
 
-                    if (this._focusables[id]) {
+                    if (this._focusable[id]) {
                         const props = this._props;
 
                         if (
@@ -476,54 +522,6 @@ export class Mover
 
         return undefined;
     }
-
-    updateVisible(updateParents: boolean): void {
-        const element = this._element.get();
-
-        if (this._updateVisibleTimer || !element) {
-            return;
-        }
-
-        if (updateParents) {
-            for (let e = element.parentElement; e; e = e.parentElement) {
-                const mover = getTabsterOnElement(this._tabster, e)?.mover;
-
-                if (mover) {
-                    (mover as unknown as Mover).updateVisible(false);
-                }
-            }
-        }
-
-        this._updateVisibleTimer = this._win().setTimeout(() => {
-            this._updateVisibleTimer = undefined;
-
-            let isChanged = false;
-            const visibleMovers: { [id: string]: Types.Visibility } = {};
-
-            for (const id of Object.keys(this._focusables)) {
-                const element = this._focusables[id].get();
-                const visible = element
-                    ? isElementVisibleInContainer(this._win, element, 10)
-                    : Types.Visibilities.Invisible;
-                const curIsVisible =
-                    this._visible[id] || Types.Visibilities.Invisible;
-
-                if (visible !== Types.Visibilities.Invisible) {
-                    visibleMovers[id] = visible;
-                }
-
-                if (curIsVisible !== visible) {
-                    isChanged = true;
-                }
-            }
-
-            if (isChanged) {
-                this._prevVisible = this._visible;
-                this._visible = visibleMovers;
-                this._processOnChange();
-            }
-        }, 0);
-    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -535,8 +533,6 @@ export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
-    private _scrollTimer: number | undefined;
-    private _scrollTargets: Node[] = [];
     private _movers: Record<string, Mover>;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
@@ -553,7 +549,6 @@ export class MoverAPI implements Types.MoverAPI {
 
         const win = this._win();
 
-        win.addEventListener("scroll", this._onScroll, true);
         win.addEventListener("keydown", this._onKeyDown, true);
     };
 
@@ -566,15 +561,6 @@ export class MoverAPI implements Types.MoverAPI {
             win.clearTimeout(this._initTimer);
             this._initTimer = undefined;
         }
-
-        if (this._scrollTimer) {
-            win.clearTimeout(this._scrollTimer);
-            this._scrollTimer = undefined;
-        }
-
-        win.removeEventListener("scroll", this._onScroll, true);
-
-        this._scrollTargets = [];
 
         win.removeEventListener("keydown", this._onKeyDown, true);
 
@@ -620,56 +606,6 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _updateVisible(scrolled: Node[]): void {
-        const containers: { [id: string]: Mover } = {};
-
-        for (const s of scrolled) {
-            for (const id of Object.keys(this._movers)) {
-                const container = this._movers[id];
-                const containerElement = container.getElement();
-
-                if (containerElement && s.contains(containerElement)) {
-                    containers[container.id] = container;
-                }
-            }
-        }
-
-        for (const id of Object.keys(containers)) {
-            containers[id].updateVisible(false);
-        }
-    }
-
-    private _onScroll = (e: UIEvent) => {
-        let isKnownTarget = false;
-
-        for (const t of this._scrollTargets) {
-            if (t === e.target) {
-                isKnownTarget = true;
-                break;
-            }
-        }
-
-        // Cannot simply use (e.target instanceof Node) as it might
-        // originate from another window.
-        if (!isKnownTarget && (e.target as Node).contains) {
-            this._scrollTargets.push(e.target as Node);
-        }
-
-        const win = this._win();
-
-        if (this._scrollTimer) {
-            win.clearTimeout(this._scrollTimer);
-        }
-
-        this._scrollTimer = win.setTimeout(() => {
-            this._scrollTimer = undefined;
-
-            this._updateVisible(this._scrollTargets);
-
-            this._scrollTargets = [];
-        }, _isVisibleTimeout);
-    };
-
     private _onKeyDown = (e: KeyboardEvent): void => {
         let keyCode = e.keyCode;
 
@@ -682,7 +618,6 @@ export class MoverAPI implements Types.MoverAPI {
             case Keys.PageUp:
             case Keys.Home:
             case Keys.End:
-            case Keys.Tab:
                 break;
             default:
                 return;
@@ -817,13 +752,6 @@ export class MoverAPI implements Types.MoverAPI {
             if (next) {
                 scrollIntoView(this._win, next, true);
             }
-        } else if (keyCode === Keys.Tab && !tabster.controlTab) {
-            next = FocusedElementState.findNextTabbable(
-                tabster,
-                ctx,
-                focused,
-                e.shiftKey
-            )?.element;
         } else if (isGrid) {
             const fromRect = focused.getBoundingClientRect();
             let lastElement: HTMLElement | undefined;
@@ -898,12 +826,6 @@ export class MoverAPI implements Types.MoverAPI {
             e.stopImmediatePropagation();
 
             nativeFocus(next);
-        } else {
-            if (keyCode === Keys.Tab) {
-                (mover as Mover)._dummyManagner?.moveOutWithDefaultAction(
-                    e.shiftKey
-                );
-            }
         }
     };
 

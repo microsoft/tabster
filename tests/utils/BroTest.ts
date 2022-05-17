@@ -3,44 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
 import { EvaluateFn, SerializableOrJSHandle, Page, KeyInput } from "puppeteer";
 
+// Importing the production version so that React doesn't complain in the test output.
+declare function require(name: string): any;
+const renderToStaticMarkup: (element: React.ReactElement) => string =
+    require("react-dom/cjs/react-dom-server.node.production.min").renderToStaticMarkup;
+
 declare const page: Page;
-
-function buildAttributesString(attributes: { [name: string]: string }): string {
-    const nameOverrides: { [name: string]: string } = {
-        className: "class",
-    };
-
-    return Object.keys(attributes)
-        .map((name) => {
-            if (typeof attributes[name] === "string") {
-                return `${nameOverrides[name] || name}="${attributes[
-                    name
-                ].replace(/"/g, "&quot;")}"`;
-            } else if (typeof attributes[name] === "number") {
-                return `${nameOverrides[name] || name}="${attributes[name]}"`;
-            } else if (typeof attributes[name] === "boolean") {
-                return `${nameOverrides[name] || name}="${
-                    attributes[name] ? "true" : "false"
-                }"`;
-            }
-
-            throw new Error(`unknown attribute: ${name}`);
-        })
-        .join(" ");
-}
-
-export function createElementString(
-    tagName: string,
-    attributes: { [name: string]: string } | null,
-    ...children: any[]
-): string {
-    return `<${tagName}${
-        attributes ? ` ${buildAttributesString(attributes)}` : ""
-    }>${children.join("")}</${tagName}>`;
-}
-
 declare let __tabsterInstance: any;
 
 async function goToPageWithRetry(url: string, times: number) {
@@ -204,7 +175,7 @@ export class BroTest implements PromiseLike<undefined> {
         await page.evaluate(
             (el, html) => (el.innerHTML = html),
             await page.$("body"),
-            `${html}`
+            renderToStaticMarkup(html)
         );
         await sleep(100);
         this._next();

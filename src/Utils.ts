@@ -22,6 +22,10 @@ export interface HTMLElementWithUID extends HTMLElement {
     __tabsterElementUID?: string;
 }
 
+export interface HTMLElementWithDummyContainer extends HTMLElement {
+    __tabsterDummyContainer?: WeakHTMLElement;
+}
+
 export interface TabsterDOMRect {
     bottom: number;
     left: number;
@@ -674,7 +678,11 @@ export class DummyInput {
     /** Called when the input is blurred */
     onFocusOut?: DummyInputFocusCallback;
 
-    constructor(getWindow: Types.GetWindow, props: DummyInputProps) {
+    constructor(
+        getWindow: Types.GetWindow,
+        props: DummyInputProps,
+        element?: WeakHTMLElement
+    ) {
         const win = getWindow();
         const input = win.document.createElement("i");
 
@@ -685,15 +693,11 @@ export class DummyInput {
         input.setAttribute("aria-hidden", "true");
 
         const style = input.style;
-        style.position = "absolute";
+        style.position = "fixed";
         style.width = style.height = "1px";
         style.opacity = "0.001";
         style.zIndex = "-1";
         style.setProperty("content-visibility", "hidden");
-
-        if (!props.isFirst) {
-            style.transform = "translate(-1px, -1px)";
-        }
 
         makeFocusIgnored(input);
 
@@ -703,6 +707,9 @@ export class DummyInput {
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
+
+        (input as HTMLElementWithDummyContainer).__tabsterDummyContainer =
+            element;
 
         if (this._isPhantom) {
             this._disposeTimer = win.setTimeout(() => {
@@ -739,7 +746,18 @@ export class DummyInput {
         input.removeEventListener("focusin", this._focusIn);
         input.removeEventListener("focusout", this._focusOut);
 
+        delete (input as HTMLElementWithDummyContainer).__tabsterDummyContainer;
+
         input.parentElement?.removeChild(input);
+    }
+
+    setTopLeft(top: number, left: number): void {
+        const style = this.input?.style;
+
+        if (style) {
+            style.top = `${top}px`;
+            style.left = `${left}px`;
+        }
     }
 
     private _focusIn = (): void => {
@@ -844,6 +862,8 @@ class DummyInputManagerCore {
     private _isOutside = false;
     private _firstDummy: DummyInput | undefined;
     private _lastDummy: DummyInput | undefined;
+    private _transformElements: HTMLElement[] = [];
+    private _scrollFrame: number | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -873,13 +893,21 @@ class DummyInputManagerCore {
 
         el.__tabsterDummy = this;
 
-        this._firstDummy = new DummyInput(this._getWindow, {
-            isFirst: true,
-        });
+        this._firstDummy = new DummyInput(
+            this._getWindow,
+            {
+                isFirst: true,
+            },
+            element
+        );
 
-        this._lastDummy = new DummyInput(this._getWindow, {
-            isFirst: false,
-        });
+        this._lastDummy = new DummyInput(
+            this._getWindow,
+            {
+                isFirst: false,
+            },
+            element
+        );
 
         this._firstDummy.onFocusIn = this._onFocusIn;
         this._firstDummy.onFocusOut = this._onFocusOut;
@@ -918,8 +946,20 @@ class DummyInputManagerCore {
                 delete this._unobserve;
             }
 
+            for (const el of this._transformElements) {
+                el.removeEventListener("scroll", this._addTransformOffsets);
+            }
+            this._transformElements = [];
+
+            const win = this._getWindow();
+
+            if (this._scrollFrame) {
+                win.cancelAnimationFrame(this._scrollFrame);
+                delete this._scrollFrame;
+            }
+
             if (this._addTimer) {
-                this._getWindow().clearTimeout(this._addTimer);
+                win.clearTimeout(this._addTimer);
                 delete this._addTimer;
             }
 
@@ -1050,6 +1090,8 @@ class DummyInputManagerCore {
                     element.insertBefore(dif, firstElementChild);
                 }
             }
+
+            this._addTransformOffsets();
         }, 0);
     }
 
@@ -1080,6 +1122,68 @@ class DummyInputManagerCore {
                 observer.disconnect();
             };
         }
+    }
+
+    private _addTransformOffsets = (): void => {
+        const win = this._getWindow();
+
+        if (this._scrollFrame) {
+            win.cancelAnimationFrame(this._scrollFrame);
+        }
+
+        this._scrollFrame = win.requestAnimationFrame(() => {
+            delete this._scrollFrame;
+            this._reallyAddTransformOffsets();
+        });
+    };
+
+    private _reallyAddTransformOffsets(): void {
+        const from = this._firstDummy?.input || this._lastDummy?.input;
+        const transformElements = this._transformElements;
+        const newTransformElements: HTMLElement[] = [];
+        const transformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
+        const newTransformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
+        let scrollTop = 0;
+        let scrollLeft = 0;
+
+        for (const el of transformElements) {
+            transformElementsMap.set(el, el);
+        }
+
+        const win = this._getWindow();
+
+        for (
+            let element: HTMLElement | undefined | null = from;
+            element;
+            element = element.parentElement
+        ) {
+            const transform = win.getComputedStyle(element).transform;
+            if (transform && transform !== "none") {
+                let el = transformElementsMap.get(element);
+
+                if (!el) {
+                    el = element;
+                    el.addEventListener("scroll", this._addTransformOffsets);
+                }
+
+                newTransformElements.push(el);
+                newTransformElementsMap.set(el, el);
+
+                scrollTop += el.scrollTop;
+                scrollLeft += el.scrollLeft;
+            }
+        }
+
+        for (const el of transformElements) {
+            if (!newTransformElementsMap.get(el)) {
+                el.removeEventListener("scroll", this._addTransformOffsets);
+            }
+        }
+
+        this._transformElements = newTransformElements;
+
+        this._firstDummy?.setTopLeft(scrollTop, scrollLeft);
+        this._lastDummy?.setTopLeft(scrollTop, scrollLeft);
     }
 }
 

@@ -50,9 +50,7 @@ export class FocusedElementState
         // Add these event listeners as capture - we want Tabster to run before user event handlers
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener("focusout", this._onFocusOut, true);
-        if (this._tabster.controlTab) {
-            win.addEventListener("keydown", this._onKeyDown, true);
-        }
+        win.addEventListener("keydown", this._onKeyDown, true);
     };
 
     dispose(): void {
@@ -71,9 +69,7 @@ export class FocusedElementState
             true
         );
         win.document.removeEventListener("focusout", this._onFocusOut, true);
-        if (this._tabster.controlTab) {
-            win.addEventListener("keydown", this._onKeyDown, true);
-        }
+        win.removeEventListener("keydown", this._onKeyDown, true);
 
         delete FocusedElementState._lastResetElement;
 
@@ -372,24 +368,38 @@ export class FocusedElementState
             }
         }
 
+        const callFindNext = (what: Types.Groupper | Types.Mover) => {
+            next = what.findNextTabbable(current, prev);
+        };
+
         if (ctx.groupper && ctx.mover) {
-            if (ctx.isGroupperFirst) {
-                next = ctx.groupper.findNextTabbable(current, prev);
+            let isGroupperFirst = ctx.isGroupperFirst;
+
+            if (isGroupperFirst) {
+                const fromCtx = RootAPI.getTabsterContext(tabster, current);
+
+                if (fromCtx?.groupper !== ctx.groupper) {
+                    isGroupperFirst = false;
+                }
+            }
+
+            if (isGroupperFirst) {
+                callFindNext(ctx.groupper);
 
                 if (next === null) {
-                    next = ctx.mover.findNextTabbable(current, prev);
+                    callFindNext(ctx.mover);
                 }
             } else {
-                next = ctx.mover.findNextTabbable(current, prev);
+                callFindNext(ctx.mover);
 
                 if (next === null) {
-                    next = ctx.groupper.findNextTabbable(current, prev);
+                    callFindNext(ctx.groupper);
                 }
             }
         } else if (ctx.groupper) {
-            next = ctx.groupper.findNextTabbable(current, prev);
+            callFindNext(ctx.groupper);
         } else if (ctx.mover) {
-            next = ctx.mover.findNextTabbable(current, prev);
+            callFindNext(ctx.mover);
         } else {
             let uncontrolled: HTMLElement | undefined;
             const onUncontrolled = (el: HTMLElement) => {
@@ -430,11 +440,12 @@ export class FocusedElementState
             return;
         }
 
+        const controlTab = this._tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(this._tabster, curElement, {
             checkRtl: true,
         });
 
-        if (!ctx) {
+        if (!ctx || (!controlTab && !ctx.mover && !ctx.groupper)) {
             return;
         }
 
@@ -446,7 +457,15 @@ export class FocusedElementState
             isPrev
         );
 
-        if (!next) {
+        if (!next || (!controlTab && !next.element)) {
+            if (!controlTab) {
+                if (ctx.mover && (!ctx.groupper || ctx.isGroupperFirst)) {
+                    ctx.mover.dummyManager?.moveOutWithDefaultAction(isPrev);
+                } else if (ctx.groupper) {
+                    ctx.groupper.dummyManager?.moveOutWithDefaultAction(isPrev);
+                }
+            }
+
             return;
         }
 
@@ -457,6 +476,7 @@ export class FocusedElementState
                 // We have met an uncontrolled area, just allow default action.
                 this._moveToUncontrolled(uncontrolled, isPrev);
             }
+
             return;
         }
 
