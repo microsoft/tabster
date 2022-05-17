@@ -22,6 +22,10 @@ export interface HTMLElementWithUID extends HTMLElement {
     __tabsterElementUID?: string;
 }
 
+export interface HTMLElementWithDummyContainer extends HTMLElement {
+    __tabsterDummyContainer?: WeakHTMLElement;
+}
+
 export interface TabsterDOMRect {
     bottom: number;
     left: number;
@@ -704,7 +708,7 @@ export class DummyInput {
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
 
-        (input as Types.HTMLElementWithDummyContainer).__tabsterDummyContainer =
+        (input as HTMLElementWithDummyContainer).__tabsterDummyContainer =
             element;
 
         if (this._isPhantom) {
@@ -742,8 +746,7 @@ export class DummyInput {
         input.removeEventListener("focusin", this._focusIn);
         input.removeEventListener("focusout", this._focusOut);
 
-        delete (input as Types.HTMLElementWithDummyContainer)
-            .__tabsterDummyContainer;
+        delete (input as HTMLElementWithDummyContainer).__tabsterDummyContainer;
 
         input.parentElement?.removeChild(input);
     }

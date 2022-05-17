@@ -11,6 +11,7 @@ import {
     getLastChild,
     matchesSelector,
     shouldIgnoreFocus,
+    HTMLElementWithDummyContainer,
 } from "./Utils";
 
 const _focusableSelector = [
@@ -272,7 +273,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 container !== currentElement &&
                 !container.contains(currentElement) &&
                 (
-                    currentElement as Types.HTMLElementWithDummyContainer
+                    currentElement as HTMLElementWithDummyContainer
                 )?.__tabsterDummyContainer?.get() !== container)
         ) {
             return null;
@@ -489,7 +490,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 isGroupperFirst &&
                 from &&
                 (
-                    from as Types.HTMLElementWithDummyContainer
+                    from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === mover.getElement() &&
                 !mover.getElement()?.contains(from)
             ) {

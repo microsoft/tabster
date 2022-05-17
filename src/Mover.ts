@@ -21,6 +21,7 @@ import {
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
+    HTMLElementWithDummyContainer,
 } from "./Utils";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
@@ -183,7 +184,7 @@ export class Mover
         const currentIsDummy =
             container &&
             (
-                current as Types.HTMLElementWithDummyContainer
+                current as HTMLElementWithDummyContainer
             )?.__tabsterDummyContainer?.get() === container;
 
         if (!container || (!container.contains(current) && !currentIsDummy)) {
@@ -286,7 +287,7 @@ export class Mover
                     (!container.contains(state.from) ||
                         (this._isFindingTabbable &&
                             (
-                                state.from as Types.HTMLElementWithDummyContainer
+                                state.from as HTMLElementWithDummyContainer
                             )?.__tabsterDummyContainer?.get() === container))
                 ) {
                     const focusable = Object.keys(this._focusable);

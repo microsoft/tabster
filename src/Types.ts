@@ -455,10 +455,6 @@ export interface FocusableAPI extends Disposable {
     findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 
-export interface HTMLElementWithDummyContainer extends HTMLElement {
-    __tabsterDummyContainer?: WeakHTMLElement;
-}
-
 export interface DummyInputManager {
     moveOutWithDefaultAction: (backwards: boolean) => void;
 }
