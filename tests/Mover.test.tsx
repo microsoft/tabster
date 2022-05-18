@@ -261,7 +261,7 @@ describe("NestedMovers", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("Nested1"));
     });
 
-    it("should not move from from nested to parent mover with arrow keys with circular navigation", async () => {
+    it("should not move from nested to parent mover with arrow keys with circular navigation", async () => {
         const attr = getTabsterAttribute({
             mover: {
                 direction: Types.MoverDirections.Vertical,
