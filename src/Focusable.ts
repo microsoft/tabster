@@ -511,8 +511,13 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        return state.acceptCondition(element)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_SKIP;
+        const result = state.acceptCondition(element);
+
+        if (result && !state.isFindAll && !state.isForward) {
+            state.found = true;
+            state.foundElement = element;
+        }
+
+        return result ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     }
 }
