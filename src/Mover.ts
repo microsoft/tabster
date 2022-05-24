@@ -560,6 +560,7 @@ export class MoverAPI implements Types.MoverAPI {
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
     private _ignoredInputTimer: number | undefined;
+    private _ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -587,6 +588,8 @@ export class MoverAPI implements Types.MoverAPI {
             win.clearTimeout(this._initTimer);
             delete this._initTimer;
         }
+
+        this._ignoredInputResolve?.(false);
 
         if (this._ignoredInputTimer) {
             win.clearTimeout(this._ignoredInputTimer);
@@ -642,6 +645,8 @@ export class MoverAPI implements Types.MoverAPI {
             this._win().clearTimeout(this._ignoredInputTimer);
             delete this._ignoredInputTimer;
         }
+
+        this._ignoredInputResolve?.(false);
 
         let keyCode = e.keyCode;
 
@@ -882,6 +887,11 @@ export class MoverAPI implements Types.MoverAPI {
                 textLength = ((element as HTMLInputElement).value || "").length;
             } else if (element.contentEditable === "true") {
                 asyncRet = new (getPromise(this._win))((resolve) => {
+                    this._ignoredInputResolve = (value: boolean) => {
+                        delete this._ignoredInputResolve;
+                        resolve(value);
+                    };
+
                     const win = this._win();
 
                     if (this._ignoredInputTimer) {
@@ -912,7 +922,7 @@ export class MoverAPI implements Types.MoverAPI {
                             anchorOffset !== prevAnchorOffset ||
                             focusOffset !== prevFocusOffset
                         ) {
-                            resolve(false);
+                            this._ignoredInputResolve?.(false);
                             return;
                         }
 
@@ -970,7 +980,7 @@ export class MoverAPI implements Types.MoverAPI {
                             }
                         }
 
-                        resolve(true);
+                        this._ignoredInputResolve?.(true);
                     }, 0);
                 });
             }
