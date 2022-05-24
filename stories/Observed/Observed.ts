@@ -5,17 +5,12 @@
 
 import "./observed.css";
 import {
-    createTabster,
-    getObservedElement,
+    getCurrentTabster,
     getTabsterAttribute,
     Types as TabsterTypes,
 } from "tabster";
 
 export type ObservedElementProps = TabsterTypes.ObservedElementProps;
-
-const tabsterCore = createTabster(window);
-
-const observedElement = getObservedElement(tabsterCore);
 
 const DELAY = 1000;
 
@@ -67,7 +62,8 @@ const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
     trigger.innerText = `Asynchronously show and focus observed element with name ${name}`;
     trigger.onclick = function () {
         showObservedTarget();
-        observedElement.requestFocus(name, 5000);
+        const tabster = getCurrentTabster(window);
+        tabster?.observedElement?.requestFocus(name, 5000);
     };
 
     return trigger;
