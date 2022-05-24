@@ -9,6 +9,7 @@ import {
     documentContains,
     getElementUId,
     getPromise,
+    isArrayDeepEqual,
     WeakHTMLElement,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
@@ -17,7 +18,7 @@ const _conditionCheckTimeout = 100;
 
 interface ObservedElementInfo {
     element: WeakHTMLElement;
-    prevName?: string;
+    prevNames?: string[];
 }
 
 interface ObservedWaiting {
@@ -287,11 +288,44 @@ export class ObservedElementAPI
                 };
             }
 
-            const observedName = observed.name;
-            const prevName = info.prevName;
+            const observedNames = observed.names;
+            const prevNames = info.prevNames;
 
-            if (observedName !== prevName) {
-                if (prevName) {
+            if (!prevNames || !isArrayDeepEqual(observedNames, prevNames)) {
+                if (prevNames) {
+                    prevNames.forEach((prevName) => {
+                        const obn = this._observedByName[prevName];
+
+                        if (obn && obn[uid]) {
+                            if (Object.keys(obn).length > 1) {
+                                delete obn[uid];
+                            } else {
+                                delete this._observedByName[prevName];
+                            }
+                        }
+                    });
+                }
+
+                info.prevNames = observedNames;
+            }
+
+            observedNames.forEach((observedName) => {
+                let obn = this._observedByName[observedName];
+
+                if (!obn) {
+                    obn = this._observedByName[observedName] = {};
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                obn[uid] = info!;
+
+                this._waitConditional(observedName);
+            });
+        } else if (info) {
+            const prevNames = info.prevNames;
+
+            if (prevNames) {
+                prevNames.forEach((prevName) => {
                     const obn = this._observedByName[prevName];
 
                     if (obn && obn[uid]) {
@@ -301,33 +335,7 @@ export class ObservedElementAPI
                             delete this._observedByName[prevName];
                         }
                     }
-                }
-
-                info.prevName = observedName;
-            }
-
-            let obn = this._observedByName[observedName];
-
-            if (!obn) {
-                obn = this._observedByName[observedName] = {};
-            }
-
-            obn[uid] = info;
-
-            this._waitConditional(observedName);
-        } else if (info) {
-            const prevName = info.prevName;
-
-            if (prevName) {
-                const obn = this._observedByName[prevName];
-
-                if (obn && obn[uid]) {
-                    if (Object.keys(obn).length > 1) {
-                        delete obn[uid];
-                    } else {
-                        delete this._observedByName[prevName];
-                    }
-                }
+                });
             }
 
             delete this._observedById[uid];
@@ -356,7 +364,7 @@ export class ObservedElementAPI
                 element
             )?.observed;
 
-            if (!observed || observed.name !== observedName) {
+            if (!observed || !observed.names.includes(observedName)) {
                 return;
             }
 
@@ -371,7 +379,7 @@ export class ObservedElementAPI
             }
 
             this.trigger(element, {
-                name: observedName,
+                names: [observedName],
                 details: observed.details,
                 accessibility,
             });
