@@ -23,7 +23,9 @@ describe("Focusable", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <button
-                        {...getTabsterAttribute({ observed: { name } })}
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
                         tabIndex={-1}
                     >
                         Button2
@@ -63,7 +65,9 @@ describe("Focusable", () => {
                 const observedButton = document.createElement("button");
                 observedButton.textContent = name;
                 document.getElementById("root")?.appendChild(observedButton);
-                const observed: Types.TabsterOnElement = { observed: { name } };
+                const observed: Types.TabsterOnElement = {
+                    observed: { names: [name] },
+                };
                 observedButton.setAttribute(
                     "data-tabster",
                     JSON.stringify(observed)
@@ -144,7 +148,9 @@ describe("Focusable", () => {
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button
-                        {...getTabsterAttribute({ observed: { name } })}
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
                         id="test-button"
                         aria-hidden="true"
                     >
@@ -179,7 +185,9 @@ describe("Focusable", () => {
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>
                     <button
-                        {...getTabsterAttribute({ observed: { name } })}
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
                         id="test-button"
                         aria-hidden="true"
                     >
