@@ -104,7 +104,7 @@ describe("Focusable", () => {
                             const button1 = document.createElement("button");
                             button1.setAttribute(
                                 "data-tabster",
-                                '{"observed":{"name": "button1"}}'
+                                '{"observed":{"names": ["button1"]}}'
                             );
                             button1.textContent = "Button1";
 
@@ -117,7 +117,7 @@ describe("Focusable", () => {
                                     document.createElement("button");
                                 button2.setAttribute(
                                     "data-tabster",
-                                    '{"observed":{"name": "button2"}}'
+                                    '{"observed":{"names": ["button2"]}}'
                                 );
                                 button2.textContent = "Button2";
                                 root?.appendChild(button2);
@@ -222,7 +222,7 @@ describe("Focusable", () => {
                 b.setAttribute("aria-hidden", "true");
                 b.setAttribute(
                     "data-tabster",
-                    `{"observed": {"name": "${name}"}}`
+                    `{"observed": {"names": ["${name}"]}}`
                 );
                 document.getElementById("root")?.appendChild(b);
             }, name)
