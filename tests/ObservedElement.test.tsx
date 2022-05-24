@@ -49,6 +49,55 @@ describe("Focusable", () => {
             });
     });
 
+    it("should request focus for element with tabindex -1 and multiple names", async () => {
+        const names = ["test-0", "test-1"];
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names },
+                        })}
+                        tabIndex={-1}
+                    >
+                        Button2
+                    </button>
+                </div>
+            )
+        )
+            // reuqest focus for names[0]
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval((name) => {
+                return (
+                    window as unknown as WindowWithTabsterCore
+                ).__tabsterInstance.observedElement?.requestFocus(name, 0)
+                    .result;
+            }, names[0])
+            .check((res: boolean) => expect(res).toBe(true))
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            // reuqest focus for names[1]
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval((name) => {
+                return (
+                    window as unknown as WindowWithTabsterCore
+                ).__tabsterInstance.observedElement?.requestFocus(name, 0)
+                    .result;
+            }, names[1])
+            .check((res: boolean) => expect(res).toBe(true))
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
+    });
+
     it("should request focus for non-existent element with tabindex -1", async () => {
         const name = "test";
         await new BroTest.BroTest(
