@@ -339,9 +339,15 @@ export class RootAPI implements Types.RootAPI {
         let uncontrolled: HTMLElement | undefined;
         let curElement: Node | null = element;
         let allMoversGrouppers: Types.TabsterContext["allMoversGrouppers"];
+        let instances: Types.TabsterContextMoverGroupper[] | undefined;
 
-        if (!allMoversGrouppers && options.allMoversGrouppers) {
-            allMoversGrouppers = [];
+        if (options.allMoversGrouppers) {
+            instances = [];
+            allMoversGrouppers = {
+                instances,
+                moverCount: 0,
+                groupperCount: 0,
+            };
         }
 
         while (curElement && (!root || checkRtl)) {
@@ -378,20 +384,24 @@ export class RootAPI implements Types.RootAPI {
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
 
-            if (allMoversGrouppers) {
+            if (allMoversGrouppers && instances) {
                 if (curMover) {
-                    allMoversGrouppers.unshift({
+                    instances.unshift({
                         isMover: true,
                         mover: curMover,
                     });
                 }
 
+                allMoversGrouppers.moverCount++;
+
                 if (curGroupper) {
-                    allMoversGrouppers.unshift({
+                    instances.unshift({
                         isMover: false,
                         groupper: curGroupper,
                     });
                 }
+
+                allMoversGrouppers.groupperCount++;
             }
 
             if (!groupper && curGroupper) {
@@ -433,6 +443,10 @@ export class RootAPI implements Types.RootAPI {
             }
 
             root = rootAPI._autoRootInstance;
+        }
+
+        if (instances && instances.length === 0) {
+            allMoversGrouppers = undefined;
         }
 
         return root

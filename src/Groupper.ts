@@ -292,7 +292,14 @@ export class Groupper
         }
 
         if (cached.isInside) {
-            if (cached.isActive === undefined) {
+            if (
+                cached.isActive === undefined &&
+                !(
+                    state.isFindAll &&
+                    cached.first &&
+                    (cached.first === element || element === this.getElement())
+                )
+            ) {
                 return NodeFilter.FILTER_REJECT;
             } else if (cached.isActive === false) {
                 return cached.first === element

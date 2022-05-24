@@ -672,6 +672,10 @@ export interface GetTabsterContextOptions {
     allMoversGrouppers?: boolean;
 }
 
+export type TabsterContextMoverGroupper =
+    | { isMover: true; mover: Mover }
+    | { isMover: false; groupper: Groupper };
+
 export interface TabsterContext {
     root: Root;
     modalizer?: Modalizer;
@@ -686,10 +690,11 @@ export interface TabsterContext {
      * The uncontrolled container of this element (if any).
      */
     uncontrolled?: HTMLElement;
-    allMoversGrouppers?: (
-        | { isMover: true; mover: Mover }
-        | { isMover: false; groupper: Groupper }
-    )[];
+    allMoversGrouppers?: {
+        moverCount: number;
+        groupperCount: number;
+        instances: TabsterContextMoverGroupper[];
+    };
     isExcludedFromMover?: boolean;
 }
 

@@ -419,32 +419,38 @@ export class FocusableAPI implements Types.FocusableAPI {
             let groupper: Types.Groupper | undefined = ctx.groupper;
             let mover: Types.Mover | undefined = ctx.mover;
             let isGroupperFirst = ctx.isGroupperFirst;
+            const allMoversGrouppers = ctx.allMoversGrouppers;
 
-            if (
-                !state.isForward &&
-                ctx.allMoversGrouppers &&
-                (!fromCtx || (!fromCtx.groupper && !fromCtx.mover))
-            ) {
+            if (allMoversGrouppers && !state.isFindAll) {
+                let fromMover: Types.Mover | undefined;
+                let fromGroupper: Types.Groupper | undefined;
+
+                if (fromCtx) {
+                    fromMover = fromCtx.mover;
+                    fromGroupper = fromCtx.groupper;
+                }
+
                 let topMover: Types.Mover | undefined;
                 let topGroupper: Types.Groupper | undefined;
 
-                for (const gm of ctx.allMoversGrouppers) {
-                    if (!topMover && gm.isMover) {
-                        topMover = gm.mover;
-                    }
-
-                    const g = !gm.isMover && gm.groupper;
-
-                    if (g && groupper && !topGroupper && g !== groupper) {
-                        const groupperElement = groupper.getElement();
-
-                        topGroupper = g;
-
-                        if (
-                            groupperElement &&
-                            g.getElement()?.contains(groupperElement)
-                        ) {
-                            groupper = gm.groupper;
+                for (const gm of allMoversGrouppers.instances) {
+                    if (gm.isMover) {
+                        if (!topMover) {
+                            const el = gm.mover.getElement();
+                            const fromElement =
+                                fromMover?.getElement() || state.container;
+                            if (el && fromElement.contains(el)) {
+                                topMover = gm.mover;
+                            }
+                        }
+                    } else {
+                        if (!topGroupper) {
+                            const el = gm.groupper.getElement();
+                            const fromElement =
+                                fromGroupper?.getElement() || state.container;
+                            if (el && fromElement.contains(el)) {
+                                topGroupper = gm.groupper;
+                            }
                         }
                     }
                 }
@@ -458,43 +464,28 @@ export class FocusableAPI implements Types.FocusableAPI {
                 }
 
                 if (mover && groupper) {
-                    const el = mover.getElement();
+                    const moverElement = mover.getElement();
 
                     isGroupperFirst =
-                        el && !groupper.getElement()?.contains(el);
+                        moverElement &&
+                        !groupper.getElement()?.contains(moverElement);
+                } else {
+                    isGroupperFirst = false;
                 }
             }
 
-            if (mover) {
-                // Avoid falling into the nested Mover.
-                const fromMover = fromCtx?.mover;
+            if (mover && groupper && isGroupperFirst && from) {
                 const moverElement = mover.getElement();
-                const fromMoverElement = fromMover?.getElement();
 
                 if (
-                    mover !== fromMover &&
                     moverElement &&
-                    fromMoverElement &&
-                    fromMoverElement.contains(moverElement)
+                    (
+                        from as HTMLElementWithDummyContainer
+                    ).__tabsterDummyContainer?.get() === moverElement &&
+                    !moverElement.contains(from)
                 ) {
-                    mover = fromMover;
-                    isGroupperFirst =
-                        groupper &&
-                        !groupper.getElement()?.contains(fromMoverElement);
+                    isGroupperFirst = false;
                 }
-            }
-
-            if (
-                mover &&
-                groupper &&
-                isGroupperFirst &&
-                from &&
-                (
-                    from as HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get() === mover.getElement() &&
-                !mover.getElement()?.contains(from)
-            ) {
-                isGroupperFirst = false;
             }
 
             if (groupper && isGroupperFirst) {
@@ -520,8 +511,13 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        return state.acceptCondition(element)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_SKIP;
+        const result = state.acceptCondition(element);
+
+        if (result && !state.isFindAll && !state.isForward) {
+            state.found = true;
+            state.foundElement = element;
+        }
+
+        return result ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     }
 }
