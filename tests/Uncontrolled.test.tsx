@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute } from "tabster";
+import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { runIfControlled } from "./utils/test-utils";
 
@@ -299,6 +299,68 @@ runIfControlled("Uncontrolled", () => {
             .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it("should properly transition between uncontrolled areas", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                    </div>
+                    <ul {...getTabsterAttribute({ mover: {} })}>
+                        <li
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button
+                                {...getTabsterAttribute({ uncontrolled: {} })}
+                            >
+                                Button3
+                            </button>
+                        </li>
+                        <li
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button
+                                {...getTabsterAttribute({ uncontrolled: {} })}
+                            >
+                                Button4
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
             });
     });
 

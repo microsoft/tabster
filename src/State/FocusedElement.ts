@@ -472,7 +472,7 @@ export class FocusedElementState
         const uncontrolled = next.uncontrolled;
 
         if (uncontrolled) {
-            if (!ctx.uncontrolled) {
+            if (ctx.uncontrolled !== uncontrolled) {
                 // We have met an uncontrolled area, just allow default action.
                 this._moveToUncontrolled(uncontrolled, isPrev);
             }
