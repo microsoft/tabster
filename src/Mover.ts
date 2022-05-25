@@ -22,6 +22,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
     HTMLElementWithDummyContainer,
+    getPromise,
 } from "./Utils";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
@@ -558,6 +559,8 @@ export class MoverAPI implements Types.MoverAPI {
     private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
+    private _ignoredInputTimer: number | undefined;
+    private _ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -583,7 +586,14 @@ export class MoverAPI implements Types.MoverAPI {
 
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
+            delete this._initTimer;
+        }
+
+        this._ignoredInputResolve?.(false);
+
+        if (this._ignoredInputTimer) {
+            win.clearTimeout(this._ignoredInputTimer);
+            delete this._ignoredInputTimer;
         }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
@@ -630,7 +640,14 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
+    private _onKeyDown = async (e: KeyboardEvent): Promise<void> => {
+        if (this._ignoredInputTimer) {
+            this._win().clearTimeout(this._ignoredInputTimer);
+            delete this._ignoredInputTimer;
+        }
+
+        this._ignoredInputResolve?.(false);
+
         let keyCode = e.keyCode;
 
         switch (keyCode) {
@@ -650,7 +667,7 @@ export class MoverAPI implements Types.MoverAPI {
         const tabster = this._tabster;
         const focused = tabster.focusedElement.getFocusedElement();
 
-        if (!focused || this._isIgnoredInput(focused, keyCode)) {
+        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
             return;
         }
 
@@ -853,38 +870,145 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _isIgnoredInput(element: HTMLElement, keyCode: number): boolean {
+    private async _isIgnoredInput(
+        element: HTMLElement,
+        keyCode: number
+    ): Promise<boolean> {
         if (matchesSelector(element, _inputSelector)) {
+            let selectionStart = 0;
+            let selectionEnd = 0;
+            let textLength = 0;
+            let asyncRet: Promise<boolean> | undefined;
+
             if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-                const selectionStart =
+                selectionStart =
                     (element as HTMLInputElement).selectionStart || 0;
-                const selectionEnd =
-                    (element as HTMLInputElement).selectionEnd || 0;
+                selectionEnd = (element as HTMLInputElement).selectionEnd || 0;
+                textLength = ((element as HTMLInputElement).value || "").length;
+            } else if (element.contentEditable === "true") {
+                asyncRet = new (getPromise(this._win))((resolve) => {
+                    this._ignoredInputResolve = (value: boolean) => {
+                        delete this._ignoredInputResolve;
+                        resolve(value);
+                    };
 
-                if (selectionStart !== selectionEnd) {
-                    return true;
-                }
+                    const win = this._win();
 
-                if (
-                    selectionStart > 0 &&
-                    (keyCode === Keys.Left ||
-                        keyCode === Keys.Up ||
-                        keyCode === Keys.Home)
-                ) {
-                    return true;
-                }
+                    if (this._ignoredInputTimer) {
+                        win.clearTimeout(this._ignoredInputTimer);
+                    }
 
-                if (
-                    selectionStart <
-                        ((element as HTMLInputElement).value || "").length &&
-                    (keyCode === Keys.Right ||
-                        keyCode === Keys.Down ||
-                        keyCode === Keys.End)
-                ) {
-                    return true;
-                }
-            } else {
-                // TODO: Handle contenteditable.
+                    const {
+                        anchorNode: prevAnchorNode,
+                        focusNode: prevFocusNode,
+                        anchorOffset: prevAnchorOffset,
+                        focusOffset: prevFocusOffset,
+                    } = win.getSelection() || {};
+
+                    // Get selection gives incorrect value if we call it syncronously onKeyDown.
+                    this._ignoredInputTimer = win.setTimeout(() => {
+                        delete this._ignoredInputTimer;
+
+                        const {
+                            anchorNode,
+                            focusNode,
+                            anchorOffset,
+                            focusOffset,
+                        } = win.getSelection() || {};
+
+                        if (
+                            anchorNode !== prevAnchorNode ||
+                            focusNode !== prevFocusNode ||
+                            anchorOffset !== prevAnchorOffset ||
+                            focusOffset !== prevFocusOffset
+                        ) {
+                            this._ignoredInputResolve?.(false);
+                            return;
+                        }
+
+                        selectionStart = anchorOffset || 0;
+                        selectionEnd = focusOffset || 0;
+                        textLength = element.textContent?.length || 0;
+
+                        if (anchorNode && focusNode) {
+                            if (
+                                element.contains(anchorNode) &&
+                                element.contains(focusNode)
+                            ) {
+                                if (anchorNode !== element) {
+                                    let anchorFound = false;
+
+                                    const addOffsets = (
+                                        node: ChildNode
+                                    ): boolean => {
+                                        if (node === anchorNode) {
+                                            anchorFound = true;
+                                        } else if (node === focusNode) {
+                                            return true;
+                                        }
+
+                                        const nodeText = node.textContent;
+
+                                        if (nodeText && !node.firstChild) {
+                                            const len = nodeText.length;
+
+                                            if (anchorFound) {
+                                                if (focusNode !== anchorNode) {
+                                                    selectionEnd += len;
+                                                }
+                                            } else {
+                                                selectionStart += len;
+                                                selectionEnd += len;
+                                            }
+                                        }
+
+                                        let stop = false;
+
+                                        for (
+                                            let e = node.firstChild;
+                                            e && !stop;
+                                            e = e.nextSibling
+                                        ) {
+                                            stop = addOffsets(e);
+                                        }
+
+                                        return stop;
+                                    };
+
+                                    addOffsets(element);
+                                }
+                            }
+                        }
+
+                        this._ignoredInputResolve?.(true);
+                    }, 0);
+                });
+            }
+
+            if (asyncRet && !(await asyncRet)) {
+                return true;
+            }
+
+            if (selectionStart !== selectionEnd) {
+                return true;
+            }
+
+            if (
+                selectionStart > 0 &&
+                (keyCode === Keys.Left ||
+                    keyCode === Keys.Up ||
+                    keyCode === Keys.Home)
+            ) {
+                return true;
+            }
+
+            if (
+                selectionStart < textLength &&
+                (keyCode === Keys.Right ||
+                    keyCode === Keys.Down ||
+                    keyCode === Keys.End)
+            ) {
+                return true;
             }
         }
 

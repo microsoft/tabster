@@ -543,3 +543,121 @@ describe("Mover with excluded part", () => {
             });
     });
 });
+
+describe("Mover with inputs inside", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should move or not move focus depending on caret position", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <input type="text" defaultValue="Input" />
+                        <button>Button2</button>
+                        <textarea>Textarea</textarea>
+                        <button>Button3</button>
+                        <div tabIndex={0} contentEditable={true}>
+                            Content{" "}
+                            <strong>
+                                editable <em>element</em>
+                            </strong>{" "}
+                            here
+                        </div>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown() // First Down moves to the end of the input value.
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+});
