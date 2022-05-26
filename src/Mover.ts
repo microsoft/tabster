@@ -874,15 +874,15 @@ export class MoverAPI implements Types.MoverAPI {
         element: HTMLElement,
         keyCode: number
     ): Promise<boolean> {
+        if (element.getAttribute("aria-expanded") === "true") {
+            return true;
+        }
+
         if (matchesSelector(element, _inputSelector)) {
             let selectionStart = 0;
             let selectionEnd = 0;
             let textLength = 0;
             let asyncRet: Promise<boolean> | undefined;
-
-            if (element.getAttribute("aria-expanded") === "true") {
-                return true;
-            }
 
             if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
                 selectionStart =
