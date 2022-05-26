@@ -880,6 +880,10 @@ export class MoverAPI implements Types.MoverAPI {
             let textLength = 0;
             let asyncRet: Promise<boolean> | undefined;
 
+            if (element.getAttribute("aria-expanded") === "true") {
+                return true;
+            }
+
             if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
                 selectionStart =
                     (element as HTMLInputElement).selectionStart || 0;
