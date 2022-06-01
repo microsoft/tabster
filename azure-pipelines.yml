@@ -76,7 +76,7 @@ jobs:
     displayName: Authenticate git for pushes
     inputs:
       script: >-
-        git config user.name "Fluent UI Build"
+        git config user.name "Tabster Build"
 
         git config user.email "fluentui-internal@service.microsoft.com"
 

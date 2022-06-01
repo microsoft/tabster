@@ -14,10 +14,7 @@ module.exports = (api) => {
     return {
         presets: ["@babel/preset-typescript", presetEnv],
         plugins: [
-            [
-                "@babel/plugin-transform-react-jsx",
-                { pragma: "BroTest.createElementString" },
-            ],
+            ["@babel/plugin-transform-react-jsx"],
             "babel-plugin-annotate-pure-calls",
         ],
     };

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -260,7 +261,7 @@ describe("NestedMovers", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("Nested1"));
     });
 
-    it("should not move from from nested to parent mover with arrow keys with circular navigation", async () => {
+    it("should not move from nested to parent mover with arrow keys with circular navigation", async () => {
         const attr = getTabsterAttribute({
             mover: {
                 direction: Types.MoverDirections.Vertical,
@@ -539,6 +540,178 @@ describe("Mover with excluded part", () => {
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});
+
+describe("Mover with inputs inside", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should move or not move focus depending on caret position", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <input type="text" defaultValue="Input" />
+                        <button>Button2</button>
+                        <textarea>Textarea</textarea>
+                        <button>Button3</button>
+                        <div tabIndex={0} contentEditable={true}>
+                            Content{" "}
+                            <strong>
+                                editable <em>element</em>
+                            </strong>{" "}
+                            here
+                        </div>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown() // First Down moves to the end of the input value.
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Content editable element here"
+                );
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Textarea");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it("should not move focus when aria-expanded is true", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <input
+                            type="text"
+                            defaultValue="Input"
+                            aria-expanded="true"
+                        />
+                        <button>Button2</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
             });
     });
 });

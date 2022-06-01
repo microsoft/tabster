@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -720,6 +721,116 @@ describe("MoverGroupper", () => {
                 expect(el?.textContent).toEqual(
                     "Button7Button8Button9Button10Button11Button12Button13"
                 );
+            });
+    });
+
+    it("should handle another mover/groupper/mover/groupper scenario", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <ul
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                            },
+                        })}
+                    >
+                        <li
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        visibilityAware:
+                                            Types.Visibilities.PartiallyVisible,
+                                    },
+                                })}
+                            >
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </div>
+                                <button>Button3</button>
+                            </div>
+                        </li>
+                        <li
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        visibilityAware:
+                                            Types.Visibilities.PartiallyVisible,
+                                    },
+                                })}
+                            >
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {
+                                            tabbability:
+                                                Types.GroupperTabbabilities
+                                                    .LimitedTrapFocus,
+                                        },
+                                    })}
+                                >
+                                    <button>Button4</button>
+                                    <button>Button5</button>
+                                </div>
+                                <button>Button6</button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4Button5Button6");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
             });
     });
 });

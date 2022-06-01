@@ -13,16 +13,9 @@ import {
 export type ModalDialogProps = TabsterTypes.ModalizerProps;
 
 export const createModalDialog = (props: ModalDialogProps) => {
-    const {
-        id = "modalizer",
-        isAlwaysAccessible,
-        isNoFocusDefault,
-        isNoFocusFirst,
-        isOthersAccessible,
-    } = props;
+    props.id ??= "modalizer";
 
     const tabster = createTabster(window);
-
     const dialog = document.createElement("div");
     dialog.classList.add("lightbox");
     dialog.classList.add("hidden");
@@ -94,11 +87,7 @@ export const createModalDialog = (props: ModalDialogProps) => {
     const attr = getTabsterAttribute(
         {
             modalizer: {
-                id,
-                isAlwaysAccessible,
-                isNoFocusDefault,
-                isNoFocusFirst,
-                isOthersAccessible,
+                ...props,
             },
         },
         true

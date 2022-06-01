@@ -120,12 +120,22 @@ export class Modalizer
 
         const focusedElement = this._tabster.focusedElement.getFocusedElement();
         const modalizerElement = this.getElement();
-        const findFn = isPrev ? "findPrev" : "findNext";
+        let findFn: "findPrev" | "findNext" | "findFirst" | "findLast" = isPrev
+            ? "findPrev"
+            : "findNext";
         let next: HTMLElement | null | undefined;
         if (focusedElement && modalizerElement?.contains(focusedElement)) {
             next = this._tabster.focusable[findFn]({
                 container: this.getElement(),
                 currentElement: focusedElement,
+            });
+        }
+
+        // circular focus trap for modalizer
+        if (!next && this._props.isTrapped) {
+            findFn = isPrev ? "findLast" : "findFirst";
+            next = this._tabster.focusable[findFn]({
+                container: this.getElement(),
             });
         }
 
