@@ -75,6 +75,8 @@ class MoverDummyManager extends DummyInputManager {
     };
 }
 
+// TypeScript enums produce depressing JavaScript code, so, we're just using
+// a few old style constants here.
 const _moverUpdateAdd = 1;
 const _moverUpdateAttr = 2;
 const _moverUpdateRemove = 3;
