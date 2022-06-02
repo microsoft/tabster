@@ -715,3 +715,69 @@ describe("Mover with inputs inside", () => {
             });
     });
 });
+
+describe("Mover with visibilityAware", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                            },
+                        })}
+                        style={{ height: 200, overflow: "scroll" }}
+                    >
+                        <button style={{ height: 100, display: "block" }}>
+                            Button2
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button3
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button4
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button5
+                        </button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .wait(100) // Give time for intersection observer to process changes.
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
+});
