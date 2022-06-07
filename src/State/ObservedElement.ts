@@ -118,6 +118,18 @@ export class ObservedElementAPI
         }
     }
 
+    private _isObservedNamesUpdated(curr: string[], prev?: string[]) {
+        if (!prev || curr.length !== prev.length) {
+            return true;
+        }
+        for (let i = 0; i < curr.length; ++i) {
+            if (curr[i] !== prev[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Returns existing element by observed name
      *
@@ -291,13 +303,7 @@ export class ObservedElementAPI
             const observedNames = observed.names;
             const prevNames = info.prevNames; // prevNames are already sorted
 
-            const isNamesChanged =
-                !prevNames ||
-                observedNames.length !== prevNames.length ||
-                observedNames.filter((name, index) => name !== prevNames[index])
-                    .length > 0;
-
-            if (isNamesChanged) {
+            if (this._isObservedNamesUpdated(observedNames, prevNames)) {
                 if (prevNames) {
                     prevNames.forEach((prevName) => {
                         const obn = this._observedByName[prevName];
