@@ -118,12 +118,12 @@ export class ObservedElementAPI
         }
     }
 
-    private _isObservedNamesUpdated(curr: string[], prev?: string[]) {
-        if (!prev || curr.length !== prev.length) {
+    private _isObservedNamesUpdated(cur: string[], prev?: string[]) {
+        if (!prev || cur.length !== prev.length) {
             return true;
         }
-        for (let i = 0; i < curr.length; ++i) {
-            if (curr[i] !== prev[i]) {
+        for (let i = 0; i < cur.length; ++i) {
+            if (cur[i] !== prev[i]) {
                 return true;
             }
         }
