@@ -50,7 +50,7 @@ describe("Focusable", () => {
     });
 
     it("should request focus for element with tabindex -1 and multiple names", async () => {
-        const names = ["test-0", "test-1"];
+        const names = ["test-1", "test-0"];
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>

@@ -9,7 +9,6 @@ import {
     documentContains,
     getElementUId,
     getPromise,
-    isArrayDeepEqual,
     WeakHTMLElement,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
@@ -288,10 +287,17 @@ export class ObservedElementAPI
                 };
             }
 
+            observed.names.sort();
             const observedNames = observed.names;
-            const prevNames = info.prevNames;
+            const prevNames = info.prevNames; // prevNames are already sorted
 
-            if (!prevNames || !isArrayDeepEqual(observedNames, prevNames)) {
+            const isNamesChanged =
+                !prevNames ||
+                observedNames.length !== prevNames.length ||
+                observedNames.filter((name, index) => name !== prevNames[index])
+                    .length > 0;
+
+            if (isNamesChanged) {
                 if (prevNames) {
                     prevNames.forEach((prevName) => {
                         const obn = this._observedByName[prevName];
