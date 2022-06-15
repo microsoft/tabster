@@ -4,7 +4,13 @@
  */
 
 import * as React from "react";
-import { EvaluateFn, SerializableOrJSHandle, Page, KeyInput } from "puppeteer";
+import {
+    EvaluateFn,
+    SerializableOrJSHandle,
+    Page,
+    Frame,
+    KeyInput,
+} from "puppeteer";
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -29,12 +35,16 @@ async function goToPageWithRetry(url: string, times: number) {
     }
 }
 
-export async function bootstrapTabsterPage() {
-    // TODO configure this easier
+export function getTestPageURL(): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
-    const url = `http://localhost:${port}/iframe.html?id=testcontainer--test-container&args=&viewMode=story`;
-    await goToPageWithRetry(url, 4);
-    await expect(page.title()).resolves.toMatch("Webpack App");
+    const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
+    const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
+    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}`;
+}
+
+export async function bootstrapTabsterPage() {
+    await goToPageWithRetry(getTestPageURL(), 4);
+    await expect(page.title()).resolves.toMatch("Tabster Test");
 
     // Waiting for the test app to set Tabster up.
     await page.evaluate(() => {
@@ -66,7 +76,18 @@ interface BrowserElement {
     attributes: { [name: string]: string };
 }
 
+interface BroTestFrameStackItem {
+    id: string;
+    frame: Page | Frame;
+}
+
 abstract class BroTestItem {
+    protected _frameStack: BroTestFrameStackItem[];
+
+    constructor(frameStack: BroTestFrameStackItem[]) {
+        this._frameStack = frameStack;
+    }
+
     abstract run(): Promise<any>;
 }
 
@@ -76,18 +97,22 @@ class BroTestItemEval extends BroTestItem {
     private _setLastEval: (lastEval: any) => void;
 
     constructor(
+        frameStack: BroTestFrameStackItem[],
         func: EvaluateFn<any>,
         args: SerializableOrJSHandle[],
         setLastEval: (lastEval: any) => void
     ) {
-        super();
+        super(frameStack);
         this._func = func;
         this._args = args;
         this._setLastEval = setLastEval;
     }
 
     async run() {
-        const lastEval = await page.evaluate(this._func, ...this._args);
+        const lastEval = await this._frameStack[0].frame.evaluate(
+            this._func,
+            ...this._args
+        );
         this._setLastEval(lastEval);
     }
 }
@@ -95,13 +120,13 @@ class BroTestItemEval extends BroTestItem {
 class BroTestItemWait extends BroTestItem {
     private _time: number;
 
-    constructor(time: number) {
-        super();
+    constructor(frameStack: BroTestFrameStackItem[], time: number) {
+        super(frameStack);
         this._time = time;
     }
 
     async run() {
-        await page.evaluate((wait) => {
+        await this._frameStack[0].frame.evaluate((wait) => {
             return new Promise((resolve) => {
                 setTimeout(() => {
                     resolve(true);
@@ -114,13 +139,87 @@ class BroTestItemWait extends BroTestItem {
 class BroTestItemCallback extends BroTestItem {
     private _callback: () => Promise<void>;
 
-    constructor(callback: () => Promise<void>) {
-        super();
+    constructor(
+        frameStack: BroTestFrameStackItem[],
+        callback: () => Promise<void>
+    ) {
+        super(frameStack);
         this._callback = callback;
     }
 
     async run() {
         await this._callback();
+    }
+}
+
+class BroTestItemHTML extends BroTestItem {
+    private _html: JSX.Element;
+
+    constructor(frameStack: BroTestFrameStackItem[], html: JSX.Element) {
+        super(frameStack);
+        this._html = html;
+    }
+
+    async run() {
+        const frame = this._frameStack[0].frame;
+
+        await frame.evaluate(
+            (el, html) => (el.innerHTML = html),
+            await frame.$("body"),
+            renderToStaticMarkup(this._html)
+        );
+        await sleep(100);
+    }
+}
+
+class BroTestItemFrame extends BroTestItem {
+    private _id: string;
+
+    constructor(frameStack: BroTestFrameStackItem[], id: string) {
+        super(frameStack);
+        this._id = id;
+    }
+
+    async run() {
+        const frameHandle = await this._frameStack[0].frame.$(
+            `iframe[id='${this._id}']`
+        );
+
+        if (frameHandle) {
+            const frame = await frameHandle.contentFrame();
+
+            if (frame) {
+                this._frameStack.unshift({ id: this._id, frame });
+                return;
+            }
+        }
+
+        throw new Error(
+            `<iframe id="${this._id}"> is not available${
+                this._frameStack.length > 1
+                    ? ` in <iframe id="${this._frameStack[0].id}">`
+                    : ""
+            }`
+        );
+    }
+}
+
+class BroTestItemUnframe extends BroTestItem {
+    private _levels: number;
+
+    constructor(frameStack: BroTestFrameStackItem[], levels = 1) {
+        super(frameStack);
+        this._levels = levels;
+    }
+
+    async run() {
+        while (this._levels-- > 0) {
+            if (this._frameStack.length > 1) {
+                this._frameStack.shift();
+            } else {
+                throw new Error("Not enough levels to unframe");
+            }
+        }
     }
 }
 
@@ -133,16 +232,23 @@ export class BroTest implements PromiseLike<undefined> {
         | undefined;
     private _reject: ((reason?: any) => void) | undefined;
     private _lastEval: any;
+    private _frameStack: BroTestFrameStackItem[];
 
     [Symbol.toStringTag]: "promise";
 
-    constructor(html: JSX.Element) {
+    constructor(html?: JSX.Element) {
         this._promise = new Promise<undefined>((resolve, reject) => {
             this._resolve = resolve;
             this._reject! = reject;
         });
 
-        this._init(html);
+        this._frameStack = [{ id: "_top", frame: page }];
+
+        if (html) {
+            this.html(html);
+        }
+
+        this._next();
     }
 
     then<TResult1 = undefined, TResult2 = never>(
@@ -171,16 +277,6 @@ export class BroTest implements PromiseLike<undefined> {
         return this._promise.finally(onfinally);
     }
 
-    private async _init(html: JSX.Element) {
-        await page.evaluate(
-            (el, html) => (el.innerHTML = html),
-            await page.$("body"),
-            renderToStaticMarkup(html)
-        );
-        await sleep(100);
-        this._next();
-    }
-
     private _next() {
         if (this._nextTimer) {
             clearTimeout(this._nextTimer);
@@ -204,8 +300,25 @@ export class BroTest implements PromiseLike<undefined> {
         }, 0) as any;
     }
 
+    html(html: JSX.Element) {
+        this._chain.push(new BroTestItemHTML(this._frameStack, html));
+        return this;
+    }
+
+    frame(...id: string[]) {
+        for (const i of id) {
+            this._chain.push(new BroTestItemFrame(this._frameStack, i));
+        }
+        return this;
+    }
+
+    unframe(levels = 1) {
+        this._chain.push(new BroTestItemUnframe(this._frameStack, levels));
+        return this;
+    }
+
     wait(time: number) {
-        this._chain.push(new BroTestItemWait(time));
+        this._chain.push(new BroTestItemWait(this._frameStack, time));
         return this;
     }
 
@@ -220,6 +333,7 @@ export class BroTest implements PromiseLike<undefined> {
     eval(func: EvaluateFn<any>, ...args: SerializableOrJSHandle[]): BroTest {
         this._chain.push(
             new BroTestItemEval(
+                this._frameStack,
                 func,
                 args,
                 (lastEval) => (this._lastEval = lastEval)
@@ -230,7 +344,7 @@ export class BroTest implements PromiseLike<undefined> {
 
     check(callback: (lastEval: any) => void) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
+            new BroTestItemCallback(this._frameStack, async () => {
                 callback(this._lastEval);
             })
         );
@@ -245,7 +359,7 @@ export class BroTest implements PromiseLike<undefined> {
             | undefined
     ) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
+            new BroTestItemCallback(this._frameStack, async () => {
                 await page.keyboard.press(key, options);
             })
         );
@@ -255,7 +369,7 @@ export class BroTest implements PromiseLike<undefined> {
 
     private _pressKey(key: KeyInput, shift?: boolean) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
+            new BroTestItemCallback(this._frameStack, async () => {
                 if (shift) {
                     await page.keyboard.down("Shift");
                 }
@@ -277,8 +391,8 @@ export class BroTest implements PromiseLike<undefined> {
      */
     click(selector: string) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
-                await page.click(selector);
+            new BroTestItemCallback(this._frameStack, async () => {
+                await this._frameStack[0].frame.click(selector);
             })
         );
 
@@ -309,31 +423,33 @@ export class BroTest implements PromiseLike<undefined> {
 
     activeElement(callback: (activeElement: BrowserElement | null) => void) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
-                const activeElement = await page.evaluate(() => {
-                    const ae = document.activeElement;
+            new BroTestItemCallback(this._frameStack, async () => {
+                const activeElement = await this._frameStack[0].frame.evaluate(
+                    () => {
+                        const ae = document.activeElement;
 
-                    if (ae && ae !== document.body) {
-                        const attributes: BrowserElement["attributes"] = {};
+                        if (ae && ae !== document.body) {
+                            const attributes: BrowserElement["attributes"] = {};
 
-                        for (const name of ae.getAttributeNames()) {
-                            const val = ae.getAttribute(name);
+                            for (const name of ae.getAttributeNames()) {
+                                const val = ae.getAttribute(name);
 
-                            if (val !== null) {
-                                attributes[name] = val;
+                                if (val !== null) {
+                                    attributes[name] = val;
+                                }
                             }
+
+                            const ret: BrowserElement = {
+                                tag: ae.tagName.toLowerCase(),
+                                textContent: ae.textContent,
+                                attributes,
+                            };
+                            return ret;
                         }
 
-                        const ret: BrowserElement = {
-                            tag: ae.tagName.toLowerCase(),
-                            textContent: ae.textContent,
-                            attributes,
-                        };
-                        return ret;
+                        return null;
                     }
-
-                    return null;
-                });
+                );
 
                 callback(activeElement);
             })
@@ -344,8 +460,8 @@ export class BroTest implements PromiseLike<undefined> {
 
     removeElement(selector?: string, async = false) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
-                await page.evaluate(
+            new BroTestItemCallback(this._frameStack, async () => {
+                await this._frameStack[0].frame.evaluate(
                     (selector: string, async?: boolean) => {
                         const el = selector
                             ? document.querySelector(selector)
@@ -373,8 +489,8 @@ export class BroTest implements PromiseLike<undefined> {
 
     focusElement(selector: string) {
         this._chain.push(
-            new BroTestItemCallback(async () => {
-                await page.evaluate((selector: string) => {
+            new BroTestItemCallback(this._frameStack, async () => {
+                await this._frameStack[0].frame.evaluate((selector: string) => {
                     const el = document.querySelector(selector);
                     if (!el) {
                         throw new Error(
