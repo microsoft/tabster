@@ -13,7 +13,7 @@ runIfUnControlled("DummyInputManager", () => {
         await BroTest.bootstrapTabsterPage({
             mover: true,
             groupper: true,
-            modalizer: true,
+            modalizer: false,
         });
     });
     describe("should update dummy inputs when DOM children update for", () => {

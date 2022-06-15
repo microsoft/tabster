@@ -53,9 +53,10 @@ serve.stdout.on("data", (data) => {
             env: { ...process.env, PORT: port },
         });
 
-        testRun.on("close", () => {
+        testRun.on("close", (code) => {
             console.log("Running tests done.");
             kill(serve.pid);
+            process.exit(code);
         });
     }
 });
