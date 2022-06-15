@@ -20,6 +20,16 @@ const renderToStaticMarkup: (element: React.ReactElement) => string =
 declare const page: Page;
 declare let __tabsterInstance: any;
 
+type TabsterParts = Partial<{
+    modalizer: boolean;
+    deloser: boolean;
+    outline: boolean;
+    mover: boolean;
+    groupper: boolean;
+    observed: boolean;
+    crossOrigin: boolean;
+}>;
+
 async function goToPageWithRetry(url: string, times: number) {
     if (times === 0) {
         throw new Error("Failed to connect to the page after multiple retries");
@@ -35,15 +45,17 @@ async function goToPageWithRetry(url: string, times: number) {
     }
 }
 
-export function getTestPageURL(): string {
+export function getTestPageURL(parts: TabsterParts): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
     const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
     const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
-    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}`;
+    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}&parts=${Object.keys(
+        parts
+    ).join(",")}`;
 }
 
-export async function bootstrapTabsterPage() {
-    await goToPageWithRetry(getTestPageURL(), 4);
+export async function bootstrapTabsterPage(parts: TabsterParts) {
+    await goToPageWithRetry(getTestPageURL(parts), 4);
     await expect(page.title()).resolves.toMatch("Tabster Test");
 
     // Waiting for the test app to set Tabster up.

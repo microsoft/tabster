@@ -5,6 +5,7 @@
         <script type="module">
             import {
                 createTabster,
+                getCrossOrigin,
                 getDeloser,
                 getGroupper,
                 getModalizer,
@@ -16,6 +17,13 @@
             const params = new URL(location.href).searchParams;
             const controlTab = params.get("controlTab") !== "false";
             const rootDummyInputs = params.get("rootDummyInputs") !== "false";
+            const parts = (params.get("parts") || "").split(",");
+            const partsToEnable = {};
+
+            for (let part of parts) {
+                partsToEnable[part] = true;
+            }
+
             const tabster = createTabster(window, {
                 autoRoot: {},
                 controlTab,
@@ -27,18 +35,41 @@
                     controlTab ? "controlled" : "uncontrolled"
                 }, root dummy inputs ${rootDummyInputs}`
             );
-            getModalizer(tabster);
-            console.log("created modalizer");
-            getDeloser(tabster);
-            console.log("created deloser");
-            getOutline(tabster);
-            console.log("created outline");
-            getMover(tabster);
-            console.log("created mover");
-            getGroupper(tabster);
-            console.log("created groupper");
-            getObservedElement(tabster);
-            console.log("created observed");
+
+            if ("modalizer" in partsToEnable) {
+                getModalizer(tabster);
+                console.log("created modalizer");
+            }
+
+            if ("deloser" in partsToEnable) {
+                getDeloser(tabster);
+                console.log("created deloser");
+            }
+
+            if ("outline" in partsToEnable) {
+                getOutline(tabster);
+                console.log("created outline");
+            }
+
+            if ("mover" in partsToEnable) {
+                getMover(tabster);
+                console.log("created mover");
+            }
+
+            if ("groupper" in partsToEnable) {
+                getGroupper(tabster);
+                console.log("created groupper");
+            }
+
+            if ("observed" in partsToEnable) {
+                getObservedElement(tabster);
+                console.log("created observed");
+            }
+
+            if ("crossOrigin" in partsToEnable) {
+                getCrossOrigin(tabster);
+                console.log("created cross origin");
+            }
         </script>
     </head>
     <body></body>

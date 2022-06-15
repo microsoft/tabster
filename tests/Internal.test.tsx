@@ -13,7 +13,7 @@ interface WindowWithTabsterCore extends Window {
 
 describe("Internal", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
     it("should restore focus", async () => {

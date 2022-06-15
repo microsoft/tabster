@@ -10,7 +10,7 @@ import { WindowWithTabsterCore } from "./utils/test-utils";
 
 describe("keyboard navigation state", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
     afterEach(async () => {

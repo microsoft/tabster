@@ -8,8 +8,10 @@ import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("CrossOrigin", () => {
+    const tabsterParts = { crossOrigin: true };
+
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage(tabsterParts);
     });
 
     it("shows <iframe> usage example", async () => {
@@ -17,7 +19,10 @@ describe("CrossOrigin", () => {
             .html(
                 <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
                     <button>Button1</button>
-                    <iframe id="frame1" src={BroTest.getTestPageURL()}></iframe>
+                    <iframe
+                        id="frame1"
+                        src={BroTest.getTestPageURL(tabsterParts)}
+                    ></iframe>
                     <button>Button2</button>
                 </div>
             )
@@ -25,7 +30,10 @@ describe("CrossOrigin", () => {
             .html(
                 <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
                     <button>Button3</button>
-                    <iframe id="frame2" src={BroTest.getTestPageURL()}></iframe>
+                    <iframe
+                        id="frame2"
+                        src={BroTest.getTestPageURL(tabsterParts)}
+                    ></iframe>
                     <button>Button4</button>
                 </div>
             )

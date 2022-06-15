@@ -13,7 +13,7 @@ interface WindowWithTabsterCore extends Window {
 
 describe("Focusable", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ observed: true });
     });
 
     it("should request focus for element with tabindex -1", async () => {

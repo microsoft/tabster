@@ -10,7 +10,7 @@ import { runIfControlled, WindowWithTabsterCore } from "./utils/test-utils";
 
 runIfControlled("Focusable", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
     it("should allow aria-disabled elements to be focused", async () => {

@@ -20,7 +20,7 @@ interface WindowWithTabsterCoreAndFocusState extends WindowWithTabsterCore {
 
 runIfControlled("Root", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({});
     });
 
     it("should insert dummy inputs as first and last children", async () => {
