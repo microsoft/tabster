@@ -10,7 +10,11 @@ import { runIfUnControlled } from "./utils/test-utils";
 
 runIfUnControlled("DummyInputManager", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
+        await BroTest.bootstrapTabsterPage({
+            mover: true,
+            groupper: true,
+            modalizer: true,
+        });
     });
     describe("should update dummy inputs when DOM children update for", () => {
         const evaluateDummy = (dummyAttribute: string, elementId: string) => {
