@@ -4,7 +4,7 @@
  */
 
 const { spawn, execSync } = require("child_process");
-const kill = require('tree-kill');
+const kill = require("tree-kill");
 const { join } = require("path");
 
 let stripAnsi;
@@ -45,7 +45,7 @@ serve.stdout.on("data", (data) => {
         }
 
         console.log(`Serving test page on port ${port}`);
-        console.log('Running tests...');
+        console.log("Running tests...");
 
         testRun = spawn("jest", process.argv.slice(2), {
             cwd: join(__filename, "../../.."),
@@ -54,7 +54,7 @@ serve.stdout.on("data", (data) => {
         });
 
         testRun.on("close", () => {
-            console.log('Running tests done.');
+            console.log("Running tests done.");
             kill(serve.pid);
         });
     }
