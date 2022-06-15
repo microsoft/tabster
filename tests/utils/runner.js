@@ -12,11 +12,11 @@ console.log("Bundling Tabster...");
 execSync("npx vite build --config vite.config.js");
 console.log("Bundling Tabster done.");
 
-console.log("Serving test page...")
+console.log("Serving test page...");
 const serveArgs = ["vite", "preview", "--config", "vite.config.js"];
-const port = parseInt(process.env.PORT || '0', 10);
+const port = parseInt(process.env.PORT || "0", 10);
 if (port > 0) {
-    serveArgs.push('--port', port);
+    serveArgs.push("--port", port);
 }
 const serve = spawn("npx", serveArgs);
 
@@ -38,7 +38,11 @@ serve.stdout.on("data", (data) => {
 
         console.log(`Serving test page on port ${port}`);
 
-        testRun = spawn("jest", process.argv.slice(2), {cwd: join(__filename, "../../.."), stdio: 'inherit', env: {...process.env, PORT: port}});
+        testRun = spawn("jest", process.argv.slice(2), {
+            cwd: join(__filename, "../../.."),
+            stdio: "inherit",
+            env: { ...process.env, PORT: port },
+        });
 
         testRun.on("close", () => {
             serve.kill();
