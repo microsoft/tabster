@@ -36,8 +36,48 @@ describe("CrossOrigin", () => {
                     <button>Button6</button>
                 </div>
             )
+            .unframe(2)
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+                expect(el?.attributes.id).toEqual("frame1");
+            })
+            .frame("frame1")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+                expect(el?.attributes.id).toEqual("frame2");
+            })
+            .frame("frame2")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el).toBeNull();
+            })
             .unframe()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el).toBeNull();
+            })
             .unframe()
-            .frame("frame1", "frame2");
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
     });
 });

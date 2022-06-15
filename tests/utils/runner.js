@@ -6,6 +6,11 @@
 const { spawn, execSync } = require("child_process");
 const { join } = require("path");
 
+let stripAnsi;
+import("strip-ansi").then((m) => {
+    stripAnsi = m.default;
+});
+
 process.chdir(join(__filename, "../.."));
 
 console.log("Bundling Tabster...");
@@ -27,10 +32,12 @@ serve.stdout.on("data", (data) => {
         return;
     }
 
-    const match = data.toString().match(/http:\/\/localhost:(\d+)\//);
+    const match = stripAnsi(data.toString()).match(
+        /http:\/\/localhost:(\d+)\//
+    );
 
     if (match) {
-        let port = parseInt(match[1], 10);
+        let port = parseInt(stripAnsi(match[1]), 10);
 
         if (!(port > 0)) {
             port = 8080;

@@ -7,7 +7,7 @@ module.exports = defineConfig({
             plugins: [
                 replace({
                     preventAssignment: true,
-                    __DEV__: `process.env.NODE_ENV === 'development'`,
+                    __DEV__: "true",
                     __VERSION__: JSON.stringify("0.0.0"),
                 }),
             ],
