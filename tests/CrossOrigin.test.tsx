@@ -14,7 +14,64 @@ describe("CrossOrigin", () => {
         await BroTest.bootstrapTabsterPage(tabsterParts);
     });
 
-    it("shows <iframe> usage example", async () => {
+    it("should request focus between iframes", async () => {
+        const name = "test";
+        const name2 = "test2";
+
+        await new BroTest.BroTest()
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <iframe
+                        id="frame1"
+                        src={BroTest.getTestPageURL(tabsterParts)}
+                    ></iframe>
+                    <button {...getTabsterAttribute({ observed: { name } })}>
+                        Button2
+                    </button>
+                </div>
+            )
+            .frame("frame1")
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({ observed: { name: name2 } })}
+                    >
+                        Button3
+                    </button>
+                </div>
+            )
+            .unframe()
+            .eval((name2) => {
+                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    name2,
+                    0
+                );
+            }, name2)
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+                expect(el?.attributes.id).toEqual("frame1");
+            })
+            .frame("frame1")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .eval((name) => {
+                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    name,
+                    0
+                );
+            }, name)
+            .activeElement((el) => {
+                expect(el).toBeNull();
+            })
+            .unframe()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
+    });
+
+    it("tabs through iframes properly", async () => {
         await new BroTest.BroTest()
             .html(
                 <div {...getTabsterAttribute({ root: {} })}>
