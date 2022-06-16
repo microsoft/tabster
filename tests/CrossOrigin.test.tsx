@@ -17,7 +17,7 @@ describe("CrossOrigin", () => {
     it("shows <iframe> usage example", async () => {
         await new BroTest.BroTest()
             .html(
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <iframe
                         id="frame1"
@@ -28,7 +28,7 @@ describe("CrossOrigin", () => {
             )
             .frame("frame1")
             .html(
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button3</button>
                     <iframe
                         id="frame2"
@@ -39,7 +39,7 @@ describe("CrossOrigin", () => {
             )
             .frame("frame2")
             .html(
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button5</button>
                     <button>Button6</button>
                 </div>

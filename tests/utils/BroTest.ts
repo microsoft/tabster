@@ -30,6 +30,8 @@ type TabsterParts = Partial<{
     crossOrigin: boolean;
 }>;
 
+let _lastRnd = 0;
+
 async function goToPageWithRetry(url: string, times: number) {
     if (times === 0) {
         throw new Error("Failed to connect to the page after multiple retries");
@@ -45,33 +47,58 @@ async function goToPageWithRetry(url: string, times: number) {
     }
 }
 
+interface WindowWithConsoleErrors extends Window {
+    __consoleErrors?: any[][];
+}
+
+async function waitPageReadyAndDecorateConsoleError(
+    frame: Page | Frame
+): Promise<void> {
+    await frame.$("body");
+
+    await frame.evaluate(() => {
+        const win = window as WindowWithConsoleErrors;
+
+        if (!win.__consoleErrors) {
+            win.__consoleErrors = [];
+
+            const origConsoleError = console.error;
+
+            console.error = function (...args: any[]) {
+                origConsoleError.apply(console, args);
+                win.__consoleErrors?.push(args);
+            };
+        }
+
+        return new Promise((resolve) => {
+            window.setTimeout(check, 10);
+
+            function check() {
+                if (typeof __tabsterInstance !== "undefined") {
+                    resolve(true);
+                } else {
+                    window.setTimeout(check, 10);
+                }
+            }
+        });
+    });
+}
+
 export function getTestPageURL(parts: TabsterParts): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
     const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
     const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
     return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}&parts=${Object.keys(
         parts
-    ).join(",")}`;
+    )
+        .filter((part: keyof TabsterParts) => parts[part])
+        .join(",")}&rnd=${++_lastRnd}`;
 }
 
 export async function bootstrapTabsterPage(parts: TabsterParts) {
     await goToPageWithRetry(getTestPageURL(parts), 4);
     await expect(page.title()).resolves.toMatch("Tabster Test");
-
-    // Waiting for the test app to set Tabster up.
-    await page.evaluate(() => {
-        return new Promise((resolve) => {
-            setTimeout(check, 100);
-
-            function check() {
-                if (__tabsterInstance) {
-                    resolve(true);
-                } else {
-                    setTimeout(check, 100);
-                }
-            }
-        });
-    }, 5000);
+    await waitPageReadyAndDecorateConsoleError(page);
 }
 
 async function sleep(time: number) {
@@ -202,6 +229,7 @@ class BroTestItemFrame extends BroTestItem {
 
             if (frame) {
                 this._frameStack.unshift({ id: this._id, frame });
+                await waitPageReadyAndDecorateConsoleError(frame);
                 return;
             }
         }
@@ -235,6 +263,41 @@ class BroTestItemUnframe extends BroTestItem {
     }
 }
 
+class BroTestItemReportConsoleErrors extends BroTestItem {
+    private _throwError?: boolean;
+
+    constructor(frameStack: BroTestFrameStackItem[], throwError?: boolean) {
+        super(frameStack);
+        this._throwError = throwError;
+    }
+
+    async run() {
+        const consoleErrors = await this._frameStack[0].frame.evaluate(() => {
+            const win = window as WindowWithConsoleErrors;
+            const ret = win.__consoleErrors || [];
+            win.__consoleErrors = [];
+            return ret;
+        });
+
+        if (consoleErrors && consoleErrors.length) {
+            const errorMessage = `Had ${
+                consoleErrors.length
+            } console.error() calls in the browser:\n${consoleErrors
+                .map(
+                    (err: any[], index: number) =>
+                        `${index + 1}. ${err.join(" ")}`
+                )
+                .join("\n")}`;
+
+            console.error(errorMessage);
+
+            if (this._throwError) {
+                throw new Error(errorMessage);
+            }
+        }
+    }
+}
+
 export class BroTest implements PromiseLike<undefined> {
     private _chain: BroTestItem[] = [];
     private _nextTimer: number | undefined;
@@ -245,8 +308,6 @@ export class BroTest implements PromiseLike<undefined> {
     private _reject: ((reason?: any) => void) | undefined;
     private _lastEval: any;
     private _frameStack: BroTestFrameStackItem[];
-
-    [Symbol.toStringTag]: "promise";
 
     constructor(html?: JSX.Element) {
         this._promise = new Promise<undefined>((resolve, reject) => {
@@ -312,6 +373,12 @@ export class BroTest implements PromiseLike<undefined> {
         }, 0) as any;
     }
 
+    private _reportConsoleErrors(throwError?: boolean): void {
+        this._chain.push(
+            new BroTestItemReportConsoleErrors(this._frameStack, throwError)
+        );
+    }
+
     html(html: JSX.Element) {
         this._chain.push(new BroTestItemHTML(this._frameStack, html));
         return this;
@@ -331,6 +398,7 @@ export class BroTest implements PromiseLike<undefined> {
 
     wait(time: number) {
         this._chain.push(new BroTestItemWait(this._frameStack, time));
+        this._reportConsoleErrors(true);
         return this;
     }
 
@@ -351,6 +419,9 @@ export class BroTest implements PromiseLike<undefined> {
                 (lastEval) => (this._lastEval = lastEval)
             )
         );
+
+        this._reportConsoleErrors(true);
+
         return this;
     }
 
@@ -376,6 +447,8 @@ export class BroTest implements PromiseLike<undefined> {
             })
         );
 
+        this._reportConsoleErrors(true);
+
         return this;
     }
 
@@ -394,6 +467,8 @@ export class BroTest implements PromiseLike<undefined> {
             })
         );
 
+        this._reportConsoleErrors(true);
+
         return this;
     }
 
@@ -407,6 +482,8 @@ export class BroTest implements PromiseLike<undefined> {
                 await this._frameStack[0].frame.click(selector);
             })
         );
+
+        this._reportConsoleErrors();
 
         return this;
     }
@@ -467,6 +544,8 @@ export class BroTest implements PromiseLike<undefined> {
             })
         );
 
+        this._reportConsoleErrors(true);
+
         return this;
     }
 
@@ -495,6 +574,8 @@ export class BroTest implements PromiseLike<undefined> {
                 );
             })
         );
+
+        this._reportConsoleErrors(true);
 
         return this;
     }
@@ -539,6 +620,8 @@ export class BroTest implements PromiseLike<undefined> {
                 }, selector);
             })
         );
+
+        this._reportConsoleErrors(true);
 
         return this;
     }

@@ -13,7 +13,7 @@ runIfUnControlled("DummyInputManager", () => {
         await BroTest.bootstrapTabsterPage({
             mover: true,
             groupper: true,
-            modalizer: false,
+            modalizer: true,
         });
     });
     describe("should update dummy inputs when DOM children update for", () => {
@@ -254,7 +254,7 @@ runIfUnControlled("DummyInputManager", () => {
 
             const testHtml = (
                 <div>
-                    <div {...attr}>
+                    <div {...attr} aria-label="modalizer">
                         <button>Button1</button>
                         <button>Button2</button>
                         <button>Button3</button>

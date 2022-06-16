@@ -55,7 +55,10 @@ serve.stdout.on("data", (data) => {
 
         testRun.on("close", (code) => {
             console.log("Running tests done.");
+            serve.stdout.pause();
+            serve.stderr.pause();
             kill(serve.pid);
+            serve.kill("SIGTERM");
             process.exit(code);
         });
     }
