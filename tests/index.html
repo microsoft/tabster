@@ -6,6 +6,7 @@
             import {
                 createTabster,
                 getCrossOrigin,
+                getCurrentTabster,
                 getDeloser,
                 getGroupper,
                 getModalizer,
@@ -13,6 +14,10 @@
                 getObservedElement,
                 getOutline,
             } from "../src";
+
+            const tabsterTest = {
+                getCurrentTabster,
+            };
 
             const params = new URL(location.href).searchParams;
             const controlTab = params.get("controlTab") !== "false";
@@ -29,6 +34,9 @@
                 controlTab,
                 rootDummyInputs,
             });
+
+            tabsterTest.core = tabster;
+
             console.log(
                 "created tabster",
                 `as ${
@@ -37,39 +45,42 @@
             );
 
             if ("modalizer" in partsToEnable) {
-                getModalizer(tabster);
+                tabsterTest.modalizer = getModalizer(tabster);
                 console.log("created modalizer");
             }
 
             if ("deloser" in partsToEnable) {
-                getDeloser(tabster);
+                tabsterTest.deloser = getDeloser(tabster);
                 console.log("created deloser");
             }
 
             if ("outline" in partsToEnable) {
-                getOutline(tabster);
+                tabsterTest.outline = getOutline(tabster);
                 console.log("created outline");
             }
 
             if ("mover" in partsToEnable) {
-                getMover(tabster);
+                tabsterTest.mover = getMover(tabster);
                 console.log("created mover");
             }
 
             if ("groupper" in partsToEnable) {
-                getGroupper(tabster);
+                tabsterTest.groupper = getGroupper(tabster);
                 console.log("created groupper");
             }
 
             if ("observed" in partsToEnable) {
-                getObservedElement(tabster);
+                tabsterTest.observedElement = getObservedElement(tabster);
                 console.log("created observed");
             }
 
             if ("crossOrigin" in partsToEnable) {
-                getCrossOrigin(tabster);
+                tabsterTest.crossOrigin = getCrossOrigin(tabster);
+                tabsterTest.crossOrigin.setup();
                 console.log("created cross origin");
             }
+
+            window.getTabsterTestVariables = () => tabsterTest;
         </script>
     </head>
     <body></body>

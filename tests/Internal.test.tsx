@@ -4,12 +4,8 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
-
-interface WindowWithTabsterCore extends Window {
-    __tabsterInstance: Types.TabsterCore;
-}
 
 describe("Internal", () => {
     beforeAll(async () => {
@@ -35,16 +31,13 @@ describe("Internal", () => {
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval(() => {
-                const tabster = (window as unknown as WindowWithTabsterCore)
-                    .__tabsterInstance;
-                tabster.internal.stopObserver();
+                getTabsterTestVariables().core?.internal.stopObserver();
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterCore)
-                    .__tabsterInstance;
+                const tabster = getTabsterTestVariables().core;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
-                if (el1 && el2) {
+                if (tabster && el1 && el2) {
                     const t1 = tabster.storageEntry(el1)?.tabster;
                     const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;
@@ -59,11 +52,10 @@ describe("Internal", () => {
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterCore)
-                    .__tabsterInstance;
+                const tabster = getTabsterTestVariables().core;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
-                if (el1 && el2) {
+                if (tabster && el1 && el2) {
                     const t1 = tabster.storageEntry(el1)?.tabster;
                     const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;
@@ -73,16 +65,13 @@ describe("Internal", () => {
                 expect(res).toEqual("true-false");
             })
             .eval(() => {
-                const tabster = (window as unknown as WindowWithTabsterCore)
-                    .__tabsterInstance;
-                tabster.internal.resumeObserver(true);
+                getTabsterTestVariables().core?.internal.resumeObserver(true);
             })
             .eval((): string | void => {
-                const tabster = (window as unknown as WindowWithTabsterCore)
-                    .__tabsterInstance;
+                const tabster = getTabsterTestVariables().core;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
-                if (el1 && el2) {
+                if (tabster && el1 && el2) {
                     const t1 = tabster.storageEntry(el1)?.tabster;
                     const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;

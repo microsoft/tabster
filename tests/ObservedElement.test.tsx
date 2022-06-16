@@ -7,10 +7,6 @@ import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
-interface WindowWithTabsterCore extends Window {
-    __tabsterInstance: Types.TabsterCore;
-}
-
 describe("Focusable", () => {
     beforeAll(async () => {
         await BroTest.bootstrapTabsterPage({ observed: true });
@@ -36,10 +32,10 @@ describe("Focusable", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((name) => {
-                return (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(name, 0)
-                    .result;
+                return getTabsterTestVariables().observedElement?.requestFocus(
+                    name,
+                    0
+                ).result;
             }, name)
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement((el) => {
@@ -53,12 +49,11 @@ describe("Focusable", () => {
             <div id="root" {...getTabsterAttribute({ root: {} })}></div>
         )
             .eval((name) => {
-                const request = (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(
-                    name,
-                    5000
-                ).result;
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        name,
+                        5000
+                    ).result;
 
                 const observedButton = document.createElement("button");
                 observedButton.textContent = name;
@@ -81,20 +76,18 @@ describe("Focusable", () => {
         await new BroTest.BroTest(<div id="root"></div>)
             .eval(() => {
                 return new Promise((resolve) => {
-                    const request1 = (
-                        window as unknown as WindowWithTabsterCore
-                    ).__tabsterInstance.observedElement?.requestFocus(
-                        "button1",
-                        10005000
-                    );
-
-                    setTimeout(() => {
-                        const request2 = (
-                            window as unknown as WindowWithTabsterCore
-                        ).__tabsterInstance.observedElement?.requestFocus(
-                            "button2",
+                    const request1 =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            "button1",
                             10005000
                         );
+
+                    setTimeout(() => {
+                        const request2 =
+                            getTabsterTestVariables().observedElement?.requestFocus(
+                                "button2",
+                                10005000
+                            );
 
                         setTimeout(() => {
                             const button1 = document.createElement("button");
@@ -154,9 +147,10 @@ describe("Focusable", () => {
             )
         )
             .eval((name) => {
-                (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(name, 100500);
+                getTabsterTestVariables().observedElement?.requestFocus(
+                    name,
+                    100500
+                );
             }, name)
             .wait(500)
             .activeElement((el) => {
@@ -189,9 +183,10 @@ describe("Focusable", () => {
             )
         )
             .eval((name) => {
-                (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(name, 100500);
+                getTabsterTestVariables().observedElement?.requestFocus(
+                    name,
+                    100500
+                );
             }, name)
             .wait(300)
             .activeElement((el) => {

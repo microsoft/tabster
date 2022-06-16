@@ -6,9 +6,9 @@
 import * as React from "react";
 import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled, WindowWithTabsterCore } from "./utils/test-utils";
+import { runIfControlled } from "./utils/test-utils";
 
-interface WindowWithTabsterCoreAndFocusState extends WindowWithTabsterCore {
+interface WindowWithTabsterCoreAndFocusState extends Window {
     __tabsterFocusedRoot?: {
         events: {
             elementId?: string;
@@ -137,9 +137,9 @@ runIfControlled("Root", () => {
                         events: [],
                     });
 
-                const tabster = win.__tabsterInstance;
+                const tabster = getTabsterTestVariables().core;
 
-                tabster.root.eventTarget.addEventListener(
+                tabster?.root.eventTarget.addEventListener(
                     "focus",
                     (
                         e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
@@ -154,7 +154,7 @@ runIfControlled("Root", () => {
                     }
                 );
 
-                tabster.root.eventTarget.addEventListener(
+                tabster?.root.eventTarget.addEventListener(
                     "blur",
                     (
                         e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>

@@ -11,6 +11,7 @@ import {
     Frame,
     KeyInput,
 } from "puppeteer";
+import { getCurrentTabster, Types } from "tabster";
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -18,7 +19,6 @@ const renderToStaticMarkup: (element: React.ReactElement) => string =
     require("react-dom/cjs/react-dom-server.node.production.min").renderToStaticMarkup;
 
 declare const page: Page;
-declare let __tabsterInstance: any;
 
 type TabsterParts = Partial<{
     modalizer: boolean;
@@ -74,7 +74,7 @@ async function waitPageReadyAndDecorateConsoleError(
             window.setTimeout(check, 10);
 
             function check() {
-                if (typeof __tabsterInstance !== "undefined") {
+                if (typeof getTabsterTestVariables !== "undefined") {
                     resolve(true);
                 } else {
                     window.setTimeout(check, 10);
@@ -82,6 +82,18 @@ async function waitPageReadyAndDecorateConsoleError(
             }
         });
     });
+}
+
+export interface BroTestTabsterTestVariables {
+    getCurrentTabster: typeof getCurrentTabster;
+    core?: Types.TabsterCore;
+    modalizer?: Types.ModalizerAPI;
+    deloser?: Types.DeloserAPI;
+    outline?: Types.OutlineAPI;
+    mover?: Types.MoverAPI;
+    groupper?: Types.GroupperAPI;
+    observedElement?: Types.ObservedElementAPI;
+    crossOrigin?: Types.CrossOriginAPI;
 }
 
 export function getTestPageURL(parts: TabsterParts): string {

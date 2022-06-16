@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled, WindowWithTabsterCore } from "./utils/test-utils";
+import { runIfControlled } from "./utils/test-utils";
 
 runIfControlled("Focusable", () => {
     beforeAll(async () => {
@@ -82,10 +82,8 @@ runIfControlled("Focusable", () => {
             )
         )
             .eval(() => {
-                return (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.focusable
-                    .findAll({ container: document.body })
+                return getTabsterTestVariables()
+                    .core?.focusable.findAll({ container: document.body })
                     .map((el) => el.textContent);
             })
             .check((focusables: string[]) => {
@@ -101,10 +99,8 @@ runIfControlled("Focusable", () => {
                 const container = document.getElementById("groupper");
 
                 return container
-                    ? (
-                          window as unknown as WindowWithTabsterCore
-                      ).__tabsterInstance.focusable
-                          .findAll({ container })
+                    ? getTabsterTestVariables()
+                          .core?.focusable.findAll({ container })
                           .map((el) => el.textContent)
                     : [];
             })
