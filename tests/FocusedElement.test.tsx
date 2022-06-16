@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("onKeyDown", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({});
     });
 
     it("should not do anything on element with contenteditable='true'", async () => {

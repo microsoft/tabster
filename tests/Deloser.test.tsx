@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("Deloser", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ deloser: true, groupper: true });
     });
 
     it("should restore focus", async () => {

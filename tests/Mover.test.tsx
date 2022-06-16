@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("Mover", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     const getTestHtml = (attr: Types.TabsterDOMAttribute) => {
@@ -206,7 +206,7 @@ describe("Mover", () => {
 
 describe("NestedMovers", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     const getTestHtml = (
@@ -281,7 +281,7 @@ describe("NestedMovers", () => {
 
 describe("Mover memorizing current", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
@@ -384,7 +384,7 @@ describe("Mover memorizing current", () => {
 
 describe("Mover with excluded part", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should handle excluded part of Mover", async () => {
@@ -546,7 +546,7 @@ describe("Mover with excluded part", () => {
 
 describe("Mover with inputs inside", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should move or not move focus depending on caret position", async () => {
@@ -718,7 +718,7 @@ describe("Mover with inputs inside", () => {
 
 describe("Mover with visibilityAware", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {

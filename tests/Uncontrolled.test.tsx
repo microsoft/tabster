@@ -10,7 +10,7 @@ import { runIfControlled } from "./utils/test-utils";
 
 runIfControlled("Uncontrolled", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
     it("should allow aria-hidden element to be focused", async () => {
