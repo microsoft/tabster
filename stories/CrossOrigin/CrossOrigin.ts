@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import "./observed.css";
+import "./crossOrigin.css";
 import {
     getCurrentTabster,
     getTabsterAttribute,
@@ -14,22 +14,26 @@ export type ObservedElementProps = TabsterTypes.ObservedElementProps;
 
 const DELAY = 1000;
 
-export const createObservedWrapper = (props: ObservedElementProps) => {
+export const createObservedWrapperWithIframe = (
+    props: ObservedElementProps
+) => {
     const { name } = props;
 
-    // create observed target
+    // create observed target in iframe
     const observedContainer = document.createElement("div");
     const observedTarget = createObserved(props);
+    const iframe = document.createElement("iframe");
+    iframe.srcdoc = `<body>${observedTarget.outerHTML}</body>`;
     const mountObservedTargetWithDelay = () => {
         if (observedContainer.childElementCount) {
-            observedContainer.removeChild(observedTarget);
+            observedContainer.removeChild(iframe);
         }
         setTimeout(() => {
-            observedContainer.appendChild(observedTarget);
+            observedContainer.appendChild(iframe);
         }, DELAY);
     };
 
-    // create multiple triggers buttons
+    // create trigger button
     const trigger = createTrigger({
         name,
         showObservedTarget: mountObservedTargetWithDelay,
@@ -49,11 +53,11 @@ type TriggerProps = {
 const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
     const trigger = document.createElement("button");
     trigger.id = `trigger-for-${name}`;
-    trigger.innerText = `Asynchronously show and focus observed element with name ${name}`;
+    trigger.innerText = `Focus observed element in iframe with name ${name}`;
     trigger.onclick = function () {
         showObservedTarget();
         const tabster = getCurrentTabster(window);
-        tabster?.observedElement?.requestFocus(name, 5000);
+        tabster?.crossOrigin?.observedElement?.requestFocus(name, 5000);
     };
 
     return trigger;

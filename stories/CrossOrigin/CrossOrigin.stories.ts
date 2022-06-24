@@ -4,10 +4,13 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { createObservedWrapper, ObservedElementProps } from "./Observed";
+import {
+    createObservedWrapperWithIframe,
+    ObservedElementProps,
+} from "./CrossOrigin";
 
 export default {
-    title: "Observed",
+    title: "Cross origin",
     argTypes: {
         name: {
             control: "object",
@@ -16,10 +19,9 @@ export default {
 } as Meta;
 
 const Observed: Story<ObservedElementProps> = (args) => {
-    return createObservedWrapper(args);
+    return createObservedWrapperWithIframe(args);
 };
-
-export const MultipleNames = Observed.bind({});
-MultipleNames.args = {
-    name: "observed-0",
+export const CrossFrameObserved = Observed.bind({});
+CrossFrameObserved.args = {
+    name: "observed-in-iframe-0",
 };
