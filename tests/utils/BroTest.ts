@@ -192,7 +192,11 @@ export class BroTest implements PromiseLike<undefined> {
             const item = this._chain.shift();
 
             if (item) {
-                await item.run();
+                await item.run().catch((reason) => {
+                    if (this._reject) {
+                        this._reject(reason);
+                    }
+                });
                 this._next();
             } else if (this._resolve) {
                 this._resolve();

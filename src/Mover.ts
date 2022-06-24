@@ -256,6 +256,30 @@ export class Mover
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number | undefined {
+        const allMoversGrouppers = state.currentCtx?.allMoversGrouppers;
+
+        if (allMoversGrouppers && allMoversGrouppers.moverCount > 1) {
+            const instances = allMoversGrouppers.instances;
+
+            for (let i = instances.length; i--; ) {
+                const gm = instances[i];
+
+                if (gm.isMover && gm.mover !== this) {
+                    const el = gm.mover.getElement();
+
+                    if (el) {
+                        if (state.container.contains(el)) {
+                            if (state.isFindAll) {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
         if (state.isFindAll) {
             return undefined;
         }
