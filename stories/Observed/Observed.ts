@@ -33,7 +33,8 @@ export const createObservedWrapper = (props: ObservedElementProps) => {
     const triggers = names.map((name) =>
         createTrigger({
             name,
-            showObservedTarget: mountObservedTargetWithDelay,
+            innerText: `Asynchronously show and focus observed element with name ${name}`,
+            onClick: mountObservedTargetWithDelay,
         })
     );
 
@@ -52,16 +53,44 @@ export const createObservedWrapper = (props: ObservedElementProps) => {
     return wrapper;
 };
 
+export const createObservedWrapperWithIframe = (
+    props: ObservedElementProps
+) => {
+    const { names } = props;
+
+    const iframe = document.createElement("iframe");
+
+    // create observed target
+    const observedTarget = createObserved(props);
+    const html = `<body>${observedTarget.outerHTML}</body>`;
+    iframe.src = "data:text/html;charset=utf-8," + encodeURI(html);
+
+    // create multiple triggers buttons
+    const triggers = names.map((name) =>
+        createTrigger({
+            name,
+            innerText: `Focus observed element in iframe with name ${name}`,
+        })
+    );
+
+    const wrapper = document.createElement("div");
+    triggers.forEach((trigger) => wrapper.appendChild(trigger));
+    document.body.appendChild(iframe);
+
+    return wrapper;
+};
+
 type TriggerProps = {
     name: string;
-    showObservedTarget: () => void;
+    innerText: string;
+    onClick?: () => void;
 };
-const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
+const createTrigger = ({ name, onClick, innerText }: TriggerProps) => {
     const trigger = document.createElement("button");
     trigger.id = `trigger-for-${name}`;
-    trigger.innerText = `Asynchronously show and focus observed element with name ${name}`;
+    trigger.innerText = innerText;
     trigger.onclick = function () {
-        showObservedTarget();
+        onClick?.();
         const tabster = getCurrentTabster(window);
         tabster?.observedElement?.requestFocus(name, 5000);
     };
@@ -69,7 +98,7 @@ const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
     return trigger;
 };
 
-const createObserved = (props: ObservedElementProps) => {
+const createObserved = (props: TabsterTypes.ObservedElementProps) => {
     const observed = document.createElement("div");
     observed.tabIndex = 0;
     observed.classList.add("observed");

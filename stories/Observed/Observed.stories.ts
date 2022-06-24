@@ -4,7 +4,11 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { createObservedWrapper, ObservedElementProps } from "./Observed";
+import {
+    createObservedWrapper,
+    ObservedElementProps,
+    createObservedWrapperWithIframe,
+} from "./Observed";
 
 export default {
     title: "Observed",
@@ -21,5 +25,14 @@ const Observed: Story<ObservedElementProps> = (args) => {
 
 export const MultipleNames = Observed.bind({});
 MultipleNames.args = {
+    names: ["observed-0", "observed-1"],
+};
+
+const ObservedInIframe: Story<ObservedElementProps> = (args) => {
+    return createObservedWrapperWithIframe(args);
+};
+
+export const MultipleNamesIframe = ObservedInIframe.bind({});
+MultipleNamesIframe.args = {
     names: ["observed-0", "observed-1"],
 };
