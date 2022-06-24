@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("<iframe />", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ deloser: true });
     });
 
     it("should focus in an out with Tab", async () => {

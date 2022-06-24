@@ -529,7 +529,7 @@ export interface Mover extends TabsterPart<MoverProps> {
     readonly id: string;
     readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
-    setCurrent(element: HTMLElement | undefined): boolean;
+    setCurrent(element: HTMLElement | undefined): void;
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
     findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;

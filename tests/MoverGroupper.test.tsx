@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("MoverGroupper", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
     it.each<[string, Types.GroupperTabbability | undefined]>([

@@ -1,6 +1,6 @@
 {
     "name": "tabster",
-    "version": "1.4.0",
+    "version": "1.4.2",
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
@@ -26,7 +26,7 @@
         "format:check": "prettier --check .",
         "lint": "eslint src/ --fix",
         "lint:check": "eslint src/",
-        "test": "jest",
+        "test": "node tests/utils/runner.js",
         "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
         "test:root-dummy-inputs": "STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm test",
         "prepublishOnly": "npm run build",
@@ -94,7 +94,10 @@
         "rollup-plugin-dts": "^4.2.0",
         "rollup-plugin-sourcemaps": "^0.6.3",
         "rollup-plugin-typescript2": "^0.31.2",
+        "strip-ansi": "^7.0.1",
+        "tree-kill": "^1.2.2",
         "tsconfig-paths-webpack-plugin": "^3.5.2",
-        "typescript": "^4.5.5"
+        "typescript": "^4.5.5",
+        "vite": "^2.9.12"
     }
 }

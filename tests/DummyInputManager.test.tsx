@@ -10,7 +10,11 @@ import { runIfUnControlled } from "./utils/test-utils";
 
 runIfUnControlled("DummyInputManager", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({
+            mover: true,
+            groupper: true,
+            modalizer: true,
+        });
     });
     describe("should update dummy inputs when DOM children update for", () => {
         const evaluateDummy = (dummyAttribute: string, elementId: string) => {
@@ -250,7 +254,7 @@ runIfUnControlled("DummyInputManager", () => {
 
             const testHtml = (
                 <div>
-                    <div {...attr}>
+                    <div {...attr} aria-label="modalizer">
                         <button>Button1</button>
                         <button>Button2</button>
                         <button>Button3</button>

@@ -21,7 +21,7 @@ const groupperItem = (
 
 describe("Groupper - default", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
     const getTestHtml = () => {
@@ -66,7 +66,7 @@ describe("Groupper - default", () => {
 
 describe("Groupper - limited focus trap", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
     const getTestHtml = () => {
@@ -117,7 +117,7 @@ describe("Groupper - limited focus trap", () => {
 
 describe("Groupper tabbing forward and backwards", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
     it("should properly move the focus when tabbing from outside of the groupper", async () => {
