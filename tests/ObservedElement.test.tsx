@@ -68,10 +68,10 @@ describe("Focusable", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((name) => {
-                return (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(name, 0)
-                    .result;
+                return getTabsterTestVariables().observedElement?.requestFocus(
+                    name,
+                    0
+                ).result;
             }, names[0])
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement((el) => {
@@ -83,10 +83,10 @@ describe("Focusable", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((name) => {
-                return (
-                    window as unknown as WindowWithTabsterCore
-                ).__tabsterInstance.observedElement?.requestFocus(name, 0)
-                    .result;
+                return getTabsterTestVariables().observedElement?.requestFocus(
+                    name,
+                    0
+                ).result;
             }, names[1])
             .check((res: boolean) => expect(res).toBe(true))
             .activeElement((el) => {
