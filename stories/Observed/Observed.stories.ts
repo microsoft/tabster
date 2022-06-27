@@ -25,8 +25,7 @@ const Observed: Story<ObservedElementProps> = (args) => {
 
 export const TargetNotInDOM = Observed.bind({});
 TargetNotInDOM.args = {
-    //   names: ["observed-0", "observed-1"],
-    name: "amber",
+    names: ["observed-0", "observed-1"],
 };
 
 const ObservedInIframe: Story<ObservedElementProps> = (args) => {
@@ -35,6 +34,5 @@ const ObservedInIframe: Story<ObservedElementProps> = (args) => {
 
 export const TargetInIframe = ObservedInIframe.bind({});
 TargetInIframe.args = {
-    //  names: ["observed-0", "observed-1"],
-    name: "amber",
+    names: ["observed-0", "observed-1"],
 };

@@ -18,22 +18,19 @@ export type ObservedElementProps = TabsterTypes.ObservedElementProps;
 const DELAY = 1000;
 
 export const createObservedWrapper = (props: ObservedElementProps) => {
-    const { name } = props;
+    const { names } = props;
 
     // create observed target
     const observedContainer = document.createElement("div");
     const observedTarget = createObserved(props, document);
     const mountObservedTargetWithDelay = () => {
-        if (observedContainer.childElementCount) {
-            observedContainer.removeChild(observedTarget);
-        }
         setTimeout(() => {
             observedContainer.appendChild(observedTarget);
         }, DELAY);
     };
 
     // create multiple triggers buttons
-    const triggers = [name].map((name) =>
+    const triggers = names.map((name) =>
         createTrigger({
             name,
             innerText: `Asynchronously show and focus observed element with name ${name}`,
@@ -71,7 +68,7 @@ window.setupTabsterInIframe = setupTabsterInIframe;
 export const createObservedWrapperWithIframe = (
     props: ObservedElementProps
 ) => {
-    const { name } = props;
+    const { names } = props;
 
     const iframe = document.createElement("iframe");
     // Note: dynamic iframe using srcdoc does not work https://bugs.chromium.org/p/chromium/issues/detail?id=1339813
@@ -91,7 +88,7 @@ export const createObservedWrapperWithIframe = (
     iframe.width = "600px";
 
     // create trigger button
-    const triggers = [name].map((name) =>
+    const triggers = names.map((name) =>
         createTrigger({
             name,
             innerText: `Focus observed element in iframe with name ${name}`,
@@ -141,8 +138,8 @@ const createObserved = (
     const observed = currDocument.createElement("div");
     observed.tabIndex = 0;
     observed.classList.add("observed");
-    observed.innerText = `observed element with name: ${JSON.stringify(
-        props.name
+    observed.innerText = `observed element with names: ${JSON.stringify(
+        props.names
     )}`;
 
     const attr = getTabsterAttribute(
