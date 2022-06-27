@@ -15,7 +15,7 @@ interface WindowWithTabster extends Window {
 
 describe("Tabster dispose", () => {
     beforeEach(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({});
     });
 
     it("should not dispose global tabster core if there are still tabster instances", async () => {
