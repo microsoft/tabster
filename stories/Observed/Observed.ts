@@ -24,6 +24,9 @@ export const createObservedWrapper = (props: ObservedElementProps) => {
     const observedContainer = document.createElement("div");
     const observedTarget = createObserved(props, document);
     const mountObservedTargetWithDelay = () => {
+        if (observedContainer.childElementCount) {
+            observedContainer.removeChild(observedTarget);
+        }
         setTimeout(() => {
             observedContainer.appendChild(observedTarget);
         }, DELAY);
