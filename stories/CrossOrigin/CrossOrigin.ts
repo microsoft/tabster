@@ -9,6 +9,7 @@ import {
     getCrossOrigin,
     getCurrentTabster,
     getObservedElement,
+    getTabsterAttribute,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -41,8 +42,19 @@ export const createObservedWrapperWithIframe = (
 
     const iframe = document.createElement("iframe");
     // Note: dynamic iframe using srcdoc does not work https://bugs.chromium.org/p/chromium/issues/detail?id=1339813
-    iframe.src = `./iframe.html?id=observed--element-in-dom&args=name:${name}&viewMode=story`;
-    iframe.height = "400px";
+    // a `src` attribute is required
+    iframe.src = `#`;
+    iframe.onload = () => {
+        const document = iframe.contentDocument;
+        if (document) {
+            document.body.innerHTML = "";
+            const script = document.createElement("script");
+            script.innerText = `setupTabsterInIframe(window)`;
+            document.body.append(script);
+            const observedTarget = createObserved(props, document);
+            document.body.append(observedTarget);
+        }
+    };
     iframe.width = "600px";
 
     // create trigger button
@@ -68,4 +80,27 @@ const createTrigger = ({ name }: TriggerProps) => {
     };
 
     return trigger;
+};
+
+const createObserved = (
+    props: ObservedElementProps,
+    currDocument: Document
+) => {
+    const observed = currDocument.createElement("div");
+    observed.tabIndex = 0;
+    observed.classList.add("observed");
+    observed.innerText = `observed element with name: ${JSON.stringify(
+        props.name
+    )}`;
+
+    const attr = getTabsterAttribute(
+        {
+            observed: props,
+        },
+        true
+    );
+
+    observed.setAttribute(TabsterTypes.TabsterAttributeName, attr);
+
+    return observed;
 };
