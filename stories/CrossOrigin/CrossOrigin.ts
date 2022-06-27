@@ -20,8 +20,8 @@ const setupTabsterInIframe = (currWindow: Window) => {
         controlTab: true,
         rootDummyInputs: undefined,
     });
+    console.log("created tabster for iframe");
     getObservedElement(tabster);
-
     getCrossOrigin(tabster);
     tabster?.crossOrigin?.setup();
     console.log("created cross origin");
@@ -40,11 +40,8 @@ export const createObservedWrapperWithIframe = (
     const { name } = props;
 
     const iframe = document.createElement("iframe");
-
-    // create observed target in iframe
-    iframe.src = `./iframe.html?id=observed--element-in-dom&args=name:${encodeURI(
-        name
-    )}&viewMode=story`;
+    // Note: dynamic iframe using srcdoc does not work https://bugs.chromium.org/p/chromium/issues/detail?id=1339813
+    iframe.src = `./iframe.html?id=observed--element-in-dom&args=name:${name}&viewMode=story`;
     iframe.height = "400px";
     iframe.width = "600px";
 
