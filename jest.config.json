@@ -1,6 +1,6 @@
 {
     "preset": "jest-puppeteer",
-    "testEnvironment": "jest-environment-puppeteer",
+    "testEnvironment": "./utils/BroTestEnvironment.ts",
     "transform": { "^.+\\.(ts|tsx|js|jsx)?$": "babel-jest" },
     "moduleNameMapper": {
         "tabster": "<rootDir>/../src/"

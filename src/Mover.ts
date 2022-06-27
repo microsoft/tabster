@@ -10,19 +10,20 @@ import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
 import {
+    createElementTreeWalker,
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
     getLastChild,
+    getPromise,
+    HTMLElementWithDummyContainer,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
     scrollIntoView,
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
-    HTMLElementWithDummyContainer,
-    getPromise,
 } from "./Utils";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
@@ -74,22 +75,38 @@ class MoverDummyManager extends DummyInputManager {
     };
 }
 
+// TypeScript enums produce depressing JavaScript code, so, we're just using
+// a few old style constants here.
+const _moverUpdateAdd = 1;
+const _moverUpdateAttr = 2;
+const _moverUpdateRemove = 3;
+
+interface MoverUpdateQueueItem {
+    element: HTMLElement;
+    type:
+        | typeof _moverUpdateAdd
+        | typeof _moverUpdateAttr
+        | typeof _moverUpdateRemove;
+}
+
 export class Mover
     extends TabsterPart<Types.MoverProps>
     implements Types.Mover
 {
     private _unobserve: (() => void) | undefined;
     private _intersectionObserver: IntersectionObserver | undefined;
-    private _onChangeTimer: number | undefined;
-    private _domChangedTimer: number | undefined;
+    private _setCurrentTimer: number | undefined;
     private _current: WeakHTMLElement | undefined;
     private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
     private _fullyVisible: string | undefined;
-    private _focusable: Record<string, WeakHTMLElement> = {};
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
     private _isFindingTabbable = false;
+    private _isNestedCall = false;
+    private _allElements: WeakMap<HTMLElement, Mover> | undefined;
+    private _updateQueue: MoverUpdateQueueItem[] | undefined;
+    private _updateTimer: number | undefined;
 
     dummyManager: MoverDummyManager | undefined;
 
@@ -109,9 +126,6 @@ export class Mover
                 { threshold: [0, 0.25, 0.5, 0.75, 1] }
             );
             this._observeState();
-            this._domChangedTimer = tabster
-                .getWindow()
-                .setTimeout(this._domChanged, 0);
         }
 
         this._onDispose = onDispose;
@@ -129,7 +143,6 @@ export class Mover
 
     dispose(): void {
         this._onDispose(this);
-        this._focusable = {};
 
         if (this._intersectionObserver) {
             this._intersectionObserver.disconnect();
@@ -138,6 +151,8 @@ export class Mover
 
         delete this._current;
         delete this._fullyVisible;
+        delete this._allElements;
+        delete this._updateQueue;
 
         if (this._unobserve) {
             this._unobserve();
@@ -146,31 +161,62 @@ export class Mover
 
         const win = this._win();
 
-        if (this._domChangedTimer) {
-            win.clearTimeout(this._domChangedTimer);
-            delete this._domChangedTimer;
+        if (this._setCurrentTimer) {
+            win.clearTimeout(this._setCurrentTimer);
+            delete this._setCurrentTimer;
         }
 
-        if (this._onChangeTimer) {
-            win.clearTimeout(this._onChangeTimer);
-            delete this._onChangeTimer;
+        if (this._updateTimer) {
+            win.clearTimeout(this._updateTimer);
+            delete this._updateTimer;
         }
 
         this.dummyManager?.dispose();
     }
 
-    setCurrent(element: HTMLElement | undefined): boolean {
+    setCurrent(element: HTMLElement | undefined): void {
         if (element) {
             this._current = new WeakHTMLElement(this._win, element);
         } else {
             this._current = undefined;
         }
 
-        if (this._props.trackState || this._props.visibilityAware) {
-            this._processOnChange();
-        }
+        if (
+            (this._props.trackState || this._props.visibilityAware) &&
+            !this._setCurrentTimer
+        ) {
+            this._setCurrentTimer = this._win().setTimeout(() => {
+                delete this._setCurrentTimer;
 
-        return false;
+                const changed: (WeakHTMLElement | undefined)[] = [];
+
+                if (this._current !== this._prevCurrent) {
+                    changed.push(this._current);
+                    changed.push(this._prevCurrent);
+                    this._prevCurrent = this._current;
+                }
+
+                for (const weak of changed) {
+                    const el = weak?.get();
+
+                    if (el && this._allElements?.get(el) === this) {
+                        const props = this._props;
+
+                        if (
+                            el &&
+                            (props.visibilityAware !== undefined ||
+                                props.trackState)
+                        ) {
+                            const state = this.getState(el);
+
+                            if (state) {
+                                triggerEvent(el, Types.MoverEventName, state);
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     getCurrent(): HTMLElement | null {
@@ -308,6 +354,7 @@ export class Mover
                 }
 
                 if (
+                    !this._isNestedCall &&
                     visibilityAware &&
                     (!container.contains(state.from) ||
                         (this._isFindingTabbable &&
@@ -315,32 +362,38 @@ export class Mover
                                 state.from as HTMLElementWithDummyContainer
                             )?.__tabsterDummyContainer?.get() === container))
                 ) {
-                    const focusable = Object.keys(this._focusable);
-                    let found: HTMLElement | undefined;
+                    this._isNestedCall = true;
 
-                    if (!state.isForward) {
-                        focusable.reverse();
-                    }
+                    const container = this.getElement();
+                    const found = this._tabster.focusable.findElement({
+                        container,
+                        ignoreUncontrolled: true,
+                        prev: !state.isForward,
+                        acceptCondition: (el) => {
+                            const id = getElementUId(this._win, el);
+                            const visibility = this._visible[id];
 
-                    for (const id of focusable) {
-                        const visibility = this._visible[id];
+                            return (
+                                container !== el &&
+                                !!this._allElements?.get(el) &&
+                                state.acceptCondition(el) &&
+                                (visibility === Types.Visibilities.Visible ||
+                                    (visibility ===
+                                        Types.Visibilities.PartiallyVisible &&
+                                        (visibilityAware ===
+                                            Types.Visibilities
+                                                .PartiallyVisible ||
+                                            !this._fullyVisible)))
+                            );
+                        },
+                    });
 
-                        if (
-                            visibility === Types.Visibilities.Visible ||
-                            (visibility ===
-                                Types.Visibilities.PartiallyVisible &&
-                                (visibilityAware ===
-                                    Types.Visibilities.PartiallyVisible ||
-                                    !this._fullyVisible))
-                        ) {
-                            found = this._focusable[id]?.get();
+                    this._isNestedCall = false;
 
-                            if (found && state.acceptCondition(found)) {
-                                state.found = true;
-                                state.foundElement = found;
-                                return NodeFilter.FILTER_ACCEPT;
-                            }
-                        }
+                    if (found) {
+                        state.found = true;
+                        state.foundElement = found;
+                        return NodeFilter.FILTER_ACCEPT;
                     }
                 }
             }
@@ -400,15 +453,196 @@ export class Mover
             return;
         }
 
-        const observer = new MutationObserver(() => {
-            const win = this._win();
+        const win = this._win();
+        const allElements = (this._allElements = new WeakMap());
+        const tabsterFocusable = this._tabster.focusable;
+        let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
-            if (this._domChangedTimer) {
-                win.clearTimeout(this._domChangedTimer);
+        const observer = new MutationObserver((mutations: MutationRecord[]) => {
+            for (const mutation of mutations) {
+                const target = mutation.target;
+                const removed = mutation.removedNodes;
+                const added = mutation.addedNodes;
+
+                if (mutation.type === "attributes") {
+                    if (mutation.attributeName === "tabindex") {
+                        updateQueue.push({
+                            element: target as HTMLElement,
+                            type: _moverUpdateAttr,
+                        });
+                    }
+                } else {
+                    for (let i = 0; i < removed.length; i++) {
+                        updateQueue.push({
+                            element: removed[i] as HTMLElement as HTMLElement,
+                            type: _moverUpdateRemove,
+                        });
+                    }
+
+                    for (let i = 0; i < added.length; i++) {
+                        updateQueue.push({
+                            element: added[i] as HTMLElement,
+                            type: _moverUpdateAdd,
+                        });
+                    }
+                }
             }
 
-            this._domChangedTimer = win.setTimeout(this._domChanged, 100);
+            requestUpdate();
         });
+
+        const setElement = (element: HTMLElement, remove?: boolean): void => {
+            const current = allElements.get(element);
+
+            if (current && remove) {
+                this._intersectionObserver?.unobserve(element);
+                allElements.delete(element);
+            }
+
+            if (!current && !remove) {
+                allElements.set(element, this);
+                this._intersectionObserver?.observe(element);
+            }
+        };
+
+        const updateElement = (element: HTMLElement): void => {
+            const isFocusable = tabsterFocusable.isFocusable(element);
+            const current = allElements.get(element);
+
+            if (current) {
+                if (!isFocusable) {
+                    setElement(element, true);
+                }
+            } else {
+                if (isFocusable) {
+                    setElement(element);
+                }
+            }
+        };
+
+        const addNewElements = (element: HTMLElement): void => {
+            const { mover } = getMoverGroupper(element);
+
+            if (mover && mover !== this) {
+                if (
+                    mover.getElement() === element &&
+                    tabsterFocusable.isFocusable(element)
+                ) {
+                    setElement(element);
+                } else {
+                    return;
+                }
+            }
+
+            const walker = createElementTreeWalker(
+                win.document,
+                element,
+                (node: Node): number => {
+                    const { mover, groupper } = getMoverGroupper(
+                        node as HTMLElement
+                    );
+
+                    if (mover && mover !== this) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+
+                    if (
+                        groupper &&
+                        (groupper.getElement() !== node ||
+                            !tabsterFocusable.isFocusable(node as HTMLElement))
+                    ) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+
+                    if (tabsterFocusable.isFocusable(node as HTMLElement)) {
+                        setElement(node as HTMLElement);
+                    }
+
+                    return NodeFilter.FILTER_SKIP;
+                }
+            );
+
+            if (walker) {
+                walker.currentNode = element;
+
+                while (walker.nextNode()) {
+                    /* Iterating for the sake of calling processNode() callback. */
+                }
+            }
+        };
+
+        const removeWalk = (element: HTMLElement): void => {
+            const current = allElements.get(element);
+
+            if (current) {
+                setElement(element, true);
+            }
+
+            for (
+                let el = element.firstElementChild;
+                el;
+                el = el.nextElementSibling
+            ) {
+                removeWalk(el as HTMLElement);
+            }
+        };
+
+        const requestUpdate = () => {
+            if (!this._updateTimer && updateQueue.length) {
+                this._updateTimer = win.setTimeout(() => {
+                    delete this._updateTimer;
+
+                    for (const { element, type } of updateQueue) {
+                        switch (type) {
+                            case _moverUpdateAttr:
+                                updateElement(element);
+                                break;
+                            case _moverUpdateAdd:
+                                addNewElements(element);
+                                break;
+                            case _moverUpdateRemove:
+                                removeWalk(element);
+                                break;
+                        }
+                    }
+
+                    updateQueue = this._updateQueue = [];
+                }, 0);
+            }
+        };
+
+        const getMoverGroupper = (
+            element: HTMLElement
+        ): { mover?: Mover; groupper?: Types.Groupper } => {
+            const ret: {
+                mover?: Mover;
+                groupper?: Types.Groupper;
+            } = {};
+
+            for (
+                let el: HTMLElement | null = element;
+                el;
+                el = el.parentElement
+            ) {
+                const toe = getTabsterOnElement(this._tabster, el);
+
+                if (toe) {
+                    if (toe.groupper && !ret.groupper) {
+                        ret.groupper = toe.groupper;
+                    }
+
+                    if (toe.mover) {
+                        ret.mover = toe.mover as Mover;
+                        break;
+                    }
+                }
+            }
+
+            return ret;
+        };
+
+        updateQueue.push({ element, type: _moverUpdateAdd });
+        requestUpdate();
 
         observer.observe(element, {
             childList: true,
@@ -420,113 +654,6 @@ export class Mover
         this._unobserve = () => {
             observer.disconnect();
         };
-    }
-
-    private _domChanged = (): void => {
-        this._domChangedTimer = undefined;
-
-        const element = this.getElement();
-
-        if (element) {
-            const elements: HTMLElement[] = this._tabster.focusable.findAll({
-                container: element,
-            });
-            const newFocusables: Record<string, WeakHTMLElement> = {};
-            const prevFocusables = this._focusable;
-
-            for (let i = 0; i < elements.length; i++) {
-                const el = elements[i];
-                const id = getElementUId(this._win, el);
-                let weakEl: WeakHTMLElement | undefined = prevFocusables[id];
-
-                if (!weakEl) {
-                    weakEl = new WeakHTMLElement(this._win, el);
-                    this._intersectionObserver?.observe(el);
-                }
-
-                newFocusables[id] = weakEl;
-            }
-
-            for (const id of Object.keys(prevFocusables)) {
-                if (!(id in newFocusables)) {
-                    const prevFocusable = prevFocusables[id].get();
-
-                    delete prevFocusables[id];
-                    delete this._visible[id];
-
-                    if (prevFocusable) {
-                        this._intersectionObserver?.unobserve(prevFocusable);
-                    }
-
-                    if (
-                        prevFocusable &&
-                        this._current?.get() === prevFocusable
-                    ) {
-                        this.setCurrent(undefined);
-                    }
-                }
-            }
-
-            this._focusable = newFocusables;
-        }
-    };
-
-    private _processOnChange(force?: boolean): void {
-        if (this._onChangeTimer && !force) {
-            return;
-        }
-
-        const reallyProcessOnChange = () => {
-            this._onChangeTimer = undefined;
-
-            const changed: (WeakHTMLElement | undefined)[] = [];
-
-            if (this._current !== this._prevCurrent) {
-                changed.push(this._current);
-                changed.push(this._prevCurrent);
-                this._prevCurrent = this._current;
-            }
-
-            const processed: Record<string, boolean> = {};
-
-            for (const weak of changed) {
-                const el = weak?.get();
-                const id = el && getElementUId(this._win, el);
-
-                if (id && !processed[id]) {
-                    processed[id] = true;
-
-                    if (this._focusable[id]) {
-                        const props = this._props;
-
-                        if (
-                            el &&
-                            (props.visibilityAware !== undefined ||
-                                props.trackState)
-                        ) {
-                            const state = this.getState(el);
-
-                            if (state) {
-                                triggerEvent(el, Types.MoverEventName, state);
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        if (this._onChangeTimer) {
-            this._win().clearTimeout(this._onChangeTimer);
-        }
-
-        if (force) {
-            reallyProcessOnChange();
-        } else {
-            this._onChangeTimer = this._win().setTimeout(
-                reallyProcessOnChange,
-                0
-            );
-        }
     }
 
     getState(element: HTMLElement): Types.MoverElementState | undefined {

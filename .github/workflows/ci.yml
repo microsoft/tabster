@@ -27,9 +27,7 @@ jobs:
             - run: npm run lint:check
             - run: npm run format:check
             - name: "Run tests"
-              run: |
-                npm run serve &
-                npm run test
+              run: npm run test
               env:
                 PORT: '8080'
             - name: "Rebuild test container (uncontrolled)"
@@ -38,9 +36,7 @@ jobs:
               env:
                 STORYBOOK_UNCONTROLLED: 'true'
             - name: "Run tests (uncontrolled)"
-              run: |
-                npm run serve &
-                npm run test
+              run: npm run test
               env:
                 PORT: '8081'
                 STORYBOOK_UNCONTROLLED: 'true'
@@ -51,9 +47,7 @@ jobs:
                 STORYBOOK_UNCONTROLLED: 'true'
                 STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
             - name: "Run tests (root-dummy-inputs)"
-              run: |
-                npm run serve &
-                npm run test
+              run: npm run test
               env:
                 PORT: '8082'
                 STORYBOOK_UNCONTROLLED: 'true'
@@ -61,4 +55,4 @@ jobs:
             - name: "Check for unstaged changes"
               run: |
                 git status --porcelain
-                git diff-index --quiet HEAD -- || exit 1 
+                git diff-index --quiet HEAD -- || exit 1

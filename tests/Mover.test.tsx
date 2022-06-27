@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 
 describe("Mover", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     const getTestHtml = (attr: Types.TabsterDOMAttribute) => {
@@ -206,7 +206,7 @@ describe("Mover", () => {
 
 describe("NestedMovers", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     const getTestHtml = (
@@ -281,7 +281,7 @@ describe("NestedMovers", () => {
 
 describe("Mover memorizing current", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
@@ -384,7 +384,7 @@ describe("Mover memorizing current", () => {
 
 describe("Mover with excluded part", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should handle excluded part of Mover", async () => {
@@ -546,7 +546,7 @@ describe("Mover with excluded part", () => {
 
 describe("Mover with inputs inside", () => {
     beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage();
+        await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
     it("should move or not move focus depending on caret position", async () => {
@@ -712,6 +712,72 @@ describe("Mover with inputs inside", () => {
             .pressUp()
             .activeElement((el) => {
                 expect(el?.attributes.value).toEqual("Input");
+            });
+    });
+});
+
+describe("Mover with visibilityAware", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                            },
+                        })}
+                        style={{ height: 200, overflow: "scroll" }}
+                    >
+                        <button style={{ height: 100, display: "block" }}>
+                            Button2
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button3
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button4
+                        </button>
+                        <button style={{ height: 100, display: "block" }}>
+                            Button5
+                        </button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .wait(100) // Give time for intersection observer to process changes.
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
             });
     });
 });
