@@ -4,7 +4,11 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { createObservedWrapper, ObservedElementProps } from "./Observed";
+import {
+    createAsyncObservedWrapper,
+    createObservedWrapper,
+    ObservedElementProps,
+} from "./Observed";
 
 export default {
     title: "Observed",
@@ -18,8 +22,15 @@ export default {
 const Observed: Story<ObservedElementProps> = (args) => {
     return createObservedWrapper(args);
 };
+export const ElementInDOM = Observed.bind({});
+ElementInDOM.args = {
+    name: "observed-0",
+};
 
-export const MultipleNames = Observed.bind({});
-MultipleNames.args = {
+const AsyncObserved: Story<ObservedElementProps> = (args) => {
+    return createAsyncObservedWrapper(args);
+};
+export const ElementNotInDOM = AsyncObserved.bind({});
+ElementNotInDOM.args = {
     name: "observed-0",
 };

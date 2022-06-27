@@ -8,13 +8,7 @@ import {
     createTabster,
     getCrossOrigin,
     getCurrentTabster,
-    getDeloser,
-    getGroupper,
-    getModalizer,
-    getMover,
     getObservedElement,
-    getOutline,
-    getTabsterAttribute,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -26,12 +20,6 @@ const setupTabsterInIframe = (currWindow: Window) => {
         controlTab: true,
         rootDummyInputs: undefined,
     });
-
-    getModalizer(tabster);
-    getDeloser(tabster);
-    getOutline(tabster);
-    getMover(tabster);
-    getGroupper(tabster);
     getObservedElement(tabster);
 
     getCrossOrigin(tabster);
@@ -54,11 +42,11 @@ export const createObservedWrapperWithIframe = (
     const iframe = document.createElement("iframe");
 
     // create observed target in iframe
-    const observedTarget = createObserved(props);
-    iframe.srcdoc = `
-<script>parent.setupTabsterInIframe(window)</script>
-<body>${observedTarget.outerHTML}</body>
-`;
+    iframe.src = `./iframe.html?id=observed--element-in-dom&args=name:${encodeURI(
+        name
+    )}&viewMode=story`;
+    iframe.height = "400px";
+    iframe.width = "600px";
 
     // create trigger button
     const trigger = createTrigger({ name });
@@ -83,24 +71,4 @@ const createTrigger = ({ name }: TriggerProps) => {
     };
 
     return trigger;
-};
-
-const createObserved = (props: ObservedElementProps) => {
-    const observed = document.createElement("div");
-    observed.tabIndex = 0;
-    observed.classList.add("observed");
-    observed.innerText = `observed element with name: ${JSON.stringify(
-        props.name
-    )}`;
-
-    const attr = getTabsterAttribute(
-        {
-            observed: props,
-        },
-        true
-    );
-
-    observed.setAttribute(TabsterTypes.TabsterAttributeName, attr);
-
-    return observed;
 };

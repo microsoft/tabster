@@ -14,7 +14,7 @@ export type ObservedElementProps = TabsterTypes.ObservedElementProps;
 
 const DELAY = 1000;
 
-export const createObservedWrapper = (props: ObservedElementProps) => {
+export const createAsyncObservedWrapper = (props: ObservedElementProps) => {
     const { name } = props;
 
     // create observed target
@@ -32,7 +32,8 @@ export const createObservedWrapper = (props: ObservedElementProps) => {
     // create multiple triggers buttons
     const trigger = createTrigger({
         name,
-        showObservedTarget: mountObservedTargetWithDelay,
+        text: `Asynchronously show and focus observed element with name ${name}`,
+        onClick: mountObservedTargetWithDelay,
     });
 
     const wrapper = document.createElement("div");
@@ -42,16 +43,36 @@ export const createObservedWrapper = (props: ObservedElementProps) => {
     return wrapper;
 };
 
+export const createObservedWrapper = (props: ObservedElementProps) => {
+    const { name } = props;
+
+    // create observed target
+    const observedTarget = createObserved(props);
+
+    // create multiple triggers buttons
+    const trigger = createTrigger({
+        name,
+        text: `Focus observed element with name ${name}`,
+    });
+
+    const wrapper = document.createElement("div");
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(observedTarget);
+
+    return wrapper;
+};
+
 type TriggerProps = {
     name: string;
-    showObservedTarget: () => void;
+    text: string;
+    onClick?: () => void;
 };
-const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
+const createTrigger = ({ name, text, onClick }: TriggerProps) => {
     const trigger = document.createElement("button");
     trigger.id = `trigger-for-${name}`;
-    trigger.innerText = `Asynchronously show and focus observed element with name ${name}`;
+    trigger.innerText = text;
     trigger.onclick = function () {
-        showObservedTarget();
+        onClick?.();
         const tabster = getCurrentTabster(window);
         tabster?.observedElement?.requestFocus(name, 5000);
     };
