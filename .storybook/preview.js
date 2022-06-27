@@ -49,6 +49,7 @@ export const decorators = [
             getObservedElement(tabster);
             console.log("created observed");
             getCrossOrigin(tabster);
+            tabster?.crossOrigin?.setup();
             console.log("created cross origin");
         }
 

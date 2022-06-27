@@ -5,57 +5,79 @@
 
 import "./crossOrigin.css";
 import {
+    createTabster,
+    getCrossOrigin,
     getCurrentTabster,
+    getDeloser,
+    getGroupper,
+    getModalizer,
+    getMover,
+    getObservedElement,
+    getOutline,
     getTabsterAttribute,
     Types as TabsterTypes,
 } from "tabster";
 
 export type ObservedElementProps = TabsterTypes.ObservedElementProps;
 
-const DELAY = 1000;
+const setupTabsterInIframe = (currWindow: Window) => {
+    const tabster = createTabster(currWindow, {
+        autoRoot: {},
+        controlTab: true,
+        rootDummyInputs: undefined,
+    });
+
+    getModalizer(tabster);
+    getDeloser(tabster);
+    getOutline(tabster);
+    getMover(tabster);
+    getGroupper(tabster);
+    getObservedElement(tabster);
+
+    getCrossOrigin(tabster);
+    tabster?.crossOrigin?.setup();
+    console.log("created cross origin");
+};
+
+declare global {
+    interface Window {
+        setupTabsterInIframe: (currWindow: Window) => void;
+    }
+}
+window.setupTabsterInIframe = setupTabsterInIframe;
 
 export const createObservedWrapperWithIframe = (
     props: ObservedElementProps
 ) => {
     const { name } = props;
 
-    // create observed target in iframe
-    const observedContainer = document.createElement("div");
-    const observedTarget = createObserved(props);
     const iframe = document.createElement("iframe");
-    iframe.srcdoc = `<body>${observedTarget.outerHTML}</body>`;
-    const mountObservedTargetWithDelay = () => {
-        if (observedContainer.childElementCount) {
-            observedContainer.removeChild(iframe);
-        }
-        setTimeout(() => {
-            observedContainer.appendChild(iframe);
-        }, DELAY);
-    };
+
+    // create observed target in iframe
+    const observedTarget = createObserved(props);
+    iframe.srcdoc = `
+<script>parent.setupTabsterInIframe(window)</script>
+<body>${observedTarget.outerHTML}</body>
+`;
 
     // create trigger button
-    const trigger = createTrigger({
-        name,
-        showObservedTarget: mountObservedTargetWithDelay,
-    });
+    const trigger = createTrigger({ name });
 
     const wrapper = document.createElement("div");
     wrapper.appendChild(trigger);
-    wrapper.appendChild(observedContainer);
+    wrapper.appendChild(iframe);
 
     return wrapper;
 };
 
 type TriggerProps = {
     name: string;
-    showObservedTarget: () => void;
 };
-const createTrigger = ({ name, showObservedTarget }: TriggerProps) => {
+const createTrigger = ({ name }: TriggerProps) => {
     const trigger = document.createElement("button");
     trigger.id = `trigger-for-${name}`;
     trigger.innerText = `Focus observed element in iframe with name ${name}`;
     trigger.onclick = function () {
-        showObservedTarget();
         const tabster = getCurrentTabster(window);
         tabster?.crossOrigin?.observedElement?.requestFocus(name, 5000);
     };
