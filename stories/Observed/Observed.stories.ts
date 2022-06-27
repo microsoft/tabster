@@ -5,15 +5,15 @@
 
 import { Meta, Story } from "@storybook/html";
 import {
-    createAsyncObservedWrapper,
     createObservedWrapper,
     ObservedElementProps,
+    createObservedWrapperWithIframe,
 } from "./Observed";
 
 export default {
     title: "Observed",
     argTypes: {
-        name: {
+        names: {
             control: "object",
         },
     },
@@ -22,15 +22,19 @@ export default {
 const Observed: Story<ObservedElementProps> = (args) => {
     return createObservedWrapper(args);
 };
-export const ElementInDOM = Observed.bind({});
-ElementInDOM.args = {
-    name: "observed-0",
+
+export const TargetNotInDOM = Observed.bind({});
+TargetNotInDOM.args = {
+    //   names: ["observed-0", "observed-1"],
+    name: "amber",
 };
 
-const AsyncObserved: Story<ObservedElementProps> = (args) => {
-    return createAsyncObservedWrapper(args);
+const ObservedInIframe: Story<ObservedElementProps> = (args) => {
+    return createObservedWrapperWithIframe(args);
 };
-export const ElementNotInDOM = AsyncObserved.bind({});
-ElementNotInDOM.args = {
-    name: "observed-0",
+
+export const TargetInIframe = ObservedInIframe.bind({});
+TargetInIframe.args = {
+    //  names: ["observed-0", "observed-1"],
+    name: "amber",
 };
