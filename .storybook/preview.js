@@ -7,6 +7,7 @@ import {
     getMover,
     getObservedElement,
     getOutline,
+    getCrossOrigin,
 } from "../src";
 
 export const parameters = {
@@ -47,6 +48,9 @@ export const decorators = [
             console.log("created groupper");
             getObservedElement(tabster);
             console.log("created observed");
+            getCrossOrigin(tabster);
+            tabster?.crossOrigin?.setup();
+            console.log("created cross origin");
         }
 
         return Story();
