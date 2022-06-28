@@ -89,7 +89,7 @@ export interface TabsterPart<P> {
 }
 
 export interface ObservedElementProps {
-    name: string;
+    names: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: any;
 }
