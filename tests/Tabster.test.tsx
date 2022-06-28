@@ -4,13 +4,10 @@
  */
 
 import * as React from "react";
-import type { createTabster, disposeTabster } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 interface WindowWithTabster extends Window {
     __tabsterInstance: unknown;
-    createTabster: typeof createTabster;
-    disposeTabster: typeof disposeTabster;
 }
 
 describe("Tabster dispose", () => {
@@ -25,11 +22,13 @@ describe("Tabster dispose", () => {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 window.__tabsterInstance.dispose();
-                const win = window as unknown as WindowWithTabster;
-                const first = win.createTabster(window);
-                win.createTabster(window);
+                const first = getTabsterTestVariables().createTabster?.(window);
+                getTabsterTestVariables().createTabster?.(window);
 
-                win.disposeTabster(first);
+                if (first) {
+                    getTabsterTestVariables().disposeTabster?.(first);
+                }
+
                 return !!(window as unknown as WindowWithTabster)
                     .__tabsterInstance;
             })
@@ -45,12 +44,14 @@ describe("Tabster dispose", () => {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 window.__tabsterInstance.dispose();
-                const win = window as unknown as WindowWithTabster;
-                const first = win.createTabster(window);
-                const second = win.createTabster(window);
+                const first = getTabsterTestVariables().createTabster?.(window);
+                const second =
+                    getTabsterTestVariables().createTabster?.(window);
 
-                win.disposeTabster(first);
-                win.disposeTabster(second);
+                if (first && second) {
+                    getTabsterTestVariables().disposeTabster?.(first);
+                    getTabsterTestVariables().disposeTabster?.(second);
+                }
                 return !!(window as unknown as WindowWithTabster)
                     .__tabsterInstance;
             })
