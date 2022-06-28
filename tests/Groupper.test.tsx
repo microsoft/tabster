@@ -24,9 +24,9 @@ describe("Groupper - default", () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
-    const getTestHtml = () => {
+    const getTestHtml = (ignoreEsc?: boolean) => {
         const rootAttr = getTabsterAttribute({ root: {} });
-        const groupperAttr = getTabsterAttribute({ groupper: {} });
+        const groupperAttr = getTabsterAttribute({ groupper: { ignoreEsc } });
 
         return (
             <div {...rootAttr}>
@@ -54,13 +54,61 @@ describe("Groupper - default", () => {
     });
 
     it("should escape focus inside groupper with Escape key", async () => {
+        interface WindowWithEscFlag extends Window {
+            __escPressed1?: number;
+        }
+
         await new BroTest.BroTest(getTestHtml())
+            .eval(() => {
+                const keyEsc = 27;
+
+                (window as WindowWithEscFlag).__escPressed1 = 0;
+
+                window.addEventListener("keydown", (e) => {
+                    if (e.keyCode === keyEsc) {
+                        (window as WindowWithEscFlag).__escPressed1!++;
+                    }
+                });
+            })
             .pressTab()
             .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
             .pressEsc()
             .activeElement((el) =>
                 expect(el?.attributes["data-count"]).toBe("1")
-            );
+            )
+            .eval(() => (window as WindowWithEscFlag).__escPressed1)
+            .check((escPressed: number) => {
+                expect(escPressed).toBe(0);
+            });
+    });
+
+    it("should not escape focus inside groupper with Escape key when ignoreEsc is passed", async () => {
+        interface WindowWithEscFlag extends Window {
+            __escPressed2?: number;
+        }
+
+        await new BroTest.BroTest(getTestHtml(true))
+            .eval(() => {
+                const keyEsc = 27;
+
+                (window as WindowWithEscFlag).__escPressed2 = 0;
+
+                window.addEventListener("keydown", (e) => {
+                    if (e.keyCode === keyEsc) {
+                        (window as WindowWithEscFlag).__escPressed2!++;
+                    }
+                });
+            })
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .pressEsc()
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .eval(() => (window as WindowWithEscFlag).__escPressed2)
+            .check((escPressed: number) => {
+                expect(escPressed).toBe(1);
+            });
     });
 });
 

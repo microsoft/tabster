@@ -495,13 +495,21 @@ export class GroupperAPI implements Types.GroupperAPI {
                             e
                         )?.groupper;
 
-                        if (g && (g.isActive() || !g.getProps().tabbability)) {
-                            g.makeTabbable(false);
+                        if (g) {
+                            const props = g.getProps();
 
-                            next = g.getFirst();
+                            if (props.ignoreEsc) {
+                                return;
+                            }
 
-                            if (next) {
-                                break;
+                            if (g.isActive() || !props.tabbability) {
+                                g.makeTabbable(false);
+
+                                next = g.getFirst();
+
+                                if (next) {
+                                    break;
+                                }
                             }
                         }
                     }

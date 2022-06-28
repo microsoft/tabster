@@ -569,6 +569,7 @@ export type GroupperTabbability =
 
 export interface GroupperProps {
     tabbability?: GroupperTabbability;
+    ignoreEsc?: boolean;
 }
 
 export interface Groupper extends TabsterPart<GroupperProps> {
