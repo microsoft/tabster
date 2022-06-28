@@ -7,7 +7,6 @@ import "./observed.css";
 import {
     createTabster,
     getCrossOrigin,
-    getCurrentTabster,
     getObservedElement,
     getTabsterAttribute,
     Types as TabsterTypes,
@@ -56,8 +55,8 @@ const setupTabsterInIframe = (currWindow: Window) => {
     });
     console.log("created tabster for iframe");
     getObservedElement(tabster);
-    getCrossOrigin(tabster);
-    tabster?.crossOrigin?.setup();
+    const crossOrigin = getCrossOrigin(tabster);
+    crossOrigin.setup();
     console.log("created cross origin");
 };
 
@@ -123,11 +122,13 @@ const createTrigger = ({
     trigger.innerText = innerText;
     trigger.onclick = function () {
         onClick?.();
-        const tabster = getCurrentTabster(window);
+        const tabster = createTabster(window);
         if (isCrossOrigin) {
-            tabster?.crossOrigin?.observedElement?.requestFocus(name, 5000);
+            const crossOrigin = getCrossOrigin(tabster);
+            crossOrigin.observedElement?.requestFocus(name, 5000);
         } else {
-            tabster?.observedElement?.requestFocus(name, 5000);
+            const observedElement = getObservedElement(tabster);
+            observedElement.requestFocus(name, 5000);
         }
     };
 
