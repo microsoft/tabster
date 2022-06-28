@@ -16,7 +16,6 @@ export {
     getModalizer,
     getObservedElement,
     getOutline,
-    getCurrentTabster,
     getInternal,
     makeNoOp,
     isNoOp,

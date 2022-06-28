@@ -4,7 +4,6 @@ import {
     getTabsterAttribute,
     setTabsterAttribute,
     getGroupper,
-    getCurrentTabster,
     Types,
 } from "tabster";
 
@@ -14,7 +13,6 @@ console.log(
     getTabsterAttribute,
     setTabsterAttribute,
     getGroupper,
-    getCurrentTabster,
     Types
 );
 

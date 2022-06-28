@@ -4,9 +4,9 @@
         <title>Tabster Test</title>
         <script type="module">
             import {
+                disposeTabster,
                 createTabster,
                 getCrossOrigin,
-                getCurrentTabster,
                 getDeloser,
                 getGroupper,
                 getModalizer,
@@ -15,9 +15,7 @@
                 getOutline,
             } from "../src";
 
-            const tabsterTest = {
-                getCurrentTabster,
-            };
+            const tabsterTest = {};
 
             const params = new URL(location.href).searchParams;
             const controlTab = params.get("controlTab") !== "false";
@@ -34,6 +32,9 @@
                 controlTab,
                 rootDummyInputs,
             });
+
+            tabsterTest.createTabster = createTabster;
+            tabsterTest.disposeTabster = disposeTabster;
 
             tabsterTest.core = tabster;
 
