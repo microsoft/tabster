@@ -1,8 +1,8 @@
 {
-  "git": {
-    "changelog": "npx auto-changelog --stdout --commit-limit false -u --template ./changelog.template.hbs"
-  },
-  "hooks": {
-    "after:bump": "npx auto-changelog -p"
-  }
+    "git": {
+        "changelog": "npx auto-changelog --stdout --commit-limit false -u --template ./changelog.template.hbs"
+    },
+    "hooks": {
+        "after:bump": "npx auto-changelog -p"
+    }
 }
