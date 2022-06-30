@@ -357,7 +357,10 @@ export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
     return tabsterCore.internal;
 }
 
-export function disposeTabster(tabster: Types.Tabster, allInstances?: boolean): void {
+export function disposeTabster(
+    tabster: Types.Tabster,
+    allInstances?: boolean
+): void {
     tabster.core.disposeTabster(tabster, allInstances);
 }
 
