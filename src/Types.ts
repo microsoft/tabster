@@ -871,12 +871,12 @@ interface TabsterCoreInternal {
     /** @internal */
     createTabster(): Tabster;
     /** @internal */
-    disposeTabster(wrapper: Tabster): void;
+    disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
     /** @internal */
     forceCleanup(): void;
 }
 
-export interface Tabster extends Disposable {
+export interface Tabster {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     focusable: FocusableAPI;
