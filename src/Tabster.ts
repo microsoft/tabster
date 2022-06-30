@@ -46,10 +46,6 @@ class Tabster implements Types.Tabster {
         this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
     }
-
-    dispose() {
-        this.core.disposeTabster(this);
-    }
 }
 
 /**
@@ -131,8 +127,12 @@ class TabsterCore implements Types.TabsterCore {
         return wrapper;
     }
 
-    disposeTabster(wrapper: Types.Tabster) {
-        this._wrappers.delete(wrapper);
+    disposeTabster(wrapper: Types.Tabster, allInstances?: boolean) {
+        if (allInstances) {
+            this._wrappers.clear();
+        } else {
+            this._wrappers.delete(wrapper);
+        }
 
         if (this._wrappers.size === 0) {
             this.dispose();
@@ -250,12 +250,6 @@ export function createTabster(
     let tabster = getCurrentTabster(win as WindowWithTabsterInstance);
 
     if (tabster) {
-        if (__DEV__) {
-            console.warn(
-                "Attempted to create a duplicate Tabster instance on the window"
-            );
-        }
-
         return tabster.createTabster();
     }
 
@@ -363,8 +357,11 @@ export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
     return tabsterCore.internal;
 }
 
-export function disposeTabster(tabster: Types.Tabster): void {
-    tabster.dispose();
+export function disposeTabster(
+    tabster: Types.Tabster,
+    allInstances?: boolean
+): void {
+    tabster.core.disposeTabster(tabster, allInstances);
 }
 
 export function getTabsterAttribute(
