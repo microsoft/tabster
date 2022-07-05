@@ -11,7 +11,18 @@ import {
     Frame,
     KeyInput,
 } from "puppeteer";
-import { createTabster, disposeTabster, Types } from "tabster";
+import {
+    createTabster,
+    disposeTabster,
+    Types,
+    getMover as getMoverBase,
+    getCrossOrigin as getCrossOriginBase,
+    getDeloser as getDeloserBase,
+    getModalizer as getModalizerBase,
+    getOutline as getOutlineBase,
+    getObservedElement as getObservedElementBase,
+    getGroupper as getGroupperBase,
+} from "tabster";
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -95,6 +106,14 @@ export interface BroTestTabsterTestVariables {
     groupper?: Types.GroupperAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
+
+    getMover: typeof getMoverBase;
+    getGroupper: typeof getGroupperBase;
+    getModalizer: typeof getModalizerBase;
+    getObservedElement: typeof getObservedElementBase;
+    getOutline: typeof getOutlineBase;
+    getDeloser: typeof getDeloserBase;
+    getCrossOrigin: typeof getCrossOriginBase;
 }
 
 export function getTestPageURL(parts: TabsterParts): string {
