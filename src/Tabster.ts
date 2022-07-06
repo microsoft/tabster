@@ -259,8 +259,9 @@ export function createTabster(
 }
 
 /**
+ * Custom type predicate because instanceof can be incorrect in different execution contexts (i.e. multi-window)
  * @param tabster global tabster core or tabster wrapper
- * @returns whether the instance is a global tabster core instance or a tabster wrapper
+ * @returns whether the instance is a global tabster core or a tabster wrapper
  */
 function isTabsterCore(
     tabster: Types.Tabster | TabsterCore
