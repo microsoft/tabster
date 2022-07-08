@@ -19,9 +19,7 @@ describe("Focusable", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
+                        {...getTabsterAttribute({ observed: { name } })}
                         tabIndex={-1}
                     >
                         Button2
@@ -45,55 +43,6 @@ describe("Focusable", () => {
             });
     });
 
-    it("should request focus for element with tabindex -1 and multiple names", async () => {
-        const names = ["test-1", "test-0"];
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names },
-                        })}
-                        tabIndex={-1}
-                    >
-                        Button2
-                    </button>
-                </div>
-            )
-        )
-            // reuqest focus for names[0]
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
-            })
-            .eval((name) => {
-                return getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    0
-                ).result;
-            }, names[0])
-            .check((res: boolean) => expect(res).toBe(true))
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            })
-            // reuqest focus for names[1]
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
-            })
-            .eval((name) => {
-                return getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    0
-                ).result;
-            }, names[1])
-            .check((res: boolean) => expect(res).toBe(true))
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            });
-    });
-
     it("should request focus for non-existent element with tabindex -1", async () => {
         const name = "test";
         await new BroTest.BroTest(
@@ -109,9 +58,7 @@ describe("Focusable", () => {
                 const observedButton = document.createElement("button");
                 observedButton.textContent = name;
                 document.getElementById("root")?.appendChild(observedButton);
-                const observed: Types.TabsterOnElement = {
-                    observed: { names: [name] },
-                };
+                const observed: Types.TabsterOnElement = { observed: { name } };
                 observedButton.setAttribute(
                     "data-tabster",
                     JSON.stringify(observed)
@@ -146,7 +93,7 @@ describe("Focusable", () => {
                             const button1 = document.createElement("button");
                             button1.setAttribute(
                                 "data-tabster",
-                                '{"observed":{"names": ["button1"]}}'
+                                '{"observed":{"name": "button1"}}'
                             );
                             button1.textContent = "Button1";
 
@@ -159,7 +106,7 @@ describe("Focusable", () => {
                                     document.createElement("button");
                                 button2.setAttribute(
                                     "data-tabster",
-                                    '{"observed":{"names": ["button2"]}}'
+                                    '{"observed":{"name": "button2"}}'
                                 );
                                 button2.textContent = "Button2";
                                 root?.appendChild(button2);
@@ -190,9 +137,7 @@ describe("Focusable", () => {
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
+                        {...getTabsterAttribute({ observed: { name } })}
                         id="test-button"
                         aria-hidden="true"
                     >
@@ -228,9 +173,7 @@ describe("Focusable", () => {
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>
                     <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
+                        {...getTabsterAttribute({ observed: { name } })}
                         id="test-button"
                         aria-hidden="true"
                     >
@@ -266,7 +209,7 @@ describe("Focusable", () => {
                 b.setAttribute("aria-hidden", "true");
                 b.setAttribute(
                     "data-tabster",
-                    `{"observed": {"names": ["${name}"]}}`
+                    `{"observed": {"name": "${name}"}}`
                 );
                 document.getElementById("root")?.appendChild(b);
             }, name)

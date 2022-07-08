@@ -31,15 +31,15 @@ describe("Internal", () => {
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval(() => {
-                getTabsterTestVariables().core?.core.internal.stopObserver();
+                getTabsterTestVariables().core?.internal.stopObserver();
             })
             .eval((): string | void => {
                 const tabster = getTabsterTestVariables().core;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
                 if (tabster && el1 && el2) {
-                    const t1 = tabster.core.storageEntry(el1)?.tabster;
-                    const t2 = tabster.core.storageEntry(el2)?.tabster;
+                    const t1 = tabster.storageEntry(el1)?.tabster;
+                    const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;
                 }
             })
@@ -56,8 +56,8 @@ describe("Internal", () => {
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
                 if (tabster && el1 && el2) {
-                    const t1 = tabster.core.storageEntry(el1)?.tabster;
-                    const t2 = tabster.core.storageEntry(el2)?.tabster;
+                    const t1 = tabster.storageEntry(el1)?.tabster;
+                    const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;
                 }
             })
@@ -65,17 +65,15 @@ describe("Internal", () => {
                 expect(res).toEqual("true-false");
             })
             .eval(() => {
-                getTabsterTestVariables().core?.core.internal.resumeObserver(
-                    true
-                );
+                getTabsterTestVariables().core?.internal.resumeObserver(true);
             })
             .eval((): string | void => {
                 const tabster = getTabsterTestVariables().core;
                 const el1 = document.getElementById("element1");
                 const el2 = document.getElementById("element2");
                 if (tabster && el1 && el2) {
-                    const t1 = tabster.core.storageEntry(el1)?.tabster;
-                    const t2 = tabster.core.storageEntry(el2)?.tabster;
+                    const t1 = tabster.storageEntry(el1)?.tabster;
+                    const t2 = tabster.storageEntry(el2)?.tabster;
                     return `${!!t1}-${!!t2}`;
                 }
             })

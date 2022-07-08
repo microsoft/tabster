@@ -15,8 +15,8 @@ describe("CrossOrigin", () => {
     });
 
     it("should request focus between iframes", async () => {
-        const names = ["name", "name2"];
-        const namesForIframe = ["frame1-name", "frame1-name2"];
+        const name = "test";
+        const name2 = "test2";
 
         await new BroTest.BroTest()
             .html(
@@ -26,11 +26,7 @@ describe("CrossOrigin", () => {
                         id="frame1"
                         src={BroTest.getTestPageURL(tabsterParts)}
                     ></iframe>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names },
-                        })}
-                    >
+                    <button {...getTabsterAttribute({ observed: { name } })}>
                         Button2
                     </button>
                 </div>
@@ -39,22 +35,19 @@ describe("CrossOrigin", () => {
             .html(
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button
-                        {...getTabsterAttribute({
-                            observed: { names: namesForIframe },
-                        })}
+                        {...getTabsterAttribute({ observed: { name: name2 } })}
                     >
                         Button3
                     </button>
                 </div>
             )
             .unframe()
-            // focus with the first observed name in array for iframe then host page
-            .eval((namesForIframe) => {
+            .eval((name2) => {
                 return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
-                    namesForIframe[0],
+                    name2,
                     0
                 );
-            }, namesForIframe)
+            }, name2)
             .activeElement((el) => {
                 expect(el?.tag).toEqual("iframe");
                 expect(el?.attributes.id).toEqual("frame1");
@@ -63,40 +56,12 @@ describe("CrossOrigin", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3");
             })
-            .eval((names) => {
+            .eval((name) => {
                 return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
-                    names[0],
+                    name,
                     0
                 );
-            }, names)
-            .activeElement((el) => {
-                expect(el).toBeNull();
-            })
-            .unframe()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            })
-            // focus with the second observed name in array for iframe then host page
-            .eval((namesForIframe) => {
-                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
-                    namesForIframe[1],
-                    0
-                );
-            }, namesForIframe)
-            .activeElement((el) => {
-                expect(el?.tag).toEqual("iframe");
-                expect(el?.attributes.id).toEqual("frame1");
-            })
-            .frame("frame1")
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button3");
-            })
-            .eval((names) => {
-                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
-                    names[1],
-                    0
-                );
-            }, names)
+            }, name)
             .activeElement((el) => {
                 expect(el).toBeNull();
             })

@@ -668,7 +668,7 @@ class StateTransaction extends CrossOriginTransaction<
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 tabster.crossOrigin!.observedElement,
                 element,
-                { names: [name], details: beginData.observedDetails }
+                { name, details: beginData.observedDetails }
             );
         }
 
@@ -800,7 +800,7 @@ class GetElementTransaction extends CrossOriginTransaction<
             deloserUId: deloser
                 ? getDeloserUID(getOwner, context, deloser)
                 : undefined,
-            observedName: observed && observed.names && observed.names[0],
+            observedName: observed && observed.name,
             observedDetails: observed && observed.details,
         };
     }
@@ -1814,7 +1814,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         ) as CrossOriginStateData;
 
         d.state = CrossOriginStates.Observed;
-        d.observedName = details.names?.[0];
+        d.observedName = details.name;
         d.observedDetails = details.details;
 
         this._transactions.beginTransaction(StateTransaction, d);

@@ -7,6 +7,7 @@ import {
     getMover,
     getDeloser,
     getModalizer,
+    getCurrentTabster,
     Types,
 } from "tabster";
 
@@ -19,6 +20,7 @@ console.log(
     getMover,
     getDeloser,
     getModalizer,
+    getCurrentTabster,
     Types
 );
 

@@ -89,7 +89,7 @@ export interface TabsterPart<P> {
 }
 
 export interface ObservedElementProps {
-    names: string[];
+    name: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: any;
 }
@@ -834,7 +834,21 @@ export interface InternalAPI {
     resumeObserver(syncState: boolean): void;
 }
 
-interface TabsterCoreInternal {
+export interface TabsterCore
+    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+        Disposable {
+    storageEntry(
+        element: HTMLElement,
+        addremove?: boolean
+    ): TabsterElementStorageEntry | undefined;
+    getWindow: GetWindow;
+
+    keyboardNavigation: KeyboardNavigationState;
+    focusedElement: FocusedElementState;
+    focusable: FocusableAPI;
+    root: RootAPI;
+    uncontrolled: UncontrolledAPI;
+
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */
@@ -859,39 +873,7 @@ interface TabsterCoreInternal {
     // No operation flag for the debugging purposes
     /** @internal */
     _noop: boolean;
-
-    /** @internal */
-    storageEntry(
-        element: HTMLElement,
-        addremove?: boolean
-    ): TabsterElementStorageEntry | undefined;
-    /** @internal */
-    getWindow: GetWindow;
-
-    /** @internal */
-    createTabster(): Tabster;
-    /** @internal */
-    disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
-    /** @internal */
-    forceCleanup(): void;
 }
-
-export interface Tabster {
-    keyboardNavigation: KeyboardNavigationState;
-    focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
-    root: RootAPI;
-    uncontrolled: UncontrolledAPI;
-
-    /** @internal */
-    core: TabsterCore;
-}
-
-export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
-        Disposable,
-        TabsterCoreInternal,
-        Omit<Tabster, "core"> {}
 
 export interface TabsterCompat {
     attributeTransform?: <P>(old: P) => TabsterAttributeProps;

@@ -30,34 +30,15 @@ import {
 
 export { Types };
 
-class Tabster implements Types.Tabster {
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    core: Types.TabsterCore;
-
-    constructor(tabster: Types.TabsterCore) {
-        this.keyboardNavigation = tabster.keyboardNavigation;
-        this.focusedElement = tabster.focusedElement;
-        this.focusable = tabster.focusable;
-        this.root = tabster.root;
-        this.uncontrolled = tabster.uncontrolled;
-        this.core = tabster;
-    }
-}
-
 /**
  * Extends Window to include an internal Tabster instance.
  */
-export class TabsterCore implements Types.TabsterCore {
+class Tabster implements Types.TabsterCore {
     private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     private _unobserve: (() => void) | undefined;
     private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
-    private _wrappers: Set<Tabster> = new Set<Tabster>();
 
     _version: string = __VERSION__;
     _noop = false;
@@ -121,24 +102,6 @@ export class TabsterCore implements Types.TabsterCore {
         startFakeWeakRefsCleanup(getWindow);
     }
 
-    createTabster(): Types.Tabster {
-        const wrapper = new Tabster(this);
-        this._wrappers.add(wrapper);
-        return wrapper;
-    }
-
-    disposeTabster(wrapper: Types.Tabster, allInstances?: boolean) {
-        if (allInstances) {
-            this._wrappers.clear();
-        } else {
-            this._wrappers.delete(wrapper);
-        }
-
-        if (this._wrappers.size === 0) {
-            this.dispose();
-        }
-    }
-
     dispose(): void {
         this.internal.stopObserver();
 
@@ -168,7 +131,6 @@ export class TabsterCore implements Types.TabsterCore {
         clearElementCache(this.getWindow);
 
         this._storage = new WeakMap();
-        this._wrappers.clear();
 
         if (win) {
             disposeInstanceContext(win);
@@ -204,40 +166,39 @@ export class TabsterCore implements Types.TabsterCore {
         return this._win;
     };
 
-    forceCleanup(): void {
-        if (!this._win) {
+    static forceCleanup(tabster: Tabster): void {
+        if (!tabster._win) {
             return;
         }
 
-        this._forgetMemorizedElements.push(this._win.document.body);
+        tabster._forgetMemorizedElements.push(tabster._win.document.body);
 
-        if (this._forgetMemorizedTimer) {
+        if (tabster._forgetMemorizedTimer) {
             return;
         }
 
-        this._forgetMemorizedTimer = this._win.setTimeout(() => {
-            delete this._forgetMemorizedTimer;
+        tabster._forgetMemorizedTimer = tabster._win.setTimeout(() => {
+            delete tabster._forgetMemorizedTimer;
 
             for (
                 let el: HTMLElement | undefined =
-                    this._forgetMemorizedElements.shift();
+                    tabster._forgetMemorizedElements.shift();
                 el;
-                el = this._forgetMemorizedElements.shift()
+                el = tabster._forgetMemorizedElements.shift()
             ) {
-                clearElementCache(this.getWindow, el);
-                FocusedElementState.forgetMemorized(this.focusedElement, el);
+                clearElementCache(tabster.getWindow, el);
+                FocusedElementState.forgetMemorized(tabster.focusedElement, el);
             }
         }, 0);
 
-        cleanupFakeWeakRefs(this.getWindow, true);
+        cleanupFakeWeakRefs(tabster.getWindow, true);
     }
 }
 
-export function forceCleanup(tabster: Types.Tabster): void {
+export function forceCleanup(tabster: Tabster): void {
     // The only legit case for calling this method is when you've completely removed
     // the application DOM and not going to add the new one for a while.
-    const tabsterCore = tabster.core;
-    tabsterCore.forceCleanup();
+    Tabster.forceCleanup(tabster);
 }
 
 /**
@@ -246,69 +207,55 @@ export function forceCleanup(tabster: Types.Tabster): void {
 export function createTabster(
     win: Window,
     props?: Types.TabsterCoreProps
-): Types.Tabster {
-    let tabster = getCurrentTabster(win as WindowWithTabsterInstance);
+): Types.TabsterCore {
+    const existingAh = getCurrentTabster(win as WindowWithTabsterInstance);
 
-    if (tabster) {
-        return tabster.createTabster();
+    if (existingAh) {
+        if (__DEV__) {
+            console.warn(
+                "Attempted to create a duplicate Tabster instance on the window"
+            );
+        }
+
+        return existingAh;
     }
 
-    tabster = new TabsterCore(win, props);
+    const tabster = new Tabster(win, props);
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
-    return tabster.createTabster();
-}
 
-/**
- * Custom type predicate because instanceof can be incorrect in different execution contexts (i.e. multi-window)
- * @param tabster global tabster core or tabster wrapper
- * @returns whether the instance is a global tabster core or a tabster wrapper
- */
-function isTabsterCore(
-    tabster: Types.Tabster | TabsterCore
-): tabster is TabsterCore {
-    return !(tabster as Types.Tabster).core;
+    return tabster;
 }
 
 /**
  * Creates a new groupper instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getGroupper(
-    tabster: Types.Tabster | TabsterCore
-): Types.GroupperAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.groupper) {
-        tabsterCore.groupper = new GroupperAPI(
-            tabsterCore,
-            tabsterCore.getWindow
-        );
+export function getGroupper(tabster: Types.TabsterCore): Types.GroupperAPI {
+    if (!tabster.groupper) {
+        tabster.groupper = new GroupperAPI(tabster, tabster.getWindow);
     }
 
-    return tabsterCore.groupper;
+    return tabster.groupper;
 }
 
 /**
  * Creates a new mover instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getMover(tabster: Types.Tabster | TabsterCore): Types.MoverAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.mover) {
-        tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
+export function getMover(tabster: Types.TabsterCore): Types.MoverAPI {
+    if (!tabster.mover) {
+        tabster.mover = new MoverAPI(tabster, tabster.getWindow);
     }
 
-    return tabsterCore.mover;
+    return tabster.mover;
 }
 
-export function getOutline(
-    tabster: Types.Tabster | TabsterCore
-): Types.OutlineAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.outline) {
-        tabsterCore.outline = new OutlineAPI(tabsterCore);
+export function getOutline(tabster: Types.TabsterCore): Types.OutlineAPI {
+    if (!tabster.outline) {
+        tabster.outline = new OutlineAPI(tabster);
     }
 
-    return tabsterCore.outline;
+    return tabster.outline;
 }
 
 /**
@@ -317,73 +264,60 @@ export function getOutline(
  * @param props Deloser props
  */
 export function getDeloser(
-    tabster: Types.Tabster | TabsterCore,
+    tabster: Types.TabsterCore,
     props?: { autoDeloser: Types.DeloserProps }
 ): Types.DeloserAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.deloser) {
-        tabsterCore.deloser = new DeloserAPI(tabsterCore, props);
+    if (!tabster.deloser) {
+        tabster.deloser = new DeloserAPI(tabster, props);
     }
 
-    return tabsterCore.deloser;
+    return tabster.deloser;
 }
 
 /**
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getModalizer(
-    tabster: Types.Tabster | TabsterCore
-): Types.ModalizerAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.modalizer) {
-        tabsterCore.modalizer = new ModalizerAPI(tabsterCore);
+export function getModalizer(tabster: Types.TabsterCore): Types.ModalizerAPI {
+    if (!tabster.modalizer) {
+        tabster.modalizer = new ModalizerAPI(tabster);
     }
 
-    return tabsterCore.modalizer;
+    return tabster.modalizer;
 }
 
 export function getObservedElement(
-    tabster: Types.Tabster | TabsterCore
+    tabster: Types.TabsterCore
 ): Types.ObservedElementAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    if (!tabsterCore.observedElement) {
-        tabsterCore.observedElement = new ObservedElementAPI(tabsterCore);
+    if (!tabster.observedElement) {
+        tabster.observedElement = new ObservedElementAPI(tabster);
     }
 
-    return tabsterCore.observedElement;
+    return tabster.observedElement;
 }
 
 export function getCrossOrigin(
-    tabster: Types.Tabster | TabsterCore
+    tabster: Types.TabsterCore
 ): Types.CrossOriginAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-
-    if (!tabsterCore.crossOrigin) {
+    if (!tabster.crossOrigin) {
         getDeloser(tabster);
         getModalizer(tabster);
         getMover(tabster);
         getGroupper(tabster);
         getOutline(tabster);
         getObservedElement(tabster);
-        tabsterCore.crossOrigin = new CrossOriginAPI(tabsterCore);
+        tabster.crossOrigin = new CrossOriginAPI(tabster);
     }
 
-    return tabsterCore.crossOrigin;
+    return tabster.crossOrigin;
 }
 
-export function getInternal(
-    tabster: Types.Tabster | TabsterCore
-): Types.InternalAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-    return tabsterCore.internal;
+export function getInternal(tabster: Types.TabsterCore): Types.InternalAPI {
+    return tabster.internal;
 }
 
-export function disposeTabster(
-    tabster: Types.Tabster,
-    allInstances?: boolean
-): void {
-    tabster.core.disposeTabster(tabster, allInstances);
+export function disposeTabster(tabster: Types.TabsterCore): void {
+    tabster.dispose();
 }
 
 export function getTabsterAttribute(
@@ -471,7 +405,7 @@ export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
 }
 
 export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
-    const self = tabster as TabsterCore;
+    const self = tabster as Tabster;
 
     if (self._noop !== noop) {
         self._noop = noop;
@@ -507,5 +441,5 @@ export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
 }
 
 export function isNoOp(tabster: Types.TabsterCore): boolean {
-    return (tabster as TabsterCore)._noop;
+    return (tabster as Tabster)._noop;
 }
