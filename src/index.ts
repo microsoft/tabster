@@ -9,7 +9,6 @@ export {
     forceCleanup,
     getTabsterAttribute,
     setTabsterAttribute,
-    getCurrentTabster,
     getGroupper,
     getMover,
     getCrossOrigin,

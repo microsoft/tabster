@@ -51,7 +51,7 @@ class Tabster implements Types.Tabster {
 /**
  * Extends Window to include an internal Tabster instance.
  */
-export class TabsterCore implements Types.TabsterCore {
+class TabsterCore implements Types.TabsterCore {
     private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     private _unobserve: (() => void) | undefined;
     private _win: WindowWithTabsterInstance | undefined;
@@ -259,24 +259,11 @@ export function createTabster(
 }
 
 /**
- * Custom type predicate because instanceof can be incorrect in different execution contexts (i.e. multi-window)
- * @param tabster global tabster core or tabster wrapper
- * @returns whether the instance is a global tabster core or a tabster wrapper
- */
-function isTabsterCore(
-    tabster: Types.Tabster | TabsterCore
-): tabster is TabsterCore {
-    return !(tabster as Types.Tabster).core;
-}
-
-/**
  * Creates a new groupper instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getGroupper(
-    tabster: Types.Tabster | TabsterCore
-): Types.GroupperAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
+    const tabsterCore = tabster.core;
     if (!tabsterCore.groupper) {
         tabsterCore.groupper = new GroupperAPI(
             tabsterCore,
@@ -291,8 +278,8 @@ export function getGroupper(
  * Creates a new mover instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getMover(tabster: Types.Tabster | TabsterCore): Types.MoverAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+export function getMover(tabster: Types.Tabster): Types.MoverAPI {
+    const tabsterCore = tabster.core;
     if (!tabsterCore.mover) {
         tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
     }
@@ -300,10 +287,8 @@ export function getMover(tabster: Types.Tabster | TabsterCore): Types.MoverAPI {
     return tabsterCore.mover;
 }
 
-export function getOutline(
-    tabster: Types.Tabster | TabsterCore
-): Types.OutlineAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+export function getOutline(tabster: Types.Tabster): Types.OutlineAPI {
+    const tabsterCore = tabster.core;
     if (!tabsterCore.outline) {
         tabsterCore.outline = new OutlineAPI(tabsterCore);
     }
@@ -317,10 +302,10 @@ export function getOutline(
  * @param props Deloser props
  */
 export function getDeloser(
-    tabster: Types.Tabster | TabsterCore,
+    tabster: Types.Tabster,
     props?: { autoDeloser: Types.DeloserProps }
 ): Types.DeloserAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+    const tabsterCore = tabster.core;
     if (!tabsterCore.deloser) {
         tabsterCore.deloser = new DeloserAPI(tabsterCore, props);
     }
@@ -332,10 +317,8 @@ export function getDeloser(
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
  */
-export function getModalizer(
-    tabster: Types.Tabster | TabsterCore
-): Types.ModalizerAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+export function getModalizer(tabster: Types.Tabster): Types.ModalizerAPI {
+    const tabsterCore = tabster.core;
     if (!tabsterCore.modalizer) {
         tabsterCore.modalizer = new ModalizerAPI(tabsterCore);
     }
@@ -344,9 +327,9 @@ export function getModalizer(
 }
 
 export function getObservedElement(
-    tabster: Types.Tabster | TabsterCore
+    tabster: Types.Tabster
 ): Types.ObservedElementAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+    const tabsterCore = tabster.core;
     if (!tabsterCore.observedElement) {
         tabsterCore.observedElement = new ObservedElementAPI(tabsterCore);
     }
@@ -354,11 +337,8 @@ export function getObservedElement(
     return tabsterCore.observedElement;
 }
 
-export function getCrossOrigin(
-    tabster: Types.Tabster | TabsterCore
-): Types.CrossOriginAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
-
+export function getCrossOrigin(tabster: Types.Tabster): Types.CrossOriginAPI {
+    const tabsterCore = tabster.core;
     if (!tabsterCore.crossOrigin) {
         getDeloser(tabster);
         getModalizer(tabster);
@@ -372,10 +352,8 @@ export function getCrossOrigin(
     return tabsterCore.crossOrigin;
 }
 
-export function getInternal(
-    tabster: Types.Tabster | TabsterCore
-): Types.InternalAPI {
-    const tabsterCore = isTabsterCore(tabster) ? tabster : tabster.core;
+export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
+    const tabsterCore = tabster.core;
     return tabsterCore.internal;
 }
 
