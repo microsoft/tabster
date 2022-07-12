@@ -4,7 +4,6 @@
  */
 
 import * as React from "react";
-import { getTabster } from "src";
 import * as BroTest from "./utils/BroTest";
 
 interface WindowWithTabster extends Window {
