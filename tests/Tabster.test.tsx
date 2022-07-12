@@ -81,4 +81,42 @@ describe("Tabster dispose", () => {
                 expect(tabsterExists).toBe(false);
             });
     });
+
+    it("should not take getTabster() instances into account global tabster core if there are no more tabster instances", async () => {
+        await new BroTest.BroTest(<div />)
+            .eval(() => {
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                window.__tabsterInstance.dispose();
+
+                const first = getTabsterTestVariables().createTabster?.(window);
+                const second =
+                    getTabsterTestVariables().createTabster?.(window);
+                const third = getTabsterTestVariables().getTabster?.(window);
+
+                const ret: boolean[] = [!!third];
+
+                if (first) {
+                    getTabsterTestVariables().disposeTabster?.(first);
+                    ret.push(
+                        !!(window as unknown as WindowWithTabster)
+                            .__tabsterInstance
+                    );
+                }
+
+                if (second) {
+                    getTabsterTestVariables().disposeTabster?.(second);
+                    ret.push(
+                        !!(window as unknown as WindowWithTabster)
+                            .__tabsterInstance
+                    );
+                }
+
+                return ret;
+            })
+            .check((tabsterExists) => {
+                expect(tabsterExists).toEqual([true, true, false]);
+            });
+    });
 });

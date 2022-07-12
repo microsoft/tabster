@@ -121,9 +121,13 @@ class TabsterCore implements Types.TabsterCore {
         startFakeWeakRefsCleanup(getWindow);
     }
 
-    createTabster(): Types.Tabster {
+    createTabster(noRefCount?: boolean): Types.Tabster {
         const wrapper = new Tabster(this);
-        this._wrappers.add(wrapper);
+
+        if (!noRefCount) {
+            this._wrappers.add(wrapper);
+        }
+
         return wrapper;
     }
 
@@ -256,6 +260,15 @@ export function createTabster(
     tabster = new TabsterCore(win, props);
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
     return tabster.createTabster();
+}
+
+/**
+ * Returns an instance of Tabster if it was created before or null.
+ */
+export function getTabster(win: Window): Types.Tabster | null {
+    const tabster = getCurrentTabster(win as WindowWithTabsterInstance);
+
+    return tabster ? tabster.createTabster(true) : null;
 }
 
 /**

@@ -5,6 +5,7 @@
 
 export {
     createTabster,
+    getTabster,
     disposeTabster,
     forceCleanup,
     getTabsterAttribute,
