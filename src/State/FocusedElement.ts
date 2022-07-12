@@ -445,7 +445,11 @@ export class FocusedElementState
             checkRtl: true,
         });
 
-        if (!ctx || (!controlTab && !ctx.mover && !ctx.groupper)) {
+        if (
+            !ctx ||
+            (!controlTab && !ctx.mover && !ctx.groupper) ||
+            ctx.ignoreKeydown[e.key as "Tab"]
+        ) {
             return;
         }
 

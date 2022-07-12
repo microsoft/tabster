@@ -284,6 +284,11 @@ describe("NestedMovers", () => {
                 direction: Types.MoverDirections.Vertical,
                 cyclic: true,
             },
+            focusable: {
+                ignoreKeydown: {
+                    Tab: true,
+                },
+            },
         });
 
         await new BroTest.BroTest(

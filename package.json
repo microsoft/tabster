@@ -27,7 +27,7 @@
         "lint": "eslint src/ --fix",
         "lint:check": "eslint src/",
         "test": "node tests/utils/runner.js",
-        "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
+        "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true node tests/utils/runner.js",
         "test:root-dummy-inputs": "STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm test",
         "prepublishOnly": "npm run build",
         "release": "release-it",
