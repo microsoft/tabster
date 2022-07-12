@@ -869,7 +869,7 @@ interface TabsterCoreInternal {
     getWindow: GetWindow;
 
     /** @internal */
-    createTabster(): Tabster;
+    createTabster(noRefCount?: boolean): Tabster;
     /** @internal */
     disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
     /** @internal */
