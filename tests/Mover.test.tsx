@@ -277,6 +277,48 @@ describe("NestedMovers", () => {
             .pressUp()
             .activeElement((el) => expect(el?.textContent).toEqual("Nested4"));
     });
+
+    it("should allow user to prevent default and control tab focus", async () => {
+        const attr = getTabsterAttribute({
+            mover: {
+                direction: Types.MoverDirections.Vertical,
+                cyclic: true,
+            },
+            focusable: {
+                ignoreKeydown: {
+                    Tab: true,
+                },
+            },
+        });
+
+        await new BroTest.BroTest(
+            (
+                <div>
+                    <button id="target">Target</button>
+                    <button>Skipped</button>
+                    <div {...attr} id="mover">
+                        <button id="start">Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                document
+                    .getElementById("mover")
+                    ?.addEventListener("keydown", (e) => {
+                        if (e.key === "Tab" && e.shiftKey) {
+                            e.preventDefault();
+                            document.getElementById("target")?.focus();
+                        }
+                    });
+            })
+            .focusElement("#start")
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Target"));
+    });
 });
 
 describe("Mover memorizing current", () => {

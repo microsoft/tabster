@@ -330,6 +330,13 @@ export interface FocusableProps {
      * Exclude element (and all subelements) from Mover navigation.
      */
     excludeFromMover?: boolean;
+    /**
+     * Prevents tabster from handling the keydown event
+     */
+    ignoreKeydown?: {
+        Tab?: boolean;
+        Escape?: boolean;
+    };
 }
 
 export interface FocusableAcceptElementState {
@@ -697,6 +704,7 @@ export interface TabsterContext {
         instances: TabsterContextMoverGroupper[];
     };
     isExcludedFromMover?: boolean;
+    ignoreKeydown: NonNullable<FocusableProps["ignoreKeydown"]>;
 }
 
 export interface RootFocusEventDetails {

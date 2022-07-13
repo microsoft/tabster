@@ -340,6 +340,7 @@ export class RootAPI implements Types.RootAPI {
         let curElement: Node | null = element;
         let allMoversGrouppers: Types.TabsterContext["allMoversGrouppers"];
         let instances: Types.TabsterContextMoverGroupper[] | undefined;
+        const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
 
         if (options.allMoversGrouppers) {
             instances = [];
@@ -421,6 +422,13 @@ export class RootAPI implements Types.RootAPI {
                 root = tabsterOnElement.root;
             }
 
+            if (tabsterOnElement.focusable?.ignoreKeydown) {
+                Object.assign(
+                    ignoreKeydown,
+                    tabsterOnElement.focusable.ignoreKeydown
+                );
+            }
+
             curElement = curElement.parentElement;
         }
 
@@ -460,6 +468,7 @@ export class RootAPI implements Types.RootAPI {
                   uncontrolled,
                   allMoversGrouppers,
                   isExcludedFromMover,
+                  ignoreKeydown,
               }
             : undefined;
     }
