@@ -24,13 +24,32 @@ describe("Groupper - default", () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
-    const getTestHtml = (ignoreEsc?: boolean) => {
+    const getTestHtml = (
+        ignoreEsc?: boolean,
+        ignoreEnter?: boolean,
+        limited?: boolean
+    ) => {
         const rootAttr = getTabsterAttribute({ root: {} });
+        let ignoreKeydown: Types.FocusableProps["ignoreKeydown"] | undefined;
+
+        if (ignoreEsc || ignoreEnter) {
+            ignoreKeydown = {};
+
+            if (ignoreEsc) {
+                ignoreKeydown.Escape = true;
+            }
+            if (ignoreEnter) {
+                ignoreKeydown.Enter = true;
+            }
+        }
+
         const groupperAttr = getTabsterAttribute({
-            groupper: {},
-            ...(ignoreEsc
-                ? { focusable: { ignoreKeydown: { Escape: true } } }
-                : null),
+            groupper: {
+                ...(limited
+                    ? { tabbability: Types.GroupperTabbabilities.Limited }
+                    : null),
+            },
+            ...(ignoreKeydown ? { focusable: { ignoreKeydown } } : null),
         });
 
         return (
@@ -88,7 +107,7 @@ describe("Groupper - default", () => {
             });
     });
 
-    it("should not escape focus inside groupper with Escape key when ignoreEsc is passed", async () => {
+    it("should not escape focus inside groupper with Escape key when ignore Escape is passed", async () => {
         interface WindowWithEscFlag extends Window {
             __escPressed2?: number;
         }
@@ -111,6 +130,58 @@ describe("Groupper - default", () => {
             .pressEsc()
             .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
             .eval(() => (window as WindowWithEscFlag).__escPressed2)
+            .check((escPressed: number) => {
+                expect(escPressed).toBe(1);
+            });
+    });
+
+    it("should enter inside groupper with Enter key when ignore Enter is passed", async () => {
+        interface WindowWithEnterFlag extends Window {
+            __enterPressed1?: number;
+        }
+
+        await new BroTest.BroTest(getTestHtml())
+            .eval(() => {
+                const keyEnter = 13;
+
+                (window as WindowWithEnterFlag).__enterPressed1 = 0;
+
+                window.addEventListener("keydown", (e) => {
+                    if (e.keyCode === keyEnter) {
+                        (window as WindowWithEnterFlag).__enterPressed1!++;
+                    }
+                });
+            })
+            .pressTab()
+            .pressEnter()
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .eval(() => (window as WindowWithEnterFlag).__enterPressed1)
+            .check((escPressed: number) => {
+                expect(escPressed).toBe(0);
+            });
+    });
+
+    it("should not enter inside groupper with Enter key when ignore Enter is passed", async () => {
+        interface WindowWithEnterFlag extends Window {
+            __enterPressed2?: number;
+        }
+
+        await new BroTest.BroTest(getTestHtml(undefined, true, true))
+            .eval(() => {
+                const keyEnter = 13;
+
+                (window as WindowWithEnterFlag).__enterPressed2 = 0;
+
+                window.addEventListener("keydown", (e) => {
+                    if (e.keyCode === keyEnter) {
+                        (window as WindowWithEnterFlag).__enterPressed2!++;
+                    }
+                });
+            })
+            .pressTab()
+            .pressEnter()
+            .activeElement((el) => expect(el?.textContent).toEqual("FooBar"))
+            .eval(() => (window as WindowWithEnterFlag).__enterPressed2)
             .check((escPressed: number) => {
                 expect(escPressed).toBe(1);
             });
