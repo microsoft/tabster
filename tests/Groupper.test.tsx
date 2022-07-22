@@ -26,7 +26,12 @@ describe("Groupper - default", () => {
 
     const getTestHtml = (ignoreEsc?: boolean) => {
         const rootAttr = getTabsterAttribute({ root: {} });
-        const groupperAttr = getTabsterAttribute({ groupper: { ignoreEsc } });
+        const groupperAttr = getTabsterAttribute({
+            groupper: {},
+            ...(ignoreEsc
+                ? { focusable: { ignoreKeydown: { Escape: true } } }
+                : null),
+        });
 
         return (
             <div {...rootAttr}>
