@@ -498,7 +498,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                         if (g) {
                             const props = g.getProps();
 
-                            if (props.ignoreEsc) {
+                            if (ctx.ignoreKeydown.Escape) {
                                 return;
                             }
 
