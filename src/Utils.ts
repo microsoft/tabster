@@ -941,6 +941,8 @@ class DummyInputManagerCore {
         ));
 
         if (wrappers.length === 0) {
+            delete (this._element?.get() as HTMLElementWithDummyInputs)
+                .__tabsterDummy;
             if (this._unobserve) {
                 this._unobserve();
                 delete this._unobserve;
