@@ -467,6 +467,10 @@ export class GroupperAPI implements Types.GroupperAPI {
                 let next: HTMLElement | null | undefined;
 
                 if (e.keyCode === Keys.Enter) {
+                    if (ctx.ignoreKeydown.Enter) {
+                        return;
+                    }
+
                     const groupperFirstFocusable = groupper.getFirst();
 
                     if (
@@ -485,6 +489,10 @@ export class GroupperAPI implements Types.GroupperAPI {
                         this._updateCurrent(next);
                     }
                 } else if (e.keyCode === Keys.Esc) {
+                    if (ctx.ignoreKeydown.Escape) {
+                        return;
+                    }
+
                     for (
                         let e: HTMLElement | null = element;
                         e;
@@ -497,10 +505,6 @@ export class GroupperAPI implements Types.GroupperAPI {
 
                         if (g) {
                             const props = g.getProps();
-
-                            if (ctx.ignoreKeydown.Escape) {
-                                return;
-                            }
 
                             if (g.isActive() || !props.tabbability) {
                                 g.makeTabbable(false);

@@ -336,6 +336,7 @@ export interface FocusableProps {
     ignoreKeydown?: {
         Tab?: boolean;
         Escape?: boolean;
+        Enter?: boolean;
     };
 }
 
