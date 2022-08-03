@@ -287,8 +287,12 @@ export class Modalizer
 
     private _setAccessibilityProps(): void {
         if (__DEV__) {
-            const element = this._element.get()
-            if (element && !element.getAttribute("aria-label") && !element.getAttribute("aria-labelledby")) {
+            const element = this._element.get();
+            if (
+                element &&
+                !element.getAttribute("aria-label") &&
+                !element.getAttribute("aria-labelledby")
+            ) {
                 console.error(
                     "Modalizer element must have either aria-label or aria-labelledby",
                     element
