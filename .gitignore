@@ -23,3 +23,5 @@ dts/
 /.rollup.cache
 
 .npmrc
+
+.devcontainer
