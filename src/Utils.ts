@@ -863,7 +863,7 @@ class DummyInputManagerCore {
     private _firstDummy: DummyInput | undefined;
     private _lastDummy: DummyInput | undefined;
     private _transformElements: HTMLElement[] = [];
-    private _scrollFrame: number | undefined;
+    private _scrollTimer: number | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -955,9 +955,9 @@ class DummyInputManagerCore {
 
             const win = this._getWindow();
 
-            if (this._scrollFrame) {
-                win.cancelAnimationFrame(this._scrollFrame);
-                delete this._scrollFrame;
+            if (this._scrollTimer) {
+                win.clearTimeout(this._scrollTimer);
+                delete this._scrollTimer;
             }
 
             if (this._addTimer) {
@@ -1129,14 +1129,15 @@ class DummyInputManagerCore {
     private _addTransformOffsets = (): void => {
         const win = this._getWindow();
 
-        if (this._scrollFrame) {
-            win.cancelAnimationFrame(this._scrollFrame);
+        if (this._scrollTimer) {
+            win.clearTimeout(this._scrollTimer);
         }
 
-        this._scrollFrame = win.requestAnimationFrame(() => {
-            delete this._scrollFrame;
+        // Making sure we're not updating the dummy inputs while scrolling to avoid excessive reflows.
+        this._scrollTimer = win.setTimeout(() => {
+            delete this._scrollTimer;
             this._reallyAddTransformOffsets();
-        });
+        }, 100);
     };
 
     private _reallyAddTransformOffsets(): void {
