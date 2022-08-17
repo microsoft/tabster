@@ -123,7 +123,7 @@ async function sleep(time: number) {
     });
 }
 
-interface BrowserElement {
+export interface BrowserElement {
     tag: string;
     textContent: string | null;
     attributes: { [name: string]: string };
@@ -466,17 +466,25 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    private _pressKey(key: KeyInput, shift?: boolean) {
+    private _pressKey(key: KeyInput, shift?: boolean, ctrl?: boolean) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 if (shift) {
                     await page.keyboard.down("Shift");
                 }
 
+                if (ctrl) {
+                    await page.keyboard.down("Control");
+                }
+
                 await page.keyboard.press(key);
 
                 if (shift) {
                     await page.keyboard.up("Shift");
+                }
+
+                if (ctrl) {
+                    await page.keyboard.up("Control");
                 }
             })
         );
@@ -502,8 +510,8 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    pressTab(shift?: boolean) {
-        return this._pressKey("Tab", shift);
+    pressTab(shift?: boolean, ctrlKey?: boolean) {
+        return this._pressKey("Tab", shift, ctrlKey);
     }
     pressEsc(shift?: boolean) {
         return this._pressKey("Escape", shift);

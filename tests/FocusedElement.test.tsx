@@ -6,6 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
+import { BrowserElement } from "./utils/BroTest";
 
 describe("onKeyDown", () => {
     beforeAll(async () => {
@@ -34,5 +35,25 @@ describe("onKeyDown", () => {
             .activeElement((el) =>
                 expect(el?.attributes["aria-hidden"]).toEqual("true")
             );
+    });
+
+    it("Should not handle event on Ctrl+Tab", async () => {
+        const testHtml = (
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div tabIndex={0}>
+                    <button>Button1</button>
+                    <button>Button2</button>
+                </div>
+                <button>Don't focus</button>
+            </div>
+        );
+
+        let focusedElement: BrowserElement | null;
+        await new BroTest.BroTest(testHtml)
+            .activeElement((el) => (focusedElement = el))
+            .pressTab(false /* shift */, true /* ctrlKey */)
+            .activeElement((el) => {
+                expect(el).toEqual(focusedElement);
+            });
     });
 });
