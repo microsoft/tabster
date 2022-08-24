@@ -145,7 +145,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     findLast(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
             container: this._getBody(),
-            prev: true,
+            isBackward: true,
             ...options,
         });
     }
@@ -160,7 +160,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     findPrev(options: Types.FindNextProps): HTMLElement | null | undefined {
         return this.findElement({
             container: this._getBody(),
-            prev: true,
+            isBackward: true,
             ...options,
         });
     }
@@ -179,103 +179,35 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     findAll(options: Types.FindAllProps): HTMLElement[] {
-        const {
-            container,
-            acceptCondition: customAcceptCondition,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            ignoreUncontrolled,
-            ignoreAccessibiliy,
-            skipDefaultCheck,
-        } = options;
-
-        const acceptCondition = (el: HTMLElement): boolean => {
-            let defaultCheck: boolean;
-            let customCheck = false;
-
-            if (skipDefaultCheck) {
-                defaultCheck = true;
-            } else {
-                defaultCheck = this._tabster.focusable.isFocusable(
-                    el,
-                    includeProgrammaticallyFocusable
-                );
-            }
-
-            if (defaultCheck) {
-                customCheck = customAcceptCondition
-                    ? customAcceptCondition(el)
-                    : true;
-            }
-
-            return defaultCheck && customCheck;
-        };
-
-        const acceptElementState: Types.FocusableAcceptElementState = {
-            container,
-            from: null,
-            isForward: true,
-            acceptCondition,
-            includeProgrammaticallyFocusable,
-            ignoreGroupper,
-            ignoreUncontrolled,
-            ignoreAccessibiliy,
-            grouppers: {},
-            isFindAll: true,
-        };
-
-        const walker = createElementTreeWalker(
-            container.ownerDocument,
-            container,
-            (node) =>
-                this._acceptElement(node as HTMLElement, acceptElementState)
-        );
-
-        const nodeFilter = walker?.filter;
-
-        if (!walker || !nodeFilter) {
-            return [];
-        }
-
-        const foundNodes: HTMLElement[] = [];
-        let node: Node | null;
-
-        while ((node = walker.nextNode())) {
-            foundNodes.push(node as HTMLElement);
-        }
-
-        return foundNodes;
+        return this._findElements(true, options) || [];
     }
 
     findElement(
         options: Types.FindFocusableProps
     ): HTMLElement | null | undefined {
+        const found = this._findElements(false, options);
+        return found ? found[0] : found;
+    }
+
+    private _findElements(
+        findAll: boolean,
+        options: Types.FindFocusableProps
+    ): HTMLElement[] | null | undefined {
         const {
             container,
             currentElement = null,
             includeProgrammaticallyFocusable,
-            ignoreGroupper,
             ignoreUncontrolled,
             ignoreAccessibiliy,
-            prev,
+            isBackward,
             onUncontrolled,
         } = options;
+
+        const elements: HTMLElement[] = [];
 
         let { acceptCondition } = options;
 
         if (!container) {
-            return null;
-        }
-
-        if (
-            !container.ownerDocument ||
-            (currentElement &&
-                container !== currentElement &&
-                !container.contains(currentElement) &&
-                (
-                    currentElement as HTMLElementWithDummyContainer
-                )?.__tabsterDummyContainer?.get() !== container)
-        ) {
             return null;
         }
 
@@ -291,14 +223,13 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const acceptElementState: Types.FocusableAcceptElementState = {
             container,
-            from: currentElement,
-            isForward: !prev,
+            from: currentElement || container,
+            isBackward,
             acceptCondition,
             includeProgrammaticallyFocusable,
-            ignoreGroupper,
             ignoreUncontrolled,
             ignoreAccessibiliy,
-            grouppers: {},
+            cachedGrouppers: {},
         };
 
         const walker = createElementTreeWalker(
@@ -312,9 +243,30 @@ export class FocusableAPI implements Types.FocusableAPI {
             return null;
         }
 
+        const prepareForNextElement = (shouldContinueIfNotFound?: boolean): boolean => {
+            const foundElement = acceptElementState.foundElement;
+
+            if (foundElement) {
+                elements.push(foundElement);
+            }
+
+            if (findAll) {
+                if (foundElement) {
+                    acceptElementState.found = false;
+                    delete acceptElementState.foundElement;
+                    delete acceptElementState.fromCtx;
+                    acceptElementState.from = foundElement;
+                }
+
+                return !!(foundElement || shouldContinueIfNotFound);
+            } else {
+                return !!(shouldContinueIfNotFound && !foundElement);
+            }
+        };
+
         if (currentElement) {
             walker.currentNode = currentElement;
-        } else if (prev) {
+        } else if (isBackward) {
             const lastChild = getLastChild(container);
 
             if (!lastChild) {
@@ -325,55 +277,78 @@ export class FocusableAPI implements Types.FocusableAPI {
                 this._acceptElement(lastChild, acceptElementState) ===
                 NodeFilter.FILTER_ACCEPT
             ) {
-                return lastChild;
+                if (!prepareForNextElement(true)) {
+                    return elements;
+                }
             } else {
                 walker.currentNode = lastChild;
             }
         }
 
-        let foundElement = (
-            prev ? walker.previousNode() : walker.nextNode()
-        ) as HTMLElement | null | undefined;
+        let foundElement: HTMLElement | null | undefined;
+        do {
+            foundElement = (isBackward ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null) || undefined;
+        } while (prepareForNextElement())
 
-        const nextUncontrolled = acceptElementState.nextUncontrolled;
-        if (nextUncontrolled) {
-            if (foundElement) {
-                // We have an uncontrolled area and there is a controlled element after it.
-                // Return undefined for the default Tab action.
-                foundElement = undefined;
-            } else {
-                // Otherwise, return null to moveOutWithDefaultAction().
-                foundElement = null;
-            }
+        if (!findAll) {
+            const nextUncontrolled = acceptElementState.nextUncontrolled;
 
-            if (onUncontrolled) {
-                onUncontrolled(nextUncontrolled);
+            if (nextUncontrolled) {
+                if (onUncontrolled) {
+                    onUncontrolled(nextUncontrolled);
+                }
+
+                if (foundElement) {
+                    // We have an uncontrolled area and there is a controlled element after it.
+                    // Return undefined for the default Tab action.
+                    return undefined;
+                } else {
+                    // Otherwise, return null to moveOutWithDefaultAction().
+                    return null;
+                }
             }
         }
 
-        return acceptElementState.found
-            ? acceptElementState.foundElement
-            : foundElement;
+        return elements.length ? elements : null;
     }
 
     private _acceptElement(
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number {
-        if (element === state.container) {
-            return NodeFilter.FILTER_SKIP;
-        }
-
         if (state.found) {
             return NodeFilter.FILTER_ACCEPT;
         }
 
+        const container = state.container;
+
+        if (element === container) {
+            return NodeFilter.FILTER_SKIP;
+        }
+
+        if (!container.contains(element)) {
+            return NodeFilter.FILTER_REJECT;
+        }
+
+        if (
+            (element as HTMLElementWithDummyContainer).__tabsterDummyContainer
+        ) {
+            return NodeFilter.FILTER_REJECT;
+        }
+
+        let lastToIgnore = state.lastToIgnore;
+
+        if (lastToIgnore) {
+            if (lastToIgnore.contains(element)) {
+                return NodeFilter.FILTER_REJECT;
+            } else {
+                lastToIgnore = state.lastToIgnore = undefined;
+            }
+        }
+
         const ctx = (state.currentCtx = RootAPI.getTabsterContext(
             this._tabster,
-            element,
-            {
-                allMoversGrouppers: true,
-            }
+            element
         ));
 
         // Tabster is opt in, if it is not managed, don't try and get do anything special
@@ -385,10 +360,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
             }
-        } else if (ctx.groupper) {
-            state.nextGroupper = ctx.groupper.getElement();
-        } else if (ctx.mover) {
-            state.nextMover = ctx.mover.getElement();
         } else if (ctx.uncontrolled && !state.nextUncontrolled) {
             if (!ctx.groupper && !ctx.mover) {
                 state.nextUncontrolled = ctx.uncontrolled;
@@ -398,6 +369,8 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         // We assume iframes are focusable because native tab behaviour would tab inside
         if (element.tagName === "IFRAME" || element.tagName === "WEBVIEW") {
+            state.found = true;
+            state.lastToIgnore = state.foundElement = element;
             return NodeFilter.FILTER_ACCEPT;
         }
 
@@ -405,119 +378,82 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_REJECT;
         }
 
-        if (!state.ignoreGroupper) {
-            const from = state.from;
-            let fromCtx = state.fromCtx;
+        let result: number | undefined;
 
-            if (from && !fromCtx) {
-                fromCtx = state.fromCtx = RootAPI.getTabsterContext(
-                    this._tabster,
-                    from
-                );
+        let fromCtx = state.fromCtx;
+
+        if (!fromCtx) {
+            fromCtx = state.fromCtx = RootAPI.getTabsterContext(
+                this._tabster,
+                state.from
+            );
+        }
+
+        const fromMover = fromCtx?.mover;
+        let groupper = ctx.groupper;
+        let mover = ctx.mover;
+
+        if (groupper || mover || fromMover) {
+            const groupperElement = groupper?.getElement();
+            const fromMoverElement = fromMover?.getElement();
+            let moverElement = mover?.getElement();
+
+            if (
+                moverElement &&
+                fromMoverElement &&
+                container.contains(fromMoverElement) &&
+                (!groupperElement ||
+                    !mover ||
+                    fromMoverElement.contains(groupperElement))
+            ) {
+                mover = fromMover;
+                moverElement = fromMoverElement;
             }
 
-            let groupper: Types.Groupper | undefined = ctx.groupper;
-            let mover: Types.Mover | undefined = ctx.mover;
-            let isGroupperFirst = ctx.isGroupperFirst;
-            const allMoversGrouppers = ctx.allMoversGrouppers;
-
-            if (allMoversGrouppers && !state.isFindAll) {
-                let fromMover: Types.Mover | undefined;
-                let fromGroupper: Types.Groupper | undefined;
-
-                if (fromCtx) {
-                    fromMover = fromCtx.mover;
-                    fromGroupper = fromCtx.groupper;
-                }
-
-                let topMover: Types.Mover | undefined;
-                let topGroupper: Types.Groupper | undefined;
-
-                for (const gm of allMoversGrouppers.instances) {
-                    if (gm.isMover) {
-                        if (!topMover) {
-                            const el = gm.mover.getElement();
-                            const fromElement =
-                                fromMover?.getElement() || state.container;
-                            if (el && fromElement.contains(el)) {
-                                topMover = gm.mover;
-                            }
-                        }
-                    } else {
-                        if (!topGroupper) {
-                            const el = gm.groupper.getElement();
-                            const fromElement =
-                                fromGroupper?.getElement() || state.container;
-                            if (el && fromElement.contains(el)) {
-                                topGroupper = gm.groupper;
-                            }
-                        }
-                    }
-                }
-
-                if (topMover) {
-                    mover = topMover;
-                }
-
-                if (topGroupper) {
-                    groupper = topGroupper;
-                }
-
-                if (mover && groupper) {
-                    const moverElement = mover.getElement();
-
-                    isGroupperFirst =
-                        moverElement &&
-                        !groupper.getElement()?.contains(moverElement);
-                } else {
-                    isGroupperFirst = false;
-                }
-            }
-
-            if (mover && groupper && isGroupperFirst && from) {
-                const moverElement = mover.getElement();
-
-                if (
-                    moverElement &&
-                    (
-                        from as HTMLElementWithDummyContainer
-                    ).__tabsterDummyContainer?.get() === moverElement &&
-                    !moverElement.contains(from)
-                ) {
-                    isGroupperFirst = false;
-                }
-            }
-
-            if (groupper && isGroupperFirst) {
-                mover = undefined;
-            } else if (mover && !isGroupperFirst) {
+            if (
+                groupperElement &&
+                (groupperElement === container ||
+                    !container.contains(groupperElement))
+            ) {
                 groupper = undefined;
             }
 
-            if (groupper) {
-                const result = groupper.acceptElement(element, state);
+            if (moverElement && !container.contains(moverElement)) {
+                mover = undefined;
+            }
 
-                if (result !== undefined) {
-                    return result;
+            if (groupper && mover) {
+                if (
+                    moverElement &&
+                    groupperElement &&
+                    !groupperElement.contains(moverElement)
+                ) {
+                    mover = undefined;
+                } else {
+                    groupper = undefined;
                 }
+            }
+
+            if (groupper) {
+                result = groupper.acceptElement(element, state);
             }
 
             if (mover) {
-                const result = mover.acceptElement(element, state);
-
-                if (result !== undefined) {
-                    return result;
-                }
+                result = mover.acceptElement(element, state);
             }
         }
 
-        const result = state.acceptCondition(element);
+        if (result === undefined) {
+            result = state.acceptCondition(element)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+        }
 
-        if (result && !state.isFindAll && !state.isForward) {
+        if (result === NodeFilter.FILTER_ACCEPT && !state.found) {
             state.found = true;
             state.foundElement = element;
         }
 
-        return result ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        return result;
     }
 }

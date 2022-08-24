@@ -15,7 +15,6 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
-    getLastChild,
     getPromise,
     HTMLElementWithDummyContainer,
     isElementVerticallyVisibleInContainer,
@@ -58,6 +57,7 @@ class MoverDummyManager extends DummyInputManager {
                 toFocus = FocusedElementState.findNextTabbable(
                     this._tabster,
                     ctx,
+                    undefined,
                     input,
                     !dummyInput.isFirst
                 )?.element;
@@ -102,8 +102,6 @@ export class Mover
     private _fullyVisible: string | undefined;
     private _win: Types.GetWindow;
     private _onDispose: (mover: Mover) => void;
-    private _isFindingTabbable = false;
-    private _isNestedCall = false;
     private _allElements: WeakMap<HTMLElement, Mover> | undefined;
     private _updateQueue: MoverUpdateQueueItem[] | undefined;
     private _updateTimer: number | undefined;
@@ -224,18 +222,17 @@ export class Mover
     }
 
     findNextTabbable(
-        current: HTMLElement,
+        currentElement?: HTMLElement,
         prev?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
             container &&
             (
-                current as HTMLElementWithDummyContainer
+                currentElement as HTMLElementWithDummyContainer
             )?.__tabsterDummyContainer?.get() === container;
 
-        if (!container || (!container.contains(current) && !currentIsDummy)) {
-            this._isFindingTabbable = false;
+        if (!container) {
             return null;
         }
 
@@ -247,55 +244,24 @@ export class Mover
             uncontrolled = el;
         };
 
-        this._isFindingTabbable = true;
-
         if (this._props.tabbable || currentIsDummy) {
             next = prev
                 ? focusable.findPrev({
-                      currentElement: current,
+                      currentElement,
                       container,
                       onUncontrolled,
                   })
                 : focusable.findNext({
-                      currentElement: current,
+                      currentElement,
                       container,
                       onUncontrolled,
                   });
         }
 
-        if (next === null) {
-            const parentElement = container.parentElement;
-
-            if (parentElement) {
-                const parentCtx = RootAPI.getTabsterContext(
-                    tabster,
-                    parentElement
-                );
-
-                if (parentCtx) {
-                    const from = prev
-                        ? container
-                        : getLastChild(container) || container;
-
-                    const ret = FocusedElementState.findNextTabbable(
-                        tabster,
-                        parentCtx,
-                        from,
-                        prev
-                    );
-
-                    this._isFindingTabbable = false;
-
-                    return ret;
-                }
-            }
-        }
-
-        this._isFindingTabbable = false;
-
         return {
             element: next,
             uncontrolled,
+            lastMoverOrGroupper: next || uncontrolled ? undefined : this,
         };
     }
 
@@ -303,98 +269,62 @@ export class Mover
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number | undefined {
-        const allMoversGrouppers = state.currentCtx?.allMoversGrouppers;
-
-        if (allMoversGrouppers && allMoversGrouppers.moverCount > 1) {
-            const instances = allMoversGrouppers.instances;
-
-            for (let i = instances.length; i--; ) {
-                const gm = instances[i];
-
-                if (gm.isMover && gm.mover !== this) {
-                    const el = gm.mover.getElement();
-
-                    if (el) {
-                        if (state.container.contains(el)) {
-                            if (state.isFindAll) {
-                                return NodeFilter.FILTER_REJECT;
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (state.isFindAll) {
-            return undefined;
+        if (!FocusedElementState.isTabbing) {
+            return state.currentCtx?.isExcludedFromMover
+                ? NodeFilter.FILTER_REJECT
+                : undefined;
         }
 
         const { memorizeCurrent, visibilityAware } = this._props;
+        const moverElement = this.getElement();
 
-        if (state.currentCtx?.isExcludedFromMover && !this._isFindingTabbable) {
-            return NodeFilter.FILTER_REJECT;
-        }
+        if (
+            moverElement &&
+            (memorizeCurrent || visibilityAware) &&
+            (!moverElement.contains(state.from) ||
+                (
+                    state.from as HTMLElementWithDummyContainer
+                ).__tabsterDummyContainer?.get() === moverElement)
+        ) {
+            if (memorizeCurrent) {
+                const current = this._current?.get();
 
-        if (memorizeCurrent || visibilityAware) {
-            const container = this.getElement();
-
-            if (container) {
-                if (memorizeCurrent) {
-                    const current = this._current?.get();
-
-                    if (current && state.acceptCondition(current)) {
-                        if (state.from && !container.contains(state.from)) {
-                            state.found = true;
-                            state.foundElement = current;
-                            return NodeFilter.FILTER_ACCEPT;
-                        }
-                    }
+                if (current && state.acceptCondition(current)) {
+                    state.found = true;
+                    state.foundElement = current;
+                    state.lastToIgnore = moverElement;
+                    return NodeFilter.FILTER_ACCEPT;
                 }
+            }
 
-                if (
-                    !this._isNestedCall &&
-                    visibilityAware &&
-                    (!container.contains(state.from) ||
-                        (this._isFindingTabbable &&
-                            (
-                                state.from as HTMLElementWithDummyContainer
-                            )?.__tabsterDummyContainer?.get() === container))
-                ) {
-                    this._isNestedCall = true;
+            if (visibilityAware) {
+                const found = this._tabster.focusable.findElement({
+                    container: moverElement,
+                    ignoreUncontrolled: true,
+                    isBackward: state.isBackward,
+                    acceptCondition: (el) => {
+                        const id = getElementUId(this._win, el);
+                        const visibility = this._visible[id];
 
-                    const container = this.getElement();
-                    const found = this._tabster.focusable.findElement({
-                        container,
-                        ignoreUncontrolled: true,
-                        prev: !state.isForward,
-                        acceptCondition: (el) => {
-                            const id = getElementUId(this._win, el);
-                            const visibility = this._visible[id];
+                        return (
+                            moverElement !== el &&
+                            !!this._allElements?.get(el) &&
+                            state.acceptCondition(el) &&
+                            (visibility === Types.Visibilities.Visible ||
+                                (visibility ===
+                                    Types.Visibilities.PartiallyVisible &&
+                                    (visibilityAware ===
+                                        Types.Visibilities.PartiallyVisible ||
+                                        !this._fullyVisible)))
+                        );
+                    },
+                });
 
-                            return (
-                                container !== el &&
-                                !!this._allElements?.get(el) &&
-                                state.acceptCondition(el) &&
-                                (visibility === Types.Visibilities.Visible ||
-                                    (visibility ===
-                                        Types.Visibilities.PartiallyVisible &&
-                                        (visibilityAware ===
-                                            Types.Visibilities
-                                                .PartiallyVisible ||
-                                            !this._fullyVisible)))
-                            );
-                        },
-                    });
-
-                    this._isNestedCall = false;
-
-                    if (found) {
-                        state.found = true;
-                        state.foundElement = found;
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
+                if (found) {
+                    state.found = true;
+                    state.foundElement = found;
+                    state.lastToIgnore = moverElement;
+                    return NodeFilter.FILTER_ACCEPT;
                 }
             }
         }
@@ -546,10 +476,13 @@ export class Mover
                         return NodeFilter.FILTER_REJECT;
                     }
 
+                    const groupperFirstFocusable = groupper?.getFirst(true);
+
                     if (
                         groupper &&
-                        (groupper.getElement() !== node ||
-                            !tabsterFocusable.isFocusable(node as HTMLElement))
+                        groupper.getElement() !== node &&
+                        groupperFirstFocusable &&
+                        groupperFirstFocusable !== node
                     ) {
                         return NodeFilter.FILTER_REJECT;
                     }
@@ -807,7 +740,7 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         if (ctx.isGroupperFirst) {
-            if (ctx.groupper && ctx.groupper.isActive()) {
+            if (ctx.groupper && ctx.groupper.isActive(true)) {
                 return;
             }
         }

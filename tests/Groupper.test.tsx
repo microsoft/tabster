@@ -250,6 +250,7 @@ describe("Groupper tabbing forward and backwards", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
@@ -270,7 +271,7 @@ describe("Groupper tabbing forward and backwards", () => {
             })
             .pressTab()
             .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
+                expect(el?.textContent).toEqual("Button2Button3");
             })
             .pressTab()
             .activeElement((el) => {
@@ -278,7 +279,7 @@ describe("Groupper tabbing forward and backwards", () => {
             })
             .pressTab(true)
             .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
+                expect(el?.textContent).toEqual("Button2Button3");
             })
             .pressTab(true)
             .activeElement((el) => {
@@ -291,6 +292,7 @@ describe("Groupper tabbing forward and backwards", () => {
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
@@ -306,7 +308,7 @@ describe("Groupper tabbing forward and backwards", () => {
         )
             .pressTab()
             .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
+                expect(el?.textContent).toEqual("Button1Button2");
             })
             .pressTab()
             .activeElement((el) => {
@@ -314,7 +316,7 @@ describe("Groupper tabbing forward and backwards", () => {
             })
             .pressTab(true)
             .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
+                expect(el?.textContent).toEqual("Button1Button2");
             })
             .pressTab(true)
             .activeElement((el) => {

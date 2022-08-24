@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from "keyborg";
+
 import * as Types from "./Types";
 import { GetWindow, Visibilities, Visibility } from "./Types";
 
@@ -659,7 +661,10 @@ export interface DummyInputProps {
     isFirst: boolean;
 }
 
-export type DummyInputFocusCallback = (dummyInput: DummyInput) => void;
+export type DummyInputFocusCallback = (
+    dummyInput: DummyInput,
+    isBackward: boolean
+) => void;
 
 /**
  * Dummy HTML elements that are used as focus sentinels for the DOM enclosed within them
@@ -760,17 +765,49 @@ export class DummyInput {
         }
     }
 
-    private _focusIn = (): void => {
-        if (this.onFocusIn && this.input) {
-            this.onFocusIn(this);
+    private _isBackward(
+        isIn: boolean,
+        current: HTMLElement,
+        previous: HTMLElement | null
+    ): boolean {
+        return isIn && !previous
+            ? !this.isFirst
+            : !!(
+                  previous &&
+                  current.compareDocumentPosition(previous) &
+                      Node.DOCUMENT_POSITION_FOLLOWING
+              );
+    }
+
+    private _focusIn = (e: FocusEvent): void => {
+        const input = this.input;
+
+        if (this.onFocusIn && input) {
+            this.onFocusIn(
+                this,
+                this._isBackward(
+                    true,
+                    input,
+                    e.relatedTarget as HTMLElement | null
+                )
+            );
         }
     };
 
-    private _focusOut = (): void => {
+    private _focusOut = (e: FocusEvent): void => {
         this.shouldMoveOut = false;
 
-        if (this.onFocusOut && this.input) {
-            this.onFocusOut(this);
+        const input = this.input;
+
+        if (this.onFocusOut && input) {
+            this.onFocusOut(
+                this,
+                this._isBackward(
+                    false,
+                    input,
+                    e.relatedTarget as HTMLElement | null
+                )
+            );
         }
 
         if (this._isPhantom) {
@@ -792,8 +829,8 @@ export const DummyInputManagerPriorities = {
 
 export class DummyInputManager {
     private _instance?: DummyInputManagerCore;
-    private _onFocusIn?: (dummyInput: DummyInput) => void;
-    private _onFocusOut?: (dummyInput: DummyInput) => void;
+    private _onFocusIn?: DummyInputFocusCallback;
+    private _onFocusOut?: DummyInputFocusCallback;
     protected _element: WeakHTMLElement;
 
     moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
@@ -801,7 +838,8 @@ export class DummyInputManager {
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
-        priority: number
+        priority: number,
+        alwaysOutside?: boolean
     ) {
         this._element = element;
 
@@ -809,7 +847,8 @@ export class DummyInputManager {
             tabster,
             element,
             this,
-            priority
+            priority,
+            alwaysOutside
         );
 
         this.moveOutWithDefaultAction = (backwards: boolean) => {
@@ -818,14 +857,14 @@ export class DummyInputManager {
     }
 
     protected _setHandlers(
-        onFocusIn?: (dummyInput: DummyInput) => void,
-        onFocusOut?: (dummyInput: DummyInput) => void
+        onFocusIn?: DummyInputFocusCallback,
+        onFocusOut?: DummyInputFocusCallback
     ): void {
         this._onFocusIn = onFocusIn;
         this._onFocusOut = onFocusOut;
     }
 
-    getHandler(isIn: boolean): ((dummyInput: DummyInput) => void) | undefined {
+    getHandler(isIn: boolean): DummyInputFocusCallback | undefined {
         return isIn ? this._onFocusIn : this._onFocusOut;
     }
 
@@ -841,6 +880,35 @@ export class DummyInputManager {
 
         delete this._onFocusIn;
         delete this._onFocusOut;
+    }
+
+    static moveWithPhantomDummy(
+        tabster: Types.TabsterCore,
+        element: HTMLElement,
+        moveOutside: boolean,
+        isBackward: boolean
+    ): void {
+        const dummy: DummyInput = new DummyInput(tabster.getWindow, {
+            isPhantom: true,
+            isFirst: true,
+        });
+
+        const input = dummy.input;
+
+        if (input) {
+            const parent = element.parentElement;
+
+            if (parent) {
+                parent.insertBefore(
+                    input,
+                    (moveOutside && !isBackward) || (!moveOutside && isBackward)
+                        ? element.nextElementSibling
+                        : element
+                );
+
+                nativeFocus(input);
+            }
+        }
     }
 }
 
@@ -869,7 +937,8 @@ class DummyInputManagerCore {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         manager: DummyInputManager,
-        priority: number
+        priority: number,
+        alwaysOutside?: boolean
     ) {
         const el = element.get() as HTMLElementWithDummyInputs;
 
@@ -921,7 +990,10 @@ class DummyInputManagerCore {
         // put our dummy inputs outside of the element.
         const tagName = element.get()?.tagName;
         this._isOutside =
-            tagName === "UL" || tagName === "OL" || tagName === "TABLE";
+            alwaysOutside ||
+            tagName === "UL" ||
+            tagName === "OL" ||
+            tagName === "TABLE";
 
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639
@@ -970,20 +1042,30 @@ class DummyInputManagerCore {
         }
     }
 
-    private _onFocus(isIn: boolean, dummyInput: DummyInput): void {
+    private _onFocus(
+        isIn: boolean,
+        dummyInput: DummyInput,
+        isBackward: boolean
+    ): void {
         const wrapper = this._getCurrent();
 
         if (wrapper) {
-            wrapper.manager.getHandler(isIn)?.(dummyInput);
+            wrapper.manager.getHandler(isIn)?.(dummyInput, isBackward);
         }
     }
 
-    private _onFocusIn = (dummyInput: DummyInput): void => {
-        this._onFocus(true, dummyInput);
+    private _onFocusIn = (
+        dummyInput: DummyInput,
+        isBackward: boolean
+    ): void => {
+        this._onFocus(true, dummyInput, isBackward);
     };
 
-    private _onFocusOut = (dummyInput: DummyInput): void => {
-        this._onFocus(false, dummyInput);
+    private _onFocusOut = (
+        dummyInput: DummyInput,
+        isBackward: boolean
+    ): void => {
+        this._onFocus(false, dummyInput, isBackward);
     };
 
     /**
@@ -1190,14 +1272,31 @@ class DummyInputManagerCore {
     }
 }
 
-export function getLastChild(container: HTMLElement): HTMLElement | null {
+export function getLastChild(container: HTMLElement): HTMLElement | undefined {
     let lastChild: HTMLElement | null = null;
 
     for (let i = container.lastElementChild; i; i = i.lastElementChild) {
         lastChild = i as HTMLElement;
     }
 
-    return lastChild;
+    return lastChild || undefined;
+}
+
+export function getAdjacentElement(
+    from: HTMLElement,
+    prev?: boolean
+): HTMLElement | undefined {
+    let cur: HTMLElement | null = from;
+    let adjacent: HTMLElement | null = null;
+
+    while (cur && !adjacent) {
+        adjacent = (
+            prev ? cur.previousElementSibling : cur.nextElementSibling
+        ) as HTMLElement | null;
+        cur = cur.parentElement;
+    }
+
+    return adjacent || undefined;
 }
 
 export function triggerEvent<D>(

@@ -343,23 +343,21 @@ export interface FocusableProps {
 export interface FocusableAcceptElementState {
     container: HTMLElement;
     currentCtx?: TabsterContext;
-    from: HTMLElement | null;
+    from: HTMLElement;
     fromCtx?: TabsterContext;
-    isForward: boolean;
+    isBackward?: boolean;
     found?: boolean;
     foundElement?: HTMLElement;
+    lastToIgnore?: HTMLElement;
+    uncontrolled?: HTMLElement;
     nextUncontrolled?: HTMLElement;
-    nextGroupper?: HTMLElement;
-    nextMover?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
-    ignoreGroupper?: boolean;
     ignoreUncontrolled?: boolean;
     ignoreAccessibiliy?: boolean;
-    grouppers: {
+    cachedGrouppers: {
         [id: string]: {
             isActive: boolean | undefined;
-            isInside: boolean;
             first?: HTMLElement | null;
         };
     };
@@ -379,7 +377,7 @@ export interface FindFocusableProps {
      * includes elements that can be focused programmatically
      */
     includeProgrammaticallyFocusable?: boolean;
-    ignoreGroupper?: boolean;
+    // ignoreGroupper?: boolean;
     /**
      * Ignore uncontrolled areas.
      */
@@ -388,7 +386,10 @@ export interface FindFocusableProps {
      * Ignore accessibility check.
      */
     ignoreAccessibiliy?: boolean;
-    prev?: boolean;
+    /**
+     * If true, find previous element instead of the next one.
+     */
+    isBackward?: boolean;
     /**
      * @param el element visited
      * @returns if an element should be accepted
@@ -405,7 +406,6 @@ export type FindFirstProps = Pick<
     FindFocusableProps,
     | "container"
     | "includeProgrammaticallyFocusable"
-    | "ignoreGroupper"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
 >;
@@ -415,7 +415,6 @@ export type FindNextProps = Pick<
     | "currentElement"
     | "container"
     | "includeProgrammaticallyFocusable"
-    | "ignoreGroupper"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
     | "onUncontrolled"
@@ -425,7 +424,6 @@ export type FindDefaultProps = Pick<
     FindFocusableProps,
     | "container"
     | "includeProgrammaticallyFocusable"
-    | "ignoreGroupper"
     | "ignoreAccessibiliy"
 >;
 
@@ -433,7 +431,6 @@ export type FindAllProps = Pick<
     FindFocusableProps,
     | "container"
     | "includeProgrammaticallyFocusable"
-    | "ignoreGroupper"
     | "acceptCondition"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
@@ -501,6 +498,7 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement;
+    lastMoverOrGroupper?: Mover | Groupper;
 };
 
 export interface MoverProps {
@@ -540,7 +538,10 @@ export interface Mover extends TabsterPart<MoverProps> {
     setCurrent(element: HTMLElement | undefined): void;
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
-    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    findNextTabbable(
+        current?: HTMLElement,
+        isBackward?: boolean
+    ): NextTabbable | null;
     acceptElement(
         element: HTMLElement,
         state: FocusableAcceptElementState
@@ -584,11 +585,13 @@ export interface Groupper extends TabsterPart<GroupperProps> {
     readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
     makeTabbable(isUnlimited: boolean): void;
-    shouldTabInside(): boolean;
-    isActive(): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
+    isActive(noIfFirstIsFocused?: boolean): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
     setFirst(element: HTMLElement | undefined): void;
-    getFirst(): HTMLElement | undefined;
-    findNextTabbable(current: HTMLElement, prev?: boolean): NextTabbable | null;
+    getFirst(orContainer: boolean): HTMLElement | undefined;
+    findNextTabbable(
+        current?: HTMLElement,
+        isBackward?: boolean
+    ): NextTabbable | null;
     acceptElement(
         element: HTMLElement,
         state: FocusableAcceptElementState
@@ -674,10 +677,6 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
-    /**
-     * Return all grouppers and movers walking up the DOM from the context element.
-     */
-    allMoversGrouppers?: boolean;
 }
 
 export type TabsterContextMoverGroupper =
@@ -698,11 +697,6 @@ export interface TabsterContext {
      * The uncontrolled container of this element (if any).
      */
     uncontrolled?: HTMLElement;
-    allMoversGrouppers?: {
-        moverCount: number;
-        groupperCount: number;
-        instances: TabsterContextMoverGroupper[];
-    };
     isExcludedFromMover?: boolean;
     ignoreKeydown: NonNullable<FocusableProps["ignoreKeydown"]>;
 }

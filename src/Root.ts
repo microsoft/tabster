@@ -149,8 +149,23 @@ export class Root
         this._remove();
     }
 
-    moveOutWithDefaultAction(backwards: boolean) {
-        this._dummyManager?.moveOutWithDefaultAction(backwards);
+    moveOutWithDefaultAction(isBackward: boolean) {
+        const dummyManager = this._dummyManager;
+
+        if (dummyManager) {
+            dummyManager.moveOutWithDefaultAction(isBackward);
+        } else {
+            const el = this.getElement();
+
+            if (el) {
+                RootDummyManager.moveWithPhantomDummy(
+                    this._tabster,
+                    el,
+                    true,
+                    isBackward
+                );
+            }
+        }
     }
 
     private _setFocused = (
@@ -338,18 +353,7 @@ export class RootAPI implements Types.RootAPI {
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
         let curElement: Node | null = element;
-        let allMoversGrouppers: Types.TabsterContext["allMoversGrouppers"];
-        let instances: Types.TabsterContextMoverGroupper[] | undefined;
         const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
-
-        if (options.allMoversGrouppers) {
-            instances = [];
-            allMoversGrouppers = {
-                instances,
-                moverCount: 0,
-                groupperCount: 0,
-            };
-        }
 
         while (curElement && (!root || checkRtl)) {
             const tabsterOnElement = getTabsterOnElement(
@@ -384,26 +388,6 @@ export class RootAPI implements Types.RootAPI {
 
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
-
-            if (allMoversGrouppers && instances) {
-                if (curMover) {
-                    instances.unshift({
-                        isMover: true,
-                        mover: curMover,
-                    });
-                }
-
-                allMoversGrouppers.moverCount++;
-
-                if (curGroupper) {
-                    instances.unshift({
-                        isMover: false,
-                        groupper: curGroupper,
-                    });
-                }
-
-                allMoversGrouppers.groupperCount++;
-            }
 
             if (!groupper && curGroupper) {
                 groupper = curGroupper;
@@ -453,10 +437,6 @@ export class RootAPI implements Types.RootAPI {
             root = rootAPI._autoRootInstance;
         }
 
-        if (instances && instances.length === 0) {
-            allMoversGrouppers = undefined;
-        }
-
         return root
             ? {
                   root,
@@ -466,7 +446,6 @@ export class RootAPI implements Types.RootAPI {
                   isGroupperFirst,
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
-                  allMoversGrouppers,
                   isExcludedFromMover,
                   ignoreKeydown,
               }
