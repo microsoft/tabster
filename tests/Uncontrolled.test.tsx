@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled } from "./utils/test-utils";
+import { runIfControlled, runIfUnControlled } from "./utils/test-utils";
 
 runIfControlled("Uncontrolled", () => {
     beforeAll(async () => {
@@ -402,4 +402,69 @@ runIfControlled("Uncontrolled", () => {
                 expect(el?.textContent).toEqual("Button1");
             });
     });
+});
+
+runIfUnControlled("Uncontrolled", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage({
+            mover: true,
+        });
+    });
+
+    it.each`
+        senario | children
+        ${"mover is direct child of uncontrolled element"} | ${(<div {...getTabsterAttribute({
+            mover: { memorizeCurrent: true },
+        })}>
+        <button>Mover-Button1</button>
+        <button>Mover-Button2</button>
+    </div>)}
+        ${"mover is NOT direct child of uncontrolled element"} | ${(<div>
+        <div {...getTabsterAttribute({
+                mover: { memorizeCurrent: true },
+            })}>
+            <button>Mover-Button1</button>
+            <button>Mover-Button2</button>
+        </div>
+    </div>)}
+    `(
+        "should maintain Movers navigation in uncontrolled when $senario",
+        async ({ children }) => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                            <button>Button1</button>
+                            {children}
+                        </div>
+                    </div>
+                )
+            )
+
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Mover-Button1");
+                })
+                .pressTab() // Tab in mover navigates outside of mover
+                .activeElement((el) => {
+                    expect(el?.textContent).toBeUndefined();
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Mover-Button1");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Mover-Button2");
+                })
+                .pressTab(true) // shift+Tab in mover navigates outside of mover
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        }
+    );
 });
