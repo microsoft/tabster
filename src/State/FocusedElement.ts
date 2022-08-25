@@ -149,16 +149,17 @@ export class FocusedElementState
         return false;
     }
 
-    private _focusFirstOrLast(isFirst: boolean, props: Types.FindFirstProps): boolean {
+    private _focusFirstOrLast(
+        isFirst: boolean,
+        props: Types.FindFirstProps
+    ): boolean {
         const tabsterFocusable = this._tabster.focusable;
         const container = props.container;
         let uncontrolled: HTMLElement | undefined;
         let toFocus: HTMLElement | null | undefined;
 
         if (container) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, container, {
-                checkRtl: true,
-            });
+            const ctx = RootAPI.getTabsterContext(this._tabster, container);
 
             if (ctx) {
                 let next = FocusedElementState.findNextTabbable(
@@ -184,7 +185,9 @@ export class FocusedElementState
                         ) {
                             toFocus = uncontrolled;
                         } else {
-                            toFocus = tabsterFocusable[isFirst ? 'findFirst' : 'findLast']({
+                            toFocus = tabsterFocusable[
+                                isFirst ? "findFirst" : "findLast"
+                            ]({
                                 container: uncontrolled,
                                 ignoreUncontrolled: true,
                                 ignoreAccessibiliy: true,
@@ -332,7 +335,7 @@ export class FocusedElementState
     private _onFocusIn = (e: KeyborgFocusInEvent): void => {
         this._setFocusedElement(
             e.target as HTMLElement,
-            (e.details.relatedTarget as (HTMLElement | undefined)),
+            e.details.relatedTarget as HTMLElement | undefined,
             e.details.isFocusedProgrammatically
         );
     };
@@ -340,7 +343,7 @@ export class FocusedElementState
     private _onFocusOut = (e: FocusEvent): void => {
         this._setFocusedElement(
             undefined,
-            (e.relatedTarget as (HTMLElement | undefined))
+            e.relatedTarget as HTMLElement | undefined
         );
     };
 
@@ -412,7 +415,10 @@ export class FocusedElementState
                       onUncontrolled,
                   });
 
-            next = { element: uncontrolled ? undefined : nextElement, uncontrolled };
+            next = {
+                element: uncontrolled ? undefined : nextElement,
+                uncontrolled,
+            };
         }
 
         const lastMoverOrGroupperElement =
@@ -483,9 +489,7 @@ export class FocusedElementState
 
         const tabster = this._tabster;
         const controlTab = tabster.controlTab;
-        const ctx = RootAPI.getTabsterContext(tabster, currentElement, {
-            checkRtl: true,
-        });
+        const ctx = RootAPI.getTabsterContext(tabster, currentElement);
 
         if (
             !ctx ||
@@ -522,15 +526,28 @@ export class FocusedElementState
         let nextElement: HTMLElement | null | undefined;
 
         if (next) {
-            const uncontrolled = next.uncontrolled;
+            let uncontrolled = next.uncontrolled;
 
             if (uncontrolled) {
-                if (ctx.uncontrolled !== uncontrolled) {
+                const isGroupperFirst = ctx.isGroupperFirst;
+                let moveOutside = false;
+
+                if (isGroupperFirst !== undefined) {
+                    if (isGroupperFirst) {
+                        uncontrolled = ctx.groupper?.getElement();
+                    } else {
+                        uncontrolled = ctx.mover?.getElement();
+                    }
+
+                    moveOutside = true;
+                }
+
+                if (uncontrolled && ctx.uncontrolled !== uncontrolled) {
                     // We have met an uncontrolled area, just allow default action.
                     DummyInputManager.moveWithPhantomDummy(
                         this._tabster,
                         uncontrolled,
-                        false,
+                        moveOutside,
                         isBackward
                     );
                 }

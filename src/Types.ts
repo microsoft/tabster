@@ -422,9 +422,7 @@ export type FindNextProps = Pick<
 
 export type FindDefaultProps = Pick<
     FindFocusableProps,
-    | "container"
-    | "includeProgrammaticallyFocusable"
-    | "ignoreAccessibiliy"
+    "container" | "includeProgrammaticallyFocusable" | "ignoreAccessibiliy"
 >;
 
 export type FindAllProps = Pick<

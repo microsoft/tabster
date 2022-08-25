@@ -29,9 +29,7 @@ class GroupperDummyManager extends DummyInputManager {
                 const input = dummyInput.input;
 
                 if (input) {
-                    const ctx = RootAPI.getTabsterContext(tabster, input, {
-                        checkRtl: true,
-                    });
+                    const ctx = RootAPI.getTabsterContext(tabster, input);
 
                     if (ctx) {
                         const next = FocusedElementState.findNextTabbable(

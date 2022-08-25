@@ -243,7 +243,9 @@ export class FocusableAPI implements Types.FocusableAPI {
             return null;
         }
 
-        const prepareForNextElement = (shouldContinueIfNotFound?: boolean): boolean => {
+        const prepareForNextElement = (
+            shouldContinueIfNotFound?: boolean
+        ): boolean => {
             const foundElement = acceptElementState.foundElement;
 
             if (foundElement) {
@@ -287,8 +289,11 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         let foundElement: HTMLElement | null | undefined;
         do {
-            foundElement = (isBackward ? walker.previousNode() : walker.nextNode()) as (HTMLElement | null) || undefined;
-        } while (prepareForNextElement())
+            foundElement =
+                ((isBackward
+                    ? walker.previousNode()
+                    : walker.nextNode()) as HTMLElement | null) || undefined;
+        } while (prepareForNextElement());
 
         if (!findAll) {
             const nextUncontrolled = acceptElementState.nextUncontrolled;
@@ -360,7 +365,11 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (shouldIgnoreFocus(element)) {
                 return NodeFilter.FILTER_SKIP;
             }
-        } else if (ctx.uncontrolled && !state.nextUncontrolled) {
+        } else if (
+            ctx.uncontrolled &&
+            !state.nextUncontrolled &&
+            this._tabster.focusable.isFocusable(element, undefined, true, true)
+        ) {
             if (!ctx.groupper && !ctx.mover) {
                 state.nextUncontrolled = ctx.uncontrolled;
                 return NodeFilter.FILTER_REJECT;
