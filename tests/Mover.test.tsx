@@ -763,7 +763,7 @@ describe("Mover with visibilityAware", () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
-    it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
+    it("should tab to first/last visible element when tabbing from outside of the Mover", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>

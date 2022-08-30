@@ -226,7 +226,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummyInside)
+                .check(checkDummyOutside)
                 .eval(appendElement, groupperId)
                 .wait(1)
                 .eval(
@@ -234,7 +234,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummyInside)
+                .check(checkDummyOutside)
                 .eval(prependElement, groupperId)
                 .wait(1)
                 .eval(
@@ -242,7 +242,7 @@ runIfUnControlled("DummyInputManager", () => {
                     Types.TabsterDummyInputAttributeName,
                     groupperId
                 )
-                .check(checkDummyInside);
+                .check(checkDummyOutside);
         });
 
         it("modalizerAPI", async () => {

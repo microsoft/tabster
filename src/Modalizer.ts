@@ -367,8 +367,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
-        const documentBody = this._win().document.body;
         if (!tabster.controlTab) {
+            const documentBody = this._win().document.body;
             this._dummyManager = new ModalizerAPIDummyManager(
                 this,
                 tabster,

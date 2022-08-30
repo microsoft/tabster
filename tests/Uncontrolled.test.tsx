@@ -17,6 +17,7 @@ runIfControlled("Uncontrolled", () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-hidden="true">Button0</button>
                     <div {...getTabsterAttribute({ uncontrolled: {} })}>
                         <button>Button1</button>
                         <button aria-hidden="true">Button2</button>
@@ -302,68 +303,6 @@ runIfControlled("Uncontrolled", () => {
             });
     });
 
-    it("should properly transition between uncontrolled areas", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                        <button>Button1</button>
-                        <button>Button2</button>
-                    </div>
-                    <ul {...getTabsterAttribute({ mover: {} })}>
-                        <li
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button
-                                {...getTabsterAttribute({ uncontrolled: {} })}
-                            >
-                                Button3
-                            </button>
-                        </li>
-                        <li
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button
-                                {...getTabsterAttribute({ uncontrolled: {} })}
-                            >
-                                Button4
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            )
-        )
-            .pressTab()
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            })
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button3");
-            })
-            .pressDown()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button4");
-            })
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            });
-    });
-
     it("should properly transition between controlled and uncontrolled areas", async () => {
         await new BroTest.BroTest(
             (
@@ -396,6 +335,120 @@ runIfControlled("Uncontrolled", () => {
             .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it("should handle Mover inside Uncontrolled", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                        <div>
+                            <div
+                                {...getTabsterAttribute({
+                                    mover: { memorizeCurrent: true },
+                                })}
+                            >
+                                <button>Mover-Button1</button>
+                                <button>Mover-Button2</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover-Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover-Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover-Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover-Button2");
+            });
+    });
+
+    it("should handle Groupper inside Uncontrolled", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                        <div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities.Limited,
+                                    },
+                                })}
+                            >
+                                <button>Groupper-Button1</button>
+                                <button>Groupper-Button2</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Groupper-Button1Groupper-Button2"
+                );
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Groupper-Button1Groupper-Button2"
+                );
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Groupper-Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Groupper-Button2");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Groupper-Button1Groupper-Button2"
+                );
             })
             .pressTab(true)
             .activeElement((el) => {
