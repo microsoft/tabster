@@ -6,6 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
+import { runIfUnControlled } from "./utils/test-utils";
 
 const groupperItem = (
     tabsterAttr: Types.TabsterDOMAttribute,
@@ -322,5 +323,54 @@ describe("Groupper tabbing forward and backwards", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toBeUndefined();
             });
+    });
+});
+
+// TODO: Address contentEditables in a controlled groupper (likely by having dummy inputs around).
+runIfUnControlled("Groupper", () => {
+    beforeAll(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    describe("Groupper with contentEditable", () => {
+        it("should handle contentEditable in a trapped groupper", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <div
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div tabIndex={0} contentEditable="true">
+                                ContentEditable
+                            </div>
+                        </div>
+                        <button>Button2</button>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("ContentEditable");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("ContentEditable");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("ContentEditable");
+                });
+        });
     });
 });

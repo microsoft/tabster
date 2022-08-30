@@ -19,34 +19,62 @@ import {
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
-    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
+    constructor(
+        element: WeakHTMLElement,
+        groupper: Groupper,
+        tabster: Types.TabsterCore
+    ) {
         super(tabster, element, DummyInputManagerPriorities.Groupper, true);
 
-        this._setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
-            const container = element.get();
+        this._setHandlers(
+            (
+                dummyInput: DummyInput,
+                isBackward: boolean,
+                relatedTarget: HTMLElement | null
+            ) => {
+                const container = element.get();
 
-            if (container && !dummyInput.shouldMoveOut) {
-                const input = dummyInput.input;
+                if (container && !dummyInput.shouldMoveOut) {
+                    const input = dummyInput.input;
 
-                if (input) {
-                    const ctx = RootAPI.getTabsterContext(tabster, input);
+                    if (input) {
+                        const ctx = RootAPI.getTabsterContext(tabster, input);
 
-                    if (ctx) {
-                        const next = FocusedElementState.findNextTabbable(
-                            tabster,
-                            ctx,
-                            undefined,
-                            input,
-                            isBackward
-                        )?.element;
+                        if (ctx) {
+                            let next: HTMLElement | null | undefined;
 
-                        if (next) {
-                            tabster.focusedElement.focus(next);
+                            if (
+                                relatedTarget &&
+                                relatedTarget.contentEditable === "true" &&
+                                groupper.getProps().tabbability ===
+                                    Types.GroupperTabbabilities
+                                        .LimitedTrapFocus &&
+                                container.contains(relatedTarget)
+                            ) {
+                                next = groupper.findNextTabbable(
+                                    relatedTarget,
+                                    isBackward
+                                )?.element;
+                            }
+
+                            if (!next) {
+                                next = FocusedElementState.findNextTabbable(
+                                    tabster,
+                                    ctx,
+                                    undefined,
+                                    input,
+                                    isBackward
+                                )?.element;
+                            }
+
+                            if (next) {
+                                tabster.focusedElement.focus(next);
+                            }
                         }
                     }
                 }
             }
-        });
+        );
     }
 }
 
@@ -74,6 +102,7 @@ export class Groupper
         if (!tabster.controlTab) {
             this.dummyManager = new GroupperDummyManager(
                 this._element,
+                this,
                 tabster
             );
         }
@@ -96,7 +125,7 @@ export class Groupper
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        prev?: boolean
+        isBackward?: boolean
     ): Types.NextTabbable | null {
         const groupperElement = this.getElement();
 
@@ -121,7 +150,7 @@ export class Groupper
         };
 
         if (this._shouldTabInside && groupperFirstFocusable) {
-            next = prev
+            next = isBackward
                 ? tabster.focusable.findPrev({
                       container: groupperElement,
                       currentElement,
@@ -139,7 +168,7 @@ export class Groupper
                 this._props.tabbability ===
                     Types.GroupperTabbabilities.LimitedTrapFocus
             ) {
-                next = prev
+                next = isBackward
                     ? tabster.focusable.findLast({
                           container: groupperElement,
                       })

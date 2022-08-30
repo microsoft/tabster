@@ -223,7 +223,7 @@ export class Mover
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        prev?: boolean
+        isBackward?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
@@ -245,7 +245,7 @@ export class Mover
         };
 
         if (this._props.tabbable || currentIsDummy) {
-            next = prev
+            next = isBackward
                 ? focusable.findPrev({
                       currentElement,
                       container,

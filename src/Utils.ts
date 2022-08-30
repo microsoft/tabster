@@ -663,7 +663,8 @@ export interface DummyInputProps {
 
 export type DummyInputFocusCallback = (
     dummyInput: DummyInput,
-    isBackward: boolean
+    isBackward: boolean,
+    relatedTarget: HTMLElement | null
 ) => void;
 
 /**
@@ -783,13 +784,12 @@ export class DummyInput {
         const input = this.input;
 
         if (this.onFocusIn && input) {
+            const relatedTarget = e.relatedTarget as HTMLElement | null;
+
             this.onFocusIn(
                 this,
-                this._isBackward(
-                    true,
-                    input,
-                    e.relatedTarget as HTMLElement | null
-                )
+                this._isBackward(true, input, relatedTarget),
+                relatedTarget
             );
         }
     };
@@ -800,13 +800,12 @@ export class DummyInput {
         const input = this.input;
 
         if (this.onFocusOut && input) {
+            const relatedTarget = e.relatedTarget as HTMLElement | null;
+
             this.onFocusOut(
                 this,
-                this._isBackward(
-                    false,
-                    input,
-                    e.relatedTarget as HTMLElement | null
-                )
+                this._isBackward(false, input, relatedTarget),
+                relatedTarget
             );
         }
 
@@ -1045,27 +1044,34 @@ class DummyInputManagerCore {
     private _onFocus(
         isIn: boolean,
         dummyInput: DummyInput,
-        isBackward: boolean
+        isBackward: boolean,
+        relatedTarget: HTMLElement | null
     ): void {
         const wrapper = this._getCurrent();
 
         if (wrapper) {
-            wrapper.manager.getHandler(isIn)?.(dummyInput, isBackward);
+            wrapper.manager.getHandler(isIn)?.(
+                dummyInput,
+                isBackward,
+                relatedTarget
+            );
         }
     }
 
     private _onFocusIn = (
         dummyInput: DummyInput,
-        isBackward: boolean
+        isBackward: boolean,
+        relatedTarget: HTMLElement | null
     ): void => {
-        this._onFocus(true, dummyInput, isBackward);
+        this._onFocus(true, dummyInput, isBackward, relatedTarget);
     };
 
     private _onFocusOut = (
         dummyInput: DummyInput,
-        isBackward: boolean
+        isBackward: boolean,
+        relatedTarget: HTMLElement | null
     ): void => {
-        this._onFocus(false, dummyInput, isBackward);
+        this._onFocus(false, dummyInput, isBackward, relatedTarget);
     };
 
     /**
