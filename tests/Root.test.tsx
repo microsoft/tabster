@@ -19,7 +19,7 @@ interface WindowWithTabsterCoreAndFocusState extends Window {
 }
 
 runIfControlled("Root", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({});
     });
 

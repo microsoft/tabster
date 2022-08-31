@@ -9,23 +9,26 @@ import * as BroTest from "./utils/BroTest";
 import { runIfUnControlled } from "./utils/test-utils";
 
 const groupperItem = (
+    tagName: "div" | "li",
     tabsterAttr: Types.TabsterDOMAttribute,
     count: number
 ) => {
+    const Tag = tagName;
     return (
-        <div tabIndex={0} {...tabsterAttr} data-count={`${count}`}>
+        <Tag tabIndex={0} {...tabsterAttr} data-count={`${count}`}>
             <button>Foo</button>
             <button>Bar</button>
-        </div>
+        </Tag>
     );
 };
 
 describe("Groupper - default", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
     const getTestHtml = (
+        tagName: "div" | "li",
         ignoreEsc?: boolean,
         ignoreEnter?: boolean,
         limited?: boolean
@@ -55,146 +58,168 @@ describe("Groupper - default", () => {
 
         return (
             <div {...rootAttr}>
-                {groupperItem(groupperAttr, 1)}
-                {groupperItem(groupperAttr, 2)}
-                {groupperItem(groupperAttr, 3)}
-                {groupperItem(groupperAttr, 4)}
+                {groupperItem(tagName, groupperAttr, 1)}
+                {groupperItem(tagName, groupperAttr, 2)}
+                {groupperItem(tagName, groupperAttr, 3)}
+                {groupperItem(tagName, groupperAttr, 4)}
             </div>
         );
     };
 
-    it("should focus groupper", async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .activeElement((el) =>
-                expect(el?.attributes["data-count"]).toBe("1")
-            );
-    });
-
-    it("should focus inside groupper with Tab key", async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toBe("Foo"));
-    });
-
-    it("should escape focus inside groupper with Escape key", async () => {
-        interface WindowWithEscFlag extends Window {
-            __escPressed1?: number;
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should focus groupper as <%s>",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.attributes["data-count"]).toBe("1")
+                );
         }
+    );
 
-        await new BroTest.BroTest(getTestHtml())
-            .eval(() => {
-                const keyEsc = 27;
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should focus inside groupper as <%s> with Tab key",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Foo"));
+        }
+    );
 
-                (window as WindowWithEscFlag).__escPressed1 = 0;
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should escape focus inside groupper as <%s> with Escape key",
+        async (tagName) => {
+            interface WindowWithEscFlag extends Window {
+                __escPressed1?: number;
+            }
 
-                window.addEventListener("keydown", (e) => {
-                    if (e.keyCode === keyEsc) {
-                        (window as WindowWithEscFlag).__escPressed1!++;
-                    }
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .eval(() => {
+                    const keyEsc = 27;
+
+                    (window as WindowWithEscFlag).__escPressed1 = 0;
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEsc) {
+                            (window as WindowWithEscFlag).__escPressed1!++;
+                        }
+                    });
+                })
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+                .pressEsc()
+                .activeElement((el) =>
+                    expect(el?.attributes["data-count"]).toBe("1")
+                )
+                .eval(() => (window as WindowWithEscFlag).__escPressed1)
+                .check((escPressed: number) => {
+                    expect(escPressed).toBe(0);
                 });
-            })
-            .pressTab()
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
-            .pressEsc()
-            .activeElement((el) =>
-                expect(el?.attributes["data-count"]).toBe("1")
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should not escape focus inside groupper as <%s> with Escape key when ignore Escape is passed",
+        async (tagName) => {
+            interface WindowWithEscFlag extends Window {
+                __escPressed2?: number;
+            }
+
+            await new BroTest.BroTest(getTestHtml(tagName, true))
+                .eval(() => {
+                    const keyEsc = 27;
+
+                    (window as WindowWithEscFlag).__escPressed2 = 0;
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEsc) {
+                            (window as WindowWithEscFlag).__escPressed2!++;
+                        }
+                    });
+                })
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+                .pressEsc()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+                .eval(() => (window as WindowWithEscFlag).__escPressed2)
+                .check((escPressed: number) => {
+                    expect(escPressed).toBe(1);
+                });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should enter inside groupper as <%s> with Enter key when ignore Enter is passed",
+        async (tagName) => {
+            interface WindowWithEnterFlag extends Window {
+                __enterPressed1?: number;
+            }
+
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .eval(() => {
+                    const keyEnter = 13;
+
+                    (window as WindowWithEnterFlag).__enterPressed1 = 0;
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEnter) {
+                            (window as WindowWithEnterFlag).__enterPressed1!++;
+                        }
+                    });
+                })
+                .pressTab()
+                .pressEnter()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+                .eval(() => (window as WindowWithEnterFlag).__enterPressed1)
+                .check((escPressed: number) => {
+                    expect(escPressed).toBe(0);
+                });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should not enter inside groupper as <%s> with Enter key when ignore Enter is passed",
+        async (tagName) => {
+            interface WindowWithEnterFlag extends Window {
+                __enterPressed2?: number;
+            }
+
+            await new BroTest.BroTest(
+                getTestHtml(tagName, undefined, true, true)
             )
-            .eval(() => (window as WindowWithEscFlag).__escPressed1)
-            .check((escPressed: number) => {
-                expect(escPressed).toBe(0);
-            });
-    });
+                .eval(() => {
+                    const keyEnter = 13;
 
-    it("should not escape focus inside groupper with Escape key when ignore Escape is passed", async () => {
-        interface WindowWithEscFlag extends Window {
-            __escPressed2?: number;
-        }
+                    (window as WindowWithEnterFlag).__enterPressed2 = 0;
 
-        await new BroTest.BroTest(getTestHtml(true))
-            .eval(() => {
-                const keyEsc = 27;
-
-                (window as WindowWithEscFlag).__escPressed2 = 0;
-
-                window.addEventListener("keydown", (e) => {
-                    if (e.keyCode === keyEsc) {
-                        (window as WindowWithEscFlag).__escPressed2!++;
-                    }
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEnter) {
+                            (window as WindowWithEnterFlag).__enterPressed2!++;
+                        }
+                    });
+                })
+                .pressTab()
+                .pressEnter()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("FooBar")
+                )
+                .eval(() => (window as WindowWithEnterFlag).__enterPressed2)
+                .check((escPressed: number) => {
+                    expect(escPressed).toBe(1);
                 });
-            })
-            .pressTab()
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
-            .pressEsc()
-            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
-            .eval(() => (window as WindowWithEscFlag).__escPressed2)
-            .check((escPressed: number) => {
-                expect(escPressed).toBe(1);
-            });
-    });
-
-    it("should enter inside groupper with Enter key when ignore Enter is passed", async () => {
-        interface WindowWithEnterFlag extends Window {
-            __enterPressed1?: number;
         }
-
-        await new BroTest.BroTest(getTestHtml())
-            .eval(() => {
-                const keyEnter = 13;
-
-                (window as WindowWithEnterFlag).__enterPressed1 = 0;
-
-                window.addEventListener("keydown", (e) => {
-                    if (e.keyCode === keyEnter) {
-                        (window as WindowWithEnterFlag).__enterPressed1!++;
-                    }
-                });
-            })
-            .pressTab()
-            .pressEnter()
-            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
-            .eval(() => (window as WindowWithEnterFlag).__enterPressed1)
-            .check((escPressed: number) => {
-                expect(escPressed).toBe(0);
-            });
-    });
-
-    it("should not enter inside groupper with Enter key when ignore Enter is passed", async () => {
-        interface WindowWithEnterFlag extends Window {
-            __enterPressed2?: number;
-        }
-
-        await new BroTest.BroTest(getTestHtml(undefined, true, true))
-            .eval(() => {
-                const keyEnter = 13;
-
-                (window as WindowWithEnterFlag).__enterPressed2 = 0;
-
-                window.addEventListener("keydown", (e) => {
-                    if (e.keyCode === keyEnter) {
-                        (window as WindowWithEnterFlag).__enterPressed2!++;
-                    }
-                });
-            })
-            .pressTab()
-            .pressEnter()
-            .activeElement((el) => expect(el?.textContent).toEqual("FooBar"))
-            .eval(() => (window as WindowWithEnterFlag).__enterPressed2)
-            .check((escPressed: number) => {
-                expect(escPressed).toBe(1);
-            });
-    });
+    );
 });
 
 describe("Groupper - limited focus trap", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
-    const getTestHtml = () => {
+    const getTestHtml = (tagName: "div" | "li") => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const groupperAttr = getTabsterAttribute({
             groupper: {
@@ -204,154 +229,77 @@ describe("Groupper - limited focus trap", () => {
 
         return (
             <div {...rootAttr}>
-                {groupperItem(groupperAttr, 1)}
-                {groupperItem(groupperAttr, 2)}
-                {groupperItem(groupperAttr, 3)}
-                {groupperItem(groupperAttr, 4)}
+                {groupperItem(tagName, groupperAttr, 1)}
+                {groupperItem(tagName, groupperAttr, 2)}
+                {groupperItem(tagName, groupperAttr, 3)}
+                {groupperItem(tagName, groupperAttr, 4)}
             </div>
         );
     };
 
-    it("should focus inside groupper with Enter key", async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressEnter()
-            .activeElement((el) => expect(el?.textContent).toBe("Foo"));
-    });
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should focus inside groupper as <%s> with Enter key",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .pressTab()
+                .pressEnter()
+                .activeElement((el) => expect(el?.textContent).toBe("Foo"));
+        }
+    );
 
-    it("should escape focus inside groupper with Escape key", async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressEnter()
-            .pressEsc()
-            .activeElement((el) =>
-                expect(el?.attributes["data-count"]).toBe("1")
-            );
-    });
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should escape focus inside groupper as <%s> with Escape key",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .pressTab()
+                .pressEnter()
+                .pressEsc()
+                .activeElement((el) =>
+                    expect(el?.attributes["data-count"]).toBe("1")
+                );
+        }
+    );
 
-    it("should trap focus within groupper", async () => {
-        await new BroTest.BroTest(getTestHtml())
-            .pressTab()
-            .pressEnter()
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toBe("Bar"))
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toBe("Foo"));
-    });
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should trap focus within groupper as <%s>",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .pressTab()
+                .pressEnter()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Bar"))
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Foo"));
+        }
+    );
 });
 
 describe("Groupper tabbing forward and backwards", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
 
-    it("should properly move the focus when tabbing from outside of the groupper", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    Types.GroupperTabbabilities.Limited,
-                            },
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                    </div>
-                    <button>Button4</button>
-                </div>
-            )
-        )
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
-            })
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2Button3");
-            })
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button4");
-            })
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2Button3");
-            })
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
-            });
-    });
-
-    it("should properly move the focus when tabbing from outside of the page", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    Types.GroupperTabbabilities.Limited,
-                            },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                    </div>
-                </div>
-            )
-        )
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1Button2");
-            })
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toBeUndefined();
-            })
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1Button2");
-            })
-            .pressTab(true)
-            .activeElement((el) => {
-                expect(el?.textContent).toBeUndefined();
-            });
-    });
-});
-
-// TODO: Address contentEditables in a controlled groupper (likely by having dummy inputs around).
-runIfUnControlled("Groupper", () => {
-    beforeAll(async () => {
-        await BroTest.bootstrapTabsterPage({ groupper: true });
-    });
-
-    describe("Groupper with contentEditable", () => {
-        it("should handle contentEditable in a trapped groupper", async () => {
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should properly move the focus when tabbing from outside of the groupper as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
             await new BroTest.BroTest(
                 (
                     <div {...getTabsterAttribute({ root: {} })}>
                         <button>Button1</button>
-                        <div
+                        <Tag
+                            tabIndex={0}
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        Types.GroupperTabbabilities.Limited,
                                 },
                             })}
                         >
-                            <div tabIndex={0} contentEditable="true">
-                                ContentEditable
-                            </div>
-                        </div>
-                        <button>Button2</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </Tag>
+                        <button>Button4</button>
                     </div>
                 )
             )
@@ -361,16 +309,114 @@ runIfUnControlled("Groupper", () => {
                 })
                 .pressTab()
                 .activeElement((el) => {
-                    expect(el?.textContent).toEqual("ContentEditable");
+                    expect(el?.textContent).toEqual("Button2Button3");
                 })
                 .pressTab()
                 .activeElement((el) => {
-                    expect(el?.textContent).toEqual("ContentEditable");
+                    expect(el?.textContent).toEqual("Button4");
                 })
                 .pressTab(true)
                 .activeElement((el) => {
-                    expect(el?.textContent).toEqual("ContentEditable");
+                    expect(el?.textContent).toEqual("Button2Button3");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
                 });
-        });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should properly move the focus when tabbing from outside of the page to groupper as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <Tag
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities.Limited,
+                                },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </Tag>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toBeUndefined();
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1Button2");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toBeUndefined();
+                });
+        }
+    );
+});
+
+// TODO: Address contentEditables in a controlled groupper (likely by having dummy inputs around).
+runIfUnControlled("Groupper", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    describe("Groupper with contentEditable", () => {
+        it.each<["div" | "li"]>([["div"], ["li"]])(
+            "should handle contentEditable in a trapped groupper as <%s>",
+            async (tagName) => {
+                const Tag = tagName;
+                await new BroTest.BroTest(
+                    (
+                        <div {...getTabsterAttribute({ root: {} })}>
+                            <button>Button1</button>
+                            <Tag
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities
+                                                .LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div tabIndex={0} contentEditable="true">
+                                    ContentEditable
+                                </div>
+                            </Tag>
+                            <button>Button2</button>
+                        </div>
+                    )
+                )
+                    .pressTab()
+                    .activeElement((el) => {
+                        expect(el?.textContent).toEqual("Button1");
+                    })
+                    .pressTab()
+                    .activeElement((el) => {
+                        expect(el?.textContent).toEqual("ContentEditable");
+                    })
+                    .pressTab()
+                    .activeElement((el) => {
+                        expect(el?.textContent).toEqual("ContentEditable");
+                    })
+                    .pressTab(true)
+                    .activeElement((el) => {
+                        expect(el?.textContent).toEqual("ContentEditable");
+                    });
+            }
+        );
     });
 });

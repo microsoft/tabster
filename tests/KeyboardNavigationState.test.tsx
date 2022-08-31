@@ -8,7 +8,7 @@ import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("keyboard navigation state", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 

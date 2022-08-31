@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 import { runIfControlled } from "./utils/test-utils";
 
 runIfControlled("Focusable", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 

@@ -10,7 +10,7 @@ import * as BroTest from "./utils/BroTest";
 describe("CrossOrigin", () => {
     const tabsterParts = { crossOrigin: true };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage(tabsterParts);
     });
 

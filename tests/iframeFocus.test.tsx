@@ -8,7 +8,7 @@ import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("<iframe />", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ deloser: true });
     });
 

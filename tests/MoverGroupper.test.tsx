@@ -8,7 +8,7 @@ import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("MoverGroupper", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
