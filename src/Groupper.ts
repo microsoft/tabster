@@ -16,6 +16,7 @@ import {
     DummyInputManagerPriorities,
     TabsterPart,
     WeakHTMLElement,
+    getAdjacentElement,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
@@ -64,11 +65,10 @@ class GroupperDummyManager extends DummyInputManager {
                                     undefined,
                                     dummyInput.isOutside
                                         ? input
-                                        : (container[
-                                              isBackward
-                                                  ? "nextElementSibling"
-                                                  : "previousElementSibling"
-                                          ] as HTMLElement | null) || undefined,
+                                        : getAdjacentElement(
+                                              container,
+                                              !isBackward
+                                          ),
                                     isBackward
                                 )?.element;
                             }

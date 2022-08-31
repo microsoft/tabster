@@ -6,7 +6,6 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfUnControlled } from "./utils/test-utils";
 
 describe("Mover", () => {
     beforeEach(async () => {
