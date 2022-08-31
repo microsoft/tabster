@@ -30,7 +30,7 @@ describe("Modalizer", () => {
         );
     };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ modalizer: true });
     });
 
@@ -183,7 +183,7 @@ describe("New Modalizer that already has focus", () => {
         );
     };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ modalizer: true });
     });
 

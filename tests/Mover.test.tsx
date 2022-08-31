@@ -6,9 +6,10 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
+import { runIfUnControlled } from "./utils/test-utils";
 
 describe("Mover", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
@@ -205,7 +206,7 @@ describe("Mover", () => {
 });
 
 describe("NestedMovers", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
@@ -322,7 +323,7 @@ describe("NestedMovers", () => {
 });
 
 describe("Mover memorizing current", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
@@ -425,7 +426,7 @@ describe("Mover memorizing current", () => {
 });
 
 describe("Mover with excluded part", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
@@ -587,7 +588,7 @@ describe("Mover with excluded part", () => {
 });
 
 describe("Mover with inputs inside", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
@@ -759,7 +760,7 @@ describe("Mover with inputs inside", () => {
 });
 
 describe("Mover with visibilityAware", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 

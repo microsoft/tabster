@@ -679,6 +679,7 @@ export class DummyInput {
     /** Flag that indicates focus is leaving the boundary of the dummy input */
     shouldMoveOut?: boolean;
     isFirst: DummyInputProps["isFirst"];
+    isOutside: boolean;
     /** Called when the input is focused */
     onFocusIn?: DummyInputFocusCallback;
     /** Called when the input is blurred */
@@ -686,6 +687,7 @@ export class DummyInput {
 
     constructor(
         getWindow: Types.GetWindow,
+        isOutside: boolean,
         props: DummyInputProps,
         element?: WeakHTMLElement
     ) {
@@ -709,6 +711,7 @@ export class DummyInput {
 
         this.input = input;
         this.isFirst = props.isFirst;
+        this.isOutside = isOutside;
         this._isPhantom = props.isPhantom ?? false;
 
         input.addEventListener("focusin", this._focusIn);
@@ -838,7 +841,7 @@ export class DummyInputManager {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
-        alwaysOutside?: boolean
+        outsideByDefault?: boolean
     ) {
         this._element = element;
 
@@ -847,7 +850,7 @@ export class DummyInputManager {
             element,
             this,
             priority,
-            alwaysOutside
+            outsideByDefault
         );
 
         this.moveOutWithDefaultAction = (backwards: boolean) => {
@@ -887,7 +890,7 @@ export class DummyInputManager {
         moveOutside: boolean,
         isBackward: boolean
     ): void {
-        const dummy: DummyInput = new DummyInput(tabster.getWindow, {
+        const dummy: DummyInput = new DummyInput(tabster.getWindow, true, {
             isPhantom: true,
             isFirst: true,
         });
@@ -937,7 +940,7 @@ class DummyInputManagerCore {
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
-        alwaysOutside?: boolean
+        outsideByDefault?: boolean
     ) {
         const el = element.get() as HTMLElementWithDummyInputs;
 
@@ -963,6 +966,7 @@ class DummyInputManagerCore {
 
         this._firstDummy = new DummyInput(
             this._getWindow,
+            this._isOutside,
             {
                 isFirst: true,
             },
@@ -971,6 +975,7 @@ class DummyInputManagerCore {
 
         this._lastDummy = new DummyInput(
             this._getWindow,
+            this._isOutside,
             {
                 isFirst: false,
             },
@@ -986,13 +991,14 @@ class DummyInputManagerCore {
         this._addDummyInputs();
 
         // Some elements allow only specific types of direct descendants and we need to
-        // put our dummy inputs outside of the element.
+        // put our dummy inputs inside or outside of the element accordingly.
         const tagName = element.get()?.tagName;
         this._isOutside =
-            alwaysOutside ||
-            tagName === "UL" ||
-            tagName === "OL" ||
-            tagName === "TABLE";
+            (outsideByDefault ||
+                tagName === "UL" ||
+                tagName === "OL" ||
+                tagName === "TABLE") &&
+            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
 
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639

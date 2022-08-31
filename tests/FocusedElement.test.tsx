@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 import { BrowserElement } from "./utils/BroTest";
 
 describe("onKeyDown", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({});
     });
 

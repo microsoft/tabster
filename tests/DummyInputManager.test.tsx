@@ -9,7 +9,7 @@ import * as BroTest from "./utils/BroTest";
 import { runIfUnControlled } from "./utils/test-utils";
 
 runIfUnControlled("DummyInputManager", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({
             mover: true,
             groupper: true,
@@ -335,6 +335,53 @@ runIfUnControlled("DummyInputManager", () => {
                         containerId
                     )
                     .check(checkDummyOutside);
+            }
+        );
+
+        it.each<["li" | "td" | "th"]>([["li"], ["td"], ["th"]])(
+            "should add dummy inputs inside the container for <li>, <td> and <th>",
+            async (tagName) => {
+                const attr = getTabsterAttribute({
+                    groupper: {
+                        tabbability:
+                            Types.GroupperTabbabilities.LimitedTrapFocus,
+                    },
+                });
+                const containerId = "inside";
+                const Tag = tagName;
+                const testHtml = (
+                    <div>
+                        <table>
+                            <Tag {...attr} id={containerId}>
+                                <button>Button1</button>
+                                <button>Button2</button>
+                            </Tag>
+                        </table>
+                    </div>
+                );
+                await new BroTest.BroTest(testHtml)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyInside)
+                    .eval(appendElement, containerId)
+                    .wait(1)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyInside)
+                    .eval(prependElement, containerId)
+                    .wait(1)
+                    .eval(
+                        evaluateDummy,
+                        Types.TabsterDummyInputAttributeName,
+                        containerId
+                    )
+                    .check(checkDummyInside);
             }
         );
     });

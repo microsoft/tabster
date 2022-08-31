@@ -62,7 +62,13 @@ class GroupperDummyManager extends DummyInputManager {
                                     tabster,
                                     ctx,
                                     undefined,
-                                    input,
+                                    dummyInput.isOutside
+                                        ? input
+                                        : (container[
+                                              isBackward
+                                                  ? "nextElementSibling"
+                                                  : "previousElementSibling"
+                                          ] as HTMLElement | null) || undefined,
                                     isBackward
                                 )?.element;
                             }
