@@ -446,7 +446,7 @@ class FocusElementTransaction extends CrossOriginTransaction<
             data.beginData
         );
         return (
-            (!!el && tabster.focusedElement.focus(el)) ||
+            (!!el && tabster.focusedElement.focus(el, true)) ||
             !!(await forwardResult)
         );
     }

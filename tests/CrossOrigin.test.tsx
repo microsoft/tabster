@@ -42,6 +42,7 @@ describe("CrossOrigin", () => {
                         {...getTabsterAttribute({
                             observed: { names: namesForIframe },
                         })}
+                        tabIndex={-1} // Testing that programmatically focusable elements are focused.
                     >
                         Button3
                     </button>
@@ -176,6 +177,60 @@ describe("CrossOrigin", () => {
                 expect(el).toBeNull();
             })
             .unframe()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
+    });
+
+    it("should request focus in the same frame", async () => {
+        const names = ["name", "name2"];
+        const namesForIframe = ["frame1-name", "frame1-name2"];
+
+        await new BroTest.BroTest()
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <iframe
+                        id="frame1"
+                        src={BroTest.getTestPageURL(tabsterParts)}
+                    ></iframe>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names },
+                        })}
+                    >
+                        Button2
+                    </button>
+                </div>
+            )
+            .frame("frame1")
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: namesForIframe },
+                        })}
+                    >
+                        Button3
+                    </button>
+                </div>
+            )
+            .eval((namesForIframe) => {
+                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    namesForIframe[0],
+                    0
+                );
+            }, namesForIframe)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .unframe()
+            .eval((names) => {
+                return getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    names[0],
+                    0
+                );
+            }, names)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             });
