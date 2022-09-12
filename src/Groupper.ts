@@ -437,7 +437,13 @@ export class GroupperAPI implements Types.GroupperAPI {
 
                 if (includeTarget || !isTarget) {
                     this._current[groupper.id] = groupper;
-                    groupper.makeTabbable(element !== el);
+                    const isTabbable =
+                        groupper.isActive() ||
+                        (element !== el &&
+                            (!groupper.getProps().delegated ||
+                                groupper.getFirst(false) !== element));
+
+                    groupper.makeTabbable(isTabbable);
                 }
 
                 isTarget = false;
@@ -464,7 +470,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (element) {
             const ctx = RootAPI.getTabsterContext(this._tabster, element);
-            const groupper = ctx?.groupper;
+            let groupper = ctx?.groupper;
 
             if (ctx && groupper) {
                 let next: HTMLElement | null | undefined;
@@ -476,7 +482,11 @@ export class GroupperAPI implements Types.GroupperAPI {
                         return;
                     }
 
-                    if (element === groupperElement) {
+                    if (
+                        element === groupperElement ||
+                        (groupper.getProps().delegated &&
+                            element === groupper.getFirst(false))
+                    ) {
                         next = this._tabster.focusable.findNext({
                             container: groupperElement,
                             currentElement: element,
@@ -499,11 +509,12 @@ export class GroupperAPI implements Types.GroupperAPI {
                                   )
                                 : undefined;
 
-                            next = parentCtx?.groupper?.getFirst(true);
+                            groupper = parentCtx?.groupper;
+                            next = groupper?.getFirst(true);
                         }
                     }
 
-                    if (next) {
+                    if (groupper) {
                         groupper.makeTabbable(false);
                     }
                 }

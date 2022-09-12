@@ -562,8 +562,7 @@ export interface MoverAPI extends MoverAPIInternal, Disposable {}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;
-    Limited: 1; // The tabbability is limited to the container (or first element if container is not focusable)
-    // and explicit Enter is needed to go inside.
+    Limited: 1; // The tabbability is limited to the container and explicit Enter is needed to go inside.
     LimitedTrapFocus: 2; // The focus is limited as above, plus trapped when inside.
 }
 export const GroupperTabbabilities: GroupperTabbabilities = {
@@ -576,6 +575,12 @@ export type GroupperTabbability =
 
 export interface GroupperProps {
     tabbability?: GroupperTabbability;
+    delegated?: boolean; // This allows to tweak the groupper behaviour for the cases when
+    // the groupper container is not focusable and groupper has Limited or LimitedTrapFocus
+    // tabbability. By default, the groupper will automatically become active once the focus
+    // goes to first focusable element inside the groupper during tabbing. When true, the
+    // groupper will become active only after Enter is pressed on first focusable element
+    // inside the groupper.
 }
 
 export interface Groupper extends TabsterPart<GroupperProps> {
