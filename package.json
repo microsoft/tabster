@@ -89,7 +89,7 @@
         "puppeteer": "^13.3.2",
         "react": "^17.0.0",
         "react-dom": "^17.0.0",
-        "release-it": "^14.12.4",
+        "release-it": "^15.4.1",
         "rimraf": "^3.0.2",
         "rollup": "^2.67.2",
         "rollup-plugin-dts": "^4.2.0",
