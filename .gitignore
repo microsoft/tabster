@@ -23,3 +23,6 @@ dts/
 /.rollup.cache
 
 .npmrc
+
+# vs code devcontainer
+.devcontainer
