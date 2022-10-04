@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement } from "./Instance";
 import { KeyboardNavigationState } from "./State/KeyboardNavigation";
 import * as Types from "./Types";
@@ -269,7 +270,7 @@ export class RootAPI implements Types.RootAPI {
         this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
-        this.eventTarget = new EventTarget();
+        this.eventTarget = createEventTarget(this._win);
     }
 
     private _init = (): void => {
