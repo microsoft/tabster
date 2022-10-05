@@ -115,7 +115,7 @@ runIfControlled("Focusable", () => {
             });
     });
 
-    describe("findIterator()", () => {
+    describe("findSome()", () => {
         let broTest: BroTest.BroTest;
 
         beforeEach(async () => {
@@ -169,24 +169,27 @@ runIfControlled("Focusable", () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container: document.body,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container: document.body,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
+                .check((evalRet: string[]) => {
+                    const expected = [
                         "Button2",
                         "Button3",
                         "Button4",
                         "Button6Button7Button8Button9Button10Button11Button12",
                         "Button13",
-                    ]);
+                    ];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -194,25 +197,28 @@ runIfControlled("Focusable", () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container: document.body,
-                        isBackward: true,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container: document.body,
+                            isBackward: true,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
+                .check((evalRet: string[]) => {
+                    const expected = [
                         "Button13",
                         "Button6Button7Button8Button9Button10Button11Button12",
                         "Button4",
                         "Button3",
                         "Button2",
-                    ]);
+                    ];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -222,25 +228,27 @@ runIfControlled("Focusable", () => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
-
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
+                .check((evalRet: string[]) => {
+                    const expected = [
                         "Button6",
                         "Button7",
                         "Button8",
                         "Button10Button11",
                         "Button12",
-                    ]);
+                    ];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -250,26 +258,28 @@ runIfControlled("Focusable", () => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container,
+                            isBackward: true,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container,
-                        isBackward: true,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
-
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
+                .check((evalRet: string[]) => {
+                    const expected = [
                         "Button12",
                         "Button10Button11",
                         "Button8",
                         "Button7",
                         "Button6",
-                    ]);
+                    ];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -280,23 +290,22 @@ runIfControlled("Focusable", () => {
                     const container = document.getElementById("groupper")!;
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container,
+                            currentElement: from || undefined,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container,
-                        currentElement: from || undefined,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
-
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
-                        "Button10Button11",
-                        "Button12",
-                    ]);
+                .check((evalRet: string[]) => {
+                    const expected = ["Button10Button11", "Button12"];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -307,21 +316,23 @@ runIfControlled("Focusable", () => {
                     const container = document.getElementById("groupper")!;
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container,
+                            currentElement: from || undefined,
+                            isBackward: true,
+                            onElement: (el) => {
+                                ret.push(el.textContent);
+                                return true;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container,
-                        currentElement: from || undefined,
-                        isBackward: true,
-                        onElement: (el) => {
-                            ret.push(el.textContent);
-                            return true;
-                        },
-                    });
-
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual(["Button7", "Button6"]);
+                .check((evalRet: string[]) => {
+                    const expected = ["Button7", "Button6"];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
 
@@ -330,23 +341,26 @@ runIfControlled("Focusable", () => {
                 .eval(() => {
                     const ret: (string | null)[] = [];
                     let counter = 0;
-                    getTabsterTestVariables().core?.focusable.findIterator({
-                        container: document.body,
-                        isBackward: true,
-                        onElement: (el) => {
-                            counter++;
-                            ret.push(el.textContent);
-                            return counter < 2;
-                        },
-                    });
+                    const found = getTabsterTestVariables()
+                        .core?.focusable.findSome({
+                            container: document.body,
+                            isBackward: true,
+                            onElement: (el) => {
+                                counter++;
+                                ret.push(el.textContent);
+                                return counter < 2;
+                            },
+                        })
+                        .map((el) => el.textContent);
 
-                    return ret;
+                    return [found, ret];
                 })
-                .check((focusables: string[]) => {
-                    expect(focusables).toEqual([
+                .check((evalRet: string[]) => {
+                    const expected = [
                         "Button13",
                         "Button6Button7Button8Button9Button10Button11Button12",
-                    ]);
+                    ];
+                    expect(evalRet).toEqual([expected, expected]);
                 });
         });
     });

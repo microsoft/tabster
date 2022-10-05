@@ -436,7 +436,7 @@ export type FindAllProps = Pick<
     container: HTMLElement;
 };
 
-export type FindIteratorProps = Pick<
+export type FindSomeProps = Pick<
     FindFocusableProps,
     | "container"
     | "currentElement"
@@ -473,7 +473,7 @@ export interface FocusableAPI extends Disposable {
      * @returns All focusables in a given context that satisfy an given condition
      */
     findAll(options: FindAllProps): HTMLElement[];
-    findIterator(options: FindIteratorProps): void;
+    findSome(options: FindSomeProps): HTMLElement[];
     findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 

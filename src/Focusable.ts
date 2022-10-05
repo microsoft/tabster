@@ -182,8 +182,8 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._findElements(true, options) || [];
     }
 
-    findIterator(options: Types.FindIteratorProps): void {
-        this._findElements(true, options);
+    findSome(options: Types.FindSomeProps): HTMLElement[] {
+        return this._findElements(true, options) || [];
     }
 
     findElement(
@@ -208,7 +208,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         } = options;
 
         const onElement = (
-            options as Types.FindIteratorProps | { onElement: undefined }
+            options as Types.FindSomeProps | { onElement: undefined }
         ).onElement;
 
         const elements: HTMLElement[] = [];
