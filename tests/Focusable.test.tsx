@@ -115,7 +115,7 @@ runIfControlled("Focusable", () => {
             });
     });
 
-    describe.only("findIterator()", () => {
+    describe("findIterator()", () => {
         let broTest: BroTest.BroTest;
 
         beforeEach(async () => {
