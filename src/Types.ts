@@ -432,7 +432,25 @@ export type FindAllProps = Pick<
     | "acceptCondition"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
-> & { container: HTMLElement; skipDefaultCheck?: boolean };
+> & {
+    container: HTMLElement;
+};
+
+export type FindIteratorProps = Pick<
+    FindFocusableProps,
+    | "container"
+    | "currentElement"
+    | "isBackward"
+    | "includeProgrammaticallyFocusable"
+    | "acceptCondition"
+    | "ignoreUncontrolled"
+    | "ignoreAccessibiliy"
+> & {
+    container: HTMLElement;
+    onElement: FindElementCallback;
+};
+
+export type FindElementCallback = (element: HTMLElement) => boolean;
 
 export interface FocusableAPI extends Disposable {
     getProps(element: HTMLElement): FocusableProps;
@@ -455,6 +473,7 @@ export interface FocusableAPI extends Disposable {
      * @returns All focusables in a given context that satisfy an given condition
      */
     findAll(options: FindAllProps): HTMLElement[];
+    findIterator(options: FindIteratorProps): void;
     findElement(options: FindFocusableProps): HTMLElement | null | undefined;
 }
 

@@ -182,6 +182,10 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._findElements(true, options) || [];
     }
 
+    findIterator(options: Types.FindIteratorProps): void {
+        this._findElements(true, options);
+    }
+
     findElement(
         options: Types.FindFocusableProps
     ): HTMLElement | null | undefined {
@@ -202,6 +206,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             isBackward,
             onUncontrolled,
         } = options;
+
+        const onElement = (
+            options as Types.FindIteratorProps | { onElement: undefined }
+        ).onElement;
 
         const elements: HTMLElement[] = [];
 
@@ -258,6 +266,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                     delete acceptElementState.foundElement;
                     delete acceptElementState.fromCtx;
                     acceptElementState.from = foundElement;
+
+                    if (onElement && !onElement(foundElement)) {
+                        return false;
+                    }
                 }
 
                 return !!(foundElement || shouldContinueIfNotFound);
@@ -277,14 +289,13 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (
                 this._acceptElement(lastChild, acceptElementState) ===
-                NodeFilter.FILTER_ACCEPT
+                    NodeFilter.FILTER_ACCEPT &&
+                !prepareForNextElement(true)
             ) {
-                if (!prepareForNextElement(true)) {
-                    return elements;
-                }
-            } else {
-                walker.currentNode = lastChild;
+                return elements;
             }
+
+            walker.currentNode = lastChild;
         }
 
         let foundElement: HTMLElement | null | undefined;
