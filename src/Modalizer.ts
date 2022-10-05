@@ -293,9 +293,8 @@ export class Modalizer
                 !element.getAttribute("aria-label") &&
                 !element.getAttribute("aria-labelledby")
             ) {
-                console.error(
-                    "Modalizer element must have either aria-label or aria-labelledby",
-                    element
+                console.warn(
+                    `Modalizer ${this.id} must have either aria-label or aria-labelledby`
                 );
             }
         }
