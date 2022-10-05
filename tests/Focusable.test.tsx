@@ -219,11 +219,12 @@ runIfControlled("Focusable", () => {
         it("should iterate forward over focusable elements within a container", async () => {
             await broTest
                 .eval(() => {
-                    const container = document.getElementById("groupper");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
 
                     getTabsterTestVariables().core?.focusable.findIterator({
-                        container: container || undefined,
+                        container,
                         onElement: (el) => {
                             ret.push(el.textContent);
                             return true;
@@ -246,11 +247,12 @@ runIfControlled("Focusable", () => {
         it("should iterate backward over focusable elements within a container", async () => {
             await broTest
                 .eval(() => {
-                    const container = document.getElementById("groupper");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
-                    // Iterate backward within a container.
+
                     getTabsterTestVariables().core?.focusable.findIterator({
-                        container: container || undefined,
+                        container,
                         isBackward: true,
                         onElement: (el) => {
                             ret.push(el.textContent);
@@ -274,12 +276,13 @@ runIfControlled("Focusable", () => {
         it("should iterate backward over focusable elements within a container from a certain element", async () => {
             await broTest
                 .eval(() => {
-                    const container = document.getElementById("groupper");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const container = document.getElementById("groupper")!;
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
 
                     getTabsterTestVariables().core?.focusable.findIterator({
-                        container: container || undefined,
+                        container,
                         currentElement: from || undefined,
                         onElement: (el) => {
                             ret.push(el.textContent);
@@ -300,12 +303,13 @@ runIfControlled("Focusable", () => {
         it("should iterate backward over focusable elements within a container from a certain element", async () => {
             await broTest
                 .eval(() => {
-                    const container = document.getElementById("groupper");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const container = document.getElementById("groupper")!;
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
 
                     getTabsterTestVariables().core?.focusable.findIterator({
-                        container: container || undefined,
+                        container,
                         currentElement: from || undefined,
                         isBackward: true,
                         onElement: (el) => {
@@ -318,6 +322,31 @@ runIfControlled("Focusable", () => {
                 })
                 .check((focusables: string[]) => {
                     expect(focusables).toEqual(["Button7", "Button6"]);
+                });
+        });
+
+        it("should stop iterating if the callback returns false", async () => {
+            await broTest
+                .eval(() => {
+                    const ret: (string | null)[] = [];
+                    let counter = 0;
+                    getTabsterTestVariables().core?.focusable.findIterator({
+                        container: document.body,
+                        isBackward: true,
+                        onElement: (el) => {
+                            counter++;
+                            ret.push(el.textContent);
+                            return counter < 2;
+                        },
+                    });
+
+                    return ret;
+                })
+                .check((focusables: string[]) => {
+                    expect(focusables).toEqual([
+                        "Button13",
+                        "Button6Button7Button8Button9Button10Button11Button12",
+                    ]);
                 });
         });
     });
