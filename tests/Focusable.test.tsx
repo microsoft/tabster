@@ -42,80 +42,7 @@ runIfControlled("Focusable", () => {
             });
     });
 
-    it("should return proper elements when findAll() is called", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button aria-hidden="true">Button1</button>
-                    <button>Button2</button>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <button>Button3</button>
-                        <div {...getTabsterAttribute({ groupper: {} })}>
-                            <button>Button4</button>
-                            <button>Button5</button>
-                        </div>
-                        <div
-                            id="groupper"
-                            tabIndex={0}
-                            {...getTabsterAttribute({ groupper: {} })}
-                        >
-                            <button>Button6</button>
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <button>Button7</button>
-                                <div {...getTabsterAttribute({ groupper: {} })}>
-                                    <button>Button8</button>
-                                    <button>Button9</button>
-                                </div>
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({ groupper: {} })}
-                                >
-                                    <button>Button10</button>
-                                    <button>Button11</button>
-                                </div>
-                            </div>
-                            <button>Button12</button>
-                        </div>
-                        <button>Button13</button>
-                    </div>
-                </div>
-            )
-        )
-            .eval(() => {
-                return getTabsterTestVariables()
-                    .core?.focusable.findAll({ container: document.body })
-                    .map((el) => el.textContent);
-            })
-            .check((focusables: string[]) => {
-                expect(focusables).toEqual([
-                    "Button2",
-                    "Button3",
-                    "Button4",
-                    "Button6Button7Button8Button9Button10Button11Button12",
-                    "Button13",
-                ]);
-            })
-            .eval(() => {
-                const container = document.getElementById("groupper");
-
-                return container
-                    ? getTabsterTestVariables()
-                          .core?.focusable.findAll({ container })
-                          .map((el) => el.textContent)
-                    : [];
-            })
-            .check((focusables: string[]) => {
-                expect(focusables).toEqual([
-                    "Button6",
-                    "Button7",
-                    "Button8",
-                    "Button10Button11",
-                    "Button12",
-                ]);
-            });
-    });
-
-    describe("findSome()", () => {
+    describe("findAll()", () => {
         let broTest: BroTest.BroTest;
 
         beforeEach(async () => {
@@ -165,12 +92,48 @@ runIfControlled("Focusable", () => {
             );
         });
 
-        it("should iterate forward over focusable elements", async () => {
+        it("should return proper elements when findAll() is called", async () => {
+            await broTest
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({ container: document.body })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual([
+                        "Button2",
+                        "Button3",
+                        "Button4",
+                        "Button6Button7Button8Button9Button10Button11Button12",
+                        "Button13",
+                    ]);
+                })
+                .eval(() => {
+                    const container = document.getElementById("groupper");
+
+                    return container
+                        ? getTabsterTestVariables()
+                              .core?.focusable.findAll({ container })
+                              .map((el) => el.textContent)
+                        : [];
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual([
+                        "Button6",
+                        "Button7",
+                        "Button8",
+                        "Button10Button11",
+                        "Button12",
+                    ]);
+                });
+        });
+
+        it("should call callback when finding focusable elements", async () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container: document.body,
                             onElement: (el) => {
                                 ret.push(el.textContent);
@@ -193,12 +156,12 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should iterate backward over focusable elements", async () => {
+        it("should call callback when finding focusable elements in backward direction", async () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container: document.body,
                             isBackward: true,
                             onElement: (el) => {
@@ -222,14 +185,14 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should iterate forward over focusable elements within a container", async () => {
+        it("should call callback when finding focusable elements within a container", async () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container,
                             onElement: (el) => {
                                 ret.push(el.textContent);
@@ -252,14 +215,14 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should iterate backward over focusable elements within a container", async () => {
+        it("should call callback when finding focusable elements in backward direction within a container", async () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const container = document.getElementById("groupper")!;
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container,
                             isBackward: true,
                             onElement: (el) => {
@@ -283,7 +246,7 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should iterate backward over focusable elements within a container from a certain element", async () => {
+        it("should call callback when finding focusable elements within a container from a certain element", async () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -291,7 +254,7 @@ runIfControlled("Focusable", () => {
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container,
                             currentElement: from || undefined,
                             onElement: (el) => {
@@ -309,7 +272,7 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should iterate backward over focusable elements within a container from a certain element", async () => {
+        it("should call callback when finding focusable elements in backward direction within a container from a certain element", async () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -317,7 +280,7 @@ runIfControlled("Focusable", () => {
                     const from = document.getElementById("button8");
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container,
                             currentElement: from || undefined,
                             isBackward: true,
@@ -336,13 +299,13 @@ runIfControlled("Focusable", () => {
                 });
         });
 
-        it("should stop iterating if the callback returns false", async () => {
+        it("should stop search if the callback returns false", async () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
                     let counter = 0;
                     const found = getTabsterTestVariables()
-                        .core?.focusable.findSome({
+                        .core?.focusable.findAll({
                             container: document.body,
                             isBackward: true,
                             onElement: (el) => {

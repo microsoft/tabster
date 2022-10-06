@@ -182,10 +182,6 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this._findElements(true, options) || [];
     }
 
-    findSome(options: Types.FindSomeProps): HTMLElement[] {
-        return this._findElements(true, options) || [];
-    }
-
     findElement(
         options: Types.FindFocusableProps
     ): HTMLElement | null | undefined {
@@ -205,11 +201,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreAccessibiliy,
             isBackward,
             onUncontrolled,
+            onElement,
         } = options;
-
-        const onElement = (
-            options as Types.FindSomeProps | { onElement: undefined }
-        ).onElement;
 
         const elements: HTMLElement[] = [];
 
