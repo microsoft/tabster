@@ -400,6 +400,11 @@ export interface FindFocusableProps {
      * @param el uncontrolled element.
      */
     onUncontrolled?(el: HTMLElement): void;
+    /**
+     * A callback that will be called for every focusable element found during findAll().
+     * If false is returned from this callback, the search will stop.
+     */
+    onElement?: FindElementCallback;
 }
 
 export type FindFirstProps = Pick<
@@ -428,11 +433,21 @@ export type FindDefaultProps = Pick<
 export type FindAllProps = Pick<
     FindFocusableProps,
     | "container"
+    | "currentElement"
+    | "isBackward"
     | "includeProgrammaticallyFocusable"
     | "acceptCondition"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
-> & { container: HTMLElement; skipDefaultCheck?: boolean };
+    | "onElement"
+> & {
+    container: HTMLElement;
+};
+
+/**
+ * A callback that is called for every found element during search. Returning false stops search.
+ */
+export type FindElementCallback = (element: HTMLElement) => boolean;
 
 export interface FocusableAPI extends Disposable {
     getProps(element: HTMLElement): FocusableProps;

@@ -201,6 +201,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             ignoreAccessibiliy,
             isBackward,
             onUncontrolled,
+            onElement,
         } = options;
 
         const elements: HTMLElement[] = [];
@@ -258,6 +259,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                     delete acceptElementState.foundElement;
                     delete acceptElementState.fromCtx;
                     acceptElementState.from = foundElement;
+
+                    if (onElement && !onElement(foundElement)) {
+                        return false;
+                    }
                 }
 
                 return !!(foundElement || shouldContinueIfNotFound);
@@ -277,14 +282,13 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (
                 this._acceptElement(lastChild, acceptElementState) ===
-                NodeFilter.FILTER_ACCEPT
+                    NodeFilter.FILTER_ACCEPT &&
+                !prepareForNextElement(true)
             ) {
-                if (!prepareForNextElement(true)) {
-                    return elements;
-                }
-            } else {
-                walker.currentNode = lastChild;
+                return elements;
             }
+
+            walker.currentNode = lastChild;
         }
 
         let foundElement: HTMLElement | null | undefined;
