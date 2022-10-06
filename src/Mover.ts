@@ -904,7 +904,7 @@ export class MoverAPI implements Types.MoverAPI {
                 isBackward,
                 onElement: (el) => {
                     // Find element which has maximal intersection with the focused element horizontally,
-                    // and/or the closest one.
+                    // or the closest one.
                     lastFound = el;
 
                     const rect = el.getBoundingClientRect();
@@ -918,7 +918,7 @@ export class MoverAPI implements Types.MoverAPI {
                         (isBackward && ay1 < by2) ||
                         (!isBackward && ay2 > by1)
                     ) {
-                        // Only consider elements which a below/above curretly focused.
+                        // Only consider elements which are below/above curretly focused.
                         return true;
                     }
 
