@@ -938,7 +938,7 @@ export class MoverAPI implements Types.MoverAPI {
                             targetElement = el;
                             lastIntersection = intersection;
                         }
-                    } else if (lastIntersection === undefined) {
+                    } else if (lastIntersection === 0) {
                         // If we didn't have intersection, try just the closest one.
                         const distance = getDistance(
                             ax1,

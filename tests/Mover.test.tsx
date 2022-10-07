@@ -1180,4 +1180,107 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Item4");
             });
     });
+
+    it("should pick the cosest element in grid when there is nothing directly below", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Grid,
+                            },
+                        })}
+                        style={{
+                            width: 280,
+                            display: "flex",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginLeft: 60,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item1
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginRight: 100,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item2
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item3
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginLeft: 115,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item4
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item5
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            });
+    });
 });
