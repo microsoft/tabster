@@ -1181,7 +1181,7 @@ describe("Mover with grid", () => {
             });
     });
 
-    it("should pick the cosest element in grid when there is nothing directly below", async () => {
+    it("should pick the closest element in grid when there is nothing directly below", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
