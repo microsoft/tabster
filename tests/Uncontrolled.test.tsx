@@ -455,4 +455,110 @@ runIfControlled("Uncontrolled", () => {
                 expect(el?.textContent).toEqual("Button1");
             });
     });
+
+    it("should handle Uncontrolled before, after and in the middle", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                    </div>
+                    <div>
+                        <ul
+                            {...getTabsterAttribute({
+                                mover: {},
+                            })}
+                        >
+                            <li
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities
+                                                .LimitedTrapFocus,
+                                        delegated: true,
+                                    },
+                                })}
+                            >
+                                <div tabIndex={0}>
+                                    <div
+                                        {...getTabsterAttribute({
+                                            uncontrolled: {},
+                                        })}
+                                    >
+                                        <button>Uncontrolled-Button1</button>
+                                    </div>
+                                    <button>Groupper-Button1</button>
+                                    <button>Groupper-Button2</button>
+                                </div>
+                            </li>
+                            <li
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities
+                                                .LimitedTrapFocus,
+                                        delegated: true,
+                                    },
+                                })}
+                            >
+                                <div tabIndex={0}>
+                                    <div
+                                        {...getTabsterAttribute({
+                                            uncontrolled: {},
+                                        })}
+                                    >
+                                        <button>Uncontrolled-Button2</button>
+                                    </div>
+                                    <button>Groupper-Button3</button>
+                                    <button>Groupper-Button4</button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button2</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Uncontrolled-Button1Groupper-Button1Groupper-Button2"
+                );
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Uncontrolled-Button2Groupper-Button3Groupper-Button4"
+                );
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual(
+                    "Uncontrolled-Button2Groupper-Button3Groupper-Button4"
+                );
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Uncontrolled-Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Groupper-Button3");
+            });
+    });
 });
