@@ -537,9 +537,17 @@ export class FocusedElementState
                     const mover = ctx.mover?.getElement();
                     let moveFrom: HTMLElement | undefined;
 
-                    if (isGroupperFirst && groupper && uncontrolled.contains(groupper)) {
+                    if (
+                        isGroupperFirst &&
+                        groupper &&
+                        uncontrolled.contains(groupper)
+                    ) {
                         moveFrom = groupper;
-                    } else if (!isGroupperFirst && mover && uncontrolled.contains(mover)) {
+                    } else if (
+                        !isGroupperFirst &&
+                        mover &&
+                        uncontrolled.contains(mover)
+                    ) {
                         moveFrom = mover;
                     }
 
