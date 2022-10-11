@@ -795,7 +795,18 @@ export class MoverAPI implements Types.MoverAPI {
             isBoth || direction === Types.MoverDirections.Horizontal;
         const isGrid = direction === Types.MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
+
         let next: HTMLElement | null | undefined;
+
+        let focusedElementRect: DOMRect;
+        let focusedElementX1 = 0;
+        let focusedElementX2 = 0;
+
+        if (isGrid) {
+            focusedElementRect = focused.getBoundingClientRect();
+            focusedElementX1 = Math.ceil(focusedElementRect.left);
+            focusedElementX2 = Math.floor(focusedElementRect.right);
+        }
 
         if (
             moverProps.disableHomeEndKeys &&
@@ -818,7 +829,15 @@ export class MoverAPI implements Types.MoverAPI {
         ) {
             next = focusable.findNext({ currentElement: focused, container });
 
-            if (!next && isCyclic) {
+            if (next && isGrid) {
+                const nextElementX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+
+                if (focusedElementX2 > nextElementX1) {
+                    next = undefined;
+                }
+            } else if (!next && isCyclic) {
                 next = focusable.findFirst({ container });
             }
         } else if (
@@ -827,7 +846,15 @@ export class MoverAPI implements Types.MoverAPI {
         ) {
             next = focusable.findPrev({ currentElement: focused, container });
 
-            if (!next && isCyclic) {
+            if (next && isGrid) {
+                const nextElementX2 = Math.floor(
+                    next.getBoundingClientRect().right
+                );
+
+                if (nextElementX2 > focusedElementX1) {
+                    next = undefined;
+                }
+            } else if (!next && isCyclic) {
                 next = focusable.findLast({ container });
             }
         } else if (keyCode === Keys.Home) {
@@ -888,11 +915,12 @@ export class MoverAPI implements Types.MoverAPI {
             }
         } else if (isGrid) {
             const isBackward = keyCode === Keys.Up;
-            const fromRect = focused.getBoundingClientRect();
-            const ax1 = Math.ceil(fromRect.left);
-            const ay1 = Math.ceil(fromRect.top);
-            const ax2 = Math.floor(fromRect.right);
-            const ay2 = Math.floor(fromRect.bottom);
+            const ax1 = focusedElementX1;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const ay1 = Math.ceil(focusedElementRect!.top);
+            const ax2 = focusedElementX2;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const ay2 = Math.floor(focusedElementRect!.bottom);
             let targetElement: HTMLElement | undefined;
             let lastFound: HTMLElement | undefined;
             let lastDistance: number | undefined;

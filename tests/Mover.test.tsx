@@ -893,7 +893,15 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row2-Col1");
             })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col1");
+            })
             .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .pressLeft()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row3-Col1");
             })
@@ -913,7 +921,15 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row1-Col3");
             })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
             .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col3");
+            })
+            .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row2-Col3");
             })
@@ -982,11 +998,19 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item7");
             })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item7");
+            })
             .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item8");
             })
             .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressLeft()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item4");
             })
@@ -1010,7 +1034,15 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item6");
             })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item6");
+            })
             .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item3");
             });
@@ -1143,11 +1175,23 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item3");
             })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
             .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item5");
             })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
             .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item9");
+            })
+            .pressLeft()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item9");
             })
@@ -1159,7 +1203,15 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item4");
             })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
             .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item2");
             })
@@ -1170,6 +1222,10 @@ describe("Mover with grid", () => {
             .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item7");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item8");
             })
             .pressRight()
             .activeElement((el) => {
@@ -1267,6 +1323,10 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Item5");
             })
             .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item2");
             })
