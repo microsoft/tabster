@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled } from "./utils/test-utils";
+import { describeIfControlled } from "./utils/test-utils";
 
 interface WindowWithTabsterCoreAndFocusState extends Window {
     __tabsterFocusedRoot?: {
@@ -18,7 +18,7 @@ interface WindowWithTabsterCoreAndFocusState extends Window {
     };
 }
 
-runIfControlled("Root", () => {
+describeIfControlled("Root", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({});
     });
