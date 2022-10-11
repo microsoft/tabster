@@ -6,9 +6,9 @@
 import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfControlled } from "./utils/test-utils";
+import { describeIfControlled } from "./utils/test-utils";
 
-runIfControlled("Focusable", () => {
+describeIfControlled("Focusable", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });

@@ -787,7 +787,9 @@ export class DummyInput {
         const input = this.input;
 
         if (this.onFocusIn && input) {
-            const relatedTarget = e.relatedTarget as HTMLElement | null;
+            const relatedTarget =
+                DummyInputManager.getLastPhantomFrom() ||
+                (e.relatedTarget as HTMLElement | null);
 
             this.onFocusIn(
                 this,
@@ -811,10 +813,6 @@ export class DummyInput {
                 relatedTarget
             );
         }
-
-        if (this._isPhantom) {
-            this.dispose();
-        }
     };
 }
 
@@ -834,6 +832,7 @@ export class DummyInputManager {
     private _onFocusIn?: DummyInputFocusCallback;
     private _onFocusOut?: DummyInputFocusCallback;
     protected _element: WeakHTMLElement;
+    private static _lastPhantomFrom: HTMLElement | undefined;
 
     moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
 
@@ -884,6 +883,12 @@ export class DummyInputManager {
         delete this._onFocusOut;
     }
 
+    static getLastPhantomFrom(): HTMLElement | undefined {
+        const ret = DummyInputManager._lastPhantomFrom;
+        delete DummyInputManager._lastPhantomFrom;
+        return ret;
+    }
+
     static moveWithPhantomDummy(
         tabster: Types.TabsterCore,
         element: HTMLElement,
@@ -901,12 +906,36 @@ export class DummyInputManager {
             const parent = element.parentElement;
 
             if (parent) {
-                parent.insertBefore(
-                    input,
+                let insertBefore = (
                     (moveOutside && !isBackward) || (!moveOutside && isBackward)
                         ? element.nextElementSibling
                         : element
-                );
+                ) as HTMLElementWithDummyContainer | null;
+
+                if (insertBefore) {
+                    if (isBackward) {
+                        const beforeBefore =
+                            insertBefore.previousElementSibling as HTMLElementWithDummyContainer | null;
+
+                        if (
+                            beforeBefore &&
+                            beforeBefore.__tabsterDummyContainer
+                        ) {
+                            insertBefore = beforeBefore;
+                        }
+                    } else if (insertBefore.__tabsterDummyContainer) {
+                        insertBefore =
+                            insertBefore.nextElementSibling as HTMLElementWithDummyContainer | null;
+                    }
+                }
+
+                parent.insertBefore(input, insertBefore);
+
+                DummyInputManager._lastPhantomFrom = element;
+
+                tabster.getWindow().setTimeout(() => {
+                    delete DummyInputManager._lastPhantomFrom;
+                }, 0);
 
                 nativeFocus(input);
             }

@@ -533,13 +533,28 @@ export class FocusedElementState
                 let moveOutside = false;
 
                 if (isGroupperFirst !== undefined) {
-                    if (isGroupperFirst) {
-                        uncontrolled = ctx.groupper?.getElement();
-                    } else {
-                        uncontrolled = ctx.mover?.getElement();
+                    const groupper = ctx.groupper?.getElement();
+                    const mover = ctx.mover?.getElement();
+                    let moveFrom: HTMLElement | undefined;
+
+                    if (
+                        isGroupperFirst &&
+                        groupper &&
+                        uncontrolled.contains(groupper)
+                    ) {
+                        moveFrom = groupper;
+                    } else if (
+                        !isGroupperFirst &&
+                        mover &&
+                        uncontrolled.contains(mover)
+                    ) {
+                        moveFrom = mover;
                     }
 
-                    moveOutside = true;
+                    if (moveFrom) {
+                        uncontrolled = moveFrom;
+                        moveOutside = true;
+                    }
                 }
 
                 if (uncontrolled && ctx.uncontrolled !== uncontrolled) {

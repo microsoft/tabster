@@ -438,6 +438,10 @@ export class RootAPI implements Types.RootAPI {
             root = rootAPI._autoRootInstance;
         }
 
+        if (groupper && !mover) {
+            isGroupperFirst = true;
+        }
+
         return root
             ? {
                   root,

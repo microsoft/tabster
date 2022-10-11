@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { runIfUnControlled } from "./utils/test-utils";
+import { describeIfUncontrolled } from "./utils/test-utils";
 
 const groupperItem = (
     tagName: "div" | "li",
@@ -423,7 +423,7 @@ describe("Groupper tabbing forward and backwards", () => {
 });
 
 // TODO: Address contentEditables in a controlled groupper (likely by having dummy inputs around).
-runIfUnControlled("Groupper", () => {
+describeIfUncontrolled("Groupper", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
