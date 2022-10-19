@@ -922,7 +922,6 @@ export class MoverAPI implements Types.MoverAPI {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const ay2 = Math.floor(focusedElementRect!.bottom);
             let targetElement: HTMLElement | undefined;
-            let lastFound: HTMLElement | undefined;
             let lastDistance: number | undefined;
             let lastIntersection = 0;
 
@@ -933,8 +932,6 @@ export class MoverAPI implements Types.MoverAPI {
                 onElement: (el) => {
                     // Find element which has maximal intersection with the focused element horizontally,
                     // or the closest one.
-                    lastFound = el;
-
                     const rect = el.getBoundingClientRect();
 
                     const bx1 = Math.ceil(rect.left);
@@ -995,7 +992,7 @@ export class MoverAPI implements Types.MoverAPI {
                 },
             });
 
-            next = targetElement || lastFound;
+            next = targetElement;
         }
 
         if (next) {

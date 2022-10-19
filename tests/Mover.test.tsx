@@ -905,6 +905,10 @@ describe("Mover with grid", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row3-Col1");
             })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
             .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row3-Col2");
@@ -922,6 +926,10 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Row1-Col3");
             })
             .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .pressUp()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row1-Col3");
             })
@@ -1319,6 +1327,14 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Item3");
             })
             .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item5");
             })
