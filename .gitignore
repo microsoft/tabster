@@ -25,3 +25,5 @@ dts/
 .npmrc
 
 .devcontainer
+
+.storybook-static

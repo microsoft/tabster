@@ -614,6 +614,39 @@ function validateMoverProps(props: Types.MoverProps): void {
     // TODO: Implement validation.
 }
 
+/**
+ * Calculates distance between two rectangles.
+ *
+ * @param ax1 first rectangle left
+ * @param ay1 first rectangle top
+ * @param ax2 first rectangle right
+ * @param ay2 first rectangle bottom
+ * @param bx1 second rectangle left
+ * @param by1 second rectangle top
+ * @param bx2 second rectangle right
+ * @param by2 second rectangle bottom
+ * @returns number, shortest distance between the rectangles.
+ */
+function getDistance(
+    ax1: number,
+    ay1: number,
+    ax2: number,
+    ay2: number,
+    bx1: number,
+    by1: number,
+    bx2: number,
+    by2: number
+): number {
+    const xDistance = ax2 < bx1 ? bx1 - ax2 : bx2 < ax1 ? ax1 - bx2 : 0;
+    const yDistance = ay2 < by1 ? by1 - ay2 : by2 < ay1 ? ay1 - by2 : 0;
+
+    return xDistance === 0
+        ? yDistance
+        : yDistance === 0
+        ? xDistance
+        : Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+}
+
 export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
@@ -762,7 +795,18 @@ export class MoverAPI implements Types.MoverAPI {
             isBoth || direction === Types.MoverDirections.Horizontal;
         const isGrid = direction === Types.MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
+
         let next: HTMLElement | null | undefined;
+
+        let focusedElementRect: DOMRect;
+        let focusedElementX1 = 0;
+        let focusedElementX2 = 0;
+
+        if (isGrid) {
+            focusedElementRect = focused.getBoundingClientRect();
+            focusedElementX1 = Math.ceil(focusedElementRect.left);
+            focusedElementX2 = Math.floor(focusedElementRect.right);
+        }
 
         if (
             moverProps.disableHomeEndKeys &&
@@ -781,20 +825,36 @@ export class MoverAPI implements Types.MoverAPI {
 
         if (
             (keyCode === Keys.Down && isVertical) ||
-            (keyCode === Keys.Right && isHorizontal)
+            (keyCode === Keys.Right && (isHorizontal || isGrid))
         ) {
             next = focusable.findNext({ currentElement: focused, container });
 
-            if (!next && isCyclic) {
+            if (next && isGrid) {
+                const nextElementX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+
+                if (focusedElementX2 > nextElementX1) {
+                    next = undefined;
+                }
+            } else if (!next && isCyclic) {
                 next = focusable.findFirst({ container });
             }
         } else if (
             (keyCode === Keys.Up && isVertical) ||
-            (keyCode === Keys.Left && isHorizontal)
+            (keyCode === Keys.Left && (isHorizontal || isGrid))
         ) {
             next = focusable.findPrev({ currentElement: focused, container });
 
-            if (!next && isCyclic) {
+            if (next && isGrid) {
+                const nextElementX2 = Math.floor(
+                    next.getBoundingClientRect().right
+                );
+
+                if (nextElementX2 > focusedElementX1) {
+                    next = undefined;
+                }
+            } else if (!next && isCyclic) {
                 next = focusable.findLast({ container });
             }
         } else if (keyCode === Keys.Home) {
@@ -854,72 +914,85 @@ export class MoverAPI implements Types.MoverAPI {
                 scrollIntoView(this._win, next, true);
             }
         } else if (isGrid) {
-            const fromRect = focused.getBoundingClientRect();
-            let lastElement: HTMLElement | undefined;
-            let prevTop: number | undefined;
+            const isBackward = keyCode === Keys.Up;
+            const ax1 = focusedElementX1;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const ay1 = Math.ceil(focusedElementRect!.top);
+            const ax2 = focusedElementX2;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const ay2 = Math.floor(focusedElementRect!.bottom);
+            let targetElement: HTMLElement | undefined;
+            let lastDistance: number | undefined;
+            let lastIntersection = 0;
 
-            const nextMethod =
-                keyCode === Keys.Down || keyCode === Keys.Right
-                    ? "findNext"
-                    : "findPrev";
+            focusable.findAll({
+                container,
+                currentElement: focused,
+                isBackward,
+                onElement: (el) => {
+                    // Find element which has maximal intersection with the focused element horizontally,
+                    // or the closest one.
+                    const rect = el.getBoundingClientRect();
 
-            for (
-                let el = focusable[nextMethod]({
-                    currentElement: focused,
-                    container,
-                });
-                el;
-                el = focusable[nextMethod]({ currentElement: el, container })
-            ) {
-                const rect = el.getBoundingClientRect();
+                    const bx1 = Math.ceil(rect.left);
+                    const by1 = Math.ceil(rect.top);
+                    const bx2 = Math.floor(rect.right);
+                    const by2 = Math.floor(rect.bottom);
 
-                if (keyCode === Keys.Up) {
-                    if (rect.top < fromRect.top) {
-                        if (prevTop === undefined) {
-                            prevTop = rect.top;
-                        } else if (rect.top < prevTop) {
-                            break;
-                        }
-
-                        if (rect.left < fromRect.left) {
-                            if (!next) {
-                                next = el;
-                            }
-
-                            break;
-                        }
-
-                        next = el;
+                    if (
+                        (isBackward && ay1 < by2) ||
+                        (!isBackward && ay2 > by1)
+                    ) {
+                        // Only consider elements which are below/above curretly focused.
+                        return true;
                     }
-                } else if (keyCode === Keys.Down) {
-                    if (rect.top > fromRect.top) {
-                        if (prevTop === undefined) {
-                            prevTop = rect.top;
-                        } else if (rect.top > prevTop) {
-                            break;
+
+                    const xIntersectionWidth =
+                        Math.ceil(Math.min(ax2, bx2)) -
+                        Math.floor(Math.max(ax1, bx1));
+                    const minWidth = Math.ceil(Math.min(ax2 - ax1, bx2 - bx1));
+
+                    if (
+                        xIntersectionWidth > 0 &&
+                        minWidth >= xIntersectionWidth
+                    ) {
+                        // Element intersects with the focused element on X axis.
+                        const intersection = xIntersectionWidth / minWidth;
+
+                        if (intersection > lastIntersection) {
+                            targetElement = el;
+                            lastIntersection = intersection;
                         }
+                    } else if (lastIntersection === 0) {
+                        // If we didn't have intersection, try just the closest one.
+                        const distance = getDistance(
+                            ax1,
+                            ay1,
+                            ax2,
+                            ay2,
+                            bx1,
+                            by1,
+                            bx2,
+                            by2
+                        );
 
-                        if (rect.left > fromRect.left) {
-                            if (!next) {
-                                next = el;
-                            }
-
-                            break;
+                        if (
+                            lastDistance === undefined ||
+                            distance < lastDistance
+                        ) {
+                            lastDistance = distance;
+                            targetElement = el;
                         }
-
-                        next = el;
+                    } else if (lastIntersection > 0) {
+                        // Element doesn't intersect, but we had intersection already, stop search.
+                        return false;
                     }
-                } else if (keyCode === Keys.Left || keyCode === Keys.Right) {
-                    next = el;
-                    break;
-                }
 
-                lastElement = el;
-            }
+                    return true;
+                },
+            });
 
-            if (!next) {
-                next = lastElement;
-            }
+            next = targetElement;
         }
 
         if (next) {

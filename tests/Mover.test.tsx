@@ -823,3 +823,540 @@ describe("Mover with visibilityAware", () => {
             });
     });
 });
+
+describe("Mover with grid", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should properly move focus with arrow keys in grid as <table>", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Grid,
+                            },
+                        })}
+                        style={{ width: 50, height: 50, overflow: "scroll" }}
+                    >
+                        <table>
+                            <tr>
+                                <td tabIndex={0}>Row1-Col1</td>
+                                <td>
+                                    <button style={{ fontSize: "50%" }}>
+                                        Row1-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row1-Col3</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td tabIndex={0}>Row2-Col1</td>
+                                <td align="right">
+                                    <button
+                                        style={{
+                                            fontSize: "50%",
+                                            marginLeft: 40,
+                                        }}
+                                    >
+                                        Row2-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row2-Col3</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td tabIndex={0}>Row3-Col1</td>
+                                <td align="center">
+                                    <button style={{ fontSize: "50%" }}>
+                                        Row3-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row3-Col3</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col1");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col3");
+            });
+    });
+
+    it("should properly move focus with arrow keys in grid as just a set of focusable elements", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Grid,
+                            },
+                        })}
+                        style={{
+                            width: 250,
+                            display: "flex",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item1
+                        </div>
+                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                            Item2
+                        </div>
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item3
+                        </div>
+                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                            Item4
+                        </div>
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item5
+                        </div>
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item6
+                        </div>
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item7
+                        </div>
+                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                            Item8
+                        </div>
+                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                            Item9
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item7");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item7");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item8");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item9");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item6");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item6");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            });
+    });
+
+    it("should properly move focus with arrow keys in grid as just a set of focusable elements with different margins", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Grid,
+                            },
+                        })}
+                        style={{
+                            width: 250,
+                            display: "flex",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 40,
+                                margin: 10,
+                            }}
+                        >
+                            Item1
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 150,
+                                height: 30,
+                                margin: 5,
+                            }}
+                        >
+                            Item2
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 50,
+                                margin: 15,
+                            }}
+                        >
+                            Item3
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 150,
+                                height: 25,
+                                margin: 8,
+                            }}
+                        >
+                            Item4
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 40,
+                                margin: 3,
+                            }}
+                        >
+                            Item5
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 50,
+                                margin: 9,
+                            }}
+                        >
+                            Item6
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 40,
+                                margin: 1,
+                            }}
+                        >
+                            Item7
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 50,
+                                height: 30,
+                                margin: 0,
+                            }}
+                        >
+                            Item8
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                border: "1px solid red",
+                                width: 150,
+                                height: 50,
+                                margin: 10,
+                            }}
+                        >
+                            Item9
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item9");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item9");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item6");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item7");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item8");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item8");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            });
+    });
+
+    it("should pick the closest element in grid when there is nothing directly below", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Grid,
+                            },
+                        })}
+                        style={{
+                            width: 280,
+                            display: "flex",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginLeft: 60,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item1
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginRight: 100,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item2
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item3
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                marginLeft: 115,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item4
+                        </div>
+                        <div
+                            tabIndex={0}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                border: "1px solid red",
+                            }}
+                        >
+                            Item5
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item4");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            });
+    });
+});
