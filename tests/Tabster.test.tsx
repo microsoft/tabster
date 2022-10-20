@@ -4,6 +4,7 @@
  */
 
 import * as React from "react";
+import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 interface WindowWithTabster extends Window {
@@ -117,6 +118,50 @@ describe("Tabster dispose", () => {
             })
             .check((tabsterExists) => {
                 expect(tabsterExists).toEqual([true, true, false]);
+            });
+    });
+
+    it("should make Tabster noop", async () => {
+        await new BroTest.BroTest(
+            <div id="root" {...getTabsterAttribute({ root: {} })} />
+        )
+            .eval(() => {
+                const root = document.getElementById("root");
+                return !!(
+                    root &&
+                    getTabsterTestVariables().core?.core.storageEntry(root)
+                );
+            })
+            .check((exists) => {
+                expect(exists).toEqual(true);
+            })
+            .eval(() => {
+                const tabsterTest = getTabsterTestVariables();
+
+                if (tabsterTest.core) {
+                    tabsterTest.makeNoOp?.(tabsterTest.core, true);
+                }
+
+                const root = document.getElementById("root");
+
+                return !!(root && tabsterTest.core?.core.storageEntry(root));
+            })
+            .check((exists) => {
+                expect(exists).toEqual(false);
+            })
+            .eval(() => {
+                const tabsterTest = getTabsterTestVariables();
+
+                if (tabsterTest.core) {
+                    tabsterTest.makeNoOp?.(tabsterTest.core, false);
+                }
+
+                const root = document.getElementById("root");
+
+                return !!(root && tabsterTest.core?.core.storageEntry(root));
+            })
+            .check((exists) => {
+                expect(exists).toEqual(true);
             });
     });
 });

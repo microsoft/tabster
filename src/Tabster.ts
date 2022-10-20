@@ -461,11 +461,11 @@ export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
     return (win as WindowWithTabsterInstance).__tabsterInstance;
 }
 
-export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
-    const self = tabster as TabsterCore;
+export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
+    const core = tabster.core;
 
-    if (self._noop !== noop) {
-        self._noop = noop;
+    if (core._noop !== noop) {
+        core._noop = noop;
 
         const processNode = (element: HTMLElement): number => {
             if (!element.getAttribute) {
@@ -473,16 +473,16 @@ export function makeNoOp(tabster: Types.TabsterCore, noop: boolean): void {
             }
 
             if (
-                getTabsterOnElement(self, element) ||
+                getTabsterOnElement(core, element) ||
                 element.hasAttribute(Types.TabsterAttributeName)
             ) {
-                updateTabsterByAttribute(self, element);
+                updateTabsterByAttribute(core, element);
             }
 
             return NodeFilter.FILTER_SKIP;
         };
 
-        const doc = self.getWindow().document;
+        const doc = core.getWindow().document;
         const body = doc.body;
 
         processNode(body);
