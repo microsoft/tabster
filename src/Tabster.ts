@@ -461,6 +461,13 @@ export function getCurrentTabster(win: Window): Types.TabsterCore | undefined {
     return (win as WindowWithTabsterInstance).__tabsterInstance;
 }
 
+/**
+ * Allows to make Tabster non operational. Intended for performance debugging (and other
+ * kinds of debugging), you can switch Tabster off without changing the application code
+ * that consumes it.
+ * @param tabster a reference created by createTabster().
+ * @param noop true if you want to make Tabster noop, false if you want to turn it back.
+ */
 export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
     const core = tabster.core;
 
