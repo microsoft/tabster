@@ -11,7 +11,13 @@ import {
     Frame,
     KeyInput,
 } from "puppeteer";
-import { createTabster, disposeTabster, getTabster, Types } from "tabster";
+import {
+    createTabster,
+    disposeTabster,
+    getTabster,
+    makeNoOp,
+    Types,
+} from "tabster";
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -88,6 +94,7 @@ export interface BroTestTabsterTestVariables {
     disposeTabster?: typeof disposeTabster;
     createTabster?: typeof createTabster;
     getTabster?: typeof getTabster;
+    makeNoOp?: typeof makeNoOp;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;
