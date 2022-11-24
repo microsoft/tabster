@@ -74,7 +74,7 @@ class GroupperDummyManager extends DummyInputManager {
                             }
 
                             if (next) {
-                                tabster.focusedElement.focus(next);
+                                nativeFocus(next);
                             }
                         }
                     }
@@ -483,9 +483,10 @@ export class GroupperAPI implements Types.GroupperAPI {
                     }
 
                     if (
-                        element === groupperElement ||
-                        (groupper.getProps().delegated &&
-                            element === groupper.getFirst(false))
+                        groupperElement &&
+                        (element === groupperElement ||
+                            (groupper.getProps().delegated &&
+                                element === groupper.getFirst(false)))
                     ) {
                         next = this._tabster.focusable.findNext({
                             container: groupperElement,

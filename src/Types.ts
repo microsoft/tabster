@@ -71,6 +71,11 @@ export interface FocusedElementState
         noAccessibleCheck?: boolean
     ): boolean;
     focusDefault(container: HTMLElement): boolean;
+    /** @internal */
+    getFirstOrLastTabbable(
+        isFirst: boolean,
+        props: FindFirstProps
+    ): HTMLElement | undefined;
     focusFirst(props: FindFirstProps): boolean;
     focusLast(props: FindFirstProps): boolean;
     resetFocus(container: HTMLElement): boolean;
@@ -86,6 +91,20 @@ export interface TabsterPart<P> {
     getElement(): HTMLElement | undefined;
     getProps(): P;
     setProps(props: P): void;
+}
+
+export interface TabsterPartWithFindNextTabbable {
+    findNextTabbable(
+        current?: HTMLElement,
+        isBackward?: boolean
+    ): NextTabbable | null;
+}
+
+export interface TabsterPartWithAcceptElement {
+    acceptElement(
+        element: HTMLElement,
+        state: FocusableAcceptElementState
+    ): number | undefined;
 }
 
 export interface ObservedElementProps {
@@ -342,6 +361,7 @@ export interface FocusableProps {
 
 export interface FocusableAcceptElementState {
     container: HTMLElement;
+    modalizerUserId?: string;
     currentCtx?: TabsterContext;
     from: HTMLElement;
     fromCtx?: TabsterContext;
@@ -366,18 +386,17 @@ export interface FocusableAcceptElementState {
 
 export interface FindFocusableProps {
     /**
-     * The container used for the search
+     * The container used for the search.
      */
-    container?: HTMLElement;
+    container: HTMLElement;
     /**
-     * The elemet to start from
+     * The elemet to start from.
      */
     currentElement?: HTMLElement;
     /**
-     * includes elements that can be focused programmatically
+     * Includes elements that can be focused programmatically.
      */
     includeProgrammaticallyFocusable?: boolean;
-    // ignoreGroupper?: boolean;
     /**
      * Ignore uncontrolled areas.
      */
@@ -391,8 +410,8 @@ export interface FindFocusableProps {
      */
     isBackward?: boolean;
     /**
-     * @param el element visited
-     * @returns if an element should be accepted
+     * @param el element visited.
+     * @returns if an element should be accepted.
      */
     acceptCondition?(el: HTMLElement): boolean;
     /**
@@ -440,9 +459,7 @@ export type FindAllProps = Pick<
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
     | "onElement"
-> & {
-    container: HTMLElement;
-};
+>;
 
 /**
  * A callback that is called for every found element during search. Returning false stops search.
@@ -544,21 +561,16 @@ export interface MoverProps {
 
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
 
-export interface Mover extends TabsterPart<MoverProps> {
+export interface Mover
+    extends TabsterPart<MoverProps>,
+        TabsterPartWithFindNextTabbable,
+        TabsterPartWithAcceptElement {
     readonly id: string;
     readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
     setCurrent(element: HTMLElement | undefined): void;
     getCurrent(): HTMLElement | null;
     getState(element: HTMLElement): MoverElementState | undefined;
-    findNextTabbable(
-        current?: HTMLElement,
-        isBackward?: boolean
-    ): NextTabbable | null;
-    acceptElement(
-        element: HTMLElement,
-        state: FocusableAcceptElementState
-    ): number | undefined;
 }
 
 export type MoverConstructor = (
@@ -598,7 +610,10 @@ export interface GroupperProps {
     // inside the groupper.
 }
 
-export interface Groupper extends TabsterPart<GroupperProps> {
+export interface Groupper
+    extends TabsterPart<GroupperProps>,
+        TabsterPartWithFindNextTabbable,
+        TabsterPartWithAcceptElement {
     readonly id: string;
     readonly dummyManager: DummyInputManager | undefined;
     dispose(): void;
@@ -606,14 +621,6 @@ export interface Groupper extends TabsterPart<GroupperProps> {
     isActive(noIfFirstIsFocused?: boolean): boolean | undefined; // Tri-state boolean, undefined when parent is not active, false when parent is active.
     setFirst(element: HTMLElement | undefined): void;
     getFirst(orContainer: boolean): HTMLElement | undefined;
-    findNextTabbable(
-        current?: HTMLElement,
-        isBackward?: boolean
-    ): NextTabbable | null;
-    acceptElement(
-        element: HTMLElement,
-        state: FocusableAcceptElementState
-    ): number | undefined;
 }
 
 export type GroupperConstructor = (
@@ -648,8 +655,9 @@ export type ModalizerEventDetails = { eventName: "beforefocusout" };
 
 export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
 
-export interface Modalizer extends TabsterPart<ModalizerProps> {
-    readonly internalId: string;
+export interface Modalizer
+    extends TabsterPart<ModalizerProps>,
+        TabsterPartWithFindNextTabbable {
     readonly userId: string;
     /**
      * @returns - Whether the element is inside the modalizer
@@ -657,15 +665,7 @@ export interface Modalizer extends TabsterPart<ModalizerProps> {
     contains(element: HTMLElement): boolean;
     dispose(): void;
     isActive(): boolean;
-    onBeforeFocusOut(): boolean;
-    /**
-     * Sets the active state of the modalizr
-     * When active, sets `aria-hidden` on all other elements
-     * Reverts `aria-hidden` changes when set to inactive
-     *
-     * @param active Whether the modalizer is active
-     */
-    setActive(active: boolean): void;
+    makeActive(isActive: boolean): void;
 }
 
 export type ModalizerConstructor = (
@@ -738,14 +738,25 @@ export interface RootAPI extends Disposable, RootAPIInternal {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UncontrolledAPI {}
 
-interface ModalizerAPIInternal {
+interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     createModalizer(element: HTMLElement, props: ModalizerProps): Modalizer;
+    /**
+     * Sets active modalizers.
+     * When active, everything outside of the modalizers with the specific user
+     * defined id gets `aria-hidden`.
+     *
+     * @param userId user defined identifier or undefined (if nothing is modal).
+     */
     /** @internal */
-    updateModalizer: (modalizer: Modalizer, removed?: boolean) => void;
+    setActive(modalizer: Modalizer | undefined): void;
 }
 
 export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
+    /** @internal */
+    activeLayer: string | undefined; // currently active Modalizer user id.
+    /** @internal */
+    currentIsOthersAccessible: boolean | undefined; // isOthersAccessible value of the currently active Modalizer.
     /**
      * Activates a Modalizer and focuses the first or default element within
      *

@@ -80,12 +80,6 @@ export function updateTabsterByAttribute(
                 if (root) {
                     tabster.root.onRoot(root, true);
                 }
-            } else if (key === "modalizer") {
-                const modalizer = tabsterOnElement.modalizer;
-
-                if (tabster.modalizer && modalizer) {
-                    tabster.modalizer.updateModalizer(modalizer, true);
-                }
             }
 
             switch (key) {

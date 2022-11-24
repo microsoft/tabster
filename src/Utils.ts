@@ -949,6 +949,29 @@ interface DummyInputWrapper {
     tabbable: boolean;
 }
 
+function setDummyInputDebugValue(
+    dummy: DummyInput,
+    wrappers: DummyInputWrapper[]
+): void {
+    const what: Record<number, string> = {
+        1: "Root",
+        2: "Modalizer",
+        3: "Mover",
+        4: "Groupper",
+    };
+
+    dummy.input?.setAttribute(
+        Types.TabsterDummyInputAttributeName,
+        [
+            `isFirst=${dummy.isFirst}`,
+            `isOutside=${dummy.isOutside}`,
+            ...wrappers.map(
+                (w) => `(${what[w.priority]}, tabbable=${w.tabbable})`
+            ),
+        ].join(", ")
+    );
+}
+
 /**
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
@@ -988,6 +1011,19 @@ class DummyInputManagerCore {
         });
 
         if (instance) {
+            if (__DEV__) {
+                this._firstDummy &&
+                    setDummyInputDebugValue(
+                        this._firstDummy,
+                        instance._wrappers
+                    );
+                this._lastDummy &&
+                    setDummyInputDebugValue(
+                        this._lastDummy,
+                        instance._wrappers
+                    );
+            }
+
             return instance;
         }
 
@@ -1045,6 +1081,13 @@ class DummyInputManagerCore {
         const wrappers = (this._wrappers = this._wrappers.filter(
             (w) => w.manager !== manager && !force
         ));
+
+        if (__DEV__) {
+            this._firstDummy &&
+                setDummyInputDebugValue(this._firstDummy, wrappers);
+            this._lastDummy &&
+                setDummyInputDebugValue(this._lastDummy, wrappers);
+        }
 
         if (wrappers.length === 0) {
             delete (this._element?.get() as HTMLElementWithDummyInputs)
@@ -1156,6 +1199,13 @@ class DummyInputManagerCore {
                 input.tabIndex = tabIndex;
             }
         }
+
+        if (__DEV__) {
+            this._firstDummy &&
+                setDummyInputDebugValue(this._firstDummy, this._wrappers);
+            this._lastDummy &&
+                setDummyInputDebugValue(this._lastDummy, this._wrappers);
+        }
     };
 
     private _getCurrent(): DummyInputWrapper | undefined {
@@ -1214,6 +1264,13 @@ class DummyInputManagerCore {
                 if (firstElementChild && firstElementChild !== dif) {
                     element.insertBefore(dif, firstElementChild);
                 }
+            }
+
+            if (__DEV__) {
+                this._firstDummy &&
+                    setDummyInputDebugValue(this._firstDummy, this._wrappers);
+                this._lastDummy &&
+                    setDummyInputDebugValue(this._lastDummy, this._wrappers);
             }
 
             this._addTransformOffsets();

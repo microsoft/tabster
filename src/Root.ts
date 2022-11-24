@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from "keyborg";
 import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement } from "./Instance";
 import { KeyboardNavigationState } from "./State/KeyboardNavigation";
@@ -75,15 +76,14 @@ class RootDummyManager extends DummyInputManager {
             if (element) {
                 this._setFocused(true, true);
 
-                const hasFocused = dummyInput.isFirst
-                    ? this._tabster.focusedElement.focusFirst({
-                          container: element,
-                      })
-                    : this._tabster.focusedElement.focusLast({
-                          container: element,
-                      });
+                const toFocus =
+                    this._tabster.focusedElement.getFirstOrLastTabbable(
+                        dummyInput.isFirst,
+                        { container: element }
+                    );
 
-                if (hasFocused) {
+                if (toFocus) {
+                    nativeFocus(toFocus);
                     return;
                 }
             }
@@ -401,6 +401,15 @@ export class RootAPI implements Types.RootAPI {
 
             if (!modalizer && tabsterOnElement.modalizer) {
                 modalizer = tabsterOnElement.modalizer;
+
+                // Modalizer puts the element out of the upper groupper and mover context.
+                if (!curMover) {
+                    mover = undefined;
+                }
+
+                if (!curGroupper) {
+                    groupper = undefined;
+                }
             }
 
             if (tabsterOnElement.root) {
@@ -455,6 +464,25 @@ export class RootAPI implements Types.RootAPI {
                   ignoreKeydown,
               }
             : undefined;
+    }
+
+    static getRoot(
+        tabster: Types.TabsterCore,
+        element: HTMLElement
+    ): Types.Root | undefined {
+        for (
+            let el = element as HTMLElement | null;
+            el;
+            el = el.parentElement
+        ) {
+            const root = getTabsterOnElement(tabster, el)?.root;
+
+            if (root) {
+                return root;
+            }
+        }
+
+        return undefined;
     }
 
     onRoot(root: Types.Root, removed?: boolean): void {

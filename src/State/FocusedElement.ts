@@ -149,10 +149,10 @@ export class FocusedElementState
         return false;
     }
 
-    private _focusFirstOrLast(
+    getFirstOrLastTabbable(
         isFirst: boolean,
         props: Types.FindFirstProps
-    ): boolean {
+    ): HTMLElement | undefined {
         const tabsterFocusable = this._tabster.focusable;
         const container = props.container;
         let uncontrolled: HTMLElement | undefined;
@@ -216,6 +216,15 @@ export class FocusedElementState
         if (toFocus && !container?.contains(toFocus)) {
             toFocus = undefined;
         }
+
+        return toFocus || undefined;
+    }
+
+    private _focusFirstOrLast(
+        isFirst: boolean,
+        props: Types.FindFirstProps
+    ): boolean {
+        const toFocus = this.getFirstOrLastTabbable(isFirst, props);
 
         if (toFocus) {
             this.focus(toFocus, false, true);
@@ -375,7 +384,9 @@ export class FocusedElementState
             FocusedElementState.isTabbing = false;
         }, 0);
 
-        const callFindNext = (what: Types.Groupper | Types.Mover) => {
+        const callFindNext = (
+            what: Types.Groupper | Types.Mover | Types.Modalizer
+        ) => {
             next = what.findNextTabbable(currentElement, isBackward);
         };
 
@@ -398,6 +409,8 @@ export class FocusedElementState
             callFindNext(ctx.groupper);
         } else if (ctx.mover) {
             callFindNext(ctx.mover);
+        } else if (ctx.modalizer) {
+            callFindNext(ctx.modalizer);
         } else {
             let uncontrolled: HTMLElement | undefined;
             const onUncontrolled = (el: HTMLElement) => {
@@ -571,36 +584,6 @@ export class FocusedElementState
             }
 
             nextElement = next.element;
-
-            if (ctx.modalizer) {
-                const nextElementCtx =
-                    nextElement &&
-                    RootAPI.getTabsterContext(tabster, nextElement);
-
-                if (
-                    !nextElementCtx ||
-                    ctx.root.uid !== nextElementCtx.root.uid ||
-                    !nextElementCtx.modalizer?.isActive()
-                ) {
-                    if (ctx.modalizer.onBeforeFocusOut()) {
-                        e.preventDefault();
-
-                        return;
-                    }
-                }
-
-                // circular focus trap for modalizer
-                if (
-                    !nextElement &&
-                    ctx.modalizer.isActive() &&
-                    ctx.modalizer.getProps().isTrapped
-                ) {
-                    const findFn = isBackward ? "findLast" : "findFirst";
-                    nextElement = tabster.focusable[findFn]({
-                        container: ctx.modalizer.getElement(),
-                    });
-                }
-            }
         }
 
         if (nextElement) {

@@ -145,8 +145,15 @@ describe("Modalizer", () => {
                 );
         });
 
-        it("should allow focus into modalizer", async () => {
+        it("should not allow focus into modalizer with isOthersAccessible", async () => {
             await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
+                .focusElement("#outside")
+                .pressTab()
+                .activeElement((el) => expect(el).toBeNull());
+        });
+
+        it("should allow focus into modalizer with isAlwaysAccessible", async () => {
+            await new BroTest.BroTest(getTestHtml({ isAlwaysAccessible: true }))
                 .focusElement("#outside")
                 .pressTab()
                 .activeElement((el) => expect(el?.attributes.id).toBe("foo"));

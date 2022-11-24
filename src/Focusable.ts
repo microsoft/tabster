@@ -26,25 +26,13 @@ const _focusableSelector = [
 
 export class FocusableAPI implements Types.FocusableAPI {
     private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
 
-    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = getWindow;
     }
 
     dispose(): void {
         /**/
-    }
-
-    private _getBody(): HTMLElement | undefined {
-        const last = this._tabster.focusedElement.getLastFocusedElement();
-
-        if (last && last.ownerDocument) {
-            return last.ownerDocument.body;
-        }
-
-        return this._win().document.body;
     }
 
     getProps(element: HTMLElement): Types.FocusableProps {
@@ -137,14 +125,12 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     findFirst(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             ...options,
         });
     }
 
     findLast(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             isBackward: true,
             ...options,
         });
@@ -152,14 +138,12 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     findNext(options: Types.FindNextProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             ...options,
         });
     }
 
     findPrev(options: Types.FindNextProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             isBackward: true,
             ...options,
         });
@@ -224,6 +208,9 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const acceptElementState: Types.FocusableAcceptElementState = {
             container,
+            modalizerUserId:
+                RootAPI.getTabsterContext(this._tabster, container)?.modalizer
+                    ?.userId || this._tabster.modalizer?.activeLayer,
             from: currentElement || container,
             isBackward,
             acceptCondition,
@@ -406,7 +393,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         let groupper = ctx.groupper;
         let mover = ctx.mover;
 
-        if (groupper || mover || fromMover) {
+        result = this._tabster.modalizer?.acceptElement(element, state);
+
+        if (result === undefined && (groupper || mover || fromMover)) {
             const groupperElement = groupper?.getElement();
             const fromMoverElement = fromMover?.getElement();
             let moverElement = mover?.getElement();
