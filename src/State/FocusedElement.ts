@@ -390,7 +390,11 @@ export class FocusedElementState
             next = what.findNextTabbable(currentElement, isBackward);
         };
 
-        if (ctx.groupper && ctx.mover) {
+        const modalizer = ctx.modalizer;
+        const groupper = ctx.groupper;
+        const mover = ctx.mover;
+
+        if (groupper && mover) {
             let isGroupperFirst = ctx.isGroupperFirst;
 
             if (isGroupperFirst && currentElement) {
@@ -404,13 +408,13 @@ export class FocusedElementState
                 }
             }
 
-            callFindNext(isGroupperFirst ? ctx.groupper : ctx.mover);
-        } else if (ctx.groupper) {
-            callFindNext(ctx.groupper);
-        } else if (ctx.mover) {
-            callFindNext(ctx.mover);
-        } else if (ctx.modalizer) {
-            callFindNext(ctx.modalizer);
+            callFindNext(isGroupperFirst ? groupper : mover);
+        } else if (groupper) {
+            callFindNext(groupper);
+        } else if (mover) {
+            callFindNext(mover);
+        } else if (modalizer) {
+            callFindNext(modalizer);
         } else {
             let uncontrolled: HTMLElement | undefined;
             const onUncontrolled = (el: HTMLElement) => {

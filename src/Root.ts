@@ -387,29 +387,33 @@ export class RootAPI implements Types.RootAPI {
                 isExcludedFromMover = true;
             }
 
+            const curModalizer = tabsterOnElement.modalizer;
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
 
-            if (!groupper && curGroupper) {
-                groupper = curGroupper;
+            if (!modalizer && curModalizer) {
+                modalizer = curModalizer;
             }
 
-            if (!mover && curMover) {
+            if (!groupper && curGroupper && (!modalizer || curModalizer)) {
+                if (modalizer) {
+                    // Modalizer dominates the groupper when they are on the same node and the groupper is active.
+                    if (
+                        !curGroupper.isActive() &&
+                        curGroupper.getProps().tabbability &&
+                        modalizer.userId !== tabster.modalizer?.activeId
+                    ) {
+                        modalizer = undefined;
+                        groupper = curGroupper;
+                    }
+                } else {
+                    groupper = curGroupper;
+                }
+            }
+
+            if (!mover && curMover && (!modalizer || curModalizer)) {
                 mover = curMover;
                 isGroupperFirst = !!groupper;
-            }
-
-            if (!modalizer && tabsterOnElement.modalizer) {
-                modalizer = tabsterOnElement.modalizer;
-
-                // Modalizer puts the element out of the upper groupper and mover context.
-                if (!curMover) {
-                    mover = undefined;
-                }
-
-                if (!curGroupper) {
-                    groupper = undefined;
-                }
             }
 
             if (tabsterOnElement.root) {

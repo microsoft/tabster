@@ -132,7 +132,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Deloser API used before initializing, please call `getDeloser()`"
+                            "Deloser API used before the initialization, please call `getDeloser()`"
                         );
                     }
                 }
@@ -166,7 +166,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Modalizer API used before initializing, please call `getModalizer()`"
+                            "Modalizer API used before the initialization, please call `getModalizer()`"
                         );
                     }
                 }
@@ -190,7 +190,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Groupper API used before initializing, please call `getGroupper()`"
+                            "Groupper API used before the initialization, please call `getGroupper()`"
                         );
                     }
                 }
@@ -209,7 +209,7 @@ export function updateTabsterByAttribute(
                         );
                     } else if (__DEV__) {
                         console.error(
-                            "Mover API used before initializing, please call `getMover()`"
+                            "Mover API used before the initialization, please call `getMover()`"
                         );
                     }
                 }
@@ -221,7 +221,7 @@ export function updateTabsterByAttribute(
                     tabster.observedElement.onObservedElementUpdate(element);
                 } else if (__DEV__) {
                     console.error(
-                        "ObservedElement API used before initializing, please call `getObservedElement()`"
+                        "ObservedElement API used before the initialization, please call `getObservedElement()`"
                     );
                 }
                 break;
@@ -235,7 +235,7 @@ export function updateTabsterByAttribute(
                     tabsterOnElement.outline = newTabsterProps.outline;
                 } else if (__DEV__) {
                     console.error(
-                        "Outline API used before initializing, please call `getOutline()`"
+                        "Outline API used before the initialization, please call `getOutline()`"
                     );
                 }
                 break;

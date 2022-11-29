@@ -210,7 +210,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             container,
             modalizerUserId:
                 RootAPI.getTabsterContext(this._tabster, container)?.modalizer
-                    ?.userId || this._tabster.modalizer?.activeLayer,
+                    ?.userId || this._tabster.modalizer?.activeId,
             from: currentElement || container,
             isBackward,
             acceptCondition,

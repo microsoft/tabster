@@ -46,6 +46,8 @@ export interface Disposable {
 
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
+    /** @internal */
+    subscribeFirst(callback: SubscribableCallback<A, B>): void;
     unsubscribe(callback: SubscribableCallback<A, B>): void;
 }
 
@@ -754,9 +756,11 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
 
 export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
     /** @internal */
-    activeLayer: string | undefined; // currently active Modalizer user id.
+    activeId: string | undefined; // currently active Modalizer user id.
     /** @internal */
     currentIsOthersAccessible: boolean | undefined; // isOthersAccessible value of the currently active Modalizer.
+    /** @internal */
+    activeElements: HTMLElement[];
     /**
      * Activates a Modalizer and focuses the first or default element within
      *
