@@ -591,6 +591,30 @@ describe("Mover with inputs inside", () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
+    it("should move for checkbox inputs", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <input type="checkbox" id="first" />
+                    <input type="checkbox" id="second" />
+                    <input type="checkbox" id="third" />
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes["id"]).toEqual("first")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.attributes["id"]).toEqual("second")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.attributes["id"]).toEqual("third")
+            );
+    });
+
     it("should move or not move focus depending on caret position", async () => {
         await new BroTest.BroTest(
             (

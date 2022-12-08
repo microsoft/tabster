@@ -25,7 +25,11 @@ import {
     WeakHTMLElement,
 } from "./Utils";
 
-const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
+const _inputSelector = [
+    "input[type='text']",
+    "textarea",
+    "*[contenteditable]",
+].join(", ");
 
 class MoverDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
