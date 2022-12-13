@@ -493,6 +493,7 @@ export interface FocusableAPI extends Disposable {
 }
 
 export interface DummyInputManager {
+    moveOut: (backwards: boolean) => void;
     moveOutWithDefaultAction: (backwards: boolean) => void;
 }
 
@@ -661,6 +662,7 @@ export interface Modalizer
     extends TabsterPart<ModalizerProps>,
         TabsterPartWithFindNextTabbable {
     readonly userId: string;
+    readonly dummyManager: DummyInputManager | undefined;
     /**
      * @returns - Whether the element is inside the modalizer
      */

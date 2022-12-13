@@ -413,7 +413,7 @@ describe("Modalizer with multiple containers", () => {
             );
     });
 
-    it.only("should work in a very monstrous complex case with Movers and Grouppers", async () => {
+    it("should work in a very monstrous complex case with Movers and Grouppers", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>

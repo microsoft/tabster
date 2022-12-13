@@ -13,6 +13,7 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
+    HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils";
@@ -52,44 +53,39 @@ function _setInformativeStyle(
  * Manages the dummy inputs for the Modalizer.
  */
 class ModalizerDummyManager extends DummyInputManager {
-    constructor(
-        element: WeakHTMLElement,
-        tabster: Types.TabsterCore
-    ) {
+    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
         super(tabster, element, DummyInputManagerPriorities.Modalizer);
 
-        this._setHandlers(
-            (
-                dummyInput: DummyInput,
-                isBackward: boolean,
-                relatedTarget: HTMLElement | null
-            ) => {
-                const el = element.get();
-                const container =
-                    el && RootAPI.getRoot(tabster, el)?.getElement();
-                const input = dummyInput.input;
+        this._setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
+            const el = element.get();
+            const container = el && RootAPI.getRoot(tabster, el)?.getElement();
+            const input = dummyInput.input;
+            let toFocus: HTMLElement | null | undefined;
 
-                if (container && !dummyInput.shouldMoveOut && input) {
-                    const ctx = RootAPI.getTabsterContext(tabster, input);
+            if (container && input) {
+                const dummyContainer = (
+                    input as HTMLElementWithDummyContainer
+                ).__tabsterDummyContainer?.get();
+                const ctx = RootAPI.getTabsterContext(
+                    tabster,
+                    dummyContainer || input
+                );
 
-                    let toFocus: HTMLElement | null | undefined;
+                if (ctx) {
+                    toFocus = FocusedElementState.findNextTabbable(
+                        tabster,
+                        ctx,
+                        undefined,
+                        input,
+                        isBackward
+                    )?.element;
+                }
 
-                    if (ctx) {
-                        toFocus = FocusedElementState.findNextTabbable(
-                            tabster,
-                            ctx,
-                            undefined,
-                            input,
-                            isBackward
-                        )?.element;
-                    }
-
-                    if (toFocus) {
-                        nativeFocus(toFocus);
-                    }
+                if (toFocus) {
+                    nativeFocus(toFocus);
                 }
             }
-        );
+        });
     }
 }
 

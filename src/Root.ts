@@ -49,7 +49,13 @@ class RootDummyManager extends DummyInputManager {
         element: WeakHTMLElement,
         setFocused: (focused: boolean, fromAdjacent?: boolean) => void
     ) {
-        super(tabster, element, DummyInputManagerPriorities.Root);
+        super(
+            tabster,
+            element,
+            DummyInputManagerPriorities.Root,
+            undefined,
+            true
+        );
 
         this._setHandlers(this._onDummyInputFocus);
 
@@ -58,7 +64,7 @@ class RootDummyManager extends DummyInputManager {
     }
 
     private _onDummyInputFocus = (dummyInput: DummyInput): void => {
-        if (dummyInput.shouldMoveOut) {
+        if (dummyInput.useDefaultAction) {
             // When we've reached the last focusable element, we want to let the browser
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing

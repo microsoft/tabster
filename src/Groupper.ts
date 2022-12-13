@@ -34,39 +34,36 @@ class GroupperDummyManager extends DummyInputManager {
                 relatedTarget: HTMLElement | null
             ) => {
                 const container = element.get();
+                const input = dummyInput.input;
 
-                if (container && !dummyInput.shouldMoveOut) {
-                    const input = dummyInput.input;
+                if (container && input) {
+                    const ctx = RootAPI.getTabsterContext(tabster, input);
 
-                    if (input) {
-                        const ctx = RootAPI.getTabsterContext(tabster, input);
+                    if (ctx) {
+                        let next: HTMLElement | null | undefined;
 
-                        if (ctx) {
-                            let next: HTMLElement | null | undefined;
+                        next = groupper.findNextTabbable(
+                            relatedTarget || undefined,
+                            isBackward
+                        )?.element;
 
-                            next = groupper.findNextTabbable(
-                                relatedTarget || undefined,
+                        if (!next) {
+                            next = FocusedElementState.findNextTabbable(
+                                tabster,
+                                ctx,
+                                undefined,
+                                dummyInput.isOutside
+                                    ? input
+                                    : getAdjacentElement(
+                                          container,
+                                          !isBackward
+                                      ),
                                 isBackward
                             )?.element;
+                        }
 
-                            if (!next) {
-                                next = FocusedElementState.findNextTabbable(
-                                    tabster,
-                                    ctx,
-                                    undefined,
-                                    dummyInput.isOutside
-                                        ? input
-                                        : getAdjacentElement(
-                                              container,
-                                              !isBackward
-                                          ),
-                                    isBackward
-                                )?.element;
-                            }
-
-                            if (next) {
-                                nativeFocus(next);
-                            }
+                        if (next) {
+                            nativeFocus(next);
                         }
                     }
                 }

@@ -48,7 +48,7 @@ class MoverDummyManager extends DummyInputManager {
         const container = this._element.get();
         const input = dummyInput.input;
 
-        if (container && !dummyInput.shouldMoveOut && input) {
+        if (container && input) {
             const ctx = RootAPI.getTabsterContext(this._tabster, container);
 
             let toFocus: HTMLElement | null | undefined;

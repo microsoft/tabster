@@ -587,6 +587,13 @@ export class FocusedElementState
                     lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
                         isBackward
                     );
+                } else if (
+                    ctx.modalizer &&
+                    !ctx.modalizer.getElement()?.contains(nextElement)
+                ) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    ctx.modalizer.dummyManager?.moveOut(isBackward);
                 }
             } else if (nextElement.tagName !== "IFRAME") {
                 e.preventDefault();

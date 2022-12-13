@@ -676,8 +676,7 @@ export class DummyInput {
     private _clearDisposeTimeout: (() => void) | undefined;
 
     input: HTMLElement | undefined;
-    /** Flag that indicates focus is leaving the boundary of the dummy input */
-    shouldMoveOut?: boolean;
+    useDefaultAction?: boolean;
     isFirst: DummyInputProps["isFirst"];
     isOutside: boolean;
     /** Called when the input is focused */
@@ -800,7 +799,7 @@ export class DummyInput {
     };
 
     private _focusOut = (e: FocusEvent): void => {
-        this.shouldMoveOut = false;
+        this.useDefaultAction = false;
 
         const input = this.input;
 
@@ -834,13 +833,15 @@ export class DummyInputManager {
     protected _element: WeakHTMLElement;
     private static _lastPhantomFrom: HTMLElement | undefined;
 
+    moveOut: DummyInputManagerCore["moveOut"];
     moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
 
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
-        outsideByDefault?: boolean
+        outsideByDefault?: boolean,
+        callForDefaultAction?: boolean
     ) {
         this._element = element;
 
@@ -849,8 +850,13 @@ export class DummyInputManager {
             element,
             this,
             priority,
-            outsideByDefault
+            outsideByDefault,
+            callForDefaultAction
         );
+
+        this.moveOut = (backwards: boolean) => {
+            this._instance?.moveOut(backwards);
+        };
 
         this.moveOutWithDefaultAction = (backwards: boolean) => {
             this._instance?.moveOutWithDefaultAction(backwards);
@@ -987,13 +993,15 @@ class DummyInputManagerCore {
     private _lastDummy: DummyInput | undefined;
     private _transformElements: HTMLElement[] = [];
     private _scrollTimer: number | undefined;
+    private _callForDefaultAction: boolean | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
-        outsideByDefault?: boolean
+        outsideByDefault?: boolean,
+        callForDefaultAction?: boolean
     ) {
         const el = element.get() as HTMLElementWithDummyInputs;
 
@@ -1003,6 +1011,7 @@ class DummyInputManagerCore {
 
         this._tabster = tabster;
         this._getWindow = tabster.getWindow;
+        this._callForDefaultAction = callForDefaultAction;
 
         const instance = el.__tabsterDummy;
 
@@ -1129,7 +1138,10 @@ class DummyInputManagerCore {
     ): void {
         const wrapper = this._getCurrent();
 
-        if (wrapper) {
+        if (
+            wrapper &&
+            (!dummyInput.useDefaultAction || this._callForDefaultAction)
+        ) {
             wrapper.manager.getHandler(isIn)?.(
                 dummyInput,
                 isBackward,
@@ -1154,9 +1166,36 @@ class DummyInputManagerCore {
         this._onFocus(false, dummyInput, isBackward, relatedTarget);
     };
 
+    moveOut = (backwards: boolean): void => {
+        const first = this._firstDummy;
+        const last = this._lastDummy;
+
+        if (first && last) {
+            const firstInput = first.input;
+            const lastInput = last.input;
+            const element = this._element?.get();
+
+            if (firstInput && lastInput && element) {
+                let toFocus: HTMLElement | undefined;
+
+                if (backwards) {
+                    firstInput.tabIndex = 0;
+                    toFocus = firstInput;
+                } else {
+                    lastInput.tabIndex = 0;
+                    toFocus = lastInput;
+                }
+
+                if (toFocus) {
+                    nativeFocus(toFocus);
+                }
+            }
+        }
+    };
+
     /**
      * Prepares to move focus out of the given element by focusing
-     * one of the dummy inputs and setting the `shouldMoveOut` flag
+     * one of the dummy inputs and setting the `useDefaultAction` flag
      * @param backwards focus moving to an element behind the given element
      */
     moveOutWithDefaultAction = (backwards: boolean): void => {
@@ -1183,12 +1222,12 @@ class DummyInputManagerCore {
                     ) {
                         toFocus = element;
                     } else {
-                        first.shouldMoveOut = true;
+                        first.useDefaultAction = true;
                         firstInput.tabIndex = 0;
                         toFocus = firstInput;
                     }
                 } else {
-                    last.shouldMoveOut = true;
+                    last.useDefaultAction = true;
                     lastInput.tabIndex = 0;
                     toFocus = lastInput;
                 }
