@@ -681,6 +681,9 @@ export interface RootProps {
 }
 
 export interface Root extends TabsterPart<RootProps> {
+    /**@internal*/
+    addDummyInputs(): void;
+
     readonly uid: string;
     dispose(): void;
     moveOutWithDefaultAction(backwards: boolean): void;
@@ -731,6 +734,8 @@ interface RootAPIInternal {
     createRoot(element: HTMLElement, props: RootProps): Root;
     /**@internal*/
     onRoot(root: Root, removed?: boolean): void;
+    /**@internal*/
+    addDummyInputs(): void;
 }
 
 export interface RootAPI extends Disposable, RootAPIInternal {

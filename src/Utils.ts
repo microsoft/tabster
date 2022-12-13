@@ -976,6 +976,7 @@ function setDummyInputDebugValue(
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
 class DummyInputManagerCore {
+    private _tabster: Types.TabsterCore;
     private _unobserve: (() => void) | undefined;
     private _addTimer: number | undefined;
     private _getWindow: Types.GetWindow;
@@ -1000,6 +1001,7 @@ class DummyInputManagerCore {
             throw new Error("No element");
         }
 
+        this._tabster = tabster;
         this._getWindow = tabster.getWindow;
 
         const instance = el.__tabsterDummy;
@@ -1029,6 +1031,16 @@ class DummyInputManagerCore {
 
         el.__tabsterDummy = this;
 
+        // Some elements allow only specific types of direct descendants and we need to
+        // put our dummy inputs inside or outside of the element accordingly.
+        const tagName = element.get()?.tagName;
+        this._isOutside =
+            (outsideByDefault ||
+                tagName === "UL" ||
+                tagName === "OL" ||
+                tagName === "TABLE") &&
+            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
+
         this._firstDummy = new DummyInput(
             this._getWindow,
             this._isOutside,
@@ -1054,16 +1066,6 @@ class DummyInputManagerCore {
 
         this._element = element;
         this._addDummyInputs();
-
-        // Some elements allow only specific types of direct descendants and we need to
-        // put our dummy inputs inside or outside of the element accordingly.
-        const tagName = element.get()?.tagName;
-        this._isOutside =
-            (outsideByDefault ||
-                tagName === "UL" ||
-                tagName === "OL" ||
-                tagName === "TABLE") &&
-            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
 
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639
@@ -1161,15 +1163,39 @@ class DummyInputManagerCore {
         const first = this._firstDummy;
         const last = this._lastDummy;
 
-        if (first?.input && last?.input) {
-            if (backwards) {
-                first.shouldMoveOut = true;
-                first.input.tabIndex = 0;
-                first.input.focus();
-            } else {
-                last.shouldMoveOut = true;
-                last.input.tabIndex = 0;
-                last.input.focus();
+        if (first && last) {
+            const firstInput = first.input;
+            const lastInput = last.input;
+            const element = this._element?.get();
+
+            if (firstInput && lastInput && element) {
+                let toFocus: HTMLElement | undefined;
+
+                if (backwards) {
+                    if (
+                        !first.isOutside &&
+                        this._tabster.focusable.isFocusable(
+                            element,
+                            true,
+                            true,
+                            true
+                        )
+                    ) {
+                        toFocus = element;
+                    } else {
+                        first.shouldMoveOut = true;
+                        firstInput.tabIndex = 0;
+                        toFocus = firstInput;
+                    }
+                } else {
+                    last.shouldMoveOut = true;
+                    lastInput.tabIndex = 0;
+                    toFocus = lastInput;
+                }
+
+                if (toFocus) {
+                    nativeFocus(toFocus);
+                }
             }
         }
     };

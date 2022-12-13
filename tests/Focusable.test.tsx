@@ -8,38 +8,42 @@ import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { describeIfControlled } from "./utils/test-utils";
 
-describeIfControlled("Focusable", () => {
+describe("Focusable", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
-    it("should allow aria-disabled elements to be focused", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button aria-disabled="true">Button1</button>
-                </div>
+    describe("aria-disabled", () => {
+        it("should allow aria-disabled elements to be focused", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button aria-disabled="true">Button1</button>
+                    </div>
+                )
             )
-        )
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button1");
-            });
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        });
     });
 
-    it("should not allow aria-hidden elements to be focused", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button aria-hidden="true">Button1</button>
-                    <button>Button2</button>
-                </div>
+    describeIfControlled("aria-hidden", () => {
+        it("should not allow aria-hidden elements to be focused", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button aria-hidden="true">Button1</button>
+                        <button>Button2</button>
+                    </div>
+                )
             )
-        )
-            .pressTab()
-            .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button2");
-            });
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                });
+        });
     });
 
     describe("findAll()", () => {

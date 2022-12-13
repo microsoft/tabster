@@ -44,19 +44,10 @@ class GroupperDummyManager extends DummyInputManager {
                         if (ctx) {
                             let next: HTMLElement | null | undefined;
 
-                            if (
-                                relatedTarget &&
-                                relatedTarget.contentEditable === "true" &&
-                                groupper.getProps().tabbability ===
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus &&
-                                container.contains(relatedTarget)
-                            ) {
-                                next = groupper.findNextTabbable(
-                                    relatedTarget,
-                                    isBackward
-                                )?.element;
-                            }
+                            next = groupper.findNextTabbable(
+                                relatedTarget || undefined,
+                                isBackward
+                            )?.element;
 
                             if (!next) {
                                 next = FocusedElementState.findNextTabbable(

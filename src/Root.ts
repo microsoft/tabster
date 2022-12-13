@@ -119,16 +119,22 @@ export class Root
         this.uid = getElementUId(win, element);
 
         if (tabster.controlTab || tabster.rootDummyInputs) {
-            this._dummyManager = new RootDummyManager(
-                tabster,
-                this._element,
-                this._setFocused
-            );
+            this.addDummyInputs();
         }
 
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
+    }
+
+    addDummyInputs(): void {
+        if (!this._dummyManager) {
+            this._dummyManager = new RootDummyManager(
+                this._tabster,
+                this._element,
+                this._setFocused
+            );
+        }
     }
 
     dispose(): void {
@@ -262,6 +268,7 @@ export class RootAPI implements Types.RootAPI {
     private _autoRoot: Types.RootProps | undefined;
     private _autoRootInstance: Root | undefined;
     private _roots: Record<string, Types.Root> = {};
+    private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
     eventTarget: EventTarget;
 
@@ -315,7 +322,21 @@ export class RootAPI implements Types.RootAPI {
 
         this._roots[newRoot.id] = newRoot;
 
+        if (this._forceDummy) {
+            newRoot.addDummyInputs();
+        }
+
         return newRoot;
+    }
+
+    addDummyInputs(): void {
+        this._forceDummy = true;
+
+        const roots = this._roots;
+
+        for (const id of Object.keys(roots)) {
+            roots[id].addDummyInputs();
+        }
     }
 
     static getRootByUId(

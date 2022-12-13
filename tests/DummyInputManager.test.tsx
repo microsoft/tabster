@@ -250,10 +250,14 @@ describeIfUncontrolled("DummyInputManager", () => {
                 modalizer: { id: "modalizer" },
             });
 
-            const modalizerAPIId = "modalizerAPI";
-
+            const modalizerOuterId = "modalizer-outer";
             const testHtml = (
-                <div>
+                <div
+                    id={modalizerOuterId}
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <div {...attr} aria-label="modalizer">
                         <button>Button1</button>
                         <button>Button2</button>
@@ -264,30 +268,26 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval((modalizerAPIId) => {
-                    document.body.setAttribute("id", modalizerAPIId);
-                }, modalizerAPIId)
-                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    "modalizer-outer"
                 )
                 .check(checkDummyInside)
-                .eval(appendElement, modalizerAPIId)
+                .eval(appendElement, modalizerOuterId)
                 .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    modalizerOuterId
                 )
                 .check(checkDummyInside)
-                .eval(prependElement, modalizerAPIId)
+                .eval(prependElement, modalizerOuterId)
                 .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    modalizerOuterId
                 )
                 .check(checkDummyInside);
         });

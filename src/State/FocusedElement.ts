@@ -36,6 +36,7 @@ export class FocusedElementState
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
+    // private _modalAction: ((current: HTMLElement) => boolean) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
@@ -438,8 +439,8 @@ export class FocusedElementState
             };
         }
 
-        const lastMoverOrGroupperElement =
-            next?.lastMoverOrGroupper?.getElement();
+        const lastMoverOrGroupper = next?.lastMoverOrGroupper;
+        const lastMoverOrGroupperElement = lastMoverOrGroupper?.getElement();
 
         if (lastMoverOrGroupperElement) {
             next = null;
@@ -466,7 +467,8 @@ export class FocusedElementState
 
                     if (adjacentFrom) {
                         if (!isBackward) {
-                            adjacentFrom = getLastChild(adjacentFrom);
+                            adjacentFrom =
+                                getLastChild(adjacentFrom) || adjacentFrom;
                         }
 
                         next = FocusedElementState.findNextTabbable(
@@ -476,6 +478,10 @@ export class FocusedElementState
                             adjacentFrom,
                             isBackward
                         );
+
+                        if (next && !next.lastMoverOrGroupper) {
+                            next.lastMoverOrGroupper = lastMoverOrGroupper;
+                        }
                     }
                 }
             }
@@ -508,11 +514,7 @@ export class FocusedElementState
         const controlTab = tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(tabster, currentElement);
 
-        if (
-            !ctx ||
-            (!controlTab && !ctx.groupper && !ctx.mover) ||
-            ctx.ignoreKeydown[e.key as "Tab"]
-        ) {
+        if (!ctx || ctx.ignoreKeydown[e.key as "Tab"]) {
             return;
         }
 
@@ -525,20 +527,6 @@ export class FocusedElementState
             currentElement,
             isBackward
         );
-
-        if (!next || (!controlTab && !next.element)) {
-            if (!controlTab) {
-                const lastMoverOrGroupper = next?.lastMoverOrGroupper;
-
-                if (lastMoverOrGroupper) {
-                    lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
-                        isBackward
-                    );
-
-                    return;
-                }
-            }
-        }
 
         let nextElement: HTMLElement | null | undefined;
 
@@ -592,7 +580,15 @@ export class FocusedElementState
 
         if (nextElement) {
             // For iframes just allow normal Tab behaviour
-            if (nextElement.tagName !== "IFRAME") {
+            if (!controlTab) {
+                const lastMoverOrGroupper = next?.lastMoverOrGroupper;
+
+                if (lastMoverOrGroupper) {
+                    lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
+                        isBackward
+                    );
+                }
+            } else if (nextElement.tagName !== "IFRAME") {
                 e.preventDefault();
                 e.stopImmediatePropagation();
 

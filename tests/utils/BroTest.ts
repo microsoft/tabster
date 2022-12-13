@@ -72,7 +72,7 @@ async function waitPageReadyAndDecorateConsoleError(
 
             console.error = function (...args: any[]) {
                 origConsoleError.apply(console, args);
-                win.__consoleErrors?.push(args);
+                win.__consoleErrors?.push(args.map((a) => `${a}`));
             };
         }
 

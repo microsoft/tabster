@@ -54,7 +54,6 @@ function _setInformativeStyle(
 class ModalizerDummyManager extends DummyInputManager {
     constructor(
         element: WeakHTMLElement,
-        modalizer: Modalizer,
         tabster: Types.TabsterCore
     ) {
         super(tabster, element, DummyInputManagerPriorities.Modalizer);
@@ -124,7 +123,6 @@ export class Modalizer
         if (!tabster.controlTab) {
             this.dummyManager = new ModalizerDummyManager(
                 this._element,
-                this,
                 tabster
             );
         }
@@ -293,6 +291,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._modalizers = {};
         this._parts = {};
         this.activeElements = [];
+
+        if (!tabster.controlTab) {
+            tabster.root.addDummyInputs();
+        }
     }
 
     private _init = (): void => {

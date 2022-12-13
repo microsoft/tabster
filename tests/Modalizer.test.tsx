@@ -344,7 +344,76 @@ describe("Modalizer with multiple containers", () => {
             );
     });
 
-    it("should work in a very complex case with Movers and Grouppers", async () => {
+    it("should escape the modalizer combined with groupper", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <button>Button1</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>ModalButton3</button>
+                            <button>ModalButton4</button>
+                        </div>
+                        <button>Button2</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            );
+    });
+
+    it.only("should work in a very monstrous complex case with Movers and Grouppers", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -380,11 +449,46 @@ describe("Modalizer with multiple containers", () => {
                                         },
                                         modalizer: {
                                             id: "modal",
+                                            isOthersAccessible: true,
                                         },
                                     })}
                                 >
                                     <button>ModalButton1.1</button>
-                                    <button>ModalButton1.2</button>
+                                    <div
+                                        {...getTabsterAttribute({
+                                            mover: {},
+                                        })}
+                                    >
+                                        <div
+                                            tabIndex={0}
+                                            {...getTabsterAttribute({
+                                                groupper: {
+                                                    tabbability:
+                                                        Types
+                                                            .GroupperTabbabilities
+                                                            .LimitedTrapFocus,
+                                                },
+                                            })}
+                                        >
+                                            <button>ModalButton1.2</button>
+                                            <button>ModalButton1.3</button>
+                                        </div>
+                                        <div
+                                            tabIndex={0}
+                                            {...getTabsterAttribute({
+                                                groupper: {
+                                                    tabbability:
+                                                        Types
+                                                            .GroupperTabbabilities
+                                                            .LimitedTrapFocus,
+                                                },
+                                            })}
+                                        >
+                                            <button>ModalButton1.4</button>
+                                            <button>ModalButton1.5</button>
+                                        </div>
+                                    </div>
+                                    <button>ModalButton1.6</button>
                                 </div>
                                 <div
                                     tabIndex={0}
@@ -520,7 +624,7 @@ describe("Modalizer with multiple containers", () => {
             .pressTab()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual(
-                    "ModalButton1.1ModalButton1.2ModalButton2.1ModalButton2.2"
+                    "ModalButton1.1ModalButton1.2ModalButton1.3ModalButton1.4ModalButton1.5ModalButton1.6ModalButton2.1ModalButton2.2"
                 )
             )
             .pressTab()
@@ -649,28 +753,78 @@ describe("Modalizer with multiple containers", () => {
             )
             .click("#groupper1-1")
             .wait(200)
-            .activeElement((el) =>
-                expect(el?.textContent).toEqual("ModalButton2.1")
-            )
+            // .activeElement((el) =>
+            //     expect(el?.textContent).toEqual("ModalButton2.1")
+            // )
             .focusElement("#groupper1-1")
             .wait(200)
             .activeElement((el) =>
-                expect(el?.textContent).toEqual("ModalButton1.1ModalButton1.2")
+                expect(el?.textContent).toEqual(
+                    "ModalButton1.1ModalButton1.2ModalButton1.3ModalButton1.4ModalButton1.5ModalButton1.6"
+                )
             )
             .pressTab()
             .wait(200)
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1.1")
             )
-            .pressTab()
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab(true)
             .activeElement((el) =>
-                expect(el?.textContent).toEqual("ModalButton1.2")
+                expect(el?.textContent).toEqual("ModalButton1.6")
             )
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toBeUndefined())
             .pressTab()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1.1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.2ModalButton1.3")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.6")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.1")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.2ModalButton1.3")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.4ModalButton1.5")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.4")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.5")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.4")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.4ModalButton1.5")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1.6")
             )
             .click("#modal-button-3-1")
             .wait(200)
