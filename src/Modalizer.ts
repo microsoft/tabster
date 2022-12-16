@@ -16,6 +16,7 @@ import {
     HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
+    triggerEvent,
 } from "./Utils";
 
 function _setInformativeStyle(
@@ -166,6 +167,12 @@ export class Modalizer
                     this._isFocused
                 );
             }
+
+            this.triggerFocusEvent(
+                isActive
+                    ? Types.ModalizerActiveEventName
+                    : Types.ModalizerInactiveEventName
+            );
         }
     }
 
@@ -238,6 +245,32 @@ export class Modalizer
             element: next,
             uncontrolled,
         };
+    }
+
+    triggerFocusEvent(
+        eventName: Types.ModalizerEventName,
+        allElements?: boolean
+    ): boolean {
+        const element = this.getElement();
+        let defaultPrevented = false;
+
+        if (element) {
+            const elements = allElements ? this._activeElements : [element];
+
+            for (const el of elements) {
+                if (
+                    !triggerEvent<Types.ModalizerEventDetails>(el, eventName, {
+                        id: this.userId,
+                        element,
+                        eventName,
+                    })
+                ) {
+                    defaultPrevented = true;
+                }
+            }
+        }
+
+        return defaultPrevented;
     }
 
     private _remove(): void {

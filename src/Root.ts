@@ -378,6 +378,7 @@ export class RootAPI implements Types.RootAPI {
         let mover: Types.Mover | undefined;
         let isExcludedFromMover = false;
         let isGroupperFirst: boolean | undefined;
+        let isModalizerInGroupper: Types.Groupper | undefined;
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
         let curElement: Node | null = element;
@@ -433,6 +434,8 @@ export class RootAPI implements Types.RootAPI {
                         modalizer = undefined;
                         groupper = curGroupper;
                     }
+
+                    isModalizerInGroupper = curGroupper;
                 } else {
                     groupper = curGroupper;
                 }
@@ -489,6 +492,7 @@ export class RootAPI implements Types.RootAPI {
                   groupper,
                   mover,
                   isGroupperFirst,
+                  isModalizerInGroupper,
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
                   isExcludedFromMover,

@@ -459,7 +459,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (element) {
             const ctx = RootAPI.getTabsterContext(this._tabster, element);
-            let groupper = ctx?.groupper;
+            let groupper = ctx?.groupper || ctx?.isModalizerInGroupper;
 
             if (ctx && groupper) {
                 let next: HTMLElement | null | undefined;

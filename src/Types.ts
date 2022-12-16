@@ -6,7 +6,10 @@
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
 export const DeloserEventName = "tabster:deloser";
-export const ModalizerEventName = "tabster:modalizer";
+export const ModalizerActiveEventName = "tabster:modalizer:active";
+export const ModalizerInactiveEventName = "tabster:modalizer:inactive";
+export const ModalizerBeforeFocusOutEventName =
+    "tabster:modalizer:beforefocusout";
 export const MoverEventName = "tabster:mover";
 
 export interface TabsterEventWithDetails<D> extends Event {
@@ -654,7 +657,16 @@ export interface ModalizerProps {
     isTrapped?: boolean;
 }
 
-export type ModalizerEventDetails = { eventName: "beforefocusout" };
+export type ModalizerEventName =
+    | typeof ModalizerActiveEventName
+    | typeof ModalizerInactiveEventName
+    | typeof ModalizerBeforeFocusOutEventName;
+
+export type ModalizerEventDetails = {
+    id: string;
+    element: HTMLElement;
+    eventName: ModalizerEventName;
+};
 
 export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
 
@@ -670,6 +682,10 @@ export interface Modalizer
     dispose(): void;
     isActive(): boolean;
     makeActive(isActive: boolean): void;
+    triggerFocusEvent(
+        eventName: ModalizerEventName,
+        allElements: boolean
+    ): boolean;
 }
 
 export type ModalizerConstructor = (
@@ -714,6 +730,7 @@ export interface TabsterContext {
     groupper?: Groupper;
     mover?: Mover;
     isGroupperFirst?: boolean;
+    isModalizerInGroupper?: Groupper;
     /**
      * Whether `dir='rtl'` is set on an ancestor
      */

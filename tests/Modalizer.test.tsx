@@ -837,3 +837,121 @@ describe("Modalizer with multiple containers", () => {
             );
     });
 });
+
+describe("Modalizer events", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
+
+    it("should trigger active/inactive events", async () => {
+        interface WindowWithModalizerEventsHistory extends Window {
+            __tabsterModalizerEvents?: string[];
+        }
+
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        aria-label="modal"
+                        id="modal-part-1"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal" },
+                        })}
+                    >
+                        <button id="modal-button">ModalButton1</button>
+                    </div>
+                    <button>Button2</button>
+                    <div
+                        aria-label="modal"
+                        id="modal-part-2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal" },
+                        })}
+                    >
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                    <button id="button-3">Button3</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const events: string[] = ((
+                    window as WindowWithModalizerEventsHistory
+                ).__tabsterModalizerEvents = []);
+
+                const addEvent = (
+                    eventName: Types.ModalizerEventName,
+                    elementId: string
+                ) => {
+                    document
+                        .getElementById(elementId)
+                        ?.addEventListener(
+                            eventName,
+                            (e: Types.ModalizerEvent) => {
+                                events.push(
+                                    `${e.details.eventName} ${e.details.id} ${e.details.element.id}`
+                                );
+                            }
+                        );
+                };
+
+                addEvent("tabster:modalizer:active", "modal-part-1");
+                addEvent("tabster:modalizer:active", "modal-part-2");
+                addEvent("tabster:modalizer:inactive", "modal-part-1");
+                addEvent("tabster:modalizer:inactive", "modal-part-2");
+            })
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .focusElement("#modal-button")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .eval(
+                () =>
+                    (window as WindowWithModalizerEventsHistory)
+                        .__tabsterModalizerEvents
+            )
+            .check((tabsterModalizerEvents: string[]) => {
+                expect(tabsterModalizerEvents).toEqual([
+                    "tabster:modalizer:active modal modal-part-1",
+                    "tabster:modalizer:active modal modal-part-2",
+                ]);
+            })
+            .focusElement("#button-3")
+            .eval(
+                () =>
+                    (window as WindowWithModalizerEventsHistory)
+                        .__tabsterModalizerEvents
+            )
+            .check((tabsterModalizerEvents: string[]) => {
+                expect(tabsterModalizerEvents).toEqual([
+                    "tabster:modalizer:active modal modal-part-1",
+                    "tabster:modalizer:active modal modal-part-2",
+                    "tabster:modalizer:inactive modal modal-part-1",
+                    "tabster:modalizer:inactive modal modal-part-2",
+                ]);
+            })
+            .focusElement("#modal-button-2")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .eval(
+                () =>
+                    (window as WindowWithModalizerEventsHistory)
+                        .__tabsterModalizerEvents
+            )
+            .check((tabsterModalizerEvents: string[]) => {
+                expect(tabsterModalizerEvents).toEqual([
+                    "tabster:modalizer:active modal modal-part-1",
+                    "tabster:modalizer:active modal modal-part-2",
+                    "tabster:modalizer:inactive modal modal-part-1",
+                    "tabster:modalizer:inactive modal modal-part-2",
+                    "tabster:modalizer:active modal modal-part-1",
+                    "tabster:modalizer:active modal modal-part-2",
+                ]);
+            });
+    });
+});

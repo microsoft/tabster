@@ -587,13 +587,33 @@ export class FocusedElementState
                     lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
                         isBackward
                     );
-                } else if (
-                    ctx.modalizer &&
-                    !ctx.modalizer.getElement()?.contains(nextElement)
-                ) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    ctx.modalizer.dummyManager?.moveOut(isBackward);
+                } else if (ctx.modalizer) {
+                    const nextElementCtx = RootAPI.getTabsterContext(
+                        tabster,
+                        nextElement
+                    );
+
+                    const preventDefault = () => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    };
+
+                    if (
+                        (!nextElementCtx ||
+                            ctx.root.uid !== nextElementCtx.root.uid ||
+                            !nextElementCtx.modalizer?.isActive()) &&
+                        ctx.modalizer.triggerFocusEvent(
+                            Types.ModalizerBeforeFocusOutEventName,
+                            true
+                        )
+                    ) {
+                        preventDefault();
+                    } else if (
+                        !ctx.modalizer.getElement()?.contains(nextElement)
+                    ) {
+                        preventDefault();
+                        ctx.modalizer.dummyManager?.moveOut(isBackward);
+                    }
                 }
             } else if (nextElement.tagName !== "IFRAME") {
                 e.preventDefault();
