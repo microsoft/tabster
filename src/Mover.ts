@@ -31,9 +31,10 @@ const _textInputSelector = [
     "*[contenteditable]",
 ].join(", ");
 
-const _inputExclusions = ["input[type='radio']", "input[type='checkbox']"].join(
-    ", "
-);
+const _nonTextInputSelector = [
+    "input[type='radio']",
+    "input[type='checkbox']",
+].join(", ");
 
 class MoverDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
@@ -1021,7 +1022,7 @@ export class MoverAPI implements Types.MoverAPI {
 
         if (
             matchesSelector(element, _textInputSelector) &&
-            !matchesSelector(element, _inputExclusions)
+            !matchesSelector(element, _nonTextInputSelector)
         ) {
             let selectionStart = 0;
             let selectionEnd = 0;
