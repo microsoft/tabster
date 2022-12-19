@@ -25,11 +25,15 @@ import {
     WeakHTMLElement,
 } from "./Utils";
 
-const _inputSelector = [
+const _textInputSelector = [
     "input[type='text']",
     "textarea",
     "*[contenteditable]",
 ].join(", ");
+
+const _inputExclusions = ["input[type='radio']", "input[type='checkbox']"].join(
+    ", "
+);
 
 class MoverDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
@@ -1015,7 +1019,10 @@ export class MoverAPI implements Types.MoverAPI {
             return true;
         }
 
-        if (matchesSelector(element, _inputSelector)) {
+        if (
+            matchesSelector(element, _textInputSelector) &&
+            !matchesSelector(element, _inputExclusions)
+        ) {
             let selectionStart = 0;
             let selectionEnd = 0;
             let textLength = 0;
