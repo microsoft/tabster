@@ -25,11 +25,9 @@ import {
     WeakHTMLElement,
 } from "./Utils";
 
-const _textInputSelector = [
-    "input[type='text']",
-    "textarea",
-    "*[contenteditable]",
-].join(", ");
+const _textInputSelector = ["input", "textarea", "*[contenteditable]"].join(
+    ", "
+);
 
 const _nonTextInputSelector = [
     "input[type='radio']",
