@@ -411,6 +411,11 @@ export interface FindFocusableProps {
      */
     ignoreAccessibiliy?: boolean;
     /**
+     * Search withing the specified modality, null for everything outside modalizers, string for
+     * a specific id, undefined for the current state.
+     */
+    modalizerId?: string | null;
+    /**
      * If true, find previous element instead of the next one.
      */
     isBackward?: boolean;
