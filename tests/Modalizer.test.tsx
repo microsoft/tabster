@@ -289,7 +289,7 @@ describe("Modalizer with multiple containers", () => {
         });
     });
 
-    it("should", async () => {
+    it("should modalize multi-layer modal", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -410,7 +410,46 @@ describe("Modalizer with multiple containers", () => {
             .pressEsc()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1ModalButton2")
-            );
+            )
+            .pressDown()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3ModalButton4")
+            )
+            .pressDown()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3ModalButton4")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton4")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton4")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3ModalButton4")
+            )
+            .pressUp()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab();
     });
 
     it("should work in a very monstrous complex case with Movers and Grouppers", async () => {

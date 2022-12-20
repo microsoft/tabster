@@ -455,11 +455,13 @@ export class GroupperAPI implements Types.GroupperAPI {
             return;
         }
 
-        const element = this._tabster.focusedElement.getFocusedElement();
+        const tabster = this._tabster;
+        const element = tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, element);
-            let groupper = ctx?.groupper || ctx?.isModalizerInGroupper;
+            const ctx = RootAPI.getTabsterContext(tabster, element);
+            const modalizerInGroupper = ctx?.modalizerInGroupper;
+            let groupper = ctx?.groupper || modalizerInGroupper;
 
             if (ctx && groupper) {
                 let next: HTMLElement | null | undefined;
@@ -477,7 +479,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                             (groupper.getProps().delegated &&
                                 element === groupper.getFirst(false)))
                     ) {
-                        next = this._tabster.focusable.findNext({
+                        next = tabster.focusable.findNext({
                             container: groupperElement,
                             currentElement: element,
                         });
@@ -494,7 +496,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                             const parentElement = groupperElement.parentElement;
                             const parentCtx = parentElement
                                 ? RootAPI.getTabsterContext(
-                                      this._tabster,
+                                      tabster,
                                       parentElement
                                   )
                                 : undefined;
@@ -506,6 +508,10 @@ export class GroupperAPI implements Types.GroupperAPI {
 
                     if (groupper) {
                         groupper.makeTabbable(false);
+
+                        if (modalizerInGroupper) {
+                            tabster.modalizer?.setActive(undefined);
+                        }
                     }
                 }
 
