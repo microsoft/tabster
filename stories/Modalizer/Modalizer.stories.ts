@@ -22,5 +22,5 @@ const SimpleFocusableCollection: Story<ModalDialogProps> = (args) => {
 
 export const Basic = SimpleFocusableCollection.bind({});
 
-export const circular = SimpleFocusableCollection.bind({});
-circular.args = { circular: true };
+export const trapped = SimpleFocusableCollection.bind({});
+trapped.args = { isTrapped: true };
