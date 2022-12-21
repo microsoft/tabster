@@ -120,7 +120,11 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div>
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <button>Button1</button>
                     <div
                         id={scrollId}
@@ -166,9 +170,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Button1"))
                 .pressTab()
                 .activeElement((el) => expect(el?.textContent).toBe("Button2"))
                 .pressDown()
+                .wait(200) // We throttle the dummy inputs position update, so giving it a bit.
                 .activeElement((el) => expect(el?.textContent).toBe("Button3"))
                 .eval(evaluateScrollTop, scrollId)
                 .check((scrollTop: number | undefined) => {
@@ -189,6 +195,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 })
                 .pressDown()
                 .pressDown()
+                .wait(200) // We throttle the dummy inputs position update, so giving it a bit.
                 .activeElement((el) => expect(el?.textContent).toBe("Button5"))
                 .eval(evaluateScrollTop, scrollId)
                 .check((scrollTop: number | undefined) => {

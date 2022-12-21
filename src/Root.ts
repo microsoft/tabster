@@ -505,6 +505,12 @@ export class RootAPI implements Types.RootAPI {
             isGroupperFirst = true;
         }
 
+        if (__DEV__ && !root) {
+            if (modalizer || groupper || mover) {
+                console.error("Tabster Root is required for Mover, Groupper and Modalizer to work.");
+            }
+        }
+
         return root
             ? {
                   root,

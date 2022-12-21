@@ -293,7 +293,11 @@ describe("NestedMovers", () => {
 
         await new BroTest.BroTest(
             (
-                <div>
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <button id="target">Target</button>
                     <button>Skipped</button>
                     <div {...attr} id="mover">
