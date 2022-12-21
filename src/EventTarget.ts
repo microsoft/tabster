@@ -7,8 +7,10 @@ import type { GetWindow } from "./Types";
 
 export function createEventTarget(getWindow: GetWindow): EventTarget {
     const global = getWindow() as unknown as typeof globalThis;
-    if ("EventTarget" in global) {
+
+    if (global.EventTarget) {
         return new global.EventTarget();
     }
+
     return global.document.createElement("div");
 }

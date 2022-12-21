@@ -1018,7 +1018,6 @@ export class MoverAPI implements Types.MoverAPI {
             let asyncRet: Promise<boolean> | undefined;
 
             if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-                const selStart = (element as HTMLInputElement).selectionStart;
                 const type = (element as HTMLInputElement).type;
                 const value = (element as HTMLInputElement).value;
 
@@ -1060,6 +1059,9 @@ export class MoverAPI implements Types.MoverAPI {
                         }
                     }
                 } else {
+                    const selStart = (element as HTMLInputElement)
+                        .selectionStart;
+
                     if (selStart === null) {
                         // Do not ignore not text editable inputs like checkboxes and radios (but ignore hidden).
                         return type === "hidden";
