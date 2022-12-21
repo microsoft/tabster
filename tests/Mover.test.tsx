@@ -602,6 +602,36 @@ describe("Mover with inputs inside", () => {
                     >
                         <button>Button1</button>
                         <input type="text" defaultValue="Input" />
+                        <input type="button" value="InputButton" />
+                        <input type="checkbox" value="InputCheckbox" />
+                        <input type="color" value="InputColor" />
+                        <input type="date" value="InputDate" />
+                        <input
+                            type="datetime-local"
+                            value="InputDatetime-local"
+                        />
+                        <input type="email" value="InputEmail" />
+                        <input type="file" value="InputFile" />
+                        <input type="hidden" value="InputHidden" />
+                        <input type="image" value="InputImage" />
+                        <input type="month" value="InputMonth" />
+                        <input type="number" value="123" />
+                        <input type="password" value="InputPassword" />
+                        <input type="radio" value="InputRadio" />
+                        <input
+                            type="range"
+                            value="0"
+                            min="0"
+                            max="2"
+                            step="1"
+                        />
+                        <input type="reset" value="InputReset" />
+                        <input type="search" value="InputSearch" />
+                        <input type="submit" value="InputSubmit" />
+                        <input type="tel" value="InputTel" />
+                        <input type="time" value="InputTime" />
+                        <input type="url" value="InputUrl" />
+                        <input type="week" value="InputWeek" />
                         <button>Button2</button>
                         <textarea>Textarea</textarea>
                         <button>Button3</button>
@@ -628,6 +658,110 @@ describe("Mover with inputs inside", () => {
             .pressDown() // First Down moves to the end of the input value.
             .activeElement((el) => {
                 expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputButton");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputCheckbox");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputColor");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputDate");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputDatetime-local");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputEmail");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputEmail");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputFile");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputImage");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputMonth");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputPassword");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputPassword");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputRadio");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("0");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputReset");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSearch");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSearch");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSubmit");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTel");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTel");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTime");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputUrl");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputUrl");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputWeek");
             })
             .pressDown()
             .activeElement((el) => {
@@ -688,6 +822,118 @@ describe("Mover with inputs inside", () => {
             .pressUp()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputWeek");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputUrl");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputUrl");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTime");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTel");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputTel");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSubmit");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSearch");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputSearch");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputReset");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("0");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputRadio");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputPassword");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputPassword");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("123");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputMonth");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputImage");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputFile");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputEmail");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputEmail");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputDatetime-local");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputDate");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputColor");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputCheckbox");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("InputButton");
             })
             .pressUp()
             .activeElement((el) => {

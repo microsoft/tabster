@@ -157,7 +157,10 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
 export class DeloserHistory {
     private _tabster: Types.TabsterCore;
     // eslint-disable-next-line @typescript-eslint/ban-types
-    private _history: DeloserHistoryByRootBase<{}, DeloserItemBase<{}>>[] = [];
+    private _history: DeloserHistoryByRootBase<
+        unknown,
+        DeloserItemBase<unknown>
+    >[] = [];
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;

@@ -1018,10 +1018,59 @@ export class MoverAPI implements Types.MoverAPI {
             let asyncRet: Promise<boolean> | undefined;
 
             if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-                selectionStart =
-                    (element as HTMLInputElement).selectionStart || 0;
-                selectionEnd = (element as HTMLInputElement).selectionEnd || 0;
-                textLength = ((element as HTMLInputElement).value || "").length;
+                const type = (element as HTMLInputElement).type;
+                const value = (element as HTMLInputElement).value;
+
+                textLength = (value || "").length;
+
+                if (type === "email" || type === "number") {
+                    // For these types Chromium doesn't provide selectionStart and selectionEnd.
+                    // Hence the ugly workaround to find if the caret position is changed with
+                    // the keypress.
+                    // TODO: Have a look at range, week, time, time, date, datetime-local.
+                    if (textLength) {
+                        const selection =
+                            element.ownerDocument.defaultView?.getSelection();
+
+                        if (selection) {
+                            const initialLength = selection.toString().length;
+                            const isBackward =
+                                keyCode === Keys.Left || keyCode === Keys.Up;
+
+                            selection.modify(
+                                "extend",
+                                isBackward ? "backward" : "forward",
+                                "character"
+                            );
+
+                            if (initialLength !== selection.toString().length) {
+                                // The caret is moved, so, we're not on the edge of the value.
+                                // Restore original selection.
+                                selection.modify(
+                                    "extend",
+                                    isBackward ? "forward" : "backward",
+                                    "character"
+                                );
+
+                                return true;
+                            } else {
+                                textLength = 0;
+                            }
+                        }
+                    }
+                } else {
+                    const selStart = (element as HTMLInputElement)
+                        .selectionStart;
+
+                    if (selStart === null) {
+                        // Do not ignore not text editable inputs like checkboxes and radios (but ignore hidden).
+                        return type === "hidden";
+                    }
+
+                    selectionStart = selStart || 0;
+                    selectionEnd =
+                        (element as HTMLInputElement).selectionEnd || 0;
+                }
             } else if (element.contentEditable === "true") {
                 asyncRet = new (getPromise(this._win))((resolve) => {
                     this._ignoredInputResolve = (value: boolean) => {
