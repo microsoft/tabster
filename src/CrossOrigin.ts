@@ -9,7 +9,6 @@ import {
     DeloserItemBase,
 } from "./Deloser";
 import { getTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
 import { RootAPI } from "./Root";
 import { Subscribable } from "./State/Subscribable";
 import * as Types from "./Types";

@@ -5,7 +5,6 @@
 
 import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
 import * as Types from "./Types";
 import {
     DummyInput,
