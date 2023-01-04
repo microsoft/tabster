@@ -36,8 +36,8 @@ export class KeyboardNavigationState
         this.setVal(isNavigatingWithKeyboard, undefined);
     };
 
-    static setVal(instance: Types.KeyboardNavigationState, val: boolean): void {
-        (instance as KeyboardNavigationState)._keyborg?.setVal(val);
+    setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void {
+        this._keyborg?.setVal(isNavigatingWithKeyboard);
     }
 
     isNavigatingWithKeyboard(): boolean {
