@@ -5,7 +5,6 @@
 
 import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
 import * as Types from "./Types";
 import {
     DummyInput,
@@ -65,10 +64,7 @@ class RootDummyManager extends DummyInputManager {
             this._setFocused(false, true);
         } else {
             // The only way a dummy input gets focused is during the keyboard navigation.
-            KeyboardNavigationState.setVal(
-                this._tabster.keyboardNavigation,
-                true
-            );
+            this._tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
 
             const element = this._element.get();
 
