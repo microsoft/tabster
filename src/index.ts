@@ -8,6 +8,7 @@ export {
     getTabster,
     disposeTabster,
     forceCleanup,
+    mergeTabsterProps,
     getTabsterAttribute,
     setTabsterAttribute,
     getGroupper,

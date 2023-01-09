@@ -28,6 +28,32 @@ export function getTabsterAttribute(
 }
 
 /**
+ * Updates Tabster props object with new props.
+ * @param element an element to set data-tabster attribute on.
+ * @param props current Tabster props to update.
+ * @param newProps new Tabster props to add.
+ *  When the value of a property in newProps is undefined, the property
+ *  will be removed from the attribute.
+ */
+export function mergeTabsterProps(
+    props: Types.TabsterAttributeProps,
+    newProps: Types.TabsterAttributeProps
+): void {
+    for (const key of Object.keys(
+        newProps
+    ) as (keyof Types.TabsterAttributeProps)[]) {
+        const value = newProps[key];
+
+        if (value) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            props[key] = value as any;
+        } else {
+            delete props[key];
+        }
+    }
+}
+
+/**
  * Sets or updates Tabster attribute of the element.
  * @param element an element to set data-tabster attribute on.
  * @param newProps new Tabster props to set.
@@ -54,21 +80,12 @@ export function setTabsterAttribute(
         }
     }
 
-    if (!update || !props) {
+    if (!props) {
         props = {};
     }
 
-    for (const key of Object.keys(
-        newProps
-    ) as (keyof Types.TabsterAttributeProps)[]) {
-        const value = newProps[key];
-
-        if (value) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props[key] = value as any;
-        } else {
-            delete props[key];
-        }
+    if (update) {
+        mergeTabsterProps(props, newProps);
     }
 
     if (Object.keys(props).length > 0) {

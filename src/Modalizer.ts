@@ -7,6 +7,7 @@ import { nativeFocus } from "keyborg";
 // import { augmentAttribute } from "./Instance";
 import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
+import { Keys } from "./Keys";
 import * as Types from "./Types";
 import {
     // createElementTreeWalker,
@@ -18,6 +19,9 @@ import {
     WeakHTMLElement,
     triggerEvent,
 } from "./Utils";
+import { getTabsterOnElement } from "./Instance";
+
+let _wasFocusedCounter = 0;
 
 function _setInformativeStyle(
     weakElement: WeakHTMLElement,
@@ -25,7 +29,7 @@ function _setInformativeStyle(
     internalId?: string,
     userId?: string,
     isActive?: boolean,
-    isFocused?: boolean
+    wasFocused?: number
 ): void {
     if (__DEV__) {
         const element = weakElement.get();
@@ -43,7 +47,7 @@ function _setInformativeStyle(
                         (isActive ? "active" : "inactive") +
                         "," +
                         "," +
-                        (isFocused ? "focused" : "not-focused")
+                        (wasFocused ? `focused(${wasFocused})` : "not-focused")
                 );
             }
         }
@@ -97,7 +101,7 @@ export class Modalizer
     userId: string;
 
     private _isActive: boolean | undefined;
-    private _isFocused = false;
+    private _wasFocused = 0;
     private _onDispose: (modalizer: Modalizer) => void;
     private _activeElements: HTMLElement[];
 
@@ -131,7 +135,7 @@ export class Modalizer
                 this.id,
                 this.userId,
                 this._isActive,
-                this._isFocused
+                this._wasFocused
             );
         }
     }
@@ -164,7 +168,7 @@ export class Modalizer
                     this.id,
                     this.userId,
                     this._isActive,
-                    this._isFocused
+                    this._wasFocused
                 );
             }
 
@@ -174,6 +178,14 @@ export class Modalizer
                     : Types.ModalizerInactiveEventName
             );
         }
+    }
+
+    focused(noIncrement?: boolean): number {
+        if (!noIncrement) {
+            this._wasFocused = ++_wasFocusedCounter;
+        }
+
+        return this._wasFocused;
     }
 
     setProps(props: Types.ModalizerProps): void {
@@ -304,7 +316,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
-    private _focusOutTimer: number | undefined;
     private _restoreModalizerFocusTimer: number | undefined;
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
@@ -324,6 +335,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         if (!tabster.controlTab) {
             tabster.root.addDummyInputs();
         }
+
+        const win = this._win();
+        win.addEventListener("keydown", this._onKeyDown, true);
     }
 
     private _init = (): void => {
@@ -341,7 +355,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         win.clearTimeout(this._restoreModalizerFocusTimer);
-        win.clearTimeout(this._focusOutTimer);
+
+        win.removeEventListener("keydown", this._onKeyDown, true);
 
         // Dispose all modalizers managed by the API
         Object.keys(this._modalizers).forEach((modalizerId) => {
@@ -416,6 +431,72 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
                 if (this.activeId === userId) {
                     this.setActive(undefined);
+                }
+            }
+        }
+    };
+
+    private _onKeyDown = (event: KeyboardEvent): void => {
+        if (event.keyCode !== Keys.Esc) {
+            return;
+        }
+
+        const tabster = this._tabster;
+        const element = tabster.focusedElement.getFocusedElement();
+
+        if (element) {
+            const ctx = RootAPI.getTabsterContext(tabster, element);
+            const modalizer = ctx?.modalizer;
+
+            if (
+                ctx &&
+                !ctx.groupper &&
+                modalizer?.isActive() &&
+                !ctx.ignoreKeydown.Escape
+            ) {
+                const activeId = modalizer.userId;
+
+                if (activeId) {
+                    const part = this._parts[activeId];
+
+                    if (part) {
+                        const focusedSince = Object.keys(part)
+                            .map((id) => {
+                                const m = part[id];
+                                const el = m.getElement();
+                                let groupper: Types.Groupper | undefined;
+
+                                if (el) {
+                                    groupper = getTabsterOnElement(
+                                        this._tabster,
+                                        el
+                                    )?.groupper;
+                                }
+
+                                return m && el && groupper
+                                    ? {
+                                          el,
+                                          groupper,
+                                          focusedSince: m.focused(true),
+                                      }
+                                    : undefined;
+                            })
+                            .filter((f) => f && f.focusedSince > 0)
+                            .sort();
+
+                        if (focusedSince.length) {
+                            const groupperElement =
+                                focusedSince[focusedSince.length - 1]?.el;
+
+                            if (groupperElement) {
+                                tabster.groupper?.handleKeyPress(
+                                    groupperElement,
+                                    event,
+                                    true
+                                );
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -625,12 +706,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        if (this._focusOutTimer) {
-            this._win().clearTimeout(this._focusOutTimer);
-            this._focusOutTimer = undefined;
-        }
-
         const modalizer = ctx.modalizer;
+
+        modalizer?.focused();
 
         if (modalizer?.userId === this.activeId) {
             this.currentIsOthersAccessible =

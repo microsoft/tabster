@@ -181,6 +181,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             container,
             currentElement = null,
             includeProgrammaticallyFocusable,
+            ignoreActiveModalizer,
             ignoreUncontrolled,
             ignoreAccessibiliy,
             modalizerId,
@@ -210,10 +211,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         const acceptElementState: Types.FocusableAcceptElementState = {
             container,
             modalizerUserId:
-                modalizerId === undefined
+                modalizerId === undefined || ignoreActiveModalizer
                     ? RootAPI.getTabsterContext(this._tabster, container)
                           ?.modalizer?.userId ||
-                      this._tabster.modalizer?.activeId
+                      (ignoreActiveModalizer
+                          ? undefined
+                          : this._tabster.modalizer?.activeId)
                     : modalizerId || undefined,
             from: currentElement || container,
             isBackward,

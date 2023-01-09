@@ -10,7 +10,11 @@ import { describeIfControlled } from "./utils/test-utils";
 
 describe("Focusable", () => {
     beforeEach(async () => {
-        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
+        await BroTest.bootstrapTabsterPage({
+            mover: true,
+            groupper: true,
+            modalizer: true,
+        });
     });
 
     describe("aria-disabled", () => {
@@ -328,6 +332,118 @@ describe("Focusable", () => {
                         "Button6Button7Button8Button9Button10Button11Button12",
                     ];
                     expect(evalRet).toEqual([expected, expected]);
+                });
+        });
+    });
+
+    describe("find*() with modalizers", () => {
+        let broTest: BroTest.BroTest;
+
+        beforeEach(async () => {
+            broTest = new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div>
+                            <button id="button1">Button1</button>
+                            <button>Button2</button>
+                        </div>
+                        <div
+                            id="modalizer"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "ololo" },
+                            })}
+                        >
+                            <button id="modal-button-1">ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <div
+                            id="modalizer2"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "ololo2" },
+                            })}
+                        >
+                            <button id="modal-button-3">ModalButton3</button>
+                            <button>ModalButton4</button>
+                        </div>
+                        <div>
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                    </div>
+                )
+            );
+        });
+
+        it("should return proper elements when findAll() is called", async () => {
+            await broTest
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({ container: document.body })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual([
+                        "Button1",
+                        "Button2",
+                        "Button3",
+                        "Button4",
+                    ]);
+                })
+                .eval(() => {
+                    const container = document.getElementById("modalizer");
+                    return (
+                        container &&
+                        getTabsterTestVariables()
+                            .core?.focusable.findAll({
+                                container,
+                            })
+                            .map((el) => el.textContent)
+                    );
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
+                })
+                .eval(() => {
+                    const container = document.getElementById("modalizer2");
+                    return (
+                        container &&
+                        getTabsterTestVariables()
+                            .core?.focusable.findAll({
+                                container,
+                            })
+                            .map((el) => el.textContent)
+                    );
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["ModalButton3", "ModalButton4"]);
+                })
+                .focusElement("#modal-button-1")
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("ModalButton1")
+                )
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({ container: document.body })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
+                })
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({
+                            container: document.body,
+                            ignoreActiveModalizer: true,
+                        })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual([
+                        "Button1",
+                        "Button2",
+                        "Button3",
+                        "Button4",
+                    ]);
                 });
         });
     });

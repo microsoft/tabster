@@ -15,6 +15,7 @@ import {
     getAdjacentElement,
     shouldIgnoreFocus,
     WeakHTMLElement,
+    triggerEvent,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
 
@@ -55,6 +56,8 @@ export class FocusedElementState
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener("focusout", this._onFocusOut, true);
         win.addEventListener("keydown", this._onKeyDown, true);
+
+        this.subscribe(this._onChanged);
     };
 
     dispose(): void {
@@ -74,6 +77,8 @@ export class FocusedElementState
         );
         win.document.removeEventListener("focusout", this._onFocusOut, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
+
+        this.unsubscribe(this._onChanged);
 
         delete FocusedElementState._lastResetElement;
 
@@ -309,6 +314,14 @@ export class FocusedElementState
             }
 
             details.isFocusedProgrammatically = isFocusedProgrammatically;
+
+            const ctx = RootAPI.getTabsterContext(this._tabster, element);
+
+            const modalizerId = ctx?.modalizer?.userId;
+
+            if (modalizerId) {
+                details.modalizerId = modalizerId;
+            }
         }
 
         const nextVal = (this._nextVal = {
@@ -623,6 +636,29 @@ export class FocusedElementState
             }
         } else {
             ctx.root.moveOutWithDefaultAction(isBackward);
+        }
+    };
+
+    _onChanged = (
+        element: HTMLElement | undefined,
+        details: Types.FocusedElementDetails
+    ): void => {
+        if (element) {
+            triggerEvent(element, Types.FocusInEventName, details);
+        } else {
+            const last = this._lastVal?.get();
+
+            if (last) {
+                const d = { ...details };
+                const lastCtx = RootAPI.getTabsterContext(this._tabster, last);
+                const modalizerId = lastCtx?.modalizer?.userId;
+
+                if (modalizerId) {
+                    d.modalizerId = modalizerId;
+                }
+
+                triggerEvent(last, Types.FocusOutEventName, d);
+            }
         }
     };
 }

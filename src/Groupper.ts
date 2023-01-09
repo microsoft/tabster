@@ -450,80 +450,85 @@ export class GroupperAPI implements Types.GroupperAPI {
         }
     }
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
-        if (e.keyCode !== Keys.Enter && e.keyCode !== Keys.Esc) {
+    private _onKeyDown = (event: KeyboardEvent): void => {
+        if (event.keyCode !== Keys.Enter && event.keyCode !== Keys.Esc) {
             return;
         }
 
-        const tabster = this._tabster;
-        const element = tabster.focusedElement.getFocusedElement();
+        const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            const ctx = RootAPI.getTabsterContext(tabster, element);
-            const modalizerInGroupper = ctx?.modalizerInGroupper;
-            let groupper = ctx?.groupper || modalizerInGroupper;
-
-            if (ctx && groupper) {
-                let next: HTMLElement | null | undefined;
-
-                const groupperElement = groupper.getElement();
-
-                if (e.keyCode === Keys.Enter) {
-                    if (ctx.ignoreKeydown.Enter) {
-                        return;
-                    }
-
-                    if (
-                        groupperElement &&
-                        (element === groupperElement ||
-                            (groupper.getProps().delegated &&
-                                element === groupper.getFirst(false)))
-                    ) {
-                        next = tabster.focusable.findNext({
-                            container: groupperElement,
-                            currentElement: element,
-                        });
-                    }
-                } else if (e.keyCode === Keys.Esc) {
-                    if (ctx.ignoreKeydown.Escape) {
-                        return;
-                    }
-
-                    if (groupperElement && groupperElement.contains(element)) {
-                        if (element !== groupperElement) {
-                            next = groupper.getFirst(true);
-                        } else {
-                            const parentElement = groupperElement.parentElement;
-                            const parentCtx = parentElement
-                                ? RootAPI.getTabsterContext(
-                                      tabster,
-                                      parentElement
-                                  )
-                                : undefined;
-
-                            groupper = parentCtx?.groupper;
-                            next = groupper?.getFirst(true);
-                        }
-                    }
-
-                    if (groupper) {
-                        groupper.makeTabbable(false);
-
-                        if (modalizerInGroupper) {
-                            tabster.modalizer?.setActive(undefined);
-                        }
-                    }
-                }
-
-                if (next) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-
-                    next.focus();
-                }
-            }
+            this.handleKeyPress(element, event);
         }
     };
+
+    handleKeyPress(
+        element: HTMLElement,
+        event: KeyboardEvent,
+        noGoUp?: boolean
+    ): void {
+        const tabster = this._tabster;
+        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const modalizerInGroupper = ctx?.modalizerInGroupper;
+        let groupper = ctx?.groupper || modalizerInGroupper;
+
+        if (ctx && groupper) {
+            let next: HTMLElement | null | undefined;
+
+            const groupperElement = groupper.getElement();
+
+            if (event.keyCode === Keys.Enter) {
+                if (ctx.ignoreKeydown.Enter) {
+                    return;
+                }
+
+                if (
+                    groupperElement &&
+                    (element === groupperElement ||
+                        (groupper.getProps().delegated &&
+                            element === groupper.getFirst(false)))
+                ) {
+                    next = tabster.focusable.findNext({
+                        container: groupperElement,
+                        currentElement: element,
+                    });
+                }
+            } else if (event.keyCode === Keys.Esc) {
+                if (ctx.ignoreKeydown.Escape) {
+                    return;
+                }
+
+                if (groupperElement && groupperElement.contains(element)) {
+                    if (element !== groupperElement || noGoUp) {
+                        next = groupper.getFirst(true);
+                    } else {
+                        const parentElement = groupperElement.parentElement;
+                        const parentCtx = parentElement
+                            ? RootAPI.getTabsterContext(tabster, parentElement)
+                            : undefined;
+
+                        groupper = parentCtx?.groupper;
+                        next = groupper?.getFirst(true);
+                    }
+                }
+
+                if (groupper) {
+                    groupper.makeTabbable(false);
+
+                    if (modalizerInGroupper) {
+                        tabster.modalizer?.setActive(undefined);
+                    }
+                }
+            }
+
+            if (next) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                next.focus();
+            }
+        }
+    }
 }
 
 function _setInformativeStyle(

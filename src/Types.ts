@@ -8,9 +8,13 @@ export const TabsterDummyInputAttributeName = "data-tabster-dummy";
 export const DeloserEventName = "tabster:deloser";
 export const ModalizerActiveEventName = "tabster:modalizer:active";
 export const ModalizerInactiveEventName = "tabster:modalizer:inactive";
+export const ModalizerFocusInEventName = "tabster:modalizer:focusin";
+export const ModalizerFocusOutEventName = "tabster:modalizer:focusout";
 export const ModalizerBeforeFocusOutEventName =
     "tabster:modalizer:beforefocusout";
 export const MoverEventName = "tabster:mover";
+export const FocusInEventName = "tabster:focusin";
+export const FocusOutEventName = "tabster:focusout";
 
 export interface TabsterEventWithDetails<D> extends Event {
     details: D;
@@ -63,6 +67,7 @@ export interface KeyboardNavigationState
 export interface FocusedElementDetails {
     relatedTarget?: HTMLElement;
     isFocusedProgrammatically?: boolean;
+    modalizerId?: string;
 }
 
 export interface FocusedElementState
@@ -403,6 +408,10 @@ export interface FindFocusableProps {
      */
     includeProgrammaticallyFocusable?: boolean;
     /**
+     * Ignore active modalizer.
+     */
+    ignoreActiveModalizer?: boolean;
+    /**
      * Ignore uncontrolled areas.
      */
     ignoreUncontrolled?: boolean;
@@ -441,6 +450,7 @@ export type FindFirstProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
+    | "ignoreActiveModalizer"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
 >;
@@ -451,6 +461,7 @@ export type FindNextProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
+    | "ignoreActiveModalizer"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
     | "onUncontrolled"
@@ -461,6 +472,7 @@ export type FindDefaultProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
+    | "ignoreActiveModalizer"
     | "ignoreAccessibiliy"
 >;
 
@@ -471,6 +483,7 @@ export type FindAllProps = Pick<
     | "currentElement"
     | "isBackward"
     | "includeProgrammaticallyFocusable"
+    | "ignoreActiveModalizer"
     | "acceptCondition"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
@@ -649,6 +662,12 @@ export type GroupperConstructor = (
 export interface GroupperAPIInternal {
     /** @internal */
     createGroupper(element: HTMLElement, props: GroupperProps): Groupper;
+    /** @internal */
+    handleKeyPress(
+        element: HTMLElement,
+        event: KeyboardEvent,
+        noGoUp?: boolean
+    ): void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -679,7 +698,9 @@ export interface ModalizerProps {
 export type ModalizerEventName =
     | typeof ModalizerActiveEventName
     | typeof ModalizerInactiveEventName
-    | typeof ModalizerBeforeFocusOutEventName;
+    | typeof ModalizerBeforeFocusOutEventName
+    | typeof ModalizerFocusInEventName
+    | typeof ModalizerFocusOutEventName;
 
 export type ModalizerEventDetails = {
     id: string;
@@ -701,6 +722,7 @@ export interface Modalizer
     dispose(): void;
     isActive(): boolean;
     makeActive(isActive: boolean): void;
+    focused(noIncrement?: boolean): number;
     triggerFocusEvent(
         eventName: ModalizerEventName,
         allElements: boolean
