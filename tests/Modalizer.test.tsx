@@ -569,6 +569,134 @@ describe("Modalizer with multiple containers", () => {
             );
     });
 
+    it("should escape the modalizer to the most recently focused groupper", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <div
+                            id="groupper"
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <div
+                            id="groupper-2"
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>ModalButton3</button>
+                            <button>ModalButton4</button>
+                        </div>
+                    </div>
+
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isTrapped: true,
+                            },
+                        })}
+                    >
+                        <button id="modal-button-5">ModalButton5</button>
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#groupper")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3ModalButton4")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton4")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton5")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3ModalButton4")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .focusElement("#modal-button-5")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton5")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            );
+    });
+
     it("should work in a very monstrous complex case with Movers and Grouppers", async () => {
         await new BroTest.BroTest(
             (

@@ -476,17 +476,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                                 return m && el && groupper
                                     ? {
                                           el,
-                                          groupper,
                                           focusedSince: m.focused(true),
                                       }
-                                    : undefined;
+                                    : { focusedSince: 0 };
                             })
-                            .filter((f) => f && f.focusedSince > 0)
-                            .sort();
+                            .filter((f) => f.focusedSince > 0)
+                            .sort((a, b) =>
+                                a.focusedSince > b.focusedSince
+                                    ? -1
+                                    : a.focusedSince < b.focusedSince
+                                    ? 1
+                                    : 0
+                            );
 
                         if (focusedSince.length) {
-                            const groupperElement =
-                                focusedSince[focusedSince.length - 1]?.el;
+                            const groupperElement = focusedSince[0].el;
 
                             if (groupperElement) {
                                 tabster.groupper?.handleKeyPress(
