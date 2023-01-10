@@ -1621,7 +1621,6 @@ describe("Adjacent Movers", () => {
                         {...getTabsterAttribute({
                             mover: {},
                         })}
-                        style={{ height: 200, overflow: "scroll" }}
                     >
                         <button>Button2</button>
                         <button>Button3</button>
@@ -1630,7 +1629,6 @@ describe("Adjacent Movers", () => {
                         {...getTabsterAttribute({
                             mover: {},
                         })}
-                        style={{ height: 200, overflow: "scroll" }}
                     >
                         <button>Button4</button>
                         <button>Button5</button>
@@ -1710,7 +1708,6 @@ describe("Adjacent Movers", () => {
                         {...getTabsterAttribute({
                             mover: { memorizeCurrent: true },
                         })}
-                        style={{ height: 200, overflow: "scroll" }}
                     >
                         <button>Button2</button>
                         <button>Button3</button>
@@ -1719,7 +1716,6 @@ describe("Adjacent Movers", () => {
                         {...getTabsterAttribute({
                             mover: { memorizeCurrent: true },
                         })}
-                        style={{ height: 200, overflow: "scroll" }}
                     >
                         <button>Button4</button>
                         <button>Button5</button>
