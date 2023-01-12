@@ -760,6 +760,21 @@ describe("Modalizer with multiple containers", () => {
                 expect(el?.textContent).toEqual("ModalButton1")
             )
             .pressEsc()
+            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+            .pressEnter()
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressEsc()
             .activeElement((el) => expect(el?.textContent).toEqual("Hello"));
     });
 
