@@ -714,7 +714,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         // An inactive groupper with the modalizer on the same node will not give the modalizer in the context,
         // yet we still want to track that the modalizer's container was focused.
-        (modalizer || getTabsterOnElement(this._tabster, focusedElement)?.modalizer)?.focused();
+        (
+            modalizer ||
+            getTabsterOnElement(this._tabster, focusedElement)?.modalizer
+        )?.focused();
 
         if (modalizer?.userId === this.activeId) {
             this.currentIsOthersAccessible =
