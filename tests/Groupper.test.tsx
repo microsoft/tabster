@@ -518,7 +518,7 @@ describe("Groupper - empty", () => {
         }
     );
 
-    it.each<["div"]>([["div"]])(
+    it.each<["div" | "li"]>([["div"], ["li"]])(
         "should handle empty groupper with focusable container as <%s>",
         async (tagName) => {
             const Tag = tagName;

@@ -697,6 +697,72 @@ describe("Modalizer with multiple containers", () => {
             );
     });
 
+    it("should escape the modalizer to the most recently focused groupper even if it has no focusables", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <div
+                            id="groupper"
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                                focusable: {
+                                    ignoreKeydown: { Enter: true },
+                                },
+                            })}
+                        >
+                            Hello
+                        </div>
+                    </div>
+
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isTrapped: true,
+                            },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                document.addEventListener("keydown", (e) => {
+                    if (e.keyCode === 13) {
+                        document.getElementById("modal-button-1")?.focus();
+                    }
+                });
+            })
+            .focusElement("#groupper")
+            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressEsc()
+            .activeElement((el) => expect(el?.textContent).toEqual("Hello"));
+    });
+
     it("should work in a very monstrous complex case with Movers and Grouppers", async () => {
         await new BroTest.BroTest(
             (
