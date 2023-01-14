@@ -62,6 +62,7 @@ export interface KeyboardNavigationState
     extends Subscribable<boolean>,
         Disposable {
     isNavigatingWithKeyboard(): boolean;
+    setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void;
 }
 
 export interface FocusedElementDetails {

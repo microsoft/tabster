@@ -244,7 +244,11 @@ export class Mover
             uncontrolled = el;
         };
 
-        if (this._props.tabbable || currentIsDummy) {
+        if (
+            this._props.tabbable ||
+            currentIsDummy ||
+            (currentElement && !container.contains(currentElement))
+        ) {
             next = isBackward
                 ? focusable.findPrev({
                       currentElement,

@@ -90,4 +90,41 @@ describe("keyboard navigation state", () => {
                 expect(keyboardNavgationState).toBe(true);
             });
     });
+
+    it("should be changed when setNavigatingWithKeyboard is called", async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="foo">Foo</button>
+                </div>
+            )
+        )
+            .focusElement("#foo")
+            .eval(getKeyboardNavigationState)
+            .check((keyboardNavgationState: boolean) => {
+                expect(keyboardNavgationState).toBe(false);
+            })
+            .eval(() => {
+                getTabsterTestVariables().core?.keyboardNavigation.setNavigatingWithKeyboard(
+                    true
+                );
+            })
+            .wait(100)
+            .eval(getKeyboardNavigationState)
+            .check((keyboardNavgationState: boolean) => {
+                expect(keyboardNavgationState).toBe(true);
+            })
+            .eval(() => {
+                getTabsterTestVariables().core?.keyboardNavigation.setNavigatingWithKeyboard(
+                    false
+                );
+            })
+            .wait(100)
+            .eval(getKeyboardNavigationState)
+            .check((keyboardNavgationState: boolean) => {
+                expect(keyboardNavgationState).toBe(false);
+            });
+    });
 });

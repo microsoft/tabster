@@ -9,7 +9,6 @@ import {
     DeloserItemBase,
 } from "./Deloser";
 import { getTabsterOnElement } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
 import { RootAPI } from "./Root";
 import { Subscribable } from "./State/Subscribable";
 import * as Types from "./Types";
@@ -710,8 +709,7 @@ class StateTransaction extends CrossOriginTransaction<
                 isNavigatingWithKeyboard
         ) {
             context.ignoreKeyboardNavigationStateUpdate = true;
-            KeyboardNavigationState.setVal(
-                tabster.keyboardNavigation,
+            tabster.keyboardNavigation.setNavigatingWithKeyboard(
                 isNavigatingWithKeyboard
             );
             context.ignoreKeyboardNavigationStateUpdate = false;
@@ -1716,8 +1714,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
                         data.isNavigatingWithKeyboard
                 ) {
                     this._ctx.ignoreKeyboardNavigationStateUpdate = true;
-                    KeyboardNavigationState.setVal(
-                        this._tabster.keyboardNavigation,
+                    this._tabster.keyboardNavigation.setNavigatingWithKeyboard(
                         data.isNavigatingWithKeyboard
                     );
                     this._ctx.ignoreKeyboardNavigationStateUpdate = false;

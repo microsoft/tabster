@@ -1610,3 +1610,183 @@ describe("Mover with grid", () => {
             });
     });
 });
+
+describe("Adjacent Movers", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should handle adjacent Movers correctly", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button4</button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it("should handle adjacent Movers with memorizeCurrent correctly", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button4</button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+});
