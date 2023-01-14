@@ -4,7 +4,7 @@
  */
 
 import { nativeFocus } from "keyborg";
-// import { augmentAttribute } from "./Instance";
+import { augmentAttribute, getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
@@ -18,9 +18,10 @@ import {
     WeakHTMLElement,
     triggerEvent,
 } from "./Utils";
-import { augmentAttribute, getTabsterOnElement } from "./Instance";
 
 let _wasFocusedCounter = 0;
+
+const _ariaHidden = "aria-hidden";
 
 function _setInformativeStyle(
     weakElement: WeakHTMLElement,
@@ -323,8 +324,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _restoreModalizerFocusTimer: number | undefined;
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
-    private _hidden: WeakMap<HTMLElement, true>;
-    private _augmented: WeakRef<HTMLElement>[];
+    private _augMap: WeakMap<HTMLElement, true>;
+    private _aug: WeakRef<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
 
     activeId: string | undefined;
@@ -337,8 +338,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         this._parts = {};
-        this._hidden = new WeakMap();
-        this._augmented = [];
+        this._augMap = new WeakMap();
+        this._aug = [];
         this.activeElements = [];
 
         if (!tabster.controlTab) {
@@ -379,8 +380,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         delete this.activeId;
         this.activeElements = [];
 
-        this._hidden = new WeakMap();
-        this._augmented = [];
+        this._augMap = new WeakMap();
+        this._aug = [];
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
     }
@@ -519,7 +520,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     };
 
     isAugmented(element: HTMLElement): boolean {
-        return this._hidden.has(element);
+        return this._augMap.has(element);
     }
 
     hiddenUpdate(): void {
@@ -681,7 +682,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         }
 
-        const hidden = this._hidden;
+        const augmentedMap = this._augMap;
         const allVisibleElements: HTMLElement[] | undefined =
             visibleElements.length > 0
                 ? [...visibleElements, ...alwaysAccessibleElements]
@@ -697,19 +698,24 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 return;
             }
 
-            if (hidden.has(element)) {
-                if (!hide) {
-                    hidden.delete(element);
-                    augmentAttribute(tabster, element, "aria-hidden");
-                }
-            } else {
+            let isAugmented = false;
+
+            if (augmentedMap.has(element)) {
                 if (hide) {
-                    hidden.set(element, true);
-                    augmentAttribute(tabster, element, "aria-hidden", "true");
+                    isAugmented = true;
+                } else {
+                    augmentedMap.delete(element);
+                    augmentAttribute(tabster, element, _ariaHidden);
                 }
+            } else if (
+                hide &&
+                augmentAttribute(tabster, element, _ariaHidden, "true")
+            ) {
+                augmentedMap.set(element, true);
+                isAugmented = true;
             }
 
-            if (hide) {
+            if (isAugmented) {
                 newAugmented.push(new WeakRef(element));
                 newAugmentedMap.set(element, true);
             }
@@ -758,7 +764,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             walk(body);
         }
 
-        this._augmented
+        this._aug
             ?.map((e) => e.deref())
             .forEach((e) => {
                 if (e && !newAugmentedMap.get(e)) {
@@ -766,7 +772,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 }
             });
 
-        this._augmented = newAugmented;
+        this._aug = newAugmented;
+        this._augMap = newAugmentedMap;
     }
 
     /**
@@ -787,7 +794,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
-        const hidden = this._hidden;
+        const augmentedMap = this._augMap;
 
         for (
             let e: HTMLElement | null = focusedElement;
@@ -799,9 +806,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             // to be able to read the element. The rest of aria-hiddens, will be removed
             // acynchronously for the sake of performance.
 
-            if (hidden.has(e)) {
-                hidden.delete(e);
-                augmentAttribute(this._tabster, e, "aria-hidden");
+            if (augmentedMap.has(e)) {
+                augmentedMap.delete(e);
+                augmentAttribute(this._tabster, e, _ariaHidden);
             }
         }
 

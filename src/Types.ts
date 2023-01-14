@@ -678,16 +678,8 @@ export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
 }
 
-export interface ModalizerAccess {
-    accessibleIn?: boolean;
-    accessibleOut?: boolean;
-    tabbableIn?: boolean;
-    tabbableOut?: boolean;
-}
-
 export interface ModalizerProps {
     id: string;
-    access?: ModalizerAccess;
     isOthersAccessible?: boolean;
     isAlwaysAccessible?: boolean;
     isNoFocusFirst?: boolean;

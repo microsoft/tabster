@@ -263,13 +263,14 @@ export function augmentAttribute(
     element: HTMLElement,
     name: string,
     value?: string | null // Restore original value when undefined.
-): void {
+): boolean {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const entry = tabster.storageEntry(element, true)!;
+    let ret = false;
 
     if (!entry.aug) {
         if (value === undefined) {
-            return;
+            return ret;
         }
 
         entry.aug = {};
@@ -286,16 +287,26 @@ export function augmentAttribute(
             } else {
                 element.setAttribute(name, origVal);
             }
+
+            ret = true;
         }
     } else {
+        let origValue: string | null | undefined;
+
         if (!(name in entry.aug)) {
-            entry.aug[name] = element.getAttribute(name);
+            origValue = element.getAttribute(name);
         }
 
-        if (value === null) {
-            element.removeAttribute(name);
-        } else {
-            element.setAttribute(name, value);
+        if (origValue !== undefined && origValue !== value) {
+            entry.aug[name] = origValue;
+
+            if (value === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, value);
+            }
+
+            ret = true;
         }
     }
 
@@ -303,4 +314,6 @@ export function augmentAttribute(
         delete entry.aug;
         tabster.storageEntry(element, false);
     }
+
+    return ret;
 }
