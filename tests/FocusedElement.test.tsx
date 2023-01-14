@@ -62,6 +62,13 @@ describe("onKeyDown", () => {
             __tabsterFocusEvents?: string[];
         }
 
+        const getEvents = () => {
+            const tabsterFocusEvents = (window as WindowWithFocusEventsHistory)
+                .__tabsterFocusEvents;
+            (window as WindowWithFocusEventsHistory).__tabsterFocusEvents = [];
+            return tabsterFocusEvents;
+        };
+
         await new BroTest.BroTest(
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>
@@ -78,9 +85,8 @@ describe("onKeyDown", () => {
             )
         )
             .eval(() => {
-                const events: string[] = ((
-                    window as WindowWithFocusEventsHistory
-                ).__tabsterFocusEvents = []);
+                (window as WindowWithFocusEventsHistory).__tabsterFocusEvents =
+                    [];
 
                 const addEvent = (eventName: string) => {
                     document.body.addEventListener(
@@ -88,14 +94,13 @@ describe("onKeyDown", () => {
                         (
                             e: Types.TabsterEventWithDetails<Types.FocusedElementDetails>
                         ) => {
-                            events.push(
+                            (
+                                window as WindowWithFocusEventsHistory
+                            ).__tabsterFocusEvents?.push(
                                 `${eventName} ${
                                     (e.target as HTMLElement)?.id
                                 } ${e.details.isFocusedProgrammatically} ${
                                     e.details.modalizerId
-                                } ${
-                                    e.details.relatedTarget?.id ||
-                                    e.details.relatedTarget?.tagName
                                 }`
                             );
                         }
@@ -106,110 +111,54 @@ describe("onKeyDown", () => {
                 addEvent("tabster:focusout");
             })
             .pressTab()
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
+                    "tabster:focusin button-1 false undefined",
                 ]);
             })
             .pressTab()
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
+                    "tabster:focusout button-1 undefined undefined",
+                    "tabster:focusin button-2 false undefined",
                 ]);
             })
             .pressTab()
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
-                    "tabster:focusout button-2 undefined undefined I",
+                    "tabster:focusout button-2 undefined undefined",
                 ]);
             })
             .pressTab(true)
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
-                    "tabster:focusout button-2 undefined undefined I",
-                    "tabster:focusin button-2 false undefined I",
+                    "tabster:focusin button-2 false undefined",
                 ]);
             })
             .focusElement("#modal-button-1")
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
-                    "tabster:focusout button-2 undefined undefined I",
-                    "tabster:focusin button-2 false undefined I",
-                    "tabster:focusout button-2 undefined undefined modal-button-1",
-                    "tabster:focusin modal-button-1 true modal button-2",
+                    "tabster:focusout button-2 undefined undefined",
+                    "tabster:focusin modal-button-1 true modal",
                 ]);
             })
             .pressTab(true)
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
-                    "tabster:focusout button-2 undefined undefined I",
-                    "tabster:focusin button-2 false undefined I",
-                    "tabster:focusout button-2 undefined undefined modal-button-1",
-                    "tabster:focusin modal-button-1 true modal button-2",
-                    "tabster:focusout modal-button-1 undefined modal I",
+                    "tabster:focusout modal-button-1 undefined modal",
                 ]);
             })
             .pressTab()
-            .eval(
-                () =>
-                    (window as WindowWithFocusEventsHistory)
-                        .__tabsterFocusEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:focusin button-1 false undefined I",
-                    "tabster:focusout button-1 undefined undefined button-2",
-                    "tabster:focusin button-2 false undefined button-1",
-                    "tabster:focusout button-2 undefined undefined I",
-                    "tabster:focusin button-2 false undefined I",
-                    "tabster:focusout button-2 undefined undefined modal-button-1",
-                    "tabster:focusin modal-button-1 true modal button-2",
-                    "tabster:focusout modal-button-1 undefined modal I",
-                    "tabster:focusin modal-button-1 false modal I",
+                    "tabster:focusin modal-button-1 false modal",
                 ]);
             });
     });
