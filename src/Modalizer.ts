@@ -10,7 +10,6 @@ import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
 import * as Types from "./Types";
 import {
-    // createElementTreeWalker,
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
@@ -19,7 +18,7 @@ import {
     WeakHTMLElement,
     triggerEvent,
 } from "./Utils";
-import { getTabsterOnElement } from "./Instance";
+import { augmentAttribute, getTabsterOnElement } from "./Instance";
 
 let _wasFocusedCounter = 0;
 
@@ -103,7 +102,7 @@ export class Modalizer
     private _isActive: boolean | undefined;
     private _wasFocused = 0;
     private _onDispose: (modalizer: Modalizer) => void;
-    private _activeElements: HTMLElement[];
+    private _activeElements: WeakRef<HTMLElement>[];
 
     dummyManager: ModalizerDummyManager | undefined;
 
@@ -112,7 +111,7 @@ export class Modalizer
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
         props: Types.ModalizerProps,
-        activeElements: HTMLElement[]
+        activeElements: WeakRef<HTMLElement>[]
     ) {
         super(tabster, element, props);
 
@@ -145,18 +144,20 @@ export class Modalizer
             this._isActive = isActive;
 
             const element = this.getElement();
-            const ae = this._activeElements;
 
             if (element) {
-                const index = ae.indexOf(element);
+                const activeElements = this._activeElements;
+                const index = activeElements
+                    .map((e) => e.deref())
+                    .indexOf(element);
 
                 if (isActive) {
                     if (index < 0) {
-                        ae.push(element);
+                        activeElements.push(new WeakRef(element));
                     }
                 } else {
                     if (index >= 0) {
-                        ae.splice(index, 1);
+                        activeElements.splice(index, 1);
                     }
                 }
             }
@@ -199,9 +200,9 @@ export class Modalizer
     }
 
     dispose(): void {
-        this._activeElements = [];
         this.makeActive(false);
         this._onDispose(this);
+        this._activeElements = [];
         this._remove();
     }
 
@@ -267,10 +268,13 @@ export class Modalizer
         let defaultPrevented = false;
 
         if (element) {
-            const elements = allElements ? this._activeElements : [element];
+            const elements = allElements
+                ? this._activeElements.map((e) => e.deref())
+                : [element];
 
             for (const el of elements) {
                 if (
+                    el &&
                     !triggerEvent<Types.ModalizerEventDetails>(el, eventName, {
                         id: this.userId,
                         element,
@@ -319,10 +323,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _restoreModalizerFocusTimer: number | undefined;
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
+    private _hidden: WeakMap<HTMLElement, true>;
+    private _augmented: WeakRef<HTMLElement>[];
+    private _hiddenUpdateTimer: number | undefined;
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
-    activeElements: HTMLElement[];
+    activeElements: WeakRef<HTMLElement>[];
 
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
@@ -330,6 +337,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         this._parts = {};
+        this._hidden = new WeakMap();
+        this._augmented = [];
         this.activeElements = [];
 
         if (!tabster.controlTab) {
@@ -369,6 +378,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._parts = {};
         delete this.activeId;
         this.activeElements = [];
+
+        this._hidden = new WeakMap();
+        this._augmented = [];
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
     }
@@ -506,6 +518,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
     };
 
+    isAugmented(element: HTMLElement): boolean {
+        return this._hidden.has(element);
+    }
+
+    hiddenUpdate(): void {
+        if (this._hiddenUpdateTimer) {
+            return;
+        }
+
+        this._hiddenUpdateTimer = this._win().setTimeout(() => {
+            delete this._hiddenUpdateTimer;
+            this._hiddenUpdate();
+        }, 250);
+    }
+
     setActive(modalizer: Types.Modalizer | undefined): void {
         const userId = modalizer?.userId;
         const activeId = this.activeId;
@@ -539,80 +566,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this.currentIsOthersAccessible =
             modalizer?.getProps().isOthersAccessible;
 
-        //     let targetDocument =
-        //         this._element.get()?.ownerDocument ||
-        //         this._modalizerParent?.get()?.ownerDocument;
-        //     // Document can't be determined frm the modalizer root or its parent, fallback to window
-        //     if (!targetDocument) {
-        //         targetDocument = this._tabster.getWindow().document;
-        //     }
-        //     const root = targetDocument.body;
-
-        //     // Sets or restores aria-hidden value based on `active` flag
-        //     const ariaHiddenWalker = createElementTreeWalker(
-        //         targetDocument,
-        //         root,
-        //         (el: HTMLElement) => {
-        //             // if other content should be accessible no need to do walk the tree
-        //             if (this._props.isOthersAccessible) {
-        //                 return NodeFilter.FILTER_REJECT;
-        //             }
-
-        //             const modalizerRoot = this._element.get();
-        //             const modalizerParent = this._modalizerParent?.get();
-        //             const isModalizerElement = modalizerRoot === el;
-        //             const containsModalizerRoot = !!el.contains(
-        //                 modalizerRoot || null
-        //             );
-        //             const containsModalizerParent = !!el.contains(
-        //                 modalizerParent || null
-        //             );
-
-        //             if (isModalizerElement) {
-        //                 return NodeFilter.FILTER_REJECT;
-        //             }
-
-        //             if (containsModalizerRoot || containsModalizerParent) {
-        //                 return NodeFilter.FILTER_SKIP;
-        //             }
-
-        //             // Add `aria-hidden` when modalizer is active
-        //             // Restore `aria-hidden` when modalizer is inactive
-        //             augmentAttribute(
-        //                 this._tabster,
-        //                 el,
-        //                 "aria-hidden",
-        //                 active ? "true" : undefined
-        //             );
-
-        //             const modalizerRootOnPage =
-        //                 modalizerRoot === modalizerRoot?.ownerDocument.body
-        //                     ? false
-        //                     : modalizerRoot?.ownerDocument.body.contains(
-        //                           modalizerRoot
-        //                       );
-
-        //             const modalizerParentOnPage =
-        //                 modalizerParent === modalizerParent?.ownerDocument.body
-        //                     ? false
-        //                     : modalizerParent?.ownerDocument.body.contains(
-        //                           modalizerParent
-        //                       );
-
-        //             // if the modalizer root or its parent is not on the page, all nodes need to be visited
-        //             if (!modalizerParentOnPage && !modalizerRootOnPage) {
-        //                 return NodeFilter.FILTER_SKIP;
-        //             }
-
-        //             return NodeFilter.FILTER_REJECT;
-        //         }
-        //     );
-
-        //     if (ariaHiddenWalker) {
-        //         while (ariaHiddenWalker.nextNode()) {
-        //             /** Iterate to update the tree */
-        //         }
-        //     }
+        this.hiddenUpdate();
     }
 
     focus(
@@ -677,7 +631,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         if (modalizerUserId) {
             for (const e of this.activeElements) {
-                if (element.contains(e) || e === element) {
+                const el = e.deref();
+
+                if (el && (element.contains(el) || el === element)) {
                     // We have a part of currently active modalizer somewhere deeper in the DOM,
                     // skipping all other checks.
                     return NodeFilter.FILTER_SKIP;
@@ -690,6 +646,127 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 currentModalizer?.getProps().isAlwaysAccessible)
             ? undefined
             : NodeFilter.FILTER_SKIP;
+    }
+
+    private _hiddenUpdate(): void {
+        const tabster = this._tabster;
+        const body = tabster.getWindow().document.body;
+        const activeId = this.activeId;
+
+        const parts = this._parts;
+        const visibleElements: HTMLElement[] = [];
+        const hiddenElements: HTMLElement[] = [];
+        const alwaysAccessibleElements: HTMLElement[] = [];
+
+        for (const userId of Object.keys(parts)) {
+            const mParts = parts[userId];
+
+            for (const id of Object.keys(mParts)) {
+                const m = mParts[id];
+                const el = m.getElement();
+                const props = m.getProps();
+                const isAlwaysAccessible = props.isAlwaysAccessible;
+
+                if (el) {
+                    if (userId === activeId) {
+                        if (!this.currentIsOthersAccessible) {
+                            visibleElements.push(el);
+                        }
+                    } else if (isAlwaysAccessible) {
+                        alwaysAccessibleElements.push(el);
+                    } else {
+                        hiddenElements.push(el);
+                    }
+                }
+            }
+        }
+
+        const hidden = this._hidden;
+        const allVisibleElements: HTMLElement[] | undefined =
+            visibleElements.length > 0
+                ? [...visibleElements, ...alwaysAccessibleElements]
+                : undefined;
+
+        const newAugmented: WeakRef<HTMLElement>[] = [];
+        const newAugmentedMap: WeakMap<HTMLElement, true> = new WeakMap();
+
+        const toggle = (element: HTMLElement, hide: boolean) => {
+            const tagName = element.tagName;
+
+            if (tagName === "SCRIPT" || tagName === "STYLE") {
+                return;
+            }
+
+            if (hidden.has(element)) {
+                if (!hide) {
+                    hidden.delete(element);
+                    augmentAttribute(tabster, element, "aria-hidden");
+                }
+            } else {
+                if (hide) {
+                    hidden.set(element, true);
+                    augmentAttribute(tabster, element, "aria-hidden", "true");
+                }
+            }
+
+            if (hide) {
+                newAugmented.push(new WeakRef(element));
+                newAugmentedMap.set(element, true);
+            }
+        };
+
+        const walk = (element: HTMLElement) => {
+            for (
+                let el = element.firstElementChild;
+                el;
+                el = el.nextElementSibling
+            ) {
+                let skip = false;
+                let containsModalizer = false;
+
+                if (allVisibleElements) {
+                    for (const c of allVisibleElements) {
+                        if (el === c) {
+                            skip = true;
+                            break;
+                        }
+
+                        if (el.contains(c)) {
+                            containsModalizer = true;
+                            break;
+                        }
+                    }
+
+                    if (containsModalizer) {
+                        walk(el as HTMLElement);
+                    } else if (!skip) {
+                        toggle(el as HTMLElement, true);
+                    }
+                } else {
+                    toggle(el as HTMLElement, false);
+                }
+            }
+        };
+
+        if (!allVisibleElements) {
+            alwaysAccessibleElements.forEach((e) => toggle(e, false));
+        }
+
+        hiddenElements.forEach((e) => toggle(e, true));
+
+        if (body) {
+            walk(body);
+        }
+
+        this._augmented
+            ?.map((e) => e.deref())
+            .forEach((e) => {
+                if (e && !newAugmentedMap.get(e)) {
+                    toggle(e, false);
+                }
+            });
+
+        this._augmented = newAugmented;
     }
 
     /**
@@ -710,10 +787,28 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
+        const hidden = this._hidden;
+
+        for (
+            let e: HTMLElement | null = focusedElement;
+            e;
+            e = e.parentElement
+        ) {
+            // If the newly focused element is inside some of the hidden containers,
+            // remove aria-hidden from those synchronously for the screen readers
+            // to be able to read the element. The rest of aria-hiddens, will be removed
+            // acynchronously for the sake of performance.
+
+            if (hidden.has(e)) {
+                hidden.delete(e);
+                augmentAttribute(this._tabster, e, "aria-hidden");
+            }
+        }
+
         const modalizer = ctx.modalizer;
 
-        // An inactive groupper with the modalizer on the same node will not give the modalizer in the context,
-        // yet we still want to track that the modalizer's container was focused.
+        // An inactive groupper with the modalizer on the same node will not give the modalizer
+        // in the context, yet we still want to track that the modalizer's container was focused.
         (
             modalizer ||
             getTabsterOnElement(this._tabster, focusedElement)?.modalizer

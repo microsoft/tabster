@@ -53,6 +53,8 @@ export function observeMutations(
                 }
             }
         }
+
+        tabster.modalizer?.hiddenUpdate();
     };
 
     function updateTabsterElements(node: Node, removed?: boolean): void {

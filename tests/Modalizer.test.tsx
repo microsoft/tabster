@@ -53,27 +53,212 @@ describe("Modalizer", () => {
         await new BroTest.BroTest(<div></div>);
     });
 
-    // it("should activate and set aria-hidden when focused", async () => {
-    //     await new BroTest.BroTest(getTestHtml())
-    //         .focusElement("#foo")
-    //         .eval(() =>
-    //             document.getElementById("hidden")?.getAttribute("aria-hidden")
-    //         )
-    //         .check((ariaHidden: string | undefined) =>
-    //             expect(ariaHidden).toBe("true")
-    //         )
-    //         .eval(() =>
-    //             document.getElementById("outside")?.hasAttribute("aria-hidden")
-    //         )
-    //         .check((hasAriaHidden: boolean | undefined) =>
-    //             expect(hasAriaHidden).toBe(false)
-    //         );
-    // });
+    it("should activate and set aria-hidden when focused", async () => {
+        await new BroTest.BroTest(getTestHtml())
+            .focusElement("#foo")
+            .wait(300)
+            .eval(() =>
+                document.getElementById("hidden")?.getAttribute("aria-hidden")
+            )
+            .check((ariaHidden: string | undefined) =>
+                expect(ariaHidden).toBe("true")
+            )
+            .eval(() =>
+                document.getElementById("outside")?.hasAttribute("aria-hidden")
+            )
+            .check((hasAriaHidden: boolean | undefined) =>
+                expect(hasAriaHidden).toBe(false)
+            );
+    });
+
+    it("should set aria-hidden on inactive elements", async () => {
+        const getAriaHiddens = () => {
+            const ret: string[] = [];
+            const pushAriaHidden = (id: string): void => {
+                ret.push(
+                    `${id}: ${document
+                        .getElementById(id)
+                        ?.getAttribute("aria-hidden")}`
+                );
+            };
+            pushAriaHidden("button-1");
+            pushAriaHidden("modal-1");
+            pushAriaHidden("button-2");
+            pushAriaHidden("modal-2");
+            pushAriaHidden("button-3");
+            pushAriaHidden("modal-3");
+            pushAriaHidden("button-4");
+            return ret;
+        };
+
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="modal-1"
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isAlwaysAccessible: true,
+                            },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                    </div>
+                    <button id="button-2">Button2</button>
+                    <div
+                        id="modal-2"
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal2",
+                                isOthersAccessible: true,
+                            },
+                        })}
+                    >
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                    <button id="button-3">Button3</button>
+                    <div>
+                        <div
+                            id="modal-3"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "modal3" },
+                            })}
+                        >
+                            <button id="modal-button-3">ModalButton3</button>
+                        </div>
+                    </div>
+                    <button id="button-4">Button4</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .wait(300)
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: null",
+                    "modal-1: null",
+                    "button-2: null",
+                    "modal-2: true",
+                    "button-3: null",
+                    "modal-3: true",
+                    "button-4: null",
+                ]);
+            })
+            .focusElement("#modal-button-1")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .wait(300)
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: true",
+                    "modal-1: null",
+                    "button-2: true",
+                    "modal-2: true",
+                    "button-3: true",
+                    "modal-3: true",
+                    "button-4: true",
+                ]);
+            })
+            .focusElement("#modal-button-2")
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                // Focused element should be cleared from aria-hidden right away.
+                expect(hiddens).toEqual([
+                    "button-1: true",
+                    "modal-1: null",
+                    "button-2: true",
+                    "modal-2: null",
+                    "button-3: true",
+                    "modal-3: true",
+                    "button-4: true",
+                ]);
+            })
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .wait(300)
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                // The rest aria-hiddens are removed asynchronously.
+                expect(hiddens).toEqual([
+                    "button-1: null",
+                    "modal-1: null",
+                    "button-2: null",
+                    "modal-2: null",
+                    "button-3: null",
+                    "modal-3: true",
+                    "button-4: null",
+                ]);
+            })
+            .focusElement("#modal-button-3")
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: null",
+                    "modal-1: null",
+                    "button-2: null",
+                    "modal-2: null",
+                    "button-3: null",
+                    "modal-3: null",
+                    "button-4: null",
+                ]);
+            })
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .wait(300)
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: true",
+                    "modal-1: null",
+                    "button-2: true",
+                    "modal-2: true",
+                    "button-3: true",
+                    "modal-3: null",
+                    "button-4: true",
+                ]);
+            })
+            .focusElement("#button-4")
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: true",
+                    "modal-1: null",
+                    "button-2: true",
+                    "modal-2: true",
+                    "button-3: true",
+                    "modal-3: null",
+                    "button-4: null",
+                ]);
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
+            .wait(300)
+            .eval(getAriaHiddens)
+            .check((hiddens: string[]) => {
+                expect(hiddens).toEqual([
+                    "button-1: null",
+                    "modal-1: null",
+                    "button-2: null",
+                    "modal-2: true",
+                    "button-3: null",
+                    "modal-3: true",
+                    "button-4: null",
+                ]);
+            });
+    });
 
     it("should deactivate and restore aria-hidden when removed from DOM", async () => {
         await new BroTest.BroTest(getTestHtml())
             .focusElement("#foo")
             .eval(() => document.getElementById("modal")?.remove())
+            .wait(300)
             .eval(() =>
                 document.getElementById("hidden")?.hasAttribute("aria-hidden")
             )
@@ -147,13 +332,14 @@ describe("Modalizer", () => {
                 getTestHtml({ isOthersAccessible: false })
             )
                 .focusElement("#foo")
+                .wait(300)
                 .eval(() =>
                     document
                         .getElementById("hidden")
                         ?.hasAttribute("aria-hidden")
                 )
                 .check((hasAriaHidden: boolean | undefined) =>
-                    expect(hasAriaHidden).toBe(false)
+                    expect(hasAriaHidden).toBe(true)
                 )
                 .pressTab(true)
                 .activeElement((el) => expect(el).toBeNull())
@@ -226,59 +412,60 @@ describe("Modalizer", () => {
     });
 });
 
-// describe("New Modalizer that already has focus", () => {
-//     const getTestHtml = () => {
-//         const rootAttr = getTabsterAttribute({ root: {} });
+describe("New Modalizer that already has focus", () => {
+    const getTestHtml = () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
 
-//         return (
-//             <div {...rootAttr}>
-//                 <div id="hidden">
-//                     <div>Hidden</div>
-//                     <button id="outside">Outside</button>
-//                 </div>
-//                 <div aria-label="modal" id="modal">
-//                     <button id="foo">Foo</button>
-//                     <button>Bar</button>
-//                 </div>
-//             </div>
-//         );
-//     };
+        return (
+            <div {...rootAttr}>
+                <div id="hidden">
+                    <div>Hidden</div>
+                    <button id="outside">Outside</button>
+                </div>
+                <div aria-label="modal" id="modal">
+                    <button id="foo">Foo</button>
+                    <button>Bar</button>
+                </div>
+            </div>
+        );
+    };
 
-//     beforeEach(async () => {
-//         await BroTest.bootstrapTabsterPage({ modalizer: true });
-//     });
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
 
-//     // makes sure that modalizer is cleaned up after each test run
-//     afterEach(async () => {
-//         await new BroTest.BroTest(<div></div>);
-//     });
+    // makes sure that modalizer is cleaned up after each test run
+    afterEach(async () => {
+        await new BroTest.BroTest(<div></div>);
+    });
 
-//     // it("should be activated", async () => {
-//     //     const tabsterAttr = getTabsterAttribute(
-//     //         {
-//     //             modalizer: { id: "modal " },
-//     //         },
-//     //         true
-//     //     ) as string;
+    it("should be activated", async () => {
+        const tabsterAttr = getTabsterAttribute(
+            {
+                modalizer: { id: "modal " },
+            },
+            true
+        ) as string;
 
-//     //     await new BroTest.BroTest(getTestHtml())
-//     //         .focusElement("#foo")
-//     //         .eval(
-//     //             (attrName, tabsterAttr) => {
-//     //                 const newModalizer = document.getElementById("modal");
-//     //                 newModalizer?.setAttribute(attrName, tabsterAttr);
-//     //             },
-//     //             Types.TabsterAttributeName,
-//     //             tabsterAttr
-//     //         )
-//     //         .eval(() =>
-//     //             document.getElementById("hidden")?.getAttribute("aria-hidden")
-//     //         )
-//     //         .check((ariaHidden: string | undefined) =>
-//     //             expect(ariaHidden).toBe("true")
-//     //         );
-//     // });
-// });
+        await new BroTest.BroTest(getTestHtml())
+            .focusElement("#foo")
+            .eval(
+                (attrName, tabsterAttr) => {
+                    const newModalizer = document.getElementById("modal");
+                    newModalizer?.setAttribute(attrName, tabsterAttr);
+                },
+                Types.TabsterAttributeName,
+                tabsterAttr
+            )
+            .wait(300)
+            .eval(() =>
+                document.getElementById("hidden")?.getAttribute("aria-hidden")
+            )
+            .check((ariaHidden: string | undefined) =>
+                expect(ariaHidden).toBe("true")
+            );
+    });
+});
 
 describe("Modalizer with multiple containers", () => {
     beforeEach(async () => {

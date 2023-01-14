@@ -117,7 +117,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         const attrVal = el.getAttribute("aria-hidden");
 
         if (attrVal && attrVal.toLowerCase() === "true") {
-            return true;
+            if (!this._tabster.modalizer?.isAugmented(el)) {
+                return true;
+            }
         }
 
         return false;

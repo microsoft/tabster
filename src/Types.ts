@@ -807,6 +807,12 @@ export interface UncontrolledAPI {}
 
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
+    activeId: string | undefined; // currently active Modalizer user id.
+    /** @internal */
+    currentIsOthersAccessible: boolean | undefined; // isOthersAccessible value of the currently active Modalizer.
+    /** @internal */
+    activeElements: WeakRef<HTMLElement>[];
+    /** @internal */
     createModalizer(element: HTMLElement, props: ModalizerProps): Modalizer;
     /**
      * Sets active modalizers.
@@ -817,15 +823,13 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
      */
     /** @internal */
     setActive(modalizer: Modalizer | undefined): void;
+    /** @internal */
+    hiddenUpdate(): void;
+    /** @internal */
+    isAugmented(element: HTMLElement): boolean;
 }
 
 export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
-    /** @internal */
-    activeId: string | undefined; // currently active Modalizer user id.
-    /** @internal */
-    currentIsOthersAccessible: boolean | undefined; // isOthersAccessible value of the currently active Modalizer.
-    /** @internal */
-    activeElements: HTMLElement[];
     /**
      * Activates a Modalizer and focuses the first or default element within
      *
