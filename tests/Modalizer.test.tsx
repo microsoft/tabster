@@ -1400,6 +1400,15 @@ describe("Modalizer events", () => {
             __tabsterModalizerEvents?: string[];
         }
 
+        const getEvents = () => {
+            const ret = (window as WindowWithModalizerEventsHistory)
+                .__tabsterModalizerEvents;
+            (
+                window as WindowWithModalizerEventsHistory
+            ).__tabsterModalizerEvents = [];
+            return ret;
+        };
+
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -1428,9 +1437,9 @@ describe("Modalizer events", () => {
             )
         )
             .eval(() => {
-                const events: string[] = ((
+                (
                     window as WindowWithModalizerEventsHistory
-                ).__tabsterModalizerEvents = []);
+                ).__tabsterModalizerEvents = [];
 
                 const addEvent = (
                     eventName: Types.ModalizerEventName,
@@ -1441,7 +1450,9 @@ describe("Modalizer events", () => {
                         ?.addEventListener(
                             eventName,
                             (e: Types.ModalizerEvent) => {
-                                events.push(
+                                (
+                                    window as WindowWithModalizerEventsHistory
+                                ).__tabsterModalizerEvents?.push(
                                     `${e.details.eventName} ${e.details.id} ${e.details.element.id}`
                                 );
                             }
@@ -1461,11 +1472,7 @@ describe("Modalizer events", () => {
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1")
             )
-            .eval(
-                () =>
-                    (window as WindowWithModalizerEventsHistory)
-                        .__tabsterModalizerEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
                     "tabster:modalizer:active modal modal-part-1",
@@ -1473,15 +1480,9 @@ describe("Modalizer events", () => {
                 ]);
             })
             .focusElement("#button-3")
-            .eval(
-                () =>
-                    (window as WindowWithModalizerEventsHistory)
-                        .__tabsterModalizerEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:modalizer:active modal modal-part-1",
-                    "tabster:modalizer:active modal modal-part-2",
                     "tabster:modalizer:inactive modal modal-part-1",
                     "tabster:modalizer:inactive modal modal-part-2",
                 ]);
@@ -1490,17 +1491,9 @@ describe("Modalizer events", () => {
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton2")
             )
-            .eval(
-                () =>
-                    (window as WindowWithModalizerEventsHistory)
-                        .__tabsterModalizerEvents
-            )
+            .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
-                    "tabster:modalizer:active modal modal-part-1",
-                    "tabster:modalizer:active modal modal-part-2",
-                    "tabster:modalizer:inactive modal modal-part-1",
-                    "tabster:modalizer:inactive modal modal-part-2",
                     "tabster:modalizer:active modal modal-part-1",
                     "tabster:modalizer:active modal modal-part-2",
                 ]);
