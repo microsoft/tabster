@@ -203,6 +203,7 @@ export class Modalizer
     dispose(): void {
         this.makeActive(false);
         this._onDispose(this);
+        this.dummyManager?.dispose();
         this._activeElements = [];
         this._remove();
     }
@@ -365,6 +366,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         win.clearTimeout(this._restoreModalizerFocusTimer);
+        win.clearTimeout(this._hiddenUpdateTimer);
 
         win.removeEventListener("keydown", this._onKeyDown, true);
 
