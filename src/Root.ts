@@ -299,10 +299,8 @@ export class RootAPI implements Types.RootAPI {
     };
 
     private _autoRootUnwait(doc: Document): void {
-        if (this._autoRootWaiting) {
-            doc.removeEventListener("readystatechange", this._autoRootCreate);
-            this._autoRootWaiting = false;
-        }
+        doc.removeEventListener("readystatechange", this._autoRootCreate);
+        this._autoRootWaiting = false;
     }
 
     dispose(): void {

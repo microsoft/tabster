@@ -75,7 +75,12 @@ export function setTabsterAttribute(
             try {
                 props = JSON.parse(attr);
             } catch (e) {
-                /**/
+                if (__DEV__) {
+                    console.error(
+                        `data-tabster attribute error: ${e}`,
+                        element
+                    );
+                }
             }
         }
     }
