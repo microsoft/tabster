@@ -427,23 +427,23 @@ describe("Focusable", () => {
                         .map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
-                    expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
-                })
-                .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({
-                            container: document.body,
-                            ignoreActiveModalizer: true,
-                        })
-                        .map((el) => el.textContent);
-                })
-                .check((evalRet: string[]) => {
                     expect(evalRet).toEqual([
                         "Button1",
                         "Button2",
                         "Button3",
                         "Button4",
                     ]);
+                })
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({
+                            container: document.body,
+                            useActiveModalizer: true,
+                        })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
                 });
         });
     });

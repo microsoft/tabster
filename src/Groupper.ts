@@ -149,11 +149,13 @@ export class Groupper
                       container: groupperElement,
                       currentElement,
                       onUncontrolled,
+                      useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: groupperElement,
                       currentElement,
                       onUncontrolled,
+                      useActiveModalizer: true,
                   });
 
             if (
@@ -165,9 +167,11 @@ export class Groupper
                 next = isBackward
                     ? tabster.focusable.findLast({
                           container: groupperElement,
+                          useActiveModalizer: true,
                       })
                     : tabster.focusable.findFirst({
                           container: groupperElement,
+                          useActiveModalizer: true,
                       });
             }
         }
@@ -239,6 +243,7 @@ export class Groupper
                     this._tabster.focusable.findFirst({
                         container: groupperElement,
                         ignoreUncontrolled: true,
+                        useActiveModalizer: true,
                     }) || undefined;
 
                 if (first) {
@@ -491,6 +496,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                     next = tabster.focusable.findNext({
                         container: groupperElement,
                         currentElement: element,
+                        useActiveModalizer: true,
                     });
                 }
             } else if (event.keyCode === Keys.Esc) {

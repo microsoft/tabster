@@ -242,6 +242,7 @@ export class Modalizer
                 container,
                 currentElement,
                 onUncontrolled,
+                useActiveModalizer: true,
             });
 
             if (
@@ -251,7 +252,7 @@ export class Modalizer
                 tabster.modalizer?.activeId
             ) {
                 next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
-                    { container }
+                    { container, useActiveModalizer: true }
                 );
             }
         }
@@ -878,7 +879,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const container = ctx?.root.getElement();
 
         if (container) {
-            let toFocus = this._tabster.focusable.findFirst({ container });
+            let toFocus = this._tabster.focusable.findFirst({
+                container,
+                useActiveModalizer: true,
+            });
 
             if (toFocus) {
                 if (
@@ -887,6 +891,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ) {
                     toFocus = this._tabster.focusable.findLast({
                         container,
+                        useActiveModalizer: true,
                     });
 
                     if (!toFocus) {

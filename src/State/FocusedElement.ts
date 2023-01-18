@@ -197,6 +197,7 @@ export class FocusedElementState
                                 container: uncontrolled,
                                 ignoreUncontrolled: true,
                                 ignoreAccessibiliy: true,
+                                useActiveModalizer: true,
                             });
                         }
 
@@ -439,11 +440,13 @@ export class FocusedElementState
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      useActiveModalizer: true,
                   });
 
             next = {

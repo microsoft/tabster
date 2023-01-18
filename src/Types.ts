@@ -409,10 +409,6 @@ export interface FindFocusableProps {
      */
     includeProgrammaticallyFocusable?: boolean;
     /**
-     * Ignore active modalizer.
-     */
-    ignoreActiveModalizer?: boolean;
-    /**
      * Ignore uncontrolled areas.
      */
     ignoreUncontrolled?: boolean;
@@ -421,7 +417,12 @@ export interface FindFocusableProps {
      */
     ignoreAccessibiliy?: boolean;
     /**
-     * Search withing the specified modality, null for everything outside modalizers, string within
+     * Take active modalizer into account when searching for elements
+     * (the elements out of active modalizer will not be returned).
+     */
+    useActiveModalizer?: boolean;
+    /**
+     * Search withing the specified modality, null for everything outside of modalizers, string within
      * a specific id, undefined for search within the current application state.
      */
     modalizerId?: string | null;
@@ -451,7 +452,7 @@ export type FindFirstProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
-    | "ignoreActiveModalizer"
+    | "useActiveModalizer"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
 >;
@@ -462,7 +463,7 @@ export type FindNextProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
-    | "ignoreActiveModalizer"
+    | "useActiveModalizer"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
     | "onUncontrolled"
@@ -473,7 +474,7 @@ export type FindDefaultProps = Pick<
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
-    | "ignoreActiveModalizer"
+    | "useActiveModalizer"
     | "ignoreAccessibiliy"
 >;
 
@@ -484,7 +485,7 @@ export type FindAllProps = Pick<
     | "currentElement"
     | "isBackward"
     | "includeProgrammaticallyFocusable"
-    | "ignoreActiveModalizer"
+    | "useActiveModalizer"
     | "acceptCondition"
     | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
