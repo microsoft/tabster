@@ -16,7 +16,6 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
-import { setTabsterAttribute } from "./AttributeHelpers";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -269,7 +268,7 @@ export class RootAPI implements Types.RootAPI {
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _autoRoot: Types.RootProps | undefined;
-    private _autoRootWaiting = false;
+    private _autoRootInstance: Root | undefined;
     private _roots: Record<string, Types.Root> = {};
     private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
@@ -279,10 +278,7 @@ export class RootAPI implements Types.RootAPI {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
-        if (autoRoot) {
-            this._autoRoot = autoRoot;
-            this._autoRootCreate();
-        }
+        this._autoRoot = autoRoot;
         this.eventTarget = createEventTarget(this._win);
     }
 
@@ -290,39 +286,14 @@ export class RootAPI implements Types.RootAPI {
         this._initTimer = undefined;
     };
 
-    private _autoRootCreate = (): Types.Root | undefined => {
-        const doc = this._win().document;
-        const body = doc.body;
-
-        if (body) {
-            this._autoRootUnwait(doc);
-
-            const props = this._autoRoot;
-
-            if (props) {
-                setTabsterAttribute(body, { root: props }, true);
-                return getTabsterOnElement(this._tabster, body)?.root;
-            }
-        } else if (!this._autoRootWaiting) {
-            this._autoRootWaiting = true;
-            doc.addEventListener("readystatechange", this._autoRootCreate);
-        }
-
-        return undefined;
-    };
-
-    private _autoRootUnwait(doc: Document): void {
-        if (this._autoRootWaiting) {
-            doc.removeEventListener("readystatechange", this._autoRootCreate);
-            this._autoRootWaiting = false;
-        }
-    }
-
     dispose(): void {
         const win = this._win();
 
-        this._autoRootUnwait(win.document);
-        delete this._autoRoot;
+        if (this._autoRootInstance) {
+            this._autoRootInstance.dispose();
+            delete this._autoRootInstance;
+            delete this._autoRoot;
+        }
 
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
@@ -490,11 +461,20 @@ export class RootAPI implements Types.RootAPI {
             const rootAPI = tabster.root as RootAPI;
             const autoRoot = rootAPI._autoRoot;
 
-            if (autoRoot) {
-                if (element.ownerDocument?.body) {
-                    root = rootAPI._autoRootCreate();
+            if (autoRoot && !rootAPI._autoRootInstance) {
+                const body = element.ownerDocument?.body;
+
+                if (body) {
+                    rootAPI._autoRootInstance = new Root(
+                        rootAPI._tabster,
+                        body,
+                        rootAPI._onRootDispose,
+                        autoRoot
+                    );
                 }
             }
+
+            root = rootAPI._autoRootInstance;
         }
 
         if (groupper && !mover) {
