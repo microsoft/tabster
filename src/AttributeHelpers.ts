@@ -89,9 +89,7 @@ export function setTabsterAttribute(
         props = {};
     }
 
-    if (update) {
-        mergeTabsterProps(props, newProps);
-    }
+    mergeTabsterProps(props, newProps);
 
     if (Object.keys(props).length > 0) {
         element.setAttribute(
