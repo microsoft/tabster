@@ -72,7 +72,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <div {...attr} id={moverId}>
                         <button>Button1</button>
                         <button>Button2</button>
@@ -120,7 +120,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <div
                         id={scrollId}
@@ -210,7 +210,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const groupperId = "groupper";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <div {...attr} id={groupperId}>
                         <button>Button1</button>
                         <button>Button2</button>
@@ -253,7 +253,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const modalizerAPIId = "modalizerAPI";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <div {...attr} aria-label="modalizer">
                         <button>Button1</button>
                         <button>Button2</button>
@@ -301,7 +301,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const containerId = "outside";
                 const Tag = tagName;
                 const testHtml = (
-                    <div>
+                    <div {...getTabsterAttribute({ root: {} })}>
                         <Tag {...attr} id={containerId}>
                             <li>
                                 <button>Button1</button>
@@ -350,7 +350,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const containerId = "inside";
                 const Tag = tagName;
                 const testHtml = (
-                    <div>
+                    <div {...getTabsterAttribute({ root: {} })}>
                         <table>
                             <Tag {...attr} id={containerId}>
                                 <button>Button1</button>
