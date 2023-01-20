@@ -315,10 +315,8 @@ export class RootAPI implements Types.RootAPI {
         this._autoRootUnwait(win.document);
         delete this._autoRoot;
 
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
+        win.clearTimeout(this._initTimer);
+        this._initTimer = undefined;
 
         Object.keys(this._roots).forEach((rootId) => {
             if (this._roots[rootId]) {
