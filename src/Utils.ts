@@ -1479,3 +1479,63 @@ export function triggerEvent<D>(
 
     return !event.defaultPrevented;
 }
+
+export function augmentAttribute(
+    tabster: Types.TabsterCore,
+    element: HTMLElement,
+    name: string,
+    value?: string | null // Restore original value when undefined.
+): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const entry = tabster.storageEntry(element, true)!;
+    let ret = false;
+
+    if (!entry.aug) {
+        if (value === undefined) {
+            return ret;
+        }
+
+        entry.aug = {};
+    }
+
+    if (value === undefined) {
+        if (name in entry.aug) {
+            const origVal = entry.aug[name];
+
+            delete entry.aug[name];
+
+            if (origVal === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, origVal);
+            }
+
+            ret = true;
+        }
+    } else {
+        let origValue: string | null | undefined;
+
+        if (!(name in entry.aug)) {
+            origValue = element.getAttribute(name);
+        }
+
+        if (origValue !== undefined && origValue !== value) {
+            entry.aug[name] = origValue;
+
+            if (value === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, value);
+            }
+
+            ret = true;
+        }
+    }
+
+    if (value === undefined && Object.keys(entry.aug).length === 0) {
+        delete entry.aug;
+        tabster.storageEntry(element, false);
+    }
+
+    return ret;
+}

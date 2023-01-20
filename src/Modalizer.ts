@@ -4,7 +4,7 @@
  */
 
 import { nativeFocus } from "keyborg";
-import { augmentAttribute, getTabsterOnElement } from "./Instance";
+import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
@@ -17,6 +17,7 @@ import {
     TabsterPart,
     WeakHTMLElement,
     triggerEvent,
+    augmentAttribute,
 } from "./Utils";
 
 let _wasFocusedCounter = 0;
