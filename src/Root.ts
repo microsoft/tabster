@@ -4,7 +4,7 @@
  */
 
 import { createEventTarget } from "./EventTarget";
-import { getTabsterOnElement } from "./Instance";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
 import {
     DummyInput,
@@ -266,18 +266,23 @@ export class RootAPI implements Types.RootAPI {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._initTimer = this._win().setTimeout(this._init, 0);
-        if (autoRoot) {
-            this._autoRoot = autoRoot;
-            this._autoRootCreate();
-        }
+        this._autoRoot = autoRoot;
         this.eventTarget = createEventTarget(this._win);
     }
 
     private _init = (): void => {
         this._initTimer = undefined;
+
+        if (this._autoRoot) {
+            this._autoRootCreate();
+        }
     };
 
     private _autoRootCreate = (): Types.Root | undefined => {
+        if (this._initTimer) {
+            return;
+        }
+
         const doc = this._win().document;
         const body = doc.body;
 
@@ -288,6 +293,7 @@ export class RootAPI implements Types.RootAPI {
 
             if (props) {
                 setTabsterAttribute(body, { root: props }, true);
+                updateTabsterByAttribute(this._tabster, body);
                 return getTabsterOnElement(this._tabster, body)?.root;
             }
         } else if (!this._autoRootWaiting) {
