@@ -376,7 +376,8 @@ export class FocusedElementState
         ctx: Types.TabsterContext,
         container?: HTMLElement,
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const actualContainer = container || ctx.root.getElement();
 
@@ -402,7 +403,11 @@ export class FocusedElementState
         const callFindNext = (
             what: Types.Groupper | Types.Mover | Types.Modalizer
         ) => {
-            next = what.findNextTabbable(currentElement, isBackward);
+            next = what.findNextTabbable(
+                currentElement,
+                isBackward,
+                ignoreUncontrolled
+            );
         };
 
         const modalizer = ctx.modalizer;
@@ -440,12 +445,14 @@ export class FocusedElementState
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
                       useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
                       useActiveModalizer: true,
                   });
 
@@ -492,7 +499,8 @@ export class FocusedElementState
                             adjacentCtx,
                             actualContainer,
                             adjacentFrom,
-                            isBackward
+                            isBackward,
+                            ignoreUncontrolled
                         );
 
                         if (next && !next.lastMoverOrGroupper) {

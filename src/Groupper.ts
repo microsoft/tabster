@@ -14,6 +14,7 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
+    HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
     getAdjacentElement,
@@ -44,7 +45,8 @@ class GroupperDummyManager extends DummyInputManager {
 
                         next = groupper.findNextTabbable(
                             relatedTarget || undefined,
-                            isBackward
+                            isBackward,
+                            true
                         )?.element;
 
                         if (!next) {
@@ -58,7 +60,8 @@ class GroupperDummyManager extends DummyInputManager {
                                           container,
                                           !isBackward
                                       ),
-                                isBackward
+                                isBackward,
+                                true
                             )?.element;
                         }
 
@@ -119,7 +122,8 @@ export class Groupper
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const groupperElement = this.getElement();
 
@@ -128,8 +132,16 @@ export class Groupper
         }
 
         const groupperFirstFocusable = this.getFirst(true);
+        const currentIsDummy =
+            (
+                currentElement as HTMLElementWithDummyContainer
+            )?.__tabsterDummyContainer?.get() === groupperElement;
 
-        if (!currentElement || !groupperElement.contains(currentElement)) {
+        if (
+            !currentElement ||
+            !groupperElement.contains(currentElement) ||
+            currentIsDummy
+        ) {
             return {
                 element: groupperFirstFocusable,
                 lastMoverOrGroupper: groupperFirstFocusable ? undefined : this,
@@ -149,11 +161,13 @@ export class Groupper
                       container: groupperElement,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
                       useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: groupperElement,
                       currentElement,
+                      ignoreUncontrolled,
                       onUncontrolled,
                       useActiveModalizer: true,
                   });
@@ -167,10 +181,12 @@ export class Groupper
                 next = isBackward
                     ? tabster.focusable.findLast({
                           container: groupperElement,
+                          ignoreUncontrolled: true,
                           useActiveModalizer: true,
                       })
                     : tabster.focusable.findFirst({
                           container: groupperElement,
+                          ignoreUncontrolled: true,
                           useActiveModalizer: true,
                       });
             }

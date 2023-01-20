@@ -1500,3 +1500,159 @@ describe("Modalizer events", () => {
             });
     });
 });
+
+describe("Modalizer with uncontrolled areas", () => {
+    const getTestHtml = () => (
+        <div {...getTabsterAttribute({ root: {} })}>
+            <button>Button1</button>
+            <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                <button>Button2</button>
+                <button>Button3</button>
+            </div>
+            <div
+                aria-label="modal"
+                {...getTabsterAttribute({
+                    modalizer: { id: "modal", isTrapped: true },
+                })}
+            >
+                <button id="foo">Foo</button>
+                <button>Bar</button>
+            </div>
+            <button>Button4</button>
+            <div
+                aria-label="modal"
+                tabIndex={0}
+                {...getTabsterAttribute({
+                    modalizer: { id: "modal", isTrapped: true },
+                    groupper: {
+                        tabbability:
+                            Types.GroupperTabbabilities.LimitedTrapFocus,
+                    },
+                })}
+            >
+                <button>ModalButton1</button>
+                <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                    <button>ModalButton2</button>
+                    <button>ModalButton3</button>
+                </div>
+                <button>ModalButton4</button>
+            </div>
+            <button>Button5</button>
+            <div
+                aria-label="modal"
+                {...getTabsterAttribute({
+                    modalizer: { id: "modal", isTrapped: true },
+                    uncontrolled: {},
+                })}
+            >
+                <button>ModalButton5</button>
+                <button>ModalButton6</button>
+            </div>
+            <button>Button6</button>
+        </div>
+    );
+
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true, groupper: true });
+    });
+
+    // makes sure that modalizer is cleaned up after each test run
+    afterEach(async () => {
+        await new BroTest.BroTest(<div></div>);
+    });
+
+    it("should properly consider uncontrolled areas", async () => {
+        await new BroTest.BroTest(getTestHtml())
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "ModalButton1ModalButton2ModalButton3ModalButton4"
+                )
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button6"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button6"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "ModalButton1ModalButton2ModalButton3ModalButton4"
+                )
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .pressTab()
+            .pressTab()
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "ModalButton1ModalButton2ModalButton3ModalButton4"
+                )
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton4")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton5")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton6")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Bar"))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Bar"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton6")
+            );
+    });
+});

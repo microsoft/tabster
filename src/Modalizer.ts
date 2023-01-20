@@ -82,7 +82,8 @@ class ModalizerDummyManager extends DummyInputManager {
                         ctx,
                         undefined,
                         input,
-                        isBackward
+                        isBackward,
+                        true
                     )?.element;
                 }
 
@@ -218,7 +219,8 @@ export class Modalizer
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const modalizerElement = this.getElement();
 
@@ -242,6 +244,7 @@ export class Modalizer
                 container,
                 currentElement,
                 onUncontrolled,
+                ignoreUncontrolled,
                 useActiveModalizer: true,
             });
 
@@ -252,7 +255,11 @@ export class Modalizer
                 tabster.modalizer?.activeId
             ) {
                 next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
-                    { container, useActiveModalizer: true }
+                    {
+                        container,
+                        ignoreUncontrolled: true,
+                        useActiveModalizer: true,
+                    }
                 );
             }
         }
@@ -881,6 +888,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         if (container) {
             let toFocus = this._tabster.focusable.findFirst({
                 container,
+                ignoreUncontrolled: true,
                 useActiveModalizer: true,
             });
 
@@ -891,6 +899,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ) {
                     toFocus = this._tabster.focusable.findLast({
                         container,
+                        ignoreUncontrolled: true,
                         useActiveModalizer: true,
                     });
 

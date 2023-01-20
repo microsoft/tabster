@@ -107,7 +107,8 @@ export interface TabsterPart<P> {
 export interface TabsterPartWithFindNextTabbable {
     findNextTabbable(
         current?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): NextTabbable | null;
 }
 

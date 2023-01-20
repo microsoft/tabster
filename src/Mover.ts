@@ -59,7 +59,8 @@ class MoverDummyManager extends DummyInputManager {
                     ctx,
                     undefined,
                     input,
-                    !dummyInput.isFirst
+                    !dummyInput.isFirst,
+                    true
                 )?.element;
             }
 
@@ -223,7 +224,8 @@ export class Mover
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
@@ -254,12 +256,14 @@ export class Mover
                       currentElement,
                       container,
                       onUncontrolled,
+                      ignoreUncontrolled,
                       useActiveModalizer: true,
                   })
                 : focusable.findNext({
                       currentElement,
                       container,
                       onUncontrolled,
+                      ignoreUncontrolled,
                       useActiveModalizer: true,
                   });
         }
@@ -850,6 +854,7 @@ export class MoverAPI implements Types.MoverAPI {
             } else if (!next && isCyclic) {
                 next = focusable.findFirst({
                     container,
+                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
@@ -874,13 +879,22 @@ export class MoverAPI implements Types.MoverAPI {
             } else if (!next && isCyclic) {
                 next = focusable.findLast({
                     container,
+                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
         } else if (keyCode === Keys.Home) {
-            next = focusable.findFirst({ container, useActiveModalizer: true });
+            next = focusable.findFirst({
+                container,
+                ignoreUncontrolled: true,
+                useActiveModalizer: true,
+            });
         } else if (keyCode === Keys.End) {
-            next = focusable.findLast({ container, useActiveModalizer: true });
+            next = focusable.findLast({
+                container,
+                ignoreUncontrolled: true,
+                useActiveModalizer: true,
+            });
         } else if (keyCode === Keys.PageUp) {
             let prevElement = focusable.findPrev({
                 currentElement: focused,
