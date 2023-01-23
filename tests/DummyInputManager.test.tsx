@@ -73,11 +73,13 @@ describeIfUncontrolled("DummyInputManager", () => {
 
             const testHtml = (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...attr} id={moverId}>
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
+                    <div>
+                        <div {...attr} id={moverId}>
+                            <button>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
                     </div>
                 </div>
             );
@@ -120,11 +122,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div
-                    {...getTabsterAttribute({
-                        root: {},
-                    })}
-                >
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <div
                         id={scrollId}
@@ -358,12 +356,14 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const Tag = tagName;
                 const testHtml = (
                     <div {...getTabsterAttribute({ root: {} })}>
-                        <table>
-                            <Tag {...attr} id={containerId}>
-                                <button>Button1</button>
-                                <button>Button2</button>
-                            </Tag>
-                        </table>
+                        <div>
+                            <table>
+                                <Tag {...attr} id={containerId}>
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </Tag>
+                            </table>
+                        </div>
                     </div>
                 );
                 await new BroTest.BroTest(testHtml)
