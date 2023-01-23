@@ -4,7 +4,7 @@
  */
 
 import { createEventTarget } from "./EventTarget";
-import { getTabsterOnElement } from "./Instance";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
 import {
     DummyInput,
@@ -15,6 +15,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { setTabsterAttribute } from "./AttributeHelpers";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -256,7 +257,7 @@ export class RootAPI implements Types.RootAPI {
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _autoRoot: Types.RootProps | undefined;
-    private _autoRootInstance: Root | undefined;
+    private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
     rootById: { [id: string]: Types.Root } = {};
     eventTarget: EventTarget;
@@ -271,21 +272,51 @@ export class RootAPI implements Types.RootAPI {
 
     private _init = (): void => {
         this._initTimer = undefined;
+
+        if (this._autoRoot) {
+            this._autoRootCreate();
+        }
     };
+
+    private _autoRootCreate = (): Types.Root | undefined => {
+        if (this._initTimer) {
+            return;
+        }
+
+        const doc = this._win().document;
+        const body = doc.body;
+
+        if (body) {
+            this._autoRootUnwait(doc);
+
+            const props = this._autoRoot;
+
+            if (props) {
+                setTabsterAttribute(body, { root: props }, true);
+                updateTabsterByAttribute(this._tabster, body);
+                return getTabsterOnElement(this._tabster, body)?.root;
+            }
+        } else if (!this._autoRootWaiting) {
+            this._autoRootWaiting = true;
+            doc.addEventListener("readystatechange", this._autoRootCreate);
+        }
+
+        return undefined;
+    };
+
+    private _autoRootUnwait(doc: Document): void {
+        doc.removeEventListener("readystatechange", this._autoRootCreate);
+        this._autoRootWaiting = false;
+    }
 
     dispose(): void {
         const win = this._win();
 
-        if (this._autoRootInstance) {
-            this._autoRootInstance.dispose();
-            delete this._autoRootInstance;
-            delete this._autoRoot;
-        }
+        this._autoRootUnwait(win.document);
+        delete this._autoRoot;
 
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
+        win.clearTimeout(this._initTimer);
+        this._initTimer = undefined;
 
         Object.keys(this._roots).forEach((rootId) => {
             if (this._roots[rootId]) {
@@ -418,20 +449,11 @@ export class RootAPI implements Types.RootAPI {
             const rootAPI = tabster.root as RootAPI;
             const autoRoot = rootAPI._autoRoot;
 
-            if (autoRoot && !rootAPI._autoRootInstance) {
-                const body = element.ownerDocument?.body;
-
-                if (body) {
-                    rootAPI._autoRootInstance = new Root(
-                        rootAPI._tabster,
-                        body,
-                        rootAPI._onRootDispose,
-                        autoRoot
-                    );
+            if (autoRoot) {
+                if (element.ownerDocument?.body) {
+                    root = rootAPI._autoRootCreate();
                 }
             }
-
-            root = rootAPI._autoRootInstance;
         }
 
         if (groupper && !mover) {
