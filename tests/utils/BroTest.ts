@@ -15,7 +15,10 @@ import {
     createTabster,
     disposeTabster,
     getTabster,
+    getTabsterAttribute,
     makeNoOp,
+    mergeTabsterProps,
+    setTabsterAttribute,
     Types,
 } from "tabster";
 
@@ -95,6 +98,9 @@ export interface BroTestTabsterTestVariables {
     createTabster?: typeof createTabster;
     getTabster?: typeof getTabster;
     makeNoOp?: typeof makeNoOp;
+    getTabsterAttribute?: typeof getTabsterAttribute;
+    setTabsterAttribute?: typeof setTabsterAttribute;
+    mergeTabsterProps?: typeof mergeTabsterProps;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;
