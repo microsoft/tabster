@@ -14,6 +14,7 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
+    HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
     getAdjacentElement,
@@ -34,48 +35,38 @@ class GroupperDummyManager extends DummyInputManager {
                 relatedTarget: HTMLElement | null
             ) => {
                 const container = element.get();
+                const input = dummyInput.input;
 
-                if (container && !dummyInput.shouldMoveOut) {
-                    const input = dummyInput.input;
+                if (container && input) {
+                    const ctx = RootAPI.getTabsterContext(tabster, input);
 
-                    if (input) {
-                        const ctx = RootAPI.getTabsterContext(tabster, input);
+                    if (ctx) {
+                        let next: HTMLElement | null | undefined;
 
-                        if (ctx) {
-                            let next: HTMLElement | null | undefined;
+                        next = groupper.findNextTabbable(
+                            relatedTarget || undefined,
+                            isBackward,
+                            true
+                        )?.element;
 
-                            if (
-                                relatedTarget &&
-                                relatedTarget.contentEditable === "true" &&
-                                groupper.getProps().tabbability ===
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus &&
-                                container.contains(relatedTarget)
-                            ) {
-                                next = groupper.findNextTabbable(
-                                    relatedTarget,
-                                    isBackward
-                                )?.element;
-                            }
+                        if (!next) {
+                            next = FocusedElementState.findNextTabbable(
+                                tabster,
+                                ctx,
+                                undefined,
+                                dummyInput.isOutside
+                                    ? input
+                                    : getAdjacentElement(
+                                          container,
+                                          !isBackward
+                                      ),
+                                isBackward,
+                                true
+                            )?.element;
+                        }
 
-                            if (!next) {
-                                next = FocusedElementState.findNextTabbable(
-                                    tabster,
-                                    ctx,
-                                    undefined,
-                                    dummyInput.isOutside
-                                        ? input
-                                        : getAdjacentElement(
-                                              container,
-                                              !isBackward
-                                          ),
-                                    isBackward
-                                )?.element;
-                            }
-
-                            if (next) {
-                                tabster.focusedElement.focus(next);
-                            }
+                        if (next) {
+                            nativeFocus(next);
                         }
                     }
                 }
@@ -131,7 +122,8 @@ export class Groupper
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const groupperElement = this.getElement();
 
@@ -140,8 +132,16 @@ export class Groupper
         }
 
         const groupperFirstFocusable = this.getFirst(true);
+        const currentIsDummy =
+            (
+                currentElement as HTMLElementWithDummyContainer
+            )?.__tabsterDummyContainer?.get() === groupperElement;
 
-        if (!currentElement || !groupperElement.contains(currentElement)) {
+        if (
+            !currentElement ||
+            !groupperElement.contains(currentElement) ||
+            currentIsDummy
+        ) {
             return {
                 element: groupperFirstFocusable,
                 lastMoverOrGroupper: groupperFirstFocusable ? undefined : this,
@@ -161,11 +161,15 @@ export class Groupper
                       container: groupperElement,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
+                      useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: groupperElement,
                       currentElement,
+                      ignoreUncontrolled,
                       onUncontrolled,
+                      useActiveModalizer: true,
                   });
 
             if (
@@ -177,9 +181,13 @@ export class Groupper
                 next = isBackward
                     ? tabster.focusable.findLast({
                           container: groupperElement,
+                          ignoreUncontrolled: true,
+                          useActiveModalizer: true,
                       })
                     : tabster.focusable.findFirst({
                           container: groupperElement,
+                          ignoreUncontrolled: true,
+                          useActiveModalizer: true,
                       });
             }
         }
@@ -251,6 +259,7 @@ export class Groupper
                     this._tabster.focusable.findFirst({
                         container: groupperElement,
                         ignoreUncontrolled: true,
+                        useActiveModalizer: true,
                     }) || undefined;
 
                 if (first) {
@@ -346,7 +355,8 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         const win = this._win();
 
-        this._tabster.focusedElement.subscribe(this._onFocus);
+        // Making sure groupper's onFocus is called before modalizer's onFocus.
+        this._tabster.focusedElement.subscribeFirst(this._onFocus);
 
         win.document.addEventListener("mousedown", this._onMouseDown, true);
         win.addEventListener("keydown", this._onKeyDown, true);
@@ -461,69 +471,82 @@ export class GroupperAPI implements Types.GroupperAPI {
         }
     }
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
-        if (e.keyCode !== Keys.Enter && e.keyCode !== Keys.Esc) {
+    private _onKeyDown = (event: KeyboardEvent): void => {
+        if (event.keyCode !== Keys.Enter && event.keyCode !== Keys.Esc) {
             return;
         }
 
         const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, element);
-            let groupper = ctx?.groupper;
-
-            if (ctx && groupper) {
-                if (ctx.ignoreKeydown(e)) {
-                    return;
-                }
-
-                let next: HTMLElement | null | undefined;
-
-                const groupperElement = groupper.getElement();
-
-                if (e.keyCode === Keys.Enter) {
-                    if (
-                        element === groupperElement ||
-                        (groupper.getProps().delegated &&
-                            element === groupper.getFirst(false))
-                    ) {
-                        next = this._tabster.focusable.findNext({
-                            container: groupperElement,
-                            currentElement: element,
-                        });
-                    }
-                } else if (e.keyCode === Keys.Esc) {
-                    if (groupperElement && groupperElement.contains(element)) {
-                        if (element !== groupperElement) {
-                            next = groupper.getFirst(true);
-                        } else {
-                            const parentElement = groupperElement.parentElement;
-                            const parentCtx = parentElement
-                                ? RootAPI.getTabsterContext(
-                                      this._tabster,
-                                      parentElement
-                                  )
-                                : undefined;
-
-                            groupper = parentCtx?.groupper;
-                            next = groupper?.getFirst(true);
-                        }
-                    }
-
-                    if (groupper) {
-                        groupper.makeTabbable(false);
-                    }
-                }
-
-                if (next) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-
-                    nativeFocus(next);
-                }
-            }
+            this.handleKeyPress(element, event);
         }
     };
+
+    handleKeyPress(
+        element: HTMLElement,
+        event: KeyboardEvent,
+        noGoUp?: boolean
+    ): void {
+        const tabster = this._tabster;
+        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const modalizerInGroupper = ctx?.modalizerInGroupper;
+        let groupper = ctx?.groupper || modalizerInGroupper;
+
+        if (ctx && groupper) {
+            if (ctx.ignoreKeydown(event)) {
+                return;
+            }
+
+            let next: HTMLElement | null | undefined;
+
+            const groupperElement = groupper.getElement();
+
+            if (event.keyCode === Keys.Enter) {
+                if (
+                    groupperElement &&
+                    (element === groupperElement ||
+                        (groupper.getProps().delegated &&
+                            element === groupper.getFirst(false)))
+                ) {
+                    next = tabster.focusable.findNext({
+                        container: groupperElement,
+                        currentElement: element,
+                        useActiveModalizer: true,
+                    });
+                }
+            } else if (event.keyCode === Keys.Esc) {
+                if (groupperElement && groupperElement.contains(element)) {
+                    if (element !== groupperElement || noGoUp) {
+                        next = groupper.getFirst(true);
+                    } else {
+                        const parentElement = groupperElement.parentElement;
+                        const parentCtx = parentElement
+                            ? RootAPI.getTabsterContext(tabster, parentElement)
+                            : undefined;
+
+                        groupper = parentCtx?.groupper;
+                        next = groupper?.getFirst(true);
+                    }
+                }
+
+                if (groupper) {
+                    groupper.makeTabbable(false);
+
+                    if (modalizerInGroupper) {
+                        tabster.modalizer?.setActive(undefined);
+                    }
+                }
+            }
+
+            if (next) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                next.focus();
+            }
+        }
+    }
 }
 
 function _setInformativeStyle(

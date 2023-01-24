@@ -90,7 +90,7 @@ class TabsterCore implements Types.TabsterCore {
 
         this.keyboardNavigation = new KeyboardNavigationState(getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
-        this.focusable = new FocusableAPI(this, getWindow);
+        this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;

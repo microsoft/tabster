@@ -474,3 +474,94 @@ describeIfUncontrolled("Groupper", () => {
         );
     });
 });
+
+describe("Groupper - empty", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should handle empty groupper as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <Tag
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            Hello
+                        </Tag>
+                        <button>Button2</button>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should handle empty groupper with focusable container as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <Tag
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            Hello
+                        </Tag>
+                        <button>Button2</button>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Hello");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Hello");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        }
+    );
+});

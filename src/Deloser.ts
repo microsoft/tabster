@@ -630,6 +630,8 @@ export class Deloser
         if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
             const first = this._tabster.focusable.findFirst({
                 container: element,
+                ignoreUncontrolled: true,
+                useActiveModalizer: true,
             });
 
             if (first) {
@@ -870,11 +872,21 @@ export class DeloserAPI implements Types.DeloserAPI {
         tabster: Types.TabsterCore,
         element: HTMLElement
     ): Types.Deloser | undefined {
+        let root: Types.Root | undefined;
+
         for (let e: HTMLElement | null = element; e; e = e.parentElement) {
             const tabsterOnElement = getTabsterOnElement(tabster, e);
 
-            if (tabsterOnElement && tabsterOnElement.deloser) {
-                return tabsterOnElement.deloser;
+            if (tabsterOnElement) {
+                if (!root) {
+                    root = tabsterOnElement.root;
+                }
+
+                const deloser = tabsterOnElement.deloser;
+
+                if (deloser) {
+                    return deloser;
+                }
             }
         }
 
@@ -887,7 +899,7 @@ export class DeloserAPI implements Types.DeloserAPI {
 
             const autoDeloserProps = deloserAPI._autoDeloser;
 
-            if (!deloserAPI._autoDeloserInstance && autoDeloserProps) {
+            if (root && !deloserAPI._autoDeloserInstance && autoDeloserProps) {
                 const body = element.ownerDocument?.body;
 
                 if (body) {

@@ -17,11 +17,23 @@ export abstract class Subscribable<A, B = undefined>
     }
 
     subscribe(callback: Types.SubscribableCallback<A, B>): void {
-        const index = this._callbacks.indexOf(callback);
+        const callbacks = this._callbacks;
+        const index = callbacks.indexOf(callback);
 
         if (index < 0) {
-            this._callbacks.push(callback);
+            callbacks.push(callback);
         }
+    }
+
+    subscribeFirst(callback: Types.SubscribableCallback<A, B>): void {
+        const callbacks = this._callbacks;
+        const index = callbacks.indexOf(callback);
+
+        if (index >= 0) {
+            callbacks.splice(index, 1);
+        }
+
+        callbacks.unshift(callback);
     }
 
     unsubscribe(callback: Types.SubscribableCallback<A, B>): void {

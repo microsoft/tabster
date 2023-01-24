@@ -80,12 +80,6 @@ export function updateTabsterByAttribute(
                 if (root) {
                     tabster.root.onRoot(root, true);
                 }
-            } else if (key === "modalizer") {
-                const modalizer = tabsterOnElement.modalizer;
-
-                if (tabster.modalizer && modalizer) {
-                    tabster.modalizer.updateModalizer(modalizer, true);
-                }
             }
 
             switch (key) {
@@ -138,7 +132,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Deloser API used before initializing, please call `getDeloser()`"
+                            "Deloser API used before initialization, please call `getDeloser()`"
                         );
                     }
                 }
@@ -172,7 +166,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Modalizer API used before initializing, please call `getModalizer()`"
+                            "Modalizer API used before initialization, please call `getModalizer()`"
                         );
                     }
                 }
@@ -196,7 +190,7 @@ export function updateTabsterByAttribute(
                             );
                     } else if (__DEV__) {
                         console.error(
-                            "Groupper API used before initializing, please call `getGroupper()`"
+                            "Groupper API used before initialization, please call `getGroupper()`"
                         );
                     }
                 }
@@ -215,7 +209,7 @@ export function updateTabsterByAttribute(
                         );
                     } else if (__DEV__) {
                         console.error(
-                            "Mover API used before initializing, please call `getMover()`"
+                            "Mover API used before initialization, please call `getMover()`"
                         );
                     }
                 }
@@ -227,7 +221,7 @@ export function updateTabsterByAttribute(
                     tabster.observedElement.onObservedElementUpdate(element);
                 } else if (__DEV__) {
                     console.error(
-                        "ObservedElement API used before initializing, please call `getObservedElement()`"
+                        "ObservedElement API used before initialization, please call `getObservedElement()`"
                     );
                 }
                 break;
@@ -241,7 +235,7 @@ export function updateTabsterByAttribute(
                     tabsterOnElement.outline = newTabsterProps.outline;
                 } else if (__DEV__) {
                     console.error(
-                        "Outline API used before initializing, please call `getOutline()`"
+                        "Outline API used before initialization, please call `getOutline()`"
                     );
                 }
                 break;
@@ -260,53 +254,6 @@ export function updateTabsterByAttribute(
             delete entry.tabster;
             delete entry.attr;
         }
-        tabster.storageEntry(element, false);
-    }
-}
-
-export function augmentAttribute(
-    tabster: Types.TabsterCore,
-    element: HTMLElement,
-    name: string,
-    value?: string | null // Restore original value when undefined.
-): void {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const entry = tabster.storageEntry(element, true)!;
-
-    if (!entry.aug) {
-        if (value === undefined) {
-            return;
-        }
-
-        entry.aug = {};
-    }
-
-    if (value === undefined) {
-        if (name in entry.aug) {
-            const origVal = entry.aug[name];
-
-            delete entry.aug[name];
-
-            if (origVal === null) {
-                element.removeAttribute(name);
-            } else {
-                element.setAttribute(name, origVal);
-            }
-        }
-    } else {
-        if (!(name in entry.aug)) {
-            entry.aug[name] = element.getAttribute(name);
-        }
-
-        if (value === null) {
-            element.removeAttribute(name);
-        } else {
-            element.setAttribute(name, value);
-        }
-    }
-
-    if (value === undefined && Object.keys(entry.aug).length === 0) {
-        delete entry.aug;
         tabster.storageEntry(element, false);
     }
 }

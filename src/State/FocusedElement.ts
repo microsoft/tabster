@@ -15,6 +15,7 @@ import {
     getAdjacentElement,
     shouldIgnoreFocus,
     WeakHTMLElement,
+    triggerEvent,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
 
@@ -36,6 +37,7 @@ export class FocusedElementState
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
+    // private _modalAction: ((current: HTMLElement) => boolean) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
@@ -54,6 +56,8 @@ export class FocusedElementState
         win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
         win.document.addEventListener("focusout", this._onFocusOut, true);
         win.addEventListener("keydown", this._onKeyDown, true);
+
+        this.subscribe(this._onChanged);
     };
 
     dispose(): void {
@@ -73,6 +77,8 @@ export class FocusedElementState
         );
         win.document.removeEventListener("focusout", this._onFocusOut, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
+
+        this.unsubscribe(this._onChanged);
 
         delete FocusedElementState._lastResetElement;
 
@@ -149,10 +155,10 @@ export class FocusedElementState
         return false;
     }
 
-    private _focusFirstOrLast(
+    getFirstOrLastTabbable(
         isFirst: boolean,
         props: Types.FindFirstProps
-    ): boolean {
+    ): HTMLElement | undefined {
         const tabsterFocusable = this._tabster.focusable;
         const container = props.container;
         let uncontrolled: HTMLElement | undefined;
@@ -191,6 +197,7 @@ export class FocusedElementState
                                 container: uncontrolled,
                                 ignoreUncontrolled: true,
                                 ignoreAccessibiliy: true,
+                                useActiveModalizer: true,
                             });
                         }
 
@@ -216,6 +223,15 @@ export class FocusedElementState
         if (toFocus && !container?.contains(toFocus)) {
             toFocus = undefined;
         }
+
+        return toFocus || undefined;
+    }
+
+    private _focusFirstOrLast(
+        isFirst: boolean,
+        props: Types.FindFirstProps
+    ): boolean {
+        const toFocus = this.getFirstOrLastTabbable(isFirst, props);
 
         if (toFocus) {
             this.focus(toFocus, false, true);
@@ -299,6 +315,14 @@ export class FocusedElementState
             }
 
             details.isFocusedProgrammatically = isFocusedProgrammatically;
+
+            const ctx = RootAPI.getTabsterContext(this._tabster, element);
+
+            const modalizerId = ctx?.modalizer?.userId;
+
+            if (modalizerId) {
+                details.modalizerId = modalizerId;
+            }
         }
 
         const nextVal = (this._nextVal = {
@@ -352,7 +376,8 @@ export class FocusedElementState
         ctx: Types.TabsterContext,
         container?: HTMLElement,
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const actualContainer = container || ctx.root.getElement();
 
@@ -375,11 +400,21 @@ export class FocusedElementState
             FocusedElementState.isTabbing = false;
         }, 0);
 
-        const callFindNext = (what: Types.Groupper | Types.Mover) => {
-            next = what.findNextTabbable(currentElement, isBackward);
+        const callFindNext = (
+            what: Types.Groupper | Types.Mover | Types.Modalizer
+        ) => {
+            next = what.findNextTabbable(
+                currentElement,
+                isBackward,
+                ignoreUncontrolled
+            );
         };
 
-        if (ctx.groupper && ctx.mover) {
+        const modalizer = ctx.modalizer;
+        const groupper = ctx.groupper;
+        const mover = ctx.mover;
+
+        if (groupper && mover) {
             let isGroupperFirst = ctx.isGroupperFirst;
 
             if (isGroupperFirst && currentElement) {
@@ -393,11 +428,13 @@ export class FocusedElementState
                 }
             }
 
-            callFindNext(isGroupperFirst ? ctx.groupper : ctx.mover);
-        } else if (ctx.groupper) {
-            callFindNext(ctx.groupper);
-        } else if (ctx.mover) {
-            callFindNext(ctx.mover);
+            callFindNext(isGroupperFirst ? groupper : mover);
+        } else if (groupper) {
+            callFindNext(groupper);
+        } else if (mover) {
+            callFindNext(mover);
+        } else if (modalizer) {
+            callFindNext(modalizer);
         } else {
             let uncontrolled: HTMLElement | undefined;
             const onUncontrolled = (el: HTMLElement) => {
@@ -408,11 +445,15 @@ export class FocusedElementState
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
+                      useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
                       container: actualContainer,
                       currentElement,
                       onUncontrolled,
+                      ignoreUncontrolled,
+                      useActiveModalizer: true,
                   });
 
             next = {
@@ -421,8 +462,8 @@ export class FocusedElementState
             };
         }
 
-        const lastMoverOrGroupperElement =
-            next?.lastMoverOrGroupper?.getElement();
+        const lastMoverOrGroupper = next?.lastMoverOrGroupper;
+        const lastMoverOrGroupperElement = lastMoverOrGroupper?.getElement();
 
         if (lastMoverOrGroupperElement) {
             next = null;
@@ -449,7 +490,8 @@ export class FocusedElementState
 
                     if (adjacentFrom) {
                         if (!isBackward) {
-                            adjacentFrom = getLastChild(adjacentFrom);
+                            adjacentFrom =
+                                getLastChild(adjacentFrom) || adjacentFrom;
                         }
 
                         next = FocusedElementState.findNextTabbable(
@@ -457,8 +499,13 @@ export class FocusedElementState
                             adjacentCtx,
                             actualContainer,
                             adjacentFrom,
-                            isBackward
+                            isBackward,
+                            ignoreUncontrolled
                         );
+
+                        if (next && !next.lastMoverOrGroupper) {
+                            next.lastMoverOrGroupper = lastMoverOrGroupper;
+                        }
                     }
                 }
             }
@@ -491,11 +538,7 @@ export class FocusedElementState
         const controlTab = tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(tabster, currentElement);
 
-        if (
-            !ctx ||
-            (!controlTab && !ctx.groupper && !ctx.mover) ||
-            ctx.ignoreKeydown(e)
-        ) {
+        if (!ctx || ctx.ignoreKeydown(e)) {
             return;
         }
 
@@ -508,20 +551,6 @@ export class FocusedElementState
             currentElement,
             isBackward
         );
-
-        if (!next || (!controlTab && !next.element)) {
-            if (!controlTab) {
-                const lastMoverOrGroupper = next?.lastMoverOrGroupper;
-
-                if (lastMoverOrGroupper) {
-                    lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
-                        isBackward
-                    );
-
-                    return;
-                }
-            }
-        }
 
         let nextElement: HTMLElement | null | undefined;
 
@@ -571,41 +600,46 @@ export class FocusedElementState
             }
 
             nextElement = next.element;
-
-            if (ctx.modalizer) {
-                const nextElementCtx =
-                    nextElement &&
-                    RootAPI.getTabsterContext(tabster, nextElement);
-
-                if (
-                    !nextElementCtx ||
-                    ctx.root.uid !== nextElementCtx.root.uid ||
-                    !nextElementCtx.modalizer?.isActive()
-                ) {
-                    if (ctx.modalizer.onBeforeFocusOut()) {
-                        e.preventDefault();
-
-                        return;
-                    }
-                }
-
-                // circular focus trap for modalizer
-                if (
-                    !nextElement &&
-                    ctx.modalizer.isActive() &&
-                    ctx.modalizer.getProps().isTrapped
-                ) {
-                    const findFn = isBackward ? "findLast" : "findFirst";
-                    nextElement = tabster.focusable[findFn]({
-                        container: ctx.modalizer.getElement(),
-                    });
-                }
-            }
         }
 
         if (nextElement) {
             // For iframes just allow normal Tab behaviour
-            if (nextElement.tagName !== "IFRAME") {
+            if (!controlTab) {
+                const lastMoverOrGroupper = next?.lastMoverOrGroupper;
+
+                if (lastMoverOrGroupper) {
+                    lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
+                        isBackward
+                    );
+                } else if (ctx.modalizer) {
+                    const nextElementCtx = RootAPI.getTabsterContext(
+                        tabster,
+                        nextElement
+                    );
+
+                    const preventDefault = () => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    };
+
+                    if (
+                        (!nextElementCtx ||
+                            ctx.root.uid !== nextElementCtx.root.uid ||
+                            !nextElementCtx.modalizer?.isActive()) &&
+                        ctx.modalizer.triggerFocusEvent(
+                            Types.ModalizerBeforeFocusOutEventName,
+                            true
+                        )
+                    ) {
+                        preventDefault();
+                    } else if (
+                        !ctx.modalizer.getElement()?.contains(nextElement)
+                    ) {
+                        preventDefault();
+                        ctx.modalizer.dummyManager?.moveOut(isBackward);
+                    }
+                }
+            } else if (nextElement.tagName !== "IFRAME") {
                 e.preventDefault();
                 e.stopImmediatePropagation();
 
@@ -613,6 +647,29 @@ export class FocusedElementState
             }
         } else {
             ctx.root.moveOutWithDefaultAction(isBackward);
+        }
+    };
+
+    _onChanged = (
+        element: HTMLElement | undefined,
+        details: Types.FocusedElementDetails
+    ): void => {
+        if (element) {
+            triggerEvent(element, Types.FocusInEventName, details);
+        } else {
+            const last = this._lastVal?.get();
+
+            if (last) {
+                const d = { ...details };
+                const lastCtx = RootAPI.getTabsterContext(this._tabster, last);
+                const modalizerId = lastCtx?.modalizer?.userId;
+
+                if (modalizerId) {
+                    d.modalizerId = modalizerId;
+                }
+
+                triggerEvent(last, Types.FocusOutEventName, d);
+            }
         }
     };
 }
