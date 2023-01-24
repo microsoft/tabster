@@ -430,7 +430,14 @@ export class RootAPI implements Types.RootAPI {
                 continue;
             }
 
-            if (tabsterOnElement.uncontrolled) {
+            const tagName = (curElement as HTMLElement).tagName;
+
+            if (
+                !uncontrolled &&
+                (tabsterOnElement.uncontrolled ||
+                    tagName === "IFRAME" ||
+                    tagName === "WEBVIEW")
+            ) {
                 uncontrolled = curElement as HTMLElement;
             }
 

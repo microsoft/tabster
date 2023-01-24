@@ -467,7 +467,7 @@ const CrossOriginStates: {
     Outline: 6,
 };
 type CrossOriginState =
-    typeof CrossOriginStates[keyof typeof CrossOriginStates];
+    (typeof CrossOriginStates)[keyof typeof CrossOriginStates];
 
 interface CrossOriginElementDataOut {
     ownerUId: string;
