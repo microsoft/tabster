@@ -51,7 +51,6 @@ export const createBasicMover = ({
 
 export const createTableMover = ({
     cyclic,
-    direction,
     disableHomeEndKeys,
     memorizeCurrent,
     tabbable,
@@ -62,7 +61,7 @@ export const createTableMover = ({
         {
             mover: {
                 cyclic,
-                direction,
+                direction: TabsterTypes.MoverDirections.Grid,
                 disableHomeEndKeys,
                 memorizeCurrent,
                 tabbable,

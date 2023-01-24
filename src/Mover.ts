@@ -863,9 +863,53 @@ export class MoverAPI implements Types.MoverAPI {
             }
         } else if (keyCode === Keys.Home) {
             next = focusable.findFirst({ container });
+            if (isGrid) {
+                let cur: HTMLElement | undefined | null = focusable.findPrev({
+                    container,
+                    currentElement: focused,
+                });
+                next = undefined;
+                let nextElementX1 = Math.ceil(
+                    cur?.getBoundingClientRect().left ?? 0
+                );
+                while (cur && nextElementX1 < focusedElementX1) {
+                    next = cur;
+                    cur = focusable.findPrev({
+                        container,
+                        currentElement: cur,
+                    });
+                    nextElementX1 = Math.ceil(
+                        cur?.getBoundingClientRect().left ?? -1
+                    );
+                }
+            }
         } else if (keyCode === Keys.End) {
             next = focusable.findLast({ container });
+            if (isGrid) {
+                let cur: HTMLElement | undefined | null = focusable.findNext({
+                    container,
+                    currentElement: focused,
+                });
+                next = undefined;
+                let nextElementX2 = Math.ceil(
+                    cur?.getBoundingClientRect().right ?? 0
+                );
+                while (cur && nextElementX2 > focusedElementX1) {
+                    console.log(cur, nextElementX2, focusedElementX1);
+                    next = cur;
+                    cur = focusable.findNext({
+                        container,
+                        currentElement: cur,
+                    });
+                    nextElementX2 = Math.ceil(
+                        cur?.getBoundingClientRect().left ?? 0
+                    );
+                }
+            }
         } else if (keyCode === Keys.PageUp) {
+            if (isGrid) {
+                return;
+            }
             let prevElement = focusable.findPrev({
                 currentElement: focused,
                 container,
@@ -892,6 +936,9 @@ export class MoverAPI implements Types.MoverAPI {
                 scrollIntoView(this._win, next, false);
             }
         } else if (keyCode === Keys.PageDown) {
+            if (isGrid) {
+                return;
+            }
             let nextElement = focusable.findNext({
                 currentElement: focused,
                 container,

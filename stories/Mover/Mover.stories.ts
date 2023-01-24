@@ -41,4 +41,3 @@ const TableWithFocusableCells: Story<MoverProps> = (args) =>
     createTableMover(args);
 
 export const TableWithMoverGrid = TableWithFocusableCells.bind({});
-TableWithMoverGrid.args = { direction: TabsterTypes.MoverDirections.Grid };
