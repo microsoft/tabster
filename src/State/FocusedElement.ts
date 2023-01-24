@@ -538,7 +538,7 @@ export class FocusedElementState
         const controlTab = tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(tabster, currentElement);
 
-        if (!ctx || ctx.ignoreKeydown[e.key as "Tab"]) {
+        if (!ctx || ctx.ignoreKeydown(e)) {
             return;
         }
 
