@@ -772,7 +772,12 @@ export class MoverAPI implements Types.MoverAPI {
             checkRtl: true,
         });
 
-        if (!ctx || !ctx.mover || ctx.isExcludedFromMover) {
+        if (
+            !ctx ||
+            !ctx.mover ||
+            ctx.isExcludedFromMover ||
+            ctx.ignoreKeydown(e)
+        ) {
             return;
         }
 
