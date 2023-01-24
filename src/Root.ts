@@ -438,6 +438,9 @@ export class RootAPI implements Types.RootAPI {
             isGroupperFirst = true;
         }
 
+        const shouldIgnoreKeydown = (event: KeyboardEvent) =>
+            !!ignoreKeydown[event.key as "Tab"];
+
         return root
             ? {
                   root,
@@ -448,7 +451,7 @@ export class RootAPI implements Types.RootAPI {
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
                   isExcludedFromMover,
-                  ignoreKeydown,
+                  ignoreKeydown: shouldIgnoreKeydown,
               }
             : undefined;
     }

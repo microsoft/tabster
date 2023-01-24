@@ -338,6 +338,12 @@ export interface FocusableProps {
         Tab?: boolean;
         Escape?: boolean;
         Enter?: boolean;
+        ArrowUp?: boolean;
+        ArrowDown?: boolean;
+        PageUp?: boolean;
+        PageDown?: boolean;
+        Home?: boolean;
+        End?: boolean;
     };
 }
 
@@ -717,7 +723,7 @@ export interface TabsterContext {
      */
     uncontrolled?: HTMLElement;
     isExcludedFromMover?: boolean;
-    ignoreKeydown: NonNullable<FocusableProps["ignoreKeydown"]>;
+    ignoreKeydown: (e: KeyboardEvent) => boolean;
 }
 
 export interface RootFocusEventDetails {

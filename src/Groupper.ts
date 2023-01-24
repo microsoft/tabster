@@ -473,15 +473,15 @@ export class GroupperAPI implements Types.GroupperAPI {
             let groupper = ctx?.groupper;
 
             if (ctx && groupper) {
+                if (ctx.ignoreKeydown(e)) {
+                    return;
+                }
+
                 let next: HTMLElement | null | undefined;
 
                 const groupperElement = groupper.getElement();
 
                 if (e.keyCode === Keys.Enter) {
-                    if (ctx.ignoreKeydown.Enter) {
-                        return;
-                    }
-
                     if (
                         element === groupperElement ||
                         (groupper.getProps().delegated &&
@@ -493,10 +493,6 @@ export class GroupperAPI implements Types.GroupperAPI {
                         });
                     }
                 } else if (e.keyCode === Keys.Esc) {
-                    if (ctx.ignoreKeydown.Escape) {
-                        return;
-                    }
-
                     if (groupperElement && groupperElement.contains(element)) {
                         if (element !== groupperElement) {
                             next = groupper.getFirst(true);

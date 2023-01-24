@@ -15,6 +15,7 @@ import {
     getAdjacentElement,
     shouldIgnoreFocus,
     WeakHTMLElement,
+    shouldIgnoreKeydown,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
 
@@ -494,7 +495,7 @@ export class FocusedElementState
         if (
             !ctx ||
             (!controlTab && !ctx.groupper && !ctx.mover) ||
-            ctx.ignoreKeydown[e.key as "Tab"]
+            ctx.ignoreKeydown(e)
         ) {
             return;
         }
