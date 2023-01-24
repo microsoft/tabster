@@ -476,7 +476,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ctx &&
                 !ctx.groupper &&
                 modalizer?.isActive() &&
-                !ctx.ignoreKeydown.Escape
+                !ctx.ignoreKeydown(event)
             ) {
                 const activeId = modalizer.userId;
 
