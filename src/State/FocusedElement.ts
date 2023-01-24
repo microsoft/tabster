@@ -15,7 +15,6 @@ import {
     getAdjacentElement,
     shouldIgnoreFocus,
     WeakHTMLElement,
-    shouldIgnoreKeydown,
 } from "../Utils";
 import { Subscribable } from "./Subscribable";
 
