@@ -646,6 +646,27 @@ export class FocusedElementState
                 nativeFocus(nextElement);
             }
         } else {
+            if (!controlTab) {
+                // Ensuring there are no inaccessible focusables before moving out.
+                // TODO: Remove this workaround once the TMP nested button is fixed.
+                const container = ctx.root.getElement();
+
+                if (container) {
+                    const n = tabster.focusable.findElement({
+                        container,
+                        currentElement,
+                        isBackward,
+                        useActiveModalizer: true,
+                        ignoreUncontrolled: true,
+                        ignoreAccessibiliy: true,
+                    });
+
+                    if (n) {
+                        return;
+                    }
+                }
+            }
+
             ctx.root.moveOutWithDefaultAction(isBackward);
         }
     };

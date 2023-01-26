@@ -7,6 +7,7 @@ import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { BrowserElement } from "./utils/BroTest";
+import { describeIfUncontrolled } from "./utils/test-utils";
 
 describe("onKeyDown", () => {
     beforeEach(async () => {
@@ -163,3 +164,55 @@ describe("onKeyDown", () => {
             });
     });
 });
+
+describeIfUncontrolled(
+    "does not skip bizarre inaccessible things in the end of the root",
+    () => {
+        beforeEach(async () => {
+            await BroTest.bootstrapTabsterPage({});
+        });
+
+        it("should focus inaccessible button in the end of root", async () => {
+            // TODO: Remove this workaround once the TMP nested button is fixed.
+            const testHtml = (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <button>Button1</button>
+                    </div>
+                    <div>
+                        <button disabled={true} id="button">
+                            Button2
+                        </button>
+                    </div>
+                </div>
+            );
+
+            await new BroTest.BroTest(testHtml)
+                .eval(() => {
+                    const innerButton = document.createElement("button");
+                    innerButton.innerText = "Button3";
+                    document.getElementById("button")?.appendChild(innerButton);
+                })
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                )
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button3")
+                )
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual(undefined)
+                )
+                .pressTab(true)
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button3")
+                )
+                .pressTab(true)
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                );
+        });
+    }
+);
