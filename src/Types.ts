@@ -482,6 +482,7 @@ export type FindDefaultProps = Pick<
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
+    | "ignoreUncontrolled"
     | "ignoreAccessibiliy"
 >;
 
@@ -595,7 +596,11 @@ export interface MoverProps {
      * element in DOM) when tabbing from outside of the mover.
      */
     visibilityAware?: Visibility;
-    disableHomeEndKeys?: boolean;
+    /**
+     * When true, Mover will try to locate a focusable with Focusable.isDefault
+     * property as a prioritized element to focus.
+     */
+    hasDefault?: boolean;
 }
 
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;

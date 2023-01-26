@@ -285,32 +285,40 @@ export class Mover
                 : undefined;
         }
 
-        const { memorizeCurrent, visibilityAware } = this._props;
+        const { memorizeCurrent, visibilityAware, hasDefault } = this._props;
         const moverElement = this.getElement();
 
         if (
             moverElement &&
-            (memorizeCurrent || visibilityAware) &&
+            (memorizeCurrent || visibilityAware || hasDefault) &&
             (!moverElement.contains(state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === moverElement)
         ) {
+            let found: HTMLElement | undefined | null;
+
             if (memorizeCurrent) {
                 const current = this._current?.get();
 
                 if (current && state.acceptCondition(current)) {
-                    state.found = true;
-                    state.foundElement = current;
-                    state.lastToIgnore = moverElement;
-                    return NodeFilter.FILTER_ACCEPT;
+                    found = current;
                 }
             }
 
-            if (visibilityAware) {
-                const found = this._tabster.focusable.findElement({
+            if (!found && hasDefault) {
+                found = this._tabster.focusable.findDefault({
                     container: moverElement,
                     ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
+            }
+
+            if (!found && visibilityAware) {
+                found = this._tabster.focusable.findElement({
+                    container: moverElement,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
                     isBackward: state.isBackward,
                     acceptCondition: (el) => {
                         const id = getElementUId(this._win, el);
@@ -329,13 +337,13 @@ export class Mover
                         );
                     },
                 });
+            }
 
-                if (found) {
-                    state.found = true;
-                    state.foundElement = found;
-                    state.lastToIgnore = moverElement;
-                    return NodeFilter.FILTER_ACCEPT;
-                }
+            if (found) {
+                state.found = true;
+                state.foundElement = found;
+                state.lastToIgnore = moverElement;
+                return NodeFilter.FILTER_ACCEPT;
             }
         }
 
@@ -821,13 +829,6 @@ export class MoverAPI implements Types.MoverAPI {
             focusedElementRect = focused.getBoundingClientRect();
             focusedElementX1 = Math.ceil(focusedElementRect.left);
             focusedElementX2 = Math.floor(focusedElementRect.right);
-        }
-
-        if (
-            moverProps.disableHomeEndKeys &&
-            (keyCode === Keys.Home || keyCode === Keys.End)
-        ) {
-            return;
         }
 
         if (ctx.isRtl) {

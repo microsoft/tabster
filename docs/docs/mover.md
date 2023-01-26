@@ -103,10 +103,6 @@ very inconvenient for the virtualized lists when the scrolling causes more items
 With `visibilityAware` we can alter that behaviour to be able to Tab to the first visible
 element instead of the first rendered one. Enables `trackState` internally.
 
-### disableHomeEndKeys?: _boolean_
-
-As the name says, we can disable Home/End keys if needed.
-
 ## Examples
 
 [See a few Mover examples in the Storybook](https://tabster.io/storybook/?path=/story/mover).

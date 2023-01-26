@@ -11,11 +11,11 @@ export type MoverProps = TabsterTypes.MoverProps;
 export const createBasicMover = ({
     cyclic,
     direction,
-    disableHomeEndKeys,
     memorizeCurrent,
     tabbable,
     trackState,
     visibilityAware,
+    hasDefault,
 }: MoverProps) => {
     console.log(direction);
 
@@ -34,11 +34,11 @@ export const createBasicMover = ({
             mover: {
                 cyclic,
                 direction,
-                disableHomeEndKeys,
                 memorizeCurrent,
                 tabbable,
                 trackState,
                 visibilityAware,
+                hasDefault,
             },
         },
         true
@@ -52,22 +52,22 @@ export const createBasicMover = ({
 export const createTableMover = ({
     cyclic,
     direction,
-    disableHomeEndKeys,
     memorizeCurrent,
     tabbable,
     trackState,
     visibilityAware,
+    hasDefault,
 }: MoverProps) => {
     const attr = getTabsterAttribute(
         {
             mover: {
                 cyclic,
                 direction,
-                disableHomeEndKeys,
                 memorizeCurrent,
                 tabbable,
                 trackState,
                 visibilityAware,
+                hasDefault,
             },
         },
         true

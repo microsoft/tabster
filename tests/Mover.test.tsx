@@ -2011,3 +2011,103 @@ describe("Adjacent Movers", () => {
         }
     );
 });
+
+describe("Mover with default element", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should focus default focusable when tabbing from outside", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { hasDefault: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button
+                            {...getTabsterAttribute({
+                                focusable: { isDefault: true },
+                            })}
+                        >
+                            Button4
+                        </button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
+
+    it("should focus memorized element or default focusable when tabbing from outside", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { hasDefault: true, memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button
+                            {...getTabsterAttribute({
+                                focusable: { isDefault: true },
+                            })}
+                        >
+                            Button4
+                        </button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});
