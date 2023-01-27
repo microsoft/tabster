@@ -6,38 +6,38 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { itIfControlled, itIfUncontrolled } from "./utils/test-utils";
 
 describe("Uncontrolled", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
     });
 
-    itIfControlled(
-        "should allow aria-hidden element to be focused",
-        async () => {
-            await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button aria-hidden="true">Button0</button>
-                        <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                            <button>Button1</button>
-                            <button aria-hidden="true">Button2</button>
-                            <button>Button3</button>
-                        </div>
+    it("should allow aria-hidden element to be focused", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-hidden="true">Button0</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button>Button1</button>
+                        <button aria-hidden="true">Button2</button>
+                        <button>Button3</button>
                     </div>
-                )
+                </div>
             )
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button1");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button2");
-                });
-        }
-    );
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button0");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
+    });
 
     it("should allow custom tab key behaviour", async () => {
         await new BroTest.BroTest(
@@ -79,72 +79,70 @@ describe("Uncontrolled", () => {
             });
     });
 
-    itIfControlled(
-        "should allow to go outside of the application when tabbing and the uncontrolled element is the last",
-        async () => {
-            await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button aria-hidden="true">Button1</button>
-                        <button>Button2</button>
-                        <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                            <button aria-hidden="true">Button3</button>
-                            <button>Button4</button>
-                        </div>
+    it("should allow to go outside of the application when tabbing and the uncontrolled element is the last", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-hidden="true">Button1</button>
+                    <button>Button2</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button aria-hidden="true">Button3</button>
+                        <button>Button4</button>
                     </div>
-                )
+                </div>
             )
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button2");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button3");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button4");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toBeUndefined();
-                });
-        }
-    );
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            });
+    });
 
-    itIfUncontrolled(
-        "should allow to go outside of the application when tabbing and the uncontrolled element is the last",
-        async () => {
-            await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button2</button>
-                        <div {...getTabsterAttribute({ uncontrolled: {} })}>
-                            <button aria-hidden="true">Button3</button>
-                            <button>Button4</button>
-                        </div>
+    it("should allow to go outside of the application when tabbing and the uncontrolled element is the last", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button2</button>
+                    <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                        <button aria-hidden="true">Button3</button>
+                        <button>Button4</button>
                     </div>
-                )
+                </div>
             )
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button2");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button3");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toEqual("Button4");
-                })
-                .pressTab()
-                .activeElement((el) => {
-                    expect(el?.textContent).toBeUndefined();
-                });
-        }
-    );
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            });
+    });
 
     it("should allow to go outside of the application when tabbing backwards and the uncontrolled element is first", async () => {
         await new BroTest.BroTest(
