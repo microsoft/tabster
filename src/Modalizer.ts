@@ -84,6 +84,7 @@ class ModalizerDummyManager extends DummyInputManager {
                         undefined,
                         input,
                         isBackward,
+                        true,
                         true
                     )?.element;
                 }

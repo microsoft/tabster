@@ -46,6 +46,7 @@ class GroupperDummyManager extends DummyInputManager {
                         next = groupper.findNextTabbable(
                             relatedTarget || undefined,
                             isBackward,
+                            true,
                             true
                         )?.element;
 
@@ -61,6 +62,7 @@ class GroupperDummyManager extends DummyInputManager {
                                           !isBackward
                                       ),
                                 isBackward,
+                                true,
                                 true
                             )?.element;
                         }
