@@ -662,7 +662,11 @@ export class FocusedElementState
                     });
 
                     if (n) {
-                        return;
+                        const nctx = RootAPI.getTabsterContext(tabster, n);
+
+                        if (!nctx || (!nctx.groupper && !nctx.mover)) {
+                            return;
+                        }
                     }
                 }
             }
