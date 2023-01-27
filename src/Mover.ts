@@ -225,7 +225,8 @@ export class Mover
     findNextTabbable(
         currentElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean
+        ignoreUncontrolled?: boolean,
+        ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
@@ -257,6 +258,7 @@ export class Mover
                       container,
                       onUncontrolled,
                       ignoreUncontrolled,
+                      ignoreAccessibility,
                       useActiveModalizer: true,
                   })
                 : focusable.findNext({
@@ -264,6 +266,7 @@ export class Mover
                       container,
                       onUncontrolled,
                       ignoreUncontrolled,
+                      ignoreAccessibility,
                       useActiveModalizer: true,
                   });
         }

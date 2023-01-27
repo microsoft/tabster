@@ -82,7 +82,7 @@ class RootDummyManager extends DummyInputManager {
                 const toFocus =
                     this._tabster.focusedElement.getFirstOrLastTabbable(
                         dummyInput.isFirst,
-                        { container: element }
+                        { container: element, ignoreAccessibility: true }
                     );
 
                 if (toFocus) {
