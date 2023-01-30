@@ -892,11 +892,13 @@ export class MoverAPI implements Types.MoverAPI {
         } else if (keyCode === Keys.Home) {
             next = focusable.findFirst({ container, ignoreUncontrolled: true, useActiveModalizer: true });
             if (isGrid) {
+                next = undefined;
                 let cur: HTMLElement | undefined | null = focusable.findPrev({
                     container,
                     currentElement: focused,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
                 });
-                next = undefined;
                 let nextElementX1 = Math.ceil(
                     cur?.getBoundingClientRect().left ?? 0
                 );
@@ -914,14 +916,17 @@ export class MoverAPI implements Types.MoverAPI {
         } else if (keyCode === Keys.End) {
             next = focusable.findLast({ container, ignoreUncontrolled: true, useActiveModalizer: true });
             if (isGrid) {
+                next = undefined;
                 let cur: HTMLElement | undefined | null = focusable.findNext({
                     container,
                     currentElement: focused,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
                 });
-                next = undefined;
                 let nextElementX2 = Math.ceil(
                     cur?.getBoundingClientRect().right ?? 0
                 );
+
                 while (cur && nextElementX2 > focusedElementX1) {
                     console.log(cur, nextElementX2, focusedElementX1);
                     next = cur;
@@ -938,6 +943,7 @@ export class MoverAPI implements Types.MoverAPI {
             if (isGrid) {
                 return;
             }
+
             let prevElement = focusable.findPrev({
                 currentElement: focused,
                 container,
