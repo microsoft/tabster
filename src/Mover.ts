@@ -48,7 +48,7 @@ class MoverDummyManager extends DummyInputManager {
         const container = this._element.get();
         const input = dummyInput.input;
 
-        if (container && !dummyInput.shouldMoveOut && input) {
+        if (container && input) {
             const ctx = RootAPI.getTabsterContext(this._tabster, container);
 
             let toFocus: HTMLElement | null | undefined;
@@ -59,7 +59,8 @@ class MoverDummyManager extends DummyInputManager {
                     ctx,
                     undefined,
                     input,
-                    !dummyInput.isFirst
+                    !dummyInput.isFirst,
+                    true
                 )?.element;
             }
 
@@ -223,7 +224,8 @@ export class Mover
 
     findNextTabbable(
         currentElement?: HTMLElement,
-        isBackward?: boolean
+        isBackward?: boolean,
+        ignoreUncontrolled?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
@@ -254,11 +256,15 @@ export class Mover
                       currentElement,
                       container,
                       onUncontrolled,
+                      ignoreUncontrolled,
+                      useActiveModalizer: true,
                   })
                 : focusable.findNext({
                       currentElement,
                       container,
                       onUncontrolled,
+                      ignoreUncontrolled,
+                      useActiveModalizer: true,
                   });
         }
 
@@ -279,32 +285,40 @@ export class Mover
                 : undefined;
         }
 
-        const { memorizeCurrent, visibilityAware } = this._props;
+        const { memorizeCurrent, visibilityAware, hasDefault } = this._props;
         const moverElement = this.getElement();
 
         if (
             moverElement &&
-            (memorizeCurrent || visibilityAware) &&
+            (memorizeCurrent || visibilityAware || hasDefault) &&
             (!moverElement.contains(state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === moverElement)
         ) {
+            let found: HTMLElement | undefined | null;
+
             if (memorizeCurrent) {
                 const current = this._current?.get();
 
                 if (current && state.acceptCondition(current)) {
-                    state.found = true;
-                    state.foundElement = current;
-                    state.lastToIgnore = moverElement;
-                    return NodeFilter.FILTER_ACCEPT;
+                    found = current;
                 }
             }
 
-            if (visibilityAware) {
-                const found = this._tabster.focusable.findElement({
+            if (!found && hasDefault) {
+                found = this._tabster.focusable.findDefault({
                     container: moverElement,
                     ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
+            }
+
+            if (!found && visibilityAware) {
+                found = this._tabster.focusable.findElement({
+                    container: moverElement,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
                     isBackward: state.isBackward,
                     acceptCondition: (el) => {
                         const id = getElementUId(this._win, el);
@@ -323,13 +337,13 @@ export class Mover
                         );
                     },
                 });
+            }
 
-                if (found) {
-                    state.found = true;
-                    state.foundElement = found;
-                    state.lastToIgnore = moverElement;
-                    return NodeFilter.FILTER_ACCEPT;
-                }
+            if (found) {
+                state.found = true;
+                state.foundElement = found;
+                state.lastToIgnore = moverElement;
+                return NodeFilter.FILTER_ACCEPT;
             }
         }
 
@@ -772,7 +786,12 @@ export class MoverAPI implements Types.MoverAPI {
             checkRtl: true,
         });
 
-        if (!ctx || !ctx.mover || ctx.isExcludedFromMover) {
+        if (
+            !ctx ||
+            !ctx.mover ||
+            ctx.isExcludedFromMover ||
+            ctx.ignoreKeydown(e)
+        ) {
             return;
         }
 
@@ -812,13 +831,6 @@ export class MoverAPI implements Types.MoverAPI {
             focusedElementX2 = Math.floor(focusedElementRect.right);
         }
 
-        if (
-            moverProps.disableHomeEndKeys &&
-            (keyCode === Keys.Home || keyCode === Keys.End)
-        ) {
-            return;
-        }
-
         if (ctx.isRtl) {
             if (keyCode === Keys.Right) {
                 keyCode = Keys.Left;
@@ -831,7 +843,11 @@ export class MoverAPI implements Types.MoverAPI {
             (keyCode === Keys.Down && isVertical) ||
             (keyCode === Keys.Right && (isHorizontal || isGrid))
         ) {
-            next = focusable.findNext({ currentElement: focused, container });
+            next = focusable.findNext({
+                currentElement: focused,
+                container,
+                useActiveModalizer: true,
+            });
 
             if (next && isGrid) {
                 const nextElementX1 = Math.ceil(
@@ -842,13 +858,21 @@ export class MoverAPI implements Types.MoverAPI {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findFirst({ container });
+                next = focusable.findFirst({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
             }
         } else if (
             (keyCode === Keys.Up && isVertical) ||
             (keyCode === Keys.Left && (isHorizontal || isGrid))
         ) {
-            next = focusable.findPrev({ currentElement: focused, container });
+            next = focusable.findPrev({
+                currentElement: focused,
+                container,
+                useActiveModalizer: true,
+            });
 
             if (next && isGrid) {
                 const nextElementX2 = Math.floor(
@@ -859,10 +883,14 @@ export class MoverAPI implements Types.MoverAPI {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findLast({ container });
+                next = focusable.findLast({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
             }
         } else if (keyCode === Keys.Home) {
-            next = focusable.findFirst({ container });
+            next = focusable.findFirst({ container, ignoreUncontrolled: true, useActiveModalizer: true });
             if (isGrid) {
                 let cur: HTMLElement | undefined | null = focusable.findPrev({
                     container,
@@ -884,7 +912,7 @@ export class MoverAPI implements Types.MoverAPI {
                 }
             }
         } else if (keyCode === Keys.End) {
-            next = focusable.findLast({ container });
+            next = focusable.findLast({ container, ignoreUncontrolled: true, useActiveModalizer: true });
             if (isGrid) {
                 let cur: HTMLElement | undefined | null = focusable.findNext({
                     container,
@@ -913,6 +941,7 @@ export class MoverAPI implements Types.MoverAPI {
             let prevElement = focusable.findPrev({
                 currentElement: focused,
                 container,
+                useActiveModalizer: true,
             });
             let pageUpElement: HTMLElement | null = null;
 
@@ -926,6 +955,7 @@ export class MoverAPI implements Types.MoverAPI {
                     ? focusable.findPrev({
                           currentElement: prevElement,
                           container,
+                          useActiveModalizer: true,
                       })
                     : null;
             }
@@ -942,6 +972,7 @@ export class MoverAPI implements Types.MoverAPI {
             let nextElement = focusable.findNext({
                 currentElement: focused,
                 container,
+                useActiveModalizer: true,
             });
             let pageDownElement: HTMLElement | null = null;
 
@@ -955,6 +986,7 @@ export class MoverAPI implements Types.MoverAPI {
                     ? focusable.findNext({
                           currentElement: nextElement,
                           container,
+                          useActiveModalizer: true,
                       })
                     : null;
             }

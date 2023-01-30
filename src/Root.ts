@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { nativeFocus } from "keyborg";
 import { createEventTarget } from "./EventTarget";
-import { getTabsterOnElement } from "./Instance";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
 import {
     DummyInput,
@@ -15,6 +16,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { setTabsterAttribute } from "./AttributeHelpers";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -47,7 +49,13 @@ class RootDummyManager extends DummyInputManager {
         element: WeakHTMLElement,
         setFocused: (focused: boolean, fromAdjacent?: boolean) => void
     ) {
-        super(tabster, element, DummyInputManagerPriorities.Root);
+        super(
+            tabster,
+            element,
+            DummyInputManagerPriorities.Root,
+            undefined,
+            true
+        );
 
         this._setHandlers(this._onDummyInputFocus);
 
@@ -56,7 +64,7 @@ class RootDummyManager extends DummyInputManager {
     }
 
     private _onDummyInputFocus = (dummyInput: DummyInput): void => {
-        if (dummyInput.shouldMoveOut) {
+        if (dummyInput.useDefaultAction) {
             // When we've reached the last focusable element, we want to let the browser
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing
@@ -71,15 +79,14 @@ class RootDummyManager extends DummyInputManager {
             if (element) {
                 this._setFocused(true, true);
 
-                const hasFocused = dummyInput.isFirst
-                    ? this._tabster.focusedElement.focusFirst({
-                          container: element,
-                      })
-                    : this._tabster.focusedElement.focusLast({
-                          container: element,
-                      });
+                const toFocus =
+                    this._tabster.focusedElement.getFirstOrLastTabbable(
+                        dummyInput.isFirst,
+                        { container: element }
+                    );
 
-                if (hasFocused) {
+                if (toFocus) {
+                    nativeFocus(toFocus);
                     return;
                 }
             }
@@ -115,16 +122,22 @@ export class Root
         this.uid = getElementUId(win, element);
 
         if (tabster.controlTab || tabster.rootDummyInputs) {
-            this._dummyManager = new RootDummyManager(
-                tabster,
-                this._element,
-                this._setFocused
-            );
+            this.addDummyInputs();
         }
 
         tabster.focusedElement.subscribe(this._onFocus);
 
         this._add();
+    }
+
+    addDummyInputs(): void {
+        if (!this._dummyManager) {
+            this._dummyManager = new RootDummyManager(
+                this._tabster,
+                this._element,
+                this._setFocused
+            );
+        }
     }
 
     dispose(): void {
@@ -256,8 +269,9 @@ export class RootAPI implements Types.RootAPI {
     private _win: Types.GetWindow;
     private _initTimer: number | undefined;
     private _autoRoot: Types.RootProps | undefined;
-    private _autoRootInstance: Root | undefined;
+    private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
+    private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
     eventTarget: EventTarget;
 
@@ -271,21 +285,51 @@ export class RootAPI implements Types.RootAPI {
 
     private _init = (): void => {
         this._initTimer = undefined;
+
+        if (this._autoRoot) {
+            this._autoRootCreate();
+        }
     };
+
+    private _autoRootCreate = (): Types.Root | undefined => {
+        if (this._initTimer) {
+            return;
+        }
+
+        const doc = this._win().document;
+        const body = doc.body;
+
+        if (body) {
+            this._autoRootUnwait(doc);
+
+            const props = this._autoRoot;
+
+            if (props) {
+                setTabsterAttribute(body, { root: props }, true);
+                updateTabsterByAttribute(this._tabster, body);
+                return getTabsterOnElement(this._tabster, body)?.root;
+            }
+        } else if (!this._autoRootWaiting) {
+            this._autoRootWaiting = true;
+            doc.addEventListener("readystatechange", this._autoRootCreate);
+        }
+
+        return undefined;
+    };
+
+    private _autoRootUnwait(doc: Document): void {
+        doc.removeEventListener("readystatechange", this._autoRootCreate);
+        this._autoRootWaiting = false;
+    }
 
     dispose(): void {
         const win = this._win();
 
-        if (this._autoRootInstance) {
-            this._autoRootInstance.dispose();
-            delete this._autoRootInstance;
-            delete this._autoRoot;
-        }
+        this._autoRootUnwait(win.document);
+        delete this._autoRoot;
 
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
+        win.clearTimeout(this._initTimer);
+        this._initTimer = undefined;
 
         Object.keys(this._roots).forEach((rootId) => {
             if (this._roots[rootId]) {
@@ -311,7 +355,21 @@ export class RootAPI implements Types.RootAPI {
 
         this._roots[newRoot.id] = newRoot;
 
+        if (this._forceDummy) {
+            newRoot.addDummyInputs();
+        }
+
         return newRoot;
+    }
+
+    addDummyInputs(): void {
+        this._forceDummy = true;
+
+        const roots = this._roots;
+
+        for (const id of Object.keys(roots)) {
+            roots[id].addDummyInputs();
+        }
     }
 
     static getRootByUId(
@@ -347,6 +405,7 @@ export class RootAPI implements Types.RootAPI {
         let mover: Types.Mover | undefined;
         let isExcludedFromMover = false;
         let isGroupperFirst: boolean | undefined;
+        let modalizerInGroupper: Types.Groupper | undefined;
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
         let curElement: Node | null = element;
@@ -371,7 +430,14 @@ export class RootAPI implements Types.RootAPI {
                 continue;
             }
 
-            if (tabsterOnElement.uncontrolled) {
+            const tagName = (curElement as HTMLElement).tagName;
+
+            if (
+                !uncontrolled &&
+                (tabsterOnElement.uncontrolled ||
+                    tagName === "IFRAME" ||
+                    tagName === "WEBVIEW")
+            ) {
                 uncontrolled = curElement as HTMLElement;
             }
 
@@ -383,20 +449,35 @@ export class RootAPI implements Types.RootAPI {
                 isExcludedFromMover = true;
             }
 
+            const curModalizer = tabsterOnElement.modalizer;
             const curGroupper = tabsterOnElement.groupper;
             const curMover = tabsterOnElement.mover;
 
-            if (!groupper && curGroupper) {
-                groupper = curGroupper;
+            if (!modalizer && curModalizer) {
+                modalizer = curModalizer;
             }
 
-            if (!mover && curMover) {
+            if (!groupper && curGroupper && (!modalizer || curModalizer)) {
+                if (modalizer) {
+                    // Modalizer dominates the groupper when they are on the same node and the groupper is active.
+                    if (
+                        !curGroupper.isActive() &&
+                        curGroupper.getProps().tabbability &&
+                        modalizer.userId !== tabster.modalizer?.activeId
+                    ) {
+                        modalizer = undefined;
+                        groupper = curGroupper;
+                    }
+
+                    modalizerInGroupper = curGroupper;
+                } else {
+                    groupper = curGroupper;
+                }
+            }
+
+            if (!mover && curMover && (!modalizer || curModalizer)) {
                 mover = curMover;
                 isGroupperFirst = !!groupper;
-            }
-
-            if (!modalizer && tabsterOnElement.modalizer) {
-                modalizer = tabsterOnElement.modalizer;
             }
 
             if (tabsterOnElement.root) {
@@ -418,25 +499,27 @@ export class RootAPI implements Types.RootAPI {
             const rootAPI = tabster.root as RootAPI;
             const autoRoot = rootAPI._autoRoot;
 
-            if (autoRoot && !rootAPI._autoRootInstance) {
-                const body = element.ownerDocument?.body;
-
-                if (body) {
-                    rootAPI._autoRootInstance = new Root(
-                        rootAPI._tabster,
-                        body,
-                        rootAPI._onRootDispose,
-                        autoRoot
-                    );
+            if (autoRoot) {
+                if (element.ownerDocument?.body) {
+                    root = rootAPI._autoRootCreate();
                 }
             }
-
-            root = rootAPI._autoRootInstance;
         }
 
         if (groupper && !mover) {
             isGroupperFirst = true;
         }
+
+        if (__DEV__ && !root) {
+            if (modalizer || groupper || mover) {
+                console.error(
+                    "Tabster Root is required for Mover, Groupper and Modalizer to work."
+                );
+            }
+        }
+
+        const shouldIgnoreKeydown = (event: KeyboardEvent) =>
+            !!ignoreKeydown[event.key as "Tab"];
 
         return root
             ? {
@@ -445,12 +528,32 @@ export class RootAPI implements Types.RootAPI {
                   groupper,
                   mover,
                   isGroupperFirst,
+                  modalizerInGroupper,
                   isRtl: checkRtl ? !!isRtl : undefined,
                   uncontrolled,
                   isExcludedFromMover,
-                  ignoreKeydown,
+                  ignoreKeydown: shouldIgnoreKeydown,
               }
             : undefined;
+    }
+
+    static getRoot(
+        tabster: Types.TabsterCore,
+        element: HTMLElement
+    ): Types.Root | undefined {
+        for (
+            let el = element as HTMLElement | null;
+            el;
+            el = el.parentElement
+        ) {
+            const root = getTabsterOnElement(tabster, el)?.root;
+
+            if (root) {
+                return root;
+            }
+        }
+
+        return undefined;
     }
 
     onRoot(root: Types.Root, removed?: boolean): void {

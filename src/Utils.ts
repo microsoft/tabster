@@ -676,8 +676,7 @@ export class DummyInput {
     private _clearDisposeTimeout: (() => void) | undefined;
 
     input: HTMLElement | undefined;
-    /** Flag that indicates focus is leaving the boundary of the dummy input */
-    shouldMoveOut?: boolean;
+    useDefaultAction?: boolean;
     isFirst: DummyInputProps["isFirst"];
     isOutside: boolean;
     /** Called when the input is focused */
@@ -800,7 +799,7 @@ export class DummyInput {
     };
 
     private _focusOut = (e: FocusEvent): void => {
-        this.shouldMoveOut = false;
+        this.useDefaultAction = false;
 
         const input = this.input;
 
@@ -834,13 +833,15 @@ export class DummyInputManager {
     protected _element: WeakHTMLElement;
     private static _lastPhantomFrom: HTMLElement | undefined;
 
+    moveOut: DummyInputManagerCore["moveOut"];
     moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
 
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
-        outsideByDefault?: boolean
+        outsideByDefault?: boolean,
+        callForDefaultAction?: boolean
     ) {
         this._element = element;
 
@@ -849,8 +850,13 @@ export class DummyInputManager {
             element,
             this,
             priority,
-            outsideByDefault
+            outsideByDefault,
+            callForDefaultAction
         );
+
+        this.moveOut = (backwards: boolean) => {
+            this._instance?.moveOut(backwards);
+        };
 
         this.moveOutWithDefaultAction = (backwards: boolean) => {
             this._instance?.moveOutWithDefaultAction(backwards);
@@ -949,10 +955,34 @@ interface DummyInputWrapper {
     tabbable: boolean;
 }
 
+function setDummyInputDebugValue(
+    dummy: DummyInput,
+    wrappers: DummyInputWrapper[]
+): void {
+    const what: Record<number, string> = {
+        1: "Root",
+        2: "Modalizer",
+        3: "Mover",
+        4: "Groupper",
+    };
+
+    dummy.input?.setAttribute(
+        Types.TabsterDummyInputAttributeName,
+        [
+            `isFirst=${dummy.isFirst}`,
+            `isOutside=${dummy.isOutside}`,
+            ...wrappers.map(
+                (w) => `(${what[w.priority]}, tabbable=${w.tabbable})`
+            ),
+        ].join(", ")
+    );
+}
+
 /**
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
 class DummyInputManagerCore {
+    private _tabster: Types.TabsterCore;
     private _unobserve: (() => void) | undefined;
     private _addTimer: number | undefined;
     private _getWindow: Types.GetWindow;
@@ -963,13 +993,15 @@ class DummyInputManagerCore {
     private _lastDummy: DummyInput | undefined;
     private _transformElements: HTMLElement[] = [];
     private _scrollTimer: number | undefined;
+    private _callForDefaultAction: boolean | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
-        outsideByDefault?: boolean
+        outsideByDefault?: boolean,
+        callForDefaultAction?: boolean
     ) {
         const el = element.get() as HTMLElementWithDummyInputs;
 
@@ -977,7 +1009,9 @@ class DummyInputManagerCore {
             throw new Error("No element");
         }
 
+        this._tabster = tabster;
         this._getWindow = tabster.getWindow;
+        this._callForDefaultAction = callForDefaultAction;
 
         const instance = el.__tabsterDummy;
 
@@ -988,10 +1022,33 @@ class DummyInputManagerCore {
         });
 
         if (instance) {
+            if (__DEV__) {
+                this._firstDummy &&
+                    setDummyInputDebugValue(
+                        this._firstDummy,
+                        instance._wrappers
+                    );
+                this._lastDummy &&
+                    setDummyInputDebugValue(
+                        this._lastDummy,
+                        instance._wrappers
+                    );
+            }
+
             return instance;
         }
 
         el.__tabsterDummy = this;
+
+        // Some elements allow only specific types of direct descendants and we need to
+        // put our dummy inputs inside or outside of the element accordingly.
+        const tagName = element.get()?.tagName;
+        this._isOutside =
+            (outsideByDefault ||
+                tagName === "UL" ||
+                tagName === "OL" ||
+                tagName === "TABLE") &&
+            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
 
         this._firstDummy = new DummyInput(
             this._getWindow,
@@ -1019,16 +1076,6 @@ class DummyInputManagerCore {
         this._element = element;
         this._addDummyInputs();
 
-        // Some elements allow only specific types of direct descendants and we need to
-        // put our dummy inputs inside or outside of the element accordingly.
-        const tagName = element.get()?.tagName;
-        this._isOutside =
-            (outsideByDefault ||
-                tagName === "UL" ||
-                tagName === "OL" ||
-                tagName === "TABLE") &&
-            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
-
         // older versions of testing frameworks like JSDOM don't support MutationObserver
         // https://github.com/jsdom/jsdom/issues/639
         // use this way of getting NODE_ENV because tsdx does not support a test environment
@@ -1045,6 +1092,13 @@ class DummyInputManagerCore {
         const wrappers = (this._wrappers = this._wrappers.filter(
             (w) => w.manager !== manager && !force
         ));
+
+        if (__DEV__) {
+            this._firstDummy &&
+                setDummyInputDebugValue(this._firstDummy, wrappers);
+            this._lastDummy &&
+                setDummyInputDebugValue(this._lastDummy, wrappers);
+        }
 
         if (wrappers.length === 0) {
             delete (this._element?.get() as HTMLElementWithDummyInputs)
@@ -1084,7 +1138,10 @@ class DummyInputManagerCore {
     ): void {
         const wrapper = this._getCurrent();
 
-        if (wrapper) {
+        if (
+            wrapper &&
+            (!dummyInput.useDefaultAction || this._callForDefaultAction)
+        ) {
             wrapper.manager.getHandler(isIn)?.(
                 dummyInput,
                 isBackward,
@@ -1109,24 +1166,75 @@ class DummyInputManagerCore {
         this._onFocus(false, dummyInput, isBackward, relatedTarget);
     };
 
+    moveOut = (backwards: boolean): void => {
+        const first = this._firstDummy;
+        const last = this._lastDummy;
+
+        if (first && last) {
+            const firstInput = first.input;
+            const lastInput = last.input;
+            const element = this._element?.get();
+
+            if (firstInput && lastInput && element) {
+                let toFocus: HTMLElement | undefined;
+
+                if (backwards) {
+                    firstInput.tabIndex = 0;
+                    toFocus = firstInput;
+                } else {
+                    lastInput.tabIndex = 0;
+                    toFocus = lastInput;
+                }
+
+                if (toFocus) {
+                    nativeFocus(toFocus);
+                }
+            }
+        }
+    };
+
     /**
      * Prepares to move focus out of the given element by focusing
-     * one of the dummy inputs and setting the `shouldMoveOut` flag
+     * one of the dummy inputs and setting the `useDefaultAction` flag
      * @param backwards focus moving to an element behind the given element
      */
     moveOutWithDefaultAction = (backwards: boolean): void => {
         const first = this._firstDummy;
         const last = this._lastDummy;
 
-        if (first?.input && last?.input) {
-            if (backwards) {
-                first.shouldMoveOut = true;
-                first.input.tabIndex = 0;
-                first.input.focus();
-            } else {
-                last.shouldMoveOut = true;
-                last.input.tabIndex = 0;
-                last.input.focus();
+        if (first && last) {
+            const firstInput = first.input;
+            const lastInput = last.input;
+            const element = this._element?.get();
+
+            if (firstInput && lastInput && element) {
+                let toFocus: HTMLElement | undefined;
+
+                if (backwards) {
+                    if (
+                        !first.isOutside &&
+                        this._tabster.focusable.isFocusable(
+                            element,
+                            true,
+                            true,
+                            true
+                        )
+                    ) {
+                        toFocus = element;
+                    } else {
+                        first.useDefaultAction = true;
+                        firstInput.tabIndex = 0;
+                        toFocus = firstInput;
+                    }
+                } else {
+                    last.useDefaultAction = true;
+                    lastInput.tabIndex = 0;
+                    toFocus = lastInput;
+                }
+
+                if (toFocus) {
+                    nativeFocus(toFocus);
+                }
             }
         }
     };
@@ -1155,6 +1263,13 @@ class DummyInputManagerCore {
             if (input) {
                 input.tabIndex = tabIndex;
             }
+        }
+
+        if (__DEV__) {
+            this._firstDummy &&
+                setDummyInputDebugValue(this._firstDummy, this._wrappers);
+            this._lastDummy &&
+                setDummyInputDebugValue(this._lastDummy, this._wrappers);
         }
     };
 
@@ -1214,6 +1329,13 @@ class DummyInputManagerCore {
                 if (firstElementChild && firstElementChild !== dif) {
                     element.insertBefore(dif, firstElementChild);
                 }
+            }
+
+            if (__DEV__) {
+                this._firstDummy &&
+                    setDummyInputDebugValue(this._firstDummy, this._wrappers);
+                this._lastDummy &&
+                    setDummyInputDebugValue(this._lastDummy, this._wrappers);
             }
 
             this._addTransformOffsets();
@@ -1356,4 +1478,64 @@ export function triggerEvent<D>(
     target.dispatchEvent(event);
 
     return !event.defaultPrevented;
+}
+
+export function augmentAttribute(
+    tabster: Types.TabsterCore,
+    element: HTMLElement,
+    name: string,
+    value?: string | null // Restore original value when undefined.
+): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const entry = tabster.storageEntry(element, true)!;
+    let ret = false;
+
+    if (!entry.aug) {
+        if (value === undefined) {
+            return ret;
+        }
+
+        entry.aug = {};
+    }
+
+    if (value === undefined) {
+        if (name in entry.aug) {
+            const origVal = entry.aug[name];
+
+            delete entry.aug[name];
+
+            if (origVal === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, origVal);
+            }
+
+            ret = true;
+        }
+    } else {
+        let origValue: string | null | undefined;
+
+        if (!(name in entry.aug)) {
+            origValue = element.getAttribute(name);
+        }
+
+        if (origValue !== undefined && origValue !== value) {
+            entry.aug[name] = origValue;
+
+            if (value === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, value);
+            }
+
+            ret = true;
+        }
+    }
+
+    if (value === undefined && Object.keys(entry.aug).length === 0) {
+        delete entry.aug;
+        tabster.storageEntry(element, false);
+    }
+
+    return ret;
 }

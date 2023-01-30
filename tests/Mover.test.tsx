@@ -293,7 +293,11 @@ describe("NestedMovers", () => {
 
         await new BroTest.BroTest(
             (
-                <div>
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <button id="target">Target</button>
                     <button>Skipped</button>
                     <div {...attr} id="mover">
@@ -318,6 +322,47 @@ describe("NestedMovers", () => {
             .focusElement("#start")
             .pressTab(true)
             .activeElement((el) => expect(el?.textContent).toEqual("Target"));
+    });
+
+    it.each([
+        "ArrowDown",
+        "ArrowUp",
+        "PageDown",
+        "PageUp",
+        "Home",
+        "End",
+    ] as const)("should ignore %s key", async (key) => {
+        const attr = getTabsterAttribute({
+            mover: {
+                direction: Types.MoverDirections.Vertical,
+                cyclic: true,
+            },
+            focusable: {
+                ignoreKeydown: {
+                    [key]: true,
+                },
+            },
+        });
+
+        await new BroTest.BroTest(
+            (
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
+                    <div {...attr} id="mover">
+                        <button id="start">Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#start")
+            .press(key)
+            .activeElement((el) => expect(el?.attributes.id).toEqual("start"));
     });
 });
 
@@ -1783,6 +1828,286 @@ describe("Adjacent Movers", () => {
             .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    it.each<["div" | "ul" | "li"]>([["div"], ["ul"], ["li"]])(
+        "should handle adjacent Movers in extra wrapper correctly",
+        async (tagName: string) => {
+            const TagName = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div>
+                            <div>
+                                <TagName
+                                    {...getTabsterAttribute({
+                                        mover: {
+                                            direction:
+                                                Types.MoverDirections
+                                                    .Horizontal,
+                                        },
+                                    })}
+                                >
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </TagName>
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                <TagName
+                                    {...getTabsterAttribute({
+                                        mover: {
+                                            direction:
+                                                Types.MoverDirections
+                                                    .Horizontal,
+                                        },
+                                    })}
+                                >
+                                    <button>Button3</button>
+                                    <button>Button4</button>
+                                </TagName>
+                            </div>
+                        </div>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                });
+        }
+    );
+
+    it.each<["div" | "ul" | "li"]>([["div"], ["ul"], ["li"]])(
+        "should handle adjacent Movers with memorizeCurrent in extra wrapper correctly",
+        async (tagName: string) => {
+            const TagName = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div>
+                            <div>
+                                <TagName
+                                    {...getTabsterAttribute({
+                                        mover: {
+                                            direction:
+                                                Types.MoverDirections
+                                                    .Horizontal,
+                                            memorizeCurrent: true,
+                                        },
+                                    })}
+                                >
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </TagName>
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                <TagName
+                                    {...getTabsterAttribute({
+                                        mover: {
+                                            direction:
+                                                Types.MoverDirections
+                                                    .Horizontal,
+                                            memorizeCurrent: true,
+                                        },
+                                    })}
+                                >
+                                    <button>Button3</button>
+                                    <button>Button4</button>
+                                </TagName>
+                            </div>
+                        </div>
+                    </div>
+                )
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressRight()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressLeft()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        }
+    );
+});
+
+describe("Mover with default element", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should focus default focusable when tabbing from outside", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { hasDefault: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button
+                            {...getTabsterAttribute({
+                                focusable: { isDefault: true },
+                            })}
+                        >
+                            Button4
+                        </button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
+
+    it("should focus memorized element or default focusable when tabbing from outside", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { hasDefault: true, memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button
+                            {...getTabsterAttribute({
+                                focusable: { isDefault: true },
+                            })}
+                        >
+                            Button4
+                        </button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
             });
     });
 });

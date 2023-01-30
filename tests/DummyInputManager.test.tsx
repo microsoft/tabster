@@ -72,12 +72,14 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div>
-                    <div {...attr} id={moverId}>
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <div {...attr} id={moverId}>
+                            <button>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
                     </div>
                 </div>
             );
@@ -120,7 +122,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const moverId = "mover";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <div
                         id={scrollId}
@@ -166,9 +168,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .pressTab()
+                .activeElement((el) => expect(el?.textContent).toBe("Button1"))
                 .pressTab()
                 .activeElement((el) => expect(el?.textContent).toBe("Button2"))
                 .pressDown()
+                .wait(200) // We throttle the dummy inputs position update, so giving it a bit.
                 .activeElement((el) => expect(el?.textContent).toBe("Button3"))
                 .eval(evaluateScrollTop, scrollId)
                 .check((scrollTop: number | undefined) => {
@@ -189,6 +193,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 })
                 .pressDown()
                 .pressDown()
+                .wait(200) // We throttle the dummy inputs position update, so giving it a bit.
                 .activeElement((el) => expect(el?.textContent).toBe("Button5"))
                 .eval(evaluateScrollTop, scrollId)
                 .check((scrollTop: number | undefined) => {
@@ -210,7 +215,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const groupperId = "groupper";
 
             const testHtml = (
-                <div>
+                <div {...getTabsterAttribute({ root: {} })}>
                     <div {...attr} id={groupperId}>
                         <button>Button1</button>
                         <button>Button2</button>
@@ -250,10 +255,14 @@ describeIfUncontrolled("DummyInputManager", () => {
                 modalizer: { id: "modalizer" },
             });
 
-            const modalizerAPIId = "modalizerAPI";
-
+            const modalizerOuterId = "modalizer-outer";
             const testHtml = (
-                <div>
+                <div
+                    id={modalizerOuterId}
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <div {...attr} aria-label="modalizer">
                         <button>Button1</button>
                         <button>Button2</button>
@@ -264,30 +273,26 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval((modalizerAPIId) => {
-                    document.body.setAttribute("id", modalizerAPIId);
-                }, modalizerAPIId)
-                .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    "modalizer-outer"
                 )
                 .check(checkDummyInside)
-                .eval(appendElement, modalizerAPIId)
+                .eval(appendElement, modalizerOuterId)
                 .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    modalizerOuterId
                 )
                 .check(checkDummyInside)
-                .eval(prependElement, modalizerAPIId)
+                .eval(prependElement, modalizerOuterId)
                 .wait(1)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
-                    modalizerAPIId
+                    modalizerOuterId
                 )
                 .check(checkDummyInside);
         });
@@ -301,7 +306,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const containerId = "outside";
                 const Tag = tagName;
                 const testHtml = (
-                    <div>
+                    <div {...getTabsterAttribute({ root: {} })}>
                         <Tag {...attr} id={containerId}>
                             <li>
                                 <button>Button1</button>
@@ -350,13 +355,15 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const containerId = "inside";
                 const Tag = tagName;
                 const testHtml = (
-                    <div>
-                        <table>
-                            <Tag {...attr} id={containerId}>
-                                <button>Button1</button>
-                                <button>Button2</button>
-                            </Tag>
-                        </table>
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div>
+                            <table>
+                                <Tag {...attr} id={containerId}>
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                </Tag>
+                            </table>
+                        </div>
                     </div>
                 );
                 await new BroTest.BroTest(testHtml)

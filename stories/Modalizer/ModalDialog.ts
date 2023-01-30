@@ -40,7 +40,15 @@ export const createModalDialog = (props: ModalDialogProps) => {
         firstFocusable?.focus();
     };
 
-    const closeDialog = () => dialog.classList.add("hidden");
+    const closeDialog = () => {
+        tabster?.focusable
+            .findFirst({
+                container: document.body,
+                modalizerId: null,
+            })
+            ?.focus();
+        dialog.classList.add("hidden");
+    };
 
     const rootBtn = document.createElement("button");
     rootBtn.innerHTML = "Open modal dialog";

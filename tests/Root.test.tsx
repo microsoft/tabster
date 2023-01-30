@@ -6,7 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { describeIfControlled } from "./utils/test-utils";
+import { itIfControlled } from "./utils/test-utils";
 
 interface WindowWithTabsterCoreAndFocusState extends Window {
     __tabsterFocusedRoot?: {
@@ -18,38 +18,42 @@ interface WindowWithTabsterCoreAndFocusState extends Window {
     };
 }
 
-describeIfControlled("Root", () => {
+describe("Root", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({});
     });
 
-    it("should insert dummy inputs as first and last children", async () => {
-        await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <button>Button</button>
-                </div>
+    itIfControlled(
+        "should insert dummy inputs as first and last children",
+        async () => {
+            await new BroTest.BroTest(
+                (
+                    <div id="root" {...getTabsterAttribute({ root: {} })}>
+                        <button>Button</button>
+                    </div>
+                )
             )
-        )
-            .eval((dummyAttribute) => {
-                return document.querySelectorAll(`[${dummyAttribute}]`).length;
-            }, TabsterTypes.TabsterDummyInputAttributeName)
-            .check((dummyCount: number) => {
-                expect(dummyCount).toBe(2);
-            })
-            .eval((dummyAttribute) => {
-                const first = document
-                    .getElementById("root")
-                    ?.children[0].hasAttribute(dummyAttribute);
-                const second = document
-                    .getElementById("root")
-                    ?.children[2].hasAttribute(dummyAttribute);
-                return first && second;
-            }, TabsterTypes.TabsterDummyInputAttributeName)
-            .check((areFirstAndLast: boolean) => {
-                expect(areFirstAndLast).toBe(true);
-            });
-    });
+                .eval((dummyAttribute) => {
+                    return document.querySelectorAll(`[${dummyAttribute}]`)
+                        .length;
+                }, TabsterTypes.TabsterDummyInputAttributeName)
+                .check((dummyCount: number) => {
+                    expect(dummyCount).toBe(2);
+                })
+                .eval((dummyAttribute) => {
+                    const first = document
+                        .getElementById("root")
+                        ?.children[0].hasAttribute(dummyAttribute);
+                    const second = document
+                        .getElementById("root")
+                        ?.children[2].hasAttribute(dummyAttribute);
+                    return first && second;
+                }, TabsterTypes.TabsterDummyInputAttributeName)
+                .check((areFirstAndLast: boolean) => {
+                    expect(areFirstAndLast).toBe(true);
+                });
+        }
+    );
 
     it("should allow to go outside of the application when tabbing forward", async () => {
         await new BroTest.BroTest(
@@ -119,7 +123,7 @@ describeIfControlled("Root", () => {
             });
     });
 
-    it("should trigger root focus events", async () => {
+    itIfControlled("should trigger root focus events", async () => {
         await new BroTest.BroTest(
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>

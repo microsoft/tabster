@@ -26,25 +26,13 @@ const _focusableSelector = [
 
 export class FocusableAPI implements Types.FocusableAPI {
     private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
 
-    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
+    constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
-        this._win = getWindow;
     }
 
     dispose(): void {
         /**/
-    }
-
-    private _getBody(): HTMLElement | undefined {
-        const last = this._tabster.focusedElement.getLastFocusedElement();
-
-        if (last && last.ownerDocument) {
-            return last.ownerDocument.body;
-        }
-
-        return this._win().document.body;
     }
 
     getProps(element: HTMLElement): Types.FocusableProps {
@@ -129,7 +117,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         const attrVal = el.getAttribute("aria-hidden");
 
         if (attrVal && attrVal.toLowerCase() === "true") {
-            return true;
+            if (!this._tabster.modalizer?.isAugmented(el)) {
+                return true;
+            }
         }
 
         return false;
@@ -137,14 +127,12 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     findFirst(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             ...options,
         });
     }
 
     findLast(options: Types.FindFirstProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             isBackward: true,
             ...options,
         });
@@ -152,14 +140,12 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     findNext(options: Types.FindNextProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             ...options,
         });
     }
 
     findPrev(options: Types.FindNextProps): HTMLElement | null | undefined {
         return this.findElement({
-            container: this._getBody(),
             isBackward: true,
             ...options,
         });
@@ -197,8 +183,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             container,
             currentElement = null,
             includeProgrammaticallyFocusable,
+            useActiveModalizer,
             ignoreUncontrolled,
             ignoreAccessibiliy,
+            modalizerId,
             isBackward,
             onUncontrolled,
             onElement,
@@ -224,6 +212,12 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         const acceptElementState: Types.FocusableAcceptElementState = {
             container,
+            modalizerUserId:
+                modalizerId === undefined && useActiveModalizer
+                    ? this._tabster.modalizer?.activeId
+                    : modalizerId ||
+                      RootAPI.getTabsterContext(this._tabster, container)
+                          ?.modalizer?.userId,
             from: currentElement || container,
             isBackward,
             acceptCondition,
@@ -375,16 +369,24 @@ export class FocusableAPI implements Types.FocusableAPI {
             this._tabster.focusable.isFocusable(element, undefined, true, true)
         ) {
             if (!ctx.groupper && !ctx.mover) {
-                state.nextUncontrolled = ctx.uncontrolled;
-                return NodeFilter.FILTER_REJECT;
+                if (
+                    ctx.modalizer?.userId === this._tabster.modalizer?.activeId
+                ) {
+                    state.nextUncontrolled = ctx.uncontrolled;
+                    return NodeFilter.FILTER_REJECT;
+                }
             }
         }
 
         // We assume iframes are focusable because native tab behaviour would tab inside
         if (element.tagName === "IFRAME" || element.tagName === "WEBVIEW") {
-            state.found = true;
-            state.lastToIgnore = state.foundElement = element;
-            return NodeFilter.FILTER_ACCEPT;
+            if (ctx.modalizer?.userId === this._tabster.modalizer?.activeId) {
+                state.found = true;
+                state.lastToIgnore = state.foundElement = element;
+                return NodeFilter.FILTER_ACCEPT;
+            } else {
+                return NodeFilter.FILTER_REJECT;
+            }
         }
 
         if (!state.ignoreAccessibiliy && !this.isAccessible(element)) {
@@ -406,7 +408,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         let groupper = ctx.groupper;
         let mover = ctx.mover;
 
-        if (groupper || mover || fromMover) {
+        result = this._tabster.modalizer?.acceptElement(element, state);
+
+        if (result === undefined && (groupper || mover || fromMover)) {
             const groupperElement = groupper?.getElement();
             const fromMoverElement = fromMover?.getElement();
             let moverElement = mover?.getElement();

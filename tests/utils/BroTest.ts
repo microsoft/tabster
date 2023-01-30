@@ -15,7 +15,10 @@ import {
     createTabster,
     disposeTabster,
     getTabster,
+    getTabsterAttribute,
     makeNoOp,
+    mergeTabsterProps,
+    setTabsterAttribute,
     Types,
 } from "tabster";
 
@@ -72,7 +75,7 @@ async function waitPageReadyAndDecorateConsoleError(
 
             console.error = function (...args: any[]) {
                 origConsoleError.apply(console, args);
-                win.__consoleErrors?.push(args);
+                win.__consoleErrors?.push(args.map((a) => `${a}`));
             };
         }
 
@@ -95,6 +98,9 @@ export interface BroTestTabsterTestVariables {
     createTabster?: typeof createTabster;
     getTabster?: typeof getTabster;
     makeNoOp?: typeof makeNoOp;
+    getTabsterAttribute?: typeof getTabsterAttribute;
+    setTabsterAttribute?: typeof setTabsterAttribute;
+    mergeTabsterProps?: typeof mergeTabsterProps;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;
