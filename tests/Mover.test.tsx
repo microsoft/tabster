@@ -1235,6 +1235,14 @@ describe("Mover with grid", () => {
             .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row3-Col3");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .press("End")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col3");
             });
     });
 
@@ -1342,6 +1350,14 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Item3");
             })
             .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .press("End")
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item3");
             });
