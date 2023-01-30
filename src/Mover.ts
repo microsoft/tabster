@@ -890,63 +890,73 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (keyCode === Keys.Home) {
-            next = focusable.findFirst({
-                container,
-                ignoreUncontrolled: true,
-                useActiveModalizer: true,
-            });
             if (isGrid) {
-                // finds the last focusable element on the horizontal
-                next = undefined;
-                let cur: HTMLElement | undefined | null = focusable.findPrev({
+                focusable.findElement({
                     container,
                     currentElement: focused,
                     ignoreUncontrolled: true,
                     useActiveModalizer: true,
+                    isBackward: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
+
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left ?? 0
+                        );
+
+                        if (
+                            el !== focused &&
+                            focusedElementX1 <= nextElementX1
+                        ) {
+                            return true;
+                        }
+
+                        next = el;
+                        return false;
+                    },
                 });
-                let nextElementX1 = Math.ceil(
-                    cur?.getBoundingClientRect().left ?? 0
-                );
-                while (cur && nextElementX1 < focusedElementX1) {
-                    next = cur;
-                    cur = focusable.findPrev({
-                        container,
-                        currentElement: cur,
-                    });
-                    nextElementX1 = Math.ceil(
-                        cur?.getBoundingClientRect().left ?? -1
-                    );
-                }
+            } else {
+                next = focusable.findFirst({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
             }
         } else if (keyCode === Keys.End) {
-            next = focusable.findLast({
-                container,
-                ignoreUncontrolled: true,
-                useActiveModalizer: true,
-            });
             if (isGrid) {
-                // finds the last focusable element on the horizontal
-                next = undefined;
-                let cur: HTMLElement | undefined | null = focusable.findNext({
+                focusable.findElement({
                     container,
                     currentElement: focused,
                     ignoreUncontrolled: true,
                     useActiveModalizer: true,
-                });
-                let nextElementX2 = Math.ceil(
-                    cur?.getBoundingClientRect().right ?? 0
-                );
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
 
-                while (cur && nextElementX2 > focusedElementX1) {
-                    next = cur;
-                    cur = focusable.findNext({
-                        container,
-                        currentElement: cur,
-                    });
-                    nextElementX2 = Math.ceil(
-                        cur?.getBoundingClientRect().left ?? 0
-                    );
-                }
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left ?? 0
+                        );
+
+                        if (
+                            el !== focused &&
+                            focusedElementX1 >= nextElementX1
+                        ) {
+                            return true;
+                        }
+
+                        next = el;
+                        return false;
+                    },
+                });
+            } else {
+                next = focusable.findLast({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
             }
         } else if (keyCode === Keys.PageUp) {
             if (isGrid) {
