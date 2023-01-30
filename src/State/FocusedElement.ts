@@ -201,7 +201,7 @@ export class FocusedElementState
                             ]({
                                 container: uncontrolled,
                                 ignoreUncontrolled: true,
-                                ignoreAccessibility: true,
+                                ignoreAccessibility,
                                 useActiveModalizer: true,
                             });
                         }
@@ -617,6 +617,11 @@ export class FocusedElementState
         }
 
         if (nextElement) {
+            const preventDefault = () => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            };
+
             // For iframes just allow normal Tab behaviour
             if (!controlTab) {
                 const lastMoverOrGroupper = next?.lastMoverOrGroupper;
@@ -630,11 +635,6 @@ export class FocusedElementState
                         tabster,
                         nextElement
                     );
-
-                    const preventDefault = () => {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                    };
 
                     if (
                         (!nextElementCtx ||
@@ -654,8 +654,7 @@ export class FocusedElementState
                     }
                 }
             } else if (nextElement.tagName !== "IFRAME") {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+                preventDefault();
 
                 nativeFocus(nextElement);
             }

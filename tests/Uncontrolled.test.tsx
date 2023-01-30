@@ -598,4 +598,94 @@ describe("Uncontrolled", () => {
                 expect(el?.textContent).toEqual("Groupper-Button3");
             });
     });
+
+    it("should properly handle nested Uncontrolled", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <button>Button1</button>
+                        <button disabled>Button2</button>
+                    </div>
+                    <div>
+                        <ul {...getTabsterAttribute({ uncontrolled: {} })}>
+                            <li>
+                                <button aria-hidden="true">Button3</button>
+                            </li>
+                            <li>
+                                <button aria-hidden="true">Button4</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <ul {...getTabsterAttribute({ uncontrolled: {} })}>
+                            <li
+                                tabIndex={0}
+                                {...getTabsterAttribute({ uncontrolled: {} })}
+                            >
+                                <button aria-hidden="true">Button5</button>
+                                <button aria-hidden="true">Button6</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button disabled>Button7</button>
+                        <button>Button8</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button8");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
 });
