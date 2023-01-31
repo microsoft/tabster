@@ -978,6 +978,35 @@ export class MoverAPI implements Types.MoverAPI {
                 },
             });
 
+            // will be on the first column move forward and preserve previous column
+            if (isGrid && next) {
+                const firstColumnX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+                focusable.findElement({
+                    currentElement: next,
+                    container,
+                    useActiveModalizer: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
+
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left
+                        );
+                        if (
+                            focusedElementX1 < nextElementX1 ||
+                            firstColumnX1 >= nextElementX1
+                        ) {
+                            return true;
+                        }
+                        next = el;
+                        return false;
+                    },
+                });
+            }
+
             if (next) {
                 scrollIntoView(this._win, next, false);
             }
@@ -999,6 +1028,36 @@ export class MoverAPI implements Types.MoverAPI {
                     return true;
                 },
             });
+
+            // will be on the last column move backwards and preserve previous column
+            if (isGrid && next) {
+                const lastColumnX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+                focusable.findElement({
+                    currentElement: next,
+                    container,
+                    useActiveModalizer: true,
+                    isBackward: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
+
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left
+                        );
+                        if (
+                            focusedElementX1 > nextElementX1 ||
+                            lastColumnX1 <= nextElementX1
+                        ) {
+                            return true;
+                        }
+                        next = el;
+                        return false;
+                    },
+                });
+            }
 
             if (next) {
                 scrollIntoView(this._win, next, true);
