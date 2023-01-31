@@ -959,64 +959,46 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (keyCode === Keys.PageUp) {
-            if (isGrid) {
-                return;
-            }
-
-            let prevElement = focusable.findPrev({
+            focusable.findElement({
                 currentElement: focused,
                 container,
                 useActiveModalizer: true,
+                isBackward: true,
+                acceptCondition: (el) => {
+                    if (!focusable.isFocusable(el)) {
+                        return false;
+                    }
+
+                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                        next = el;
+                        return false;
+                    }
+
+                    return true;
+                },
             });
-            let pageUpElement: HTMLElement | null = null;
-
-            while (prevElement) {
-                pageUpElement = prevElement;
-
-                prevElement = isElementVerticallyVisibleInContainer(
-                    this._win,
-                    prevElement
-                )
-                    ? focusable.findPrev({
-                          currentElement: prevElement,
-                          container,
-                          useActiveModalizer: true,
-                      })
-                    : null;
-            }
-
-            next = pageUpElement;
 
             if (next) {
                 scrollIntoView(this._win, next, false);
             }
         } else if (keyCode === Keys.PageDown) {
-            if (isGrid) {
-                return;
-            }
-            let nextElement = focusable.findNext({
+            focusable.findElement({
                 currentElement: focused,
                 container,
                 useActiveModalizer: true,
+                acceptCondition: (el) => {
+                    if (!focusable.isFocusable(el)) {
+                        return false;
+                    }
+
+                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                        next = el;
+                        return false;
+                    }
+
+                    return true;
+                },
             });
-            let pageDownElement: HTMLElement | null = null;
-
-            while (nextElement) {
-                pageDownElement = nextElement;
-
-                nextElement = isElementVerticallyVisibleInContainer(
-                    this._win,
-                    nextElement
-                )
-                    ? focusable.findNext({
-                          currentElement: nextElement,
-                          container,
-                          useActiveModalizer: true,
-                      })
-                    : null;
-            }
-
-            next = pageDownElement;
 
             if (next) {
                 scrollIntoView(this._win, next, true);
