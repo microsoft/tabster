@@ -1130,7 +1130,6 @@ describe("Mover with grid", () => {
                                 direction: Types.MoverDirections.Grid,
                             },
                         })}
-                        style={{ width: 50, height: 50, overflow: "scroll" }}
                     >
                         <table>
                             <tr>
@@ -1233,6 +1232,22 @@ describe("Mover with grid", () => {
                 expect(el?.textContent).toEqual("Row2-Col3");
             })
             .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col3");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col1");
+            })
+            .press("End")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row3-Col3");
+            })
+            .press("PageUp")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .press("PageDown")
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Row3-Col3");
             });
@@ -1344,6 +1359,26 @@ describe("Mover with grid", () => {
             .pressRight()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Item3");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .press("End")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item3");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
+            })
+            .press("PageDown")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item7");
+            })
+            .press("PageUp")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Item1");
             });
     });
 

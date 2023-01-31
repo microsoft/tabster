@@ -890,69 +890,174 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (keyCode === Keys.Home) {
-            next = focusable.findFirst({
-                container,
-                ignoreUncontrolled: true,
-                useActiveModalizer: true,
-            });
+            if (isGrid) {
+                focusable.findElement({
+                    container,
+                    currentElement: focused,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                    isBackward: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
+
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left ?? 0
+                        );
+
+                        if (
+                            el !== focused &&
+                            focusedElementX1 <= nextElementX1
+                        ) {
+                            return true;
+                        }
+
+                        next = el;
+                        return false;
+                    },
+                });
+            } else {
+                next = focusable.findFirst({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
+            }
         } else if (keyCode === Keys.End) {
-            next = focusable.findLast({
-                container,
-                ignoreUncontrolled: true,
-                useActiveModalizer: true,
-            });
+            if (isGrid) {
+                focusable.findElement({
+                    container,
+                    currentElement: focused,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
+
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left ?? 0
+                        );
+
+                        if (
+                            el !== focused &&
+                            focusedElementX1 >= nextElementX1
+                        ) {
+                            return true;
+                        }
+
+                        next = el;
+                        return false;
+                    },
+                });
+            } else {
+                next = focusable.findLast({
+                    container,
+                    ignoreUncontrolled: true,
+                    useActiveModalizer: true,
+                });
+            }
         } else if (keyCode === Keys.PageUp) {
-            let prevElement = focusable.findPrev({
+            focusable.findElement({
                 currentElement: focused,
                 container,
                 useActiveModalizer: true,
+                isBackward: true,
+                acceptCondition: (el) => {
+                    if (!focusable.isFocusable(el)) {
+                        return false;
+                    }
+
+                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                        next = el;
+                        return false;
+                    }
+
+                    return true;
+                },
             });
-            let pageUpElement: HTMLElement | null = null;
 
-            while (prevElement) {
-                pageUpElement = prevElement;
+            // will be on the first column move forward and preserve previous column
+            if (isGrid && next) {
+                const firstColumnX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+                focusable.findElement({
+                    currentElement: next,
+                    container,
+                    useActiveModalizer: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
 
-                prevElement = isElementVerticallyVisibleInContainer(
-                    this._win,
-                    prevElement
-                )
-                    ? focusable.findPrev({
-                          currentElement: prevElement,
-                          container,
-                          useActiveModalizer: true,
-                      })
-                    : null;
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left
+                        );
+                        if (
+                            focusedElementX1 < nextElementX1 ||
+                            firstColumnX1 >= nextElementX1
+                        ) {
+                            return true;
+                        }
+                        next = el;
+                        return false;
+                    },
+                });
             }
-
-            next = pageUpElement;
 
             if (next) {
                 scrollIntoView(this._win, next, false);
             }
         } else if (keyCode === Keys.PageDown) {
-            let nextElement = focusable.findNext({
+            focusable.findElement({
                 currentElement: focused,
                 container,
                 useActiveModalizer: true,
+                acceptCondition: (el) => {
+                    if (!focusable.isFocusable(el)) {
+                        return false;
+                    }
+
+                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                        next = el;
+                        return false;
+                    }
+
+                    return true;
+                },
             });
-            let pageDownElement: HTMLElement | null = null;
 
-            while (nextElement) {
-                pageDownElement = nextElement;
+            // will be on the last column move backwards and preserve previous column
+            if (isGrid && next) {
+                const lastColumnX1 = Math.ceil(
+                    next.getBoundingClientRect().left
+                );
+                focusable.findElement({
+                    currentElement: next,
+                    container,
+                    useActiveModalizer: true,
+                    isBackward: true,
+                    acceptCondition: (el) => {
+                        if (!focusable.isFocusable(el)) {
+                            return false;
+                        }
 
-                nextElement = isElementVerticallyVisibleInContainer(
-                    this._win,
-                    nextElement
-                )
-                    ? focusable.findNext({
-                          currentElement: nextElement,
-                          container,
-                          useActiveModalizer: true,
-                      })
-                    : null;
+                        const nextElementX1 = Math.ceil(
+                            el.getBoundingClientRect().left
+                        );
+                        if (
+                            focusedElementX1 > nextElementX1 ||
+                            lastColumnX1 <= nextElementX1
+                        ) {
+                            return true;
+                        }
+                        next = el;
+                        return false;
+                    },
+                });
             }
-
-            next = pageDownElement;
 
             if (next) {
                 scrollIntoView(this._win, next, true);
