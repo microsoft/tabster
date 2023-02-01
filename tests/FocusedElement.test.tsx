@@ -208,9 +208,11 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
                 <div>
                     <button>Button1</button>
                 </div>
-                <button disabled={true} id="button">
-                    Button2
-                </button>
+                <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                    <button disabled={true} id="button">
+                        Button2
+                    </button>
+                </div>
                 <div style={{ display: "none" }}>
                     <div>
                         <button>Button4</button>
