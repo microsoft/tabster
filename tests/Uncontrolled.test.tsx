@@ -688,4 +688,62 @@ describe("Uncontrolled", () => {
                 expect(el?.textContent).toEqual("Button1");
             });
     });
+
+    it("should properly handle uncontrolled inside hidden element", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button {...getTabsterAttribute({ uncontrolled: {} })}>
+                        Button1
+                    </button>
+                    <div
+                        tabIndex={0}
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    Types.GroupperTabbabilities
+                                        .LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button {...getTabsterAttribute({ uncontrolled: {} })}>
+                            Button2
+                        </button>
+                        <button {...getTabsterAttribute({ uncontrolled: {} })}>
+                            Button3
+                        </button>
+                    </div>
+                    <div style={{ visibility: "hidden" }}>
+                        <button {...getTabsterAttribute({ uncontrolled: {} })}>
+                            Button4
+                        </button>
+                    </div>
+                    <button {...getTabsterAttribute({ uncontrolled: {} })}>
+                        Button5
+                    </button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("Button2Button3")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("Button2Button3")
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toBeUndefined());
+    });
 });

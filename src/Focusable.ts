@@ -372,7 +372,9 @@ export class FocusableAPI implements Types.FocusableAPI {
                 if (
                     ctx.modalizer?.userId === this._tabster.modalizer?.activeId
                 ) {
-                    state.nextUncontrolled = ctx.uncontrolled;
+                    if (this.isVisible(ctx.uncontrolled)) {
+                        state.nextUncontrolled = ctx.uncontrolled;
+                    }
                     return NodeFilter.FILTER_REJECT;
                 }
             }
