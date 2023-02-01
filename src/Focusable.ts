@@ -205,7 +205,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 this._tabster.focusable.isFocusable(
                     el,
                     includeProgrammaticallyFocusable,
-                    ignoreAccessibility,
+                    false,
                     ignoreAccessibility
                 );
         }
