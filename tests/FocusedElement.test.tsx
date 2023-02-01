@@ -163,3 +163,80 @@ describe("onKeyDown", () => {
             });
     });
 });
+
+describe("does not skip bizarre inaccessible things in the end of the root", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({});
+    });
+
+    it("should focus inaccessible button in the end of root", async () => {
+        // TODO: Remove this workaround once the TMP nested button is fixed.
+        const testHtml = (
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <button>Button1</button>
+                </div>
+                <div>
+                    <button disabled={true} id="button">
+                        Button2
+                    </button>
+                </div>
+            </div>
+        );
+
+        await new BroTest.BroTest(testHtml)
+            .eval(() => {
+                const innerButton = document.createElement("button");
+                innerButton.innerText = "Button3";
+                document.getElementById("button")?.appendChild(innerButton);
+            })
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual(undefined))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
+    });
+
+    it("should focus inaccessible button inside uncontrolled in the end of root and invisible button in the very end", async () => {
+        const testHtml = (
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <button>Button1</button>
+                </div>
+                <div {...getTabsterAttribute({ uncontrolled: {} })}>
+                    <button disabled={true} id="button">
+                        Button2
+                    </button>
+                </div>
+                <div style={{ display: "none" }}>
+                    <div>
+                        <button>Button4</button>
+                    </div>
+                </div>
+                <div>Empty</div>
+            </div>
+        );
+
+        await new BroTest.BroTest(testHtml)
+            .eval(() => {
+                const innerButton = document.createElement("button");
+                innerButton.innerText = "Button3";
+                document.getElementById("button")?.appendChild(innerButton);
+            })
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual(undefined))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
+    });
+});

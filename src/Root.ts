@@ -82,7 +82,7 @@ class RootDummyManager extends DummyInputManager {
                 const toFocus =
                     this._tabster.focusedElement.getFirstOrLastTabbable(
                         dummyInput.isFirst,
-                        { container: element }
+                        { container: element, ignoreAccessibility: true }
                     );
 
                 if (toFocus) {
@@ -433,10 +433,9 @@ export class RootAPI implements Types.RootAPI {
             const tagName = (curElement as HTMLElement).tagName;
 
             if (
-                !uncontrolled &&
-                (tabsterOnElement.uncontrolled ||
-                    tagName === "IFRAME" ||
-                    tagName === "WEBVIEW")
+                tabsterOnElement.uncontrolled ||
+                tagName === "IFRAME" ||
+                tagName === "WEBVIEW"
             ) {
                 uncontrolled = curElement as HTMLElement;
             }

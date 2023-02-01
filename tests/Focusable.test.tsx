@@ -6,7 +6,6 @@
 import * as React from "react";
 import { getTabsterAttribute } from "tabster";
 import * as BroTest from "./utils/BroTest";
-import { describeIfControlled } from "./utils/test-utils";
 
 describe("Focusable", () => {
     beforeEach(async () => {
@@ -33,8 +32,8 @@ describe("Focusable", () => {
         });
     });
 
-    describeIfControlled("aria-hidden", () => {
-        it("should not allow aria-hidden elements to be focused", async () => {
+    describe("aria-hidden", () => {
+        it("should allow aria-hidden elements to be focused", async () => {
             await new BroTest.BroTest(
                 (
                     <div {...getTabsterAttribute({ root: {} })}>
@@ -45,7 +44,15 @@ describe("Focusable", () => {
             )
                 .pressTab()
                 .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
                     expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
                 });
         });
     });

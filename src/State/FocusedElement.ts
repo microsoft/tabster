@@ -157,10 +157,13 @@ export class FocusedElementState
 
     getFirstOrLastTabbable(
         isFirst: boolean,
-        props: Types.FindFirstProps
+        props: Pick<
+            Types.FindFocusableProps,
+            "container" | "ignoreAccessibility"
+        >
     ): HTMLElement | undefined {
         const tabsterFocusable = this._tabster.focusable;
-        const container = props.container;
+        const { container, ignoreAccessibility } = props;
         let uncontrolled: HTMLElement | undefined;
         let toFocus: HTMLElement | null | undefined;
 
@@ -173,7 +176,9 @@ export class FocusedElementState
                     ctx,
                     container,
                     undefined,
-                    !isFirst
+                    !isFirst,
+                    undefined,
+                    ignoreAccessibility
                 );
 
                 if (next) {
@@ -196,7 +201,7 @@ export class FocusedElementState
                             ]({
                                 container: uncontrolled,
                                 ignoreUncontrolled: true,
-                                ignoreAccessibiliy: true,
+                                ignoreAccessibility,
                                 useActiveModalizer: true,
                             });
                         }
@@ -207,7 +212,9 @@ export class FocusedElementState
                                 ctx,
                                 uncontrolled,
                                 undefined,
-                                !isFirst
+                                !isFirst,
+                                undefined,
+                                ignoreAccessibility
                             );
 
                             if (next) {
@@ -377,7 +384,8 @@ export class FocusedElementState
         container?: HTMLElement,
         currentElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean
+        ignoreUncontrolled?: boolean,
+        ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const actualContainer = container || ctx.root.getElement();
 
@@ -406,7 +414,8 @@ export class FocusedElementState
             next = what.findNextTabbable(
                 currentElement,
                 isBackward,
-                ignoreUncontrolled
+                ignoreUncontrolled,
+                ignoreAccessibility
             );
         };
 
@@ -446,6 +455,7 @@ export class FocusedElementState
                       currentElement,
                       onUncontrolled,
                       ignoreUncontrolled,
+                      ignoreAccessibility,
                       useActiveModalizer: true,
                   })
                 : tabster.focusable.findNext({
@@ -453,6 +463,7 @@ export class FocusedElementState
                       currentElement,
                       onUncontrolled,
                       ignoreUncontrolled,
+                      ignoreAccessibility,
                       useActiveModalizer: true,
                   });
 
@@ -500,7 +511,8 @@ export class FocusedElementState
                             actualContainer,
                             adjacentFrom,
                             isBackward,
-                            ignoreUncontrolled
+                            ignoreUncontrolled,
+                            ignoreAccessibility
                         );
 
                         if (next && !next.lastMoverOrGroupper) {
@@ -549,7 +561,9 @@ export class FocusedElementState
             ctx,
             undefined,
             currentElement,
-            isBackward
+            isBackward,
+            undefined,
+            true
         );
 
         let nextElement: HTMLElement | null | undefined;
@@ -603,6 +617,11 @@ export class FocusedElementState
         }
 
         if (nextElement) {
+            const preventDefault = () => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            };
+
             // For iframes just allow normal Tab behaviour
             if (!controlTab) {
                 const lastMoverOrGroupper = next?.lastMoverOrGroupper;
@@ -616,11 +635,6 @@ export class FocusedElementState
                         tabster,
                         nextElement
                     );
-
-                    const preventDefault = () => {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                    };
 
                     if (
                         (!nextElementCtx ||
@@ -640,8 +654,7 @@ export class FocusedElementState
                     }
                 }
             } else if (nextElement.tagName !== "IFRAME") {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+                preventDefault();
 
                 nativeFocus(nextElement);
             }

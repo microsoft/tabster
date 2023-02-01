@@ -185,7 +185,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             includeProgrammaticallyFocusable,
             useActiveModalizer,
             ignoreUncontrolled,
-            ignoreAccessibiliy,
+            ignoreAccessibility,
             modalizerId,
             isBackward,
             onUncontrolled,
@@ -205,8 +205,8 @@ export class FocusableAPI implements Types.FocusableAPI {
                 this._tabster.focusable.isFocusable(
                     el,
                     includeProgrammaticallyFocusable,
-                    ignoreAccessibiliy,
-                    ignoreAccessibiliy
+                    false,
+                    ignoreAccessibility
                 );
         }
 
@@ -223,7 +223,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             acceptCondition,
             includeProgrammaticallyFocusable,
             ignoreUncontrolled,
-            ignoreAccessibiliy,
+            ignoreAccessibility,
             cachedGrouppers: {},
         };
 
@@ -372,7 +372,9 @@ export class FocusableAPI implements Types.FocusableAPI {
                 if (
                     ctx.modalizer?.userId === this._tabster.modalizer?.activeId
                 ) {
-                    state.nextUncontrolled = ctx.uncontrolled;
+                    if (this.isVisible(ctx.uncontrolled)) {
+                        state.nextUncontrolled = ctx.uncontrolled;
+                    }
                     return NodeFilter.FILTER_REJECT;
                 }
             }
@@ -389,7 +391,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         }
 
-        if (!state.ignoreAccessibiliy && !this.isAccessible(element)) {
+        if (!state.ignoreAccessibility && !this.isAccessible(element)) {
             return NodeFilter.FILTER_REJECT;
         }
 

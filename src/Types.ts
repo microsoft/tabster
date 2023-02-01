@@ -85,7 +85,7 @@ export interface FocusedElementState
     /** @internal */
     getFirstOrLastTabbable(
         isFirst: boolean,
-        props: FindFirstProps
+        props: Pick<FindFocusableProps, "container" | "ignoreAccessibility">
     ): HTMLElement | undefined;
     focusFirst(props: FindFirstProps): boolean;
     focusLast(props: FindFirstProps): boolean;
@@ -108,7 +108,8 @@ export interface TabsterPartWithFindNextTabbable {
     findNextTabbable(
         current?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean
+        ignoreUncontrolled?: boolean,
+        ignoreAccessibility?: boolean
     ): NextTabbable | null;
 }
 
@@ -392,7 +393,7 @@ export interface FocusableAcceptElementState {
     acceptCondition: (el: HTMLElement) => boolean;
     includeProgrammaticallyFocusable?: boolean;
     ignoreUncontrolled?: boolean;
-    ignoreAccessibiliy?: boolean;
+    ignoreAccessibility?: boolean;
     cachedGrouppers: {
         [id: string]: {
             isActive: boolean | undefined;
@@ -422,7 +423,7 @@ export interface FindFocusableProps {
     /**
      * Ignore accessibility check.
      */
-    ignoreAccessibiliy?: boolean;
+    ignoreAccessibility?: boolean;
     /**
      * Take active modalizer into account when searching for elements
      * (the elements out of active modalizer will not be returned).
@@ -461,7 +462,7 @@ export type FindFirstProps = Pick<
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
     | "ignoreUncontrolled"
-    | "ignoreAccessibiliy"
+    | "ignoreAccessibility"
 >;
 
 export type FindNextProps = Pick<
@@ -472,7 +473,7 @@ export type FindNextProps = Pick<
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
     | "ignoreUncontrolled"
-    | "ignoreAccessibiliy"
+    | "ignoreAccessibility"
     | "onUncontrolled"
 >;
 
@@ -483,7 +484,7 @@ export type FindDefaultProps = Pick<
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
     | "ignoreUncontrolled"
-    | "ignoreAccessibiliy"
+    | "ignoreAccessibility"
 >;
 
 export type FindAllProps = Pick<
@@ -496,7 +497,7 @@ export type FindAllProps = Pick<
     | "useActiveModalizer"
     | "acceptCondition"
     | "ignoreUncontrolled"
-    | "ignoreAccessibiliy"
+    | "ignoreAccessibility"
     | "onElement"
 >;
 

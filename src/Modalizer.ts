@@ -84,6 +84,7 @@ class ModalizerDummyManager extends DummyInputManager {
                         undefined,
                         input,
                         isBackward,
+                        true,
                         true
                     )?.element;
                 }
@@ -221,7 +222,8 @@ export class Modalizer
     findNextTabbable(
         currentElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean
+        ignoreUncontrolled?: boolean,
+        ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const modalizerElement = this.getElement();
 
@@ -246,6 +248,7 @@ export class Modalizer
                 currentElement,
                 onUncontrolled,
                 ignoreUncontrolled,
+                ignoreAccessibility,
                 useActiveModalizer: true,
             });
 
@@ -259,6 +262,7 @@ export class Modalizer
                     {
                         container,
                         ignoreUncontrolled: true,
+                        ignoreAccessibility,
                         useActiveModalizer: true,
                     }
                 );
