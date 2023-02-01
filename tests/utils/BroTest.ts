@@ -465,7 +465,12 @@ export class BroTest implements PromiseLike<undefined> {
     press(
         key: KeyInput,
         options?:
-            | { text?: string | undefined; delay?: number | undefined; ctrl?: boolean; shift?: boolean }
+            | {
+                  text?: string | undefined;
+                  delay?: number | undefined;
+                  ctrl?: boolean;
+                  shift?: boolean;
+              }
             | undefined
     ) {
         this._chain.push(
