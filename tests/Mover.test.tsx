@@ -364,6 +364,47 @@ describe("NestedMovers", () => {
             .press(key)
             .activeElement((el) => expect(el?.attributes.id).toEqual("start"));
     });
+
+    it.each([
+        "ArrowDown",
+        "ArrowUp",
+        "PageDown",
+        "PageUp",
+        "Home",
+        "End",
+    ] as const)("should ignore CTRL key with %s", async (key) => {
+        const attr = getTabsterAttribute({
+            mover: {
+                direction: Types.MoverDirections.Vertical,
+                cyclic: true,
+            },
+            focusable: {
+                ignoreKeydown: {
+                    [key]: true,
+                },
+            },
+        });
+
+        await new BroTest.BroTest(
+            (
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
+                    <div {...attr} id="mover">
+                        <button id="start">Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                        <button>Mover Item</button>
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#start")
+            .press(key, { ctrl: true })
+            .activeElement((el) => expect(el?.attributes.id).toEqual("start"));
+    });
 });
 
 describe("Mover memorizing current", () => {

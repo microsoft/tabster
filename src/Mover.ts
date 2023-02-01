@@ -763,6 +763,10 @@ export class MoverAPI implements Types.MoverAPI {
         this._ignoredInputResolve?.(false);
 
         let keyCode = e.keyCode;
+        // Mover does not use ctrl key currently
+        if (e.ctrlKey) {
+            return;
+        }
 
         switch (keyCode) {
             case Keys.Down:
