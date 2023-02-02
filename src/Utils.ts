@@ -362,28 +362,23 @@ export function isElementVerticallyVisibleInContainer(
     element: HTMLElement
 ): boolean {
     const container = getScrollableContainer(element);
-
-    if (container) {
-        const containerRect = getBoundingRect(getWindow, container);
-        const elementRect = element.getBoundingClientRect();
-        const intersectionThreshold = elementRect.height * 0.1;
-        const topIntersection = Math.max(
-            0,
-            containerRect.top - elementRect.top
-        );
-        const bottomIntersection = Math.max(
-            0,
-            elementRect.bottom - containerRect.bottom
-        );
-        const totalIntersection = topIntersection + bottomIntersection;
-
-        return (
-            totalIntersection === 0 ||
-            totalIntersection <= intersectionThreshold
-        );
+    if (!container) {
+        return false;
     }
 
-    return false;
+    const containerRect = getBoundingRect(getWindow, container);
+    const elementRect = element.getBoundingClientRect();
+    const intersectionThreshold = elementRect.height * 0.1;
+    const topIntersection = Math.max(0, containerRect.top - elementRect.top);
+    const bottomIntersection = Math.max(
+        0,
+        elementRect.bottom - containerRect.bottom
+    );
+    const totalIntersection = topIntersection + bottomIntersection;
+
+    return (
+        totalIntersection === 0 || totalIntersection <= intersectionThreshold
+    );
 }
 
 export function isElementVisibleInContainer(
