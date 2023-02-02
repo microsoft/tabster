@@ -378,7 +378,8 @@ export function isElementVerticallyVisibleInContainer(
         const totalIntersection = topIntersection + bottomIntersection;
 
         return (
-            totalIntersection === 0 || totalIntersection <= intersectionThreshold
+            totalIntersection === 0 ||
+            totalIntersection <= intersectionThreshold
         );
     }
 
