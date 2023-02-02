@@ -369,7 +369,7 @@ export function isElementVerticallyVisibleInContainer(
 
     const containerRect = getBoundingRect(getWindow, container);
     const elementRect = element.getBoundingClientRect();
-    const intersectionThreshold = elementRect.height * (1 - tolerance);
+    const intersectionTolerance = elementRect.height * (1 - tolerance);
     const topIntersection = Math.max(0, containerRect.top - elementRect.top);
     const bottomIntersection = Math.max(
         0,
@@ -378,7 +378,7 @@ export function isElementVerticallyVisibleInContainer(
     const totalIntersection = topIntersection + bottomIntersection;
 
     return (
-        totalIntersection === 0 || totalIntersection <= intersectionThreshold
+        totalIntersection === 0 || totalIntersection <= intersectionTolerance
     );
 }
 
