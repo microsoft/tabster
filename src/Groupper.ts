@@ -201,13 +201,20 @@ export class Groupper
 
         if (!next && !uncontrolled) {
             const parentElement = groupperElement.parentElement;
-            const parentCtx = parentElement && RootAPI.getTabsterContext(tabster, parentElement);
+            const parentCtx =
+                parentElement &&
+                RootAPI.getTabsterContext(tabster, parentElement);
             const parentGroupper = parentCtx?.groupper;
 
             if (parentGroupper && parentCtx.isGroupperFirst) {
                 // For the case of directly nested grouppers after nothing's found in the current groupper,
                 // check the parent one.
-                return parentGroupper.findNextTabbable(groupperElement, isBackward, ignoreUncontrolled, ignoreAccessibility);
+                return parentGroupper.findNextTabbable(
+                    groupperElement,
+                    isBackward,
+                    ignoreUncontrolled,
+                    ignoreAccessibility
+                );
             }
         }
 
