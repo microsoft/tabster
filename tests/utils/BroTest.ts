@@ -567,6 +567,21 @@ export class BroTest implements PromiseLike<undefined> {
         return this._pressKey("ArrowRight", shift);
     }
 
+    scrollTo(selector: string, x: number, y: number) {
+        this._chain.push(
+            new BroTestItemCallback(this._frameStack, async () => {
+                await page.waitForSelector(selector);
+                await page.evaluate((selector: string, x: number, y: number) => {
+                    const scrollContainer: HTMLElement | null =
+                        document.querySelector(selector);
+                    scrollContainer?.scroll(x, y);
+                }, selector, x, y);
+            })
+        );
+
+        return this;
+    }
+
     activeElement(callback: (activeElement: BrowserElement | null) => void) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
