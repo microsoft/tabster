@@ -571,11 +571,16 @@ export class BroTest implements PromiseLike<undefined> {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 await page.waitForSelector(selector);
-                await page.evaluate((selector: string, x: number, y: number) => {
-                    const scrollContainer: HTMLElement | null =
-                        document.querySelector(selector);
-                    scrollContainer?.scroll(x, y);
-                }, selector, x, y);
+                await page.evaluate(
+                    (selector: string, x: number, y: number) => {
+                        const scrollContainer: HTMLElement | null =
+                            document.querySelector(selector);
+                        scrollContainer?.scroll(x, y);
+                    },
+                    selector,
+                    x,
+                    y
+                );
             })
         );
 
