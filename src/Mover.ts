@@ -810,6 +810,35 @@ export class MoverAPI implements Types.MoverAPI {
 
         const mover = ctx.mover;
         const container = mover.getElement();
+        // let isGroupperFirst = !!ctx.isGroupperFirst;
+
+        // const getParentMover = (moverEl: HTMLElement | undefined, moverCtx: Types.TabsterContext): [HTMLElement, Types.TabsterContext, Types.Mover] | void => {
+        //     if (!moverCtx.groupper || moverCtx.isGroupperFirst === isGroupperFirst) {
+        //         const parentElement = moverEl?.parentElement;
+        //         const parentCtx = parentElement && RootAPI.getTabsterContext(tabster, parentElement, {checkRtl: true});
+        //         const parentMover = parentCtx?.mover;
+        //         const parentMoverElement = parentMover?.getElement();
+        //         const parentIsGroupperFirst = !!parentCtx?.isGroupperFirst;
+
+        //         if (parentCtx && parentMoverElement && (!parentCtx.groupper || (parentIsGroupperFirst === isGroupperFirst))) {
+        //             isGroupperFirst = parentIsGroupperFirst;
+        //             return [parentMoverElement, parentCtx, parentMover as Types.Mover];
+        //         }
+        //     }
+        // };
+
+        // let parent: [HTMLElement, Types.TabsterContext, Types.Mover] | void;
+
+        // do {
+        //     parent = getParentMover(moverElement, ctx);
+
+        //     if (parent) {
+        //         const m = parent[2];
+
+        //         const {direction, cyclic} = m.getProps();
+        //         [moverElement, ctx, mover] = parent;
+        //     }
+        // } while (parent);
 
         if (!container) {
             return;

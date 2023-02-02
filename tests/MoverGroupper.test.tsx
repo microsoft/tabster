@@ -1080,4 +1080,480 @@ describe("MoverGroupper", () => {
                 );
             });
     });
+
+    it("should move properly in the nested mover/groupper/groupper scenario", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities
+                                                .LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <button>Button1</button>
+                                <button>Button2</button>
+                            </div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            Types.GroupperTabbabilities
+                                                .LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <button>Button3</button>
+                                <button>Button4</button>
+                            </div>
+                        </div>
+                        <button>Button5</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+
+    // it("should move properly in the nested mover/mover/groupper scenario", async () => {
+    //     await new BroTest.BroTest(
+    //         (
+    //             <div {...getTabsterAttribute({ root: {} })}>
+    //                 <div {...getTabsterAttribute({ mover: {} })}>
+    //                     <button>Button1</button>
+    //                     <div {...getTabsterAttribute({ mover: {} })}>
+    //                         <div
+    //                             tabIndex={0}
+    //                             {...getTabsterAttribute({
+    //                                 groupper: {
+    //                                     tabbability:
+    //                                         Types.GroupperTabbabilities
+    //                                             .LimitedTrapFocus,
+    //                                 },
+    //                             })}
+    //                         >
+    //                             <button>Button2</button>
+    //                             <button>Button3</button>
+    //                         </div>
+    //                         <button>Button5</button>
+    //                     </div>
+    //                     <button>Button6</button>
+    //                 </div>
+    //             </div>
+    //         )
+    //     )
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2Button3");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2Button3");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2Button3");
+    //         })
+    //         .pressEnter()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressTab(true)
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressEsc()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2Button3");
+    //         });
+    // });
+
+    // it("should move properly in the nested groupper/mover/mover scenario", async () => {
+    //     await new BroTest.BroTest(
+    //         (
+    //             <div {...getTabsterAttribute({ root: {} })}>
+    //                 <div
+    //                     tabIndex={0}
+    //                     {...getTabsterAttribute({
+    //                         groupper: {
+    //                             tabbability:
+    //                                 Types.GroupperTabbabilities
+    //                                     .LimitedTrapFocus,
+    //                         },
+    //                     })}
+    //                 >
+    //                     <div {...getTabsterAttribute({ mover: {} })}>
+    //                         <button>Button1</button>
+    //                         <div {...getTabsterAttribute({ mover: {} })}>
+    //                             <button>Button2</button>
+    //                             <button>Button3</button>
+    //                         </div>
+    //                         <button>Button4</button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         )
+    //     )
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+    //         })
+    //         .pressEnter()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressEsc()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+    //         });
+    // });
+
+    // it("should move properly in the nested mover/mover/mover/groupper scenario", async () => {
+    //     await new BroTest.BroTest(
+    //         (
+    //             <div {...getTabsterAttribute({ root: {} })}>
+    //                 <div {...getTabsterAttribute({ mover: {} })}>
+    //                     <button>Button1</button>
+    //                     <div {...getTabsterAttribute({ mover: {} })}>
+    //                         <button>Button2</button>
+    //                         <div {...getTabsterAttribute({ mover: {} })}>
+    //                             <div
+    //                                 tabIndex={0}
+    //                                 {...getTabsterAttribute({
+    //                                     groupper: {
+    //                                         tabbability:
+    //                                             Types.GroupperTabbabilities
+    //                                                 .LimitedTrapFocus,
+    //                                     },
+    //                                 })}
+    //                             >
+    //                                 <button>Button3</button>
+    //                                 <button>Button4</button>
+    //                             </div>
+    //                             <button>Button5</button>
+    //                         </div>
+    //                         <button>Button6</button>
+    //                     </div>
+    //                     <button>Button7</button>
+    //                 </div>
+    //             </div>
+    //         )
+    //     )
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3Button4");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button7");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button7");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3Button4");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3Button4");
+    //         })
+    //         .pressEnter()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressTab(true)
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressEsc()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3Button4");
+    //         });
+    // });
+
+    // it("should move properly in the nested groupper/mover/mover/mover scenario", async () => {
+    //     await new BroTest.BroTest(
+    //         (
+    //             <div {...getTabsterAttribute({ root: {} })}>
+    //                 <div
+    //                     tabIndex={0}
+    //                     {...getTabsterAttribute({
+    //                         groupper: {
+    //                             tabbability:
+    //                                 Types.GroupperTabbabilities
+    //                                     .LimitedTrapFocus,
+    //                         },
+    //                     })}
+    //                 >
+    //                     <div {...getTabsterAttribute({ mover: {} })}>
+    //                         <button>Button1</button>
+    //                         <div {...getTabsterAttribute({ mover: {} })}>
+    //                             <button>Button2</button>
+    //                             <div {...getTabsterAttribute({ mover: {} })}>
+    //                                 <button>Button3</button>
+    //                                 <button>Button4</button>
+    //                             </div>
+    //                             <button>Button5</button>
+    //                         </div>
+    //                         <button>Button6</button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         )
+    //     )
+    //         .pressTab()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual(
+    //                 "Button1Button2Button3Button4Button5Button6"
+    //             );
+    //         })
+    //         .pressEnter()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressDown()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button6");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button5");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button4");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button3");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button2");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressUp()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual("Button1");
+    //         })
+    //         .pressEsc()
+    //         .activeElement((el) => {
+    //             expect(el?.textContent).toEqual(
+    //                 "Button1Button2Button3Button4Button5Button6"
+    //             );
+    //         });
+    // });
 });

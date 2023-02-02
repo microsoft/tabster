@@ -229,13 +229,14 @@ describe("NestedMovers", () => {
                         <button>Nested3</button>
                         <button id="nestedLast">Nested4</button>
                     </div>
+                    <button>Parent4</button>
                 </div>
                 <button>Ignore</button>
             </div>
         );
     };
 
-    it("should move from from parent to nested mover with arrow keys", async () => {
+    it("should move from parent to nested mover with arrow keys", async () => {
         const attr = getTabsterAttribute({
             mover: {
                 direction: Types.MoverDirections.Vertical,
@@ -244,11 +245,12 @@ describe("NestedMovers", () => {
 
         await new BroTest.BroTest(getTestHtml(attr, attr))
             .focusElement("#parentLast")
+            .activeElement((el) => expect(el?.textContent).toEqual("Parent4"))
             .pressDown()
             .activeElement((el) => expect(el?.textContent).toEqual("Nested1"));
     });
 
-    it("should not move from from nested to parent mover with arrow keys", async () => {
+    it("should not move from nested to parent mover with arrow keys", async () => {
         const attr = getTabsterAttribute({
             mover: {
                 direction: Types.MoverDirections.Vertical,

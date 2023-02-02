@@ -652,8 +652,14 @@ export class FocusedElementState
                         preventDefault();
                         ctx.modalizer.dummyManager?.moveOut(isBackward);
                     }
+
+                    nextElement = undefined;
                 }
-            } else if (nextElement.tagName !== "IFRAME") {
+            } else if (nextElement.tagName === "IFRAME") {
+                nextElement = undefined;
+            }
+
+            if (nextElement) {
                 preventDefault();
 
                 nativeFocus(nextElement);
