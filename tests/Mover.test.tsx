@@ -1095,6 +1095,186 @@ describe("Mover with visibilityAware", () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
+    it("should scroll to first visible element with PageUp", async () => {
+        const itemStyles = {
+            height: 100,
+            width: 100,
+            display: "flex",
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px dashed blue",
+            boxSizing: "border-box" as const,
+        };
+
+        const containerStyles = {
+            height: 200,
+            width: 200,
+            display: "flex",
+            flexDirection: "column" as const,
+            alignItems: "center",
+            border: "1px dashed red",
+            boxSizing: "border-box" as const,
+            overflowY: "scroll" as const,
+        };
+
+        await new BroTest.BroTest(
+            (
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware:
+                                Types.Visibilities.PartiallyVisible,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" style={itemStyles}>
+                        Item 4
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#two")
+            .activeElement((el) => el?.attributes.id === "two")
+            .scrollTo("#container", 0, 20)
+            .press("PageUp")
+            .activeElement((el) => el?.attributes.id === "one")
+            .focusElement("#two")
+            .activeElement((el) => el?.attributes.id === "two")
+            .scrollTo("#container", 0, 10)
+            .press("PageUp")
+            .activeElement((el) => el?.attributes.id === "two");
+    });
+
+    it("should scroll to last visible element with PageDown", async () => {
+        const itemStyles = {
+            height: 100,
+            width: 100,
+            display: "flex",
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px dashed blue",
+            boxSizing: "border-box" as const,
+        };
+
+        const containerStyles = {
+            height: 200,
+            width: 200,
+            display: "flex",
+            flexDirection: "column" as const,
+            alignItems: "center",
+            border: "1px dashed red",
+            boxSizing: "border-box" as const,
+            overflowY: "scroll" as const,
+        };
+
+        await new BroTest.BroTest(
+            (
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware:
+                                Types.Visibilities.PartiallyVisible,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" style={itemStyles}>
+                        Item 4
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#two")
+            .activeElement((el) => el?.attributes.id === "two")
+            .scrollTo("#container", 0, 80)
+            .press("PageDown")
+            .activeElement((el) => el?.attributes.id === "three")
+            .scrollTo("#container", 0, 85)
+            .press("PageDown")
+            .activeElement((el) => el?.attributes.id === "two");
+    });
+
+    it("should be able to configure visibility tolerance", async () => {
+        const itemStyles = {
+            height: 100,
+            width: 100,
+            display: "flex",
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px dashed blue",
+            boxSizing: "border-box" as const,
+        };
+
+        const containerStyles = {
+            height: 200,
+            width: 200,
+            display: "flex",
+            flexDirection: "column" as const,
+            alignItems: "center",
+            border: "1px dashed red",
+            boxSizing: "border-box" as const,
+            overflowY: "scroll" as const,
+        };
+
+        await new BroTest.BroTest(
+            (
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware:
+                                Types.Visibilities.PartiallyVisible,
+                            visibilityTolerance: 0.1,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" style={itemStyles}>
+                        Item 4
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#two")
+            .activeElement((el) => el?.attributes.id === "two")
+            .scrollTo("#container", 0, 80)
+            .press("PageUp")
+            .activeElement((el) => el?.attributes.id === "one");
+    });
+
     it("should tab to first/last visible element when tabbing from outside of the Mover", async () => {
         await new BroTest.BroTest(
             (
