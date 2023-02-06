@@ -648,10 +648,11 @@ export class FocusedElementState
                 let outOfDOMOrder = next?.outOfDOMOrder;
 
                 if (
+                    !outOfDOMOrder &&
                     currentElement.compareDocumentPosition(nextElement) &
-                    (isBackward
-                        ? document.DOCUMENT_POSITION_FOLLOWING
-                        : document.DOCUMENT_POSITION_PRECEDING)
+                        (isBackward
+                            ? document.DOCUMENT_POSITION_FOLLOWING
+                            : document.DOCUMENT_POSITION_PRECEDING)
                 ) {
                     outOfDOMOrder = true;
                 }

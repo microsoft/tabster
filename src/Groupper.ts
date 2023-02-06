@@ -348,21 +348,18 @@ export class Groupper
 
         if (groupperElement) {
             if (isActive !== true) {
-                if (groupperElement === element) {
-                    if (parentCtxGroupper) {
-                        if (!parentGroupperElement) {
-                            parentGroupperElement =
-                                parentCtxGroupper.getElement();
-                        }
+                if (groupperElement === element && parentCtxGroupper) {
+                    if (!parentGroupperElement) {
+                        parentGroupperElement = parentCtxGroupper.getElement();
+                    }
 
-                        if (
-                            parentGroupperElement &&
-                            !getIsActive(parentCtxGroupper) &&
-                            state.container.contains(parentGroupperElement) &&
-                            parentGroupperElement !== state.container
-                        ) {
-                            return NodeFilter.FILTER_REJECT;
-                        }
+                    if (
+                        parentGroupperElement &&
+                        !getIsActive(parentCtxGroupper) &&
+                        state.container.contains(parentGroupperElement) &&
+                        parentGroupperElement !== state.container
+                    ) {
+                        return NodeFilter.FILTER_REJECT;
                     }
                 }
 
