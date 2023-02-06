@@ -603,6 +603,17 @@ export interface MoverProps {
      * property as a prioritized element to focus.
      */
     hasDefault?: boolean;
+    /**
+     * A value between 0 and 1 that specifies the tolerance allowed
+     * when testing for visibility.
+     *
+     * @example
+     * an element of height 100px has 10px that are above the viewport
+     * hidden by scroll. This element is a valid visible element to focus.
+     *
+     * @default 0.8
+     */
+    visibilityTolerance?: number;
 }
 
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
@@ -613,6 +624,9 @@ export interface Mover
         TabsterPartWithAcceptElement {
     readonly id: string;
     readonly dummyManager: DummyInputManager | undefined;
+    readonly visibilityTolerance: NonNullable<
+        MoverProps["visibilityTolerance"]
+    >;
     dispose(): void;
     setCurrent(element: HTMLElement | undefined): void;
     getCurrent(): HTMLElement | null;

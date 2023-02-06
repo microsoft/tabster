@@ -359,21 +359,27 @@ export function getBoundingRect(
 
 export function isElementVerticallyVisibleInContainer(
     getWindow: GetWindow,
-    element: HTMLElement
+    element: HTMLElement,
+    tolerance: number
 ): boolean {
     const container = getScrollableContainer(element);
-
-    if (container) {
-        const containerRect = getBoundingRect(getWindow, container);
-        const elementRect = element.getBoundingClientRect();
-
-        return (
-            Math.ceil(elementRect.top) >= Math.ceil(containerRect.top) &&
-            Math.floor(elementRect.bottom) <= Math.floor(containerRect.bottom)
-        );
+    if (!container) {
+        return false;
     }
 
-    return false;
+    const containerRect = getBoundingRect(getWindow, container);
+    const elementRect = element.getBoundingClientRect();
+    const intersectionTolerance = elementRect.height * (1 - tolerance);
+    const topIntersection = Math.max(0, containerRect.top - elementRect.top);
+    const bottomIntersection = Math.max(
+        0,
+        elementRect.bottom - containerRect.bottom
+    );
+    const totalIntersection = topIntersection + bottomIntersection;
+
+    return (
+        totalIntersection === 0 || totalIntersection <= intersectionTolerance
+    );
 }
 
 export function isElementVisibleInContainer(

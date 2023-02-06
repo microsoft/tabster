@@ -107,6 +107,7 @@ export class Mover
     private _updateQueue: MoverUpdateQueueItem[] | undefined;
     private _updateTimer: number | undefined;
 
+    visibilityTolerance: number;
     dummyManager: MoverDummyManager | undefined;
 
     constructor(
@@ -118,6 +119,7 @@ export class Mover
         super(tabster, element, props);
 
         this._win = tabster.getWindow;
+        this.visibilityTolerance = props.visibilityTolerance ?? 0.8;
 
         if (this._props.trackState || this._props.visibilityAware) {
             this._intersectionObserver = new IntersectionObserver(
@@ -974,7 +976,13 @@ export class MoverAPI implements Types.MoverAPI {
                         return false;
                     }
 
-                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                    if (
+                        isElementVerticallyVisibleInContainer(
+                            this._win,
+                            el,
+                            mover.visibilityTolerance
+                        )
+                    ) {
                         next = el;
                         return false;
                     }
@@ -1025,7 +1033,13 @@ export class MoverAPI implements Types.MoverAPI {
                         return false;
                     }
 
-                    if (isElementVerticallyVisibleInContainer(this._win, el)) {
+                    if (
+                        isElementVerticallyVisibleInContainer(
+                            this._win,
+                            el,
+                            mover.visibilityTolerance
+                        )
+                    ) {
                         next = el;
                         return false;
                     }
