@@ -72,6 +72,7 @@ class ModalizerDummyManager extends DummyInputManager {
                 const dummyContainer = (
                     input as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get();
+
                 const ctx = RootAPI.getTabsterContext(
                     tabster,
                     dummyContainer || input
@@ -81,7 +82,7 @@ class ModalizerDummyManager extends DummyInputManager {
                     toFocus = FocusedElementState.findNextTabbable(
                         tabster,
                         ctx,
-                        undefined,
+                        container,
                         input,
                         isBackward,
                         true,
@@ -122,7 +123,6 @@ export class Modalizer
         this.userId = props.id;
         this._onDispose = onDispose;
         this._activeElements = activeElements;
-        this._setAccessibilityProps();
 
         if (!tabster.controlTab) {
             this.dummyManager = new ModalizerDummyManager(
@@ -199,8 +199,6 @@ export class Modalizer
         }
 
         this._props = { ...props };
-
-        this._setAccessibilityProps();
     }
 
     dispose(): void {
@@ -307,21 +305,6 @@ export class Modalizer
     private _remove(): void {
         if (__DEV__) {
             _setInformativeStyle(this._element, true);
-        }
-    }
-
-    private _setAccessibilityProps(): void {
-        if (__DEV__) {
-            const element = this._element.get();
-            if (
-                element &&
-                !element.getAttribute("aria-label") &&
-                !element.getAttribute("aria-labelledby")
-            ) {
-                console.warn(
-                    `Modalizer ${this.id} must have either aria-label or aria-labelledby`
-                );
-            }
         }
     }
 }

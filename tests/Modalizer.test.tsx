@@ -1192,14 +1192,103 @@ describe("Modalizer with multiple containers", () => {
                 expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
             )
             .pressTab()
-            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
             .pressTab(true)
             .activeElement((el) =>
                 expect(el?.textContent).toEqual(
-                    "ModalButton3.1ModalButton3.2NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
                 )
             )
             .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2"
+                )
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2"
+                )
+            )
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2"
+                )
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.3ModalButton3.4")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.3ModalButton3.4")
+            )
+
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual(
+                    "NonModalButton1NonModalButton2ModalButton3.3ModalButton3.4"
+                )
+            )
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
+            )
+            .pressUp()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton3.1ModalButton3.2")
             )
@@ -1262,12 +1351,19 @@ describe("Modalizer with multiple containers", () => {
             .pressTab(true)
             .activeElement((el) => expect(el?.textContent).toBeUndefined())
             .click("#groupper1-2")
+            .pressUp()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton2.1ModalButton2.2")
             )
             .pressTab()
-            .activeElement((el) => expect(el?.textContent).toBeUndefined())
-            .click("#groupper1-2")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2.1ModalButton2.2")
+            )
+            .pressUp()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2.1ModalButton2.2")
+            )
+            .pressDown()
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton2.1ModalButton2.2")
             )
@@ -1305,9 +1401,9 @@ describe("Modalizer with multiple containers", () => {
             )
             .click("#groupper1-1")
             .wait(200)
-            // .activeElement((el) =>
-            //     expect(el?.textContent).toEqual("ModalButton2.1")
-            // )
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2.1")
+            )
             .focusElement("#groupper1-1")
             .wait(200)
             .activeElement((el) =>

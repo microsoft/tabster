@@ -570,6 +570,7 @@ export type NextTabbable = {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement;
     lastMoverOrGroupper?: Mover | Groupper;
+    outOfDOMOrder?: boolean;
 };
 
 export interface MoverProps {

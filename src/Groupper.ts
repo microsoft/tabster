@@ -134,11 +134,21 @@ export class Groupper
             return null;
         }
 
-        const groupperFirstFocusable = this.getFirst(true);
         const currentIsDummy =
             (
                 currentElement as HTMLElementWithDummyContainer
             )?.__tabsterDummyContainer?.get() === groupperElement;
+
+        if (
+            !this._shouldTabInside &&
+            currentElement &&
+            groupperElement.contains(currentElement) &&
+            !currentIsDummy
+        ) {
+            return { element: undefined, lastMoverOrGroupper: this };
+        }
+
+        const groupperFirstFocusable = this.getFirst(true);
 
         if (
             !currentElement ||
@@ -196,25 +206,6 @@ export class Groupper
                           ignoreAccessibility,
                           useActiveModalizer: true,
                       });
-            }
-        }
-
-        if (!next && !uncontrolled) {
-            const parentElement = groupperElement.parentElement;
-            const parentCtx =
-                parentElement &&
-                RootAPI.getTabsterContext(tabster, parentElement);
-            const parentGroupper = parentCtx?.groupper;
-
-            if (parentGroupper && parentCtx.isGroupperFirst) {
-                // For the case of directly nested grouppers after nothing's found in the current groupper,
-                // check the parent one.
-                return parentGroupper.findNextTabbable(
-                    groupperElement,
-                    isBackward,
-                    ignoreUncontrolled,
-                    ignoreAccessibility
-                );
             }
         }
 
@@ -311,46 +302,78 @@ export class Groupper
     ): number | undefined {
         const cachedGrouppers = state.cachedGrouppers;
 
-        let cached = cachedGrouppers[this.id];
-        let isActive: boolean | undefined;
+        const parentElement = this.getElement()?.parentElement;
+        const parentCtx =
+            parentElement &&
+            RootAPI.getTabsterContext(this._tabster, parentElement);
+        const parentCtxGroupper = parentCtx?.groupper;
+        const parentGroupper = parentCtx?.isGroupperFirst
+            ? parentCtxGroupper
+            : undefined;
+        let parentGroupperElement: HTMLElement | undefined;
 
-        if (cached) {
-            isActive = cached.isActive;
-        } else {
-            isActive = this.isActive(true);
+        const getIsActive = (groupper: Types.Groupper) => {
+            let cached = cachedGrouppers[groupper.id];
+            let isActive: boolean | undefined;
 
-            cached = cachedGrouppers[this.id] = {
-                isActive,
-            };
+            if (cached) {
+                isActive = cached.isActive;
+            } else {
+                isActive = this.isActive(true);
+
+                cached = cachedGrouppers[groupper.id] = {
+                    isActive,
+                };
+            }
+
+            return isActive;
+        };
+
+        if (parentGroupper) {
+            parentGroupperElement = parentGroupper.getElement();
+
+            if (
+                !getIsActive(parentGroupper) &&
+                parentGroupperElement &&
+                state.container !== parentGroupperElement &&
+                state.container.contains(parentGroupperElement)
+            ) {
+                // Do not fall into a child groupper of inactive parent groupper if it's in the scope of the search.
+                return NodeFilter.FILTER_REJECT;
+            }
         }
 
+        const isActive = getIsActive(this);
         const groupperElement = this.getElement();
 
         if (groupperElement) {
             if (isActive !== true) {
-                if (groupperElement.contains(state.from)) {
-                    return NodeFilter.FILTER_REJECT;
-                }
+                if (groupperElement === element) {
+                    if (parentCtxGroupper) {
+                        if (!parentGroupperElement) {
+                            parentGroupperElement =
+                                parentCtxGroupper.getElement();
+                        }
 
-                const fromCtx = state.fromCtx;
-                const fromGroupperElement = fromCtx?.groupper?.getElement();
-                const fromMover = fromCtx?.mover;
-                const currentCtx = state.currentCtx;
-                const currentMover = currentCtx?.mover;
+                        if (
+                            parentGroupperElement &&
+                            !getIsActive(parentCtxGroupper) &&
+                            state.container.contains(parentGroupperElement) &&
+                            parentGroupperElement !== state.container
+                        ) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                    }
+                }
 
                 if (
-                    state.container !== fromGroupperElement &&
-                    fromGroupperElement?.contains(groupperElement) &&
-                    fromMover &&
-                    fromCtx.isGroupperFirst &&
-                    (!currentMover ||
-                        currentMover === fromMover ||
-                        !currentCtx.isGroupperFirst)
+                    groupperElement !== element &&
+                    groupperElement.contains(element)
                 ) {
-                    // Avoid falling into the inner groupper in a mover/groupper/groupper scenario.
                     return NodeFilter.FILTER_REJECT;
                 }
 
+                const cached = cachedGrouppers[this.id];
                 let first: HTMLElement | null | undefined;
 
                 if ("first" in cached) {
