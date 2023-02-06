@@ -804,10 +804,8 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        if (ctx.isGroupperFirst) {
-            if (ctx.groupper && ctx.groupper.isActive(true)) {
-                return;
-            }
+        if (ctx.isGroupperFirst && ctx.groupper?.isActive(true)) {
+            return;
         }
 
         const mover = ctx.mover;

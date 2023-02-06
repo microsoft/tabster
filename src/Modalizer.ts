@@ -72,6 +72,7 @@ class ModalizerDummyManager extends DummyInputManager {
                 const dummyContainer = (
                     input as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get();
+
                 const ctx = RootAPI.getTabsterContext(
                     tabster,
                     dummyContainer || input
@@ -81,7 +82,7 @@ class ModalizerDummyManager extends DummyInputManager {
                     toFocus = FocusedElementState.findNextTabbable(
                         tabster,
                         ctx,
-                        undefined,
+                        container,
                         input,
                         isBackward,
                         true,
