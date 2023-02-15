@@ -630,20 +630,29 @@ export function setBasics(win: Window, basics: InternalBasics): void {
 
 let _lastTabsterPartId = 0;
 
-export abstract class TabsterPart<P, D = undefined>
-    implements Types.TabsterPart<P>
+export abstract class TabsterPart<
+    P extends keyof Types.TabsterAttributeProps,
+    D = undefined
+> implements Types.TabsterPart<P>
 {
     protected _tabster: Types.TabsterCore;
     protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _props: P;
+    protected _props: Types.TabsterAttributePropsWith<P>[P];
+    protected _part: P;
 
     readonly id: string;
 
-    constructor(tabster: Types.TabsterCore, element: HTMLElement, props: P) {
+    constructor(
+        tabster: Types.TabsterCore,
+        element: HTMLElement,
+        part: P,
+        props: Types.TabsterAttributePropsWith<P>
+    ) {
         const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
-        this._props = { ...props };
+        this._props = { ...props[part] };
+        this._part = part;
         this.id = "i" + ++_lastTabsterPartId;
     }
 
@@ -651,12 +660,12 @@ export abstract class TabsterPart<P, D = undefined>
         return this._element.get();
     }
 
-    getProps(): P {
+    getProps(): Types.TabsterAttributePropsWith<P>[P] {
         return this._props;
     }
 
-    setProps(props: P): void {
-        this._props = { ...props };
+    setProps(props: Types.TabsterAttributePropsWith<P>): void {
+        this._props = { ...props[this._part] };
     }
 }
 
@@ -846,6 +855,7 @@ export class DummyInputManager {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
+        sys?: Types.SysProps,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -856,6 +866,7 @@ export class DummyInputManager {
             element,
             this,
             priority,
+            sys,
             outsideByDefault,
             callForDefaultAction
         );
@@ -1006,6 +1017,7 @@ class DummyInputManagerCore {
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
+        sys?: Types.SysProps,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -1048,13 +1060,16 @@ class DummyInputManagerCore {
 
         // Some elements allow only specific types of direct descendants and we need to
         // put our dummy inputs inside or outside of the element accordingly.
-        const tagName = element.get()?.tagName;
+        const forcedDummyPosition = sys?.dummyInputsOutside;
+        const tagName = el.tagName;
         this._isOutside =
-            (outsideByDefault ||
-                tagName === "UL" ||
-                tagName === "OL" ||
-                tagName === "TABLE") &&
-            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
+            forcedDummyPosition === undefined
+                ? (outsideByDefault ||
+                      tagName === "UL" ||
+                      tagName === "OL" ||
+                      tagName === "TABLE") &&
+                  !(tagName === "LI" || tagName === "TD" || tagName === "TH")
+                : forcedDummyPosition;
 
         this._firstDummy = new DummyInput(
             this._getWindow,

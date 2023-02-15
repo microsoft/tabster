@@ -34,9 +34,10 @@ class MoverDummyManager extends DummyInputManager {
     constructor(
         element: WeakHTMLElement,
         tabster: Types.TabsterCore,
-        getMemorized: () => WeakHTMLElement | undefined
+        getMemorized: () => WeakHTMLElement | undefined,
+        sys: Types.SysProps | undefined
     ) {
-        super(tabster, element, DummyInputManagerPriorities.Mover);
+        super(tabster, element, DummyInputManagerPriorities.Mover, sys);
 
         this._tabster = tabster;
         this._getMemorized = getMemorized;
@@ -90,10 +91,7 @@ interface MoverUpdateQueueItem {
         | typeof _moverUpdateRemove;
 }
 
-export class Mover
-    extends TabsterPart<Types.MoverProps>
-    implements Types.Mover
-{
+export class Mover extends TabsterPart<"mover"> implements Types.Mover {
     private _unobserve: (() => void) | undefined;
     private _intersectionObserver: IntersectionObserver | undefined;
     private _setCurrentTimer: number | undefined;
@@ -114,12 +112,14 @@ export class Mover
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (mover: Mover) => void,
-        props: Types.MoverProps
+        props: Types.TabsterAttributePropsWith<"mover">
     ) {
-        super(tabster, element, props);
+        super(tabster, element, "mover", props);
+
+        const moverProps = props.mover;
 
         this._win = tabster.getWindow;
-        this.visibilityTolerance = props.visibilityTolerance ?? 0.8;
+        this.visibilityTolerance = moverProps.visibilityTolerance ?? 0.8;
 
         if (this._props.trackState || this._props.visibilityAware) {
             this._intersectionObserver = new IntersectionObserver(
@@ -131,13 +131,14 @@ export class Mover
 
         this._onDispose = onDispose;
         const getMemorized = () =>
-            props.memorizeCurrent ? this._current : undefined;
+            this.getProps().memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
             this.dummyManager = new MoverDummyManager(
                 this._element,
                 tabster,
-                getMemorized
+                getMemorized,
+                props.sys
             );
         }
     }
@@ -722,9 +723,12 @@ export class MoverAPI implements Types.MoverAPI {
         });
     }
 
-    createMover(element: HTMLElement, props: Types.MoverProps): Types.Mover {
+    createMover(
+        element: HTMLElement,
+        props: Types.TabsterAttributePropsWith<"mover">
+    ): Types.Mover {
         if (__DEV__) {
-            validateMoverProps(props);
+            validateMoverProps(props.mover);
         }
 
         const newMover = new Mover(

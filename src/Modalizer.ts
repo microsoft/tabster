@@ -59,8 +59,12 @@ function _setInformativeStyle(
  * Manages the dummy inputs for the Modalizer.
  */
 class ModalizerDummyManager extends DummyInputManager {
-    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
-        super(tabster, element, DummyInputManagerPriorities.Modalizer);
+    constructor(
+        element: WeakHTMLElement,
+        tabster: Types.TabsterCore,
+        sys: Types.SysProps | undefined
+    ) {
+        super(tabster, element, DummyInputManagerPriorities.Modalizer, sys);
 
         this._setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
             const el = element.get();
@@ -99,7 +103,7 @@ class ModalizerDummyManager extends DummyInputManager {
 }
 
 export class Modalizer
-    extends TabsterPart<Types.ModalizerProps>
+    extends TabsterPart<"modalizer">
     implements Types.Modalizer
 {
     userId: string;
@@ -115,19 +119,20 @@ export class Modalizer
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
-        props: Types.ModalizerProps,
+        props: Types.TabsterAttributePropsWith<"modalizer">,
         activeElements: WeakRef<HTMLElement>[]
     ) {
-        super(tabster, element, props);
+        super(tabster, element, "modalizer", props);
 
-        this.userId = props.id;
+        this.userId = props.modalizer.id;
         this._onDispose = onDispose;
         this._activeElements = activeElements;
 
         if (!tabster.controlTab) {
             this.dummyManager = new ModalizerDummyManager(
                 this._element,
-                tabster
+                tabster,
+                props.sys
             );
         }
 
@@ -193,12 +198,14 @@ export class Modalizer
         return this._wasFocused;
     }
 
-    setProps(props: Types.ModalizerProps): void {
-        if (props.id) {
-            this.userId = props.id;
-        }
+    setProps(props: Types.TabsterAttributePropsWith<"modalizer">): void {
+        super.setProps(props);
 
-        this._props = { ...props };
+        const id = props.modalizer.id;
+
+        if (id) {
+            this.userId = id;
+        }
     }
 
     dispose(): void {
@@ -386,10 +393,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     createModalizer(
         element: HTMLElement,
-        props: Types.ModalizerProps
+        props: Types.TabsterAttributePropsWith<"modalizer">
     ): Types.Modalizer {
         if (__DEV__) {
-            validateModalizerProps(props);
+            validateModalizerProps(props.modalizer);
         }
 
         const modalizer = new Modalizer(
@@ -401,7 +408,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         );
 
         const id = modalizer.id;
-        const userId = props.id;
+        const userId = props.modalizer.id;
 
         this._modalizers[id] = modalizer;
 

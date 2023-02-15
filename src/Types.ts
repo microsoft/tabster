@@ -97,11 +97,11 @@ export interface WeakHTMLElement<D = undefined> {
     getData(): D | undefined;
 }
 
-export interface TabsterPart<P> {
+export interface TabsterPart<P extends keyof TabsterAttributeProps> {
     readonly id: string;
     getElement(): HTMLElement | undefined;
-    getProps(): P;
-    setProps(props: P): void;
+    getProps(): TabsterAttributePropsWith<P>[P];
+    setProps(props: TabsterAttributePropsWith<P>): void;
 }
 
 export interface TabsterPartWithFindNextTabbable {
@@ -319,7 +319,7 @@ export interface DeloserProps {
     noSelectorCheck?: boolean;
 }
 
-export interface Deloser extends TabsterPart<DeloserProps> {
+export interface Deloser extends TabsterPart<"deloser"> {
     readonly uid: string;
     dispose(): void;
     isActive(): boolean;
@@ -342,7 +342,10 @@ export type DeloserConstructor = (
 
 interface DeloserInterfaceInternal {
     /** @internal */
-    createDeloser(element: HTMLElement, props: DeloserProps): Deloser;
+    createDeloser(
+        element: HTMLElement,
+        props: TabsterAttributePropsWith<"deloser">
+    ): Deloser;
 }
 
 export interface DeloserAPI extends DeloserInterfaceInternal, Disposable {
@@ -619,7 +622,7 @@ export interface MoverProps {
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
 
 export interface Mover
-    extends TabsterPart<MoverProps>,
+    extends TabsterPart<"mover">,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -641,7 +644,10 @@ export type MoverConstructor = (
 
 interface MoverAPIInternal {
     /** @internal */
-    createMover(element: HTMLElement, props: MoverProps): Mover;
+    createMover(
+        element: HTMLElement,
+        props: TabsterAttributePropsWith<"mover">
+    ): Mover;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -671,7 +677,7 @@ export interface GroupperProps {
 }
 
 export interface Groupper
-    extends TabsterPart<GroupperProps>,
+    extends TabsterPart<"groupper">,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -691,7 +697,10 @@ export type GroupperConstructor = (
 
 export interface GroupperAPIInternal {
     /** @internal */
-    createGroupper(element: HTMLElement, props: GroupperProps): Groupper;
+    createGroupper(
+        element: HTMLElement,
+        props: TabsterAttributePropsWith<"groupper">
+    ): Groupper;
     /** @internal */
     handleKeyPress(
         element: HTMLElement,
@@ -733,7 +742,7 @@ export type ModalizerEventDetails = {
 export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
 
 export interface Modalizer
-    extends TabsterPart<ModalizerProps>,
+    extends TabsterPart<"modalizer">,
         TabsterPartWithFindNextTabbable {
     readonly userId: string;
     readonly dummyManager: DummyInputManager | undefined;
@@ -761,7 +770,7 @@ export interface RootProps {
     restoreFocusOrder?: RestoreFocusOrder;
 }
 
-export interface Root extends TabsterPart<RootProps> {
+export interface Root extends TabsterPart<"root"> {
     /**@internal*/
     addDummyInputs(): void;
 
@@ -775,6 +784,23 @@ export type RootConstructor = (
     element: HTMLElement,
     props: RootProps
 ) => Root;
+
+/**
+ * Ability to fine-tune Tabster internal behaviour in rare cases of need.
+ * Normally, should not be used. A deep understanding of the intention and the effect
+ * is required.
+ */
+export interface SysProps {
+    /**
+     * Force dummy input position outside or inside of the element.
+     * By default (when undefined), the position is determined dynamically
+     * (for example inside for <li> elements and outside for <table> elements,
+     * plus a default Groupper/Mover/Modalizer implementation position).
+     * Setting to true will force the dummy inputs to be always outside of the element,
+     * setting to false will force the dummy inputs to be always inside.
+     */
+    dummyInputsOutside?: boolean;
+}
 
 export interface GetTabsterContextOptions {
     /**
@@ -813,7 +839,10 @@ export interface RootFocusEventDetails {
 
 interface RootAPIInternal {
     /**@internal*/
-    createRoot(element: HTMLElement, props: RootProps): Root;
+    createRoot(
+        element: HTMLElement,
+        props: TabsterAttributePropsWith<"root">
+    ): Root;
     /**@internal*/
     onRoot(root: Root, removed?: boolean): void;
     /**@internal*/
@@ -835,7 +864,10 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     activeElements: WeakRef<HTMLElement>[];
     /** @internal */
-    createModalizer(element: HTMLElement, props: ModalizerProps): Modalizer;
+    createModalizer(
+        element: HTMLElement,
+        props: TabsterAttributePropsWith<"modalizer">
+    ): Modalizer;
     /**
      * Sets active modalizers.
      * When active, everything outside of the modalizers with the specific user
@@ -902,6 +934,10 @@ export interface OutlineOnElement {
     outline: OutlinedElementProps;
 }
 
+export interface SysOnElement {
+    sys: SysProps;
+}
+
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserProps;
     root: RootProps;
@@ -912,7 +948,11 @@ export type TabsterAttributeProps = Partial<{
     mover: MoverProps;
     observed: ObservedElementProps;
     outline: OutlinedElementProps;
+    sys: SysProps;
 }>;
+
+export type TabsterAttributePropsWith<P extends keyof TabsterAttributeProps> =
+    TabsterAttributeProps & Required<Pick<TabsterAttributeProps, P>>;
 
 export interface TabsterAttributeOnElement {
     string: string;
@@ -932,7 +972,8 @@ export type TabsterOnElement = Partial<
         GroupperOnElement &
         ObservedOnElement &
         OutlineOnElement &
-        UncontrolledOnElement
+        UncontrolledOnElement &
+        SysOnElement
 >;
 
 export interface OutlineElements {

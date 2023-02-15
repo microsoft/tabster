@@ -49,17 +49,32 @@ describeIfUncontrolled("DummyInputManager", () => {
         };
 
         const appendElement = (elementId: string) => {
-            const mover = document.getElementById(elementId) as HTMLElement;
+            const current = document.getElementById(elementId) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element append";
-            mover.appendChild(newElement);
+            current.appendChild(newElement);
         };
 
         const prependElement = (elementId: string) => {
-            const mover = document.getElementById(elementId) as HTMLElement;
+            const current = document.getElementById(elementId) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
-            mover.prepend(newElement);
+            current.prepend(newElement);
+        };
+
+        const insertElementBefore = (elementId: string) => {
+            const current = document.getElementById(elementId) as HTMLElement;
+            const newElement = document.createElement("button");
+            newElement.textContent = "New element prepend";
+            current.parentElement?.insertBefore(newElement, current);
+        };
+
+        const insertElementAfter = (elementId: string) => {
+            const current = document.getElementById(elementId) as HTMLElement;
+            const nextSibling = current.nextElementSibling;
+            const newElement = document.createElement("button");
+            newElement.textContent = "New element prepend";
+            current.parentElement?.insertBefore(newElement, nextSibling);
         };
 
         it("mover", async () => {
@@ -391,5 +406,143 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .check(checkDummyInside);
             }
         );
+
+        it("should use enforced dummy input position in Mover", async () => {
+            const moverId = "mover";
+
+            const testHtml = (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <div
+                            {...getTabsterAttribute({
+                                mover: {},
+                                // Force inputs out.
+                                sys: { dummyInputsOutside: true },
+                            })}
+                            id={moverId}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            await new BroTest.BroTest(testHtml)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    moverId
+                )
+                .check(checkDummyOutside)
+                .eval(insertElementBefore, moverId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    moverId
+                )
+                .check(checkDummyOutside)
+                .eval(insertElementAfter, moverId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    moverId
+                )
+                .check(checkDummyOutside);
+        });
+
+        it("should use enforced dummy input Groupper", async () => {
+            const groupperId = "groupper";
+
+            const testHtml = (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <table
+                            {...getTabsterAttribute({
+                                groupper: {},
+                                // Force inputs in.
+                                sys: { dummyInputsOutside: false },
+                            })}
+                            id={groupperId}
+                        >
+                            <button>Button5</button>
+                        </table>
+                    </div>
+                </div>
+            );
+
+            await new BroTest.BroTest(testHtml)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyInside)
+                .eval(appendElement, groupperId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyInside)
+                .eval(prependElement, groupperId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyInside);
+        });
+
+        it("should use enforced dummy input position in Modalizer", async () => {
+            const modalizerId = "modalizer";
+
+            const testHtml = (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <div
+                            {...getTabsterAttribute({
+                                modalizer: { id: "modal" },
+                                // Force inputs outside.
+                                sys: { dummyInputsOutside: true },
+                            })}
+                            id={modalizerId}
+                        >
+                            <button>Button6</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            await new BroTest.BroTest(testHtml)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    modalizerId
+                )
+                .check(checkDummyOutside)
+                .eval(insertElementBefore, modalizerId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    modalizerId
+                )
+                .check(checkDummyOutside)
+                .eval(insertElementAfter, modalizerId)
+                .wait(1)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    modalizerId
+                )
+                .check(checkDummyOutside);
+        });
     });
 });

@@ -54,6 +54,7 @@ class RootDummyManager extends DummyInputManager {
             element,
             DummyInputManagerPriorities.Root,
             undefined,
+            undefined,
             true
         );
 
@@ -96,10 +97,7 @@ class RootDummyManager extends DummyInputManager {
     };
 }
 
-export class Root
-    extends TabsterPart<Types.RootProps, undefined>
-    implements Types.Root
-{
+export class Root extends TabsterPart<"root"> implements Types.Root {
     readonly uid: string;
 
     private _dummyManager?: RootDummyManager;
@@ -112,9 +110,9 @@ export class Root
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (root: Root) => void,
-        props: Types.RootProps
+        props: Types.TabsterAttributePropsWith<"root">
     ) {
-        super(tabster, element, props);
+        super(tabster, element, "root", props);
 
         this._onDispose = onDispose;
 
@@ -341,9 +339,12 @@ export class RootAPI implements Types.RootAPI {
         this.rootById = {};
     }
 
-    createRoot(element: HTMLElement, props: Types.RootProps): Types.Root {
+    createRoot(
+        element: HTMLElement,
+        props: Types.TabsterAttributePropsWith<"root">
+    ): Types.Root {
         if (__DEV__) {
-            validateRootProps(props);
+            validateRootProps(props.root);
         }
 
         const newRoot = new Root(
