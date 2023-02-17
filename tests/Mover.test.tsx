@@ -327,6 +327,8 @@ describe("NestedMovers", () => {
     it.each([
         "ArrowDown",
         "ArrowUp",
+        "ArrowLeft",
+        "ArrowRight",
         "PageDown",
         "PageUp",
         "Home",
@@ -368,6 +370,8 @@ describe("NestedMovers", () => {
     it.each([
         "ArrowDown",
         "ArrowUp",
+        "ArrowLeft",
+        "ArrowRight",
         "PageDown",
         "PageUp",
         "Home",
