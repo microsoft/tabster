@@ -1,53 +1,54 @@
-name: Storybook deployment
+name: GitHub Pages deployment
 
 on:
-    push:
-        branches: [master]
+  push:
+    branches: [master]
 
 env:
-    CI: true
+  CI: true
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-                with:
-                    fetch-depth: 0
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-            - name: Use Node.js 14
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 14.x
+      - name: Use Node.js 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
 
-            - name: Install packages
-                run: npm install
+      - name: Install packages
+        run: npm install
 
-            - name: Build
-                - run: npm run build
-                - run: npm run build-docs
+      - name: Build
+        run: |
+          npm run build
+          npm run build-docs
 
-            - name: Prepare to deploy
-                - run: npm run prepare-pages-deploy
+      - name: Prepare to deploy
+        run: npm run prepare-pages-deploy
 
-            - name: Upload pages artifact
-                uses: actions/upload-pages-artifact@v1
-                with:
-                    path: './.pages-deploy/'
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: './.pages-deploy/'
 
-    deploy:
-        needs: build
-        runs-on: ubuntu-latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
 
-        permissions:
-            pages: write
-            id-token: write
+    permissions:
+      pages: write
+      id-token: write
 
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
-        steps:
-            - name: Deploy to GitHub Pages
-                id: deployment
-                uses: actions/deploy-pages@v1
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
