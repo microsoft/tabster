@@ -10,35 +10,44 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
-        permissions:
-            contents: write
-
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
+                with:
+                    fetch-depth: 0
 
             - name: Use Node.js 14
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v3
               with:
                   node-version: 14.x
 
-            - run: npm install
-            - run: npm run build
-            - run: npm run build-docs
+            - name: Install packages
+                run: npm install
 
-            - name: Deploy docs
-              uses: JamesIves/github-pages-deploy-action@4.1.1
-              with:
-                  branch: gh-pages
-                  folder: docs/build
-                  target-folder: /
+            - name: Build
+                - run: npm run build
+                - run: npm run build-docs
 
-                  clean: true
+            - name: Prepare to deploy
+                - run: npm run prepare-pages-deploy
 
-            - name: Deploy storybook
-              uses: JamesIves/github-pages-deploy-action@4.1.1
-              with:
-                  branch: gh-pages
-                  folder: storybook-static
-                  target-folder: storybook
+            - name: Upload pages artifact
+                uses: actions/upload-pages-artifact@v1
+                with:
+                    path: './.pages-deploy/'
 
-                  clean: true
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+
+        permissions:
+            pages: write
+            id-token: write
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        steps:
+            - name: Deploy to GitHub Pages
+                id: deployment
+                uses: actions/deploy-pages@v1
