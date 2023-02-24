@@ -1,13 +1,13 @@
 name: CI
 
 on:
-    push:
-        branches: [ master ]
-    pull_request:
-        branches: [ master ]
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 env:
-    CI: true
+  CI: true
 
 jobs:
   build:
