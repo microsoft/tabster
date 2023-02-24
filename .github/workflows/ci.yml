@@ -1,60 +1,60 @@
 name: CI
 
 on:
-    push:
-        branches: [ master ]
-    pull_request:
-        branches: [ master ]
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 env:
-    CI: true
+  CI: true
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Use Node.js 16
-              uses: actions/setup-node@v1
-              with:
-                  node-version: 16.x
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
 
-            - run: npm install
-            - run: npm run type-check
-            - run: npm run build
-            - run: npm run lint:check
-            - run: npm run format:check
-            - name: "Run tests"
-              run: npm run test
-              env:
-                PORT: '8080'
-            - name: "Rebuild test container (uncontrolled)"
-              run: |
-                npm run build
-              env:
-                STORYBOOK_UNCONTROLLED: 'true'
-            - name: "Run tests (uncontrolled)"
-              run: npm run test
-              env:
-                PORT: '8081'
-                STORYBOOK_UNCONTROLLED: 'true'
-            - name: "Rebuild test container (root-dummy-inputs)"
-              run: |
-                npm run build
-              env:
-                STORYBOOK_UNCONTROLLED: 'true'
-                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
-            - name: "Run tests (root-dummy-inputs)"
-              run: npm run test
-              env:
-                PORT: '8082'
-                STORYBOOK_UNCONTROLLED: 'true'
-                STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
-            - name: "Check for unstaged changes"
-              run: |
-                git status --porcelain
-                git diff-index --quiet HEAD -- || exit 1
-            - name: "Build docs"
-              run: npm run build-docs
+      - run: npm install
+      - run: npm run type-check
+      - run: npm run build
+      - run: npm run lint:check
+      - run: npm run format:check
+      - name: "Run tests"
+        run: npm run test
+        env:
+          PORT: '8080'
+      - name: "Rebuild test container (uncontrolled)"
+        run: |
+          npm run build
+        env:
+          STORYBOOK_UNCONTROLLED: 'true'
+      - name: "Run tests (uncontrolled)"
+        run: npm run test
+        env:
+          PORT: '8081'
+          STORYBOOK_UNCONTROLLED: 'true'
+      - name: "Rebuild test container (root-dummy-inputs)"
+        run: |
+          npm run build
+        env:
+          STORYBOOK_UNCONTROLLED: 'true'
+          STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+      - name: "Run tests (root-dummy-inputs)"
+        run: npm run test
+        env:
+          PORT: '8082'
+          STORYBOOK_UNCONTROLLED: 'true'
+          STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+      - name: "Check for unstaged changes"
+        run: |
+          git status --porcelain
+          git diff-index --quiet HEAD -- || exit 1
+      - name: "Build docs"
+        run: npm run build-docs
