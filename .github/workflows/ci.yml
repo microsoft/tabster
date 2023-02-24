@@ -56,3 +56,5 @@ jobs:
         run: |
           git status --porcelain
           git diff-index --quiet HEAD -- || exit 1
+      - name: "Build docs"
+        run: npm run build-docs
