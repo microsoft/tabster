@@ -6,3 +6,4 @@ docs/build
 docs/.docusaurus
 docs/.cache-loader
 *.yml
+.pages-deploy
