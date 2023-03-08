@@ -324,6 +324,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _augMap: WeakMap<HTMLElement, true>;
     private _aug: WeakRef<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
+    private _isDisposed = false;
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
@@ -354,6 +355,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     };
 
     dispose(): void {
+        this._isDisposed = true;
+
         const win = this._win();
 
         if (this._initTimer) {
@@ -565,7 +568,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this.currentIsOthersAccessible =
             modalizer?.getProps().isOthersAccessible;
 
-        this.hiddenUpdate();
+        if (!this._isDisposed) {
+            this.hiddenUpdate();
+        }
     }
 
     focus(

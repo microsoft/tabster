@@ -6,6 +6,7 @@
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
+import { WindowWithTabsterInstance } from "../src/Root";
 
 describe("Modalizer", () => {
     const getTestHtml = (
@@ -1750,5 +1751,101 @@ describe("Modalizer with uncontrolled areas", () => {
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton6")
             );
+    });
+});
+
+describe("Modalizer dispose", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true, groupper: true });
+    });
+
+    // makes sure that modalizer is cleaned up after each test run
+    afterEach(async () => {
+        await new BroTest.BroTest(<div></div>);
+    });
+
+    it("should dispose stored Modalizer instances on Tabster dispose", async () => {
+        interface WindowWithOldTabster extends Window {
+            __oldTabster?: WindowWithTabsterInstance["__tabsterInstance"];
+        }
+
+        interface ModalizerWithSomeInternals extends Types.ModalizerAPI {
+            _modalizers: Record<string, Types.Modalizer>;
+            _isDisposed: boolean;
+        }
+
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        aria-label="modal1"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal1" },
+                        })}
+                    >
+                        <button id="foo">Foo</button>
+                    </div>
+                    <button>Button2</button>
+                    <div
+                        aria-label="modal2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal2" },
+                        })}
+                    >
+                        <button>Baz</button>
+                    </div>
+                    <button>Button3</button>
+                    <div
+                        aria-label="modal1"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal1" },
+                        })}
+                    >
+                        <button>Bar</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .focusElement("#foo")
+            .activeElement((el) => expect(el?.textContent).toEqual("Foo"))
+            .eval(() => {
+                (window as WindowWithOldTabster).__oldTabster = (
+                    window as WindowWithTabsterInstance
+                ).__tabsterInstance;
+
+                const modalizerInstanceCount = Object.keys(
+                    (
+                        (window as WindowWithTabsterInstance).__tabsterInstance
+                            ?.modalizer as ModalizerWithSomeInternals
+                    )._modalizers
+                ).length;
+
+                const vars = getTabsterTestVariables();
+                const tabster = vars.core;
+                if (vars && tabster) {
+                    vars.disposeTabster?.(tabster, true);
+                }
+
+                return modalizerInstanceCount;
+            })
+            .check((modalizerInstanceCount) => {
+                expect(modalizerInstanceCount).toEqual(3);
+            })
+            // Give the dispose time to call everything.
+            .wait(1000)
+            .eval(() => {
+                const modalizerAPI = (window as WindowWithOldTabster)
+                    .__oldTabster?.modalizer as ModalizerWithSomeInternals;
+                return [
+                    modalizerAPI._isDisposed,
+                    Object.keys(modalizerAPI._modalizers).length,
+                ];
+            })
+            .check((modalizerInstanceCount) => {
+                expect(modalizerInstanceCount).toEqual([true, 0]);
+            });
     });
 });
