@@ -785,6 +785,18 @@ export type RootConstructor = (
     props: RootProps
 ) => Root;
 
+export interface SysDummyInputsPositions {
+    Auto: 0; // Tabster will place dummy inputs depending on the container tag name and on the default behaviour.
+    Inside: 1; // Tabster will always place dummy inputs inside the container.
+    Outside: 2; // Tabster will always place dummy inputs outside of the container.
+}
+export const SysDummyInputsPositions: SysDummyInputsPositions = {
+    Auto: 0,
+    Inside: 1,
+    Outside: 2,
+};
+export type SysDummyInputsPosition =
+    SysDummyInputsPositions[keyof SysDummyInputsPositions];
 /**
  * Ability to fine-tune Tabster internal behaviour in rare cases of need.
  * Normally, should not be used. A deep understanding of the intention and the effect
@@ -799,7 +811,7 @@ export interface SysProps {
      * Setting to true will force the dummy inputs to be always outside of the element,
      * setting to false will force the dummy inputs to be always inside.
      */
-    dummyInputsOutside?: boolean;
+    dummyInputsPosition?: SysDummyInputsPosition;
 }
 
 export interface GetTabsterContextOptions {

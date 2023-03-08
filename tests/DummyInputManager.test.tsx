@@ -417,7 +417,10 @@ describeIfUncontrolled("DummyInputManager", () => {
                             {...getTabsterAttribute({
                                 mover: {},
                                 // Force inputs out.
-                                sys: { dummyInputsOutside: true },
+                                sys: {
+                                    dummyInputsPosition:
+                                        Types.SysDummyInputsPositions.Outside,
+                                },
                             })}
                             id={moverId}
                         >
@@ -465,7 +468,10 @@ describeIfUncontrolled("DummyInputManager", () => {
                             {...getTabsterAttribute({
                                 groupper: {},
                                 // Force inputs in.
-                                sys: { dummyInputsOutside: false },
+                                sys: {
+                                    dummyInputsPosition:
+                                        Types.SysDummyInputsPositions.Inside,
+                                },
                             })}
                             id={groupperId}
                         >
@@ -510,7 +516,10 @@ describeIfUncontrolled("DummyInputManager", () => {
                             {...getTabsterAttribute({
                                 modalizer: { id: "modal" },
                                 // Force inputs outside.
-                                sys: { dummyInputsOutside: true },
+                                sys: {
+                                    dummyInputsPosition:
+                                        Types.SysDummyInputsPositions.Outside,
+                                },
                             })}
                             id={modalizerId}
                         >

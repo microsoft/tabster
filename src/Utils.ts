@@ -1060,16 +1060,15 @@ class DummyInputManagerCore {
 
         // Some elements allow only specific types of direct descendants and we need to
         // put our dummy inputs inside or outside of the element accordingly.
-        const forcedDummyPosition = sys?.dummyInputsOutside;
+        const forcedDummyPosition = sys?.dummyInputsPosition;
         const tagName = el.tagName;
-        this._isOutside =
-            forcedDummyPosition === undefined
-                ? (outsideByDefault ||
-                      tagName === "UL" ||
-                      tagName === "OL" ||
-                      tagName === "TABLE") &&
-                  !(tagName === "LI" || tagName === "TD" || tagName === "TH")
-                : forcedDummyPosition;
+        this._isOutside = !forcedDummyPosition
+            ? (outsideByDefault ||
+                  tagName === "UL" ||
+                  tagName === "OL" ||
+                  tagName === "TABLE") &&
+              !(tagName === "LI" || tagName === "TD" || tagName === "TH")
+            : forcedDummyPosition === Types.SysDummyInputsPositions.Outside;
 
         this._firstDummy = new DummyInput(
             this._getWindow,
