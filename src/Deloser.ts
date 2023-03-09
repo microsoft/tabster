@@ -354,7 +354,10 @@ function buildSelector(element: HTMLElement): string | undefined {
     return selector.join(" ");
 }
 
-export class Deloser extends TabsterPart<"deloser"> implements Types.Deloser {
+export class Deloser
+    extends TabsterPart<Types.DeloserProps>
+    implements Types.Deloser
+{
     readonly uid: string;
     private _isActive = false;
     private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
@@ -365,9 +368,9 @@ export class Deloser extends TabsterPart<"deloser"> implements Types.Deloser {
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (deloser: Deloser) => void,
-        props: Types.TabsterAttributePropsWith<"deloser">
+        props: Types.DeloserProps
     ) {
-        super(tabster, element, "deloser", props);
+        super(tabster, element, props);
 
         this.uid = getElementUId(tabster.getWindow, element);
         this._onDispose = onDispose;
@@ -716,10 +719,10 @@ export class DeloserAPI implements Types.DeloserAPI {
 
     createDeloser(
         element: HTMLElement,
-        props: Types.TabsterAttributePropsWith<"deloser">
+        props: Types.DeloserProps
     ): Types.Deloser {
         if (__DEV__) {
-            validateDeloserProps(props.deloser);
+            validateDeloserProps(props);
         }
 
         const deloser = new Deloser(
@@ -904,7 +907,7 @@ export class DeloserAPI implements Types.DeloserAPI {
                         tabster,
                         body,
                         (tabster.deloser as DeloserAPI)._onDeloserDispose,
-                        { deloser: autoDeloserProps }
+                        autoDeloserProps
                     );
                 }
             }

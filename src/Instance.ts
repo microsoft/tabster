@@ -118,18 +118,20 @@ export function updateTabsterByAttribute(
     for (const key of Object.keys(
         newTabsterProps
     ) as (keyof Types.TabsterAttributeProps)[]) {
+        const sys = newTabsterProps.sys;
+
         switch (key) {
             case "deloser":
                 if (tabsterOnElement.deloser) {
                     tabsterOnElement.deloser.setProps(
-                        newTabsterProps as Types.TabsterAttributePropsWith<"deloser">
+                        newTabsterProps.deloser as Types.DeloserProps
                     );
                 } else {
                     if (tabster.deloser) {
                         tabsterOnElement.deloser =
                             tabster.deloser.createDeloser(
                                 element,
-                                newTabsterProps as Types.TabsterAttributePropsWith<"deloser">
+                                newTabsterProps.deloser as Types.DeloserProps
                             );
                     } else if (__DEV__) {
                         console.error(
@@ -142,12 +144,13 @@ export function updateTabsterByAttribute(
             case "root":
                 if (tabsterOnElement.root) {
                     tabsterOnElement.root.setProps(
-                        newTabsterProps as Types.TabsterAttributePropsWith<"root">
+                        newTabsterProps.root as Types.RootProps
                     );
                 } else {
                     tabsterOnElement.root = tabster.root.createRoot(
                         element,
-                        newTabsterProps as Types.TabsterAttributePropsWith<"root">
+                        newTabsterProps.root as Types.RootProps,
+                        sys
                     );
                 }
                 tabster.root.onRoot(tabsterOnElement.root);
@@ -156,14 +159,15 @@ export function updateTabsterByAttribute(
             case "modalizer":
                 if (tabsterOnElement.modalizer) {
                     tabsterOnElement.modalizer.setProps(
-                        newTabsterProps as Types.TabsterAttributePropsWith<"modalizer">
+                        newTabsterProps.modalizer as Types.ModalizerProps
                     );
                 } else {
                     if (tabster.modalizer) {
                         tabsterOnElement.modalizer =
                             tabster.modalizer.createModalizer(
                                 element,
-                                newTabsterProps as Types.TabsterAttributePropsWith<"modalizer">
+                                newTabsterProps.modalizer as Types.ModalizerProps,
+                                sys
                             );
                     } else if (__DEV__) {
                         console.error(
@@ -180,14 +184,15 @@ export function updateTabsterByAttribute(
             case "groupper":
                 if (tabsterOnElement.groupper) {
                     tabsterOnElement.groupper.setProps(
-                        newTabsterProps as Types.TabsterAttributePropsWith<"groupper">
+                        newTabsterProps.groupper as Types.GroupperProps
                     );
                 } else {
                     if (tabster.groupper) {
                         tabsterOnElement.groupper =
                             tabster.groupper.createGroupper(
                                 element,
-                                newTabsterProps as Types.TabsterAttributePropsWith<"groupper">
+                                newTabsterProps.groupper as Types.GroupperProps,
+                                sys
                             );
                     } else if (__DEV__) {
                         console.error(
@@ -200,13 +205,14 @@ export function updateTabsterByAttribute(
             case "mover":
                 if (tabsterOnElement.mover) {
                     tabsterOnElement.mover.setProps(
-                        newTabsterProps as Types.TabsterAttributePropsWith<"mover">
+                        newTabsterProps.mover as Types.MoverProps
                     );
                 } else {
                     if (tabster.mover) {
                         tabsterOnElement.mover = tabster.mover.createMover(
                             element,
-                            newTabsterProps as Types.TabsterAttributePropsWith<"mover">
+                            newTabsterProps.mover as Types.MoverProps,
+                            sys
                         );
                     } else if (__DEV__) {
                         console.error(

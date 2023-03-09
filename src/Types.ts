@@ -97,11 +97,11 @@ export interface WeakHTMLElement<D = undefined> {
     getData(): D | undefined;
 }
 
-export interface TabsterPart<P extends keyof TabsterAttributeProps> {
+export interface TabsterPart<P> {
     readonly id: string;
     getElement(): HTMLElement | undefined;
-    getProps(): TabsterAttributePropsWith<P>[P];
-    setProps(props: TabsterAttributePropsWith<P>): void;
+    getProps(): P;
+    setProps(props: P): void;
 }
 
 export interface TabsterPartWithFindNextTabbable {
@@ -319,7 +319,7 @@ export interface DeloserProps {
     noSelectorCheck?: boolean;
 }
 
-export interface Deloser extends TabsterPart<"deloser"> {
+export interface Deloser extends TabsterPart<DeloserProps> {
     readonly uid: string;
     dispose(): void;
     isActive(): boolean;
@@ -342,10 +342,7 @@ export type DeloserConstructor = (
 
 interface DeloserInterfaceInternal {
     /** @internal */
-    createDeloser(
-        element: HTMLElement,
-        props: TabsterAttributePropsWith<"deloser">
-    ): Deloser;
+    createDeloser(element: HTMLElement, props: DeloserProps): Deloser;
 }
 
 export interface DeloserAPI extends DeloserInterfaceInternal, Disposable {
@@ -624,7 +621,7 @@ export interface MoverProps {
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
 
 export interface Mover
-    extends TabsterPart<"mover">,
+    extends TabsterPart<MoverProps>,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -648,7 +645,8 @@ interface MoverAPIInternal {
     /** @internal */
     createMover(
         element: HTMLElement,
-        props: TabsterAttributePropsWith<"mover">
+        props: MoverProps,
+        sys: SysProps | undefined
     ): Mover;
 }
 
@@ -679,7 +677,7 @@ export interface GroupperProps {
 }
 
 export interface Groupper
-    extends TabsterPart<"groupper">,
+    extends TabsterPart<GroupperProps>,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -701,7 +699,8 @@ export interface GroupperAPIInternal {
     /** @internal */
     createGroupper(
         element: HTMLElement,
-        props: TabsterAttributePropsWith<"groupper">
+        props: GroupperProps,
+        sys: SysProps | undefined
     ): Groupper;
     /** @internal */
     handleKeyPress(
@@ -744,7 +743,7 @@ export type ModalizerEventDetails = {
 export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
 
 export interface Modalizer
-    extends TabsterPart<"modalizer">,
+    extends TabsterPart<ModalizerProps>,
         TabsterPartWithFindNextTabbable {
     readonly userId: string;
     readonly dummyManager: DummyInputManager | undefined;
@@ -772,7 +771,7 @@ export interface RootProps {
     restoreFocusOrder?: RestoreFocusOrder;
 }
 
-export interface Root extends TabsterPart<"root"> {
+export interface Root extends TabsterPart<RootProps> {
     /**@internal*/
     addDummyInputs(): void;
 
@@ -855,7 +854,8 @@ interface RootAPIInternal {
     /**@internal*/
     createRoot(
         element: HTMLElement,
-        props: TabsterAttributePropsWith<"root">
+        props: RootProps,
+        sys: SysProps | undefined
     ): Root;
     /**@internal*/
     onRoot(root: Root, removed?: boolean): void;
@@ -880,7 +880,8 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     createModalizer(
         element: HTMLElement,
-        props: TabsterAttributePropsWith<"modalizer">
+        props: ModalizerProps,
+        sys: SysProps | undefined
     ): Modalizer;
     /**
      * Sets active modalizers.
@@ -964,9 +965,6 @@ export type TabsterAttributeProps = Partial<{
     outline: OutlinedElementProps;
     sys: SysProps;
 }>;
-
-export type TabsterAttributePropsWith<P extends keyof TabsterAttributeProps> =
-    TabsterAttributeProps & Required<Pick<TabsterAttributeProps, P>>;
 
 export interface TabsterAttributeOnElement {
     string: string;

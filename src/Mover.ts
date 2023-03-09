@@ -91,7 +91,10 @@ interface MoverUpdateQueueItem {
         | typeof _moverUpdateRemove;
 }
 
-export class Mover extends TabsterPart<"mover"> implements Types.Mover {
+export class Mover
+    extends TabsterPart<Types.MoverProps>
+    implements Types.Mover
+{
     private _unobserve: (() => void) | undefined;
     private _intersectionObserver: IntersectionObserver | undefined;
     private _setCurrentTimer: number | undefined;
@@ -112,14 +115,13 @@ export class Mover extends TabsterPart<"mover"> implements Types.Mover {
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (mover: Mover) => void,
-        props: Types.TabsterAttributePropsWith<"mover">
+        props: Types.MoverProps,
+        sys: Types.SysProps | undefined
     ) {
-        super(tabster, element, "mover", props);
-
-        const moverProps = props.mover;
+        super(tabster, element, props);
 
         this._win = tabster.getWindow;
-        this.visibilityTolerance = moverProps.visibilityTolerance ?? 0.8;
+        this.visibilityTolerance = props.visibilityTolerance ?? 0.8;
 
         if (this._props.trackState || this._props.visibilityAware) {
             this._intersectionObserver = new IntersectionObserver(
@@ -131,14 +133,14 @@ export class Mover extends TabsterPart<"mover"> implements Types.Mover {
 
         this._onDispose = onDispose;
         const getMemorized = () =>
-            this.getProps().memorizeCurrent ? this._current : undefined;
+            props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
             this.dummyManager = new MoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized,
-                props.sys
+                sys
             );
         }
     }
@@ -725,17 +727,19 @@ export class MoverAPI implements Types.MoverAPI {
 
     createMover(
         element: HTMLElement,
-        props: Types.TabsterAttributePropsWith<"mover">
+        props: Types.MoverProps,
+        sys: Types.SysProps | undefined
     ): Types.Mover {
         if (__DEV__) {
-            validateMoverProps(props.mover);
+            validateMoverProps(props);
         }
 
         const newMover = new Mover(
             this._tabster,
             element,
             this._onMoverDispose,
-            props
+            props,
+            sys
         );
         this._movers[newMover.id] = newMover;
         return newMover;

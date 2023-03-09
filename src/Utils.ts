@@ -630,29 +630,20 @@ export function setBasics(win: Window, basics: InternalBasics): void {
 
 let _lastTabsterPartId = 0;
 
-export abstract class TabsterPart<
-    P extends keyof Types.TabsterAttributeProps,
-    D = undefined
-> implements Types.TabsterPart<P>
+export abstract class TabsterPart<P, D = undefined>
+    implements Types.TabsterPart<P>
 {
     protected _tabster: Types.TabsterCore;
     protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _props: Types.TabsterAttributePropsWith<P>[P];
-    protected _part: P;
+    protected _props: P;
 
     readonly id: string;
 
-    constructor(
-        tabster: Types.TabsterCore,
-        element: HTMLElement,
-        part: P,
-        props: Types.TabsterAttributePropsWith<P>
-    ) {
+    constructor(tabster: Types.TabsterCore, element: HTMLElement, props: P) {
         const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
-        this._props = { ...props[part] };
-        this._part = part;
+        this._props = { ...props };
         this.id = "i" + ++_lastTabsterPartId;
     }
 
@@ -660,12 +651,12 @@ export abstract class TabsterPart<
         return this._element.get();
     }
 
-    getProps(): Types.TabsterAttributePropsWith<P>[P] {
+    getProps(): P {
         return this._props;
     }
 
-    setProps(props: Types.TabsterAttributePropsWith<P>): void {
-        this._props = { ...props[this._part] };
+    setProps(props: P): void {
+        this._props = { ...props };
     }
 }
 
@@ -855,7 +846,7 @@ export class DummyInputManager {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
-        sys?: Types.SysProps,
+        sys: Types.SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -1017,7 +1008,7 @@ class DummyInputManagerCore {
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
-        sys?: Types.SysProps,
+        sys: Types.SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {

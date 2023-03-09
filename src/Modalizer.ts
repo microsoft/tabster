@@ -103,7 +103,7 @@ class ModalizerDummyManager extends DummyInputManager {
 }
 
 export class Modalizer
-    extends TabsterPart<"modalizer">
+    extends TabsterPart<Types.ModalizerProps>
     implements Types.Modalizer
 {
     userId: string;
@@ -119,12 +119,13 @@ export class Modalizer
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
-        props: Types.TabsterAttributePropsWith<"modalizer">,
+        props: Types.ModalizerProps,
+        sys: Types.SysProps | undefined,
         activeElements: WeakRef<HTMLElement>[]
     ) {
-        super(tabster, element, "modalizer", props);
+        super(tabster, element, props);
 
-        this.userId = props.modalizer.id;
+        this.userId = props.id;
         this._onDispose = onDispose;
         this._activeElements = activeElements;
 
@@ -132,7 +133,7 @@ export class Modalizer
             this.dummyManager = new ModalizerDummyManager(
                 this._element,
                 tabster,
-                props.sys
+                sys
             );
         }
 
@@ -198,14 +199,12 @@ export class Modalizer
         return this._wasFocused;
     }
 
-    setProps(props: Types.TabsterAttributePropsWith<"modalizer">): void {
-        super.setProps(props);
-
-        const id = props.modalizer.id;
-
-        if (id) {
-            this.userId = id;
+    setProps(props: Types.ModalizerProps): void {
+        if (props.id) {
+            this.userId = props.id;
         }
+
+        this._props = { ...props };
     }
 
     dispose(): void {
@@ -393,10 +392,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     createModalizer(
         element: HTMLElement,
-        props: Types.TabsterAttributePropsWith<"modalizer">
+        props: Types.ModalizerProps,
+        sys: Types.SysProps | undefined
     ): Types.Modalizer {
         if (__DEV__) {
-            validateModalizerProps(props.modalizer);
+            validateModalizerProps(props);
         }
 
         const modalizer = new Modalizer(
@@ -404,11 +404,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             element,
             this._onModalizerDispose,
             props,
+            sys,
             this.activeElements
         );
 
         const id = modalizer.id;
-        const userId = props.modalizer.id;
+        const userId = props.id;
 
         this._modalizers[id] = modalizer;
 
