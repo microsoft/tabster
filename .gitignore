@@ -27,3 +27,5 @@ dts/
 .devcontainer
 
 .storybook-static
+
+.pages-deploy

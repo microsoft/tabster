@@ -1,6 +1,6 @@
 {
     "name": "tabster",
-    "version": "4.1.1",
+    "version": "4.1.2",
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
@@ -41,7 +41,8 @@
         "type-check": "npm run type-check:lib && npm run type-check:tests && npm run type-check:stories",
         "type-check:lib": "tsc -b  src/tsconfig.lib.json",
         "type-check:tests": "tsc -b tests/tsconfig.spec.json",
-        "type-check:stories": "tsc -b stories/tsconfig.stories.json"
+        "type-check:stories": "tsc -b stories/tsconfig.stories.json",
+        "prepare-pages-deploy": "rimraf ./.pages-deploy && npm run build-docs && npm run build-storybook && copyfiles -u 2 -a \"./docs/build/**/*\" ./.pages-deploy && copyfiles -u 1 -a \"./storybook-static/**/*\" ./.pages-deploy/storybook"
     },
     "dependencies": {
         "keyborg": "^2.0.0",
@@ -79,6 +80,7 @@
         "babel-jest": "^27.5.1",
         "babel-loader": "^8.2.3",
         "babel-plugin-annotate-pure-calls": "^0.4.0",
+        "copyfiles": "^2.4.1",
         "eslint": "^8.30.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-header": "^3.1.1",

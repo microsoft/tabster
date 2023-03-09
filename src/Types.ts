@@ -374,6 +374,8 @@ export interface FocusableProps {
         Enter?: boolean;
         ArrowUp?: boolean;
         ArrowDown?: boolean;
+        ArrowLeft?: boolean;
+        ArrowRight?: boolean;
         PageUp?: boolean;
         PageDown?: boolean;
         Home?: boolean;
