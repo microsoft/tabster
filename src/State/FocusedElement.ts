@@ -51,11 +51,18 @@ export class FocusedElementState
         this._initTimer = undefined;
 
         const win = this._win();
+        const doc = win.document;
 
         // Add these event listeners as capture - we want Tabster to run before user event handlers
-        win.document.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
-        win.document.addEventListener("focusout", this._onFocusOut, true);
+        doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
+        doc.addEventListener("focusout", this._onFocusOut, true);
         win.addEventListener("keydown", this._onKeyDown, true);
+
+        const activeElement = doc.activeElement;
+
+        if (activeElement && activeElement !== doc.body) {
+            this._setFocusedElement(activeElement as HTMLElement);
+        }
 
         this.subscribe(this._onChanged);
     };

@@ -25,69 +25,82 @@
             const params = new URL(location.href).searchParams;
             const controlTab = params.get("controlTab") !== "false";
             const rootDummyInputs = params.get("rootDummyInputs") !== "false";
-            const parts = (params.get("parts") || "").split(",");
+            const partsValue = params.get("parts");
+            const parts =
+                typeof partsValue === "string"
+                    ? partsValue.split(",")
+                    : undefined;
             const partsToEnable = {};
-
-            for (let part of parts) {
-                partsToEnable[part] = true;
-            }
-
-            const tabster = createTabster(window, {
-                controlTab,
-                rootDummyInputs,
-            });
 
             tabsterTest.createTabster = createTabster;
             tabsterTest.disposeTabster = disposeTabster;
             tabsterTest.getTabster = getTabster;
+            tabsterTest.getCrossOrigin = getCrossOrigin;
+            tabsterTest.getDeloser = getDeloser;
+            tabsterTest.getGroupper = getGroupper;
+            tabsterTest.getModalizer = getModalizer;
+            tabsterTest.getMover = getMover;
+            tabsterTest.getObservedElement = getObservedElement;
+            tabsterTest.getOutline = getOutline;
             tabsterTest.makeNoOp = makeNoOp;
             tabsterTest.getTabsterAttribute = getTabsterAttribute;
             tabsterTest.setTabsterAttribute = setTabsterAttribute;
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
 
-            tabsterTest.core = tabster;
+            if (parts !== undefined) {
+                for (let part of parts) {
+                    partsToEnable[part] = true;
+                }
 
-            console.log(
-                "created tabster",
-                `as ${
-                    controlTab ? "controlled" : "uncontrolled"
-                }, root dummy inputs ${rootDummyInputs}`
-            );
+                const tabster = createTabster(window, {
+                    controlTab,
+                    rootDummyInputs,
+                });
 
-            if ("modalizer" in partsToEnable) {
-                tabsterTest.modalizer = getModalizer(tabster);
-                console.log("created modalizer");
-            }
+                tabsterTest.core = tabster;
 
-            if ("deloser" in partsToEnable) {
-                tabsterTest.deloser = getDeloser(tabster);
-                console.log("created deloser");
-            }
+                console.log(
+                    "created tabster",
+                    `as ${
+                        controlTab ? "controlled" : "uncontrolled"
+                    }, root dummy inputs ${rootDummyInputs}`
+                );
 
-            if ("outline" in partsToEnable) {
-                tabsterTest.outline = getOutline(tabster);
-                console.log("created outline");
-            }
+                if ("modalizer" in partsToEnable) {
+                    tabsterTest.modalizer = getModalizer(tabster);
+                    console.log("created modalizer");
+                }
 
-            if ("mover" in partsToEnable) {
-                tabsterTest.mover = getMover(tabster);
-                console.log("created mover");
-            }
+                if ("deloser" in partsToEnable) {
+                    tabsterTest.deloser = getDeloser(tabster);
+                    console.log("created deloser");
+                }
 
-            if ("groupper" in partsToEnable) {
-                tabsterTest.groupper = getGroupper(tabster);
-                console.log("created groupper");
-            }
+                if ("outline" in partsToEnable) {
+                    tabsterTest.outline = getOutline(tabster);
+                    console.log("created outline");
+                }
 
-            if ("observed" in partsToEnable) {
-                tabsterTest.observedElement = getObservedElement(tabster);
-                console.log("created observed");
-            }
+                if ("mover" in partsToEnable) {
+                    tabsterTest.mover = getMover(tabster);
+                    console.log("created mover");
+                }
 
-            if ("crossOrigin" in partsToEnable) {
-                tabsterTest.crossOrigin = getCrossOrigin(tabster);
-                tabsterTest.crossOrigin.setup();
-                console.log("created cross origin");
+                if ("groupper" in partsToEnable) {
+                    tabsterTest.groupper = getGroupper(tabster);
+                    console.log("created groupper");
+                }
+
+                if ("observed" in partsToEnable) {
+                    tabsterTest.observedElement = getObservedElement(tabster);
+                    console.log("created observed");
+                }
+
+                if ("crossOrigin" in partsToEnable) {
+                    tabsterTest.crossOrigin = getCrossOrigin(tabster);
+                    tabsterTest.crossOrigin.setup();
+                    console.log("created cross origin");
+                }
             }
 
             window.getTabsterTestVariables = () => tabsterTest;

@@ -59,6 +59,7 @@ class TabsterCore implements Types.TabsterCore {
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
+    private _initTimer: number | undefined;
 
     _version: string = __VERSION__;
     _noop = false;
@@ -117,9 +118,14 @@ class TabsterCore implements Types.TabsterCore {
             },
         };
 
-        this.internal.resumeObserver(false);
-
         startFakeWeakRefsCleanup(getWindow);
+
+        // Gives a tick to the host app to initialize other tabster
+        // APIs before tabster starts observing attributes.
+        this._initTimer = win.setTimeout(() => {
+            delete this._initTimer;
+            this.internal.resumeObserver(true);
+        }, 0);
     }
 
     createTabster(noRefCount?: boolean): Types.Tabster {
@@ -148,6 +154,9 @@ class TabsterCore implements Types.TabsterCore {
         this.internal.stopObserver();
 
         const win = this._win;
+
+        win?.clearTimeout(this._initTimer);
+        delete this._initTimer;
 
         this._forgetMemorizedElements = [];
 
