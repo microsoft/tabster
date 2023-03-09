@@ -643,7 +643,11 @@ export type MoverConstructor = (
 
 interface MoverAPIInternal {
     /** @internal */
-    createMover(element: HTMLElement, props: MoverProps): Mover;
+    createMover(
+        element: HTMLElement,
+        props: MoverProps,
+        sys: SysProps | undefined
+    ): Mover;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -693,7 +697,11 @@ export type GroupperConstructor = (
 
 export interface GroupperAPIInternal {
     /** @internal */
-    createGroupper(element: HTMLElement, props: GroupperProps): Groupper;
+    createGroupper(
+        element: HTMLElement,
+        props: GroupperProps,
+        sys: SysProps | undefined
+    ): Groupper;
     /** @internal */
     handleKeyPress(
         element: HTMLElement,
@@ -778,6 +786,35 @@ export type RootConstructor = (
     props: RootProps
 ) => Root;
 
+export interface SysDummyInputsPositions {
+    Auto: 0; // Tabster will place dummy inputs depending on the container tag name and on the default behaviour.
+    Inside: 1; // Tabster will always place dummy inputs inside the container.
+    Outside: 2; // Tabster will always place dummy inputs outside of the container.
+}
+export const SysDummyInputsPositions: SysDummyInputsPositions = {
+    Auto: 0,
+    Inside: 1,
+    Outside: 2,
+};
+export type SysDummyInputsPosition =
+    SysDummyInputsPositions[keyof SysDummyInputsPositions];
+/**
+ * Ability to fine-tune Tabster internal behaviour in rare cases of need.
+ * Normally, should not be used. A deep understanding of the intention and the effect
+ * is required.
+ */
+export interface SysProps {
+    /**
+     * Force dummy input position outside or inside of the element.
+     * By default (when undefined), the position is determined dynamically
+     * (for example inside for <li> elements and outside for <table> elements,
+     * plus a default Groupper/Mover/Modalizer implementation position).
+     * Setting to true will force the dummy inputs to be always outside of the element,
+     * setting to false will force the dummy inputs to be always inside.
+     */
+    dummyInputsPosition?: SysDummyInputsPosition;
+}
+
 export interface GetTabsterContextOptions {
     /**
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
@@ -815,7 +852,11 @@ export interface RootFocusEventDetails {
 
 interface RootAPIInternal {
     /**@internal*/
-    createRoot(element: HTMLElement, props: RootProps): Root;
+    createRoot(
+        element: HTMLElement,
+        props: RootProps,
+        sys: SysProps | undefined
+    ): Root;
     /**@internal*/
     onRoot(root: Root, removed?: boolean): void;
     /**@internal*/
@@ -837,7 +878,11 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     activeElements: WeakRef<HTMLElement>[];
     /** @internal */
-    createModalizer(element: HTMLElement, props: ModalizerProps): Modalizer;
+    createModalizer(
+        element: HTMLElement,
+        props: ModalizerProps,
+        sys: SysProps | undefined
+    ): Modalizer;
     /**
      * Sets active modalizers.
      * When active, everything outside of the modalizers with the specific user
@@ -904,6 +949,10 @@ export interface OutlineOnElement {
     outline: OutlinedElementProps;
 }
 
+export interface SysOnElement {
+    sys: SysProps;
+}
+
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserProps;
     root: RootProps;
@@ -914,6 +963,7 @@ export type TabsterAttributeProps = Partial<{
     mover: MoverProps;
     observed: ObservedElementProps;
     outline: OutlinedElementProps;
+    sys: SysProps;
 }>;
 
 export interface TabsterAttributeOnElement {
@@ -934,7 +984,8 @@ export type TabsterOnElement = Partial<
         GroupperOnElement &
         ObservedOnElement &
         OutlineOnElement &
-        UncontrolledOnElement
+        UncontrolledOnElement &
+        SysOnElement
 >;
 
 export interface OutlineElements {

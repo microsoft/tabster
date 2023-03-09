@@ -34,9 +34,10 @@ class MoverDummyManager extends DummyInputManager {
     constructor(
         element: WeakHTMLElement,
         tabster: Types.TabsterCore,
-        getMemorized: () => WeakHTMLElement | undefined
+        getMemorized: () => WeakHTMLElement | undefined,
+        sys: Types.SysProps | undefined
     ) {
-        super(tabster, element, DummyInputManagerPriorities.Mover);
+        super(tabster, element, DummyInputManagerPriorities.Mover, sys);
 
         this._tabster = tabster;
         this._getMemorized = getMemorized;
@@ -114,7 +115,8 @@ export class Mover
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (mover: Mover) => void,
-        props: Types.MoverProps
+        props: Types.MoverProps,
+        sys: Types.SysProps | undefined
     ) {
         super(tabster, element, props);
 
@@ -137,7 +139,8 @@ export class Mover
             this.dummyManager = new MoverDummyManager(
                 this._element,
                 tabster,
-                getMemorized
+                getMemorized,
+                sys
             );
         }
     }
@@ -722,7 +725,11 @@ export class MoverAPI implements Types.MoverAPI {
         });
     }
 
-    createMover(element: HTMLElement, props: Types.MoverProps): Types.Mover {
+    createMover(
+        element: HTMLElement,
+        props: Types.MoverProps,
+        sys: Types.SysProps | undefined
+    ): Types.Mover {
         if (__DEV__) {
             validateMoverProps(props);
         }
@@ -731,7 +738,8 @@ export class MoverAPI implements Types.MoverAPI {
             this._tabster,
             element,
             this._onMoverDispose,
-            props
+            props,
+            sys
         );
         this._movers[newMover.id] = newMover;
         return newMover;

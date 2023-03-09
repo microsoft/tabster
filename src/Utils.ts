@@ -846,6 +846,7 @@ export class DummyInputManager {
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
         priority: number,
+        sys: Types.SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -856,6 +857,7 @@ export class DummyInputManager {
             element,
             this,
             priority,
+            sys,
             outsideByDefault,
             callForDefaultAction
         );
@@ -1006,6 +1008,7 @@ class DummyInputManagerCore {
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
+        sys: Types.SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -1048,13 +1051,15 @@ class DummyInputManagerCore {
 
         // Some elements allow only specific types of direct descendants and we need to
         // put our dummy inputs inside or outside of the element accordingly.
-        const tagName = element.get()?.tagName;
-        this._isOutside =
-            (outsideByDefault ||
-                tagName === "UL" ||
-                tagName === "OL" ||
-                tagName === "TABLE") &&
-            !(tagName === "LI" || tagName === "TD" || tagName === "TH");
+        const forcedDummyPosition = sys?.dummyInputsPosition;
+        const tagName = el.tagName;
+        this._isOutside = !forcedDummyPosition
+            ? (outsideByDefault ||
+                  tagName === "UL" ||
+                  tagName === "OL" ||
+                  tagName === "TABLE") &&
+              !(tagName === "LI" || tagName === "TD" || tagName === "TH")
+            : forcedDummyPosition === Types.SysDummyInputsPositions.Outside;
 
         this._firstDummy = new DummyInput(
             this._getWindow,

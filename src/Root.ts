@@ -47,12 +47,14 @@ class RootDummyManager extends DummyInputManager {
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
-        setFocused: (focused: boolean, fromAdjacent?: boolean) => void
+        setFocused: (focused: boolean, fromAdjacent?: boolean) => void,
+        sys: Types.SysProps | undefined
     ) {
         super(
             tabster,
             element,
             DummyInputManagerPriorities.Root,
+            sys,
             undefined,
             true
         );
@@ -103,6 +105,7 @@ export class Root
     readonly uid: string;
 
     private _dummyManager?: RootDummyManager;
+    private _sys?: Types.SysProps;
     private _isFocused = false;
     private _setFocusedTimer: number | undefined;
     private _setTabbableTimer: number | undefined;
@@ -112,7 +115,8 @@ export class Root
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (root: Root) => void,
-        props: Types.RootProps
+        props: Types.RootProps,
+        sys: Types.SysProps | undefined
     ) {
         super(tabster, element, props);
 
@@ -120,6 +124,8 @@ export class Root
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
+
+        this._sys = sys;
 
         if (tabster.controlTab || tabster.rootDummyInputs) {
             this.addDummyInputs();
@@ -135,7 +141,8 @@ export class Root
             this._dummyManager = new RootDummyManager(
                 this._tabster,
                 this._element,
-                this._setFocused
+                this._setFocused,
+                this._sys
             );
         }
     }
@@ -341,7 +348,11 @@ export class RootAPI implements Types.RootAPI {
         this.rootById = {};
     }
 
-    createRoot(element: HTMLElement, props: Types.RootProps): Types.Root {
+    createRoot(
+        element: HTMLElement,
+        props: Types.RootProps,
+        sys: Types.SysProps | undefined
+    ): Types.Root {
         if (__DEV__) {
             validateRootProps(props);
         }
@@ -350,7 +361,8 @@ export class RootAPI implements Types.RootAPI {
             this._tabster,
             element,
             this._onRootDispose,
-            props
+            props,
+            sys
         ) as Types.Root;
 
         this._roots[newRoot.id] = newRoot;
