@@ -361,9 +361,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._initTimer = undefined;
         }
 
-        win.clearTimeout(this._restoreModalizerFocusTimer);
-        win.clearTimeout(this._hiddenUpdateTimer);
-
         win.removeEventListener("keydown", this._onKeyDown, true);
 
         // Dispose all modalizers managed by the API
@@ -373,6 +370,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 delete this._modalizers[modalizerId];
             }
         });
+
+        win.clearTimeout(this._restoreModalizerFocusTimer);
+        win.clearTimeout(this._hiddenUpdateTimer);
 
         this._parts = {};
         delete this.activeId;
