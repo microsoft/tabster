@@ -812,12 +812,33 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        if (ctx.isGroupperFirst && ctx.groupper?.isActive(true)) {
-            return;
-        }
-
         const mover = ctx.mover;
         const container = mover.getElement();
+
+        if (ctx.isGroupperFirst) {
+            const groupper = ctx.groupper;
+
+            if (groupper && !groupper.isActive(true)) {
+                // For the cases when we have Mover/Active Groupper/Inactive Groupper, we need to check
+                // the grouppers between the current element and the current mover.
+                for (
+                    let el: HTMLElement | null | undefined =
+                        groupper.getElement()?.parentElement;
+                    el && el !== container;
+                    el = el.parentElement
+                ) {
+                    if (
+                        getTabsterOnElement(tabster, el)?.groupper?.isActive(
+                            true
+                        )
+                    ) {
+                        return;
+                    }
+                }
+            } else {
+                return;
+            }
+        }
 
         if (!container) {
             return;
