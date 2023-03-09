@@ -15,6 +15,13 @@ import {
     createTabster,
     disposeTabster,
     getTabster,
+    getCrossOrigin,
+    getDeloser,
+    getGroupper,
+    getModalizer,
+    getMover,
+    getObservedElement,
+    getOutline,
     getTabsterAttribute,
     makeNoOp,
     mergeTabsterProps,
@@ -97,6 +104,13 @@ export interface BroTestTabsterTestVariables {
     disposeTabster?: typeof disposeTabster;
     createTabster?: typeof createTabster;
     getTabster?: typeof getTabster;
+    getCrossOrigin?: typeof getCrossOrigin;
+    getDeloser?: typeof getDeloser;
+    getGroupper?: typeof getGroupper;
+    getModalizer?: typeof getModalizer;
+    getMover?: typeof getMover;
+    getObservedElement?: typeof getObservedElement;
+    getOutline?: typeof getOutline;
     makeNoOp?: typeof makeNoOp;
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
@@ -111,18 +125,20 @@ export interface BroTestTabsterTestVariables {
     crossOrigin?: Types.CrossOriginAPI;
 }
 
-export function getTestPageURL(parts: TabsterParts): string {
+export function getTestPageURL(parts?: TabsterParts): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
     const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
     const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
-    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}&parts=${Object.keys(
+    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}${
         parts
-    )
-        .filter((part: keyof TabsterParts) => parts[part])
-        .join(",")}&rnd=${++_lastRnd}`;
+            ? `&parts=${Object.keys(parts)
+                  .filter((part: keyof TabsterParts) => parts[part])
+                  .join(",")}`
+            : ""
+    }&rnd=${++_lastRnd}`;
 }
 
-export async function bootstrapTabsterPage(parts: TabsterParts) {
+export async function bootstrapTabsterPage(parts?: TabsterParts) {
     await goToPageWithRetry(getTestPageURL(parts), 4);
     await expect(page.title()).resolves.toMatch("Tabster Test");
     await waitPageReadyAndDecorateConsoleError(page);
