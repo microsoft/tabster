@@ -59,8 +59,12 @@ function _setInformativeStyle(
  * Manages the dummy inputs for the Modalizer.
  */
 class ModalizerDummyManager extends DummyInputManager {
-    constructor(element: WeakHTMLElement, tabster: Types.TabsterCore) {
-        super(tabster, element, DummyInputManagerPriorities.Modalizer);
+    constructor(
+        element: WeakHTMLElement,
+        tabster: Types.TabsterCore,
+        sys: Types.SysProps | undefined
+    ) {
+        super(tabster, element, DummyInputManagerPriorities.Modalizer, sys);
 
         this._setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
             const el = element.get();
@@ -116,6 +120,7 @@ export class Modalizer
         element: HTMLElement,
         onDispose: (modalizer: Modalizer) => void,
         props: Types.ModalizerProps,
+        sys: Types.SysProps | undefined,
         activeElements: WeakRef<HTMLElement>[]
     ) {
         super(tabster, element, props);
@@ -127,7 +132,8 @@ export class Modalizer
         if (!tabster.controlTab) {
             this.dummyManager = new ModalizerDummyManager(
                 this._element,
-                tabster
+                tabster,
+                sys
             );
         }
 
@@ -386,7 +392,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     createModalizer(
         element: HTMLElement,
-        props: Types.ModalizerProps
+        props: Types.ModalizerProps,
+        sys: Types.SysProps | undefined
     ): Types.Modalizer {
         if (__DEV__) {
             validateModalizerProps(props);
@@ -397,6 +404,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             element,
             this._onModalizerDispose,
             props,
+            sys,
             this.activeElements
         );
 

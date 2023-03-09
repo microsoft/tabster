@@ -108,6 +108,7 @@ export function updateTabsterByAttribute(
                 case "focusable":
                 case "outline":
                 case "uncontrolled":
+                case "sys":
                     delete tabsterOnElement[key];
                     break;
             }
@@ -117,6 +118,8 @@ export function updateTabsterByAttribute(
     for (const key of Object.keys(
         newTabsterProps
     ) as (keyof Types.TabsterAttributeProps)[]) {
+        const sys = newTabsterProps.sys;
+
         switch (key) {
             case "deloser":
                 if (tabsterOnElement.deloser) {
@@ -146,7 +149,8 @@ export function updateTabsterByAttribute(
                 } else {
                     tabsterOnElement.root = tabster.root.createRoot(
                         element,
-                        newTabsterProps.root as Types.RootProps
+                        newTabsterProps.root as Types.RootProps,
+                        sys
                     );
                 }
                 tabster.root.onRoot(tabsterOnElement.root);
@@ -162,7 +166,8 @@ export function updateTabsterByAttribute(
                         tabsterOnElement.modalizer =
                             tabster.modalizer.createModalizer(
                                 element,
-                                newTabsterProps.modalizer as Types.ModalizerProps
+                                newTabsterProps.modalizer as Types.ModalizerProps,
+                                sys
                             );
                     } else if (__DEV__) {
                         console.error(
@@ -186,7 +191,8 @@ export function updateTabsterByAttribute(
                         tabsterOnElement.groupper =
                             tabster.groupper.createGroupper(
                                 element,
-                                newTabsterProps.groupper as Types.GroupperProps
+                                newTabsterProps.groupper as Types.GroupperProps,
+                                sys
                             );
                     } else if (__DEV__) {
                         console.error(
@@ -205,7 +211,8 @@ export function updateTabsterByAttribute(
                     if (tabster.mover) {
                         tabsterOnElement.mover = tabster.mover.createMover(
                             element,
-                            newTabsterProps.mover as Types.MoverProps
+                            newTabsterProps.mover as Types.MoverProps,
+                            sys
                         );
                     } else if (__DEV__) {
                         console.error(
@@ -238,6 +245,10 @@ export function updateTabsterByAttribute(
                         "Outline API used before initialization, please call `getOutline()`"
                     );
                 }
+                break;
+
+            case "sys":
+                tabsterOnElement.sys = newTabsterProps.sys;
                 break;
 
             default:

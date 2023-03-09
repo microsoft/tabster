@@ -5,8 +5,8 @@
 
 import * as React from "react";
 import { getTabsterAttribute, Types } from "tabster";
-import * as BroTest from "./utils/BroTest";
 import { WindowWithTabsterInstance } from "../src/Root";
+import * as BroTest from "./utils/BroTest";
 
 describe("Modalizer", () => {
     const getTestHtml = (

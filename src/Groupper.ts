@@ -24,9 +24,16 @@ class GroupperDummyManager extends DummyInputManager {
     constructor(
         element: WeakHTMLElement,
         groupper: Groupper,
-        tabster: Types.TabsterCore
+        tabster: Types.TabsterCore,
+        sys: Types.SysProps | undefined
     ) {
-        super(tabster, element, DummyInputManagerPriorities.Groupper, true);
+        super(
+            tabster,
+            element,
+            DummyInputManagerPriorities.Groupper,
+            sys,
+            true
+        );
 
         this._setHandlers(
             (
@@ -91,7 +98,8 @@ export class Groupper
         tabster: Types.TabsterCore,
         element: HTMLElement,
         onDispose: (groupper: Groupper) => void,
-        props: Types.GroupperProps
+        props: Types.GroupperProps,
+        sys: Types.SysProps | undefined
     ) {
         super(tabster, element, props);
         this.makeTabbable(false);
@@ -102,7 +110,8 @@ export class Groupper
             this.dummyManager = new GroupperDummyManager(
                 this._element,
                 this,
-                tabster
+                tabster,
+                sys
             );
         }
     }
@@ -450,7 +459,11 @@ export class GroupperAPI implements Types.GroupperAPI {
         });
     }
 
-    createGroupper(element: HTMLElement, props: Types.GroupperProps) {
+    createGroupper(
+        element: HTMLElement,
+        props: Types.GroupperProps,
+        sys: Types.SysProps | undefined
+    ) {
         if (__DEV__) {
             validateGroupperProps(props);
         }
@@ -459,7 +472,8 @@ export class GroupperAPI implements Types.GroupperAPI {
             this._tabster,
             element,
             this._onGroupperDispose,
-            props
+            props,
+            sys
         );
 
         this._grouppers[newGroupper.id] = newGroupper;
