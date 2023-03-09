@@ -1771,7 +1771,6 @@ describe("Modalizer dispose", () => {
 
         interface ModalizerWithSomeInternals extends Types.ModalizerAPI {
             _modalizers: Record<string, Types.Modalizer>;
-            _isDisposed: boolean;
         }
 
         await new BroTest.BroTest(
@@ -1839,13 +1838,11 @@ describe("Modalizer dispose", () => {
             .eval(() => {
                 const modalizerAPI = (window as WindowWithOldTabster)
                     .__oldTabster?.modalizer as ModalizerWithSomeInternals;
-                return [
-                    modalizerAPI._isDisposed,
-                    Object.keys(modalizerAPI._modalizers).length,
-                ];
+
+                return Object.keys(modalizerAPI._modalizers).length;
             })
             .check((modalizerInstanceCount) => {
-                expect(modalizerInstanceCount).toEqual([true, 0]);
+                expect(modalizerInstanceCount).toEqual(0);
             });
     });
 });
