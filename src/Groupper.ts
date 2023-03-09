@@ -414,6 +414,7 @@ function validateGroupperProps(props: Types.GroupperProps): void {
 export class GroupperAPI implements Types.GroupperAPI {
     private _tabster: Types.TabsterCore;
     private _initTimer: number | undefined;
+    private _updateTimer: number | undefined;
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
@@ -443,7 +444,12 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (this._initTimer) {
             win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
+            delete this._initTimer;
+        }
+
+        if (this._updateTimer) {
+            win.clearTimeout(this._updateTimer);
+            delete this._updateTimer;
         }
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
@@ -478,6 +484,27 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._grouppers[newGroupper.id] = newGroupper;
 
+        const focusedElement = this._tabster.focusedElement.getFocusedElement();
+
+        // Newly created groupper contains currently focused element, update the state on the next tick (to
+        // make sure all grouppers are processed).
+        if (
+            focusedElement &&
+            element.contains(focusedElement) &&
+            !this._updateTimer
+        ) {
+            this._updateTimer = this._win().setTimeout(() => {
+                delete this._updateTimer;
+                // Making sure the focused element hasn't changed.
+                if (
+                    focusedElement ===
+                    this._tabster.focusedElement.getFocusedElement()
+                ) {
+                    this._updateCurrent(focusedElement, true, true);
+                }
+            }, 0);
+        }
+
         return newGroupper;
     }
 
@@ -506,6 +533,11 @@ export class GroupperAPI implements Types.GroupperAPI {
         includeTarget?: boolean,
         checkTarget?: boolean
     ): void {
+        if (this._updateTimer) {
+            this._win().clearTimeout(this._updateTimer);
+            delete this._updateTimer;
+        }
+
         const newIds: Record<string, true> = {};
 
         let isTarget = true;
