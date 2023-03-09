@@ -120,6 +120,8 @@ class TabsterCore implements Types.TabsterCore {
 
         startFakeWeakRefsCleanup(getWindow);
 
+        // Gives a tick to the host app to initialize other tabster
+        // APIs before tabster starts observing attributes.
         this._initTimer = win.setTimeout(() => {
             delete this._initTimer;
             this.internal.resumeObserver(true);
