@@ -1200,7 +1200,15 @@ describe("MoverGroupper", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3Button4");
             })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
             .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1Button2");
             })
@@ -1213,6 +1221,10 @@ describe("MoverGroupper", () => {
                 expect(el?.textContent).toEqual("Button2");
             })
             .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             });
