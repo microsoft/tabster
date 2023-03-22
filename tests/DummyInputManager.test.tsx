@@ -107,7 +107,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(appendElement, moverId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -115,7 +115,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(prependElement, moverId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -295,7 +295,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(appendElement, modalizerOuterId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -303,7 +303,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(prependElement, modalizerOuterId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -389,7 +389,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     )
                     .check(checkDummyInside)
                     .eval(appendElement, containerId)
-                    .wait(1)
+                    .wait(300)
                     .eval(
                         evaluateDummy,
                         Types.TabsterDummyInputAttributeName,
@@ -397,7 +397,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     )
                     .check(checkDummyInside)
                     .eval(prependElement, containerId)
-                    .wait(1)
+                    .wait(300)
                     .eval(
                         evaluateDummy,
                         Types.TabsterDummyInputAttributeName,
@@ -441,7 +441,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(insertElementBefore, moverId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -449,7 +449,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(insertElementAfter, moverId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -489,7 +489,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(appendElement, groupperId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -497,7 +497,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyInside)
                 .eval(prependElement, groupperId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -537,7 +537,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(insertElementBefore, modalizerId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -545,7 +545,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(insertElementAfter, modalizerId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
