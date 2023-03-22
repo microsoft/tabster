@@ -994,52 +994,48 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     private _domChangedTimer?: number;
     private _dummyMap: WeakMap<HTMLElement, () => void> = new WeakMap();
     private _dummies: WeakRef<HTMLElement>[] = [];
-    domChanged?(parent: HTMLElement | null): void;
+    domChanged?(parent: HTMLElement): void;
 
     constructor(win: GetWindow) {
         this._win = win;
     }
 
-    add(dummy: HTMLElement | undefined, callback: () => void): void {
-        if (dummy) {
-            const dummyMap = this._dummyMap;
-            const cb = dummyMap.get(dummy);
+    add(dummy: HTMLElement, callback: () => void): void {
+        const dummyMap = this._dummyMap;
+        const cb = dummyMap.get(dummy);
 
-            if (!cb) {
-                this._dummies.push(new WeakRef(dummy));
-                this.domChanged = this._domChanged;
-            }
-
-            dummyMap.set(dummy, callback);
+        if (!cb) {
+            this._dummies.push(new WeakRef(dummy));
+            this.domChanged = this._domChanged;
         }
+
+        dummyMap.set(dummy, callback);
     }
 
-    remove(dummy: HTMLElement | undefined): void {
-        if (dummy) {
-            const dummyMap = this._dummyMap;
-            const cb = dummyMap.get(dummy);
+    remove(dummy: HTMLElement): void {
+        const dummyMap = this._dummyMap;
+        const cb = dummyMap.get(dummy);
 
-            if (cb) {
-                dummyMap.delete(dummy);
+        if (cb) {
+            dummyMap.delete(dummy);
 
-                const dummies = this._dummies;
+            const dummies = this._dummies;
 
-                for (let i = dummies.length; i--; ) {
-                    const el = dummies[i].deref();
+            for (let i = dummies.length; i--; ) {
+                const el = dummies[i].deref();
 
-                    if (el) {
-                        if (el === dummy) {
-                            dummies.splice(i, 1);
-                            break;
-                        }
-                    } else {
+                if (el) {
+                    if (el === dummy) {
                         dummies.splice(i, 1);
+                        break;
                     }
+                } else {
+                    dummies.splice(i, 1);
                 }
+            }
 
-                if (dummies.length === 0) {
-                    delete this.domChanged;
-                }
+            if (dummies.length === 0) {
+                delete this.domChanged;
             }
         }
     }
@@ -1064,30 +1060,31 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         delete this._win;
     }
 
-    private _domChanged = (parent: HTMLElement | null): void => {
-        if (parent && !this._domChangedMap.has(parent)) {
-            this._domChangedMap.set(parent, true);
-
-            if (!this._domChangedTimer) {
-                this._domChangedTimer = this._win?.().setTimeout(() => {
-                    delete this._domChangedTimer;
-
-                    for (const dummyRef of this._dummies) {
-                        const dummy = dummyRef.deref();
-                        const dummyParent = dummy?.parentElement;
-
-                        if (
-                            dummyParent &&
-                            this._domChangedMap.has(dummyParent)
-                        ) {
-                            this._dummyMap.get(dummy)?.();
-                        }
-                    }
-
-                    this._domChangedMap = new WeakMap();
-                }, 100);
-            }
+    private _domChanged = (parent: HTMLElement): void => {
+        if (this._domChangedMap.has(parent)) {
+            return;
         }
+
+        this._domChangedMap.set(parent, true);
+
+        if (this._domChangedTimer) {
+            return;
+        }
+
+        this._domChangedTimer = this._win?.().setTimeout(() => {
+            delete this._domChangedTimer;
+
+            for (const dummyRef of this._dummies) {
+                const dummy = dummyRef.deref();
+                const dummyParent = dummy?.parentElement;
+
+                if (dummyParent && this._domChangedMap.has(dummyParent)) {
+                    this._dummyMap.get(dummy)?.();
+                }
+            }
+
+            this._domChangedMap = new WeakMap();
+        }, 100);
     };
 
     updateOffsets(callback: () => void): void {
@@ -1199,10 +1196,9 @@ class DummyInputManagerCore {
         // We will be checking dummy input parents to see if their child list have changed.
         // So, it is enough to have just one of the inputs observed, because
         // both dummy inputs always have the same parent.
-        tabster._dummyObserver.add(
-            this._firstDummy.input,
-            this._addDummyInputs
-        );
+        const dummyElement = this._firstDummy.input;
+        dummyElement &&
+            tabster._dummyObserver.add(dummyElement, this._addDummyInputs);
 
         this._firstDummy.onFocusIn = this._onFocusIn;
         this._firstDummy.onFocusOut = this._onFocusOut;
@@ -1246,7 +1242,8 @@ class DummyInputManagerCore {
                 delete this._addTimer;
             }
 
-            this._tabster._dummyObserver.remove(this._firstDummy?.input);
+            const dummyElement = this._firstDummy?.input;
+            dummyElement && this._tabster._dummyObserver.remove(dummyElement);
 
             this._firstDummy?.dispose();
             this._lastDummy?.dispose();

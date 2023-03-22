@@ -1014,10 +1014,10 @@ export interface InternalAPI {
 }
 
 export interface DummyInputObserver {
-    add(dummy: HTMLElement | undefined, callback: () => void): void;
-    remove(dummy: HTMLElement | undefined): void;
+    add(dummy: HTMLElement, callback: () => void): void;
+    remove(dummy: HTMLElement): void;
     dispose(): void;
-    domChanged?(parent: HTMLElement | null): void;
+    domChanged?(parent: HTMLElement): void;
     updateOffsets(callback: () => void): void;
 }
 

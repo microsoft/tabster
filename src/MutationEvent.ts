@@ -46,14 +46,16 @@ export function observeMutations(
             } else {
                 for (let i = 0; i < removed.length; i++) {
                     const el = removed[i];
+                    const parent = el.parentElement;
                     updateTabsterElements(el, true);
-                    tabster._dummyObserver.domChanged?.(el.parentElement);
+                    parent && tabster._dummyObserver.domChanged?.(parent);
                 }
 
                 for (let i = 0; i < added.length; i++) {
                     const el = added[i];
+                    const parent = el.parentElement;
                     updateTabsterElements(el);
-                    tabster._dummyObserver.domChanged?.(el.parentElement);
+                    parent && tabster._dummyObserver.domChanged?.(parent);
                 }
             }
         }
