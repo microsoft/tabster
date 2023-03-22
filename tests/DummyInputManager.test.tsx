@@ -411,7 +411,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             }
         );
 
-        it.only("should reinsert the dummy input if it's removed for some reason", async () => {
+        it("should reinsert the dummy input if it's removed for some reason", async () => {
             const attr = getTabsterAttribute({
                 groupper: {},
             });
