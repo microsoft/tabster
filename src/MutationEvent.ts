@@ -45,14 +45,12 @@ export function observeMutations(
                 }
             } else {
                 for (let i = 0; i < removed.length; i++) {
-                    const el = removed[i];
-                    updateTabsterElements(el, true);
+                    updateTabsterElements(removed[i], true);
                     tabster._dummyObserver.domChanged?.(target as HTMLElement);
                 }
 
                 for (let i = 0; i < added.length; i++) {
-                    const el = added[i];
-                    updateTabsterElements(el);
+                    updateTabsterElements(added[i]);
                     tabster._dummyObserver.domChanged?.(target as HTMLElement);
                 }
             }
