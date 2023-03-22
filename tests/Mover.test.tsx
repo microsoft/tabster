@@ -1160,6 +1160,7 @@ describe("Mover with trackState", () => {
                     .getElementById("container")
                     ?.setAttribute("data-tabster", moverAttribute);
             }, getTabsterAttribute({ mover: { trackState: true } }, true))
+            .wait(300)
             .eval(() =>
                 Array.prototype.map.call(
                     document.querySelectorAll(".item"),
