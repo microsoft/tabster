@@ -1078,7 +1078,10 @@ export class DummyInputObserver implements Types.DummyInputObserver {
                 const dummy = dummyRef.deref();
                 const dummyParent = dummy?.parentElement;
 
-                if (dummyParent && this._domChangedMap.has(dummyParent)) {
+                if (
+                    dummy &&
+                    (!dummyParent || this._domChangedMap.has(dummyParent))
+                ) {
                     this._dummyMap.get(dummy)?.();
                 }
             }

@@ -231,11 +231,13 @@ describeIfUncontrolled("DummyInputManager", () => {
 
             const testHtml = (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...attr} id={groupperId}>
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
+                    <div>
+                        <div {...attr} id={groupperId}>
+                            <button>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
                     </div>
                 </div>
             );
@@ -248,7 +250,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(appendElement, groupperId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -256,7 +258,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval(prependElement, groupperId)
-                .wait(1)
+                .wait(300)
                 .eval(
                     evaluateDummy,
                     Types.TabsterDummyInputAttributeName,
@@ -322,14 +324,16 @@ describeIfUncontrolled("DummyInputManager", () => {
                 const Tag = tagName;
                 const testHtml = (
                     <div {...getTabsterAttribute({ root: {} })}>
-                        <Tag {...attr} id={containerId}>
-                            <li>
-                                <button>Button1</button>
-                            </li>
-                            <li>
-                                <button>Button2</button>
-                            </li>
-                        </Tag>
+                        <div>
+                            <Tag {...attr} id={containerId}>
+                                <li>
+                                    <button>Button1</button>
+                                </li>
+                                <li>
+                                    <button>Button2</button>
+                                </li>
+                            </Tag>
+                        </div>
                     </div>
                 );
                 await new BroTest.BroTest(testHtml)
@@ -340,7 +344,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     )
                     .check(checkDummyOutside)
                     .eval(appendElement, containerId)
-                    .wait(1)
+                    .wait(300)
                     .eval(
                         evaluateDummy,
                         Types.TabsterDummyInputAttributeName,
@@ -348,7 +352,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     )
                     .check(checkDummyOutside)
                     .eval(prependElement, containerId)
-                    .wait(1)
+                    .wait(300)
                     .eval(
                         evaluateDummy,
                         Types.TabsterDummyInputAttributeName,
@@ -406,6 +410,85 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .check(checkDummyInside);
             }
         );
+
+        it.only("should reinsert the dummy input if it's removed for some reason", async () => {
+            const attr = getTabsterAttribute({
+                groupper: {},
+            });
+            const groupperId = "groupper";
+
+            const testHtml = (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <div {...attr} id={groupperId}>
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            await new BroTest.BroTest(testHtml)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyOutside)
+                .eval((elementId) => {
+                    const current = document.getElementById(
+                        elementId
+                    ) as HTMLElement;
+                    const parent = current.parentElement as HTMLElement;
+                    const firstDummy =
+                        current.previousElementSibling as HTMLElement;
+                    parent.removeChild(firstDummy);
+                }, groupperId)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check((res: ReturnType<typeof evaluateDummy>) => {
+                    expect(res.first).toBe(false);
+                    expect(res.last).toBe(false);
+                    expect(res.prev).toBe(false);
+                    expect(res.next).toBe(true);
+                })
+                .wait(300)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyOutside)
+                .eval((elementId) => {
+                    const current = document.getElementById(
+                        elementId
+                    ) as HTMLElement;
+                    const parent = current.parentElement as HTMLElement;
+                    const lastDummy = current.nextElementSibling as HTMLElement;
+                    parent.removeChild(lastDummy);
+                }, groupperId)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check((res: ReturnType<typeof evaluateDummy>) => {
+                    expect(res.first).toBe(false);
+                    expect(res.last).toBe(false);
+                    expect(res.prev).toBe(true);
+                    expect(res.next).toBe(false);
+                })
+                .wait(300)
+                .eval(
+                    evaluateDummy,
+                    Types.TabsterDummyInputAttributeName,
+                    groupperId
+                )
+                .check(checkDummyOutside);
+        });
 
         it("should use enforced dummy input position in Mover", async () => {
             const moverId = "mover";
