@@ -46,10 +46,12 @@ export function observeMutations(
             } else {
                 for (let i = 0; i < removed.length; i++) {
                     updateTabsterElements(removed[i], true);
+                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
                 }
 
                 for (let i = 0; i < added.length; i++) {
                     updateTabsterElements(added[i]);
+                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
                 }
             }
         }

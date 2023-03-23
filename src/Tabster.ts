@@ -26,6 +26,7 @@ import {
     disposeInstanceContext,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
+    DummyInputObserver,
 } from "./Utils";
 
 export { Types };
@@ -73,6 +74,7 @@ class TabsterCore implements Types.TabsterCore {
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     internal: Types.InternalAPI;
+    _dummyObserver: Types.DummyInputObserver;
 
     // Extended APIs
     groupper?: Types.GroupperAPI;
@@ -96,6 +98,8 @@ class TabsterCore implements Types.TabsterCore {
         this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
+
+        this._dummyObserver = new DummyInputObserver(getWindow);
 
         this.internal = {
             stopObserver: (): void => {
@@ -177,6 +181,8 @@ class TabsterCore implements Types.TabsterCore {
         this.focusable.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
+
+        this._dummyObserver.dispose();
 
         stopFakeWeakRefsCleanupAndClearStorage(this.getWindow);
         clearElementCache(this.getWindow);

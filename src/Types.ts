@@ -1013,6 +1013,14 @@ export interface InternalAPI {
     resumeObserver(syncState: boolean): void;
 }
 
+export interface DummyInputObserver {
+    add(dummy: HTMLElement, callback: () => void): void;
+    remove(dummy: HTMLElement): void;
+    dispose(): void;
+    domChanged?(parent: HTMLElement): void;
+    updateOffsets(callback: () => void): void;
+}
+
 interface TabsterCoreInternal {
     /** @internal */
     groupper?: GroupperAPI;
@@ -1030,6 +1038,9 @@ interface TabsterCoreInternal {
     crossOrigin?: CrossOriginAPI;
     /** @internal */
     internal: InternalAPI;
+
+    /** @internal */
+    _dummyObserver: DummyInputObserver;
 
     // The version of the tabster package this instance is on
     /** @internal */

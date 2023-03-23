@@ -986,12 +986,99 @@ function setDummyInputDebugValue(
     );
 }
 
+export class DummyInputObserver implements Types.DummyInputObserver {
+    private _win?: GetWindow;
+    private _offsetsQueue: (() => void)[] = [];
+    private _offsetsTimer?: number;
+    private _changedParents: WeakSet<HTMLElement> = new WeakSet();
+    private _updateDummyInputsTimer?: number;
+    private _dummies: Map<HTMLElement, () => void> = new Map();
+    domChanged?(parent: HTMLElement): void;
+
+    constructor(win: GetWindow) {
+        this._win = win;
+    }
+
+    add(dummy: HTMLElement, callback: () => void): void {
+        this._dummies.set(dummy, callback);
+        this.domChanged = this._domChanged;
+    }
+
+    remove(dummy: HTMLElement): void {
+        const dummyInputElements = this._dummies;
+        dummyInputElements.delete(dummy);
+
+        if (dummyInputElements.size === 0) {
+            delete this.domChanged;
+        }
+    }
+
+    dispose(): void {
+        const win = this._win?.();
+
+        if (this._offsetsTimer) {
+            win?.clearTimeout(this._offsetsTimer);
+            delete this._offsetsTimer;
+        }
+
+        if (this._updateDummyInputsTimer) {
+            win?.clearTimeout(this._updateDummyInputsTimer);
+            delete this._updateDummyInputsTimer;
+        }
+
+        this._changedParents = new WeakSet();
+        this._dummies.clear();
+
+        delete this._win;
+    }
+
+    private _domChanged = (parent: HTMLElement): void => {
+        if (this._changedParents.has(parent)) {
+            return;
+        }
+
+        this._changedParents.add(parent);
+
+        if (this._updateDummyInputsTimer) {
+            return;
+        }
+
+        this._updateDummyInputsTimer = this._win?.().setTimeout(() => {
+            delete this._updateDummyInputsTimer;
+
+            for (const [dummy, callback] of this._dummies) {
+                const dummyParent = dummy.parentElement;
+
+                if (!dummyParent || this._changedParents.has(dummyParent)) {
+                    callback();
+                }
+            }
+
+            this._changedParents = new WeakSet();
+        }, 100);
+    };
+
+    updateOffsets(callback: () => void): void {
+        this._offsetsQueue.push(callback);
+
+        if (this._offsetsTimer) {
+            return;
+        }
+
+        this._offsetsTimer = this._win?.().setTimeout(() => {
+            delete this._offsetsTimer;
+
+            this._offsetsQueue.forEach((callback) => callback());
+            this._offsetsQueue = [];
+        }, 100);
+    }
+}
+
 /**
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
 class DummyInputManagerCore {
     private _tabster: Types.TabsterCore;
-    private _unobserve: (() => void) | undefined;
     private _addTimer: number | undefined;
     private _getWindow: Types.GetWindow;
     private _wrappers: DummyInputWrapper[] = [];
@@ -1079,6 +1166,13 @@ class DummyInputManagerCore {
             element
         );
 
+        // We will be checking dummy input parents to see if their child list have changed.
+        // So, it is enough to have just one of the inputs observed, because
+        // both dummy inputs always have the same parent.
+        const dummyElement = this._firstDummy.input;
+        dummyElement &&
+            tabster._dummyObserver.add(dummyElement, this._addDummyInputs);
+
         this._firstDummy.onFocusIn = this._onFocusIn;
         this._firstDummy.onFocusOut = this._onFocusOut;
         this._lastDummy.onFocusIn = this._onFocusIn;
@@ -1086,17 +1180,6 @@ class DummyInputManagerCore {
 
         this._element = element;
         this._addDummyInputs();
-
-        // older versions of testing frameworks like JSDOM don't support MutationObserver
-        // https://github.com/jsdom/jsdom/issues/639
-        // use this way of getting NODE_ENV because tsdx does not support a test environment
-        // https://github.com/jaredpalmer/tsdx/issues/167
-        if (
-            typeof process === "undefined" ||
-            process.env["NODE_ENV"] !== "test"
-        ) {
-            this._observeMutations();
-        }
     }
 
     dispose(manager: DummyInputManager, force?: boolean): void {
@@ -1114,10 +1197,6 @@ class DummyInputManagerCore {
         if (wrappers.length === 0) {
             delete (this._element?.get() as HTMLElementWithDummyInputs)
                 .__tabsterDummy;
-            if (this._unobserve) {
-                this._unobserve();
-                delete this._unobserve;
-            }
 
             for (const el of this._transformElements) {
                 el.removeEventListener("scroll", this._addTransformOffsets);
@@ -1135,6 +1214,9 @@ class DummyInputManagerCore {
                 win.clearTimeout(this._addTimer);
                 delete this._addTimer;
             }
+
+            const dummyElement = this._firstDummy?.input;
+            dummyElement && this._tabster._dummyObserver.remove(dummyElement);
 
             this._firstDummy?.dispose();
             this._lastDummy?.dispose();
@@ -1300,7 +1382,7 @@ class DummyInputManagerCore {
      * Adds dummy inputs as the first and last child of the given element
      * Called each time the children under the element is mutated
      */
-    private _addDummyInputs() {
+    private _addDummyInputs = () => {
         if (this._addTimer) {
             return;
         }
@@ -1351,36 +1433,7 @@ class DummyInputManagerCore {
 
             this._addTransformOffsets();
         }, 0);
-    }
-
-    /**
-     * Creates a mutation observer to ensure that on DOM changes, the dummy inputs
-     * stay as the first and last child elements
-     */
-    private _observeMutations(): void {
-        if (this._unobserve) {
-            return;
-        }
-
-        const observer = new MutationObserver(() => {
-            if (this._unobserve) {
-                this._addDummyInputs();
-            }
-        });
-
-        const element = this._element?.get();
-        const actualElement = this._isOutside
-            ? element?.parentElement
-            : element;
-
-        if (actualElement) {
-            observer.observe(actualElement, { childList: true });
-
-            this._unobserve = () => {
-                observer.disconnect();
-            };
-        }
-    }
+    };
 
     private _addTransformOffsets = (): void => {
         const win = this._getWindow();
@@ -1392,11 +1445,13 @@ class DummyInputManagerCore {
         // Making sure we're not updating the dummy inputs while scrolling to avoid excessive reflows.
         this._scrollTimer = win.setTimeout(() => {
             delete this._scrollTimer;
-            this._reallyAddTransformOffsets();
+            this._tabster._dummyObserver.updateOffsets(
+                this._reallyAddTransformOffsets
+            );
         }, 100);
     };
 
-    private _reallyAddTransformOffsets(): void {
+    private _reallyAddTransformOffsets = (): void => {
         const from = this._firstDummy?.input || this._lastDummy?.input;
         const transformElements = this._transformElements;
         const newTransformElements: HTMLElement[] = [];
@@ -1443,7 +1498,7 @@ class DummyInputManagerCore {
 
         this._firstDummy?.setTopLeft(scrollTop, scrollLeft);
         this._lastDummy?.setTopLeft(scrollTop, scrollLeft);
-    }
+    };
 }
 
 export function getLastChild(container: HTMLElement): HTMLElement | undefined {
