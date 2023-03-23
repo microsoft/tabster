@@ -1006,14 +1006,10 @@ export class DummyInputObserver implements Types.DummyInputObserver {
 
     remove(dummy: HTMLElement): void {
         const dummyInputElements = this._dummies;
-        const cb = dummyInputElements.get(dummy);
+        dummyInputElements.delete(dummy);
 
-        if (cb) {
-            dummyInputElements.delete(dummy);
-
-            if (dummyInputElements.size === 0) {
-                delete this.domChanged;
-            }
+        if (dummyInputElements.size === 0) {
+            delete this.domChanged;
         }
     }
 
