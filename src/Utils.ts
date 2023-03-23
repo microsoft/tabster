@@ -992,8 +992,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     private _offsetsTimer?: number;
     private _changedParents: WeakSet<HTMLElement> = new WeakSet();
     private _updateDummyInputsTimer?: number;
-    private _dummyMap: WeakMap<HTMLElement, () => void> = new WeakMap();
-    private _dummies: WeakRef<HTMLElement>[] = [];
+    private _dummies: Map<HTMLElement, () => void> = new Map();
     domChanged?(parent: HTMLElement): void;
 
     constructor(win: GetWindow) {
@@ -1001,40 +1000,18 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     }
 
     add(dummy: HTMLElement, callback: () => void): void {
-        const dummyMap = this._dummyMap;
-        const cb = dummyMap.get(dummy);
-
-        if (!cb) {
-            this._dummies.push(new WeakRef(dummy));
-            this.domChanged = this._domChanged;
-        }
-
-        dummyMap.set(dummy, callback);
+        this._dummies.set(dummy, callback);
+        this.domChanged = this._domChanged;
     }
 
     remove(dummy: HTMLElement): void {
-        const dummyMap = this._dummyMap;
-        const cb = dummyMap.get(dummy);
+        const dummyInputElements = this._dummies;
+        const cb = dummyInputElements.get(dummy);
 
         if (cb) {
-            dummyMap.delete(dummy);
+            dummyInputElements.delete(dummy);
 
-            const dummies = this._dummies;
-
-            for (let i = dummies.length; i--; ) {
-                const el = dummies[i].deref();
-
-                if (el) {
-                    if (el === dummy) {
-                        dummies.splice(i, 1);
-                        break;
-                    }
-                } else {
-                    dummies.splice(i, 1);
-                }
-            }
-
-            if (dummies.length === 0) {
+            if (dummyInputElements.size === 0) {
                 delete this.domChanged;
             }
         }
@@ -1054,8 +1031,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         }
 
         this._changedParents = new WeakSet();
-        this._dummyMap = new WeakMap();
-        this._dummies = [];
+        this._dummies.clear();
 
         delete this._win;
     }
@@ -1074,15 +1050,11 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         this._updateDummyInputsTimer = this._win?.().setTimeout(() => {
             delete this._updateDummyInputsTimer;
 
-            for (const dummyRef of this._dummies) {
-                const dummy = dummyRef.deref();
-                const dummyParent = dummy?.parentElement;
+            for (const [dummy, callback] of this._dummies) {
+                const dummyParent = dummy.parentElement;
 
-                if (
-                    dummy &&
-                    (!dummyParent || this._changedParents.has(dummyParent))
-                ) {
-                    this._dummyMap.get(dummy)?.();
+                if (!dummyParent || this._changedParents.has(dummyParent)) {
+                    callback();
                 }
             }
 
