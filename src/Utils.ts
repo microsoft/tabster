@@ -990,8 +990,8 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     private _win?: GetWindow;
     private _offsetsQueue: (() => void)[] = [];
     private _offsetsTimer?: number;
-    private _domChangedMap: WeakMap<HTMLElement, true> = new WeakMap();
-    private _domChangedTimer?: number;
+    private _changedParents: WeakSet<HTMLElement> = new WeakSet();
+    private _updateDummyInputsTimer?: number;
     private _dummyMap: WeakMap<HTMLElement, () => void> = new WeakMap();
     private _dummies: WeakRef<HTMLElement>[] = [];
     domChanged?(parent: HTMLElement): void;
@@ -1048,12 +1048,12 @@ export class DummyInputObserver implements Types.DummyInputObserver {
             delete this._offsetsTimer;
         }
 
-        if (this._domChangedTimer) {
-            win?.clearTimeout(this._domChangedTimer);
-            delete this._domChangedTimer;
+        if (this._updateDummyInputsTimer) {
+            win?.clearTimeout(this._updateDummyInputsTimer);
+            delete this._updateDummyInputsTimer;
         }
 
-        this._domChangedMap = new WeakMap();
+        this._changedParents = new WeakSet();
         this._dummyMap = new WeakMap();
         this._dummies = [];
 
@@ -1061,18 +1061,18 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     }
 
     private _domChanged = (parent: HTMLElement): void => {
-        if (this._domChangedMap.has(parent)) {
+        if (this._changedParents.has(parent)) {
             return;
         }
 
-        this._domChangedMap.set(parent, true);
+        this._changedParents.add(parent);
 
-        if (this._domChangedTimer) {
+        if (this._updateDummyInputsTimer) {
             return;
         }
 
-        this._domChangedTimer = this._win?.().setTimeout(() => {
-            delete this._domChangedTimer;
+        this._updateDummyInputsTimer = this._win?.().setTimeout(() => {
+            delete this._updateDummyInputsTimer;
 
             for (const dummyRef of this._dummies) {
                 const dummy = dummyRef.deref();
@@ -1080,13 +1080,13 @@ export class DummyInputObserver implements Types.DummyInputObserver {
 
                 if (
                     dummy &&
-                    (!dummyParent || this._domChangedMap.has(dummyParent))
+                    (!dummyParent || this._changedParents.has(dummyParent))
                 ) {
                     this._dummyMap.get(dummy)?.();
                 }
             }
 
-            this._domChangedMap = new WeakMap();
+            this._changedParents = new WeakSet();
         }, 100);
     };
 
