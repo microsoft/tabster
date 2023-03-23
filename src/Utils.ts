@@ -1093,14 +1093,16 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     updateOffsets(callback: () => void): void {
         this._offsetsQueue.push(callback);
 
-        if (!this._offsetsTimer) {
-            this._offsetsTimer = this._win?.().setTimeout(() => {
-                delete this._offsetsTimer;
-
-                this._offsetsQueue.forEach((callback) => callback());
-                this._offsetsQueue = [];
-            }, 100);
+        if (this._offsetsTimer) {
+            return;
         }
+
+        this._offsetsTimer = this._win?.().setTimeout(() => {
+            delete this._offsetsTimer;
+
+            this._offsetsQueue.forEach((callback) => callback());
+            this._offsetsQueue = [];
+        }, 100);
     }
 }
 
