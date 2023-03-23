@@ -1444,6 +1444,83 @@ describe("Mover with visibilityAware", () => {
                 expect(el?.textContent).toEqual("Button4");
             });
     });
+
+    it("should tab to first/last visible element when tabbing from outside and Movers are all around", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button1</button>
+                    </div>
+                    <div>
+                        <div
+                            id="mover"
+                            {...getTabsterAttribute({
+                                mover: {
+                                    visibilityAware: Types.Visibilities.Visible,
+                                },
+                            })}
+                            style={{ height: 50, overflow: "auto" }}
+                        >
+                            <button style={{ height: 25, display: "block" }}>
+                                Button2
+                            </button>
+                            <button style={{ height: 25, display: "block" }}>
+                                Button3
+                            </button>
+                            <button style={{ height: 25, display: "block" }}>
+                                Button4
+                            </button>
+                            <button style={{ height: 25, display: "block" }}>
+                                Button5
+                            </button>
+                            <button style={{ height: 25, display: "block" }}>
+                                Button6
+                            </button>
+                        </div>
+                    </div>
+
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button7</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .scrollTo("#mover", 0, 25 * 5)
+            .wait(300)
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            });
+    });
 });
 
 describe("Mover with grid", () => {

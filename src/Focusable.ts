@@ -420,10 +420,9 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (
                 moverElement &&
                 fromMoverElement &&
+                fromMoverElement.contains(moverElement) &&
                 container.contains(fromMoverElement) &&
-                (!groupperElement ||
-                    !mover ||
-                    fromMoverElement.contains(groupperElement))
+                (!groupperElement || fromMoverElement.contains(groupperElement))
             ) {
                 mover = fromMover;
                 moverElement = fromMoverElement;
