@@ -1094,6 +1094,106 @@ describe("Mover with inputs inside", () => {
     });
 });
 
+describe("Mover with trackState", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("trigger events as we scroll", async () => {
+        const itemStyles = {
+            height: 20,
+        };
+
+        const containerStyles = {
+            height: 50,
+            overflowY: "scroll" as const,
+        };
+
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div id="container" style={containerStyles}>
+                        <div id="one" tabIndex={0} style={itemStyles}>
+                            Item 1
+                        </div>
+                        <div id="two" tabIndex={0} style={itemStyles}>
+                            Item 2
+                        </div>
+                        <div id="three" tabIndex={0} style={itemStyles}>
+                            Item 3
+                        </div>
+                        <div id="four" tabIndex={0} style={itemStyles}>
+                            Item 4
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .eval((moverAttribute: string) => {
+                document.addEventListener(
+                    "tabster:mover",
+                    (e: Types.MoverEvent) => {
+                        let className = "item";
+
+                        switch (e.details.visibility) {
+                            case 0:
+                                className += " invisible";
+                                break;
+                            case 1:
+                                className += " partially-visible";
+                                break;
+                            case 2:
+                                className += " visible";
+                                break;
+                        }
+
+                        if (e.details.isCurrent) {
+                            className += " active";
+                        }
+
+                        (e.target as HTMLElement).className = className;
+                    }
+                );
+
+                // Adding mover after the event subscription.
+                document
+                    .getElementById("container")
+                    ?.setAttribute("data-tabster", moverAttribute);
+            }, getTabsterAttribute({ mover: { trackState: true } }, true))
+            .wait(300)
+            .eval(() =>
+                Array.prototype.map.call(
+                    document.querySelectorAll(".item"),
+                    (el: HTMLElement) => el.className
+                )
+            )
+            .check((classNames) => {
+                expect(classNames).toEqual([
+                    "item visible",
+                    "item visible",
+                    "item partially-visible",
+                    "item invisible",
+                ]);
+            })
+            .scrollTo("#container", 0, 50)
+            .wait(300)
+            .eval(() =>
+                Array.prototype.map.call(
+                    document.querySelectorAll(".item"),
+                    (el: HTMLElement) => el.className
+                )
+            )
+            .check((classNames) => {
+                expect(classNames).toEqual([
+                    "item invisible",
+                    "item partially-visible",
+                    "item visible",
+                    "item visible",
+                ]);
+            });
+    });
+});
+
 describe("Mover with visibilityAware", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
@@ -1124,27 +1224,29 @@ describe("Mover with visibilityAware", () => {
 
         await new BroTest.BroTest(
             (
-                <div
-                    id="container"
-                    {...getTabsterAttribute({
-                        mover: {
-                            visibilityAware:
-                                Types.Visibilities.PartiallyVisible,
-                        },
-                    })}
-                    style={containerStyles}
-                >
-                    <div id="one" style={itemStyles}>
-                        Item 1
-                    </div>
-                    <div id="two" style={itemStyles}>
-                        Item 2
-                    </div>
-                    <div id="three" style={itemStyles}>
-                        Item 3
-                    </div>
-                    <div id="four" style={itemStyles}>
-                        Item 4
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="container"
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                            },
+                        })}
+                        style={containerStyles}
+                    >
+                        <div id="one" tabIndex={0} style={itemStyles}>
+                            Item 1
+                        </div>
+                        <div id="two" tabIndex={0} style={itemStyles}>
+                            Item 2
+                        </div>
+                        <div id="three" tabIndex={0} style={itemStyles}>
+                            Item 3
+                        </div>
+                        <div id="four" tabIndex={0} style={itemStyles}>
+                            Item 4
+                        </div>
                     </div>
                 </div>
             )
@@ -1186,27 +1288,29 @@ describe("Mover with visibilityAware", () => {
 
         await new BroTest.BroTest(
             (
-                <div
-                    id="container"
-                    {...getTabsterAttribute({
-                        mover: {
-                            visibilityAware:
-                                Types.Visibilities.PartiallyVisible,
-                        },
-                    })}
-                    style={containerStyles}
-                >
-                    <div id="one" style={itemStyles}>
-                        Item 1
-                    </div>
-                    <div id="two" style={itemStyles}>
-                        Item 2
-                    </div>
-                    <div id="three" style={itemStyles}>
-                        Item 3
-                    </div>
-                    <div id="four" style={itemStyles}>
-                        Item 4
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="container"
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                            },
+                        })}
+                        style={containerStyles}
+                    >
+                        <div id="one" tabIndex={0} style={itemStyles}>
+                            Item 1
+                        </div>
+                        <div id="two" tabIndex={0} style={itemStyles}>
+                            Item 2
+                        </div>
+                        <div id="three" tabIndex={0} style={itemStyles}>
+                            Item 3
+                        </div>
+                        <div id="four" tabIndex={0} style={itemStyles}>
+                            Item 4
+                        </div>
                     </div>
                 </div>
             )
@@ -1246,28 +1350,30 @@ describe("Mover with visibilityAware", () => {
 
         await new BroTest.BroTest(
             (
-                <div
-                    id="container"
-                    {...getTabsterAttribute({
-                        mover: {
-                            visibilityAware:
-                                Types.Visibilities.PartiallyVisible,
-                            visibilityTolerance: 0.1,
-                        },
-                    })}
-                    style={containerStyles}
-                >
-                    <div id="one" style={itemStyles}>
-                        Item 1
-                    </div>
-                    <div id="two" style={itemStyles}>
-                        Item 2
-                    </div>
-                    <div id="three" style={itemStyles}>
-                        Item 3
-                    </div>
-                    <div id="four" style={itemStyles}>
-                        Item 4
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="container"
+                        {...getTabsterAttribute({
+                            mover: {
+                                visibilityAware:
+                                    Types.Visibilities.PartiallyVisible,
+                                visibilityTolerance: 0.1,
+                            },
+                        })}
+                        style={containerStyles}
+                    >
+                        <div id="one" tabIndex={0} style={itemStyles}>
+                            Item 1
+                        </div>
+                        <div id="two" tabIndex={0} style={itemStyles}>
+                            Item 2
+                        </div>
+                        <div id="three" tabIndex={0} style={itemStyles}>
+                            Item 3
+                        </div>
+                        <div id="four" tabIndex={0} style={itemStyles}>
+                            Item 4
+                        </div>
                     </div>
                 </div>
             )

@@ -363,7 +363,7 @@ export class Mover
             const el = entry.target as HTMLElement;
             const id = getElementUId(this._win, el);
 
-            let newVisibility: Types.Visibility | undefined;
+            let newVisibility: Types.Visibility;
             let fullyVisible = this._fullyVisible;
 
             if (entry.intersectionRatio >= 0.25) {
@@ -375,6 +375,8 @@ export class Mover
                 if (newVisibility === Types.Visibilities.Visible) {
                     fullyVisible = id;
                 }
+            } else {
+                newVisibility = Types.Visibilities.Invisible;
             }
 
             if (this._visible[id] !== newVisibility) {
