@@ -1382,4 +1382,75 @@ describe("MoverGroupper", () => {
                 expect(el?.textContent).toEqual("Button1Button2Button3Button4");
             });
     });
+
+    it("should properly handle groupper and mover on the same element", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                                mover: {},
+                            })}
+                        >
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </div>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2Button3");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2Button3");
+            });
+    });
 });

@@ -486,9 +486,14 @@ export class RootAPI implements Types.RootAPI {
                 }
             }
 
-            if (!mover && curMover && (!modalizer || curModalizer)) {
+            if (
+                !mover &&
+                curMover &&
+                (!modalizer || curModalizer) &&
+                (!curGroupper || curElement !== element)
+            ) {
                 mover = curMover;
-                isGroupperFirst = !!groupper;
+                isGroupperFirst = !!groupper && groupper !== curGroupper;
             }
 
             if (tabsterOnElement.root) {
