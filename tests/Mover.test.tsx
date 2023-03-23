@@ -1099,7 +1099,7 @@ describe("Mover with trackState", () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
     });
 
-    it.only("trigger events as we scroll", async () => {
+    it("trigger events as we scroll", async () => {
         const itemStyles = {
             height: 20,
         };
