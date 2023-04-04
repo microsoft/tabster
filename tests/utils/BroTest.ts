@@ -341,8 +341,26 @@ class BroTestItemReportConsoleErrors extends BroTestItem {
     }
 }
 
+class BroTestItemRepeat extends BroTestItem {
+    private _callback: () => void;
+
+    constructor(frameStack: BroTestFrameStackItem[], callback: () => void) {
+        super(frameStack);
+        this._callback = callback;
+    }
+
+    async run() {
+        this._callback();
+    }
+}
+
 export class BroTest implements PromiseLike<undefined> {
     private _chain: BroTestItem[] = [];
+    private _repeatChainsBuilding: BroTestItem[][] = [];
+    private _repeatChainsRunning: BroTestItem[][] = [];
+    private _repeatStartTimes: number[] = [];
+    private _prevChains: BroTestItem[][] = [];
+    private _repeats: number[] = [];
     private _nextTimer: number | undefined;
     private _promise: Promise<undefined>;
     private _resolve:
@@ -355,7 +373,7 @@ export class BroTest implements PromiseLike<undefined> {
     constructor(html?: JSX.Element) {
         this._promise = new Promise<undefined>((resolve, reject) => {
             this._resolve = resolve;
-            this._reject! = reject;
+            this._reject = reject;
         });
 
         this._frameStack = [{ id: "_top", frame: page }];
@@ -400,6 +418,14 @@ export class BroTest implements PromiseLike<undefined> {
 
         this._nextTimer = setTimeout(async () => {
             delete this._nextTimer;
+
+            if (this._repeatChainsBuilding.length) {
+                this._reject?.(
+                    new Error(
+                        "repeatBegin() is missing corresponding repeatEnd()"
+                    )
+                );
+            }
 
             const item = this._chain.shift();
 
@@ -715,6 +741,81 @@ export class BroTest implements PromiseLike<undefined> {
         );
 
         this._reportConsoleErrors(true);
+
+        return this;
+    }
+
+    repeatBegin(repeats: number) {
+        if (repeats < 1) {
+            this._reject?.(
+                new Error("repeatBegin() must be called with repeats > 0")
+            );
+
+            return this;
+        }
+
+        const chain: BroTestItem[] = [];
+
+        this._chain.push(
+            new BroTestItemRepeat(this._frameStack, () => {
+                this._prevChains.push(this._chain);
+                this._repeatChainsRunning.unshift(chain);
+                this._chain = chain.slice(0);
+                this._repeats.unshift(repeats - 1);
+                this._repeatStartTimes.unshift(performance.now());
+            })
+        );
+
+        this._repeatChainsBuilding.push(this._chain);
+        this._chain = chain;
+
+        return this;
+    }
+
+    repeatEnd(stats?: (time: number) => void) {
+        const chain = this._repeatChainsBuilding.pop();
+
+        if (!chain) {
+            this._reject?.(
+                new Error("repeatEnd() is missing corresponding repeatBegin()")
+            );
+
+            return this;
+        }
+
+        this._chain.push(
+            new BroTestItemRepeat(this._frameStack, () => {
+                const fullChain = this._repeatChainsRunning[0];
+                const repeats = this._repeats[0];
+
+                if (!fullChain || repeats === undefined) {
+                    throw new Error("Something went wrong, repeat chain error");
+                }
+
+                if (repeats > 0) {
+                    this._chain = fullChain.slice(0);
+                    this._repeats[0]--;
+                } else {
+                    this._repeatChainsRunning.shift();
+                    this._repeats.shift();
+                    const startTime = this._repeatStartTimes.shift();
+
+                    const prevChain = this._prevChains.pop();
+
+                    if (!prevChain || startTime === undefined) {
+                        throw new Error(
+                            "Something went wrong, repeat chain error"
+                        );
+                    }
+
+                    stats?.(performance.now() - startTime);
+
+                    this._chain = prevChain;
+                }
+            })
+        );
+
+        this._chain = chain;
 
         return this;
     }
