@@ -34,7 +34,6 @@ export class ObservedElementAPI
 {
     private _win: Types.GetWindow;
     private _tabster: Types.TabsterCore;
-    private _initTimer: number | undefined;
     private _waiting: Record<string, ObservedWaiting> = {};
     private _lastRequestFocusId = 0;
     private _observedById: { [uid: string]: ObservedElementInfo } = {};
@@ -50,22 +49,13 @@ export class ObservedElementAPI
         super();
         this._tabster = tabster;
         this._win = tabster.getWindow;
-        this._initTimer = this._win().setTimeout(this._init, 0);
+
+        tabster.queueInit(() => {
+            this._tabster.focusedElement.subscribe(this._onFocus);
+        });
     }
 
-    private _init = (): void => {
-        this._initTimer = undefined;
-        this._tabster.focusedElement.subscribe(this._onFocus);
-    };
-
     dispose(): void {
-        const win = this._win();
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
-
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         for (const key of Object.keys(this._waiting)) {

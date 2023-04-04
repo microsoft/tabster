@@ -413,7 +413,6 @@ function validateGroupperProps(props: Types.GroupperProps): void {
 
 export class GroupperAPI implements Types.GroupperAPI {
     private _tabster: Types.TabsterCore;
-    private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
@@ -422,12 +421,10 @@ export class GroupperAPI implements Types.GroupperAPI {
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
         this._win = getWindow;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        tabster.queueInit(this._init);
     }
 
     private _init = (): void => {
-        this._initTimer = undefined;
-
         const win = this._win();
 
         // Making sure groupper's onFocus is called before modalizer's onFocus.
@@ -441,11 +438,6 @@ export class GroupperAPI implements Types.GroupperAPI {
         const win = this._win();
 
         this._current = {};
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            delete this._initTimer;
-        }
 
         if (this._updateTimer) {
             win.clearTimeout(this._updateTimer);

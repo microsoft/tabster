@@ -1634,7 +1634,6 @@ export class CrossOriginObservedElementState
 
 export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _tabster: Types.TabsterCore;
-    private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _transactions: CrossOriginTransactions;
     private _blurTimer: number | undefined;
@@ -1671,7 +1670,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
         if (this.isSetUp()) {
             return this._transactions.setSendUp(sendUp);
         } else {
-            this._initTimer = this._win().setTimeout(this._init, 0);
+            this._tabster.queueInit(this._init);
             return this._transactions.setup(sendUp);
         }
     }
@@ -1681,8 +1680,6 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     }
 
     private _init = (): void => {
-        this._initTimer = undefined;
-
         const tabster = this._tabster;
 
         tabster.keyboardNavigation.subscribe(
@@ -1723,11 +1720,6 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     };
 
     dispose(): void {
-        if (this._initTimer) {
-            this._win().clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
-
         const tabster = this._tabster;
 
         tabster.keyboardNavigation.unsubscribe(

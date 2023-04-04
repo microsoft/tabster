@@ -61,6 +61,7 @@ class TabsterCore implements Types.TabsterCore {
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
     private _initTimer: number | undefined;
+    private _initQueue: (() => void)[] = [];
 
     _version: string = __VERSION__;
     _noop = false;
@@ -126,10 +127,9 @@ class TabsterCore implements Types.TabsterCore {
 
         // Gives a tick to the host app to initialize other tabster
         // APIs before tabster starts observing attributes.
-        this._initTimer = win.setTimeout(() => {
-            delete this._initTimer;
+        this.queueInit(() => {
             this.internal.resumeObserver(true);
-        }, 0);
+        });
     }
 
     createTabster(noRefCount?: boolean): Types.Tabster {
@@ -161,6 +161,7 @@ class TabsterCore implements Types.TabsterCore {
 
         win?.clearTimeout(this._initTimer);
         delete this._initTimer;
+        this._initQueue = [];
 
         this._forgetMemorizedElements = [];
 
@@ -250,6 +251,32 @@ class TabsterCore implements Types.TabsterCore {
         }, 0);
 
         cleanupFakeWeakRefs(this.getWindow, true);
+    }
+
+    queueInit(callback: () => void): void {
+        if (!this._win) {
+            return;
+        }
+
+        this._initQueue.push(callback);
+
+        if (!this._initTimer) {
+            this._initTimer = this._win?.setTimeout(() => {
+                delete this._initTimer;
+                this.drainInitQueue();
+            }, 0);
+        }
+    }
+
+    drainInitQueue(): void {
+        if (!this._win) {
+            return;
+        }
+
+        const queue = this._initQueue;
+        // Resetting the queue before calling the callbacks to avoid recursion.
+        this._initQueue = [];
+        queue.forEach((callback) => callback());
     }
 }
 
