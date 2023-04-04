@@ -988,7 +988,12 @@ function setDummyInputDebugValue(
 
 export class DummyInputObserver implements Types.DummyInputObserver {
     private _win?: GetWindow;
-    private _offsetsQueue: (() => void)[] = [];
+    private _offsetsQueue: ((
+        scrollTopLeftCache: Map<
+            HTMLElement,
+            { scrollTop: number; scrollLeft: number } | null
+        >
+    ) => () => void)[] = [];
     private _offsetsTimer?: number;
     private _changedParents: WeakSet<HTMLElement> = new WeakSet();
     private _updateDummyInputsTimer?: number;
@@ -1058,8 +1063,15 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         }, 100);
     };
 
-    updateOffsets(callback: () => void): void {
-        this._offsetsQueue.push(callback);
+    updateOffsets(
+        compute: (
+            scrollTopLeftCache: Map<
+                HTMLElement,
+                { scrollTop: number; scrollLeft: number } | null
+            >
+        ) => () => void
+    ): void {
+        this._offsetsQueue.push(compute);
 
         if (this._offsetsTimer) {
             return;
@@ -1068,8 +1080,26 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         this._offsetsTimer = this._win?.().setTimeout(() => {
             delete this._offsetsTimer;
 
-            this._offsetsQueue.forEach((callback) => callback());
+            // A cache for current bulk of updates to reduce getComputedStyle() calls.
+            const scrollTopLeftCache = new Map<
+                HTMLElement,
+                { scrollTop: number; scrollLeft: number } | null
+            >();
+
+            const setTopLeftCallbacks = this._offsetsQueue.map((compute) =>
+                compute(scrollTopLeftCache)
+            );
+
             this._offsetsQueue = [];
+
+            // We're splitting the computation of offsets and setting them to avoid extra
+            // reflows.
+            for (const setTopLeft of setTopLeftCallbacks) {
+                setTopLeft();
+            }
+
+            // Explicitly clear to not hold references till the next garbage collection.
+            scrollTopLeftCache.clear();
         }, 100);
     }
 }
@@ -1086,7 +1116,7 @@ class DummyInputManagerCore {
     private _isOutside = false;
     private _firstDummy: DummyInput | undefined;
     private _lastDummy: DummyInput | undefined;
-    private _transformElements: HTMLElement[] = [];
+    private _transformElements: Set<HTMLElement> = new Set();
     private _scrollTimer: number | undefined;
     private _callForDefaultAction: boolean | undefined;
 
@@ -1201,7 +1231,7 @@ class DummyInputManagerCore {
             for (const el of this._transformElements) {
                 el.removeEventListener("scroll", this._addTransformOffsets);
             }
-            this._transformElements = [];
+            this._transformElements.clear();
 
             const win = this._getWindow();
 
@@ -1446,23 +1476,22 @@ class DummyInputManagerCore {
         this._scrollTimer = win.setTimeout(() => {
             delete this._scrollTimer;
             this._tabster._dummyObserver.updateOffsets(
-                this._reallyAddTransformOffsets
+                this._computeTransformOffsets
             );
         }, 100);
     };
 
-    private _reallyAddTransformOffsets = (): void => {
+    private _computeTransformOffsets = (
+        scrollTopLeftCache: Map<
+            HTMLElement,
+            { scrollTop: number; scrollLeft: number } | null
+        >
+    ): (() => void) => {
         const from = this._firstDummy?.input || this._lastDummy?.input;
         const transformElements = this._transformElements;
-        const newTransformElements: HTMLElement[] = [];
-        const transformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
-        const newTransformElementsMap = new WeakMap<HTMLElement, HTMLElement>();
+        const newTransformElements: typeof transformElements = new Set();
         let scrollTop = 0;
         let scrollLeft = 0;
-
-        for (const el of transformElements) {
-            transformElementsMap.set(el, el);
-        }
 
         const win = this._getWindow();
 
@@ -1471,33 +1500,50 @@ class DummyInputManagerCore {
             element;
             element = element.parentElement
         ) {
-            const transform = win.getComputedStyle(element).transform;
-            if (transform && transform !== "none") {
-                let el = transformElementsMap.get(element);
+            let scrollTopLeft = scrollTopLeftCache.get(element);
 
-                if (!el) {
-                    el = element;
-                    el.addEventListener("scroll", this._addTransformOffsets);
+            // getComputedStyle() and element.scrollLeft/Top() cause style recalculation,
+            // so we cache the result across all elements in the current bulk.
+            if (scrollTopLeft === undefined) {
+                const transform = win.getComputedStyle(element).transform;
+
+                if (transform && transform !== "none") {
+                    scrollTopLeft = {
+                        scrollTop: element.scrollTop,
+                        scrollLeft: element.scrollLeft,
+                    };
                 }
 
-                newTransformElements.push(el);
-                newTransformElementsMap.set(el, el);
+                scrollTopLeftCache.set(element, scrollTopLeft || null);
+            }
 
-                scrollTop += el.scrollTop;
-                scrollLeft += el.scrollLeft;
+            if (scrollTopLeft) {
+                newTransformElements.add(element);
+
+                if (!transformElements.has(element)) {
+                    element.addEventListener(
+                        "scroll",
+                        this._addTransformOffsets
+                    );
+                }
+
+                scrollTop += scrollTopLeft.scrollTop;
+                scrollLeft += scrollTopLeft.scrollLeft;
             }
         }
 
         for (const el of transformElements) {
-            if (!newTransformElementsMap.get(el)) {
+            if (!newTransformElements.has(el)) {
                 el.removeEventListener("scroll", this._addTransformOffsets);
             }
         }
 
         this._transformElements = newTransformElements;
 
-        this._firstDummy?.setTopLeft(scrollTop, scrollLeft);
-        this._lastDummy?.setTopLeft(scrollTop, scrollLeft);
+        return () => {
+            this._firstDummy?.setTopLeft(scrollTop, scrollLeft);
+            this._lastDummy?.setTopLeft(scrollTop, scrollLeft);
+        };
     };
 }
 

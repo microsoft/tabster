@@ -1018,7 +1018,14 @@ export interface DummyInputObserver {
     remove(dummy: HTMLElement): void;
     dispose(): void;
     domChanged?(parent: HTMLElement): void;
-    updateOffsets(callback: () => void): void;
+    updateOffsets(
+        compute: (
+            scrollTopLeftCache: Map<
+                HTMLElement,
+                { scrollTop: number; scrollLeft: number } | null
+            >
+        ) => () => void
+    ): void;
 }
 
 interface TabsterCoreInternal {
