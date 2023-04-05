@@ -1018,7 +1018,7 @@ export interface DummyInputObserver {
     remove(dummy: HTMLElement): void;
     dispose(): void;
     domChanged?(parent: HTMLElement): void;
-    updateOffsets(
+    updatePositions(
         compute: (
             scrollTopLeftCache: Map<
                 HTMLElement,

@@ -88,6 +88,8 @@ try {
     _isBrokenIE11 = true;
 }
 
+const _updateDummyInputsTimeout = 100;
+
 interface WindowWithUtilsConext extends Window {
     __tabsterInstanceContext?: InstanceContext;
     Promise: PromiseConstructor;
@@ -988,13 +990,16 @@ function setDummyInputDebugValue(
 
 export class DummyInputObserver implements Types.DummyInputObserver {
     private _win?: GetWindow;
-    private _offsetsQueue: ((
-        scrollTopLeftCache: Map<
-            HTMLElement,
-            { scrollTop: number; scrollLeft: number } | null
-        >
-    ) => () => void)[] = [];
-    private _offsetsTimer?: number;
+    private _updateQueue: Set<
+        (
+            scrollTopLeftCache: Map<
+                HTMLElement,
+                { scrollTop: number; scrollLeft: number } | null
+            >
+        ) => () => void
+    > = new Set();
+    private _updateTimer?: number;
+    private _lastUpdateQueueTime = 0;
     private _changedParents: WeakSet<HTMLElement> = new WeakSet();
     private _updateDummyInputsTimer?: number;
     private _dummies: Map<HTMLElement, () => void> = new Map();
@@ -1021,9 +1026,9 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     dispose(): void {
         const win = this._win?.();
 
-        if (this._offsetsTimer) {
-            win?.clearTimeout(this._offsetsTimer);
-            delete this._offsetsTimer;
+        if (this._updateTimer) {
+            win?.clearTimeout(this._updateTimer);
+            delete this._updateTimer;
         }
 
         if (this._updateDummyInputsTimer) {
@@ -1060,10 +1065,10 @@ export class DummyInputObserver implements Types.DummyInputObserver {
             }
 
             this._changedParents = new WeakSet();
-        }, 100);
+        }, _updateDummyInputsTimeout);
     };
 
-    updateOffsets(
+    updatePositions(
         compute: (
             scrollTopLeftCache: Map<
                 HTMLElement,
@@ -1071,36 +1076,63 @@ export class DummyInputObserver implements Types.DummyInputObserver {
             >
         ) => () => void
     ): void {
-        this._offsetsQueue.push(compute);
-
-        if (this._offsetsTimer) {
+        if (!this._win) {
+            // As this is a public method, we make sure that it has no effect when
+            // called after dispose().
             return;
         }
 
-        this._offsetsTimer = this._win?.().setTimeout(() => {
-            delete this._offsetsTimer;
+        this._updateQueue.add(compute);
 
-            // A cache for current bulk of updates to reduce getComputedStyle() calls.
-            const scrollTopLeftCache = new Map<
-                HTMLElement,
-                { scrollTop: number; scrollLeft: number } | null
-            >();
+        this._lastUpdateQueueTime = Date.now();
 
-            const setTopLeftCallbacks = this._offsetsQueue.map((compute) =>
-                compute(scrollTopLeftCache)
-            );
+        this._scheduledUpdatePositions();
+    }
 
-            this._offsetsQueue = [];
+    private _scheduledUpdatePositions(): void {
+        if (this._updateTimer) {
+            return;
+        }
 
-            // We're splitting the computation of offsets and setting them to avoid extra
-            // reflows.
-            for (const setTopLeft of setTopLeftCallbacks) {
-                setTopLeft();
+        this._updateTimer = this._win?.().setTimeout(() => {
+            delete this._updateTimer;
+
+            // updatePositions() might be called quite a lot during the scrolling.
+            // So, instead of clearing the timeout and scheduling a new one, we
+            // check if enough time has passed since the last updatePositions() call
+            // and only schedule a new one if not.
+            // At maximum, we will update dummy inputs positions
+            // _updateDummyInputsTimeout * 2 after the last updatePositions() call.
+            if (
+                this._lastUpdateQueueTime + _updateDummyInputsTimeout <=
+                Date.now()
+            ) {
+                // A cache for current bulk of updates to reduce getComputedStyle() calls.
+                const scrollTopLeftCache = new Map<
+                    HTMLElement,
+                    { scrollTop: number; scrollLeft: number } | null
+                >();
+
+                const setTopLeftCallbacks: (() => void)[] = [];
+
+                for (const compute of this._updateQueue) {
+                    setTopLeftCallbacks.push(compute(scrollTopLeftCache));
+                }
+
+                this._updateQueue.clear();
+
+                // We're splitting the computation of offsets and setting them to avoid extra
+                // reflows.
+                for (const setTopLeft of setTopLeftCallbacks) {
+                    setTopLeft();
+                }
+
+                // Explicitly clear to not hold references till the next garbage collection.
+                scrollTopLeftCache.clear();
+            } else {
+                this._scheduledUpdatePositions();
             }
-
-            // Explicitly clear to not hold references till the next garbage collection.
-            scrollTopLeftCache.clear();
-        }, 100);
+        }, _updateDummyInputsTimeout);
     }
 }
 
@@ -1117,7 +1149,6 @@ class DummyInputManagerCore {
     private _firstDummy: DummyInput | undefined;
     private _lastDummy: DummyInput | undefined;
     private _transformElements: Set<HTMLElement> = new Set();
-    private _scrollTimer: number | undefined;
     private _callForDefaultAction: boolean | undefined;
 
     constructor(
@@ -1234,11 +1265,6 @@ class DummyInputManagerCore {
             this._transformElements.clear();
 
             const win = this._getWindow();
-
-            if (this._scrollTimer) {
-                win.clearTimeout(this._scrollTimer);
-                delete this._scrollTimer;
-            }
 
             if (this._addTimer) {
                 win.clearTimeout(this._addTimer);
@@ -1466,19 +1492,9 @@ class DummyInputManagerCore {
     };
 
     private _addTransformOffsets = (): void => {
-        const win = this._getWindow();
-
-        if (this._scrollTimer) {
-            win.clearTimeout(this._scrollTimer);
-        }
-
-        // Making sure we're not updating the dummy inputs while scrolling to avoid excessive reflows.
-        this._scrollTimer = win.setTimeout(() => {
-            delete this._scrollTimer;
-            this._tabster._dummyObserver.updateOffsets(
-                this._computeTransformOffsets
-            );
-        }, 100);
+        this._tabster._dummyObserver.updatePositions(
+            this._computeTransformOffsets
+        );
     };
 
     private _computeTransformOffsets = (
