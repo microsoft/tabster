@@ -28,7 +28,6 @@ export class FocusedElementState
     static isTabbing = false;
 
     private _tabster: Types.TabsterCore;
-    private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _nextVal:
         | {
@@ -37,19 +36,16 @@ export class FocusedElementState
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
-    // private _modalAction: ((current: HTMLElement) => boolean) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
 
         this._tabster = tabster;
         this._win = getWindow;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
+        tabster.queueInit(this._init);
     }
 
     private _init = (): void => {
-        this._initTimer = undefined;
-
         const win = this._win();
         const doc = win.document;
 
@@ -71,11 +67,6 @@ export class FocusedElementState
         super.dispose();
 
         const win = this._win();
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
 
         win.document.removeEventListener(
             KEYBORG_FOCUSIN,

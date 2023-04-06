@@ -323,7 +323,6 @@ function validateModalizerProps(props: Types.ModalizerProps): void {
 export class ModalizerAPI implements Types.ModalizerAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _initTimer: number | undefined;
     private _restoreModalizerFocusTimer: number | undefined;
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
@@ -338,7 +337,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
-        this._initTimer = this._win().setTimeout(this._init, 0);
         this._modalizers = {};
         this._parts = {};
         this._augMap = new WeakMap();
@@ -351,21 +349,14 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         const win = this._win();
         win.addEventListener("keydown", this._onKeyDown, true);
+
+        tabster.queueInit(() => {
+            this._tabster.focusedElement.subscribe(this._onFocus);
+        });
     }
-
-    private _init = (): void => {
-        this._initTimer = undefined;
-
-        this._tabster.focusedElement.subscribe(this._onFocus);
-    };
 
     dispose(): void {
         const win = this._win();
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
 

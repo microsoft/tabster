@@ -274,7 +274,6 @@ function validateRootProps(props: Types.RootProps): void {
 export class RootAPI implements Types.RootAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _initTimer: number | undefined;
     private _autoRoot: Types.RootProps | undefined;
     private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
@@ -285,24 +284,17 @@ export class RootAPI implements Types.RootAPI {
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
-        this._initTimer = this._win().setTimeout(this._init, 0);
         this._autoRoot = autoRoot;
         this.eventTarget = createEventTarget(this._win);
+
+        tabster.queueInit(() => {
+            if (this._autoRoot) {
+                this._autoRootCreate();
+            }
+        });
     }
 
-    private _init = (): void => {
-        this._initTimer = undefined;
-
-        if (this._autoRoot) {
-            this._autoRootCreate();
-        }
-    };
-
     private _autoRootCreate = (): Types.Root | undefined => {
-        if (this._initTimer) {
-            return;
-        }
-
         const doc = this._win().document;
         const body = doc.body;
 
@@ -334,9 +326,6 @@ export class RootAPI implements Types.RootAPI {
 
         this._autoRootUnwait(win.document);
         delete this._autoRoot;
-
-        win.clearTimeout(this._initTimer);
-        this._initTimer = undefined;
 
         Object.keys(this._roots).forEach((rootId) => {
             if (this._roots[rootId]) {
@@ -409,6 +398,11 @@ export class RootAPI implements Types.RootAPI {
         if (!element.ownerDocument) {
             return undefined;
         }
+
+        // Normally, the initialization starts on the next tick after the tabster
+        // instance creation. However, if the application starts using it before
+        // the next tick, we need to make sure the initialization is done.
+        tabster.drainInitQueue();
 
         const checkRtl = options.checkRtl;
         let root: Types.Root | undefined;

@@ -59,7 +59,6 @@ class OutlinePosition {
 export class OutlineAPI implements Types.OutlineAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _initTimer: number | undefined;
     private _updateTimer: number | undefined;
     private _outlinedElement: HTMLElement | undefined;
     private _curPos: OutlinePosition | undefined;
@@ -73,7 +72,8 @@ export class OutlineAPI implements Types.OutlineAPI {
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
-        this._initTimer = this._win().setTimeout(this._init, 0);
+
+        tabster.queueInit(this._init);
 
         if (typeof document !== "undefined") {
             if ("onfullscreenchange" in document) {
@@ -93,8 +93,6 @@ export class OutlineAPI implements Types.OutlineAPI {
     }
 
     private _init = (): void => {
-        this._initTimer = undefined;
-
         this._tabster.keyboardNavigation.subscribe(
             this._onKeyboardNavigationStateChanged
         );
@@ -134,11 +132,6 @@ export class OutlineAPI implements Types.OutlineAPI {
 
     dispose(): void {
         const win = this._win();
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
 
         if (this._updateTimer) {
             win.clearTimeout(this._updateTimer);

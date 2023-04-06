@@ -250,6 +250,69 @@ describe("Tabster create", () => {
             });
     });
 
+    it("should initialize Modalizer when the DOM is mounted and the focus is called synchronously before Tabster is fully initialized", async () => {
+        await new BroTest.BroTest(
+            (
+                <div>
+                    <button>Button1</button>
+                    <div
+                        id="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal", isTrapped: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                    </div>
+                    <button id="button3">Button3</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                return !!(window as WindowWithTabsterInstance)
+                    .__tabsterInstance;
+            })
+            .check((hasInstance: boolean) => {
+                expect(hasInstance).toBe(false);
+            })
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                const tabster = vars.createTabster?.(window, { autoRoot: {} });
+                tabster && vars.getModalizer?.(tabster);
+
+                const modalContainer = document.getElementById("modal");
+
+                if (modalContainer && tabster) {
+                    const first = tabster.focusable.findFirst({
+                        container: modalContainer,
+                    });
+
+                    first?.focus();
+                }
+
+                // The dev time custom state style should be propagated and set to active
+                // as the sign that the modalizer is initialized and handled.
+                return (
+                    modalContainer?.getAttribute("style")?.indexOf("active") ||
+                    -1
+                );
+            })
+            .check((hasInstance: boolean) => {
+                expect(hasInstance).toBeGreaterThan(0);
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            });
+    });
+
     it("should initialize Grouppers when the DOM is mounted before Tabster is created", async () => {
         await new BroTest.BroTest(
             (

@@ -657,7 +657,6 @@ function validateDeloserProps(props: Types.DeloserProps): void {
 export class DeloserAPI implements Types.DeloserAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _initTimer: number | undefined;
     /**
      * Tracks if focus is inside a deloser
      */
@@ -677,7 +676,10 @@ export class DeloserAPI implements Types.DeloserAPI {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._history = new DeloserHistory(tabster);
-        this._initTimer = this._win().setTimeout(this._init, 0);
+
+        tabster.queueInit(() => {
+            this._tabster.focusedElement.subscribe(this._onFocus);
+        });
 
         const autoDeloser = props?.autoDeloser;
         if (autoDeloser) {
@@ -685,19 +687,8 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
-    private _init = (): void => {
-        this._initTimer = undefined;
-
-        this._tabster.focusedElement.subscribe(this._onFocus);
-    };
-
     dispose(): void {
         const win = this._win();
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            this._initTimer = undefined;
-        }
 
         if (this._restoreFocusTimer) {
             win.clearTimeout(this._restoreFocusTimer);

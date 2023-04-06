@@ -677,7 +677,6 @@ function getDistance(
 
 export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
-    private _initTimer: number | undefined;
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
     private _ignoredInputTimer: number | undefined;
@@ -686,29 +685,23 @@ export class MoverAPI implements Types.MoverAPI {
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
         this._win = getWindow;
-        this._initTimer = getWindow().setTimeout(this._init, 0);
         this._movers = {};
 
-        tabster.focusedElement.subscribe(this._onFocus);
+        tabster.queueInit(this._init);
     }
 
     private _init = (): void => {
-        this._initTimer = undefined;
-
         const win = this._win();
 
         win.addEventListener("keydown", this._onKeyDown, true);
+
+        this._tabster.focusedElement.subscribe(this._onFocus);
     };
 
     dispose(): void {
         const win = this._win();
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
-
-        if (this._initTimer) {
-            win.clearTimeout(this._initTimer);
-            delete this._initTimer;
-        }
 
         this._ignoredInputResolve?.(false);
 

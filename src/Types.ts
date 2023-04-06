@@ -1064,6 +1064,11 @@ interface TabsterCoreInternal {
     disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
     /** @internal */
     forceCleanup(): void;
+
+    /** @internal */
+    queueInit(callback: () => void): void;
+    /** @internal */
+    drainInitQueue(): void;
 }
 
 export interface Tabster {
