@@ -295,10 +295,11 @@ export class Mover
 
         const { memorizeCurrent, visibilityAware, hasDefault } = this._props;
         const moverElement = this.getElement();
+        const actualHasDefault = hasDefault || hasDefault === undefined;
 
         if (
             moverElement &&
-            (memorizeCurrent || visibilityAware || hasDefault) &&
+            (memorizeCurrent || visibilityAware || actualHasDefault) &&
             (!moverElement.contains(state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
@@ -314,7 +315,7 @@ export class Mover
                 }
             }
 
-            if (!found && hasDefault) {
+            if (!found && actualHasDefault) {
                 found = this._tabster.focusable.findDefault({
                     container: moverElement,
                     ignoreUncontrolled: true,
