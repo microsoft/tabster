@@ -759,7 +759,7 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onKeyDown = async (e: KeyboardEvent): Promise<void> => {
+    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
         if (this._ignoredInputTimer) {
             this._win().clearTimeout(this._ignoredInputTimer);
             delete this._ignoredInputTimer;
@@ -767,11 +767,11 @@ export class MoverAPI implements Types.MoverAPI {
 
         this._ignoredInputResolve?.(false);
 
-        let keyCode = e.keyCode;
+        let keyCode = event.keyCode;
 
         // Give a chance to other listeners to handle the event (for example,
         // to scroll instead of moving focus).
-        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
             return;
         }
 
@@ -804,7 +804,7 @@ export class MoverAPI implements Types.MoverAPI {
             !ctx ||
             !ctx.mover ||
             ctx.isExcludedFromMover ||
-            ctx.ignoreKeydown(e)
+            ctx.ignoreKeydown(event)
         ) {
             return;
         }
@@ -1190,8 +1190,8 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         if (next) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+            event.preventDefault();
+            event.stopImmediatePropagation();
 
             nativeFocus(next);
         }
