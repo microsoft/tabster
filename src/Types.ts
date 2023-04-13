@@ -602,7 +602,7 @@ export interface MoverProps {
     visibilityAware?: Visibility;
     /**
      * When true, Mover will try to locate a focusable with Focusable.isDefault
-     * property as a prioritized element to focus.
+     * property as a prioritized element to focus. True by default.
      */
     hasDefault?: boolean;
     /**

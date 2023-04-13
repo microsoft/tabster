@@ -293,7 +293,11 @@ export class Mover
                 : undefined;
         }
 
-        const { memorizeCurrent, visibilityAware, hasDefault } = this._props;
+        const {
+            memorizeCurrent,
+            visibilityAware,
+            hasDefault = true,
+        } = this._props;
         const moverElement = this.getElement();
 
         if (
