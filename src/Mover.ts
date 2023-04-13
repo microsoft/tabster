@@ -768,8 +768,10 @@ export class MoverAPI implements Types.MoverAPI {
         this._ignoredInputResolve?.(false);
 
         let keyCode = e.keyCode;
-        // Mover does not use ctrl key currently
-        if (e.ctrlKey) {
+
+        // Give a chance to other listeners to handle the event (for example,
+        // to scroll instead of moving focus).
+        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
             return;
         }
 

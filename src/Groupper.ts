@@ -579,6 +579,11 @@ export class GroupperAPI implements Types.GroupperAPI {
             return;
         }
 
+        // Give a chance to other listeners to handle the event.
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+            return;
+        }
+
         const element = this._tabster.focusedElement.getFocusedElement();
 
         if (element) {

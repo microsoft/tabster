@@ -486,18 +486,29 @@ export class BroTest implements PromiseLike<undefined> {
                   delay?: number | undefined;
                   ctrl?: boolean;
                   shift?: boolean;
+                  alt?: boolean;
+                  meta?: boolean;
               }
             | undefined
     ) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                const { shift, ctrl } = options ?? {};
+                const { shift, ctrl, alt, meta } = options ?? {};
+
                 if (shift) {
                     await page.keyboard.down("Shift");
                 }
 
                 if (ctrl) {
                     await page.keyboard.down("Control");
+                }
+
+                if (alt) {
+                    await page.keyboard.down("Alt");
+                }
+
+                if (meta) {
+                    await page.keyboard.down("Meta");
                 }
 
                 await page.keyboard.press(key, options);
@@ -509,6 +520,14 @@ export class BroTest implements PromiseLike<undefined> {
                 if (ctrl) {
                     await page.keyboard.up("Control");
                 }
+
+                if (alt) {
+                    await page.keyboard.up("Alt");
+                }
+
+                if (meta) {
+                    await page.keyboard.up("Meta");
+                }
             })
         );
 
@@ -517,7 +536,13 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    private _pressKey(key: KeyInput, shift?: boolean, ctrl?: boolean) {
+    private _pressKey(
+        key: KeyInput,
+        shift?: boolean,
+        ctrl?: boolean,
+        alt?: boolean,
+        meta?: boolean
+    ) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 if (shift) {
@@ -528,6 +553,14 @@ export class BroTest implements PromiseLike<undefined> {
                     await page.keyboard.down("Control");
                 }
 
+                if (alt) {
+                    await page.keyboard.down("Alt");
+                }
+
+                if (meta) {
+                    await page.keyboard.down("Meta");
+                }
+
                 await page.keyboard.press(key);
 
                 if (shift) {
@@ -536,6 +569,14 @@ export class BroTest implements PromiseLike<undefined> {
 
                 if (ctrl) {
                     await page.keyboard.up("Control");
+                }
+
+                if (alt) {
+                    await page.keyboard.up("Alt");
+                }
+
+                if (meta) {
+                    await page.keyboard.up("Meta");
                 }
             })
         );
@@ -561,26 +602,61 @@ export class BroTest implements PromiseLike<undefined> {
         return this;
     }
 
-    pressTab(shift?: boolean, ctrlKey?: boolean) {
-        return this._pressKey("Tab", shift, ctrlKey);
+    pressTab(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("Tab", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressEsc(shift?: boolean) {
-        return this._pressKey("Escape", shift);
+    pressEsc(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("Escape", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressEnter(shift?: boolean) {
-        return this._pressKey("Enter", shift);
+    pressEnter(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("Enter", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressUp(shift?: boolean) {
-        return this._pressKey("ArrowUp", shift);
+    pressUp(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("ArrowUp", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressDown(shift?: boolean) {
-        return this._pressKey("ArrowDown", shift);
+    pressDown(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("ArrowDown", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressLeft(shift?: boolean) {
-        return this._pressKey("ArrowLeft", shift);
+    pressLeft(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("ArrowLeft", shiftKey, ctrlKey, altKey, metaKey);
     }
-    pressRight(shift?: boolean) {
-        return this._pressKey("ArrowRight", shift);
+    pressRight(
+        shiftKey?: boolean,
+        ctrlKey?: boolean,
+        altKey?: boolean,
+        metaKey?: boolean
+    ) {
+        return this._pressKey("ArrowRight", shiftKey, ctrlKey, altKey, metaKey);
     }
 
     scrollTo(selector: string, x: number, y: number) {
