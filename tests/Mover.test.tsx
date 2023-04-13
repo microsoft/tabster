@@ -376,39 +376,51 @@ describe("NestedMovers", () => {
         "PageUp",
         "Home",
         "End",
-    ] as const)("should ignore CTRL key with %s", async (key) => {
-        const attr = getTabsterAttribute({
-            mover: {
-                direction: Types.MoverDirections.Vertical,
-                cyclic: true,
-            },
-            focusable: {
-                ignoreKeydown: {
-                    [key]: true,
+    ] as const)(
+        "should ignore Ctrl, Alt, Shift and Meta keys with %s",
+        async (key) => {
+            const attr = getTabsterAttribute({
+                mover: {
+                    direction: Types.MoverDirections.Both,
+                    cyclic: true,
                 },
-            },
-        });
+            });
 
-        await new BroTest.BroTest(
-            (
-                <div
-                    {...getTabsterAttribute({
-                        root: {},
-                    })}
-                >
-                    <div {...attr} id="mover">
-                        <button id="start">Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
+            await new BroTest.BroTest(
+                (
+                    <div
+                        {...getTabsterAttribute({
+                            root: {},
+                        })}
+                    >
+                        <div {...attr} id="mover">
+                            <button id="start">Mover Item 1</button>
+                            <button>Mover Item 2</button>
+                            <button>Mover Item 3</button>
+                            <button>Mover Item 4</button>
+                        </div>
                     </div>
-                </div>
+                )
             )
-        )
-            .focusElement("#start")
-            .press(key, { ctrl: true })
-            .activeElement((el) => expect(el?.attributes.id).toEqual("start"));
-    });
+                .focusElement("#start")
+                .press(key, { ctrl: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Mover Item 1")
+                )
+                .press(key, { alt: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Mover Item 1")
+                )
+                .press(key, { shift: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Mover Item 1")
+                )
+                .press(key, { meta: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Mover Item 1")
+                );
+        }
+    );
 });
 
 describe("Mover memorizing current", () => {

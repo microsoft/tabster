@@ -326,6 +326,52 @@ describe("Groupper - limited focus trap", () => {
                 .activeElement((el) => expect(el?.textContent).toBe("Bar3"));
         }
     );
+
+    it.each(["ctrl", "alt", "shift", "meta"] as const)(
+        "should ignore Enter and Esc keys with %s",
+        async (key) => {
+            await new BroTest.BroTest(
+                (
+                    <div
+                        {...getTabsterAttribute({
+                            root: {},
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+                    </div>
+                )
+            )
+                .pressTab()
+                .press("Enter", { [key]: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1Button2")
+                )
+                .pressEnter()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                )
+                .press("Escape", { [key]: true })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                )
+                .pressEsc()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1Button2")
+                );
+        }
+    );
 });
 
 describe("Groupper tabbing forward and backwards", () => {
