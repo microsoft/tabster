@@ -293,13 +293,16 @@ export class Mover
                 : undefined;
         }
 
-        const { memorizeCurrent, visibilityAware, hasDefault } = this._props;
+        const {
+            memorizeCurrent,
+            visibilityAware,
+            hasDefault = true,
+        } = this._props;
         const moverElement = this.getElement();
-        const actualHasDefault = hasDefault || hasDefault === undefined;
 
         if (
             moverElement &&
-            (memorizeCurrent || visibilityAware || actualHasDefault) &&
+            (memorizeCurrent || visibilityAware || hasDefault) &&
             (!moverElement.contains(state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
@@ -315,7 +318,7 @@ export class Mover
                 }
             }
 
-            if (!found && actualHasDefault) {
+            if (!found && hasDefault) {
                 found = this._tabster.focusable.findDefault({
                     container: moverElement,
                     ignoreUncontrolled: true,
