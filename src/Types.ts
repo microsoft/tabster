@@ -384,7 +384,7 @@ export interface FocusableAcceptElementState {
     container: HTMLElement;
     modalizerUserId?: string;
     currentCtx?: TabsterContext;
-    from: HTMLElement;
+    from?: HTMLElement | null;
     fromCtx?: TabsterContext;
     isBackward?: boolean;
     found?: boolean;
@@ -482,6 +482,7 @@ export type FindNextProps = Pick<
 export type FindDefaultProps = Pick<
     FindFocusableProps,
     | "container"
+    | "currentElement"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
@@ -616,6 +617,14 @@ export interface MoverProps {
      * @default 0.8
      */
     visibilityTolerance?: number;
+    /**
+     * CSS selector. If the currently focused element matches this selector,
+     * and the arrow key press would perform no action inside that element,
+     * the focus will be moved to the Mover the same way as if you would Tab
+     * or Shift+Tab inside the Mover from outside. Meaning that props like
+     * memorizeCurrent and hasDefault will be taken into consideration.
+     */
+    nextFor?: string;
 }
 
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;

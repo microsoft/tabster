@@ -467,6 +467,7 @@ export class FocusedElementState
             const onUncontrolled = (el: HTMLElement) => {
                 uncontrolled = el;
             };
+
             const nextElement = isBackward
                 ? tabster.focusable.findPrev({
                       container: actualContainer,

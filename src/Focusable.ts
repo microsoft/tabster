@@ -218,7 +218,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                     : modalizerId ||
                       RootAPI.getTabsterContext(this._tabster, container)
                           ?.modalizer?.userId,
-            from: currentElement || container,
+            from: currentElement,
             isBackward,
             acceptCondition,
             includeProgrammaticallyFocusable,
@@ -398,11 +398,12 @@ export class FocusableAPI implements Types.FocusableAPI {
         let result: number | undefined;
 
         let fromCtx = state.fromCtx;
+        const from = state.from;
 
-        if (!fromCtx) {
+        if (!fromCtx && from) {
             fromCtx = state.fromCtx = RootAPI.getTabsterContext(
                 this._tabster,
-                state.from
+                from
             );
         }
 

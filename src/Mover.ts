@@ -23,6 +23,7 @@ import {
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
+    getAdjacentElement,
 } from "./Utils";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
@@ -110,6 +111,7 @@ export class Mover
 
     visibilityTolerance: number;
     dummyManager: MoverDummyManager | undefined;
+    nextFor?: string;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -122,6 +124,7 @@ export class Mover
 
         this._win = tabster.getWindow;
         this.visibilityTolerance = props.visibilityTolerance ?? 0.8;
+        this.nextFor = props.nextFor;
 
         if (this._props.trackState || this._props.visibilityAware) {
             this._intersectionObserver = new IntersectionObserver(
@@ -237,7 +240,7 @@ export class Mover
         const currentIsDummy =
             container &&
             (
-                currentElement as HTMLElementWithDummyContainer
+                currentElement as HTMLElementWithDummyContainer | undefined
             )?.__tabsterDummyContainer?.get() === container;
 
         if (!container) {
@@ -255,7 +258,8 @@ export class Mover
         if (
             this._props.tabbable ||
             currentIsDummy ||
-            (currentElement && !container.contains(currentElement))
+            !currentElement ||
+            !container.contains(currentElement)
         ) {
             next = isBackward
                 ? focusable.findPrev({
@@ -303,10 +307,11 @@ export class Mover
         if (
             moverElement &&
             (memorizeCurrent || visibilityAware || hasDefault) &&
-            (!moverElement.contains(state.from) ||
+            (!state.from ||
+                !moverElement.contains(state.from) ||
                 (
-                    state.from as HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get() === moverElement)
+                    state.from as HTMLElementWithDummyContainer | undefined
+                )?.__tabsterDummyContainer?.get() === moverElement)
         ) {
             let found: HTMLElement | undefined | null;
 
@@ -321,6 +326,7 @@ export class Mover
             if (!found && hasDefault) {
                 found = this._tabster.focusable.findDefault({
                     container: moverElement,
+                    currentElement: moverElement,
                     ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
@@ -329,6 +335,7 @@ export class Mover
             if (!found && visibilityAware) {
                 found = this._tabster.focusable.findElement({
                     container: moverElement,
+                    currentElement: moverElement,
                     ignoreUncontrolled: true,
                     useActiveModalizer: true,
                     isBackward: state.isBackward,
@@ -683,6 +690,7 @@ export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
+    private _moversFor: Record<string, Set<Mover>>;
     private _ignoredInputTimer: number | undefined;
     private _ignoredInputResolve: ((value: boolean) => void) | undefined;
 
@@ -690,6 +698,7 @@ export class MoverAPI implements Types.MoverAPI {
         this._tabster = tabster;
         this._win = getWindow;
         this._movers = {};
+        this._moversFor = {};
 
         tabster.queueInit(this._init);
     }
@@ -722,6 +731,8 @@ export class MoverAPI implements Types.MoverAPI {
                 delete this._movers[moverId];
             }
         });
+
+        this._moversFor = {};
     }
 
     createMover(
@@ -740,12 +751,37 @@ export class MoverAPI implements Types.MoverAPI {
             props,
             sys
         );
+
         this._movers[newMover.id] = newMover;
+
+        const nextFor = newMover.nextFor;
+
+        if (nextFor) {
+            let moversFor = this._moversFor[nextFor];
+
+            if (!moversFor) {
+                moversFor = this._moversFor[nextFor] = new Set();
+            }
+
+            moversFor.add(newMover);
+        }
+
         return newMover;
     }
 
     private _onMoverDispose = (mover: Mover) => {
         delete this._movers[mover.id];
+
+        const nextFor = mover.nextFor;
+        const moversFor = nextFor && this._moversFor[nextFor];
+
+        if (moversFor) {
+            moversFor.delete(mover);
+
+            if (moversFor.size === 0) {
+                delete this._moversFor[nextFor];
+            }
+        }
     };
 
     private _onFocus = (e: HTMLElement | undefined): void => {
@@ -764,8 +800,10 @@ export class MoverAPI implements Types.MoverAPI {
     };
 
     private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
+        const win = this._win();
+
         if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
+            win.clearTimeout(this._ignoredInputTimer);
             delete this._ignoredInputTimer;
         }
 
@@ -796,24 +834,103 @@ export class MoverAPI implements Types.MoverAPI {
         const tabster = this._tabster;
         const focused = tabster.focusedElement.getFocusedElement();
 
-        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
+        if (focused && (await this._isIgnoredInput(focused, keyCode))) {
             return;
         }
 
-        const ctx = RootAPI.getTabsterContext(tabster, focused, {
-            checkRtl: true,
-        });
+        const ctx =
+            focused &&
+            RootAPI.getTabsterContext(tabster, focused, {
+                checkRtl: true,
+            });
 
-        if (
-            !ctx ||
-            !ctx.mover ||
-            ctx.isExcludedFromMover ||
-            ctx.ignoreKeydown(event)
-        ) {
+        const mover = ctx?.mover;
+
+        if (!mover) {
+            // Mover's nextFor property allows the Mover to gain focus when
+            // the arrow keys are pressed on an element that matches the
+            // nextFor selector. Here we find if there is a Mover that wants
+            // to gain focus given the currently focused element.
+            const moversFor = this._moversFor;
+            const allMoversFor: [HTMLElement | undefined, Mover?][] = [];
+            const focusedOrBody = focused || win.document.body;
+
+            for (const nextFor of Object.keys(moversFor)) {
+                if (matchesSelector(focusedOrBody, nextFor)) {
+                    for (const m of moversFor[nextFor]) {
+                        allMoversFor.push([m.getElement(), m]);
+                    }
+                }
+            }
+
+            if (allMoversFor.length > 0) {
+                allMoversFor.push([focusedOrBody]);
+
+                // Sort by DOM position to find the closest Mover when there are
+                // multiple matching Movers.
+                allMoversFor.sort((a, b) => {
+                    const aElement = a[0];
+                    const bElement = b[0];
+
+                    return aElement &&
+                        bElement &&
+                        aElement.compareDocumentPosition(bElement) &
+                            Node.DOCUMENT_POSITION_FOLLOWING
+                        ? -1
+                        : 1;
+                });
+
+                const isBackward =
+                    keyCode === Keys.Up ||
+                    keyCode === Keys.Left ||
+                    keyCode === Keys.PageUp ||
+                    keyCode === Keys.Home;
+
+                const focusedIndex = allMoversFor.findIndex(
+                    (a) => a[0] === focusedOrBody
+                );
+
+                let moverToFocus: Mover | undefined;
+
+                if (focusedIndex === 0) {
+                    moverToFocus = allMoversFor[1][1];
+                } else if (focusedIndex === allMoversFor.length - 1) {
+                    moverToFocus = allMoversFor[focusedIndex - 1][1];
+                } else {
+                    moverToFocus =
+                        allMoversFor[
+                            isBackward ? focusedIndex - 1 : focusedIndex + 1
+                        ][1];
+                }
+
+                if (moverToFocus) {
+                    const moverToFocusElement = moverToFocus.getElement();
+
+                    if (moverToFocusElement) {
+                        const fromElement = getAdjacentElement(
+                            moverToFocusElement,
+                            !isBackward
+                        );
+
+                        FocusedElementState.isTabbing = true;
+                        const next = moverToFocus.findNextTabbable(
+                            fromElement,
+                            isBackward
+                        );
+                        FocusedElementState.isTabbing = false;
+
+                        next?.element?.focus();
+                    }
+                }
+            }
+
             return;
         }
 
-        const mover = ctx.mover;
+        if (!ctx || ctx.isExcludedFromMover || ctx.ignoreKeydown(event)) {
+            return;
+        }
+
         const container = mover.getElement();
 
         if (ctx.isGroupperFirst) {

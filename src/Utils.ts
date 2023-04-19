@@ -1579,11 +1579,13 @@ export function getAdjacentElement(
 ): HTMLElement | undefined {
     let cur: HTMLElement | null = from;
     let adjacent: HTMLElement | null = null;
+    const body = from.ownerDocument.body;
 
-    while (cur && !adjacent) {
+    while (cur && !adjacent && cur !== body) {
         adjacent = (
             prev ? cur.previousElementSibling : cur.nextElementSibling
         ) as HTMLElement | null;
+
         cur = cur.parentElement;
     }
 
