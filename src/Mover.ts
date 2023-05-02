@@ -799,11 +799,96 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        const win = this._win();
+    private _focusMoverFor(
+        focusedElement: HTMLElement | undefined,
+        keyCode: number
+    ): void {
+        // Mover's nextFor property allows a Mover to gain focus when
+        // the arrow keys are pressed when the focus is currently not
+        // inside any Mover. Here we find if there is a Mover with
+        // nextFor matching the currently focused element and focus it (if there is).
 
+        const moversFor = this._moversFor;
+        const allMoversFor: { element: HTMLElement; mover?: Mover }[] = [];
+        const focusedElementOrBody =
+            focusedElement || this._win().document.body;
+
+        for (const nextFor of Object.keys(moversFor)) {
+            if (matchesSelector(focusedElementOrBody, nextFor)) {
+                for (const mover of moversFor[nextFor]) {
+                    const element = mover.getElement();
+
+                    if (element) {
+                        allMoversFor.push({ element, mover });
+                    }
+                }
+            }
+        }
+
+        if (allMoversFor.length > 0) {
+            allMoversFor.push({ element: focusedElementOrBody });
+
+            // Sort by DOM position to find the closest Mover when there are
+            // multiple matching Movers.
+            allMoversFor.sort((a, b) => {
+                const aElement = a.element;
+                const bElement = b.element;
+
+                return aElement.compareDocumentPosition(bElement) &
+                    Node.DOCUMENT_POSITION_FOLLOWING
+                    ? -1
+                    : 1;
+            });
+
+            const isBackward =
+                keyCode === Keys.Up ||
+                keyCode === Keys.Left ||
+                keyCode === Keys.PageUp ||
+                keyCode === Keys.Home;
+
+            const focusedElementIndex = allMoversFor.findIndex(
+                (a) => a.element === focusedElementOrBody
+            );
+
+            let moverToFocusIndex = isBackward
+                ? focusedElementIndex - 1
+                : focusedElementIndex + 1;
+
+            if (moverToFocusIndex < 0) {
+                // No Mover before the focused element, so focus the next one.
+                moverToFocusIndex = 1;
+            } else if (moverToFocusIndex >= allMoversFor.length) {
+                // No Mover after the focused element, so focus the previous one.
+                moverToFocusIndex = allMoversFor.length - 2;
+            }
+
+            const moverToFocus = allMoversFor[moverToFocusIndex]?.mover;
+
+            if (moverToFocus) {
+                const moverToFocusElement = moverToFocus.getElement();
+
+                if (moverToFocusElement) {
+                    const fromElement = getAdjacentElement(
+                        moverToFocusElement,
+                        !isBackward
+                    );
+
+                    FocusedElementState.isTabbing = true;
+                    const next = moverToFocus.findNextTabbable(
+                        fromElement,
+                        isBackward
+                    );
+                    FocusedElementState.isTabbing = false;
+
+                    next?.element?.focus();
+                }
+            }
+        }
+    }
+
+    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
         if (this._ignoredInputTimer) {
-            win.clearTimeout(this._ignoredInputTimer);
+            this._win().clearTimeout(this._ignoredInputTimer);
             delete this._ignoredInputTimer;
         }
 
@@ -847,82 +932,9 @@ export class MoverAPI implements Types.MoverAPI {
         const mover = ctx?.mover;
 
         if (!mover) {
-            // Mover's nextFor property allows the Mover to gain focus when
-            // the arrow keys are pressed on an element that matches the
-            // nextFor selector. Here we find if there is a Mover that wants
-            // to gain focus given the currently focused element.
-            const moversFor = this._moversFor;
-            const allMoversFor: [HTMLElement | undefined, Mover?][] = [];
-            const focusedOrBody = focused || win.document.body;
-
-            for (const nextFor of Object.keys(moversFor)) {
-                if (matchesSelector(focusedOrBody, nextFor)) {
-                    for (const m of moversFor[nextFor]) {
-                        allMoversFor.push([m.getElement(), m]);
-                    }
-                }
-            }
-
-            if (allMoversFor.length > 0) {
-                allMoversFor.push([focusedOrBody]);
-
-                // Sort by DOM position to find the closest Mover when there are
-                // multiple matching Movers.
-                allMoversFor.sort((a, b) => {
-                    const aElement = a[0];
-                    const bElement = b[0];
-
-                    return aElement &&
-                        bElement &&
-                        aElement.compareDocumentPosition(bElement) &
-                            Node.DOCUMENT_POSITION_FOLLOWING
-                        ? -1
-                        : 1;
-                });
-
-                const isBackward =
-                    keyCode === Keys.Up ||
-                    keyCode === Keys.Left ||
-                    keyCode === Keys.PageUp ||
-                    keyCode === Keys.Home;
-
-                const focusedIndex = allMoversFor.findIndex(
-                    (a) => a[0] === focusedOrBody
-                );
-
-                let moverToFocus: Mover | undefined;
-
-                if (focusedIndex === 0) {
-                    moverToFocus = allMoversFor[1][1];
-                } else if (focusedIndex === allMoversFor.length - 1) {
-                    moverToFocus = allMoversFor[focusedIndex - 1][1];
-                } else {
-                    moverToFocus =
-                        allMoversFor[
-                            isBackward ? focusedIndex - 1 : focusedIndex + 1
-                        ][1];
-                }
-
-                if (moverToFocus) {
-                    const moverToFocusElement = moverToFocus.getElement();
-
-                    if (moverToFocusElement) {
-                        const fromElement = getAdjacentElement(
-                            moverToFocusElement,
-                            !isBackward
-                        );
-
-                        FocusedElementState.isTabbing = true;
-                        const next = moverToFocus.findNextTabbable(
-                            fromElement,
-                            isBackward
-                        );
-                        FocusedElementState.isTabbing = false;
-
-                        next?.element?.focus();
-                    }
-                }
-            }
+            // The focus is not inside any Mover, try to find a matching Mover
+            // with nextFor property matching the currently focused element.
+            this._focusMoverFor(focused, keyCode);
 
             return;
         }
