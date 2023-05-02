@@ -618,7 +618,7 @@ export interface MoverProps {
      */
     visibilityTolerance?: number;
     /**
-     * CSS selector. If the currently focused element matches this selector,
+     * A [CSS selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors). If the currently focused element matches this selector,
      * and the arrow key press would perform no action inside that element,
      * the focus will be moved to the Mover the same way as if you would Tab
      * or Shift+Tab inside the Mover from outside. Meaning that props like
