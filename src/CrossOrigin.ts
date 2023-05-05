@@ -770,7 +770,8 @@ class GetElementTransaction extends CrossOriginTransaction<
             } else if (data.observedName) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 element = tabster.observedElement!.getElement(
-                    data.observedName
+                    data.observedName,
+                    data.accessibility
                 );
             }
         }

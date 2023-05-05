@@ -235,4 +235,146 @@ describe("CrossOrigin", () => {
                 expect(el?.textContent).toEqual("Button2");
             });
     });
+
+    it("should request focus and wait till the element becomes accessible", async () => {
+        const namesForOuter = ["name", "name2"];
+        const namesForInner = ["frame1-name", "frame1-name2"];
+
+        await new BroTest.BroTest()
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <iframe
+                        id="frame1"
+                        src={BroTest.getTestPageURL(tabsterParts)}
+                    ></iframe>
+                    <button
+                        id="outer-button"
+                        aria-hidden="true"
+                        {...getTabsterAttribute({
+                            observed: { names: namesForOuter },
+                        })}
+                    >
+                        ButtonInOuter
+                    </button>
+                </div>
+            )
+            .frame("frame1")
+            .html(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        id="inner-button"
+                        aria-hidden="true"
+                        {...getTabsterAttribute({
+                            observed: { names: namesForInner },
+                        })}
+                    >
+                        ButtonInInner
+                    </button>
+                </div>
+            )
+            .eval((observedName) => {
+                getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    observedName,
+                    3000
+                );
+            }, namesForInner[0])
+            .activeElement((el) => {
+                expect(el).toBeNull();
+            })
+            .eval(() => {
+                document
+                    .getElementById("inner-button")
+                    ?.removeAttribute("aria-hidden");
+            })
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInInner");
+            })
+            .eval(() => {
+                // Setting it back to try again from the outer iframe.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                document
+                    .getElementById("inner-button")!
+                    .setAttribute("aria-hidden", "true");
+            })
+            .unframe()
+            .eval((observedName) => {
+                getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    observedName,
+                    3000
+                );
+            }, namesForOuter[0])
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+            })
+            .eval(() => {
+                document
+                    .getElementById("outer-button")
+                    ?.removeAttribute("aria-hidden");
+            })
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInOuter");
+            })
+            .eval((observedName) => {
+                // Setting it back to try again from the inner iframe.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                document
+                    .getElementById("outer-button")!
+                    .setAttribute("aria-hidden", "true");
+
+                // Trying the inner iframe again.
+                getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    observedName,
+                    3000
+                );
+            }, namesForInner[1])
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInOuter");
+            })
+            .frame("frame1")
+            .eval(() => {
+                document
+                    .getElementById("inner-button")
+                    ?.removeAttribute("aria-hidden");
+            })
+            .unframe()
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+            })
+            .frame("frame1")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInInner");
+            })
+            .eval((observedName) => {
+                getTabsterTestVariables().crossOrigin?.observedElement?.requestFocus(
+                    observedName,
+                    3000
+                );
+            }, namesForOuter[1])
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInInner");
+            })
+            .unframe()
+            .activeElement((el) => {
+                expect(el?.tag).toEqual("iframe");
+            })
+            .eval(() => {
+                document
+                    .getElementById("outer-button")
+                    ?.removeAttribute("aria-hidden");
+            })
+            .wait(200)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("ButtonInOuter");
+            })
+            .frame("frame1")
+            .activeElement((el) => {
+                expect(el).toBeNull();
+            });
+    });
 });
