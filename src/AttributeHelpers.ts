@@ -41,7 +41,7 @@ export function mergeTabsterProps<E extends Types.TabsterAttributeProps>(
 ): void {
     for (const key of Object.keys(
         newProps
-    ) as (keyof (Types.TabsterAttributeProps & E))[]) {
+    ) as (keyof Types.TabsterAttributeProps)[]) {
         const value = newProps[key];
 
         if (value) {
