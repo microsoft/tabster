@@ -51,10 +51,7 @@ export class ExtensibleAPI<A, I, E> implements Types.ExtensibleAPI<A, I, E> {
             this._isInitialized = true;
 
             this._extensions.forEach((Extension) => {
-                this._extensionInstances.set(
-                    Extension,
-                    new Extension(this as unknown as A, this._tabster)
-                );
+                this._createExtension(Extension);
             });
         }
     }
@@ -73,10 +70,7 @@ export class ExtensibleAPI<A, I, E> implements Types.ExtensibleAPI<A, I, E> {
         this._extensions.add(Extension);
 
         if (this._isInitialized) {
-            this._extensionInstances.set(
-                Extension,
-                new Extension(this as unknown as A, this._tabster)
-            );
+            this._createExtension(Extension);
         }
     }
 
@@ -132,6 +126,15 @@ export class ExtensibleAPI<A, I, E> implements Types.ExtensibleAPI<A, I, E> {
                 this._tabster,
                 this._win
             )
+        );
+    }
+
+    private _createExtension(
+        Extension: Types.TabsterPartExtensionClass<A, I, E>
+    ): void {
+        this._extensionInstances.set(
+            Extension,
+            new Extension(this as unknown as A, this._tabster)
         );
     }
 
