@@ -51,10 +51,6 @@ export interface Disposable {
     dispose(): void;
 }
 
-export interface ExtensibleAPIEvents {
-    [key: string]: () => void;
-}
-
 export interface ExtensibleAPI<A, I, E> {
     /**
      * Should be called by the Tabster part (for example, MoverAPI) once it has finished the initialization.
@@ -99,6 +95,13 @@ export interface ExtensibleAPI<A, I, E> {
     dispose(): void;
 }
 
+/**
+ * A base class for Tabster part extensions.
+ * It is passed to registerExtension() and is instantiated once the relevant part is ready.
+ * Once an instance of a tabster part is created, instanceCreated() is called.
+ * Once an instance of a tabster part is about to be disposed, instanceDispose() is called.
+ * onEvent() is called when the Tabster part triggers an event.
+ */
 export abstract class TabsterPartExtension<A, I, E> {
     abstract instanceCreated(
         instance: I,
@@ -128,16 +131,6 @@ export abstract class TabsterPartExtension<A, I, E> {
 export interface TabsterPartExtensionClass<A, I, E> {
     new (api: A, tabster: TabsterCore): TabsterPartExtension<A, I, E>;
 }
-
-// export abstract class Extension<A, I> {
-//     constructor(api: A) {
-//         this._api = api;
-//         this._tabster = tabster;
-//     }
-
-//     /** @internal */
-//     abstract dispose(): void;
-// }
 
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
