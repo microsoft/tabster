@@ -94,7 +94,7 @@ export function setTabsterAttribute<E extends Types.TabsterAttributeProps>(
     if (Object.keys(props).length > 0) {
         element.setAttribute(
             Types.TabsterAttributeName,
-            getTabsterAttribute<E>(props, true)
+            getTabsterAttribute(props, true)
         );
     } else {
         element.removeAttribute(Types.TabsterAttributeName);
