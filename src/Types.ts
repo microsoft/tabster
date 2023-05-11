@@ -51,6 +51,94 @@ export interface Disposable {
     dispose(): void;
 }
 
+export interface ExtensibleAPIEvents {
+    [key: string]: () => void;
+}
+
+export interface ExtensibleAPI<A, I, E> {
+    /**
+     * Should be called by the Tabster part (for example, MoverAPI) once it has finished the initialization.
+     * The extensions will be initialized in this call.
+     */
+    /** @internal */
+    _setInitialized(): void;
+
+    /**
+     * Register an extension.
+     */
+    registerExtension(Extension: TabsterPartExtensionClass<A, I, E>): void;
+
+    /**
+     * Unregister an extension.
+     */
+    unregisterExtension(Extension: TabsterPartExtensionClass<A, I, E>): void;
+
+    /**
+     * Should be called by the Tabster part (for example, MoverAPI) to trigger an event and
+     * call the handlers of that event in the extensions.
+     */
+    triggerExtensionEvent<N extends keyof E>(name: N, details: E[N]): void;
+
+    /**
+     * Should be called by the Tabster part (for example, MoverAPI) when it has created an instance.
+     * Invokes instanceCreated() callbacks of all registered extensions.
+     * @param instance instance of the Tabster part.
+     */
+    /** @internal */
+    _instanceCreated(instance: I): void;
+
+    /**
+     * Should be called by the Tabster part (for example, MoverAPI) when it is going to dispose an instance.
+     * Invokes instanceDispose() callbacks of all registered extensions.
+     * @param instance instance of the Tabster part.
+     */
+    /** @internal */
+    _instanceDispose(instance: I): void;
+
+    /** @internal */
+    dispose(): void;
+}
+
+export abstract class TabsterPartExtension<A, I, E> {
+    abstract instanceCreated(
+        instance: I,
+        api: A,
+        tabster: TabsterCore,
+        win: GetWindow
+    ): void;
+
+    abstract instanceDispose(
+        instance: I,
+        api: A,
+        tabster: TabsterCore,
+        win: GetWindow
+    ): void;
+
+    onEvent?<N extends keyof E>(
+        name: N,
+        details: E[N],
+        api: A,
+        tabster: TabsterCore,
+        win: GetWindow
+    ): void;
+
+    abstract dispose(api: A, tabster: TabsterCore, win: GetWindow): void;
+}
+
+export interface TabsterPartExtensionClass<A, I, E> {
+    new (api: A, tabster: TabsterCore): TabsterPartExtension<A, I, E>;
+}
+
+// export abstract class Extension<A, I> {
+//     constructor(api: A) {
+//         this._api = api;
+//         this._tabster = tabster;
+//     }
+
+//     /** @internal */
+//     abstract dispose(): void;
+// }
+
 export interface Subscribable<A, B = undefined> {
     subscribe(callback: SubscribableCallback<A, B>): void;
     /** @internal */
@@ -617,14 +705,6 @@ export interface MoverProps {
      * @default 0.8
      */
     visibilityTolerance?: number;
-    /**
-     * A [CSS selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors). If the currently focused element matches this selector,
-     * and the arrow key press would perform no action inside that element,
-     * the focus will be moved to the Mover the same way as if you would Tab
-     * or Shift+Tab inside the Mover from outside. Meaning that props like
-     * memorizeCurrent and hasDefault will be taken into consideration.
-     */
-    nextFor?: string;
 }
 
 export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
@@ -659,8 +739,16 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
+export interface MoverAPIEvents {
+    noaction: { keyCode: number };
+    ololo: { aa: 123 };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MoverAPI extends MoverAPIInternal, Disposable {}
+export interface MoverAPI
+    extends MoverAPIInternal,
+        Disposable,
+        ExtensibleAPI<MoverAPI, Mover, MoverAPIEvents> {}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;

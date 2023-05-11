@@ -41,6 +41,7 @@ type TabsterParts = Partial<{
     deloser: boolean;
     outline: boolean;
     mover: boolean;
+    moverExtensions: boolean;
     groupper: boolean;
     observed: boolean;
     crossOrigin: boolean;

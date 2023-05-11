@@ -31,6 +31,7 @@ import {
 
 export { Types };
 export * from "./AttributeHelpers";
+export * as Extensions from "./Extensions";
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;

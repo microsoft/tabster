@@ -18,6 +18,7 @@
                 mergeTabsterProps,
                 getTabsterAttribute,
                 setTabsterAttribute,
+                Extensions,
             } from "../src";
 
             const tabsterTest = {};
@@ -84,6 +85,11 @@
                 if ("mover" in partsToEnable) {
                     tabsterTest.mover = getMover(tabster);
                     console.log("created mover");
+
+                    tabsterTest.mover.registerExtension(
+                        Extensions.MoverNextFor
+                    );
+                    console.log("registered mover extensions");
                 }
 
                 if ("groupper" in partsToEnable) {

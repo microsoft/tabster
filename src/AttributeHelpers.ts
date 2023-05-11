@@ -5,15 +5,15 @@
 
 import * as Types from "./Types";
 
-export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps
+export function getTabsterAttribute<E extends Types.TabsterAttributeProps>(
+    props: Types.TabsterAttributeProps & E
 ): Types.TabsterDOMAttribute;
-export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps,
+export function getTabsterAttribute<E extends Types.TabsterAttributeProps>(
+    props: Types.TabsterAttributeProps & E,
     plain: true
 ): string;
-export function getTabsterAttribute(
-    props: Types.TabsterAttributeProps,
+export function getTabsterAttribute<E extends Types.TabsterAttributeProps>(
+    props: Types.TabsterAttributeProps & E,
     plain?: true
 ): Types.TabsterDOMAttribute | string {
     const attr = JSON.stringify(props);
@@ -35,13 +35,13 @@ export function getTabsterAttribute(
  *  When the value of a property in newProps is undefined, the property
  *  will be removed from the attribute.
  */
-export function mergeTabsterProps(
-    props: Types.TabsterAttributeProps,
-    newProps: Types.TabsterAttributeProps
+export function mergeTabsterProps<E extends Types.TabsterAttributeProps>(
+    props: Types.TabsterAttributeProps & E,
+    newProps: Types.TabsterAttributeProps & E
 ): void {
     for (const key of Object.keys(
         newProps
-    ) as (keyof Types.TabsterAttributeProps)[]) {
+    ) as (keyof (Types.TabsterAttributeProps & E))[]) {
         const value = newProps[key];
 
         if (value) {
@@ -61,12 +61,12 @@ export function mergeTabsterProps(
  *  When true and the value of a property in newProps is undefined, the property
  *  will be removed from the attribute.
  */
-export function setTabsterAttribute(
+export function setTabsterAttribute<E extends Types.TabsterAttributeProps>(
     element: HTMLElement,
-    newProps: Types.TabsterAttributeProps,
+    newProps: Types.TabsterAttributeProps & E,
     update?: boolean
 ): void {
-    let props: Types.TabsterAttributeProps | undefined;
+    let props: typeof newProps | undefined;
 
     if (update) {
         const attr = element.getAttribute(Types.TabsterAttributeName);
@@ -86,7 +86,7 @@ export function setTabsterAttribute(
     }
 
     if (!props) {
-        props = {};
+        props = {} as typeof newProps;
     }
 
     mergeTabsterProps(props, newProps);
@@ -94,7 +94,7 @@ export function setTabsterAttribute(
     if (Object.keys(props).length > 0) {
         element.setAttribute(
             Types.TabsterAttributeName,
-            getTabsterAttribute(props, true)
+            getTabsterAttribute<E>(props, true)
         );
     } else {
         element.removeAttribute(Types.TabsterAttributeName);

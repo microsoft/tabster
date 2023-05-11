@@ -22,4 +22,5 @@ export {
     makeNoOp,
     isNoOp,
     Types,
+    Extensions,
 } from "./Tabster";
