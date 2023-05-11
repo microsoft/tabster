@@ -734,7 +734,6 @@ interface MoverAPIInternal {
 
 export interface MoverAPIEvents {
     noaction: { keyCode: number };
-    ololo: { aa: 123 };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

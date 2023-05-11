@@ -825,7 +825,7 @@ export class MoverAPI
 
         const mover = ctx?.mover;
 
-        if (ctx && (ctx.isExcludedFromMover || ctx.ignoreKeydown(event))) {
+        if (mover && (ctx.isExcludedFromMover || ctx.ignoreKeydown(event))) {
             return;
         }
 
