@@ -8,7 +8,7 @@ import { matchesSelector, getAdjacentElement } from "./Utils";
 import { Keys } from "./Keys";
 import { FocusedElementState } from "./State/FocusedElement";
 
-interface MoverNextForProps extends Types.MoverProps {
+interface _MoverNextForProps extends Types.MoverProps {
     /**
      * A [CSS selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors).
      * If the currently focused element matches this selector, and the arrow key press
@@ -20,8 +20,8 @@ interface MoverNextForProps extends Types.MoverProps {
     nextFor?: string;
 }
 
-export interface ExtensionProps_MoverNextFor {
-    mover?: MoverNextForProps;
+export interface MoverNextForProps {
+    mover?: _MoverNextForProps;
 }
 
 export class MoverNextFor extends Types.TabsterPartExtension<
@@ -54,7 +54,7 @@ export class MoverNextFor extends Types.TabsterPartExtension<
     }
 
     instanceCreated(mover: Types.Mover): void {
-        const nextFor = (mover.getProps() as MoverNextForProps).nextFor;
+        const nextFor = (mover.getProps() as _MoverNextForProps).nextFor;
 
         if (nextFor) {
             let moversFor = this._moversFor[nextFor];

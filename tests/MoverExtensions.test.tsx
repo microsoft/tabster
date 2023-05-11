@@ -18,11 +18,9 @@ describe("Mover with nextFor", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button>Button1</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: { nextFor: "#next-for" },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: { nextFor: "#next-for" },
+                        })}
                     >
                         <button>Button2</button>
                         <button>Button3</button>
@@ -98,14 +96,12 @@ describe("Mover with nextFor", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button id="next-for-1">Button1</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: {
-                                    nextFor:
-                                        "#next-for-1, #next-for-2, #next-for-3",
-                                },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: {
+                                nextFor:
+                                    "#next-for-1, #next-for-2, #next-for-3",
+                            },
+                        })}
                     >
                         <button>Button2</button>
                         <button>Button3</button>
@@ -113,14 +109,12 @@ describe("Mover with nextFor", () => {
                     </div>
                     <button id="next-for-2">Button5</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: {
-                                    nextFor:
-                                        "#next-for-2, #next-for-3, #next-for-4",
-                                },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: {
+                                nextFor:
+                                    "#next-for-2, #next-for-3, #next-for-4",
+                            },
+                        })}
                     >
                         <button>Button6</button>
                         <button>Button7</button>
@@ -128,14 +122,12 @@ describe("Mover with nextFor", () => {
                     </div>
                     <button id="next-for-3">Button9</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: {
-                                    nextFor:
-                                        "#next-for-2, #next-for-3, #next-for-4",
-                                },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: {
+                                nextFor:
+                                    "#next-for-2, #next-for-3, #next-for-4",
+                            },
+                        })}
                     >
                         <button>Button10</button>
                         <button>Button11</button>
@@ -196,11 +188,9 @@ describe("Mover with nextFor", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button id="button">Button1</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: { nextFor: "body" },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: { nextFor: "body" },
+                        })}
                     >
                         <button>Button2</button>
                         <button>Button3</button>
@@ -239,11 +229,9 @@ describe("Mover with nextFor", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <textarea defaultValue="Hello" />
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: { nextFor: "textarea" },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: { nextFor: "textarea" },
+                        })}
                     >
                         <button>Button1</button>
                         <button>Button2</button>
@@ -272,11 +260,9 @@ describe("Mover with nextFor", () => {
                 <div {...getTabsterAttribute({ root: {} })}>
                     <button id="button">Button1</button>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: { nextFor: "button" },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: { nextFor: "button" },
+                        })}
                     >
                         <button>Button2</button>
                         <button
@@ -325,11 +311,9 @@ describe("Mover with nextFor", () => {
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <div
-                        {...getTabsterAttribute<Extensions.ExtensionProps_MoverNextFor>(
-                            {
-                                mover: { nextFor: "body" },
-                            }
-                        )}
+                        {...getTabsterAttribute<Extensions.MoverNextForProps>({
+                            mover: { nextFor: "body" },
+                        })}
                     >
                         <button>Button1</button>
                         <button
