@@ -637,4 +637,65 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .check(checkDummyOutside);
         });
     });
+
+    it("should force dummy inputs position update when the move out functions are called before the async update on DOM changed", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                </div>
+            )
+        )
+            .eval((dummyAttribute: string) => {
+                const rootElement = document.getElementById("root");
+                const buttonElement = document.createElement("button");
+                buttonElement.textContent = "Button2";
+
+                rootElement?.appendChild(buttonElement);
+
+                const isDummyLast: (boolean | null)[] = [];
+
+                // We've pushed the button to the end of the root element. The dummy
+                // input is supposed to be moved after this element, but that normally
+                // happens asuncronously.
+                isDummyLast.push(
+                    rootElement?.lastElementChild
+                        ? rootElement.lastElementChild.hasAttribute(
+                              dummyAttribute
+                          )
+                        : null
+                );
+
+                const tabster = getTabsterTestVariables().core?.core;
+
+                if (tabster && rootElement) {
+                    // Calling an internal API to force the dummy inputs update.
+                    const root = (
+                        tabster.root.constructor as unknown as {
+                            getRoot: (
+                                tabster: Types.TabsterCore,
+                                element: HTMLElement
+                            ) => Types.Root | undefined;
+                        }
+                    ).getRoot(tabster, rootElement);
+
+                    root?.moveOutWithDefaultAction(false);
+
+                    // After the internal API call above, the dummy input should be
+                    // forced to become the last element again.
+                    isDummyLast.push(
+                        rootElement?.lastElementChild
+                            ? rootElement.lastElementChild.hasAttribute(
+                                  dummyAttribute
+                              )
+                            : null
+                    );
+                }
+
+                return isDummyLast;
+            }, Types.TabsterDummyInputAttributeName)
+            .check((isDummyLast: (boolean | null)[]) => {
+                expect(isDummyLast).toEqual([false, true]);
+            });
+    });
 });

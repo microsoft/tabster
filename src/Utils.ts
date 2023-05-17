@@ -1320,6 +1320,11 @@ class DummyInputManagerCore {
         const last = this._lastDummy;
 
         if (first && last) {
+            // For the sake of performance optimization, the dummy input
+            // position in the DOM updates asynchronously from the DOM change.
+            // Calling _ensurePosition() to make sure the position is correct.
+            this._ensurePosition();
+
             const firstInput = first.input;
             const lastInput = last.input;
             const element = this._element?.get();
@@ -1352,6 +1357,11 @@ class DummyInputManagerCore {
         const last = this._lastDummy;
 
         if (first && last) {
+            // For the sake of performance optimization, the dummy input
+            // position in the DOM updates asynchronously from the DOM change.
+            // Calling _ensurePosition() to make sure the position is correct.
+            this._ensurePosition();
+
             const firstInput = first.input;
             const lastInput = last.input;
             const element = this._element?.get();
@@ -1446,39 +1456,7 @@ class DummyInputManagerCore {
         this._addTimer = this._getWindow().setTimeout(() => {
             delete this._addTimer;
 
-            const element = this._element?.get();
-            const dif = this._firstDummy?.input;
-            const dil = this._lastDummy?.input;
-
-            if (!element || !dif || !dil) {
-                return;
-            }
-
-            if (this._isOutside) {
-                const elementParent = element.parentElement;
-
-                if (elementParent) {
-                    const nextSibling = element.nextElementSibling;
-
-                    if (nextSibling !== dil) {
-                        elementParent.insertBefore(dil, nextSibling);
-                    }
-
-                    if (element.previousElementSibling !== dif) {
-                        elementParent.insertBefore(dif, element);
-                    }
-                }
-            } else {
-                if (element.lastElementChild !== dil) {
-                    element.appendChild(dil);
-                }
-
-                const firstElementChild = element.firstElementChild;
-
-                if (firstElementChild && firstElementChild !== dif) {
-                    element.insertBefore(dif, firstElementChild);
-                }
-            }
+            this._ensurePosition();
 
             if (__DEV__) {
                 this._firstDummy &&
@@ -1490,6 +1468,42 @@ class DummyInputManagerCore {
             this._addTransformOffsets();
         }, 0);
     };
+
+    private _ensurePosition(): void {
+        const element = this._element?.get();
+        const firstDummyInput = this._firstDummy?.input;
+        const lastDummyInput = this._lastDummy?.input;
+
+        if (!element || !firstDummyInput || !lastDummyInput) {
+            return;
+        }
+
+        if (this._isOutside) {
+            const elementParent = element.parentElement;
+
+            if (elementParent) {
+                const nextSibling = element.nextElementSibling;
+
+                if (nextSibling !== lastDummyInput) {
+                    elementParent.insertBefore(lastDummyInput, nextSibling);
+                }
+
+                if (element.previousElementSibling !== firstDummyInput) {
+                    elementParent.insertBefore(firstDummyInput, element);
+                }
+            }
+        } else {
+            if (element.lastElementChild !== lastDummyInput) {
+                element.appendChild(lastDummyInput);
+            }
+
+            const firstElementChild = element.firstElementChild;
+
+            if (firstElementChild && firstElementChild !== firstDummyInput) {
+                element.insertBefore(firstDummyInput, firstElementChild);
+            }
+        }
+    }
 
     private _addTransformOffsets = (): void => {
         this._tabster._dummyObserver.updatePositions(
