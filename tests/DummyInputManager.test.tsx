@@ -638,7 +638,7 @@ describeIfUncontrolled("DummyInputManager", () => {
         });
     });
 
-    it("should force dummy inputs position update when the move out functions are called before the async update on DOM changed", async () => {
+    it("should force dummy inputs position update when the move out functions are called before the async update on DOM change", async () => {
         await new BroTest.BroTest(
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>
@@ -657,7 +657,7 @@ describeIfUncontrolled("DummyInputManager", () => {
 
                 // We've pushed the button to the end of the root element. The dummy
                 // input is supposed to be moved after this element, but that normally
-                // happens asuncronously.
+                // happens asynchronously.
                 isDummyLast.push(
                     rootElement?.lastElementChild
                         ? rootElement.lastElementChild.hasAttribute(
