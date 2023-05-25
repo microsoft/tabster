@@ -377,7 +377,7 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         for (
             let parent = this._outlinedElement.parentElement;
-            parent;
+            parent && parent.nodeType === Node.ELEMENT_NODE;
             parent = parent.parentElement
         ) {
             // The element might be partially visible within its scrollable parent,

@@ -60,7 +60,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     isVisible(el: HTMLElement): boolean {
-        if (!el.ownerDocument) {
+        if (!el.ownerDocument || el.nodeType !== Node.ELEMENT_NODE) {
             return false;
         }
 

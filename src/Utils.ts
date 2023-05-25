@@ -1527,7 +1527,7 @@ class DummyInputManagerCore {
 
         for (
             let element: HTMLElement | undefined | null = from;
-            element;
+            element && element.nodeType === Node.ELEMENT_NODE;
             element = element.parentElement
         ) {
             let scrollTopLeft = scrollTopLeftCache.get(element);
