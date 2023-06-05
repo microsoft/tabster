@@ -62,7 +62,7 @@ export const createTableMover = ({
         {
             mover: {
                 cyclic,
-                direction: TabsterTypes.MoverDirections.Grid,
+                direction,
                 memorizeCurrent,
                 tabbable,
                 trackState,

@@ -853,7 +853,8 @@ export class MoverAPI implements Types.MoverAPI {
             isBoth || direction === Types.MoverDirections.Vertical;
         const isHorizontal =
             isBoth || direction === Types.MoverDirections.Horizontal;
-        const isGrid = direction === Types.MoverDirections.Grid;
+        const isGridLinear = direction === Types.MoverDirections.GridLinear;
+        const isGrid = isGridLinear || direction === Types.MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
 
         let next: HTMLElement | null | undefined;
@@ -891,7 +892,7 @@ export class MoverAPI implements Types.MoverAPI {
                     next.getBoundingClientRect().left
                 );
 
-                if (focusedElementX2 > nextElementX1) {
+                if (!isGridLinear && focusedElementX2 > nextElementX1) {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
@@ -916,7 +917,7 @@ export class MoverAPI implements Types.MoverAPI {
                     next.getBoundingClientRect().right
                 );
 
-                if (nextElementX2 > focusedElementX1) {
+                if (!isGridLinear && nextElementX2 > focusedElementX1) {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
