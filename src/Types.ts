@@ -559,12 +559,14 @@ export interface MoverDirections {
     Vertical: 1; // Only up/down arrows move to the next/previous.
     Horizontal: 2; // Only left/right arrows move to the next/previous.
     Grid: 3; // Two-dimentional movement depending on the visual placement.
+    GridLinear: 4; // Two-dimentional movement depending on the visual placement. Allows linear movement.
 }
 export const MoverDirections: MoverDirections = {
     Both: 0,
     Vertical: 1,
     Horizontal: 2,
     Grid: 3,
+    GridLinear: 4,
 };
 export type MoverDirection = MoverDirections[keyof MoverDirections];
 

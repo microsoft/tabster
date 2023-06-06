@@ -2030,6 +2030,89 @@ describe("Mover with grid", () => {
     });
 });
 
+describe("Mover with linear grid", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should properly move focus with arrow keys in linear grid as <table>", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.GridLinear,
+                            },
+                        })}
+                    >
+                        <table>
+                            <tr>
+                                <td tabIndex={0}>Row1-Col1</td>
+                                <td>
+                                    <button style={{ fontSize: "50%" }}>
+                                        Row1-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row1-Col3</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td tabIndex={0}>Row2-Col1</td>
+                                <td align="right">
+                                    <button
+                                        style={{
+                                            fontSize: "50%",
+                                            marginLeft: 40,
+                                        }}
+                                    >
+                                        Row2-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row2-Col3</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td tabIndex={0}>Row3-Col1</td>
+                                <td align="center">
+                                    <button style={{ fontSize: "50%" }}>
+                                        Row3-Col2
+                                    </button>
+                                </td>
+                                <td style={{ padding: 10 }}>
+                                    <button>Row3-Col3</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col1");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row2-Col1");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Row1-Col3");
+            });
+    });
+});
+
 describe("Adjacent Movers", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });
