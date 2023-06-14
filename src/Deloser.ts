@@ -679,6 +679,14 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         tabster.queueInit(() => {
             this._tabster.focusedElement.subscribe(this._onFocus);
+            const doc = this._win().document;
+
+            const activeElement = doc.activeElement;
+
+            if (activeElement && activeElement !== doc.body) {
+                // Adding currently focused element to the deloser history.
+                this._onFocus(activeElement as HTMLElement);
+            }
         });
 
         const autoDeloser = props?.autoDeloser;

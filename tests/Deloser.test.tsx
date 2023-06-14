@@ -175,3 +175,58 @@ describe("Deloser", () => {
             });
     });
 });
+
+describe("Deloser created lazily", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should add currently focused element to the Deloser history if Deloser is created after the focus", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <button
+                            id="button1"
+                            {...getTabsterAttribute({ deloser: {} })}
+                        >
+                            Button1
+                        </button>
+                    </div>
+                    <div id="second">
+                        <button
+                            id="button2"
+                            {...getTabsterAttribute({ deloser: {} })}
+                        >
+                            Button2
+                        </button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+                const tabster = vars.createTabster?.(window);
+
+                if (tabster) {
+                    vars.getDeloser?.(tabster);
+                }
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .eval(() => {
+                const el = document.getElementById("second");
+                el?.parentElement?.removeChild(el);
+            })
+            .wait(500)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
+});
