@@ -654,7 +654,15 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const parts = this._parts;
         const visibleElements: HTMLElement[] = [];
         const hiddenElements: HTMLElement[] = [];
-        const alwaysAccessibleElements: HTMLElement[] = [];
+        const alwaysAccessibleElementsSelector =
+            tabster.modalizerAlwaysAccessible;
+        const alwaysAccessibleElements: HTMLElement[] =
+            alwaysAccessibleElementsSelector
+                ? Array.prototype.slice.call(
+                      body.querySelectorAll(alwaysAccessibleElementsSelector),
+                      0
+                  )
+                : [];
 
         for (const userId of Object.keys(parts)) {
             const mParts = parts[userId];

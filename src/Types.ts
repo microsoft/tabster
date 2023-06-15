@@ -36,6 +36,13 @@ export interface TabsterCoreProps {
      * This option allows to enable dummy inputs on Root.
      */
     rootDummyInputs?: boolean;
+    /**
+     * When Modalizer is active, we put aria-hidden to everything else to hide
+     * it from screen readers. This CSS selector allows to exclude some elements
+     * from this behaviour. For example, this could be used to exclude aria-live region
+     * with the application-wide status announcements.
+     */
+    modalizerAlwaysAccessible?: string;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -1092,7 +1099,10 @@ export interface Tabster {
 }
 
 export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+    extends Pick<
+            TabsterCoreProps,
+            "controlTab" | "rootDummyInputs" | "modalizerAlwaysAccessible"
+        >,
         Disposable,
         TabsterCoreInternal,
         Omit<Tabster, "core"> {}

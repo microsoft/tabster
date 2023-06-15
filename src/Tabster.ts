@@ -67,6 +67,7 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
+    modalizerAlwaysAccessible?: string;
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
@@ -99,6 +100,7 @@ class TabsterCore implements Types.TabsterCore {
         this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
+        this.modalizerAlwaysAccessible = props?.modalizerAlwaysAccessible;
 
         this._dummyObserver = new DummyInputObserver(getWindow);
 
