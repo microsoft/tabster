@@ -329,18 +329,20 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _augMap: WeakMap<HTMLElement, true>;
     private _aug: WeakRef<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
+    private _alwaysAccessibleSelector: string | undefined;
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
     activeElements: WeakRef<HTMLElement>[];
 
-    constructor(tabster: Types.TabsterCore) {
+    constructor(tabster: Types.TabsterCore, alwaysAccessibleSelector?: string) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._modalizers = {};
         this._parts = {};
         this._augMap = new WeakMap();
         this._aug = [];
+        this._alwaysAccessibleSelector = alwaysAccessibleSelector;
         this.activeElements = [];
 
         if (!tabster.controlTab) {
@@ -654,7 +656,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const parts = this._parts;
         const visibleElements: HTMLElement[] = [];
         const hiddenElements: HTMLElement[] = [];
-        const alwaysAccessibleElements: HTMLElement[] = [];
+        const alwaysAccessibleSelector = this._alwaysAccessibleSelector;
+        const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
+            ? Array.from(body.querySelectorAll(alwaysAccessibleSelector))
+            : [];
 
         for (const userId of Object.keys(parts)) {
             const mParts = parts[userId];

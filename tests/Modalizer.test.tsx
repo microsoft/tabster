@@ -1846,3 +1846,83 @@ describe("Modalizer dispose", () => {
             });
     });
 });
+
+describe("Modalizer with alwaysAccessibleSelector", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should not set aria-hidden on elements that match the alwaysAccessibleSelector", async () => {
+        await new BroTest.BroTest(
+            (
+                <div>
+                    <button id="button1">Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal", isTrapped: true },
+                        })}
+                    >
+                        <button id="button2">Button2</button>
+                    </div>
+                    <button id="button3">Button3</button>
+                    <div id="aria-live" aria-live="polite">
+                        Ololo
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                const tabster = vars.createTabster?.(window, {
+                    autoRoot: {},
+                });
+
+                if (tabster) {
+                    vars.getModalizer?.(tabster, "[aria-live]");
+                }
+            })
+            .focusElement("#button2")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .wait(500)
+            .eval(() => [
+                document.getElementById("button1")?.hasAttribute("aria-hidden"),
+                document
+                    .getElementById("button2")
+                    ?.parentElement?.hasAttribute("aria-hidden"),
+                document.getElementById("button3")?.hasAttribute("aria-hidden"),
+                document
+                    .getElementById("aria-live")
+                    ?.hasAttribute("aria-hidden"),
+            ])
+            .check(([button1, button2, button3, ariaLive]) => {
+                expect(button1).toEqual(true);
+                expect(button2).toEqual(false);
+                expect(button3).toEqual(true);
+                expect(ariaLive).toEqual(false);
+            })
+            .focusElement("#button3")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .wait(500)
+            .eval(() => [
+                document.getElementById("button1")?.hasAttribute("aria-hidden"),
+                document
+                    .getElementById("button2")
+                    ?.parentElement?.hasAttribute("aria-hidden"),
+                document.getElementById("button3")?.hasAttribute("aria-hidden"),
+                document
+                    .getElementById("aria-live")
+                    ?.hasAttribute("aria-hidden"),
+            ])
+            .check(([button1, button2, button3, ariaLive]) => {
+                expect(button1).toEqual(false);
+                expect(button2).toEqual(true);
+                expect(button3).toEqual(false);
+                expect(ariaLive).toEqual(false);
+            });
+    });
+});
