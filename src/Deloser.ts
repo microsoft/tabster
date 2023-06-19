@@ -296,9 +296,11 @@ function buildElementSelector(
     const escapeRegExp = /(:|\.|\[|\]|,|=|@)/g;
     const escapeReplaceValue = "\\$1";
 
-    if (element.id) {
+    const elementId = element.getAttribute("id");
+
+    if (elementId) {
         selector.push(
-            "#" + element.id.replace(escapeRegExp, escapeReplaceValue)
+            "#" + elementId.replace(escapeRegExp, escapeReplaceValue)
         );
     }
 
