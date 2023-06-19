@@ -67,7 +67,6 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
-    modalizerAlwaysAccessible?: string;
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
