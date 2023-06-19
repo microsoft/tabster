@@ -100,7 +100,6 @@ class TabsterCore implements Types.TabsterCore {
         this.uncontrolled = new UncontrolledAPI();
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
-        this.modalizerAlwaysAccessible = props?.modalizerAlwaysAccessible;
 
         this._dummyObserver = new DummyInputObserver(getWindow);
 
@@ -374,11 +373,22 @@ export function getDeloser(
 /**
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
+ * @param alwaysAccessibleSelector When Modalizer is active, we put
+ * aria-hidden to everything else to hide it from screen readers. This CSS
+ * selector allows to exclude some elements from this behaviour. For example,
+ * this could be used to exclude aria-live region with the application-wide
+ * status announcements.
  */
-export function getModalizer(tabster: Types.Tabster): Types.ModalizerAPI {
+export function getModalizer(
+    tabster: Types.Tabster,
+    alwaysAccessibleSelector?: string
+): Types.ModalizerAPI {
     const tabsterCore = tabster.core;
     if (!tabsterCore.modalizer) {
-        tabsterCore.modalizer = new ModalizerAPI(tabsterCore);
+        tabsterCore.modalizer = new ModalizerAPI(
+            tabsterCore,
+            alwaysAccessibleSelector
+        );
     }
 
     return tabsterCore.modalizer;

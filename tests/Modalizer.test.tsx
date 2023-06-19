@@ -1876,11 +1876,10 @@ describe("Modalizer with modalizerAlwaysAccessible selector", () => {
 
                 const tabster = vars.createTabster?.(window, {
                     autoRoot: {},
-                    modalizerAlwaysAccessible: "[aria-live]",
                 });
 
                 if (tabster) {
-                    vars.getModalizer?.(tabster);
+                    vars.getModalizer?.(tabster, "[aria-live]");
                 }
             })
             .focusElement("#button2")
