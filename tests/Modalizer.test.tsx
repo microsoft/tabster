@@ -1847,12 +1847,12 @@ describe("Modalizer dispose", () => {
     });
 });
 
-describe("Modalizer with modalizerAlwaysAccessible selector", () => {
+describe("Modalizer with alwaysAccessibleSelector", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it("should not set aria-hidden on elements that match the modalizerAlwaysAccessible selector", async () => {
+    it("should not set aria-hidden on elements that match the alwaysAccessibleSelector", async () => {
         await new BroTest.BroTest(
             (
                 <div>
