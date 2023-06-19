@@ -658,10 +658,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const hiddenElements: HTMLElement[] = [];
         const alwaysAccessibleSelector = this._alwaysAccessibleSelector;
         const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
-            ? Array.prototype.slice.call(
-                  body.querySelectorAll(alwaysAccessibleSelector),
-                  0
-              )
+            ? Array.from(body.querySelectorAll(alwaysAccessibleSelector))
             : [];
 
         for (const userId of Object.keys(parts)) {
