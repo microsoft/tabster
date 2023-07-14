@@ -70,9 +70,12 @@ export class RestorerAPI implements RestorerAPIType {
     }
 
     dispose(): void {
+        const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
+        win.removeEventListener(EVENT_NAME, this._onRestoreFocus);
+
         if (this._restoreFocusTimeout) {
-            this._getWindow().clearTimeout(this._restoreFocusTimeout);
+            win.clearTimeout(this._restoreFocusTimeout);
         }
     }
 
