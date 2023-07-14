@@ -42,9 +42,6 @@ export const RestorerBasicExample: Story = () => {
     target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
-        const dummy = document.createElement("button");
-        dummy.textContent = "dummy";
-        example.append(dummy);
         document.getElementById("unmount")?.addEventListener("click", () => {
             source.remove();
         });

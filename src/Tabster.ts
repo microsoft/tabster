@@ -179,6 +179,7 @@ class TabsterCore implements Types.TabsterCore {
         this.mover?.dispose();
         this.modalizer?.dispose();
         this.observedElement?.dispose();
+        this.restorer?.dispose();
 
         this.keyboardNavigation.dispose();
         this.focusable.dispose();
