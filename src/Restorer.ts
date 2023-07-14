@@ -115,8 +115,7 @@ export class RestorerAPI implements RestorerAPIType {
         }
 
         let weakRef = this._history.pop();
-        // parentElement is null when the element is no longer in DOM
-        while (!weakRef?.deref()?.parentElement) {
+        while (!doc.body.contains(weakRef?.deref()?.parentElement ?? null)) {
             console.log("loop");
             weakRef = this._history.pop();
         }
