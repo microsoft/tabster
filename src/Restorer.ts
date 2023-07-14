@@ -52,6 +52,7 @@ export class RestorerAPI implements RestorerAPIType {
     private _history: WeakRef<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
+    private _restoreFocusTimeout = 0;
     private _getWindow: GetWindow;
 
     constructor(
@@ -70,10 +71,20 @@ export class RestorerAPI implements RestorerAPIType {
 
     dispose(): void {
         this._focusedElementState.unsubscribe(this._onFocusIn);
+        if (this._restoreFocusTimeout) {
+            this._getWindow().clearTimeout(this._restoreFocusTimeout);
+        }
     }
 
     private _onRestoreFocus = (e: Event) => {
-        setTimeout(() => this._restoreFocus(e.target as HTMLElement));
+        const win = this._getWindow();
+        if (this._restoreFocusTimeout) {
+            win.clearTimeout(this._restoreFocusTimeout);
+        }
+
+        this._restoreFocusTimeout = win.setTimeout(() =>
+            this._restoreFocus(e.target as HTMLElement)
+        );
     };
 
     private _onFocusIn = (element: HTMLElement | undefined) => {
