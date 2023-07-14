@@ -109,7 +109,7 @@ export class RestorerAPI implements RestorerAPIType {
             // clicking on any empty space focuses body - this is can be a false positive
             !this._keyboardNavState.isNavigatingWithKeyboard() &&
             // source no longer exists on DOM - always restore focus
-            source.parentElement !== null
+            !doc.body.contains(source)
         ) {
             return;
         }
