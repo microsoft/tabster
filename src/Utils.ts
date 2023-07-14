@@ -1681,3 +1681,24 @@ export function augmentAttribute(
 
     return ret;
 }
+
+export function getTabsterAttributeOnElement(
+    element: HTMLElement
+): Types.TabsterAttributeProps | null {
+    if (!element.hasAttribute(Types.TabsterAttributeName)) {
+        return null;
+    }
+
+    // We already checked the presence with `hasAttribute`
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const rawAttribute = element.getAttribute(Types.TabsterAttributeName)!;
+    let tabsterAttribute: Types.TabsterAttributeProps;
+    try {
+        tabsterAttribute = JSON.parse(rawAttribute);
+    } catch {
+        console.error("Tabster: failed to parse attribute", rawAttribute);
+        tabsterAttribute = {};
+    }
+
+    return tabsterAttribute;
+}

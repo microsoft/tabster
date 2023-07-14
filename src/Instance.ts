@@ -87,6 +87,7 @@ export function updateTabsterByAttribute(
                 case "root":
                 case "groupper":
                 case "modalizer":
+                case "restorer":
                 case "mover":
                     // eslint-disable-next-line no-case-declarations
                     const part = tabsterOnElement[key];
@@ -175,6 +176,17 @@ export function updateTabsterByAttribute(
                         );
                     }
                 }
+                break;
+
+            case "restorer":
+                // TODO implement setProps on restorer API
+                if (newTabsterProps.restorer && tabster.restorer) {
+                    tabsterOnElement.restorer = tabster.restorer.createRestorer(
+                        element,
+                        newTabsterProps.restorer
+                    );
+                }
+
                 break;
 
             case "focusable":
