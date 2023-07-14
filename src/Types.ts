@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Res } from "./Restorer";
-
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
 export const DeloserEventName = "tabster:deloser";
