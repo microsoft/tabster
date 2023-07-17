@@ -915,6 +915,20 @@ export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
     ): boolean;
 }
 
+/**
+ * A signature for the accessibleCheck callback from getModalizer().
+ * It is called when active Modalizer sets aria-hidden on elements outsidef of it.
+ *
+ * @param element The element that is about to receive aria-hidden.
+ * @param activeModalizerElements The container elements of the active modalizer.
+ * @returns true if the element should remain accessible and should not receive
+ * aria-hidden.
+ */
+export type ModalizerElementAccessibleCheck = (
+    element: HTMLElement,
+    activeModalizerElements?: HTMLElement[]
+) => boolean;
+
 export interface DeloserOnElement {
     deloser: Deloser;
 }
