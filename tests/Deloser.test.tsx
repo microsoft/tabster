@@ -174,6 +174,28 @@ describe("Deloser", () => {
                 expect(el?.textContent).toEqual("Button4");
             });
     });
+
+    it("should restore focus in <form> with named inputs", async () => {
+        await new BroTest.BroTest(
+            (
+                <form {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                    <button>Button1</button>
+                    <input name="id" />
+                    <button>Button2</button>
+                </form>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.attributes.name).toEqual("id");
+            })
+            .removeElement()
+            .wait(300)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
 });
 
 describe("Deloser created lazily", () => {
