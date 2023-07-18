@@ -377,16 +377,24 @@ export function getDeloser(
  * selector allows to exclude some elements from this behaviour. For example,
  * this could be used to exclude aria-live region with the application-wide
  * status announcements.
+ * @param accessibleCheck An optional callback that will be called when
+ * active Modalizer wants to hide an element that doesn't belong to it from
+ * the screen readers by setting aria-hidden. Similar to alwaysAccessibleSelector
+ * but allows to address the elements programmatically rather than with a selector.
+ * If the callback returns true, the element will not receive aria-hidden.
  */
 export function getModalizer(
     tabster: Types.Tabster,
-    alwaysAccessibleSelector?: string
+    // @deprecated use accessibleCheck.
+    alwaysAccessibleSelector?: string,
+    accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const tabsterCore = tabster.core;
     if (!tabsterCore.modalizer) {
         tabsterCore.modalizer = new ModalizerAPI(
             tabsterCore,
-            alwaysAccessibleSelector
+            alwaysAccessibleSelector,
+            accessibleCheck
         );
     }
 
