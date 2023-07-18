@@ -385,6 +385,7 @@ export function getDeloser(
  */
 export function getModalizer(
     tabster: Types.Tabster,
+    // @deprecated use accessibleCheck.
     alwaysAccessibleSelector?: string,
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
