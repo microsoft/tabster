@@ -14,10 +14,10 @@ describe("Restorer", () => {
     it("should restore focus when focus is moved to body from source", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -44,10 +44,10 @@ describe("Restorer", () => {
     it("should restore focus when source is a focusable element", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -74,10 +74,10 @@ describe("Restorer", () => {
     it("should follow target history", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -108,10 +108,10 @@ describe("Restorer", () => {
     it("should follow target history when element is removed", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -143,10 +143,10 @@ describe("Restorer", () => {
     it("should not restore focus when lost focus is not on body", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -178,7 +178,7 @@ describe("Restorer", () => {
     it("should not restore focus when focus is not lost from source", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -205,10 +205,10 @@ describe("Restorer", () => {
     it("should not restore focus during mouse navigation mode", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (
@@ -234,10 +234,10 @@ describe("Restorer", () => {
     it("should restore focus during mouse navigation mode if source is removed from DOM", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.target },
+            restorer: { type: Types.RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.source },
+            restorer: { type: Types.RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (

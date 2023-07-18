@@ -14,14 +14,14 @@ export default {
 export const RestorerBasicExample: Story = () => {
     const sourceAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.source },
+            restorer: { type: TabsterTypes.RestorerTypes.Source },
         },
         true
     );
 
     const targetAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.target },
+            restorer: { type: TabsterTypes.RestorerTypes.Target },
         },
         true
     );
@@ -55,14 +55,14 @@ export const RestorerBasicExample: Story = () => {
 export const UseTargetHistory: Story = () => {
     const sourceAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.source },
+            restorer: { type: TabsterTypes.RestorerTypes.Source },
         },
         true
     );
 
     const targetAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.target },
+            restorer: { type: TabsterTypes.RestorerTypes.Target },
         },
         true
     );

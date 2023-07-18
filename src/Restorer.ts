@@ -33,14 +33,14 @@ function createRestorer(
     };
 
     const dispose = () => {
-        if (type === RestorerTypes.source) {
+        if (type === RestorerTypes.Source) {
             element?.removeEventListener("focusout", onFocusOut);
         }
 
         element = undefined;
     };
 
-    if (type === RestorerTypes.source) {
+    if (type === RestorerTypes.Source) {
         element?.addEventListener("focusout", onFocusOut);
     }
 
@@ -73,7 +73,7 @@ export function createRestorerAPI(
         }
 
         const tabsterAttribute = getTabsterAttributeOnElement(element);
-        if (tabsterAttribute?.restorer?.type !== RestorerTypes.target) {
+        if (tabsterAttribute?.restorer?.type !== RestorerTypes.Target) {
             return;
         }
 

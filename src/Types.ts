@@ -563,8 +563,8 @@ export interface MoverDirections {
 }
 
 export const RestorerTypes = {
-    source: 0,
-    target: 1,
+    Source: 0,
+    Target: 1,
 } as const;
 
 export type RestorerType = typeof RestorerTypes[keyof typeof RestorerTypes];
