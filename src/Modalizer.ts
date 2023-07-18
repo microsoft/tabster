@@ -338,6 +338,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     constructor(
         tabster: Types.TabsterCore,
+        // @deprecated use accessibleCheck.
         alwaysAccessibleSelector?: string,
         accessibleCheck?: Types.ModalizerElementAccessibleCheck
     ) {
