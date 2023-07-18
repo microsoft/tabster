@@ -12,6 +12,7 @@
                 getGroupper,
                 getModalizer,
                 getMover,
+                getRestorer,
                 getObservedElement,
                 getOutline,
                 makeNoOp,
@@ -94,6 +95,11 @@
                 if ("observed" in partsToEnable) {
                     tabsterTest.observedElement = getObservedElement(tabster);
                     console.log("created observed");
+                }
+
+                if ("restorer" in partsToEnable) {
+                    tabsterTest.crossOrigin = getRestorer(tabster);
+                    console.log("created restorer");
                 }
 
                 if ("crossOrigin" in partsToEnable) {
