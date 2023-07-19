@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { getTabsterOnElement } from "./Instance";
 import type {
     RestorerAPI as RestorerAPIType,
     GetWindow,
-    RestorerType,
     Restorer as RestorerInterace,
     RestorerProps,
     KeyboardNavigationState,
@@ -14,7 +14,7 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { TabsterPart, getTabsterAttributeOnElement } from "./Utils";
+import { TabsterPart } from "./Utils";
 
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
@@ -96,8 +96,10 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
-        const tabsterAttribute = getTabsterAttributeOnElement(element);
-        if (tabsterAttribute?.restorer?.type !== RestorerTypes.Target) {
+        const tabsterAttribute = getTabsterOnElement(this._tabster, element);
+        if (
+            tabsterAttribute?.restorer?.getProps().type !== RestorerTypes.Target
+        ) {
             return;
         }
 
