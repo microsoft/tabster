@@ -11,35 +11,38 @@ import type {
     RestorerProps,
     KeyboardNavigationState,
     FocusedElementState,
+    TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { getTabsterAttributeOnElement } from "./Utils";
+import { TabsterPart, getTabsterAttributeOnElement } from "./Utils";
 
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
-class Restorer implements RestorerInterace {
-    private _element: HTMLElement | undefined;
-    private _type: RestorerType;
-    constructor(element: HTMLElement, type: RestorerType) {
-        this._element = element;
-        this._type = type;
-        if (this._type === RestorerTypes.Source) {
-            this._element.addEventListener("focusout", this._onFocusOut);
+class Restorer extends TabsterPart<RestorerProps> implements RestorerInterace {
+    constructor(
+        tabster: TabsterCore,
+        element: HTMLElement,
+        props: RestorerProps
+    ) {
+        super(tabster, element, props);
+        if (this._props.type === RestorerTypes.Source) {
+            const element = this._element?.get();
+            element?.addEventListener("focusout", this._onFocusOut);
         }
     }
 
     dispose(): void {
-        if (this._type === RestorerTypes.Source) {
-            this._element?.removeEventListener("focusout", this._onFocusOut);
+        if (this._props.type === RestorerTypes.Source) {
+            const element = this._element?.get();
+            element?.removeEventListener("focusout", this._onFocusOut);
         }
-
-        this._element = undefined;
     }
 
     private _onFocusOut = (e: FocusEvent) => {
         if (e.relatedTarget === null) {
-            this._element?.dispatchEvent(
+            const element = this._element?.get();
+            element?.dispatchEvent(
                 new Event(EVENT_NAME, {
                     bubbles: true,
                 })
@@ -49,22 +52,20 @@ class Restorer implements RestorerInterace {
 }
 
 export class RestorerAPI implements RestorerAPIType {
+    private _tabster: TabsterCore;
     private _history: WeakRef<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
     private _restoreFocusTimeout = 0;
     private _getWindow: GetWindow;
 
-    constructor(
-        getWindow: GetWindow,
-        keyboardNavState: KeyboardNavigationState,
-        focusedElementState: FocusedElementState
-    ) {
-        this._getWindow = getWindow;
+    constructor(tabster: TabsterCore) {
+        this._tabster = tabster;
+        this._getWindow = tabster.getWindow;
         this._getWindow().addEventListener(EVENT_NAME, this._onRestoreFocus);
 
-        this._keyboardNavState = keyboardNavState;
-        this._focusedElementState = focusedElementState;
+        this._keyboardNavState = tabster.keyboardNavigation;
+        this._focusedElementState = tabster.focusedElement;
 
         this._focusedElementState.subscribe(this._onFocusIn);
     }
@@ -138,6 +139,6 @@ export class RestorerAPI implements RestorerAPIType {
     };
 
     public createRestorer(element: HTMLElement, props: RestorerProps) {
-        return new Restorer(element, props.type);
+        return new Restorer(this._tabster, element, props);
     }
 }

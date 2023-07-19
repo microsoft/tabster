@@ -930,7 +930,7 @@ interface RestorerAPIInternal {
 
 export interface RestorerAPI extends RestorerAPIInternal, Disposable {}
 
-export type Restorer = Disposable;
+export interface Restorer extends Disposable, TabsterPart<RestorerProps> {}
 
 export interface DeloserOnElement {
     deloser: Deloser;

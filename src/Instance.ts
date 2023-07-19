@@ -179,12 +179,24 @@ export function updateTabsterByAttribute(
                 break;
 
             case "restorer":
-                // TODO implement setProps on restorer API
-                if (newTabsterProps.restorer && tabster.restorer) {
-                    tabsterOnElement.restorer = tabster.restorer.createRestorer(
-                        element,
-                        newTabsterProps.restorer
+                if (tabsterOnElement.restorer) {
+                    tabsterOnElement.restorer.setProps(
+                        newTabsterProps.restorer as Types.RestorerProps
                     );
+                } else {
+                    if (tabster.restorer) {
+                        if (newTabsterProps.restorer) {
+                            tabsterOnElement.restorer =
+                                tabster.restorer.createRestorer(
+                                    element,
+                                    newTabsterProps.restorer
+                                );
+                        }
+                    } else if (__DEV__) {
+                        console.error(
+                            "Restorer API used before initialization, please call `getRestorer()`"
+                        );
+                    }
                 }
 
                 break;

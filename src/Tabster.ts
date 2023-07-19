@@ -429,14 +429,8 @@ export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
 
 export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
     const tabsterCore = tabster.core;
-    const { getWindow, keyboardNavigation, focusedElement } =
-        tabsterCore;
     if (!tabsterCore.restorer) {
-        tabsterCore.restorer = new RestorerAPI(
-            getWindow,
-            keyboardNavigation,
-            focusedElement
-        );
+        tabsterCore.restorer = new RestorerAPI(tabsterCore);
     }
 
     return tabsterCore.restorer;
