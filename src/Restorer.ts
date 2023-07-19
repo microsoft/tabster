@@ -7,7 +7,7 @@ import { getTabsterOnElement } from "./Instance";
 import type {
     RestorerAPI as RestorerAPIType,
     GetWindow,
-    Restorer as RestorerInterace,
+    Restorer as RestorerInterface,
     RestorerProps,
     KeyboardNavigationState,
     FocusedElementState,
@@ -19,7 +19,7 @@ import { TabsterPart } from "./Utils";
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
-class Restorer extends TabsterPart<RestorerProps> implements RestorerInterace {
+class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     constructor(
         tabster: TabsterCore,
         element: HTMLElement,
@@ -133,7 +133,6 @@ export class RestorerAPI implements RestorerAPIType {
 
         let weakRef = this._history.pop();
         while (!doc.body.contains(weakRef?.deref()?.parentElement ?? null)) {
-            console.log("loop");
             weakRef = this._history.pop();
         }
 
