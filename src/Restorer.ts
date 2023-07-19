@@ -115,7 +115,7 @@ export class RestorerAPI implements RestorerAPIType {
         this._history.push(new WeakRef<HTMLElement>(element));
     };
 
-    private _restoreFocus = (Source: HTMLElement) => {
+    private _restoreFocus = (source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
         const doc = this._getWindow().document;
         if (doc.activeElement !== document.body) {
@@ -126,13 +126,16 @@ export class RestorerAPI implements RestorerAPIType {
             // clicking on any empty space focuses body - this is can be a false positive
             !this._keyboardNavState.isNavigatingWithKeyboard() &&
             // Source no longer exists on DOM - always restore focus
-            doc.body.contains(Source)
+            doc.body.contains(source)
         ) {
             return;
         }
 
         let weakRef = this._history.pop();
-        while (!doc.body.contains(weakRef?.deref()?.parentElement ?? null)) {
+        while (
+            weakRef &&
+            !doc.body.contains(weakRef.deref()?.parentElement ?? null)
+        ) {
             weakRef = this._history.pop();
         }
 
