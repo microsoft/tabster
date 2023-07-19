@@ -330,12 +330,18 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _aug: WeakRef<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
     private _alwaysAccessibleSelector: string | undefined;
+    private _accessibleCheck: Types.ModalizerElementAccessibleCheck | undefined;
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
     activeElements: WeakRef<HTMLElement>[];
 
-    constructor(tabster: Types.TabsterCore, alwaysAccessibleSelector?: string) {
+    constructor(
+        tabster: Types.TabsterCore,
+        // @deprecated use accessibleCheck.
+        alwaysAccessibleSelector?: string,
+        accessibleCheck?: Types.ModalizerElementAccessibleCheck
+    ) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._modalizers = {};
@@ -343,6 +349,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._augMap = new WeakMap();
         this._aug = [];
         this._alwaysAccessibleSelector = alwaysAccessibleSelector;
+        this._accessibleCheck = accessibleCheck;
         this.activeElements = [];
 
         if (!tabster.controlTab) {
@@ -660,18 +667,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
             ? Array.from(body.querySelectorAll(alwaysAccessibleSelector))
             : [];
+        const activeModalizerElements: HTMLElement[] = [];
 
         for (const userId of Object.keys(parts)) {
-            const mParts = parts[userId];
+            const modalizerParts = parts[userId];
 
-            for (const id of Object.keys(mParts)) {
-                const m = mParts[id];
-                const el = m.getElement();
-                const props = m.getProps();
+            for (const id of Object.keys(modalizerParts)) {
+                const modalizer = modalizerParts[id];
+                const el = modalizer.getElement();
+                const props = modalizer.getProps();
                 const isAlwaysAccessible = props.isAlwaysAccessible;
 
                 if (el) {
                     if (userId === activeId) {
+                        activeModalizerElements.push(el);
+
                         if (!this.currentIsOthersAccessible) {
                             visibleElements.push(el);
                         }
@@ -711,6 +721,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 }
             } else if (
                 hide &&
+                !this._accessibleCheck?.(element, activeModalizerElements) &&
                 augmentAttribute(tabster, element, _ariaHidden, "true")
             ) {
                 augmentedMap.set(element, true);
