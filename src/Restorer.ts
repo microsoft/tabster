@@ -4,9 +4,10 @@
  */
 
 import type {
-    RestorerAPI,
+    RestorerAPI as RestorerAPIType,
     GetWindow,
-    Restorer,
+    RestorerType,
+    Restorer as RestorerInterace,
     RestorerProps,
     KeyboardNavigationState,
     FocusedElementState,
@@ -17,57 +18,79 @@ import { getTabsterAttributeOnElement } from "./Utils";
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
-function createRestorer(
-    element: HTMLElement | undefined,
-    props: RestorerProps
-): Restorer {
-    const { type } = props;
-    const onFocusOut = (e: FocusEvent) => {
+class Restorer implements RestorerInterace {
+    private _element: HTMLElement | undefined;
+    private _type: RestorerType;
+    constructor(element: HTMLElement, type: RestorerType) {
+        this._element = element;
+        this._type = type;
+        if (this._type === RestorerTypes.Source) {
+            this._element.addEventListener("focusout", this._onFocusOut);
+        }
+    }
+
+    dispose(): void {
+        if (this._type === RestorerTypes.Source) {
+            this._element?.removeEventListener("focusout", this._onFocusOut);
+        }
+
+        this._element = undefined;
+    }
+
+    private _onFocusOut = (e: FocusEvent) => {
         if (e.relatedTarget === null) {
-            element?.dispatchEvent(
+            this._element?.dispatchEvent(
                 new Event(EVENT_NAME, {
                     bubbles: true,
                 })
             );
         }
     };
-
-    const dispose = () => {
-        if (type === RestorerTypes.Source) {
-            element?.removeEventListener("focusout", onFocusOut);
-        }
-
-        element = undefined;
-    };
-
-    if (type === RestorerTypes.Source) {
-        element?.addEventListener("focusout", onFocusOut);
-    }
-
-    return {
-        dispose,
-    };
 }
 
-export function createRestorerAPI(
-    getWindow: GetWindow,
-    keyboardNavState: KeyboardNavigationState,
-    focusedElementState: FocusedElementState
-): RestorerAPI {
-    let restoreFocusTimeout = 0;
-    const history: WeakRef<HTMLElement>[] = [];
-    const onRestoreFocus = (e: Event) => {
-        const win = getWindow();
-        if (restoreFocusTimeout) {
-            win.clearTimeout(restoreFocusTimeout);
+export class RestorerAPI implements RestorerAPIType {
+    private _history: WeakRef<HTMLElement>[] = [];
+    private _keyboardNavState: KeyboardNavigationState;
+    private _focusedElementState: FocusedElementState;
+    private _restoreFocusTimeout = 0;
+    private _getWindow: GetWindow;
+
+    constructor(
+        getWindow: GetWindow,
+        keyboardNavState: KeyboardNavigationState,
+        focusedElementState: FocusedElementState
+    ) {
+        this._getWindow = getWindow;
+        this._getWindow().addEventListener(EVENT_NAME, this._onRestoreFocus);
+
+        this._keyboardNavState = keyboardNavState;
+        this._focusedElementState = focusedElementState;
+
+        this._focusedElementState.subscribe(this._onFocusIn);
+    }
+
+    dispose(): void {
+        const win = this._getWindow();
+        this._focusedElementState.unsubscribe(this._onFocusIn);
+        win.removeEventListener(EVENT_NAME, this._onRestoreFocus);
+
+        if (this._restoreFocusTimeout) {
+            win.clearTimeout(this._restoreFocusTimeout);
+        }
+    }
+
+    private _onRestoreFocus = (e: Event) => {
+        const win = this._getWindow();
+        if (this._restoreFocusTimeout) {
+            win.clearTimeout(this._restoreFocusTimeout);
         }
 
-        restoreFocusTimeout = win.setTimeout(() =>
-            restoreFocus(e.target as HTMLElement)
+        this._restoreFocusTimeout = win.setTimeout(() =>
+            this._restoreFocus(e.target as HTMLElement)
         );
     };
 
-    const onFocusIn = (element: HTMLElement | undefined) => {
+    private _onFocusIn = (element: HTMLElement | undefined) => {
         if (!element) {
             return;
         }
@@ -78,59 +101,43 @@ export function createRestorerAPI(
         }
 
         // Don't duplicate the top of history
-        if (history[history.length - 1]?.deref() === element) {
+        if (this._history[this._history.length - 1]?.deref() === element) {
             return;
         }
 
-        if (history.length > HISOTRY_DEPTH) {
-            history.shift();
+        if (this._history.length > HISOTRY_DEPTH) {
+            this._history.shift();
         }
 
-        history.push(new WeakRef<HTMLElement>(element));
+        this._history.push(new WeakRef<HTMLElement>(element));
     };
 
-    const restoreFocus = (source: HTMLElement) => {
+    private _restoreFocus = (Source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
-        const doc = getWindow().document;
+        const doc = this._getWindow().document;
         if (doc.activeElement !== document.body) {
             return;
         }
 
         if (
             // clicking on any empty space focuses body - this is can be a false positive
-            !keyboardNavState.isNavigatingWithKeyboard() &&
-            // source no longer exists on DOM - always restore focus
-            doc.body.contains(source)
+            !this._keyboardNavState.isNavigatingWithKeyboard() &&
+            // Source no longer exists on DOM - always restore focus
+            doc.body.contains(Source)
         ) {
             return;
         }
 
-        let weakRef = history.pop();
-        while (
-            weakRef &&
-            !doc.body.contains(weakRef.deref()?.parentElement ?? null)
-        ) {
-            weakRef = history.pop();
+        let weakRef = this._history.pop();
+        while (!doc.body.contains(weakRef?.deref()?.parentElement ?? null)) {
+            console.log("loop");
+            weakRef = this._history.pop();
         }
 
         weakRef?.deref()?.focus();
     };
 
-    getWindow().addEventListener(EVENT_NAME, onRestoreFocus);
-    focusedElementState.subscribe(onFocusIn);
-
-    const dispose = () => {
-        const win = getWindow();
-        focusedElementState.unsubscribe(onFocusIn);
-        win.removeEventListener(EVENT_NAME, onRestoreFocus);
-
-        if (restoreFocusTimeout) {
-            win.clearTimeout(restoreFocusTimeout);
-        }
-    };
-
-    return {
-        dispose,
-        createRestorer,
-    };
+    public createRestorer(element: HTMLElement, props: RestorerProps) {
+        return new Restorer(element, props.type);
+    }
 }

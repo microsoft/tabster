@@ -28,7 +28,7 @@ import {
     stopFakeWeakRefsCleanupAndClearStorage,
     DummyInputObserver,
 } from "./Utils";
-import { createRestorerAPI } from "./Restorer";
+import { RestorerAPI } from "./Restorer";
 
 export { Types };
 export * from "./AttributeHelpers";
@@ -429,9 +429,10 @@ export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
 
 export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
     const tabsterCore = tabster.core;
-    const { getWindow, keyboardNavigation, focusedElement } = tabsterCore;
+    const { getWindow, keyboardNavigation, focusedElement } =
+        tabsterCore;
     if (!tabsterCore.restorer) {
-        tabsterCore.restorer = createRestorerAPI(
+        tabsterCore.restorer = new RestorerAPI(
             getWindow,
             keyboardNavigation,
             focusedElement
