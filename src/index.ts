@@ -19,6 +19,7 @@ export {
     getObservedElement,
     getOutline,
     getInternal,
+    getRestorer,
     makeNoOp,
     isNoOp,
     Types,

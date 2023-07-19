@@ -8,6 +8,7 @@ import {
     getObservedElement,
     getOutline,
     getCrossOrigin,
+    getRestorer,
 } from "../src";
 
 export const parameters = {
@@ -50,6 +51,8 @@ export const decorators = [
         const crossOrigin = getCrossOrigin(tabster);
         crossOrigin.setup();
         console.log("created cross origin");
+        getRestorer(tabster);
+        console.log("created restorer");
 
         window.createTabster = createTabster;
         window.disposeTabster = disposeTabster;

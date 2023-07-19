@@ -87,6 +87,7 @@ export function updateTabsterByAttribute(
                 case "root":
                 case "groupper":
                 case "modalizer":
+                case "restorer":
                 case "mover":
                     // eslint-disable-next-line no-case-declarations
                     const part = tabsterOnElement[key];
@@ -175,6 +176,29 @@ export function updateTabsterByAttribute(
                         );
                     }
                 }
+                break;
+
+            case "restorer":
+                if (tabsterOnElement.restorer) {
+                    tabsterOnElement.restorer.setProps(
+                        newTabsterProps.restorer as Types.RestorerProps
+                    );
+                } else {
+                    if (tabster.restorer) {
+                        if (newTabsterProps.restorer) {
+                            tabsterOnElement.restorer =
+                                tabster.restorer.createRestorer(
+                                    element,
+                                    newTabsterProps.restorer
+                                );
+                        }
+                    } else if (__DEV__) {
+                        console.error(
+                            "Restorer API used before initialization, please call `getRestorer()`"
+                        );
+                    }
+                }
+
                 break;
 
             case "focusable":

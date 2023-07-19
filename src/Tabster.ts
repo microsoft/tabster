@@ -28,6 +28,7 @@ import {
     stopFakeWeakRefsCleanupAndClearStorage,
     DummyInputObserver,
 } from "./Utils";
+import { RestorerAPI } from "./Restorer";
 
 export { Types };
 export * from "./AttributeHelpers";
@@ -85,6 +86,7 @@ class TabsterCore implements Types.TabsterCore {
     modalizer?: Types.ModalizerAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
+    restorer?: Types.RestorerAPI;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = createWeakMap(win);
@@ -177,6 +179,7 @@ class TabsterCore implements Types.TabsterCore {
         this.mover?.dispose();
         this.modalizer?.dispose();
         this.observedElement?.dispose();
+        this.restorer?.dispose();
 
         this.keyboardNavigation.dispose();
         this.focusable.dispose();
@@ -430,6 +433,15 @@ export function getCrossOrigin(tabster: Types.Tabster): Types.CrossOriginAPI {
 export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
     const tabsterCore = tabster.core;
     return tabsterCore.internal;
+}
+
+export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
+    const tabsterCore = tabster.core;
+    if (!tabsterCore.restorer) {
+        tabsterCore.restorer = new RestorerAPI(tabsterCore);
+    }
+
+    return tabsterCore.restorer;
 }
 
 export function disposeTabster(

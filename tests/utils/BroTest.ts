@@ -27,6 +27,7 @@ import {
     mergeTabsterProps,
     setTabsterAttribute,
     Types,
+    getRestorer,
 } from "tabster";
 
 // Importing the production version so that React doesn't complain in the test output.
@@ -44,6 +45,7 @@ type TabsterParts = Partial<{
     groupper: boolean;
     observed: boolean;
     crossOrigin: boolean;
+    restorer: boolean;
 }>;
 
 let _lastRnd = 0;
@@ -109,6 +111,7 @@ export interface BroTestTabsterTestVariables {
     getGroupper?: typeof getGroupper;
     getModalizer?: typeof getModalizer;
     getMover?: typeof getMover;
+    getRestorer?: typeof getRestorer;
     getObservedElement?: typeof getObservedElement;
     getOutline?: typeof getOutline;
     makeNoOp?: typeof makeNoOp;

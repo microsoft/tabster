@@ -561,6 +561,14 @@ export interface MoverDirections {
     Grid: 3; // Two-dimentional movement depending on the visual placement.
     GridLinear: 4; // Two-dimentional movement depending on the visual placement. Allows linear movement.
 }
+
+export const RestorerTypes = {
+    Source: 0,
+    Target: 1,
+} as const;
+
+export type RestorerType = typeof RestorerTypes[keyof typeof RestorerTypes];
+
 export const MoverDirections: MoverDirections = {
     Both: 0,
     Vertical: 1,
@@ -915,6 +923,14 @@ export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
     ): boolean;
 }
 
+interface RestorerAPIInternal {
+    /** @internal */
+    createRestorer(element: HTMLElement, props: RestorerProps): Restorer;
+}
+
+export interface RestorerAPI extends RestorerAPIInternal, Disposable {}
+
+export interface Restorer extends Disposable, TabsterPart<RestorerProps> {}
 /**
  * A signature for the accessibleCheck callback from getModalizer().
  * It is called when active Modalizer sets aria-hidden on elements outsidef of it.
@@ -939,6 +955,10 @@ export interface RootOnElement {
 
 export interface ModalizerOnElement {
     modalizer: Modalizer;
+}
+
+export interface RestorerOnElement {
+    restorer: Restorer;
 }
 
 export interface FocusableOnElement {
@@ -969,6 +989,10 @@ export interface SysOnElement {
     sys: SysProps;
 }
 
+export interface RestorerProps {
+    type: RestorerType;
+}
+
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserProps;
     root: RootProps;
@@ -980,6 +1004,7 @@ export type TabsterAttributeProps = Partial<{
     observed: ObservedElementProps;
     outline: OutlinedElementProps;
     sys: SysProps;
+    restorer: RestorerProps;
 }>;
 
 export interface TabsterAttributeOnElement {
@@ -1001,7 +1026,8 @@ export type TabsterOnElement = Partial<
         ObservedOnElement &
         OutlineOnElement &
         UncontrolledOnElement &
-        SysOnElement
+        SysOnElement &
+        RestorerOnElement
 >;
 
 export interface OutlineElements {
@@ -1061,6 +1087,8 @@ interface TabsterCoreInternal {
     crossOrigin?: CrossOriginAPI;
     /** @internal */
     internal: InternalAPI;
+    /** @internal */
+    restorer?: RestorerAPI;
 
     /** @internal */
     _dummyObserver: DummyInputObserver;
