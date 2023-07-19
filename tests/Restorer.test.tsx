@@ -261,4 +261,37 @@ describe("Restorer", () => {
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
+
+    it("should not run infinite loop when there is no history", async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: Types.RestorerTypes.Target },
+        });
+        const sourceAttr = getTabsterAttribute({
+            restorer: { type: Types.RestorerTypes.Source },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target" {...targetAttr}>
+                        target
+                    </button>
+
+                    <button id="source" {...sourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .click("#target")
+            .activeElement((el) => expect(el?.textContent).toEqual("target"))
+            .click("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                document.getElementById("target")?.remove();
+            })
+            .eval(() => {
+                document.getElementById("source")?.remove();
+            });
+    }, 10000);
 });
