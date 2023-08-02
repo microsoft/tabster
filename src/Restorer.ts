@@ -118,7 +118,7 @@ export class RestorerAPI implements RestorerAPIType {
     private _restoreFocus = (source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
         const doc = this._getWindow().document;
-        if (doc.activeElement !== document.body) {
+        if (doc.activeElement !== doc.body) {
             return;
         }
 
