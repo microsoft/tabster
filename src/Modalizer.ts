@@ -18,6 +18,10 @@ import {
     WeakHTMLElement,
     triggerEvent,
     augmentAttribute,
+    getInstanceContext,
+    FakeWeakRef,
+    TabsterWeakRef,
+    cleanupFakeWeakRefs,
 } from "./Utils";
 
 let _wasFocusedCounter = 0;
@@ -111,7 +115,7 @@ export class Modalizer
     private _isActive: boolean | undefined;
     private _wasFocused = 0;
     private _onDispose: (modalizer: Modalizer) => void;
-    private _activeElements: WeakRef<HTMLElement>[];
+    private _activeElements: TabsterWeakRef<HTMLElement>[];
 
     dummyManager: ModalizerDummyManager | undefined;
 
@@ -128,6 +132,7 @@ export class Modalizer
         this.userId = props.id;
         this._onDispose = onDispose;
         this._activeElements = activeElements;
+        this._tabster = tabster;
 
         if (!tabster.controlTab) {
             this.dummyManager = new ModalizerDummyManager(
@@ -163,7 +168,12 @@ export class Modalizer
 
                 if (isActive) {
                     if (index < 0) {
-                        activeElements.push(new WeakRef(element));
+                        const ctx = getInstanceContext(this._tabster.getWindow);
+                        if (ctx.WeakRef) {
+                            activeElements.push(new ctx.WeakRef(element));
+                        } else {
+                            activeElements.push(new FakeWeakRef(element));
+                        }
                     }
                 } else {
                     if (index >= 0) {
@@ -211,6 +221,7 @@ export class Modalizer
         this.makeActive(false);
         this._onDispose(this);
         this.dummyManager?.dispose();
+        cleanupFakeWeakRefs(this._tabster.getWindow);
         this._activeElements = [];
         this._remove();
     }
@@ -327,7 +338,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
     private _augMap: WeakMap<HTMLElement, true>;
-    private _aug: WeakRef<HTMLElement>[];
+    private _aug: TabsterWeakRef<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
     private _alwaysAccessibleSelector: string | undefined;
     private _accessibleCheck: Types.ModalizerElementAccessibleCheck | undefined;
@@ -700,7 +711,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ? [...visibleElements, ...alwaysAccessibleElements]
                 : undefined;
 
-        const newAugmented: WeakRef<HTMLElement>[] = [];
+        const newAugmented: TabsterWeakRef<HTMLElement>[] = [];
         const newAugmentedMap: WeakMap<HTMLElement, true> = new WeakMap();
 
         const toggle = (element: HTMLElement, hide: boolean) => {
@@ -729,7 +740,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
 
             if (isAugmented) {
-                newAugmented.push(new WeakRef(element));
+                const ctx = getInstanceContext(tabster.getWindow);
+                if (ctx.WeakRef) {
+                    newAugmented.push(new ctx.WeakRef(element));
+                } else {
+                    newAugmented.push(new FakeWeakRef(element));
+                }
                 newAugmentedMap.set(element, true);
             }
         };

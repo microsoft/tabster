@@ -149,11 +149,11 @@ export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
     return new (ctx?.basics.WeakMap || WeakMap)();
 }
 
-interface TabsterWeakRef<T> {
+export interface TabsterWeakRef<T> {
     deref(): T | undefined;
 }
 
-class FakeWeakRef<T extends HTMLElement = HTMLElement>
+export class FakeWeakRef<T extends HTMLElement = HTMLElement>
     implements TabsterWeakRef<T>
 {
     private _target: T | undefined;

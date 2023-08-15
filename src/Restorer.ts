@@ -14,7 +14,12 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { TabsterPart } from "./Utils";
+import {
+    FakeWeakRef,
+    TabsterPart,
+    TabsterWeakRef,
+    getInstanceContext,
+} from "./Utils";
 
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
@@ -53,7 +58,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
 export class RestorerAPI implements RestorerAPIType {
     private _tabster: TabsterCore;
-    private _history: WeakRef<HTMLElement>[] = [];
+    private _history: TabsterWeakRef<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
     private _restoreFocusTimeout = 0;
@@ -111,8 +116,12 @@ export class RestorerAPI implements RestorerAPIType {
         if (this._history.length > HISOTRY_DEPTH) {
             this._history.shift();
         }
-
-        this._history.push(new WeakRef<HTMLElement>(element));
+        const ctx = getInstanceContext(this._tabster.getWindow);
+        if (ctx.WeakRef) {
+            this._history.push(new ctx.WeakRef<HTMLElement>(element));
+        } else {
+            this._history.push(new FakeWeakRef<HTMLElement>(element));
+        }
     };
 
     private _restoreFocus = (source: HTMLElement) => {
