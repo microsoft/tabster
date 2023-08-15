@@ -18,6 +18,7 @@ import {
     FakeWeakRef,
     TabsterPart,
     TabsterWeakRef,
+    cleanupFakeWeakRefs,
     getInstanceContext,
 } from "./Utils";
 
@@ -79,6 +80,7 @@ export class RestorerAPI implements RestorerAPIType {
         const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
         win.removeEventListener(EVENT_NAME, this._onRestoreFocus);
+        cleanupFakeWeakRefs(this._tabster.getWindow);
 
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);
