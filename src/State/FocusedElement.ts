@@ -12,7 +12,6 @@ import {
     documentContains,
     DummyInputManager,
     getLastChild,
-    getAdjacentElement,
     shouldIgnoreFocus,
     WeakHTMLElement,
     triggerEvent,
