@@ -174,6 +174,7 @@ export class FocusedElementState
                     ctx,
                     container,
                     undefined,
+                    undefined,
                     !isFirst,
                     undefined,
                     ignoreAccessibility
@@ -209,6 +210,7 @@ export class FocusedElementState
                                 this._tabster,
                                 ctx,
                                 uncontrolled,
+                                undefined,
                                 undefined,
                                 !isFirst,
                                 undefined,
@@ -381,6 +383,7 @@ export class FocusedElementState
         ctx: Types.TabsterContext,
         container?: HTMLElement,
         currentElement?: HTMLElement,
+        referenceElement?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -406,53 +409,60 @@ export class FocusedElementState
             FocusedElementState.isTabbing = false;
         }, 0);
 
+        const modalizer = ctx.modalizer;
+        const groupper = ctx.groupper;
+        const mover = ctx.mover;
+
         const callFindNext = (
-            what: Types.Groupper | Types.Mover | Types.Modalizer,
-            cur?: HTMLElement
+            what: Types.Groupper | Types.Mover | Types.Modalizer
         ) => {
             next = what.findNextTabbable(
-                cur || currentElement,
+                currentElement,
+                referenceElement,
                 isBackward,
                 ignoreUncontrolled,
                 ignoreAccessibility
             );
 
-            const lastMoverOrGroupper = next?.lastMoverOrGroupper;
+            if (currentElement && !next?.element && !next?.uncontrolled) {
+                const parentElement =
+                    what !== modalizer && what.getElement()?.parentElement;
 
-            if (lastMoverOrGroupper && !next?.element && !next?.uncontrolled) {
-                // Handling nested Movers and Grouppers. If not found in the current one,
-                // try the parent one.
-                const lastMoverOrGroupperElement =
-                    lastMoverOrGroupper.getElement();
-                const parentElement = lastMoverOrGroupperElement?.parentElement;
-                const parentCtx =
-                    parentElement &&
-                    RootAPI.getTabsterContext(tabster, parentElement);
+                if (parentElement) {
+                    const parentCtx = RootAPI.getTabsterContext(
+                        tabster,
+                        currentElement,
+                        { referenceElement: parentElement }
+                    );
 
-                if (parentCtx) {
-                    const isGroupperFirst = parentCtx.isGroupperFirst;
-                    const parentMoverOrGroupper = isGroupperFirst
-                        ? parentCtx.groupper
-                        : parentCtx.mover;
-
-                    if (parentMoverOrGroupper) {
+                    if (parentCtx) {
+                        const currentScopeElement = what.getElement();
                         const newCurrent = isBackward
-                            ? lastMoverOrGroupperElement
-                            : getLastChild(lastMoverOrGroupperElement);
+                            ? currentScopeElement
+                            : (currentScopeElement &&
+                                  getLastChild(currentScopeElement)) ||
+                              currentScopeElement;
 
-                        callFindNext(parentMoverOrGroupper, newCurrent);
+                        if (newCurrent) {
+                            next = FocusedElementState.findNextTabbable(
+                                tabster,
+                                parentCtx,
+                                container,
+                                newCurrent,
+                                parentElement,
+                                isBackward,
+                                ignoreUncontrolled,
+                                ignoreAccessibility
+                            );
 
-                        if (next) {
-                            next.outOfDOMOrder = true;
+                            if (next) {
+                                next.outOfDOMOrder = true;
+                            }
                         }
                     }
                 }
             }
         };
-
-        const modalizer = ctx.modalizer;
-        const groupper = ctx.groupper;
-        const mover = ctx.mover;
 
         if (groupper && mover) {
             callFindNext(ctx.isGroupperFirst ? groupper : mover);
@@ -467,78 +477,38 @@ export class FocusedElementState
             const onUncontrolled = (el: HTMLElement) => {
                 uncontrolled = el;
             };
+
+            let findProps: Types.FindNextProps;
+
             const nextElement = isBackward
-                ? tabster.focusable.findPrev({
-                      container: actualContainer,
-                      currentElement,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  })
-                : tabster.focusable.findNext({
-                      container: actualContainer,
-                      currentElement,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  });
+                ? tabster.focusable.findPrev(
+                      (findProps = {
+                          container: actualContainer,
+                          currentElement,
+                          referenceElement,
+                          onUncontrolled,
+                          ignoreUncontrolled,
+                          ignoreAccessibility,
+                          useActiveModalizer: true,
+                      })
+                  )
+                : tabster.focusable.findNext(
+                      (findProps = {
+                          container: actualContainer,
+                          currentElement,
+                          referenceElement,
+                          onUncontrolled,
+                          ignoreUncontrolled,
+                          ignoreAccessibility,
+                          useActiveModalizer: true,
+                      })
+                  );
 
             next = {
                 element: uncontrolled ? undefined : nextElement,
                 uncontrolled,
+                outOfDOMOrder: findProps.outOfDOMOrderResult || false,
             };
-        }
-
-        const lastMoverOrGroupper = next?.lastMoverOrGroupper;
-        const lastMoverOrGroupperElement = lastMoverOrGroupper?.getElement();
-
-        if (lastMoverOrGroupperElement) {
-            next = null;
-
-            const adjacentElement = getAdjacentElement(
-                lastMoverOrGroupperElement,
-                isBackward
-            );
-
-            if (adjacentElement) {
-                const adjacentCtx = RootAPI.getTabsterContext(
-                    tabster,
-                    adjacentElement,
-                    {
-                        checkRtl: true,
-                    }
-                );
-
-                if (adjacentCtx) {
-                    let adjacentFrom = getAdjacentElement(
-                        adjacentElement,
-                        !isBackward
-                    );
-
-                    if (adjacentFrom) {
-                        if (!isBackward) {
-                            adjacentFrom =
-                                getLastChild(adjacentFrom) || adjacentFrom;
-                        }
-
-                        next = FocusedElementState.findNextTabbable(
-                            tabster,
-                            adjacentCtx,
-                            actualContainer,
-                            adjacentFrom,
-                            isBackward,
-                            ignoreUncontrolled,
-                            ignoreAccessibility
-                        );
-
-                        if (next && !next.lastMoverOrGroupper) {
-                            next.lastMoverOrGroupper = lastMoverOrGroupper;
-                        }
-                    }
-                }
-            }
         }
 
         return next;
@@ -579,6 +549,7 @@ export class FocusedElementState
             ctx,
             undefined,
             currentElement,
+            undefined,
             isBackward,
             undefined,
             true
@@ -640,55 +611,16 @@ export class FocusedElementState
                 e.stopImmediatePropagation();
             };
 
-            // For iframes just allow normal Tab behaviour
             if (!controlTab) {
-                const lastMoverOrGroupper = next?.lastMoverOrGroupper;
-                let outOfDOMOrder = next?.outOfDOMOrder;
-
-                if (
-                    !outOfDOMOrder &&
-                    currentElement.compareDocumentPosition(nextElement) &
-                        (isBackward
-                            ? document.DOCUMENT_POSITION_FOLLOWING
-                            : document.DOCUMENT_POSITION_PRECEDING)
-                ) {
-                    outOfDOMOrder = true;
-                }
-
-                if (outOfDOMOrder) {
+                if (next?.outOfDOMOrder) {
                     // The next element is out of DOM order (for example because of a trapped groupper),
                     // do not let the browser to move focus.
                     preventDefault();
 
                     nativeFocus(nextElement);
-                } else if (lastMoverOrGroupper) {
-                    lastMoverOrGroupper.dummyManager?.moveOutWithDefaultAction(
-                        isBackward
-                    );
-                } else if (ctx.modalizer) {
-                    const nextElementCtx = RootAPI.getTabsterContext(
-                        tabster,
-                        nextElement
-                    );
-
-                    if (
-                        (!nextElementCtx ||
-                            ctx.root.uid !== nextElementCtx.root.uid ||
-                            !nextElementCtx.modalizer?.isActive()) &&
-                        ctx.modalizer.triggerFocusEvent(
-                            Types.ModalizerBeforeFocusOutEventName,
-                            true
-                        )
-                    ) {
-                        preventDefault();
-                    } else if (
-                        !ctx.modalizer.getElement()?.contains(nextElement)
-                    ) {
-                        preventDefault();
-                        ctx.modalizer.dummyManager?.moveOut(isBackward);
-                    }
                 }
             } else if (nextElement.tagName !== "IFRAME") {
+                // For iframes just allow normal Tab behaviour.
                 preventDefault();
 
                 nativeFocus(nextElement);

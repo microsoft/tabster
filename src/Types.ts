@@ -107,6 +107,7 @@ export interface TabsterPart<P> {
 export interface TabsterPartWithFindNextTabbable {
     findNextTabbable(
         current?: HTMLElement,
+        reference?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -403,6 +404,7 @@ export interface FocusableAcceptElementState {
         };
     };
     isFindAll?: boolean;
+    skippedFocusable?: boolean;
 }
 
 export interface FindFocusableProps {
@@ -414,6 +416,7 @@ export interface FindFocusableProps {
      * The elemet to start from.
      */
     currentElement?: HTMLElement;
+    referenceElement?: HTMLElement;
     /**
      * Includes elements that can be focused programmatically.
      */
@@ -455,6 +458,12 @@ export interface FindFocusableProps {
      * If false is returned from this callback, the search will stop.
      */
     onElement?: FindElementCallback;
+    /**
+     * An output parameter. Will be true after the findNext/findPrev() call if some focusable
+     * elements were skipped during the search and the result element not immediately next
+     * focusable after the currentElement.
+     */
+    outOfDOMOrderResult?: boolean;
 }
 
 export type FindFirstProps = Pick<
@@ -470,6 +479,7 @@ export type FindFirstProps = Pick<
 export type FindNextProps = Pick<
     FindFocusableProps,
     | "currentElement"
+    | "referenceElement"
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
@@ -477,6 +487,7 @@ export type FindNextProps = Pick<
     | "ignoreUncontrolled"
     | "ignoreAccessibility"
     | "onUncontrolled"
+    | "outOfDOMOrderResult"
 >;
 
 export type FindDefaultProps = Pick<
@@ -581,8 +592,7 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement;
-    lastMoverOrGroupper?: Mover | Groupper;
-    outOfDOMOrder?: boolean;
+    outOfDOMOrder: boolean;
 };
 
 export interface MoverProps {
@@ -830,6 +840,10 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
+    /**
+     *
+     */
+    referenceElement?: HTMLElement;
 }
 
 export type TabsterContextMoverGroupper =

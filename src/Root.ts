@@ -414,7 +414,7 @@ export class RootAPI implements Types.RootAPI {
         let modalizerInGroupper: Types.Groupper | undefined;
         let isRtl: boolean | undefined;
         let uncontrolled: HTMLElement | undefined;
-        let curElement: Node | null = element;
+        let curElement: Node | null = options.referenceElement || element;
         const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
 
         while (curElement && (!root || checkRtl)) {

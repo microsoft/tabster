@@ -52,6 +52,7 @@ class GroupperDummyManager extends DummyInputManager {
 
                         next = groupper.findNextTabbable(
                             relatedTarget || undefined,
+                            undefined,
                             isBackward,
                             true,
                             true
@@ -68,6 +69,7 @@ class GroupperDummyManager extends DummyInputManager {
                                           container,
                                           !isBackward
                                       ),
+                                undefined,
                                 isBackward,
                                 true,
                                 true
@@ -133,6 +135,7 @@ export class Groupper
 
     findNextTabbable(
         currentElement?: HTMLElement,
+        referenceElement?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -154,7 +157,7 @@ export class Groupper
             groupperElement.contains(currentElement) &&
             !currentIsDummy
         ) {
-            return { element: undefined, lastMoverOrGroupper: this };
+            return { element: undefined, outOfDOMOrder: true };
         }
 
         const groupperFirstFocusable = this.getFirst(true);
@@ -166,35 +169,46 @@ export class Groupper
         ) {
             return {
                 element: groupperFirstFocusable,
-                lastMoverOrGroupper: groupperFirstFocusable ? undefined : this,
+                outOfDOMOrder: true,
             };
         }
 
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
         let uncontrolled: HTMLElement | undefined;
+        let outOfDOMOrder = false;
         const onUncontrolled = (el: HTMLElement) => {
             uncontrolled = el;
         };
 
         if (this._shouldTabInside && groupperFirstFocusable) {
+            let findProps: Types.FindNextProps;
+
             next = isBackward
-                ? tabster.focusable.findPrev({
-                      container: groupperElement,
-                      currentElement,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  })
-                : tabster.focusable.findNext({
-                      container: groupperElement,
-                      currentElement,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  });
+                ? tabster.focusable.findPrev(
+                      (findProps = {
+                          container: groupperElement,
+                          currentElement,
+                          referenceElement,
+                          onUncontrolled,
+                          ignoreUncontrolled,
+                          ignoreAccessibility,
+                          useActiveModalizer: true,
+                      })
+                  )
+                : tabster.focusable.findNext(
+                      (findProps = {
+                          container: groupperElement,
+                          currentElement,
+                          referenceElement,
+                          onUncontrolled,
+                          ignoreUncontrolled,
+                          ignoreAccessibility,
+                          useActiveModalizer: true,
+                      })
+                  );
+
+            outOfDOMOrder = !!findProps.outOfDOMOrderResult;
 
             if (
                 !uncontrolled &&
@@ -215,13 +229,15 @@ export class Groupper
                           ignoreAccessibility,
                           useActiveModalizer: true,
                       });
+
+                outOfDOMOrder = true;
             }
         }
 
         return {
             element: next,
             uncontrolled,
-            lastMoverOrGroupper: next || uncontrolled ? undefined : this,
+            outOfDOMOrder,
         };
     }
 
@@ -348,6 +364,7 @@ export class Groupper
                 state.container.contains(parentGroupperElement)
             ) {
                 // Do not fall into a child groupper of inactive parent groupper if it's in the scope of the search.
+                state.skippedFocusable = true;
                 return NodeFilter.FILTER_REJECT;
             }
         }
@@ -368,6 +385,7 @@ export class Groupper
                         state.container.contains(parentGroupperElement) &&
                         parentGroupperElement !== state.container
                     ) {
+                        state.skippedFocusable = true;
                         return NodeFilter.FILTER_REJECT;
                     }
                 }
@@ -376,6 +394,7 @@ export class Groupper
                     groupperElement !== element &&
                     groupperElement.contains(element)
                 ) {
+                    state.skippedFocusable = true;
                     return NodeFilter.FILTER_REJECT;
                 }
 
@@ -390,6 +409,7 @@ export class Groupper
 
                 if (first && state.acceptCondition(first)) {
                     state.lastToIgnore = groupperElement;
+                    state.skippedFocusable = true;
 
                     if (first !== state.from) {
                         state.found = true;
