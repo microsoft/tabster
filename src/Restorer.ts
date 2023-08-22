@@ -103,6 +103,10 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
+        this._addToHistory(element);
+    };
+
+    private _addToHistory(element: HTMLElement) {
         // Don't duplicate the top of history
         if (this._history[this._history.length - 1]?.deref() === element) {
             return;
@@ -113,7 +117,7 @@ export class RestorerAPI implements RestorerAPIType {
         }
 
         this._history.push(new WeakRef<HTMLElement>(element));
-    };
+    }
 
     private _restoreFocus = (source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
@@ -143,6 +147,15 @@ export class RestorerAPI implements RestorerAPIType {
     };
 
     public createRestorer(element: HTMLElement, props: RestorerProps) {
-        return new Restorer(this._tabster, element, props);
+        const restorer = new Restorer(this._tabster, element, props);
+        // Focus might already be on a restorer target when it gets created so the focusin will not do anything
+        if (
+            props.type === RestorerTypes.Target &&
+            element.ownerDocument.activeElement === element
+        ) {
+            this._addToHistory(element);
+        }
+
+        return restorer;
     }
 }

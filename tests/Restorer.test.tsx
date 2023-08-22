@@ -294,4 +294,45 @@ describe("Restorer", () => {
                 document.getElementById("source")?.remove();
             });
     }, 10000);
+
+    it.only("should register already focused target", async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: Types.RestorerTypes.Target },
+        });
+        const sourceAttr = getTabsterAttribute({
+            restorer: { type: Types.RestorerTypes.Source },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <div id="target-container" {...targetAttr}></div>
+
+                    <button id="source" {...sourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .eval(
+                (tabsterAttrName, targetAttr) => {
+                    const target = document.createElement("button");
+                    target.textContent = "target";
+                    target.setAttribute(tabsterAttrName, targetAttr);
+                    document
+                        .getElementById("target-container")
+                        ?.appendChild(target);
+                    target.focus();
+                },
+                Types.TabsterAttributeName,
+                targetAttr[Types.TabsterAttributeName] as string
+            )
+            .activeElement((el) => expect(el?.textContent).toEqual("target"))
+            .click("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                document.getElementById("source")?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target"));
+    });
 });
