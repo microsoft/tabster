@@ -404,6 +404,11 @@ export interface FocusableAcceptElementState {
         };
     };
     isFindAll?: boolean;
+    /**
+     * A flag that indicates that some focusable elements were skipped
+     * during the search and the found element is not the one the browser
+     * would normally focus if the user pressed Tab.
+     */
     skippedFocusable?: boolean;
 }
 

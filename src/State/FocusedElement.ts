@@ -594,7 +594,7 @@ export class FocusedElementState
 
         if (nextElement) {
             if (nextElement.tagName === "IFRAME") {
-                // For iframes we always want to use default action to move focus, inside
+                // For iframes we always want to use default action to move focus into
                 // an iframe, because there is no ability to move focus inside that iframe
                 // programmatically (assuming no cross origin access).
                 DummyInputManager.moveWithPhantomDummy(
