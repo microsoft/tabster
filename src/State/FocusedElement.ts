@@ -605,24 +605,28 @@ export class FocusedElementState
         }
 
         if (nextElement) {
-            const preventDefault = () => {
+            if (nextElement.tagName === "IFRAME") {
+                // For iframes we always want to use default action to move focus, inside
+                // an iframe, because there is no ability to move focus inside that iframe
+                // programmatically (assuming no cross origin access).
+                DummyInputManager.moveWithPhantomDummy(
+                    this._tabster,
+                    nextElement,
+                    false,
+                    isBackward
+                );
+
+                return;
+            }
+
+            if (controlTab || next?.outOfDOMOrder) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-            };
-
-            if (!controlTab) {
-                if (next?.outOfDOMOrder) {
-                    // The next element is out of DOM order (for example because of a trapped groupper),
-                    // do not let the browser to move focus.
-                    preventDefault();
-
-                    nativeFocus(nextElement);
-                }
-            } else if (nextElement.tagName !== "IFRAME") {
-                // For iframes just allow normal Tab behaviour.
-                preventDefault();
 
                 nativeFocus(nextElement);
+            } else {
+                // We are in uncontrolled mode and the next element is in DOM order.
+                // Just allow the default action
             }
         } else {
             ctx.root.moveOutWithDefaultAction(isBackward);

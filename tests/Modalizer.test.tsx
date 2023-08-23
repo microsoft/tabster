@@ -1578,6 +1578,109 @@ describe("Modalizer with multiple containers", () => {
             .pressTab(true)
             .activeElement((el) => expect(el?.textContent).toEqual("Button2"));
     });
+
+    it("should skip iframes between the active modalizer parts and should properly focus them when the modalizer is not active", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                                modalizer: {
+                                    id: "modal",
+                                    isOthersAccessible: true,
+                                    isAlwaysAccessible: true,
+                                    isTrapped: true,
+                                },
+                            })}
+                        >
+                            <button>Button2</button>
+                            <div
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        cyclic: true,
+                                        direction:
+                                            Types.MoverDirections.Vertical,
+                                    },
+                                })}
+                            >
+                                <button>Button3</button>
+                            </div>
+                        </div>
+                    </div>
+                    <iframe id="frame1" src={BroTest.getTestPageURL()}></iframe>
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isOthersAccessible: true,
+                                isAlwaysAccessible: true,
+                                isTrapped: true,
+                            },
+                        })}
+                    >
+                        <div
+                            {...getTabsterAttribute({
+                                mover: {
+                                    cyclic: true,
+                                    direction: Types.MoverDirections.Vertical,
+                                },
+                            })}
+                        >
+                            <button>Button5</button>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .frame("frame1")
+            .html(
+                <div>
+                    <button>Button4</button>
+                </div>
+            )
+            .unframe()
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("Button2Button3")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.attributes.id).toEqual("frame1"))
+            .frame("frame1")
+            .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
+            .unframe()
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button5"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"));
+    });
 });
 
 describe("Modalizer events", () => {
