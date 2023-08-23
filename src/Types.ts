@@ -416,6 +416,9 @@ export interface FindFocusableProps {
      * The elemet to start from.
      */
     currentElement?: HTMLElement;
+    /**
+     * See `referenceElement` of GetTabsterContextOptions for description.
+     */
     referenceElement?: HTMLElement;
     /**
      * Includes elements that can be focused programmatically.
@@ -841,7 +844,13 @@ export interface GetTabsterContextOptions {
      */
     checkRtl?: boolean;
     /**
-     *
+     * The element to start computing the context from. Useful when dealing
+     * with nested structures. For example, if we have an element inside a groupper
+     * inside another groupper, the `groupper` prop in this element's contexts will
+     * be the inner groupper, but when we pass the inner groupper's parent element
+     * as `referenceElement`, the context groupper will be the outer one. Having
+     * this option simplifies searching for the next tabbable element in the
+     * environment of nested movers and grouppers.
      */
     referenceElement?: HTMLElement;
 }
