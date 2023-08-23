@@ -182,31 +182,19 @@ export class Groupper
         };
 
         if (this._shouldTabInside && groupperFirstFocusable) {
-            let findProps: Types.FindNextProps;
+            const findProps: Types.FindNextProps = {
+                container: groupperElement,
+                currentElement,
+                referenceElement,
+                onUncontrolled,
+                ignoreUncontrolled,
+                ignoreAccessibility,
+                useActiveModalizer: true,
+            };
 
             next = isBackward
-                ? tabster.focusable.findPrev(
-                      (findProps = {
-                          container: groupperElement,
-                          currentElement,
-                          referenceElement,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  )
-                : tabster.focusable.findNext(
-                      (findProps = {
-                          container: groupperElement,
-                          currentElement,
-                          referenceElement,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  );
+                ? tabster.focusable.findPrev(findProps)
+                : tabster.focusable.findNext(findProps);
 
             outOfDOMOrder = !!findProps.outOfDOMOrderResult;
 

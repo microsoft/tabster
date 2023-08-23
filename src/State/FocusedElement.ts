@@ -477,31 +477,19 @@ export class FocusedElementState
                 uncontrolled = el;
             };
 
-            let findProps: Types.FindNextProps;
+            const findProps: Types.FindNextProps = {
+                container: actualContainer,
+                currentElement,
+                referenceElement,
+                onUncontrolled,
+                ignoreUncontrolled,
+                ignoreAccessibility,
+                useActiveModalizer: true,
+            };
 
             const nextElement = isBackward
-                ? tabster.focusable.findPrev(
-                      (findProps = {
-                          container: actualContainer,
-                          currentElement,
-                          referenceElement,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  )
-                : tabster.focusable.findNext(
-                      (findProps = {
-                          container: actualContainer,
-                          currentElement,
-                          referenceElement,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  );
+                ? tabster.focusable.findPrev(findProps)
+                : tabster.focusable.findNext(findProps);
 
             next = {
                 element: uncontrolled ? undefined : nextElement,

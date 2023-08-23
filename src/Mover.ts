@@ -260,31 +260,19 @@ export class Mover
             currentIsDummy ||
             (currentElement && !container.contains(currentElement))
         ) {
-            let findProps: Types.FindNextProps;
+            const findProps: Types.FindNextProps = {
+                currentElement,
+                referenceElement,
+                container,
+                onUncontrolled,
+                ignoreUncontrolled,
+                ignoreAccessibility,
+                useActiveModalizer: true,
+            };
 
             next = isBackward
-                ? focusable.findPrev(
-                      (findProps = {
-                          currentElement,
-                          referenceElement,
-                          container,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  )
-                : focusable.findNext(
-                      (findProps = {
-                          currentElement,
-                          referenceElement,
-                          container,
-                          onUncontrolled,
-                          ignoreUncontrolled,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                  );
+                ? focusable.findPrev(findProps)
+                : focusable.findNext(findProps);
 
             outOfDOMOrder = !!findProps.outOfDOMOrderResult;
         }
