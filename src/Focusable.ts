@@ -138,18 +138,18 @@ export class FocusableAPI implements Types.FocusableAPI {
         });
     }
 
-    findNext(options: Types.FindNextProps): HTMLElement | null | undefined {
-        const opts = { ...options };
-        const ret = this.findElement(opts);
-        options.outOfDOMOrderResult = opts.outOfDOMOrderResult;
-        return ret;
+    findNext(
+        options: Types.FindNextProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement({ ...options }, out);
     }
 
-    findPrev(options: Types.FindNextProps): HTMLElement | null | undefined {
-        const opts = { ...options, isBackward: true };
-        const ret = this.findElement(opts);
-        options.outOfDOMOrderResult = opts.outOfDOMOrderResult;
-        return ret;
+    findPrev(
+        options: Types.FindNextProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement({ ...options, isBackward: true }, out);
     }
 
     findDefault(options: Types.FindDefaultProps): HTMLElement | null {
@@ -170,15 +170,17 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     findElement(
-        options: Types.FindFocusableProps
+        options: Types.FindFocusableProps,
+        out?: Types.FindFocusableOutputProps
     ): HTMLElement | null | undefined {
-        const found = this._findElements(false, options);
+        const found = this._findElements(false, options, out);
         return found ? found[0] : found;
     }
 
     private _findElements(
         findAll: boolean,
-        options: Types.FindFocusableProps
+        options: Types.FindFocusableProps,
+        out?: Types.FindFocusableOutputProps
     ): HTMLElement[] | null | undefined {
         const {
             container,
@@ -192,6 +194,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             onUncontrolled,
             onElement,
         } = options;
+
+        if (!out) {
+            out = {};
+        }
 
         const elements: HTMLElement[] = [];
 
@@ -267,7 +273,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         };
 
         if (!currentElement) {
-            options.outOfDOMOrderResult = true;
+            out.outOfDOMOrder = true;
         }
 
         if (currentElement) {
@@ -285,7 +291,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 !prepareForNextElement(true)
             ) {
                 if (acceptElementState.skippedFocusable) {
-                    options.outOfDOMOrderResult = true;
+                    out.outOfDOMOrder = true;
                 }
 
                 return elements;
@@ -322,7 +328,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (acceptElementState.skippedFocusable) {
-            options.outOfDOMOrderResult = true;
+            out.outOfDOMOrder = true;
         }
 
         return elements.length ? elements : null;

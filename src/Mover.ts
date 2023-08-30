@@ -247,7 +247,6 @@ export class Mover
         }
 
         const tabster = this._tabster;
-        const focusable = tabster.focusable;
         let next: HTMLElement | null | undefined = null;
         let uncontrolled: HTMLElement | undefined;
         let outOfDOMOrder = false;
@@ -270,11 +269,14 @@ export class Mover
                 useActiveModalizer: true,
             };
 
-            next = isBackward
-                ? focusable.findPrev(findProps)
-                : focusable.findNext(findProps);
+            const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            outOfDOMOrder = !!findProps.outOfDOMOrderResult;
+            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
+                findProps,
+                findPropsOut
+            );
+
+            outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
         }
 
         return {

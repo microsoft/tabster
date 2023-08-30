@@ -192,11 +192,14 @@ export class Groupper
                 useActiveModalizer: true,
             };
 
-            next = isBackward
-                ? tabster.focusable.findPrev(findProps)
-                : tabster.focusable.findNext(findProps);
+            const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            outOfDOMOrder = !!findProps.outOfDOMOrderResult;
+            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
+                findProps,
+                findPropsOut
+            );
+
+            outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
 
             if (
                 !uncontrolled &&

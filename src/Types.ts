@@ -466,12 +466,15 @@ export interface FindFocusableProps {
      * If false is returned from this callback, the search will stop.
      */
     onElement?: FindElementCallback;
+}
+
+export interface FindFocusableOutputProps {
     /**
      * An output parameter. Will be true after the findNext/findPrev() call if some focusable
      * elements were skipped during the search and the result element not immediately next
      * focusable after the currentElement.
      */
-    outOfDOMOrderResult?: boolean;
+    outOfDOMOrder?: boolean;
 }
 
 export type FindFirstProps = Pick<
@@ -495,7 +498,6 @@ export type FindNextProps = Pick<
     | "ignoreUncontrolled"
     | "ignoreAccessibility"
     | "onUncontrolled"
-    | "outOfDOMOrderResult"
 >;
 
 export type FindDefaultProps = Pick<
@@ -541,14 +543,23 @@ export interface FocusableAPI extends Disposable {
     // find* return null when there is no element and undefined when there is an uncontrolled area.
     findFirst(options: FindFirstProps): HTMLElement | null | undefined;
     findLast(options: FindFirstProps): HTMLElement | null | undefined;
-    findNext(options: FindNextProps): HTMLElement | null | undefined;
-    findPrev(options: FindNextProps): HTMLElement | null | undefined;
+    findNext(
+        options: FindNextProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
+    findPrev(
+        options: FindNextProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
     findDefault(options: FindDefaultProps): HTMLElement | null;
     /**
      * @returns All focusables in a given context that satisfy an given condition
      */
     findAll(options: FindAllProps): HTMLElement[];
-    findElement(options: FindFocusableProps): HTMLElement | null | undefined;
+    findElement(
+        options: FindFocusableProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
 }
 
 export interface DummyInputManager {
@@ -600,7 +611,7 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement;
-    outOfDOMOrder: boolean;
+    outOfDOMOrder?: boolean;
 };
 
 export interface MoverProps {

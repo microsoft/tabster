@@ -260,10 +260,12 @@ export class Modalizer
                 useActiveModalizer: true,
             };
 
-            next =
-                tabster.focusable[isBackward ? "findPrev" : "findNext"](
-                    findProps
-                );
+            const findPropsOut: Types.FindFocusableOutputProps = {};
+
+            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
+                findProps,
+                findPropsOut
+            );
 
             if (
                 !uncontrolled &&
@@ -282,7 +284,7 @@ export class Modalizer
 
                 outOfDOMOrder = true;
             } else {
-                outOfDOMOrder = !!findProps.outOfDOMOrderResult;
+                outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
             }
         }
 

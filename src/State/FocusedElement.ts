@@ -487,14 +487,16 @@ export class FocusedElementState
                 useActiveModalizer: true,
             };
 
-            const nextElement = isBackward
-                ? tabster.focusable.findPrev(findProps)
-                : tabster.focusable.findNext(findProps);
+            const findPropsOut: Types.FindFocusableOutputProps = {};
+
+            const nextElement = tabster.focusable[
+                isBackward ? "findPrev" : "findNext"
+            ](findProps, findPropsOut);
 
             next = {
                 element: uncontrolled ? undefined : nextElement,
                 uncontrolled,
-                outOfDOMOrder: findProps.outOfDOMOrderResult || false,
+                outOfDOMOrder: findPropsOut.outOfDOMOrder,
             };
         }
 
