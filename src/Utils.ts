@@ -680,6 +680,7 @@ export type DummyInputFocusCallback = (
  */
 export class DummyInput {
     private _isPhantom: DummyInputProps["isPhantom"];
+    private _fixedTarget?: WeakHTMLElement;
     private _disposeTimer: number | undefined;
     private _clearDisposeTimeout: (() => void) | undefined;
 
@@ -696,7 +697,8 @@ export class DummyInput {
         getWindow: Types.GetWindow,
         isOutside: boolean,
         props: DummyInputProps,
-        element?: WeakHTMLElement
+        element?: WeakHTMLElement,
+        fixedTarget?: WeakHTMLElement
     ) {
         const win = getWindow();
         const input = win.document.createElement("i");
@@ -720,6 +722,7 @@ export class DummyInput {
         this.isFirst = props.isFirst;
         this.isOutside = isOutside;
         this._isPhantom = props.isPhantom ?? false;
+        this._fixedTarget = fixedTarget;
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
@@ -755,6 +758,7 @@ export class DummyInput {
             return;
         }
 
+        delete this._fixedTarget;
         delete this.onFocusIn;
         delete this.onFocusOut;
         delete this.input;
@@ -791,6 +795,16 @@ export class DummyInput {
     }
 
     private _focusIn = (e: FocusEvent): void => {
+        if (this._fixedTarget) {
+            const target = this._fixedTarget.get();
+
+            if (target) {
+                nativeFocus(target);
+            }
+
+            return;
+        }
+
         const input = this.input;
 
         if (this.onFocusIn && input) {
@@ -807,6 +821,10 @@ export class DummyInput {
     };
 
     private _focusOut = (e: FocusEvent): void => {
+        if (this._fixedTarget) {
+            return;
+        }
+
         this.useDefaultAction = false;
 
         const input = this.input;
@@ -908,7 +926,7 @@ export class DummyInputManager {
     static moveWithPhantomDummy(
         tabster: Types.TabsterCore,
         element: HTMLElement,
-        moveOutside: boolean,
+        moveOutOfElement: boolean,
         isBackward: boolean
     ): void {
         const dummy: DummyInput = new DummyInput(tabster.getWindow, true, {
@@ -919,32 +937,30 @@ export class DummyInputManager {
         const input = dummy.input;
 
         if (input) {
-            const parent = element.parentElement;
+            let parent: HTMLElementWithDummyContainer | null;
+            let insertBefore: HTMLElementWithDummyContainer | null;
+
+            if (moveOutOfElement) {
+                parent = element.parentElement;
+
+                if (isBackward) {
+                    insertBefore = element;
+                } else {
+                    insertBefore =
+                        element.nextElementSibling as HTMLElementWithDummyContainer | null;
+                }
+            } else {
+                if (isBackward) {
+                    parent = element;
+                    insertBefore =
+                        element.firstElementChild as HTMLElementWithDummyContainer | null;
+                } else {
+                    parent = element.parentElement;
+                    insertBefore = element;
+                }
+            }
 
             if (parent) {
-                let insertBefore = (
-                    (moveOutside && !isBackward) || (!moveOutside && isBackward)
-                        ? element.nextElementSibling
-                        : element
-                ) as HTMLElementWithDummyContainer | null;
-
-                if (insertBefore) {
-                    if (isBackward) {
-                        const beforeBefore =
-                            insertBefore.previousElementSibling as HTMLElementWithDummyContainer | null;
-
-                        if (
-                            beforeBefore &&
-                            beforeBefore.__tabsterDummyContainer
-                        ) {
-                            insertBefore = beforeBefore;
-                        }
-                    } else if (insertBefore.__tabsterDummyContainer) {
-                        insertBefore =
-                            insertBefore.nextElementSibling as HTMLElementWithDummyContainer | null;
-                    }
-                }
-
                 parent.insertBefore(input, insertBefore);
 
                 DummyInputManager._lastPhantomFrom = element;
@@ -955,6 +971,33 @@ export class DummyInputManager {
 
                 nativeFocus(input);
             }
+        }
+    }
+
+    static addPhantomDummyWithTarget(
+        tabster: Types.TabsterCore,
+        anchor: HTMLElement,
+        isBackward: boolean,
+        element: HTMLElement
+    ): void {
+        const dummy: DummyInput = new DummyInput(
+            tabster.getWindow,
+            true,
+            {
+                isPhantom: true,
+                isFirst: true,
+            },
+            undefined,
+            new WeakHTMLElement(tabster.getWindow, element)
+        );
+
+        const input = dummy.input;
+
+        if (input) {
+            anchor.parentElement?.insertBefore(
+                input,
+                isBackward ? anchor : anchor.nextElementSibling
+            );
         }
     }
 }

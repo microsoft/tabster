@@ -409,11 +409,11 @@ export class RootAPI implements Types.RootAPI {
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
         let mover: Types.Mover | undefined;
-        let isExcludedFromMover = false;
-        let isGroupperFirst: boolean | undefined;
+        let excludedFromMover = false;
+        let groupperBeforeMover: boolean | undefined;
         let modalizerInGroupper: Types.Groupper | undefined;
-        let isRtl: boolean | undefined;
-        let uncontrolled: HTMLElement | undefined;
+        let dirRightToLeft: boolean | undefined;
+        let uncontrolled: boolean | undefined;
         let curElement: Node | null = options.referenceElement || element;
         const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
 
@@ -423,11 +423,11 @@ export class RootAPI implements Types.RootAPI {
                 curElement as HTMLElement
             );
 
-            if (checkRtl && isRtl === undefined) {
+            if (checkRtl && dirRightToLeft === undefined) {
                 const dir = (curElement as HTMLElement).dir;
 
                 if (dir) {
-                    isRtl = dir.toLowerCase() === "rtl";
+                    dirRightToLeft = dir.toLowerCase() === "rtl";
                 }
             }
 
@@ -439,11 +439,12 @@ export class RootAPI implements Types.RootAPI {
             const tagName = (curElement as HTMLElement).tagName;
 
             if (
-                tabsterOnElement.uncontrolled ||
-                tagName === "IFRAME" ||
-                tagName === "WEBVIEW"
+                (tabsterOnElement.uncontrolled ||
+                    tagName === "IFRAME" ||
+                    tagName === "WEBVIEW") &&
+                uncontrolled === undefined
             ) {
-                uncontrolled = curElement as HTMLElement;
+                uncontrolled = true;
             }
 
             if (
@@ -451,7 +452,7 @@ export class RootAPI implements Types.RootAPI {
                 tabsterOnElement.focusable?.excludeFromMover &&
                 !groupper
             ) {
-                isExcludedFromMover = true;
+                excludedFromMover = true;
             }
 
             const curModalizer = tabsterOnElement.modalizer;
@@ -487,7 +488,7 @@ export class RootAPI implements Types.RootAPI {
                 (!curGroupper || curElement !== element)
             ) {
                 mover = curMover;
-                isGroupperFirst = !!groupper && groupper !== curGroupper;
+                groupperBeforeMover = !!groupper && groupper !== curGroupper;
             }
 
             if (tabsterOnElement.root) {
@@ -499,6 +500,10 @@ export class RootAPI implements Types.RootAPI {
                     ignoreKeydown,
                     tabsterOnElement.focusable.ignoreKeydown
                 );
+            }
+
+            if (!uncontrolled && (mover || groupper || modalizer)) {
+                uncontrolled = false;
             }
 
             curElement = curElement.parentElement;
@@ -517,7 +522,7 @@ export class RootAPI implements Types.RootAPI {
         }
 
         if (groupper && !mover) {
-            isGroupperFirst = true;
+            groupperBeforeMover = true;
         }
 
         if (__DEV__ && !root) {
@@ -537,11 +542,11 @@ export class RootAPI implements Types.RootAPI {
                   modalizer,
                   groupper,
                   mover,
-                  isGroupperFirst,
+                  groupperBeforeMover,
                   modalizerInGroupper,
-                  isRtl: checkRtl ? !!isRtl : undefined,
+                  rtl: checkRtl ? !!dirRightToLeft : undefined,
                   uncontrolled,
-                  isExcludedFromMover,
+                  excludedFromMover,
                   ignoreKeydown: shouldIgnoreKeydown,
               }
             : undefined;

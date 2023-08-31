@@ -109,7 +109,6 @@ export interface TabsterPartWithFindNextTabbable {
         current?: HTMLElement,
         reference?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
     ): NextTabbable | null;
 }
@@ -390,12 +389,12 @@ export interface FocusableAcceptElementState {
     isBackward?: boolean;
     found?: boolean;
     foundElement?: HTMLElement;
-    lastToIgnore?: HTMLElement;
+    foundBackward?: HTMLElement;
+    rejectElementsFrom?: HTMLElement;
     uncontrolled?: HTMLElement;
-    nextUncontrolled?: HTMLElement;
     acceptCondition: (el: HTMLElement) => boolean;
+    hasCustomCondition?: boolean;
     includeProgrammaticallyFocusable?: boolean;
-    ignoreUncontrolled?: boolean;
     ignoreAccessibility?: boolean;
     cachedGrouppers: {
         [id: string]: {
@@ -430,10 +429,6 @@ export interface FindFocusableProps {
      */
     includeProgrammaticallyFocusable?: boolean;
     /**
-     * Ignore uncontrolled areas.
-     */
-    ignoreUncontrolled?: boolean;
-    /**
      * Ignore accessibility check.
      */
     ignoreAccessibility?: boolean;
@@ -457,11 +452,6 @@ export interface FindFocusableProps {
      */
     acceptCondition?(el: HTMLElement): boolean;
     /**
-     * A callback that will be called if an uncontrolled area is met.
-     * @param el uncontrolled element.
-     */
-    onUncontrolled?(el: HTMLElement): void;
-    /**
      * A callback that will be called for every focusable element found during findAll().
      * If false is returned from this callback, the search will stop.
      */
@@ -475,6 +465,10 @@ export interface FindFocusableOutputProps {
      * focusable after the currentElement.
      */
     outOfDOMOrder?: boolean;
+    /**
+     * An output parameter. Will be true if the found element is uncontrolled.
+     */
+    uncontrolled?: boolean;
 }
 
 export type FindFirstProps = Pick<
@@ -483,7 +477,6 @@ export type FindFirstProps = Pick<
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
-    | "ignoreUncontrolled"
     | "ignoreAccessibility"
 >;
 
@@ -495,9 +488,7 @@ export type FindNextProps = Pick<
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
-    | "ignoreUncontrolled"
     | "ignoreAccessibility"
-    | "onUncontrolled"
 >;
 
 export type FindDefaultProps = Pick<
@@ -506,7 +497,6 @@ export type FindDefaultProps = Pick<
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
-    | "ignoreUncontrolled"
     | "ignoreAccessibility"
 >;
 
@@ -519,7 +509,6 @@ export type FindAllProps = Pick<
     | "includeProgrammaticallyFocusable"
     | "useActiveModalizer"
     | "acceptCondition"
-    | "ignoreUncontrolled"
     | "ignoreAccessibility"
     | "onElement"
 >;
@@ -541,8 +530,14 @@ export interface FocusableAPI extends Disposable {
     isVisible(element: HTMLElement): boolean;
     isAccessible(element: HTMLElement): boolean;
     // find* return null when there is no element and undefined when there is an uncontrolled area.
-    findFirst(options: FindFirstProps): HTMLElement | null | undefined;
-    findLast(options: FindFirstProps): HTMLElement | null | undefined;
+    findFirst(
+        options: FindFirstProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
+    findLast(
+        options: FindFirstProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
     findNext(
         options: FindNextProps,
         out?: FindFocusableOutputProps
@@ -551,7 +546,10 @@ export interface FocusableAPI extends Disposable {
         options: FindNextProps,
         out?: FindFocusableOutputProps
     ): HTMLElement | null | undefined;
-    findDefault(options: FindDefaultProps): HTMLElement | null;
+    findDefault(
+        options: FindDefaultProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null;
     /**
      * @returns All focusables in a given context that satisfy an given condition
      */
@@ -610,7 +608,7 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
-    uncontrolled?: HTMLElement;
+    uncontrolled?: boolean;
     outOfDOMOrder?: boolean;
 };
 
@@ -880,17 +878,14 @@ export interface TabsterContext {
     modalizer?: Modalizer;
     groupper?: Groupper;
     mover?: Mover;
-    isGroupperFirst?: boolean;
+    groupperBeforeMover?: boolean;
     modalizerInGroupper?: Groupper;
     /**
      * Whether `dir='rtl'` is set on an ancestor
      */
-    isRtl?: boolean;
-    /**
-     * The uncontrolled container of this element (if any).
-     */
-    uncontrolled?: HTMLElement;
-    isExcludedFromMover?: boolean;
+    rtl?: boolean;
+    excludedFromMover?: boolean;
+    uncontrolled?: boolean;
     ignoreKeydown: (e: KeyboardEvent) => boolean;
 }
 

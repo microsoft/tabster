@@ -125,17 +125,29 @@ export class FocusableAPI implements Types.FocusableAPI {
         return false;
     }
 
-    findFirst(options: Types.FindFirstProps): HTMLElement | null | undefined {
-        return this.findElement({
-            ...options,
-        });
+    findFirst(
+        options: Types.FindFirstProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement(
+            {
+                ...options,
+            },
+            out
+        );
     }
 
-    findLast(options: Types.FindFirstProps): HTMLElement | null | undefined {
-        return this.findElement({
-            isBackward: true,
-            ...options,
-        });
+    findLast(
+        options: Types.FindFirstProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement(
+            {
+                isBackward: true,
+                ...options,
+            },
+            out
+        );
     }
 
     findNext(
@@ -152,16 +164,22 @@ export class FocusableAPI implements Types.FocusableAPI {
         return this.findElement({ ...options, isBackward: true }, out);
     }
 
-    findDefault(options: Types.FindDefaultProps): HTMLElement | null {
+    findDefault(
+        options: Types.FindDefaultProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null {
         return (
-            this.findElement({
-                ...options,
-                acceptCondition: (el) =>
-                    this._tabster.focusable.isFocusable(
-                        el,
-                        options.includeProgrammaticallyFocusable
-                    ) && !!this.getProps(el).isDefault,
-            }) || null
+            this.findElement(
+                {
+                    ...options,
+                    acceptCondition: (el) =>
+                        this._tabster.focusable.isFocusable(
+                            el,
+                            options.includeProgrammaticallyFocusable
+                        ) && !!this.getProps(el).isDefault,
+                },
+                out
+            ) || null
         );
     }
 
@@ -187,11 +205,9 @@ export class FocusableAPI implements Types.FocusableAPI {
             currentElement = null,
             includeProgrammaticallyFocusable,
             useActiveModalizer,
-            ignoreUncontrolled,
             ignoreAccessibility,
             modalizerId,
             isBackward,
-            onUncontrolled,
             onElement,
         } = options;
 
@@ -202,12 +218,15 @@ export class FocusableAPI implements Types.FocusableAPI {
         const elements: HTMLElement[] = [];
 
         let { acceptCondition } = options;
+        let hasCustomCondition = true;
 
         if (!container) {
             return null;
         }
 
         if (!acceptCondition) {
+            hasCustomCondition = false;
+
             acceptCondition = (el) =>
                 this._tabster.focusable.isFocusable(
                     el,
@@ -228,8 +247,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             from: currentElement || container,
             isBackward,
             acceptCondition,
+            hasCustomCondition,
             includeProgrammaticallyFocusable,
-            ignoreUncontrolled,
             ignoreAccessibility,
             cachedGrouppers: {},
         };
@@ -248,7 +267,9 @@ export class FocusableAPI implements Types.FocusableAPI {
         const prepareForNextElement = (
             shouldContinueIfNotFound?: boolean
         ): boolean => {
-            const foundElement = acceptElementState.foundElement;
+            const foundElement =
+                acceptElementState.foundElement ||
+                acceptElementState.foundBackward;
 
             if (foundElement) {
                 elements.push(foundElement);
@@ -258,6 +279,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 if (foundElement) {
                     acceptElementState.found = false;
                     delete acceptElementState.foundElement;
+                    delete acceptElementState.foundBackward;
                     delete acceptElementState.fromCtx;
                     acceptElementState.from = foundElement;
 
@@ -300,30 +322,22 @@ export class FocusableAPI implements Types.FocusableAPI {
             walker.currentNode = lastChild;
         }
 
-        let foundElement: HTMLElement | null | undefined;
         do {
-            foundElement =
-                ((isBackward
-                    ? walker.previousNode()
-                    : walker.nextNode()) as HTMLElement | null) || undefined;
+            if (isBackward) {
+                walker.previousNode();
+            } else {
+                walker.nextNode();
+            }
         } while (prepareForNextElement());
 
         if (!findAll) {
-            const nextUncontrolled = acceptElementState.nextUncontrolled;
-
-            if (nextUncontrolled) {
-                if (onUncontrolled) {
-                    onUncontrolled(nextUncontrolled);
-                }
-
-                if (foundElement) {
-                    // We have an uncontrolled area and there is a controlled element after it.
-                    // Return undefined for the default Tab action.
-                    return undefined;
-                } else {
-                    // Otherwise, return null to moveOutWithDefaultAction().
-                    return null;
-                }
+            const foundElement = elements[0];
+            if (
+                foundElement &&
+                RootAPI.getTabsterContext(this._tabster, foundElement)
+                    ?.uncontrolled
+            ) {
+                out.uncontrolled = true;
             }
         }
 
@@ -339,6 +353,17 @@ export class FocusableAPI implements Types.FocusableAPI {
         state: Types.FocusableAcceptElementState
     ): number {
         if (state.found) {
+            return NodeFilter.FILTER_ACCEPT;
+        }
+
+        const foundBackward = state.foundBackward;
+
+        if (
+            foundBackward &&
+            (element === foundBackward || !foundBackward.contains(element))
+        ) {
+            state.found = true;
+            state.foundElement = foundBackward;
             return NodeFilter.FILTER_ACCEPT;
         }
 
@@ -358,14 +383,8 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_REJECT;
         }
 
-        let lastToIgnore = state.lastToIgnore;
-
-        if (lastToIgnore) {
-            if (lastToIgnore.contains(element)) {
-                return NodeFilter.FILTER_REJECT;
-            } else {
-                lastToIgnore = state.lastToIgnore = undefined;
-            }
+        if (state.rejectElementsFrom?.contains(element)) {
+            return NodeFilter.FILTER_REJECT;
         }
 
         const ctx = (state.currentCtx = RootAPI.getTabsterContext(
@@ -378,35 +397,32 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_SKIP;
         }
 
-        if (state.ignoreUncontrolled) {
-            if (shouldIgnoreFocus(element)) {
-                return NodeFilter.FILTER_SKIP;
+        if (shouldIgnoreFocus(element)) {
+            if (
+                this._tabster.focusable.isFocusable(
+                    element,
+                    undefined,
+                    true,
+                    true
+                )
+            ) {
+                state.skippedFocusable = true;
             }
-        } else if (
-            ctx.uncontrolled &&
-            !state.nextUncontrolled &&
-            this._tabster.focusable.isFocusable(element, undefined, true, true)
-        ) {
-            if (!ctx.groupper && !ctx.mover) {
-                if (
-                    ctx.modalizer?.userId === this._tabster.modalizer?.activeId
-                ) {
-                    if (this.isVisible(ctx.uncontrolled)) {
-                        state.nextUncontrolled = ctx.uncontrolled;
-                    }
 
-                    state.skippedFocusable = true;
-
-                    return NodeFilter.FILTER_REJECT;
-                }
-            }
+            return NodeFilter.FILTER_SKIP;
         }
 
-        // We assume iframes are focusable because native tab behaviour would tab inside
-        if (element.tagName === "IFRAME" || element.tagName === "WEBVIEW") {
+        // We assume iframes are focusable because native tab behaviour would tab inside.
+        // But we do it only during the standard search when there is no custom accept
+        // element condition.
+        if (
+            !state.hasCustomCondition &&
+            (element.tagName === "IFRAME" || element.tagName === "WEBVIEW")
+        ) {
             if (ctx.modalizer?.userId === this._tabster.modalizer?.activeId) {
                 state.found = true;
-                state.lastToIgnore = state.foundElement = element;
+                state.rejectElementsFrom = state.foundElement = element;
+
                 return NodeFilter.FILTER_ACCEPT;
             } else {
                 return NodeFilter.FILTER_REJECT;
@@ -506,8 +522,16 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (result === NodeFilter.FILTER_ACCEPT && !state.found) {
-            state.found = true;
-            state.foundElement = element;
+            if (state.isBackward) {
+                // When TreeWalker goes backwards, it visits the container first,
+                // then it goes inside. So, if the container is accepted, we remember it,
+                // but allowing the TreeWalker to check inside.
+                state.foundBackward = element;
+                result = NodeFilter.FILTER_SKIP;
+            } else {
+                state.found = true;
+                state.foundElement = element;
+            }
         }
 
         return result;
