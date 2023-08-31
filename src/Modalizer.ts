@@ -88,6 +88,7 @@ class ModalizerDummyManager extends DummyInputManager {
                         ctx,
                         container,
                         input,
+                        undefined,
                         isBackward,
                         true,
                         true
@@ -225,6 +226,7 @@ export class Modalizer
 
     findNextTabbable(
         currentElement?: HTMLElement,
+        referenceElement?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -238,6 +240,7 @@ export class Modalizer
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
         let uncontrolled: HTMLElement | undefined;
+        let outOfDOMOrder = false;
         const onUncontrolled = (el: HTMLElement) => {
             uncontrolled = el;
         };
@@ -247,14 +250,22 @@ export class Modalizer
             RootAPI.getRoot(tabster, currentElement)?.getElement();
 
         if (container) {
-            next = tabster.focusable[isBackward ? "findPrev" : "findNext"]({
+            const findProps: Types.FindNextProps = {
                 container,
                 currentElement,
+                referenceElement,
                 onUncontrolled,
                 ignoreUncontrolled,
                 ignoreAccessibility,
                 useActiveModalizer: true,
-            });
+            };
+
+            const findPropsOut: Types.FindFocusableOutputProps = {};
+
+            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
+                findProps,
+                findPropsOut
+            );
 
             if (
                 !uncontrolled &&
@@ -270,12 +281,17 @@ export class Modalizer
                         useActiveModalizer: true,
                     }
                 );
+
+                outOfDOMOrder = true;
+            } else {
+                outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
             }
         }
 
         return {
             element: next,
             uncontrolled,
+            outOfDOMOrder,
         };
     }
 
@@ -648,11 +664,18 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         }
 
-        return modalizerUserId === currentModalizer?.userId ||
+        const ret =
+            modalizerUserId === currentModalizer?.userId ||
             (!modalizerUserId &&
                 currentModalizer?.getProps().isAlwaysAccessible)
-            ? undefined
-            : NodeFilter.FILTER_SKIP;
+                ? undefined
+                : NodeFilter.FILTER_SKIP;
+
+        if (ret !== undefined) {
+            state.skippedFocusable = true;
+        }
+
+        return ret;
     }
 
     private _hiddenUpdate(): void {

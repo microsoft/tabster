@@ -138,17 +138,18 @@ export class FocusableAPI implements Types.FocusableAPI {
         });
     }
 
-    findNext(options: Types.FindNextProps): HTMLElement | null | undefined {
-        return this.findElement({
-            ...options,
-        });
+    findNext(
+        options: Types.FindNextProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement({ ...options }, out);
     }
 
-    findPrev(options: Types.FindNextProps): HTMLElement | null | undefined {
-        return this.findElement({
-            isBackward: true,
-            ...options,
-        });
+    findPrev(
+        options: Types.FindNextProps,
+        out?: Types.FindFocusableOutputProps
+    ): HTMLElement | null | undefined {
+        return this.findElement({ ...options, isBackward: true }, out);
     }
 
     findDefault(options: Types.FindDefaultProps): HTMLElement | null {
@@ -169,15 +170,17 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     findElement(
-        options: Types.FindFocusableProps
+        options: Types.FindFocusableProps,
+        out?: Types.FindFocusableOutputProps
     ): HTMLElement | null | undefined {
-        const found = this._findElements(false, options);
+        const found = this._findElements(false, options, out);
         return found ? found[0] : found;
     }
 
     private _findElements(
         findAll: boolean,
-        options: Types.FindFocusableProps
+        options: Types.FindFocusableProps,
+        out?: Types.FindFocusableOutputProps
     ): HTMLElement[] | null | undefined {
         const {
             container,
@@ -191,6 +194,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             onUncontrolled,
             onElement,
         } = options;
+
+        if (!out) {
+            out = {};
+        }
 
         const elements: HTMLElement[] = [];
 
@@ -265,6 +272,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             }
         };
 
+        if (!currentElement) {
+            out.outOfDOMOrder = true;
+        }
+
         if (currentElement) {
             walker.currentNode = currentElement;
         } else if (isBackward) {
@@ -279,6 +290,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                     NodeFilter.FILTER_ACCEPT &&
                 !prepareForNextElement(true)
             ) {
+                if (acceptElementState.skippedFocusable) {
+                    out.outOfDOMOrder = true;
+                }
+
                 return elements;
             }
 
@@ -310,6 +325,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                     return null;
                 }
             }
+        }
+
+        if (acceptElementState.skippedFocusable) {
+            out.outOfDOMOrder = true;
         }
 
         return elements.length ? elements : null;
@@ -375,6 +394,9 @@ export class FocusableAPI implements Types.FocusableAPI {
                     if (this.isVisible(ctx.uncontrolled)) {
                         state.nextUncontrolled = ctx.uncontrolled;
                     }
+
+                    state.skippedFocusable = true;
+
                     return NodeFilter.FILTER_REJECT;
                 }
             }
@@ -392,6 +414,10 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (!state.ignoreAccessibility && !this.isAccessible(element)) {
+            if (this.isFocusable(element, false, true, true)) {
+                state.skippedFocusable = true;
+            }
+
             return NodeFilter.FILTER_REJECT;
         }
 
@@ -412,6 +438,10 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         result = this._tabster.modalizer?.acceptElement(element, state);
 
+        if (result !== undefined) {
+            state.skippedFocusable = true;
+        }
+
         if (result === undefined && (groupper || mover || fromMover)) {
             const groupperElement = groupper?.getElement();
             const fromMoverElement = fromMover?.getElement();
@@ -419,7 +449,7 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (
                 moverElement &&
-                fromMoverElement &&
+                fromMoverElement?.contains(moverElement) &&
                 container.contains(fromMoverElement) &&
                 (!groupperElement ||
                     !mover ||
@@ -466,6 +496,13 @@ export class FocusableAPI implements Types.FocusableAPI {
             result = state.acceptCondition(element)
                 ? NodeFilter.FILTER_ACCEPT
                 : NodeFilter.FILTER_SKIP;
+
+            if (
+                result === NodeFilter.FILTER_SKIP &&
+                this.isFocusable(element, false, true, true)
+            ) {
+                state.skippedFocusable = true;
+            }
         }
 
         if (result === NodeFilter.FILTER_ACCEPT && !state.found) {

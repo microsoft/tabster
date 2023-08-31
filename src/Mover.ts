@@ -60,6 +60,7 @@ class MoverDummyManager extends DummyInputManager {
                     ctx,
                     undefined,
                     input,
+                    undefined,
                     !dummyInput.isFirst,
                     true
                 )?.element;
@@ -229,6 +230,7 @@ export class Mover
 
     findNextTabbable(
         currentElement?: HTMLElement,
+        referenceElement?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -245,9 +247,9 @@ export class Mover
         }
 
         const tabster = this._tabster;
-        const focusable = tabster.focusable;
         let next: HTMLElement | null | undefined = null;
         let uncontrolled: HTMLElement | undefined;
+        let outOfDOMOrder = false;
         const onUncontrolled = (el: HTMLElement) => {
             uncontrolled = el;
         };
@@ -257,29 +259,30 @@ export class Mover
             currentIsDummy ||
             (currentElement && !container.contains(currentElement))
         ) {
-            next = isBackward
-                ? focusable.findPrev({
-                      currentElement,
-                      container,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  })
-                : focusable.findNext({
-                      currentElement,
-                      container,
-                      onUncontrolled,
-                      ignoreUncontrolled,
-                      ignoreAccessibility,
-                      useActiveModalizer: true,
-                  });
+            const findProps: Types.FindNextProps = {
+                currentElement,
+                referenceElement,
+                container,
+                onUncontrolled,
+                ignoreUncontrolled,
+                ignoreAccessibility,
+                useActiveModalizer: true,
+            };
+
+            const findPropsOut: Types.FindFocusableOutputProps = {};
+
+            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
+                findProps,
+                findPropsOut
+            );
+
+            outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
         }
 
         return {
             element: next,
             uncontrolled,
-            lastMoverOrGroupper: next || uncontrolled ? undefined : this,
+            outOfDOMOrder,
         };
     }
 
@@ -355,6 +358,7 @@ export class Mover
                 state.found = true;
                 state.foundElement = found;
                 state.lastToIgnore = moverElement;
+                state.skippedFocusable = true;
                 return NodeFilter.FILTER_ACCEPT;
             }
         }

@@ -107,6 +107,7 @@ export interface TabsterPart<P> {
 export interface TabsterPartWithFindNextTabbable {
     findNextTabbable(
         current?: HTMLElement,
+        reference?: HTMLElement,
         isBackward?: boolean,
         ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
@@ -403,6 +404,12 @@ export interface FocusableAcceptElementState {
         };
     };
     isFindAll?: boolean;
+    /**
+     * A flag that indicates that some focusable elements were skipped
+     * during the search and the found element is not the one the browser
+     * would normally focus if the user pressed Tab.
+     */
+    skippedFocusable?: boolean;
 }
 
 export interface FindFocusableProps {
@@ -414,6 +421,10 @@ export interface FindFocusableProps {
      * The elemet to start from.
      */
     currentElement?: HTMLElement;
+    /**
+     * See `referenceElement` of GetTabsterContextOptions for description.
+     */
+    referenceElement?: HTMLElement;
     /**
      * Includes elements that can be focused programmatically.
      */
@@ -457,6 +468,15 @@ export interface FindFocusableProps {
     onElement?: FindElementCallback;
 }
 
+export interface FindFocusableOutputProps {
+    /**
+     * An output parameter. Will be true after the findNext/findPrev() call if some focusable
+     * elements were skipped during the search and the result element not immediately next
+     * focusable after the currentElement.
+     */
+    outOfDOMOrder?: boolean;
+}
+
 export type FindFirstProps = Pick<
     FindFocusableProps,
     | "container"
@@ -470,6 +490,7 @@ export type FindFirstProps = Pick<
 export type FindNextProps = Pick<
     FindFocusableProps,
     | "currentElement"
+    | "referenceElement"
     | "container"
     | "modalizerId"
     | "includeProgrammaticallyFocusable"
@@ -522,14 +543,23 @@ export interface FocusableAPI extends Disposable {
     // find* return null when there is no element and undefined when there is an uncontrolled area.
     findFirst(options: FindFirstProps): HTMLElement | null | undefined;
     findLast(options: FindFirstProps): HTMLElement | null | undefined;
-    findNext(options: FindNextProps): HTMLElement | null | undefined;
-    findPrev(options: FindNextProps): HTMLElement | null | undefined;
+    findNext(
+        options: FindNextProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
+    findPrev(
+        options: FindNextProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
     findDefault(options: FindDefaultProps): HTMLElement | null;
     /**
      * @returns All focusables in a given context that satisfy an given condition
      */
     findAll(options: FindAllProps): HTMLElement[];
-    findElement(options: FindFocusableProps): HTMLElement | null | undefined;
+    findElement(
+        options: FindFocusableProps,
+        out?: FindFocusableOutputProps
+    ): HTMLElement | null | undefined;
 }
 
 export interface DummyInputManager {
@@ -581,7 +611,6 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement;
-    lastMoverOrGroupper?: Mover | Groupper;
     outOfDOMOrder?: boolean;
 };
 
@@ -830,6 +859,16 @@ export interface GetTabsterContextOptions {
      * Should visit **all** element ancestors to verify if `dir='rtl'` is set
      */
     checkRtl?: boolean;
+    /**
+     * The element to start computing the context from. Useful when dealing
+     * with nested structures. For example, if we have an element inside a groupper
+     * inside another groupper, the `groupper` prop in this element's contexts will
+     * be the inner groupper, but when we pass the inner groupper's parent element
+     * as `referenceElement`, the context groupper will be the outer one. Having
+     * this option simplifies searching for the next tabbable element in the
+     * environment of nested movers and grouppers.
+     */
+    referenceElement?: HTMLElement;
 }
 
 export type TabsterContextMoverGroupper =
