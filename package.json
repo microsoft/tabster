@@ -1,6 +1,6 @@
 {
     "name": "tabster",
-    "version": "4.7.2",
+    "version": "5.0.0-canary.0",
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
