@@ -195,7 +195,6 @@ export class Groupper
             uncontrolled = !!findPropsOut.uncontrolled;
 
             if (
-                !uncontrolled &&
                 !next &&
                 this._props.tabbability ===
                     Types.GroupperTabbabilities.LimitedTrapFocus

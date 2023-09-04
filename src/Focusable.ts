@@ -290,6 +290,15 @@ export class FocusableAPI implements Types.FocusableAPI {
 
                 return !!(foundElement || shouldContinueIfNotFound);
             } else {
+                if (
+                    foundElement &&
+                    out &&
+                    RootAPI.getTabsterContext(this._tabster, foundElement)
+                        ?.uncontrolled
+                ) {
+                    out.uncontrolled = true;
+                }
+
                 return !!(shouldContinueIfNotFound && !foundElement);
             }
         };
@@ -329,17 +338,6 @@ export class FocusableAPI implements Types.FocusableAPI {
                 walker.nextNode();
             }
         } while (prepareForNextElement());
-
-        if (!findAll) {
-            const foundElement = elements[0];
-            if (
-                foundElement &&
-                RootAPI.getTabsterContext(this._tabster, foundElement)
-                    ?.uncontrolled
-            ) {
-                out.uncontrolled = true;
-            }
-        }
 
         if (acceptElementState.skippedFocusable) {
             out.outOfDOMOrder = true;
