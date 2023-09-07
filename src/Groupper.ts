@@ -173,7 +173,7 @@ export class Groupper
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
         let outOfDOMOrder = false;
-        let uncontrolled = false;
+        let uncontrolled: HTMLElement | null | undefined;
 
         if (this._shouldTabInside && groupperFirstFocusable) {
             const findProps: Types.FindNextProps = {
@@ -192,27 +192,25 @@ export class Groupper
             );
 
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
-            uncontrolled = !!findPropsOut.uncontrolled;
 
             if (
                 !next &&
                 this._props.tabbability ===
                     Types.GroupperTabbabilities.LimitedTrapFocus
             ) {
-                next = isBackward
-                    ? tabster.focusable.findLast({
-                          container: groupperElement,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                    : tabster.focusable.findFirst({
-                          container: groupperElement,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      });
+                next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
+                    {
+                        container: groupperElement,
+                        ignoreAccessibility,
+                        useActiveModalizer: true,
+                    },
+                    findPropsOut
+                );
 
                 outOfDOMOrder = true;
             }
+
+            uncontrolled = findPropsOut.uncontrolled;
         }
 
         return {

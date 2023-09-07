@@ -14,16 +14,6 @@ import {
     HTMLElementWithDummyContainer,
 } from "./Utils";
 
-const _focusableSelector = [
-    "a[href]",
-    "button:not([disabled])",
-    "input:not([disabled])",
-    "select:not([disabled])",
-    "textarea:not([disabled])",
-    "*[tabindex]",
-    "*[contenteditable]",
-].join(", ");
-
 export class FocusableAPI implements Types.FocusableAPI {
     private _tabster: Types.TabsterCore;
 
@@ -47,7 +37,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         noAccessibleCheck?: boolean
     ): boolean {
         if (
-            matchesSelector(el, _focusableSelector) &&
+            matchesSelector(el, Types.FocusableSelector) &&
             (includeProgrammaticallyFocusable || el.tabIndex !== -1)
         ) {
             return (
@@ -290,13 +280,11 @@ export class FocusableAPI implements Types.FocusableAPI {
 
                 return !!(foundElement || shouldContinueIfNotFound);
             } else {
-                if (
-                    foundElement &&
-                    out &&
-                    RootAPI.getTabsterContext(this._tabster, foundElement)
-                        ?.uncontrolled
-                ) {
-                    out.uncontrolled = true;
+                if (foundElement && out) {
+                    out.uncontrolled = RootAPI.getTabsterContext(
+                        this._tabster,
+                        foundElement
+                    )?.uncontrolled;
                 }
 
                 return !!(shouldContinueIfNotFound && !foundElement);

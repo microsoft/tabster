@@ -16,6 +16,16 @@ export const MoverEventName = "tabster:mover";
 export const FocusInEventName = "tabster:focusin";
 export const FocusOutEventName = "tabster:focusout";
 
+export const FocusableSelector = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "*[tabindex]",
+    "*[contenteditable]",
+].join(", ");
+
 export interface TabsterEventWithDetails<D> extends Event {
     details: D;
 }
@@ -468,7 +478,7 @@ export interface FindFocusableOutputProps {
     /**
      * An output parameter. Will be true if the found element is uncontrolled.
      */
-    uncontrolled?: boolean;
+    uncontrolled?: HTMLElement | null;
 }
 
 export type FindFirstProps = Pick<
@@ -608,7 +618,7 @@ export type MoverDirection = MoverDirections[keyof MoverDirections];
 
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
-    uncontrolled?: boolean;
+    uncontrolled?: HTMLElement | null;
     outOfDOMOrder?: boolean;
 };
 
@@ -885,7 +895,7 @@ export interface TabsterContext {
      */
     rtl?: boolean;
     excludedFromMover?: boolean;
-    uncontrolled?: boolean;
+    uncontrolled?: HTMLElement | null;
     ignoreKeydown: (e: KeyboardEvent) => boolean;
 }
 

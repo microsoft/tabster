@@ -247,7 +247,7 @@ export class Mover
 
         let next: HTMLElement | null | undefined = null;
         let outOfDOMOrder = false;
-        let uncontrolled = false;
+        let uncontrolled: HTMLElement | null | undefined;
 
         if (
             this._props.tabbable ||
@@ -269,7 +269,7 @@ export class Mover
             ](findProps, findPropsOut);
 
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
-            uncontrolled = !!findPropsOut.uncontrolled;
+            uncontrolled = findPropsOut.uncontrolled;
         }
 
         return {

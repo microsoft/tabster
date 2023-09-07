@@ -295,7 +295,7 @@ describe("Restorer", () => {
             });
     }, 10000);
 
-    it.only("should register already focused target", async () => {
+    it("should register already focused target", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
             restorer: { type: Types.RestorerTypes.Target },

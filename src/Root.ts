@@ -413,7 +413,7 @@ export class RootAPI implements Types.RootAPI {
         let groupperBeforeMover: boolean | undefined;
         let modalizerInGroupper: Types.Groupper | undefined;
         let dirRightToLeft: boolean | undefined;
-        let uncontrolled: boolean | undefined;
+        let uncontrolled: HTMLElement | null | undefined;
         let curElement: Node | null = options.referenceElement || element;
         const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
 
@@ -444,7 +444,7 @@ export class RootAPI implements Types.RootAPI {
                     tagName === "WEBVIEW") &&
                 uncontrolled === undefined
             ) {
-                uncontrolled = true;
+                uncontrolled = curElement as HTMLElement;
             }
 
             if (
@@ -503,7 +503,7 @@ export class RootAPI implements Types.RootAPI {
             }
 
             if (!uncontrolled && (mover || groupper || modalizer)) {
-                uncontrolled = false;
+                uncontrolled = null;
             }
 
             curElement = curElement.parentElement;

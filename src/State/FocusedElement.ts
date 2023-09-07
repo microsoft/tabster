@@ -488,10 +488,19 @@ export class FocusedElementState
         const nextElement = next?.element;
 
         if (nextElement) {
-            if (ctx.uncontrolled && controlTab) {
-                // We are in uncontrolled zone. We allow whatever controls it to move
+            if (ctx.uncontrolled) {
+                if (
+                    !next.outOfDOMOrder &&
+                    next.uncontrolled === ctx.uncontrolled
+                ) {
+                    // Nothing to do, everything will be done by the browser or something
+                    // that controls the uncontrolled area.
+                    return;
+                }
+
+                // We are in uncontrolled area. We allow whatever controls it to move
                 // focus, but we add a phantom dummy to make sure the focus is moved
-                // to the correct place if the uncontrolled zone allows default action.
+                // to the correct place if the uncontrolled area allows default action.
                 // We only need that in the controlled mode, because in uncontrolled
                 // mode we have dummy inputs around everything that redirects focus.
                 DummyInputManager.addPhantomDummyWithTarget(
@@ -505,7 +514,7 @@ export class FocusedElementState
             }
 
             if (next.uncontrolled || nextElement.tagName === "IFRAME") {
-                // For iframes and uncontrolled zones we always want to use default action to
+                // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 DummyInputManager.moveWithPhantomDummy(
                     this._tabster,

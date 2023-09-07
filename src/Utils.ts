@@ -149,6 +149,10 @@ export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
     return new (ctx?.basics.WeakMap || WeakMap)();
 }
 
+export function hasSubFocusable(element: HTMLElement): boolean {
+    return !!element.querySelector(Types.FocusableSelector);
+}
+
 interface TabsterWeakRef<T> {
     deref(): T | undefined;
 }
@@ -994,10 +998,20 @@ export class DummyInputManager {
         const input = dummy.input;
 
         if (input) {
-            anchor.parentElement?.insertBefore(
-                input,
-                isBackward ? anchor : anchor.nextElementSibling
-            );
+            let dummyParent: HTMLElement | null;
+            let insertBefore: HTMLElement | null;
+
+            if (hasSubFocusable(anchor) && !isBackward) {
+                dummyParent = anchor;
+                insertBefore = anchor.firstElementChild as HTMLElement | null;
+            } else {
+                dummyParent = anchor.parentElement;
+                insertBefore = isBackward
+                    ? anchor
+                    : (anchor.nextElementSibling as HTMLElement | null);
+            }
+
+            dummyParent?.insertBefore(input, insertBefore);
         }
     }
 }
