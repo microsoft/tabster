@@ -163,7 +163,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 {
                     ...options,
                     acceptCondition: (el) =>
-                        this._tabster.focusable.isFocusable(
+                        this.isFocusable(
                             el,
                             options.includeProgrammaticallyFocusable
                         ) && !!this.getProps(el).isDefault,
@@ -208,17 +208,15 @@ export class FocusableAPI implements Types.FocusableAPI {
         const elements: HTMLElement[] = [];
 
         let { acceptCondition } = options;
-        let hasCustomCondition = true;
+        const hasCustomCondition = !!acceptCondition;
 
         if (!container) {
             return null;
         }
 
         if (!acceptCondition) {
-            hasCustomCondition = false;
-
             acceptCondition = (el) =>
-                this._tabster.focusable.isFocusable(
+                this.isFocusable(
                     el,
                     includeProgrammaticallyFocusable,
                     false,
@@ -258,7 +256,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             shouldContinueIfNotFound?: boolean
         ): boolean => {
             const foundElement =
-                acceptElementState.foundElement ||
+                acceptElementState.foundElement ??
                 acceptElementState.foundBackward;
 
             if (foundElement) {
@@ -384,14 +382,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (shouldIgnoreFocus(element)) {
-            if (
-                this._tabster.focusable.isFocusable(
-                    element,
-                    undefined,
-                    true,
-                    true
-                )
-            ) {
+            if (this.isFocusable(element, undefined, true, true)) {
                 state.skippedFocusable = true;
             }
 

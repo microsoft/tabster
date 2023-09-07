@@ -980,9 +980,9 @@ export class DummyInputManager {
 
     static addPhantomDummyWithTarget(
         tabster: Types.TabsterCore,
-        anchor: HTMLElement,
+        sourceElement: HTMLElement,
         isBackward: boolean,
-        element: HTMLElement
+        targetElement: HTMLElement
     ): void {
         const dummy: DummyInput = new DummyInput(
             tabster.getWindow,
@@ -992,7 +992,7 @@ export class DummyInputManager {
                 isFirst: true,
             },
             undefined,
-            new WeakHTMLElement(tabster.getWindow, element)
+            new WeakHTMLElement(tabster.getWindow, targetElement)
         );
 
         const input = dummy.input;
@@ -1001,14 +1001,15 @@ export class DummyInputManager {
             let dummyParent: HTMLElement | null;
             let insertBefore: HTMLElement | null;
 
-            if (hasSubFocusable(anchor) && !isBackward) {
-                dummyParent = anchor;
-                insertBefore = anchor.firstElementChild as HTMLElement | null;
+            if (hasSubFocusable(sourceElement) && !isBackward) {
+                dummyParent = sourceElement;
+                insertBefore =
+                    sourceElement.firstElementChild as HTMLElement | null;
             } else {
-                dummyParent = anchor.parentElement;
+                dummyParent = sourceElement.parentElement;
                 insertBefore = isBackward
-                    ? anchor
-                    : (anchor.nextElementSibling as HTMLElement | null);
+                    ? sourceElement
+                    : (sourceElement.nextElementSibling as HTMLElement | null);
             }
 
             dummyParent?.insertBefore(input, insertBefore);
