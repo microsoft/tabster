@@ -488,10 +488,15 @@ export class FocusedElementState
         const nextElement = next?.element;
 
         if (nextElement) {
-            if (ctx.uncontrolled) {
+            const nextUncontrolled = next.uncontrolled;
+
+            if (
+                ctx.uncontrolled ||
+                nextUncontrolled?.contains(currentElement)
+            ) {
                 if (
                     !next.outOfDOMOrder &&
-                    next.uncontrolled === ctx.uncontrolled
+                    nextUncontrolled === ctx.uncontrolled
                 ) {
                     // Nothing to do, everything will be done by the browser or something
                     // that controls the uncontrolled area.
@@ -513,12 +518,12 @@ export class FocusedElementState
                 return;
             }
 
-            if (next.uncontrolled || nextElement.tagName === "IFRAME") {
+            if (nextUncontrolled || nextElement.tagName === "IFRAME") {
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 DummyInputManager.moveWithPhantomDummy(
                     this._tabster,
-                    nextElement,
+                    nextUncontrolled ?? nextElement,
                     false,
                     isBackward
                 );

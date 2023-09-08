@@ -941,33 +941,20 @@ export class DummyInputManager {
         const input = dummy.input;
 
         if (input) {
-            let parent: HTMLElementWithDummyContainer | null;
-            let insertBefore: HTMLElementWithDummyContainer | null;
-
-            if (moveOutOfElement) {
-                parent = element.parentElement;
-
-                if (isBackward) {
-                    insertBefore = element;
-                } else {
-                    insertBefore =
-                        element.nextElementSibling as HTMLElementWithDummyContainer | null;
-                }
-            } else {
-                if (isBackward) {
-                    parent = element;
-                    insertBefore =
-                        element.firstElementChild as HTMLElementWithDummyContainer | null;
-                } else {
-                    parent = element.parentElement;
-                    insertBefore = element;
-                }
-            }
+            const parent =
+                element.parentElement as HTMLElementWithDummyContainer | null;
+            const insertBefore =
+                (moveOutOfElement && isBackward) ||
+                (!moveOutOfElement && !isBackward)
+                    ? element
+                    : (element.nextElementSibling as HTMLElementWithDummyContainer | null);
 
             if (parent) {
                 parent.insertBefore(input, insertBefore);
 
-                DummyInputManager._lastPhantomFrom = element;
+                DummyInputManager._lastPhantomFrom = isBackward
+                    ? undefined
+                    : element;
 
                 tabster.getWindow().setTimeout(() => {
                     delete DummyInputManager._lastPhantomFrom;
