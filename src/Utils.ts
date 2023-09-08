@@ -812,9 +812,7 @@ export class DummyInput {
         const input = this.input;
 
         if (this.onFocusIn && input) {
-            const relatedTarget =
-                DummyInputManager.getLastPhantomFrom() ||
-                (e.relatedTarget as HTMLElement | null);
+            const relatedTarget = e.relatedTarget as HTMLElement | null;
 
             this.onFocusIn(
                 this,
@@ -861,7 +859,6 @@ export class DummyInputManager {
     private _onFocusIn?: DummyInputFocusCallback;
     private _onFocusOut?: DummyInputFocusCallback;
     protected _element: WeakHTMLElement;
-    private static _lastPhantomFrom: HTMLElement | undefined;
 
     moveOut: DummyInputManagerCore["moveOut"];
     moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
@@ -921,12 +918,6 @@ export class DummyInputManager {
         delete this._onFocusOut;
     }
 
-    static getLastPhantomFrom(): HTMLElement | undefined {
-        const ret = DummyInputManager._lastPhantomFrom;
-        delete DummyInputManager._lastPhantomFrom;
-        return ret;
-    }
-
     static moveWithPhantomDummy(
         tabster: Types.TabsterCore,
         element: HTMLElement,
@@ -951,15 +942,6 @@ export class DummyInputManager {
 
             if (parent) {
                 parent.insertBefore(input, insertBefore);
-
-                DummyInputManager._lastPhantomFrom = isBackward
-                    ? undefined
-                    : element;
-
-                tabster.getWindow().setTimeout(() => {
-                    delete DummyInputManager._lastPhantomFrom;
-                }, 0);
-
                 nativeFocus(input);
             }
         }
