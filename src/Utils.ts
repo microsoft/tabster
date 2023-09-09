@@ -932,13 +932,53 @@ export class DummyInputManager {
         const input = dummy.input;
 
         if (input) {
-            const parent =
-                element.parentElement as HTMLElementWithDummyContainer | null;
-            const insertBefore =
-                (moveOutOfElement && isBackward) ||
-                (!moveOutOfElement && !isBackward)
-                    ? element
-                    : (element.nextElementSibling as HTMLElementWithDummyContainer | null);
+            let parent: HTMLElement | null;
+            let insertBefore: HTMLElementWithDummyContainer | null;
+
+            if (element.tagName === "BODY") {
+                // We cannot insert elements outside of BODY.
+                parent = element;
+                insertBefore =
+                    (moveOutOfElement && isBackward) ||
+                    (!moveOutOfElement && !isBackward)
+                        ? (element.firstElementChild as HTMLElement | null)
+                        : null;
+            } else {
+                parent = element.parentElement as HTMLElement | null;
+                insertBefore =
+                    (moveOutOfElement && isBackward) ||
+                    (!moveOutOfElement && !isBackward)
+                        ? element
+                        : (element.nextElementSibling as HTMLElement | null);
+
+                let potentialDummy: HTMLElementWithDummyContainer | null;
+                let dummyFor: HTMLElement | undefined;
+
+                do {
+                    // This is a safety pillow for the cases when someone, combines
+                    // groupper with uncontrolled on the same node. Which is technically
+                    // not correct, but moving into the container element via its dummy
+                    // input would produce a correct behaviour in uncontrolled mode.
+                    potentialDummy = (
+                        (moveOutOfElement && isBackward) ||
+                        (!moveOutOfElement && !isBackward)
+                            ? insertBefore?.previousElementSibling
+                            : insertBefore
+                    ) as HTMLElementWithDummyContainer | null;
+
+                    dummyFor = potentialDummy?.__tabsterDummyContainer?.get();
+
+                    if (dummyFor === element) {
+                        insertBefore =
+                            (moveOutOfElement && isBackward) ||
+                            (!moveOutOfElement && !isBackward)
+                                ? potentialDummy
+                                : (potentialDummy?.nextElementSibling as HTMLElement | null);
+                    } else {
+                        dummyFor = undefined;
+                    }
+                } while (dummyFor);
+            }
 
             if (parent) {
                 parent.insertBefore(input, insertBefore);

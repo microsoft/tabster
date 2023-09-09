@@ -442,8 +442,14 @@ export class RootAPI implements Types.RootAPI {
                 (tabsterOnElement.uncontrolled ||
                     tagName === "IFRAME" ||
                     tagName === "WEBVIEW") &&
-                uncontrolled === undefined
+                uncontrolled !== null
             ) {
+                // `uncontrolled` is undefined when we haven't seen uncontrolled yet.
+                // `uncontrolled` is null when there is some Tabster related like mover or groupper
+                // deeper in the context of the element and we should ignore uncontrolled.
+                // `uncontrolled` is HTMLElement when we've seen uncontrolled, and we want the most
+                // upper one in case someone has decided to nest uncontrolled elements for some
+                // reason.
                 uncontrolled = curElement as HTMLElement;
             }
 
