@@ -20,15 +20,30 @@ const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
+    private _observer: MutationObserver | undefined;
+
     constructor(
         tabster: TabsterCore,
         element: HTMLElement,
         props: RestorerProps
     ) {
         super(tabster, element, props);
+
+        // need to attach MutationObserver for Safari to detect source element removal.
+        // removing the activeElement does not trigger a focusout event in Safari
+        const isSafari = navigator?.userAgent.indexOf('Safari') !== -1 && navigator?.userAgent.indexOf('Chrome') === -1;
+
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
             element?.addEventListener("focusout", this._onFocusOut);
+
+            // attach MutationObserver to parent for Safari
+            const parent = element?.parentElement;
+            if (isSafari && parent) {
+                this._observer = new MutationObserver(this._onNodeRemoved);
+                this._observer.observe(parent, { childList: true, subtree: false });
+            }
+
         }
     }
 
@@ -47,6 +62,25 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
                     bubbles: true,
                 })
             );
+        }
+    };
+
+    private _onNodeRemoved = (mutations: MutationRecord[]) => {
+        for (const mutation of mutations) {
+            for (let i = 0; i < mutation.removedNodes.length; i++) {
+                const element = this._element?.get();
+                if (mutation.removedNodes[i] === element) {
+                    const lastFocused = this._tabster.focusedElement.getFocusedElement();
+                    if (lastFocused && element.contains(lastFocused)) {
+                        document.body?.dispatchEvent(
+                            new Event(EVENT_NAME, {
+                                bubbles: true,
+                            })
+                        );
+                    }
+                    this._observer?.disconnect();
+                }
+            }
         }
     };
 }
