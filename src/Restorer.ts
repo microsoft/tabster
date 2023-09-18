@@ -20,7 +20,7 @@ const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
-    private _observer: MutationObserver | undefined;
+    private _hasFocus = false;
 
     constructor(
         tabster: TabsterCore,
@@ -32,16 +32,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
             element?.addEventListener("focusout", this._onFocusOut);
-
-            // Need to also listen to node removals, which do not trigger focus events in non-Chromium browsers
-            const parent = element?.parentElement;
-            if (parent) {
-                this._observer = new MutationObserver(this._onNodeRemoved);
-                this._observer.observe(parent, {
-                    childList: true,
-                    subtree: false,
-                });
-            }
+            element?.addEventListener("focusin", this._onFocusIn);
         }
     }
 
@@ -49,38 +40,35 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
             element?.removeEventListener("focusout", this._onFocusOut);
+            element?.removeEventListener("focusin", this._onFocusIn);
+
+            if (element && this._hasFocus) {
+                const doc = this._tabster.getWindow().document;
+                doc.body?.dispatchEvent(
+                    new Event(EVENT_NAME, {
+                        bubbles: true,
+                    })
+                );
+            }
         }
     }
 
     private _onFocusOut = (e: FocusEvent) => {
-        if (e.relatedTarget === null) {
-            const element = this._element?.get();
-            element?.dispatchEvent(
+        const element = this._element?.get();
+        if (element && e.relatedTarget === null) {
+            element.dispatchEvent(
                 new Event(EVENT_NAME, {
                     bubbles: true,
                 })
             );
         }
+        if (element && !element.contains(e.relatedTarget as HTMLElement | null)) {
+            this._hasFocus = false;
+        }
     };
 
-    private _onNodeRemoved = (mutations: MutationRecord[]) => {
-        for (const mutation of mutations) {
-            for (let i = 0; i < mutation.removedNodes.length; i++) {
-                const element = this._element?.get();
-                if (mutation.removedNodes[i] === element) {
-                    const lastFocused =
-                        this._tabster.focusedElement.getFocusedElement();
-                    if (lastFocused && element.contains(lastFocused)) {
-                        document.body?.dispatchEvent(
-                            new Event(EVENT_NAME, {
-                                bubbles: true,
-                            })
-                        );
-                    }
-                    this._observer?.disconnect();
-                }
-            }
-        }
+    private _onFocusIn = () => {
+        this._hasFocus = true;
     };
 }
 
