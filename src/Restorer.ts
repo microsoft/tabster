@@ -42,7 +42,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
             element?.removeEventListener("focusout", this._onFocusOut);
             element?.removeEventListener("focusin", this._onFocusIn);
 
-            if (element && this._hasFocus) {
+            if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
                 doc.body?.dispatchEvent(
                     new Event(EVENT_NAME, {
