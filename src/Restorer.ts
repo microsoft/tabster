@@ -62,7 +62,10 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
                 })
             );
         }
-        if (element && !element.contains(e.relatedTarget as HTMLElement | null)) {
+        if (
+            element &&
+            !element.contains(e.relatedTarget as HTMLElement | null)
+        ) {
             this._hasFocus = false;
         }
     };
