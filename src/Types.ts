@@ -46,6 +46,12 @@ export interface TabsterCoreProps {
      * This option allows to enable dummy inputs on Root.
      */
     rootDummyInputs?: boolean;
+    /**
+     * A callback that will be called for the uncontrolled areas with `trapsFocus`
+     * when Tabster wants to know is the element is currently trapping focus and
+     * Tabster should not interfere with handling Tab.
+     */
+    isTrappingFocus?: (element: HTMLElement) => boolean;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -901,7 +907,6 @@ export interface TabsterContext {
 
 export interface RootFocusEventDetails {
     element: HTMLElement;
-    fromAdjacent?: boolean;
 }
 
 interface RootAPIInternal {
@@ -921,8 +926,9 @@ export interface RootAPI extends Disposable, RootAPIInternal {
     eventTarget: EventTarget;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UncontrolledAPI {}
+export interface UncontrolledAPI {
+    isTrappingFocus(element: HTMLElement): boolean;
+}
 
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */

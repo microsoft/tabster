@@ -10,7 +10,13 @@ import * as Types from "./Types";
  * i.e. Tabster will not control focus events within an uncontrolled area
  */
 export class UncontrolledAPI implements Types.UncontrolledAPI {
-    constructor() {
-        /**/
+    private _isTrappingFocus?: (element: HTMLElement) => boolean;
+
+    constructor(isTrappingFocus?: (element: HTMLElement) => boolean) {
+        this._isTrappingFocus = isTrappingFocus;
+    }
+
+    isTrappingFocus(element: HTMLElement): boolean {
+        return !!this._isTrappingFocus?.(element);
     }
 }

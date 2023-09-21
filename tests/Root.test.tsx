@@ -13,7 +13,6 @@ interface WindowWithTabsterCoreAndFocusState extends Window {
         events: {
             elementId?: string;
             type: "focus" | "blur";
-            fromAdjacent?: boolean;
         }[];
     };
 }
@@ -123,7 +122,7 @@ describe("Root", () => {
             });
     });
 
-    itIfControlled("should trigger root focus events", async () => {
+    it("should trigger root focus events", async () => {
         await new BroTest.BroTest(
             (
                 <div id="root" {...getTabsterAttribute({ root: {} })}>
@@ -152,7 +151,6 @@ describe("Root", () => {
                             focusedRoot.events.push({
                                 elementId: e.details.element.id,
                                 type: "focus",
-                                fromAdjacent: e.details.fromAdjacent,
                             });
                         }
                     }
@@ -167,7 +165,6 @@ describe("Root", () => {
                             focusedRoot.events.push({
                                 elementId: e.details.element.id,
                                 type: "blur",
-                                fromAdjacent: e.details.fromAdjacent,
                             });
                         }
                     }
@@ -189,7 +186,6 @@ describe("Root", () => {
                         events: [
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                         ],
@@ -216,12 +212,10 @@ describe("Root", () => {
                         events: [
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
                         ],
@@ -244,17 +238,14 @@ describe("Root", () => {
                         events: [
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                         ],
@@ -278,22 +269,18 @@ describe("Root", () => {
                         events: [
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
                         ],
@@ -313,25 +300,24 @@ describe("Root", () => {
                         events: [
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "focus",
                             },
                             {
                                 elementId: "root",
-                                fromAdjacent: true,
                                 type: "blur",
                             },
-                            { elementId: "root", type: "focus" },
+                            {
+                                elementId: "root",
+                                type: "focus",
+                            },
                         ],
                     });
                 }

@@ -944,12 +944,29 @@ export class DummyInputManager {
                         ? (element.firstElementChild as HTMLElement | null)
                         : null;
             } else {
-                parent = element.parentElement as HTMLElement | null;
-                insertBefore =
-                    (moveOutOfElement && isBackward) ||
-                    (!moveOutOfElement && !isBackward)
-                        ? element
-                        : (element.nextElementSibling as HTMLElement | null);
+                if (
+                    moveOutOfElement &&
+                    (!isBackward ||
+                        (isBackward &&
+                            !tabster.focusable.isFocusable(
+                                element,
+                                false,
+                                true,
+                                true
+                            )))
+                ) {
+                    parent = element;
+                    insertBefore = isBackward
+                        ? (element.firstElementChild as HTMLElementWithDummyContainer | null)
+                        : null;
+                } else {
+                    parent = element.parentElement as HTMLElement | null;
+                    insertBefore =
+                        (moveOutOfElement && isBackward) ||
+                        (!moveOutOfElement && !isBackward)
+                            ? element
+                            : (element.nextElementSibling as HTMLElement | null);
+                }
 
                 let potentialDummy: HTMLElementWithDummyContainer | null;
                 let dummyFor: HTMLElement | undefined;

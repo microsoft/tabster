@@ -42,12 +42,12 @@ function _setInformativeStyle(
 
 class RootDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
-    private _setFocused: (focused: boolean, fromAdjacent?: boolean) => void;
+    private _setFocused: (focused: boolean) => void;
 
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
-        setFocused: (focused: boolean, fromAdjacent?: boolean) => void,
+        setFocused: (focused: boolean) => void,
         sys: Types.SysProps | undefined
     ) {
         super(
@@ -71,7 +71,7 @@ class RootDummyManager extends DummyInputManager {
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing
             // the default action to move the focus out.
-            this._setFocused(false, true);
+            this._setFocused(false);
         } else {
             // The only way a dummy input gets focused is during the keyboard navigation.
             this._tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
@@ -79,7 +79,7 @@ class RootDummyManager extends DummyInputManager {
             const element = this._element.get();
 
             if (element) {
-                this._setFocused(true, true);
+                this._setFocused(true);
 
                 const toFocus =
                     this._tabster.focusedElement.getFirstOrLastTabbable(
@@ -108,7 +108,6 @@ export class Root
     private _sys?: Types.SysProps;
     private _isFocused = false;
     private _setFocusedTimer: number | undefined;
-    private _setTabbableTimer: number | undefined;
     private _onDispose: (root: Root) => void;
 
     constructor(
@@ -131,7 +130,10 @@ export class Root
             this.addDummyInputs();
         }
 
-        tabster.focusedElement.subscribe(this._onFocus);
+        const w = win();
+
+        w.document.addEventListener("focusin", this._onFocusIn);
+        w.document.addEventListener("focusout", this._onFocusOut);
 
         this._add();
     }
@@ -152,14 +154,12 @@ export class Root
 
         const win = this._tabster.getWindow();
 
+        win.document.removeEventListener("focusin", this._onFocusIn);
+        win.document.removeEventListener("focusout", this._onFocusOut);
+
         if (this._setFocusedTimer) {
             win.clearTimeout(this._setFocusedTimer);
             delete this._setFocusedTimer;
-        }
-
-        if (this._setTabbableTimer) {
-            win.clearTimeout(this._setTabbableTimer);
-            delete this._setTabbableTimer;
         }
 
         this._dummyManager?.dispose();
@@ -185,10 +185,7 @@ export class Root
         }
     }
 
-    private _setFocused = (
-        hasFocused: boolean,
-        fromAdjacent?: boolean
-    ): void => {
+    private _setFocused = (hasFocused: boolean): void => {
         if (this._setFocusedTimer) {
             this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
             delete this._setFocusedTimer;
@@ -203,54 +200,42 @@ export class Root
         if (element) {
             if (hasFocused) {
                 this._isFocused = true;
+                this._dummyManager?.setTabbable(false);
+
                 triggerEvent<Types.RootFocusEventDetails>(
                     this._tabster.root.eventTarget,
                     "focus",
-                    { element, fromAdjacent }
+                    { element }
                 );
             } else {
                 this._setFocusedTimer = this._tabster
                     .getWindow()
                     .setTimeout(() => {
                         delete this._setFocusedTimer;
+
                         this._isFocused = false;
+                        this._dummyManager?.setTabbable(true);
+
                         triggerEvent<Types.RootFocusEventDetails>(
                             this._tabster.root.eventTarget,
                             "blur",
-                            { element, fromAdjacent }
+                            { element }
                         );
                     }, 0);
             }
         }
     };
 
-    private _onFocus = (e: HTMLElement | undefined) => {
-        const win = this._tabster.getWindow();
+    private _onFocusIn = (event: FocusEvent) => {
+        const target = event.target as HTMLElement | null;
 
-        if (this._setTabbableTimer) {
-            win.clearTimeout(this._setTabbableTimer);
-            delete this._setTabbableTimer;
+        if (target && this._element.get()?.contains(target)) {
+            this._setFocused(true);
         }
+    };
 
-        if (e) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, e);
-
-            if (ctx) {
-                this._setFocused(ctx.root.getElement() === this._element.get());
-            }
-
-            if (!ctx || ctx.uncontrolled || this._tabster.rootDummyInputs) {
-                this._dummyManager?.setTabbable(false);
-                return;
-            }
-        } else {
-            this._setFocused(false);
-        }
-
-        this._setTabbableTimer = win.setTimeout(() => {
-            delete this._setTabbableTimer;
-            this._dummyManager?.setTabbable(true);
-        }, 0);
+    private _onFocusOut = () => {
+        this._setFocused(false);
     };
 
     private _add(): void {

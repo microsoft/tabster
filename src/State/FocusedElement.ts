@@ -16,6 +16,7 @@ import {
     WeakHTMLElement,
     triggerEvent,
 } from "../Utils";
+import { getTabsterOnElement } from "../Instance";
 import { Subscribable } from "./Subscribable";
 
 export class FocusedElementState
@@ -541,7 +542,43 @@ export class FocusedElementState
                 // Just allow the default action
             }
         } else {
-            ctx.root.moveOutWithDefaultAction(isBackward);
+            let currentUncontrolled = ctx.uncontrolled;
+
+            if (
+                currentUncontrolled &&
+                !tabster.uncontrolled.isTrappingFocus(currentUncontrolled)
+            ) {
+                currentUncontrolled = undefined;
+            }
+
+            if (!currentUncontrolled) {
+                for (
+                    let el: HTMLElement | null = currentElement.parentElement;
+                    el;
+                    el = el.parentElement
+                ) {
+                    currentUncontrolled = getTabsterOnElement(tabster, el)
+                        ?.uncontrolled
+                        ? el
+                        : undefined;
+
+                    if (currentUncontrolled) {
+                        if (
+                            !tabster.uncontrolled.isTrappingFocus(
+                                currentUncontrolled
+                            )
+                        ) {
+                            currentUncontrolled = undefined;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!currentUncontrolled) {
+                ctx.root.moveOutWithDefaultAction(isBackward);
+            }
         }
     };
 
