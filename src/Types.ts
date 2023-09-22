@@ -51,7 +51,7 @@ export interface TabsterCoreProps {
      * when Tabster wants to know is the element is currently trapping focus and
      * Tabster should not interfere with handling Tab.
      */
-    isTrappingFocus?: (element: HTMLElement) => boolean;
+    checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
 }
 
 export type GetTabster = () => TabsterCore;
