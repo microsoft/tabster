@@ -87,6 +87,7 @@ class TabsterCore implements Types.TabsterCore {
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
     restorer?: Types.RestorerAPI;
+    getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = createWeakMap(win);
@@ -103,6 +104,8 @@ class TabsterCore implements Types.TabsterCore {
         this.rootDummyInputs = !!props?.rootDummyInputs;
 
         this._dummyObserver = new DummyInputObserver(getWindow);
+
+        this.getParent = props?.getParent ?? ((el) => el.parentElement);
 
         this.internal = {
             stopObserver: (): void => {
