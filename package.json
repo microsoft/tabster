@@ -66,7 +66,7 @@
         "@storybook/addon-essentials": "^6.4.19",
         "@storybook/addon-links": "^6.4.19",
         "@storybook/builder-webpack5": "^6.4.19",
-        "@storybook/html": "^6.4.19",
+        "@storybook/html": "^7.4.6",
         "@storybook/manager-webpack5": "^6.4.19",
         "@types/expect-puppeteer": "^4.4.7",
         "@types/jest": "^27.4.0",
