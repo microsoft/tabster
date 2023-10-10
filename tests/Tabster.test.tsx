@@ -17,6 +17,69 @@ describe("Tabster dispose", () => {
         await BroTest.bootstrapTabsterPage({});
     });
 
+    it("should set getParent prop on first creation", async () => {
+        const parentId = "parent";
+        await new BroTest.BroTest(<div />)
+            .eval((id) => {
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                window.__tabsterInstance.dispose();
+                const parent = document.createElement("div");
+                parent.id = id;
+                getTabsterTestVariables().createTabster?.(window, {
+                    getParent: () => parent,
+                });
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                return window.__tabsterInstance.getParent().id;
+            }, parentId)
+            .check((id) => {
+                expect(id).toEqual(parentId);
+            });
+    });
+
+    it("should set getParent prop on latest creation", async () => {
+        const first = "first";
+        const second = "second";
+        await new BroTest.BroTest(<div />)
+            .eval((id) => {
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                window.__tabsterInstance.dispose();
+
+                const parent = document.createElement("div");
+                parent.id = id;
+                getTabsterTestVariables().createTabster?.(window, {
+                    getParent: () => parent,
+                });
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                return window.__tabsterInstance.getParent().id;
+            }, first)
+            .check((id) => {
+                expect(id).toEqual(first);
+            })
+            .eval((id) => {
+                const parent = document.createElement("div");
+                parent.id = id;
+                getTabsterTestVariables().createTabster?.(window, {
+                    getParent: () => parent,
+                });
+
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                return window.__tabsterInstance.getParent().id;
+            }, second)
+            .check((id) => {
+                expect(id).toEqual(second);
+            });
+    });
+
     it("should not dispose global tabster core if there are still tabster instances", async () => {
         await new BroTest.BroTest(<div />)
             .eval(() => {

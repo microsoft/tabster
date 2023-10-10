@@ -1155,7 +1155,7 @@ interface TabsterCoreInternal {
     getWindow: GetWindow;
 
     /** @internal */
-    createTabster(noRefCount?: boolean): Tabster;
+    createTabster(noRefCount?: boolean, props?: TabsterCoreProps): Tabster;
     /** @internal */
     disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
     /** @internal */
