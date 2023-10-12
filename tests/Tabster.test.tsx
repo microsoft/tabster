@@ -37,11 +37,12 @@ describe("Tabster dispose", () => {
                     getParent: () => parent,
                 });
 
-                const tabsterInstance  = (
-                    window as unknown as WindowWithTabster
-                ).__tabsterInstance as unknown as Types.TabsterCore
+                const tabsterInstance = (window as unknown as WindowWithTabster)
+                    .__tabsterInstance as unknown as Types.TabsterCore;
 
-                const parentResult = tabsterInstance.getParent(document.createElement('div')) as HTMLElement | null;
+                const parentResult = tabsterInstance.getParent(
+                    document.createElement("div")
+                ) as HTMLElement | null;
                 return parentResult?.id;
             }, parentId)
             .check((id) => {
@@ -79,11 +80,12 @@ describe("Tabster dispose", () => {
                     getParent: () => parent,
                 });
 
-                const tabsterInstance  = (
-                    window as unknown as WindowWithTabster
-                ).__tabsterInstance as unknown as Types.TabsterCore
+                const tabsterInstance = (window as unknown as WindowWithTabster)
+                    .__tabsterInstance as unknown as Types.TabsterCore;
 
-                const parentResult = tabsterInstance.getParent(document.createElement('div')) as HTMLElement | null;
+                const parentResult = tabsterInstance.getParent(
+                    document.createElement("div")
+                ) as HTMLElement | null;
                 return parentResult?.id;
             }, second)
             .check((id) => {
