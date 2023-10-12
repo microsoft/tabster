@@ -9,7 +9,13 @@ import { WindowWithTabsterInstance } from "../src/Root";
 import * as BroTest from "./utils/BroTest";
 
 interface WindowWithTabster extends Window {
-    __tabsterInstance: unknown;
+    __tabsterInstance?: Types.TabsterCore;
+}
+
+interface NodeWithVirtualParent extends Node {
+    _virtual: {
+        parent?: Node;
+    };
 }
 
 describe("Tabster dispose", () => {
@@ -30,10 +36,13 @@ describe("Tabster dispose", () => {
                 getTabsterTestVariables().createTabster?.(window, {
                     getParent: () => parent,
                 });
-                // dispose default tabster on the test page
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                return window.__tabsterInstance.getParent().id;
+
+                const tabsterInstance  = (
+                    window as unknown as WindowWithTabster
+                ).__tabsterInstance as unknown as Types.TabsterCore
+
+                const parentResult = tabsterInstance.getParent(document.createElement('div')) as HTMLElement | null;
+                return parentResult?.id;
             }, parentId)
             .check((id) => {
                 expect(id).toEqual(parentId);
@@ -70,13 +79,87 @@ describe("Tabster dispose", () => {
                     getParent: () => parent,
                 });
 
-                // dispose default tabster on the test page
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                return window.__tabsterInstance.getParent().id;
+                const tabsterInstance  = (
+                    window as unknown as WindowWithTabster
+                ).__tabsterInstance as unknown as Types.TabsterCore
+
+                const parentResult = tabsterInstance.getParent(document.createElement('div')) as HTMLElement | null;
+                return parentResult?.id;
             }, second)
             .check((id) => {
                 expect(id).toEqual(second);
+            });
+    });
+
+    it("should support virtual parents with getParent", async () => {
+        const parentId = "parent";
+        await new BroTest.BroTest(<div />)
+            .eval((id) => {
+                function isVirtualElement(
+                    element: Node
+                ): element is NodeWithVirtualParent {
+                    // eslint-disable-next-line no-prototype-builtins
+                    return element && element.hasOwnProperty("_virtual");
+                }
+
+                function getVirtualParent(child: Node): Node | null {
+                    return isVirtualElement(child)
+                        ? child._virtual.parent || null
+                        : null;
+                }
+                function setVirtualParent(child: Node, parent?: Node): void {
+                    const virtualChild = child;
+
+                    if (
+                        !(virtualChild as unknown as NodeWithVirtualParent)
+                            ._virtual
+                    ) {
+                        (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual = {};
+                    }
+
+                    (
+                        virtualChild as unknown as NodeWithVirtualParent
+                    )._virtual.parent = parent;
+                }
+
+                function getParent(child: Node | null): Node | null {
+                    if (!child) {
+                        return null;
+                    }
+
+                    const virtualParent = getVirtualParent(child);
+
+                    if (virtualParent) {
+                        return virtualParent;
+                    }
+
+                    return null;
+                }
+
+                // dispose default tabster on the test page
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                window.__tabsterInstance.dispose();
+                const child = document.createElement("div");
+                const parent = document.createElement("div");
+                parent.id = id;
+
+                setVirtualParent(child, parent);
+                getTabsterTestVariables().createTabster?.(window, {
+                    getParent,
+                });
+
+                const tabsterInstance = (window as unknown as WindowWithTabster)
+                    .__tabsterInstance as unknown as Types.TabsterCore;
+                const parentResult = tabsterInstance.getParent(
+                    child
+                ) as HTMLElement | null;
+                return parentResult?.id;
+            }, parentId)
+            .check((id) => {
+                expect(id).toEqual(parentId);
             });
     });
 
