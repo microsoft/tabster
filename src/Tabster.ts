@@ -142,7 +142,7 @@ class TabsterCore implements Types.TabsterCore {
      * props can/should be mergeable, so let's add more as we move on.
      * @param props Tabster props
      */
-    mergeProps(props?: Types.TabsterCoreProps) {
+    private _mergeProps(props?: Types.TabsterCoreProps) {
         if (!props) {
             return;
         }
@@ -160,7 +160,7 @@ class TabsterCore implements Types.TabsterCore {
             this._wrappers.add(wrapper);
         }
 
-        this.mergeProps(props);
+        this._mergeProps(props);
 
         return wrapper;
     }
