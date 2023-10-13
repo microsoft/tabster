@@ -87,6 +87,7 @@ class TabsterCore implements Types.TabsterCore {
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
     restorer?: Types.RestorerAPI;
+    getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = createWeakMap(win);
@@ -103,6 +104,8 @@ class TabsterCore implements Types.TabsterCore {
         this.rootDummyInputs = !!props?.rootDummyInputs;
 
         this._dummyObserver = new DummyInputObserver(getWindow);
+
+        this.getParent = props?.getParent ?? ((el) => el.parentElement);
 
         this.internal = {
             stopObserver: (): void => {
@@ -134,12 +137,30 @@ class TabsterCore implements Types.TabsterCore {
         });
     }
 
-    createTabster(noRefCount?: boolean): Types.Tabster {
+    /**
+     * Merges external props with the current props. Not all
+     * props can/should be mergeable, so let's add more as we move on.
+     * @param props Tabster props
+     */
+    private _mergeProps(props?: Types.TabsterCoreProps) {
+        if (!props) {
+            return;
+        }
+
+        this.getParent = props.getParent ?? this.getParent;
+    }
+
+    createTabster(
+        noRefCount?: boolean,
+        props?: Types.TabsterCoreProps
+    ): Types.Tabster {
         const wrapper = new Tabster(this);
 
         if (!noRefCount) {
             this._wrappers.add(wrapper);
         }
+
+        this._mergeProps(props);
 
         return wrapper;
     }
@@ -300,7 +321,7 @@ export function createTabster(
     let tabster = getCurrentTabster(win as WindowWithTabsterInstance);
 
     if (tabster) {
-        return tabster.createTabster();
+        return tabster.createTabster(false, props);
     }
 
     tabster = new TabsterCore(win, props);
