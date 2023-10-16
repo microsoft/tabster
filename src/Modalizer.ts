@@ -212,6 +212,7 @@ export class Modalizer
         this.makeActive(false);
         this._onDispose(this);
         this.dummyManager?.dispose();
+        delete this.dummyManager;
         this._activeElements = [];
         this._remove();
     }

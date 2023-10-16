@@ -123,6 +123,7 @@ export class Groupper
 
         const element = this._element.get();
         this.dummyManager?.dispose();
+        delete this.dummyManager;
 
         if (element) {
             if (__DEV__) {
