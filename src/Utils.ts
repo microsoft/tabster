@@ -841,9 +841,6 @@ export class DummyInputManager {
     protected _element: WeakHTMLElement;
     private static _lastPhantomFrom: HTMLElement | undefined;
 
-    moveOut: DummyInputManagerCore["moveOut"];
-    moveOutWithDefaultAction: DummyInputManagerCore["moveOutWithDefaultAction"];
-
     constructor(
         tabster: Types.TabsterCore,
         element: WeakHTMLElement,
@@ -863,14 +860,6 @@ export class DummyInputManager {
             outsideByDefault,
             callForDefaultAction
         );
-
-        this.moveOut = (backwards: boolean) => {
-            this._instance?.moveOut(backwards);
-        };
-
-        this.moveOutWithDefaultAction = (backwards: boolean) => {
-            this._instance?.moveOutWithDefaultAction(backwards);
-        };
     }
 
     protected _setHandlers(
@@ -879,6 +868,14 @@ export class DummyInputManager {
     ): void {
         this._onFocusIn = onFocusIn;
         this._onFocusOut = onFocusOut;
+    }
+
+    moveOut(backwards: boolean): void {
+        this._instance?.moveOut(backwards);
+    }
+
+    moveOutWithDefaultAction(backwards: boolean): void {
+        this._instance?.moveOutWithDefaultAction(backwards);
     }
 
     getHandler(isIn: boolean): DummyInputFocusCallback | undefined {
@@ -1002,7 +999,8 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     private _lastUpdateQueueTime = 0;
     private _changedParents: WeakSet<HTMLElement> = new WeakSet();
     private _updateDummyInputsTimer?: number;
-    private _dummies: Map<HTMLElement, () => void> = new Map();
+    private _dummyElements: WeakRef<HTMLElement>[] = [];
+    private _dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
     domChanged?(parent: HTMLElement): void;
 
     constructor(win: GetWindow) {
@@ -1010,15 +1008,22 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     }
 
     add(dummy: HTMLElement, callback: () => void): void {
-        this._dummies.set(dummy, callback);
-        this.domChanged = this._domChanged;
+        if (!this._dummyCallbacks.has(dummy)) {
+            this._dummyElements.push(new WeakRef(dummy));
+            this._dummyCallbacks.set(dummy, callback);
+            this.domChanged = this._domChanged;
+        }
     }
 
     remove(dummy: HTMLElement): void {
-        const dummyInputElements = this._dummies;
-        dummyInputElements.delete(dummy);
+        this._dummyElements = this._dummyElements.filter((ref) => {
+            const element = ref.deref();
+            return element && element !== dummy;
+        });
 
-        if (dummyInputElements.size === 0) {
+        this._dummyCallbacks.delete(dummy);
+
+        if (this._dummyElements.length === 0) {
             delete this.domChanged;
         }
     }
@@ -1037,8 +1042,11 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         }
 
         this._changedParents = new WeakSet();
-        this._dummies.clear();
+        this._dummyCallbacks = new WeakMap();
+        this._dummyElements = [];
+        this._updateQueue.clear();
 
+        delete this.domChanged;
         delete this._win;
     }
 
@@ -1056,11 +1064,22 @@ export class DummyInputObserver implements Types.DummyInputObserver {
         this._updateDummyInputsTimer = this._win?.().setTimeout(() => {
             delete this._updateDummyInputsTimer;
 
-            for (const [dummy, callback] of this._dummies) {
-                const dummyParent = dummy.parentElement;
+            for (const ref of this._dummyElements) {
+                const dummyElement = ref.deref();
 
-                if (!dummyParent || this._changedParents.has(dummyParent)) {
-                    callback();
+                if (dummyElement) {
+                    const callback = this._dummyCallbacks.get(dummyElement);
+
+                    if (callback) {
+                        const dummyParent = dummyElement.parentElement;
+
+                        if (
+                            !dummyParent ||
+                            this._changedParents.has(dummyParent)
+                        ) {
+                            callback();
+                        }
+                    }
                 }
             }
 
