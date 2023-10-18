@@ -177,6 +177,7 @@ export class Mover
         }
 
         this.dummyManager?.dispose();
+        delete this.dummyManager;
     }
 
     setCurrent(element: HTMLElement | undefined): void {
