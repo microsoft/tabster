@@ -248,7 +248,11 @@ class BroTestItemHTML extends BroTestItem {
         const frame = this._frameStack[0].frame;
 
         await frame.evaluate(
-            (el, html) => (el.innerHTML = html),
+            (el, html) => {
+                if (el) {
+                    el.innerHTML = html;
+                }
+            },
             await frame.$("body"),
             renderToStaticMarkup(this._html)
         );
