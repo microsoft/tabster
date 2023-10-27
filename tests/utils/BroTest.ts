@@ -4,12 +4,7 @@
  */
 
 import * as React from "react";
-import {
-    EvaluateFunc,
-    Page,
-    Frame,
-    KeyInput,
-} from "puppeteer";
+import { EvaluateFunc, Page, Frame, KeyInput } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
