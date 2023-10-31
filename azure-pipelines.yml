@@ -4,101 +4,86 @@
 
 variables:
   - group: 'Github and NPM secrets'
-  - group: InfoSec-SecurityResults
   - name: tags
     value: production,externalfacing
 
-jobs:
-- job: Compliance
-  displayName: Compliance checks
-  pool:
-    name: uifabric-windows-2019-small
-  steps:
-  - checkout: self
-    clean: true
+resources:
+  repositories:
+    - repository: 1esPipelines
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
 
-  - task: UseDotNet@2
-    displayName: Use .NET Core sdk 3.x
-    inputs:
-      version: 3.x
-
-  - task: CredScan@3
-    displayName: Run Credential Scanner
-    inputs:
-      debugMode: false
-      folderSuppression: false
-
-  - task: ESLint@1
-    displayName: Run ESLint
-
-  - task: PublishSecurityAnalysisLogs@3
-    displayName: Publish Guardian Artifacts
-
-  - task: AssetRetention@3
-    displayName: ARtifact Retention Orchestrator Workflow (ARROW)
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-    inputs:
-      ArrowServiceConnection: dd6a5756-fb5f-4a28-98b6-a525d1421299
-      IsShipped: true
-
-  - task: PostAnalysis@2
-    displayName: Guardian Break
-
-- job: Release
-  displayName: Release
-  dependsOn: Compliance
-
-  pool:
-    name: 1ES-Host-Ubuntu
-
-  steps:
-  - checkout: self
-    clean: true
-
-  - task: CmdLine@2
-    displayName: Re-attach head
-    inputs:
-      script: |
-        git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
-        git pull
-
-  - task: NodeTool@0
-    displayName: Use Node 16.x
-    inputs:
-      versionSpec: 16.x
-
-  - task: Npm@1
-    displayName: npm install
-    inputs:
-      verbose: false
-
-  - task: CmdLine@2
-    displayName: Authenticate git for pushes
-    inputs:
-      script: >-
-        git config user.name "Tabster Build"
-
-        git config user.email "fluentui-internal@service.microsoft.com"
-
-        git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
-
-  - task: CmdLine@2
-    displayName: Write npmrc for publish token
-    inputs:
-      script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
-
-  - task: CmdLine@2
-    displayName: Publish (official)
-    condition: eq(variables.prerelease, false)
-    inputs:
-      script: 'npm run release -- $(publishVersion) --ci '
-    env:
-        NPM_TOKEN: $(npmToken)
-
-  - task: CmdLine@2
-    displayName: Publish (prerelease)
-    condition: eq(variables.prerelease, true)
-    inputs:
-      script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
-    env:
-        NPM_TOKEN: $(npmToken)
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  parameters:
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: windows-latest
+      os: windows # We need windows because compliance task only run on windows.
+    stages:
+      - stage: main
+        jobs:
+          - job: Release
+            pool:
+              name: '1ES-Host-Ubuntu'
+              image: '1ES-PT-Ubuntu-20.04'
+              os: linux
+            workspace:
+              clean: all
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(System.DefaultWorkingDirectory)
+                  artifactName: output
+            steps:
+              - checkout: self
+                clean: true
+            
+              - task: CmdLine@2
+                displayName: Re-attach head
+                inputs:
+                  script: |
+                    git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
+                    git pull
+            
+              - task: NodeTool@0
+                displayName: Use Node 16.x
+                inputs:
+                  versionSpec: 16.x
+            
+              - task: Npm@1
+                displayName: npm install
+                inputs:
+                  verbose: false
+            
+              - task: CmdLine@2
+                displayName: Authenticate git for pushes
+                inputs:
+                  script: >-
+                    git config user.name "Tabster Build"
+            
+                    git config user.email "fluentui-internal@service.microsoft.com"
+            
+                    git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
+            
+              - task: CmdLine@2
+                displayName: Write npmrc for publish token
+                inputs:
+                  script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+            
+              - task: CmdLine@2
+                displayName: Publish (official)
+                condition: eq(variables.prerelease, false)
+                inputs:
+                  script: 'npm run release -- $(publishVersion) --ci '
+                env:
+                    NPM_TOKEN: $(npmToken)
+            
+              - task: CmdLine@2
+                displayName: Publish (prerelease)
+                condition: eq(variables.prerelease, true)
+                inputs:
+                  script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+                env:
+                    NPM_TOKEN: $(npmToken)
