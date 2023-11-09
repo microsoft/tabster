@@ -23,6 +23,7 @@ function getUncontrolledFocusTrapContainer(
     tabster: Types.TabsterCore,
     element: HTMLElement
 ): HTMLElement | undefined {
+    const getParent = tabster.getParent;
     let el: HTMLElement | null = element;
 
     do {
@@ -33,7 +34,7 @@ function getUncontrolledFocusTrapContainer(
             return el;
         }
 
-        el = el.parentElement;
+        el = getParent(el) as HTMLElement | null;
     } while (el);
 
     return undefined;

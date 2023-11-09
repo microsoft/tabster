@@ -227,11 +227,19 @@ export class Root
     };
 
     private _onFocusIn = (event: FocusEvent) => {
-        const target = event.target as HTMLElement | null;
+        const getParent = this._tabster.getParent;
+        const rootElement = this._element.get();
+        let curElement = event.target as HTMLElement | null;
 
-        if (target && this._element.get()?.contains(target)) {
-            this._setFocused(true);
-        }
+        do {
+            if (curElement === rootElement) {
+                this._setFocused(true);
+                return;
+            }
+
+            curElement =
+                curElement && (getParent(curElement) as HTMLElement | null);
+        } while (curElement);
     };
 
     private _onFocusOut = () => {
@@ -539,10 +547,12 @@ export class RootAPI implements Types.RootAPI {
         tabster: Types.TabsterCore,
         element: HTMLElement
     ): Types.Root | undefined {
+        const getParent = tabster.getParent;
+
         for (
             let el = element as HTMLElement | null;
             el;
-            el = el.parentElement
+            el = getParent(el) as HTMLElement | null
         ) {
             const root = getTabsterOnElement(tabster, el)?.root;
 
