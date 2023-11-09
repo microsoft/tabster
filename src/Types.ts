@@ -941,7 +941,7 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     currentIsOthersAccessible: boolean | undefined; // isOthersAccessible value of the currently active Modalizer.
     /** @internal */
-    activeElements: WeakRef<HTMLElement>[];
+    activeElements: WeakHTMLElement<HTMLElement>[];
     /** @internal */
     createModalizer(
         element: HTMLElement,
