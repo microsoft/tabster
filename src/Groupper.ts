@@ -54,7 +54,6 @@ class GroupperDummyManager extends DummyInputManager {
                             relatedTarget || undefined,
                             undefined,
                             isBackward,
-                            true,
                             true
                         )?.element;
 
@@ -71,7 +70,6 @@ class GroupperDummyManager extends DummyInputManager {
                                       ),
                                 undefined,
                                 isBackward,
-                                true,
                                 true
                             )?.element;
                         }
@@ -138,7 +136,6 @@ export class Groupper
         currentElement?: HTMLElement,
         referenceElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const groupperElement = this.getElement();
@@ -176,19 +173,14 @@ export class Groupper
 
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
-        let uncontrolled: HTMLElement | undefined;
         let outOfDOMOrder = false;
-        const onUncontrolled = (el: HTMLElement) => {
-            uncontrolled = el;
-        };
+        let uncontrolled: HTMLElement | null | undefined;
 
         if (this._shouldTabInside && groupperFirstFocusable) {
             const findProps: Types.FindNextProps = {
                 container: groupperElement,
                 currentElement,
                 referenceElement,
-                onUncontrolled,
-                ignoreUncontrolled,
                 ignoreAccessibility,
                 useActiveModalizer: true,
             };
@@ -203,27 +195,23 @@ export class Groupper
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
 
             if (
-                !uncontrolled &&
                 !next &&
                 this._props.tabbability ===
                     Types.GroupperTabbabilities.LimitedTrapFocus
             ) {
-                next = isBackward
-                    ? tabster.focusable.findLast({
-                          container: groupperElement,
-                          ignoreUncontrolled: true,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      })
-                    : tabster.focusable.findFirst({
-                          container: groupperElement,
-                          ignoreUncontrolled: true,
-                          ignoreAccessibility,
-                          useActiveModalizer: true,
-                      });
+                next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
+                    {
+                        container: groupperElement,
+                        ignoreAccessibility,
+                        useActiveModalizer: true,
+                    },
+                    findPropsOut
+                );
 
                 outOfDOMOrder = true;
             }
+
+            uncontrolled = findPropsOut.uncontrolled;
         }
 
         return {
@@ -292,7 +280,6 @@ export class Groupper
                 first =
                     this._tabster.focusable.findFirst({
                         container: groupperElement,
-                        ignoreUncontrolled: true,
                         useActiveModalizer: true,
                     }) || undefined;
 
@@ -324,7 +311,7 @@ export class Groupper
             parentElement &&
             RootAPI.getTabsterContext(this._tabster, parentElement);
         const parentCtxGroupper = parentCtx?.groupper;
-        const parentGroupper = parentCtx?.isGroupperFirst
+        const parentGroupper = parentCtx?.groupperBeforeMover
             ? parentCtxGroupper
             : undefined;
         let parentGroupperElement: HTMLElement | undefined;
@@ -400,7 +387,7 @@ export class Groupper
                 }
 
                 if (first && state.acceptCondition(first)) {
-                    state.lastToIgnore = groupperElement;
+                    state.rejectElementsFrom = groupperElement;
                     state.skippedFocusable = true;
 
                     if (first !== state.from) {

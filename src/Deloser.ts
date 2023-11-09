@@ -632,7 +632,6 @@ export class Deloser
         if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
             const first = this._tabster.focusable.findFirst({
                 container: element,
-                ignoreUncontrolled: true,
                 useActiveModalizer: true,
             });
 

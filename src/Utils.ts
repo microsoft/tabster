@@ -149,6 +149,10 @@ export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
     return new (ctx?.basics.WeakMap || WeakMap)();
 }
 
+export function hasSubFocusable(element: HTMLElement): boolean {
+    return !!element.querySelector(Types.FocusableSelector);
+}
+
 interface TabsterWeakRef<T> {
     deref(): T | undefined;
 }
@@ -680,6 +684,7 @@ export type DummyInputFocusCallback = (
  */
 export class DummyInput {
     private _isPhantom: DummyInputProps["isPhantom"];
+    private _fixedTarget?: WeakHTMLElement;
     private _disposeTimer: number | undefined;
     private _clearDisposeTimeout: (() => void) | undefined;
 
@@ -696,7 +701,8 @@ export class DummyInput {
         getWindow: Types.GetWindow,
         isOutside: boolean,
         props: DummyInputProps,
-        element?: WeakHTMLElement
+        element?: WeakHTMLElement,
+        fixedTarget?: WeakHTMLElement
     ) {
         const win = getWindow();
         const input = win.document.createElement("i");
@@ -720,6 +726,7 @@ export class DummyInput {
         this.isFirst = props.isFirst;
         this.isOutside = isOutside;
         this._isPhantom = props.isPhantom ?? false;
+        this._fixedTarget = fixedTarget;
 
         input.addEventListener("focusin", this._focusIn);
         input.addEventListener("focusout", this._focusOut);
@@ -755,6 +762,7 @@ export class DummyInput {
             return;
         }
 
+        delete this._fixedTarget;
         delete this.onFocusIn;
         delete this.onFocusOut;
         delete this.input;
@@ -791,12 +799,20 @@ export class DummyInput {
     }
 
     private _focusIn = (e: FocusEvent): void => {
+        if (this._fixedTarget) {
+            const target = this._fixedTarget.get();
+
+            if (target) {
+                nativeFocus(target);
+            }
+
+            return;
+        }
+
         const input = this.input;
 
         if (this.onFocusIn && input) {
-            const relatedTarget =
-                DummyInputManager.getLastPhantomFrom() ||
-                (e.relatedTarget as HTMLElement | null);
+            const relatedTarget = e.relatedTarget as HTMLElement | null;
 
             this.onFocusIn(
                 this,
@@ -807,6 +823,10 @@ export class DummyInput {
     };
 
     private _focusOut = (e: FocusEvent): void => {
+        if (this._fixedTarget) {
+            return;
+        }
+
         this.useDefaultAction = false;
 
         const input = this.input;
@@ -839,7 +859,6 @@ export class DummyInputManager {
     private _onFocusIn?: DummyInputFocusCallback;
     private _onFocusOut?: DummyInputFocusCallback;
     protected _element: WeakHTMLElement;
-    private static _lastPhantomFrom: HTMLElement | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -896,18 +915,22 @@ export class DummyInputManager {
         delete this._onFocusOut;
     }
 
-    static getLastPhantomFrom(): HTMLElement | undefined {
-        const ret = DummyInputManager._lastPhantomFrom;
-        delete DummyInputManager._lastPhantomFrom;
-        return ret;
-    }
-
     static moveWithPhantomDummy(
         tabster: Types.TabsterCore,
-        element: HTMLElement,
-        moveOutside: boolean,
-        isBackward: boolean
+        element: HTMLElement, // The target element to move to or out of.
+        moveOutOfElement: boolean, // Whether to move out of the element or into it.
+        isBackward: boolean // Are we tabbing of shift-tabbing?
     ): void {
+        // Phantom dummy is a hack to use browser's default action to move
+        // focus from a specific point in the application to the next/previous
+        // element. Default action is needed because next focusable element
+        // is not always available to focus directly (for example, next focusable
+        // is inside isolated iframe) or for uncontrolled areas we want to make
+        // sure that something that controls it takes care of the focusing.
+        // It works in a way that during the Tab key handling, we create a dummy
+        // input element, place it to the specific place in the DOM and focus it,
+        // then the default action of the Tab press will move focus from our dummy
+        // input. And we remove it from the DOM right after that.
         const dummy: DummyInput = new DummyInput(tabster.getWindow, true, {
             isPhantom: true,
             isFirst: true,
@@ -916,42 +939,143 @@ export class DummyInputManager {
         const input = dummy.input;
 
         if (input) {
-            const parent = element.parentElement;
+            let parent: HTMLElement | null;
+            let insertBefore: HTMLElementWithDummyContainer | null;
 
-            if (parent) {
-                let insertBefore = (
-                    (moveOutside && !isBackward) || (!moveOutside && isBackward)
-                        ? element.nextElementSibling
-                        : element
-                ) as HTMLElementWithDummyContainer | null;
+            // Let's say we have a following DOM structure:
+            // <div>
+            //   <button>Button1</button>
+            //   <div id="uncontrolled" data-tabster={uncontrolled: {}}>
+            //     <button>Button2</button>
+            //     <button>Button3</button>
+            //   </div>
+            //   <button>Button4</button>
+            // </div>
+            //
+            // We pass the "uncontrolled" div as the element to move to or out of.
+            //
+            // When we pass moveOutOfElement=true and isBackward=false,
+            // the phantom dummy input will be inserted before Button4.
+            //
+            // When we pass moveOutOfElement=true and isBackward=true, there are
+            // two cases. If the uncontrolled element is focusable (has tabindex=0),
+            // the phantom dummy input will be inserted after Button1. If the
+            // uncontrolled element is not focusable, the phantom dummy input will be
+            // inserted before Button2.
+            //
+            // When we pass moveOutOfElement=false and isBackward=false, the
+            // phantom dummy input will be inserted after Button1.
+            //
+            // When we pass moveOutOfElement=false and isBackward=true, the phantom
+            // dummy input will be inserted before Button4.
+            //
+            // And we have a corner case for <body> and we make sure that the inserted
+            // dummy is inserted properly when there are existing permanent dummies.
 
-                if (insertBefore) {
-                    if (isBackward) {
-                        const beforeBefore =
-                            insertBefore.previousElementSibling as HTMLElementWithDummyContainer | null;
-
-                        if (
-                            beforeBefore &&
-                            beforeBefore.__tabsterDummyContainer
-                        ) {
-                            insertBefore = beforeBefore;
-                        }
-                    } else if (insertBefore.__tabsterDummyContainer) {
-                        insertBefore =
-                            insertBefore.nextElementSibling as HTMLElementWithDummyContainer | null;
-                    }
+            if (element.tagName === "BODY") {
+                // We cannot insert elements outside of BODY.
+                parent = element;
+                insertBefore =
+                    (moveOutOfElement && isBackward) ||
+                    (!moveOutOfElement && !isBackward)
+                        ? (element.firstElementChild as HTMLElement | null)
+                        : null;
+            } else {
+                if (
+                    moveOutOfElement &&
+                    (!isBackward ||
+                        (isBackward &&
+                            !tabster.focusable.isFocusable(
+                                element,
+                                false,
+                                true,
+                                true
+                            )))
+                ) {
+                    parent = element;
+                    insertBefore = isBackward
+                        ? (element.firstElementChild as HTMLElementWithDummyContainer | null)
+                        : null;
+                } else {
+                    parent = element.parentElement as HTMLElement | null;
+                    insertBefore =
+                        (moveOutOfElement && isBackward) ||
+                        (!moveOutOfElement && !isBackward)
+                            ? element
+                            : (element.nextElementSibling as HTMLElement | null);
                 }
 
+                let potentialDummy: HTMLElementWithDummyContainer | null;
+                let dummyFor: HTMLElement | undefined;
+
+                do {
+                    // This is a safety pillow for the cases when someone, combines
+                    // groupper with uncontrolled on the same node. Which is technically
+                    // not correct, but moving into the container element via its dummy
+                    // input would produce a correct behaviour in uncontrolled mode.
+                    potentialDummy = (
+                        (moveOutOfElement && isBackward) ||
+                        (!moveOutOfElement && !isBackward)
+                            ? insertBefore?.previousElementSibling
+                            : insertBefore
+                    ) as HTMLElementWithDummyContainer | null;
+
+                    dummyFor = potentialDummy?.__tabsterDummyContainer?.get();
+
+                    if (dummyFor === element) {
+                        insertBefore =
+                            (moveOutOfElement && isBackward) ||
+                            (!moveOutOfElement && !isBackward)
+                                ? potentialDummy
+                                : (potentialDummy?.nextElementSibling as HTMLElement | null);
+                    } else {
+                        dummyFor = undefined;
+                    }
+                } while (dummyFor);
+            }
+
+            if (parent) {
                 parent.insertBefore(input, insertBefore);
-
-                DummyInputManager._lastPhantomFrom = element;
-
-                tabster.getWindow().setTimeout(() => {
-                    delete DummyInputManager._lastPhantomFrom;
-                }, 0);
-
                 nativeFocus(input);
             }
+        }
+    }
+
+    static addPhantomDummyWithTarget(
+        tabster: Types.TabsterCore,
+        sourceElement: HTMLElement,
+        isBackward: boolean,
+        targetElement: HTMLElement
+    ): void {
+        const dummy: DummyInput = new DummyInput(
+            tabster.getWindow,
+            true,
+            {
+                isPhantom: true,
+                isFirst: true,
+            },
+            undefined,
+            new WeakHTMLElement(tabster.getWindow, targetElement)
+        );
+
+        const input = dummy.input;
+
+        if (input) {
+            let dummyParent: HTMLElement | null;
+            let insertBefore: HTMLElement | null;
+
+            if (hasSubFocusable(sourceElement) && !isBackward) {
+                dummyParent = sourceElement;
+                insertBefore =
+                    sourceElement.firstElementChild as HTMLElement | null;
+            } else {
+                dummyParent = sourceElement.parentElement;
+                insertBefore = isBackward
+                    ? sourceElement
+                    : (sourceElement.nextElementSibling as HTMLElement | null);
+            }
+
+            dummyParent?.insertBefore(input, insertBefore);
         }
     }
 }

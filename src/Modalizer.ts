@@ -90,7 +90,6 @@ class ModalizerDummyManager extends DummyInputManager {
                         input,
                         undefined,
                         isBackward,
-                        true,
                         true
                     )?.element;
                 }
@@ -229,7 +228,6 @@ export class Modalizer
         currentElement?: HTMLElement,
         referenceElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const modalizerElement = this.getElement();
@@ -240,11 +238,8 @@ export class Modalizer
 
         const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
-        let uncontrolled: HTMLElement | undefined;
         let outOfDOMOrder = false;
-        const onUncontrolled = (el: HTMLElement) => {
-            uncontrolled = el;
-        };
+        let uncontrolled: HTMLElement | null | undefined;
 
         const container =
             currentElement &&
@@ -255,8 +250,6 @@ export class Modalizer
                 container,
                 currentElement,
                 referenceElement,
-                onUncontrolled,
-                ignoreUncontrolled,
                 ignoreAccessibility,
                 useActiveModalizer: true,
             };
@@ -268,25 +261,22 @@ export class Modalizer
                 findPropsOut
             );
 
-            if (
-                !uncontrolled &&
-                !next &&
-                this._props.isTrapped &&
-                tabster.modalizer?.activeId
-            ) {
+            if (!next && this._props.isTrapped && tabster.modalizer?.activeId) {
                 next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
                     {
                         container,
-                        ignoreUncontrolled: true,
                         ignoreAccessibility,
                         useActiveModalizer: true,
-                    }
+                    },
+                    findPropsOut
                 );
 
                 outOfDOMOrder = true;
             } else {
                 outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
             }
+
+            uncontrolled = findPropsOut.uncontrolled;
         }
 
         return {
@@ -915,7 +905,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         if (container) {
             let toFocus = this._tabster.focusable.findFirst({
                 container,
-                ignoreUncontrolled: true,
                 useActiveModalizer: true,
             });
 
@@ -926,7 +915,6 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ) {
                     toFocus = this._tabster.focusable.findLast({
                         container,
-                        ignoreUncontrolled: true,
                         useActiveModalizer: true,
                     });
 

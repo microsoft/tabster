@@ -233,7 +233,6 @@ export class Mover
         currentElement?: HTMLElement,
         referenceElement?: HTMLElement,
         isBackward?: boolean,
-        ignoreUncontrolled?: boolean,
         ignoreAccessibility?: boolean
     ): Types.NextTabbable | null {
         const container = this.getElement();
@@ -247,13 +246,9 @@ export class Mover
             return null;
         }
 
-        const tabster = this._tabster;
         let next: HTMLElement | null | undefined = null;
-        let uncontrolled: HTMLElement | undefined;
         let outOfDOMOrder = false;
-        const onUncontrolled = (el: HTMLElement) => {
-            uncontrolled = el;
-        };
+        let uncontrolled: HTMLElement | null | undefined;
 
         if (
             this._props.tabbable ||
@@ -264,20 +259,18 @@ export class Mover
                 currentElement,
                 referenceElement,
                 container,
-                onUncontrolled,
-                ignoreUncontrolled,
                 ignoreAccessibility,
                 useActiveModalizer: true,
             };
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
-                findProps,
-                findPropsOut
-            );
+            next = this._tabster.focusable[
+                isBackward ? "findPrev" : "findNext"
+            ](findProps, findPropsOut);
 
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
+            uncontrolled = findPropsOut.uncontrolled;
         }
 
         return {
@@ -292,7 +285,7 @@ export class Mover
         state: Types.FocusableAcceptElementState
     ): number | undefined {
         if (!FocusedElementState.isTabbing) {
-            return state.currentCtx?.isExcludedFromMover
+            return state.currentCtx?.excludedFromMover
                 ? NodeFilter.FILTER_REJECT
                 : undefined;
         }
@@ -325,7 +318,6 @@ export class Mover
             if (!found && hasDefault) {
                 found = this._tabster.focusable.findDefault({
                     container: moverElement,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
@@ -333,7 +325,6 @@ export class Mover
             if (!found && visibilityAware) {
                 found = this._tabster.focusable.findElement({
                     container: moverElement,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                     isBackward: state.isBackward,
                     acceptCondition: (el) => {
@@ -358,7 +349,7 @@ export class Mover
             if (found) {
                 state.found = true;
                 state.foundElement = found;
-                state.lastToIgnore = moverElement;
+                state.rejectElementsFrom = moverElement;
                 state.skippedFocusable = true;
                 return NodeFilter.FILTER_ACCEPT;
             }
@@ -812,7 +803,7 @@ export class MoverAPI implements Types.MoverAPI {
         if (
             !ctx ||
             !ctx.mover ||
-            ctx.isExcludedFromMover ||
+            ctx.excludedFromMover ||
             ctx.ignoreKeydown(event)
         ) {
             return;
@@ -821,7 +812,7 @@ export class MoverAPI implements Types.MoverAPI {
         const mover = ctx.mover;
         const container = mover.getElement();
 
-        if (ctx.isGroupperFirst) {
+        if (ctx.groupperBeforeMover) {
             const groupper = ctx.groupper;
 
             if (groupper && !groupper.isActive(true)) {
@@ -874,7 +865,7 @@ export class MoverAPI implements Types.MoverAPI {
             focusedElementX2 = Math.floor(focusedElementRect.right);
         }
 
-        if (ctx.isRtl) {
+        if (ctx.rtl) {
             if (keyCode === Keys.Right) {
                 keyCode = Keys.Left;
             } else if (keyCode === Keys.Left) {
@@ -903,7 +894,6 @@ export class MoverAPI implements Types.MoverAPI {
             } else if (!next && isCyclic) {
                 next = focusable.findFirst({
                     container,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
@@ -928,7 +918,6 @@ export class MoverAPI implements Types.MoverAPI {
             } else if (!next && isCyclic) {
                 next = focusable.findLast({
                     container,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
@@ -937,7 +926,6 @@ export class MoverAPI implements Types.MoverAPI {
                 focusable.findElement({
                     container,
                     currentElement: focused,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
@@ -963,7 +951,6 @@ export class MoverAPI implements Types.MoverAPI {
             } else {
                 next = focusable.findFirst({
                     container,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
@@ -972,7 +959,6 @@ export class MoverAPI implements Types.MoverAPI {
                 focusable.findElement({
                     container,
                     currentElement: focused,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
                         if (!focusable.isFocusable(el)) {
@@ -997,7 +983,6 @@ export class MoverAPI implements Types.MoverAPI {
             } else {
                 next = focusable.findLast({
                     container,
-                    ignoreUncontrolled: true,
                     useActiveModalizer: true,
                 });
             }
