@@ -1,0 +1,13 @@
+{
+    "tool": "Credential Scanner",
+    "suppressions": [
+        {
+            "file": ".git/config",
+            "_justification": "Standard token for CI pipeline"
+        },
+        {
+            "file": "node_modules/proxy-agent/test/ssl-cert-snakeoil.key",
+            "_justification": "External dependency proxy-agent, not shipping these files"
+        }
+    ]
+}
