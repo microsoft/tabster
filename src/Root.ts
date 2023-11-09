@@ -384,12 +384,15 @@ export class RootAPI implements Types.RootAPI {
             return undefined;
         }
 
+        const { checkRtl, referenceElement } = options;
+
+        const getParent = tabster.getParent;
+
         // Normally, the initialization starts on the next tick after the tabster
         // instance creation. However, if the application starts using it before
         // the next tick, we need to make sure the initialization is done.
         tabster.drainInitQueue();
 
-        const checkRtl = options.checkRtl;
         let root: Types.Root | undefined;
         let modalizer: Types.Modalizer | undefined;
         let groupper: Types.Groupper | undefined;
@@ -399,7 +402,7 @@ export class RootAPI implements Types.RootAPI {
         let modalizerInGroupper: Types.Groupper | undefined;
         let dirRightToLeft: boolean | undefined;
         let uncontrolled: HTMLElement | null | undefined;
-        let curElement: Node | null = options.referenceElement || element;
+        let curElement: Node | null = referenceElement || element;
         const ignoreKeydown: Types.FocusableProps["ignoreKeydown"] = {};
 
         while (curElement && (!root || checkRtl)) {
@@ -417,7 +420,7 @@ export class RootAPI implements Types.RootAPI {
             }
 
             if (!tabsterOnElement) {
-                curElement = curElement.parentElement;
+                curElement = getParent(curElement);
                 continue;
             }
 
@@ -486,7 +489,7 @@ export class RootAPI implements Types.RootAPI {
                 );
             }
 
-            curElement = curElement.parentElement;
+            curElement = getParent(curElement);
         }
 
         // No root element could be found, try to get an auto root

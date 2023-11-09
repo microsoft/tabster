@@ -52,6 +52,11 @@ export interface TabsterCoreProps {
      * Tabster should not interfere with handling Tab.
      */
     checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
+    /**
+     * Custom getter for parent elements. Defaults to the default .parentElement call
+     * Currently only used to detect tabster contexts
+     */
+    getParent?(el: Node): Node | null;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -1160,7 +1165,7 @@ interface TabsterCoreInternal {
     getWindow: GetWindow;
 
     /** @internal */
-    createTabster(noRefCount?: boolean): Tabster;
+    createTabster(noRefCount?: boolean, props?: TabsterCoreProps): Tabster;
     /** @internal */
     disposeTabster(wrapper: Tabster, allInstances?: boolean): void;
     /** @internal */
@@ -1170,6 +1175,8 @@ interface TabsterCoreInternal {
     queueInit(callback: () => void): void;
     /** @internal */
     drainInitQueue(): void;
+    /** @internal */
+    getParent: (el: Node) => Node | null;
 }
 
 export interface Tabster {
