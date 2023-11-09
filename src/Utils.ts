@@ -920,10 +920,20 @@ export class DummyInputManager {
 
     static moveWithPhantomDummy(
         tabster: Types.TabsterCore,
-        element: HTMLElement,
-        moveOutOfElement: boolean,
-        isBackward: boolean
+        element: HTMLElement, // The target element to move to or out of.
+        moveOutOfElement: boolean, // Whether to move out of the element or into it.
+        isBackward: boolean // Are we tabbing of shift-tabbing?
     ): void {
+        // Phantom dummy is a hack to use browser's default action to move
+        // focus from a specific point in the application to the next/previous
+        // element. Default action is needed because next focusable element
+        // is not always available to focus directly (for example, next focusable
+        // is inside isolated iframe) or for uncontrolled areas we want to make
+        // sure that something that controls it takes care of the focusing.
+        // It works in a way that during the Tab key handling, we create a dummy
+        // input element, place it to the specific place in the DOM and focus it,
+        // then the default action of the Tab press will move focus from our dummy
+        // input. And we remove it from the DOM right after that.
         const dummy: DummyInput = new DummyInput(tabster.getWindow, true, {
             isPhantom: true,
             isFirst: true,
@@ -934,6 +944,36 @@ export class DummyInputManager {
         if (input) {
             let parent: HTMLElement | null;
             let insertBefore: HTMLElementWithDummyContainer | null;
+
+            // Let's say we have a following DOM structure:
+            // <div>
+            //   <button>Button1</button>
+            //   <div id="uncontrolled" data-tabster={uncontrolled: {}}>
+            //     <button>Button2</button>
+            //     <button>Button3</button>
+            //   </div>
+            //   <button>Button4</button>
+            // </div>
+            //
+            // We pass the "uncontrolled" div as the element to move to or out of.
+            //
+            // When we pass moveOutOfElement=true and isBackward=false,
+            // the phantom dummy input will be inserted before Button4.
+            //
+            // When we pass moveOutOfElement=true and isBackward=true, there are
+            // two cases. If the uncontrolled element is focusable (has tabindex=0),
+            // the phantom dummy input will be inserted after Button1. If the
+            // uncontrolled element is not focusable, the phantom dummy input will be
+            // inserted before Button2.
+            //
+            // When we pass moveOutOfElement=false and isBackward=false, the
+            // phantom dummy input will be inserted after Button1.
+            //
+            // When we pass moveOutOfElement=false and isBackward=true, the phantom
+            // dummy input will be inserted before Button4.
+            //
+            // And we have a corner case for <body> and we make sure that the inserted
+            // dummy is inserted properly when there are existing permanent dummies.
 
             if (element.tagName === "BODY") {
                 // We cannot insert elements outside of BODY.
