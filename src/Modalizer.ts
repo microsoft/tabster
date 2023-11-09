@@ -111,7 +111,7 @@ export class Modalizer
     private _isActive: boolean | undefined;
     private _wasFocused = 0;
     private _onDispose: (modalizer: Modalizer) => void;
-    private _activeElements: WeakRef<HTMLElement>[];
+    private _activeElements: WeakHTMLElement<HTMLElement>[];
 
     dummyManager: ModalizerDummyManager | undefined;
 
@@ -121,7 +121,7 @@ export class Modalizer
         onDispose: (modalizer: Modalizer) => void,
         props: Types.ModalizerProps,
         sys: Types.SysProps | undefined,
-        activeElements: WeakRef<HTMLElement>[]
+        activeElements: WeakHTMLElement<HTMLElement>[]
     ) {
         super(tabster, element, props);
 
@@ -158,12 +158,17 @@ export class Modalizer
             if (element) {
                 const activeElements = this._activeElements;
                 const index = activeElements
-                    .map((e) => e.deref())
+                    .map((e) => e.get())
                     .indexOf(element);
 
                 if (isActive) {
                     if (index < 0) {
-                        activeElements.push(new WeakRef(element));
+                        activeElements.push(
+                            new WeakHTMLElement(
+                                this._tabster.getWindow,
+                                element
+                            )
+                        );
                     }
                 } else {
                     if (index >= 0) {
@@ -295,7 +300,7 @@ export class Modalizer
 
         if (element) {
             const elements = allElements
-                ? this._activeElements.map((e) => e.deref())
+                ? this._activeElements.map((e) => e.get())
                 : [element];
 
             for (const el of elements) {
@@ -334,14 +339,14 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
     private _augMap: WeakMap<HTMLElement, true>;
-    private _aug: WeakRef<HTMLElement>[];
+    private _aug: WeakHTMLElement<HTMLElement>[];
     private _hiddenUpdateTimer: number | undefined;
     private _alwaysAccessibleSelector: string | undefined;
     private _accessibleCheck: Types.ModalizerElementAccessibleCheck | undefined;
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
-    activeElements: WeakRef<HTMLElement>[];
+    activeElements: WeakHTMLElement<HTMLElement>[];
 
     constructor(
         tabster: Types.TabsterCore,
@@ -645,7 +650,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         if (modalizerUserId) {
             for (const e of this.activeElements) {
-                const el = e.deref();
+                const el = e.get();
 
                 if (el && (element.contains(el) || el === element)) {
                     // We have a part of currently active modalizer somewhere deeper in the DOM,
@@ -714,7 +719,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 ? [...visibleElements, ...alwaysAccessibleElements]
                 : undefined;
 
-        const newAugmented: WeakRef<HTMLElement>[] = [];
+        const newAugmented: WeakHTMLElement<HTMLElement>[] = [];
         const newAugmentedMap: WeakMap<HTMLElement, true> = new WeakMap();
 
         const toggle = (element: HTMLElement, hide: boolean) => {
@@ -743,7 +748,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
 
             if (isAugmented) {
-                newAugmented.push(new WeakRef(element));
+                newAugmented.push(
+                    new WeakHTMLElement(tabster.getWindow, element)
+                );
                 newAugmentedMap.set(element, true);
             }
         };
@@ -792,7 +799,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         this._aug
-            ?.map((e) => e.deref())
+            ?.map((e) => e.get())
             .forEach((e) => {
                 if (e && !newAugmentedMap.get(e)) {
                     toggle(e, false);

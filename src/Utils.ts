@@ -1123,7 +1123,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     private _lastUpdateQueueTime = 0;
     private _changedParents: WeakSet<HTMLElement> = new WeakSet();
     private _updateDummyInputsTimer?: number;
-    private _dummyElements: WeakRef<HTMLElement>[] = [];
+    private _dummyElements: WeakHTMLElement<HTMLElement>[] = [];
     private _dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
     domChanged?(parent: HTMLElement): void;
 
@@ -1132,8 +1132,8 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     }
 
     add(dummy: HTMLElement, callback: () => void): void {
-        if (!this._dummyCallbacks.has(dummy)) {
-            this._dummyElements.push(new WeakRef(dummy));
+        if (!this._dummyCallbacks.has(dummy) && this._win) {
+            this._dummyElements.push(new WeakHTMLElement(this._win, dummy));
             this._dummyCallbacks.set(dummy, callback);
             this.domChanged = this._domChanged;
         }
@@ -1141,7 +1141,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
 
     remove(dummy: HTMLElement): void {
         this._dummyElements = this._dummyElements.filter((ref) => {
-            const element = ref.deref();
+            const element = ref.get();
             return element && element !== dummy;
         });
 
@@ -1189,7 +1189,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
             delete this._updateDummyInputsTimer;
 
             for (const ref of this._dummyElements) {
-                const dummyElement = ref.deref();
+                const dummyElement = ref.get();
 
                 if (dummyElement) {
                     const callback = this._dummyCallbacks.get(dummyElement);

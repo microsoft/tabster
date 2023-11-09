@@ -14,7 +14,7 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { TabsterPart } from "./Utils";
+import { TabsterPart, WeakHTMLElement } from "./Utils";
 
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
@@ -77,7 +77,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
 export class RestorerAPI implements RestorerAPIType {
     private _tabster: TabsterCore;
-    private _history: WeakRef<HTMLElement>[] = [];
+    private _history: WeakHTMLElement<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
     private _restoreFocusTimeout = 0;
@@ -132,7 +132,7 @@ export class RestorerAPI implements RestorerAPIType {
 
     private _addToHistory(element: HTMLElement) {
         // Don't duplicate the top of history
-        if (this._history[this._history.length - 1]?.deref() === element) {
+        if (this._history[this._history.length - 1]?.get() === element) {
             return;
         }
 
@@ -140,7 +140,9 @@ export class RestorerAPI implements RestorerAPIType {
             this._history.shift();
         }
 
-        this._history.push(new WeakRef<HTMLElement>(element));
+        this._history.push(
+            new WeakHTMLElement<HTMLElement>(this._getWindow, element)
+        );
     }
 
     private _restoreFocus = (source: HTMLElement) => {
@@ -159,15 +161,15 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
-        let weakRef = this._history.pop();
+        let weakElement = this._history.pop();
         while (
-            weakRef &&
-            !doc.body.contains(weakRef.deref()?.parentElement ?? null)
+            weakElement &&
+            !doc.body.contains(weakElement.get()?.parentElement ?? null)
         ) {
-            weakRef = this._history.pop();
+            weakElement = this._history.pop();
         }
 
-        weakRef?.deref()?.focus();
+        weakElement?.get()?.focus();
     };
 
     public createRestorer(element: HTMLElement, props: RestorerProps) {
