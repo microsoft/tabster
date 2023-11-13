@@ -4,13 +4,7 @@
  */
 
 import * as React from "react";
-import {
-    EvaluateFn,
-    SerializableOrJSHandle,
-    Page,
-    Frame,
-    KeyInput,
-} from "puppeteer";
+import { EvaluateFunc, Page, Frame, KeyInput } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
@@ -177,14 +171,14 @@ abstract class BroTestItem {
 }
 
 class BroTestItemEval extends BroTestItem {
-    private _func: EvaluateFn<any>;
-    private _args: SerializableOrJSHandle[];
+    private _func: EvaluateFunc<any>;
+    private _args: unknown[];
     private _setLastEval: (lastEval: any) => void;
 
     constructor(
         frameStack: BroTestFrameStackItem[],
-        func: EvaluateFn<any>,
-        args: SerializableOrJSHandle[],
+        func: EvaluateFunc<any>,
+        args: unknown[],
         setLastEval: (lastEval: any) => void
     ) {
         super(frameStack);
@@ -249,7 +243,11 @@ class BroTestItemHTML extends BroTestItem {
         const frame = this._frameStack[0].frame;
 
         await frame.evaluate(
-            (el, html) => (el.innerHTML = html),
+            (el, html) => {
+                if (el) {
+                    el.innerHTML = html;
+                }
+            },
             await frame.$("body"),
             renderToStaticMarkup(this._html)
         );
@@ -456,7 +454,7 @@ export class BroTest implements PromiseLike<undefined> {
         return this.wait(time);
     }
 
-    eval(func: EvaluateFn<any>, ...args: SerializableOrJSHandle[]): BroTest {
+    eval(func: EvaluateFunc<any>, ...args: unknown[]): BroTest {
         this._chain.push(
             new BroTestItemEval(
                 this._frameStack,
