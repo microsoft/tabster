@@ -1453,4 +1453,127 @@ describe("MoverGroupper", () => {
                 expect(el?.textContent).toEqual("Button2Button3");
             });
     });
+
+    it("should handle nested movers when the inner mover is on focusable element", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Foo</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                memorizeCurrent: true,
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                mover: {
+                                    direction: Types.MoverDirections.Horizontal,
+                                    cyclic: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                mover: {
+                                    direction: Types.MoverDirections.Horizontal,
+                                    cyclic: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                mover: {
+                                    direction: Types.MoverDirections.Horizontal,
+                                    cyclic: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button5</button>
+                            <button>Button6</button>
+                        </div>
+                    </div>
+                    <button>Bar</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Foo");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Bar");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Foo");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressEnter()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressEsc()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Bar");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            });
+    });
 });

@@ -745,8 +745,14 @@ export class MoverAPI implements Types.MoverAPI {
     };
 
     private _onFocus = (e: HTMLElement | undefined): void => {
+        // When something in the app gets focused, we are making sure that
+        // the relevant context Mover is aware of it.
+        // Looking for the relevant context Mover from the currently
+        // focused element parent, not from the element itself, because the
+        // mover element itself cannot be its own current (but might be
+        // current for its parent Mover).
         for (
-            let el: HTMLElement | null | undefined = e;
+            let el: HTMLElement | null | undefined = e?.parentElement;
             el;
             el = el.parentElement
         ) {
