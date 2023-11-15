@@ -1458,7 +1458,7 @@ describe("MoverGroupper", () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Foo</button>
+                    <button id="foo">Foo</button>
                     <div
                         {...getTabsterAttribute({
                             mover: {
@@ -1516,7 +1516,7 @@ describe("MoverGroupper", () => {
                             })}
                         >
                             <button>Button5</button>
-                            <button>Button6</button>
+                            <button id="button6">Button6</button>
                         </div>
                     </div>
                     <button>Bar</button>
@@ -1574,6 +1574,22 @@ describe("MoverGroupper", () => {
             .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .eval(() => {
+                document.getElementById("button6")?.focus();
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .eval(() => {
+                document.getElementById("foo")?.focus();
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Foo");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6");
             });
     });
 });
