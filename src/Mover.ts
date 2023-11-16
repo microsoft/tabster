@@ -744,17 +744,36 @@ export class MoverAPI implements Types.MoverAPI {
         delete this._movers[mover.id];
     };
 
-    private _onFocus = (e: HTMLElement | undefined): void => {
+    private _onFocus = (element: HTMLElement | undefined): void => {
+        // When something in the app gets focused, we are making sure that
+        // the relevant context Mover is aware of it.
+        // Looking for the relevant context Mover from the currently
+        // focused element parent, not from the element itself, because the
+        // Mover element itself cannot be its own current (but might be
+        // current for its parent Mover).
+        let currentFocusableElement = element;
+        let deepestFocusableElement = element;
+
         for (
-            let el: HTMLElement | null | undefined = e;
+            let el: HTMLElement | null | undefined = element?.parentElement;
             el;
             el = el.parentElement
         ) {
+            // We go through all Movers up from the focused element and
+            // set their current element to the deepest focusable of that
+            // Mover.
             const mover = getTabsterOnElement(this._tabster, el)?.mover;
 
             if (mover) {
-                mover.setCurrent(e);
-                break;
+                mover.setCurrent(deepestFocusableElement);
+                currentFocusableElement = undefined;
+            }
+
+            if (
+                !currentFocusableElement &&
+                this._tabster.focusable.isFocusable(el)
+            ) {
+                currentFocusableElement = deepestFocusableElement = el;
             }
         }
     };
