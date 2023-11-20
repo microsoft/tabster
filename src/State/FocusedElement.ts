@@ -27,9 +27,14 @@ function getUncontrolledFocusTrapContainer(
     let el: HTMLElement | null = element;
 
     do {
+        const uncontrolledOnElement = getTabsterOnElement(
+            tabster,
+            el
+        )?.uncontrolled;
         if (
-            getTabsterOnElement(tabster, el)?.uncontrolled &&
-            tabster.uncontrolled.isTrappingFocus(el)
+            uncontrolledOnElement &&
+            (uncontrolledOnElement.trapsFocus ||
+                tabster.uncontrolled.isTrappingFocus(el))
         ) {
             return el;
         }

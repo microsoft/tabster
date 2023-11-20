@@ -881,7 +881,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it("should coexist with custom focus trap implementation", async () => {
+    it("should coexist with custom focus trap implementation, using checkUncontrolledTrappingFocus() callback", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -909,6 +909,112 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                     checkUncontrolledTrappingFocus: (e) =>
                         e.id === "trap1" || e.id === "trap2",
                 });
+
+                const trapFocus = (parentId: string) => {
+                    const parent = document.getElementById(parentId);
+
+                    if (parent) {
+                        parent.addEventListener("keydown", (e) => {
+                            if (e.key === "Tab") {
+                                const buttons = parent.querySelectorAll(
+                                    "button, *[tabindex]"
+                                ) as NodeListOf<HTMLElement>;
+                                const index = Array.prototype.indexOf.call(
+                                    buttons,
+                                    document.activeElement
+                                );
+
+                                if (index >= 0) {
+                                    if (index === 0 && e.shiftKey) {
+                                        e.preventDefault();
+                                        buttons[buttons.length - 1].focus();
+                                    } else if (
+                                        index === buttons.length - 1 &&
+                                        !e.shiftKey
+                                    ) {
+                                        e.preventDefault();
+                                        buttons[0].focus();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                };
+
+                trapFocus("trap1");
+                trapFocus("trap2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .focusElement("#button-4")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            });
+    });
+
+    it("should coexist with custom focus trap implementation, using trapsFocus property", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="trap1"
+                        {...getTabsterAttribute({
+                            uncontrolled: { trapsFocus: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <button id="button-4">Button4</button>
+                    <div
+                        id="trap2"
+                        {...getTabsterAttribute({
+                            uncontrolled: { trapsFocus: true },
+                        })}
+                    >
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                getTabsterTestVariables().createTabster?.(window, {});
 
                 const trapFocus = (parentId: string) => {
                     const parent = document.getElementById(parentId);

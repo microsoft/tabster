@@ -1000,6 +1000,15 @@ export type ModalizerElementAccessibleCheck = (
     activeModalizerElements?: HTMLElement[]
 ) => boolean;
 
+export interface UncontrolledProps {
+    // Indicated that uncontrolled area traps focus, that makes Tabster
+    // to give it full control over the Tab handling. If not set, Tabster
+    // might still handle Tab in the uncontrolled area, when, for example,
+    // there is an inactive Modalizer (that needs to be skipped) after the
+    // last focusable element of the uncontrolled area.
+    trapsFocus?: boolean;
+}
+
 export interface DeloserOnElement {
     deloser: Deloser;
 }
@@ -1029,7 +1038,7 @@ export interface GroupperOnElement {
 }
 
 export interface UncontrolledOnElement {
-    uncontrolled: Record<string, never>;
+    uncontrolled: UncontrolledProps;
 }
 
 export interface ObservedOnElement {
@@ -1051,7 +1060,7 @@ export interface RestorerProps {
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserProps;
     root: RootProps;
-    uncontrolled: UncontrolledOnElement["uncontrolled"];
+    uncontrolled: UncontrolledProps;
     modalizer: ModalizerProps;
     focusable: FocusableProps;
     groupper: GroupperProps;
