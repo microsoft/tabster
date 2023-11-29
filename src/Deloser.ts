@@ -10,6 +10,7 @@ import {
     documentContains,
     getElementUId,
     getPromise,
+    isDisplayNone,
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
@@ -829,7 +830,7 @@ export class DeloserAPI implements Types.DeloserAPI {
                 !force &&
                 (this._isRestoringFocus ||
                     !this._inDeloser ||
-                    !!lastFocused?.offsetParent)
+                    (lastFocused && !isDisplayNone(lastFocused)))
             ) {
                 return;
             }
