@@ -881,7 +881,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it("should coexist with custom focus trap implementation, using checkUncontrolledTrappingFocus() callback", async () => {
+    it("should coexist with custom focus trap implementation, using checkUncontrolledCompletely() callback", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -906,7 +906,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         )
             .eval(() => {
                 getTabsterTestVariables().createTabster?.(window, {
-                    checkUncontrolledTrappingFocus: (e) =>
+                    checkUncontrolledCompletely: (e) =>
                         e.id === "trap1" || e.id === "trap2",
                 });
 
@@ -986,7 +986,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
             });
     });
 
-    it("should coexist with custom focus trap implementation, using trapsFocus property", async () => {
+    it("should coexist with custom focus trap implementation, using completely property", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -994,7 +994,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                     <div
                         id="trap1"
                         {...getTabsterAttribute({
-                            uncontrolled: { trapsFocus: true },
+                            uncontrolled: { completely: true },
                         })}
                     >
                         <button>Button2</button>
@@ -1004,7 +1004,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                     <div
                         id="trap2"
                         {...getTabsterAttribute({
-                            uncontrolled: { trapsFocus: true },
+                            uncontrolled: { completely: true },
                         })}
                     >
                         <button>Button5</button>

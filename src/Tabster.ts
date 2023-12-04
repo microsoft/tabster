@@ -100,7 +100,7 @@ class TabsterCore implements Types.TabsterCore {
         this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = new UncontrolledAPI(
-            props?.checkUncontrolledTrappingFocus
+            props?.checkUncontrolledCompletely
         );
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;

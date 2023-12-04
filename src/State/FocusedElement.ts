@@ -33,8 +33,8 @@ function getUncontrolledFocusTrapContainer(
         )?.uncontrolled;
         if (
             uncontrolledOnElement &&
-            (uncontrolledOnElement.trapsFocus ||
-                tabster.uncontrolled.isTrappingFocus(el))
+            (uncontrolledOnElement.completely ||
+                tabster.uncontrolled.isUncontrolledCompletely(el))
         ) {
             return el;
         }

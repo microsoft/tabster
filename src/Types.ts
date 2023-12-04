@@ -47,11 +47,11 @@ export interface TabsterCoreProps {
      */
     rootDummyInputs?: boolean;
     /**
-     * A callback that will be called for the uncontrolled areas with `trapsFocus`
-     * when Tabster wants to know is the element is currently trapping focus and
-     * Tabster should not interfere with handling Tab.
+     * A callback that will be called for the uncontrolled areas when Tabster wants
+     * to know is the uncontrolled element wants complete control (for example it
+     * is trapping focus) and Tabster should not interfere with handling Tab.
      */
-    checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
+    checkUncontrolledCompletely?: (element: HTMLElement) => boolean;
     /**
      * Custom getter for parent elements. Defaults to the default .parentElement call
      * Currently only used to detect tabster contexts
@@ -932,7 +932,7 @@ export interface RootAPI extends Disposable, RootAPIInternal {
 }
 
 export interface UncontrolledAPI {
-    isTrappingFocus(element: HTMLElement): boolean;
+    isUncontrolledCompletely(element: HTMLElement): boolean;
 }
 
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
@@ -1001,12 +1001,22 @@ export type ModalizerElementAccessibleCheck = (
 ) => boolean;
 
 export interface UncontrolledProps {
-    // Indicated that uncontrolled area traps focus, that makes Tabster
-    // to give it full control over the Tab handling. If not set, Tabster
-    // might still handle Tab in the uncontrolled area, when, for example,
-    // there is an inactive Modalizer (that needs to be skipped) after the
-    // last focusable element of the uncontrolled area.
-    trapsFocus?: boolean;
+    // Normally, even uncontrolled areas should not be completely uncontrolled
+    // to be able to interact with the rest of the application properly.
+    // For example, if an uncontrolled area implements something like
+    // roving tabindex, it should be uncontrolled inside the area, but it
+    // still should be able to be an organic part of the application.
+    // However, in some cases, third party component might want to be able
+    // to gain full control of the area, for example, if it implements
+    // some custom trap focus logic.
+    // `completely` indicates that uncontrolled area must gain full control over
+    // Tab handling. If not set, Tabster might still handle Tab in the
+    // uncontrolled area, when, for example, there is an inactive Modalizer
+    // (that needs to be skipped) after the last focusable element of the
+    // uncontrolled area.
+    // WARNING: Use with caution, as it might break the normal keyboard navigation
+    // between the uncontrolled area and the rest of the application.
+    completely?: boolean;
 }
 
 export interface DeloserOnElement {
