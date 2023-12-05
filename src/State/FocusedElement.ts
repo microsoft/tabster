@@ -19,7 +19,7 @@ import {
 import { getTabsterOnElement } from "../Instance";
 import { Subscribable } from "./Subscribable";
 
-function getUncontrolledFocusTrapContainer(
+function getUncontrolledCompletelyContainer(
     tabster: Types.TabsterCore,
     element: HTMLElement
 ): HTMLElement | undefined {
@@ -27,9 +27,17 @@ function getUncontrolledFocusTrapContainer(
     let el: HTMLElement | null = element;
 
     do {
+        const uncontrolledOnElement = getTabsterOnElement(
+            tabster,
+            el
+        )?.uncontrolled;
+
         if (
-            getTabsterOnElement(tabster, el)?.uncontrolled &&
-            tabster.uncontrolled.isTrappingFocus(el)
+            uncontrolledOnElement &&
+            tabster.uncontrolled.isUncontrolledCompletely(
+                el,
+                !!uncontrolledOnElement.completely
+            )
         ) {
             return el;
         }
@@ -508,8 +516,8 @@ export class FocusedElementState
         );
 
         const nextElement = next?.element;
-        const uncontrolledFocusTrapContainer =
-            getUncontrolledFocusTrapContainer(tabster, currentElement);
+        const uncontrolledCompletelyContainer =
+            getUncontrolledCompletelyContainer(tabster, currentElement);
 
         if (nextElement) {
             const nextUncontrolled = next.uncontrolled;
@@ -521,8 +529,8 @@ export class FocusedElementState
                 if (
                     (!next.outOfDOMOrder &&
                         nextUncontrolled === ctx.uncontrolled) ||
-                    (uncontrolledFocusTrapContainer &&
-                        !uncontrolledFocusTrapContainer.contains(nextElement))
+                    (uncontrolledCompletelyContainer &&
+                        !uncontrolledCompletelyContainer.contains(nextElement))
                 ) {
                     // Nothing to do, everything will be done by the browser or something
                     // that controls the uncontrolled area.
@@ -567,7 +575,7 @@ export class FocusedElementState
                 // Just allow the default action.
             }
         } else {
-            if (!uncontrolledFocusTrapContainer) {
+            if (!uncontrolledCompletelyContainer) {
                 ctx.root.moveOutWithDefaultAction(isBackward);
             }
         }
