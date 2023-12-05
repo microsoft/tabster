@@ -50,8 +50,15 @@ export interface TabsterCoreProps {
      * A callback that will be called for the uncontrolled areas when Tabster wants
      * to know is the uncontrolled element wants complete control (for example it
      * is trapping focus) and Tabster should not interfere with handling Tab.
+     * If the callback returns undefined, then the default behaviour is to return
+     * the uncontrolled.completely value from the element. If the callback returns
+     * non-undefined value, the callback's value will dominate the element's
+     * uncontrolled.completely value.
      */
-    checkUncontrolledCompletely?: (element: HTMLElement) => boolean;
+    checkUncontrolledCompletely?: (
+        element: HTMLElement,
+        completely: boolean // A uncontrolled.completely value from the element.
+    ) => boolean | undefined;
     /**
      * Custom getter for parent elements. Defaults to the default .parentElement call
      * Currently only used to detect tabster contexts
@@ -932,7 +939,10 @@ export interface RootAPI extends Disposable, RootAPIInternal {
 }
 
 export interface UncontrolledAPI {
-    isUncontrolledCompletely(element: HTMLElement): boolean;
+    isUncontrolledCompletely(
+        element: HTMLElement,
+        completely: boolean
+    ): boolean;
 }
 
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
