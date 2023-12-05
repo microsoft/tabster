@@ -55,10 +55,14 @@ export interface TabsterCoreProps {
      * non-undefined value, the callback's value will dominate the element's
      * uncontrolled.completely value.
      */
-    checkUncontrolledTrappingFocus?: (
+    checkUncontrolledCompletely?: (
         element: HTMLElement,
         completely: boolean // A uncontrolled.completely value from the element.
     ) => boolean | undefined;
+    /**
+     * @deprecated use checkUncontrolledCompletely.
+     */
+    checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
     /**
      * Custom getter for parent elements. Defaults to the default .parentElement call
      * Currently only used to detect tabster contexts

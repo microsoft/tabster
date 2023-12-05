@@ -881,7 +881,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it("should coexist with custom focus trap implementation, using checkUncontrolledTrappingFocus() callback", async () => {
+    it("should coexist with custom focus trap implementation, using checkUncontrolledCompletely() callback", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -906,7 +906,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         )
             .eval(() => {
                 getTabsterTestVariables().createTabster?.(window, {
-                    checkUncontrolledTrappingFocus: (e) =>
+                    checkUncontrolledCompletely: (e) =>
                         e.id === "trap1" || e.id === "trap2",
                 });
 
@@ -1092,7 +1092,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
             });
     });
 
-    it("should coexist with custom focus trap implementation, using checkUncontrolledTrappingFocus() callback and completely property defaulting to the property when the callback returns undefined", async () => {
+    it("should coexist with custom focus trap implementation, using checkUncontrolledCompletely() callback and completely property defaulting to the property when the callback returns undefined", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -1140,7 +1140,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         )
             .eval(() => {
                 getTabsterTestVariables().createTabster?.(window, {
-                    checkUncontrolledTrappingFocus: (e) => {
+                    checkUncontrolledCompletely: (e) => {
                         switch (true) {
                             case e.id === "trap1":
                                 return true;
