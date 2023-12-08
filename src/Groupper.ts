@@ -608,10 +608,11 @@ export class GroupperAPI implements Types.GroupperAPI {
             const focused = tabster.focusedElement.getFocusedElement();
 
             if (
-                await tabster.internal.inputChecker?.isIgnoredInput?.(
-                    element,
+                focused &&
+                (await tabster.internal.inputChecker?.isIgnoredInput?.(
+                    focused,
                     event.keyCode
-                )
+                ))
             ) {
                 return;
             }
