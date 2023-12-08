@@ -6,7 +6,10 @@
 import { nativeFocus } from "keyborg";
 
 import * as Types from "./Types";
+import { Keys } from "./Keys";
 import { GetWindow, Visibilities, Visibility } from "./Types";
+
+const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -1844,4 +1847,258 @@ export function getTabsterAttributeOnElement(
     }
 
     return tabsterAttribute;
+}
+
+export class InputChecker implements Types.InputChecker {
+    private _win: Types.GetWindow;
+    private _requests: Set<{
+        resolve?: ((value: boolean) => void) | undefined;
+        timer?: number;
+    }> = new Set();
+    private _disposed = false;
+
+    constructor(getWindow: Types.GetWindow) {
+        this._win = getWindow;
+    }
+
+    dispose(): void {
+        this._disposed = true;
+
+        const win = this._win();
+
+        this._requests.forEach((r) => {
+            if (r.timer) {
+                win.clearTimeout(r.timer);
+            }
+
+            r.resolve?.(false);
+        });
+
+        this._requests.clear();
+    }
+
+    async isIgnoredInput(
+        element: HTMLElement,
+        keyCode: number
+    ): Promise<boolean> {
+        if (this._disposed) {
+            return false;
+        }
+
+        if (
+            element.getAttribute("aria-expanded") === "true" &&
+            element.hasAttribute("aria-activedescendant")
+        ) {
+            // It is likely a combobox with expanded options and arrow keys are
+            // controlled by it.
+            return true;
+        }
+
+        if (matchesSelector(element, _inputSelector)) {
+            let selectionStart = 0;
+            let selectionEnd = 0;
+            let textLength = 0;
+            let asyncRet: Promise<boolean> | undefined;
+
+            if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+                const type = (element as HTMLInputElement).type;
+                const value = (element as HTMLInputElement).value;
+
+                textLength = (value || "").length;
+
+                if (type === "email" || type === "number") {
+                    // For these types Chromium doesn't provide selectionStart and selectionEnd.
+                    // Hence the ugly workaround to find if the caret position is changed with
+                    // the keypress.
+                    // TODO: Have a look at range, week, time, time, date, datetime-local.
+                    if (textLength) {
+                        const selection =
+                            element.ownerDocument.defaultView?.getSelection();
+
+                        if (selection) {
+                            const initialLength = selection.toString().length;
+                            const isBackward =
+                                keyCode === Keys.Left || keyCode === Keys.Up;
+
+                            selection.modify(
+                                "extend",
+                                isBackward ? "backward" : "forward",
+                                "character"
+                            );
+
+                            if (initialLength !== selection.toString().length) {
+                                // The caret is moved, so, we're not on the edge of the value.
+                                // Restore original selection.
+                                selection.modify(
+                                    "extend",
+                                    isBackward ? "forward" : "backward",
+                                    "character"
+                                );
+
+                                return true;
+                            } else {
+                                textLength = 0;
+                            }
+                        }
+                    }
+                } else {
+                    const selStart = (element as HTMLInputElement)
+                        .selectionStart;
+
+                    if (selStart === null) {
+                        // Do not ignore not text editable inputs like checkboxes and radios (but ignore hidden).
+                        return type === "hidden";
+                    }
+
+                    selectionStart = selStart || 0;
+                    selectionEnd =
+                        (element as HTMLInputElement).selectionEnd || 0;
+                }
+            } else if (element.contentEditable === "true") {
+                const request: {
+                    resolve?: ((value: boolean) => void) | undefined;
+                    timer?: number;
+                } = {};
+
+                this._requests.add(request);
+
+                // When this promise resolves with false, it means that the selection is changed and
+                // the element is ignored input. It will also be resolved to false from dispose method.
+                // When this promise resolves with true, selectionStart and selectionEnd are set to
+                // the current selection values and we can check them to see if the caret is moved.
+                asyncRet = new (getPromise(this._win))((resolve) => {
+                    const win = this._win();
+
+                    request.resolve = (value: boolean) => {
+                        this._requests.delete(request);
+
+                        if (request.timer) {
+                            win.clearTimeout(request.timer);
+                            delete request.timer;
+                        }
+
+                        resolve(value);
+                    };
+
+                    const {
+                        anchorNode: prevAnchorNode,
+                        focusNode: prevFocusNode,
+                        anchorOffset: prevAnchorOffset,
+                        focusOffset: prevFocusOffset,
+                    } = win.getSelection() || {};
+
+                    // Get selection gives incorrect value if we call it syncronously onKeyDown,
+                    // so, we're using setTimeout(0) to get the correct value on the next tick.
+                    request.timer = win.setTimeout(() => {
+                        delete request.timer;
+
+                        const {
+                            anchorNode,
+                            focusNode,
+                            anchorOffset,
+                            focusOffset,
+                        } = win.getSelection() || {};
+
+                        if (
+                            anchorNode !== prevAnchorNode ||
+                            focusNode !== prevFocusNode ||
+                            anchorOffset !== prevAnchorOffset ||
+                            focusOffset !== prevFocusOffset
+                        ) {
+                            request.resolve?.(false);
+                            return;
+                        }
+
+                        selectionStart = anchorOffset || 0;
+                        selectionEnd = focusOffset || 0;
+                        textLength = element.textContent?.length || 0;
+
+                        if (anchorNode && focusNode) {
+                            if (
+                                element.contains(anchorNode) &&
+                                element.contains(focusNode)
+                            ) {
+                                if (anchorNode !== element) {
+                                    let anchorFound = false;
+
+                                    const addOffsets = (
+                                        node: ChildNode
+                                    ): boolean => {
+                                        if (node === anchorNode) {
+                                            anchorFound = true;
+                                        } else if (node === focusNode) {
+                                            return true;
+                                        }
+
+                                        const nodeText = node.textContent;
+
+                                        if (nodeText && !node.firstChild) {
+                                            const len = nodeText.length;
+
+                                            if (anchorFound) {
+                                                if (focusNode !== anchorNode) {
+                                                    selectionEnd += len;
+                                                }
+                                            } else {
+                                                selectionStart += len;
+                                                selectionEnd += len;
+                                            }
+                                        }
+
+                                        let stop = false;
+
+                                        for (
+                                            let e = node.firstChild;
+                                            e && !stop;
+                                            e = e.nextSibling
+                                        ) {
+                                            stop = addOffsets(e);
+                                        }
+
+                                        return stop;
+                                    };
+
+                                    addOffsets(element);
+                                }
+                            }
+                        }
+
+                        request.resolve?.(true);
+                    }, 0);
+                });
+            }
+
+            if (asyncRet && !(await asyncRet)) {
+                // The selection is changed. Ignored input.
+                return true;
+            }
+
+            if (selectionStart !== selectionEnd) {
+                // There is active selection in the input. Ignored input.
+                return true;
+            }
+
+            if (
+                selectionStart > 0 &&
+                (keyCode === Keys.Left ||
+                    keyCode === Keys.Up ||
+                    keyCode === Keys.Home)
+            ) {
+                // selectionStart is not at the beginning and the left arrow should move the caret. Ignored input.
+                return true;
+            }
+
+            if (
+                selectionStart < textLength &&
+                (keyCode === Keys.Right ||
+                    keyCode === Keys.Down ||
+                    keyCode === Keys.End)
+            ) {
+                // selectionStart is not at the end and the right arrow should move the caret. Ignored input.
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
