@@ -590,11 +590,11 @@ export class GroupperAPI implements Types.GroupperAPI {
         }
     };
 
-    handleKeyPress(
+    async handleKeyPress(
         element: HTMLElement,
         event: KeyboardEvent,
         noGoUp?: boolean
-    ): void {
+    ): Promise<void> {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, element);
         const modalizerInGroupper = ctx?.modalizerInGroupper;
@@ -602,6 +602,18 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (ctx && groupper) {
             if (ctx.ignoreKeydown(event)) {
+                return;
+            }
+
+            const focused = tabster.focusedElement.getFocusedElement();
+
+            if (
+                focused &&
+                (await tabster.internal.inputChecker?.isIgnoredInput?.(
+                    focused,
+                    event.keyCode
+                ))
+            ) {
                 return;
             }
 
@@ -646,11 +658,26 @@ export class GroupperAPI implements Types.GroupperAPI {
                 }
             }
 
-            if (next) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
+            // If the currently focused element is changed already (because something else
+            // in the application has moved focus), we don't need to handle the keypress.
+            if (
+                next &&
+                tabster.focusedElement.getFocusedElement() === focused
+            ) {
+                if (event.eventPhase) {
+                    // isIgnoredInput result could come asynchronously for the contentEditable
+                    // elements. In that case, the event is already handled by the focused
+                    // contentEditable element. But when we set focus synchronously, we need
+                    // to prevent default, otherwise if the next element is input, it will
+                    // handle current keypress event as if it was happened on the input itself
+                    // (i. e. will move the caret right after receiving focus).
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
 
-                next.focus();
+                if (next !== focused) {
+                    next.focus();
+                }
             }
         }
     }

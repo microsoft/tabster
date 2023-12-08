@@ -27,6 +27,7 @@ import {
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
     DummyInputObserver,
+    InputChecker,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 
@@ -211,6 +212,9 @@ class TabsterCore implements Types.TabsterCore {
         this.focusedElement.dispose();
         this.root.dispose();
 
+        this.internal.inputChecker?.dispose();
+        delete this.internal.inputChecker;
+
         this._dummyObserver.dispose();
 
         stopFakeWeakRefsCleanupAndClearStorage(this.getWindow);
@@ -343,12 +347,26 @@ export function getTabster(win: Window): Types.Tabster | null {
 }
 
 /**
+ * Initializes isIgnoredInput required for groupper and mover.
+ */
+function setInputChecker(
+    getWindow: Types.GetWindow,
+    internal: Types.InternalAPI
+): void {
+    if (!internal.inputChecker) {
+        internal.inputChecker = new InputChecker(getWindow);
+    }
+}
+
+/**
  * Creates a new groupper instance or returns an existing one
  * @param tabster Tabster instance
  */
 export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     const tabsterCore = tabster.core;
     if (!tabsterCore.groupper) {
+        setInputChecker(tabsterCore.getWindow, tabsterCore.internal);
+
         tabsterCore.groupper = new GroupperAPI(
             tabsterCore,
             tabsterCore.getWindow
@@ -365,6 +383,8 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
 export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
     if (!tabsterCore.mover) {
+        setInputChecker(tabsterCore.getWindow, tabsterCore.internal);
+
         tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
     }
 
@@ -400,15 +420,9 @@ export function getDeloser(
 /**
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
- * @param alwaysAccessibleSelector When Modalizer is active, we put
- * aria-hidden to everything else to hide it from screen readers. This CSS
- * selector allows to exclude some elements from this behaviour. For example,
- * this could be used to exclude aria-live region with the application-wide
- * status announcements.
  * @param accessibleCheck An optional callback that will be called when
  * active Modalizer wants to hide an element that doesn't belong to it from
- * the screen readers by setting aria-hidden. Similar to alwaysAccessibleSelector
- * but allows to address the elements programmatically rather than with a selector.
+ * the screen readers by setting aria-hidden.
  * If the callback returns true, the element will not receive aria-hidden.
  */
 export function getModalizer(

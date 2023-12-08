@@ -1138,9 +1138,19 @@ export interface TabsterElementStorage {
 
 export type DisposeFunc = () => void;
 
+export interface InputChecker {
+    isIgnoredInput(element: HTMLElement, keyCode: number): Promise<boolean>;
+    dispose(): void;
+}
+
 export interface InternalAPI {
     stopObserver(): void;
     resumeObserver(syncState: boolean): void;
+    // Mover and Groupper (when used) will initialize the input checker
+    // to be able to figure out if the currently focused element handles the
+    // keypress and Mover or Groupper should not interfere. For example, if an
+    // arrow key moves caret inside a text input, Mover should not move focus.
+    inputChecker?: InputChecker;
 }
 
 export interface DummyInputObserver {

@@ -15,17 +15,13 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
-    getPromise,
     HTMLElementWithDummyContainer,
     isElementVerticallyVisibleInContainer,
-    matchesSelector,
     scrollIntoView,
     TabsterPart,
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
-
-const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
 class MoverDummyManager extends DummyInputManager {
     private _tabster: Types.TabsterCore;
@@ -679,12 +675,11 @@ export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
-    private _ignoredInputTimer: number | undefined;
-    private _ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
         this._win = getWindow;
+
         this._movers = {};
 
         tabster.queueInit(this._init);
@@ -699,18 +694,9 @@ export class MoverAPI implements Types.MoverAPI {
     };
 
     dispose(): void {
-        const win = this._win();
-
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        this._ignoredInputResolve?.(false);
-
-        if (this._ignoredInputTimer) {
-            win.clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
-
-        win.removeEventListener("keydown", this._onKeyDown, true);
+        this._win().removeEventListener("keydown", this._onKeyDown, true);
 
         Object.keys(this._movers).forEach((moverId) => {
             if (this._movers[moverId]) {
@@ -779,13 +765,6 @@ export class MoverAPI implements Types.MoverAPI {
     };
 
     private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
-
-        this._ignoredInputResolve?.(false);
-
         let keyCode = event.keyCode;
 
         // Give a chance to other listeners to handle the event (for example,
@@ -811,7 +790,13 @@ export class MoverAPI implements Types.MoverAPI {
         const tabster = this._tabster;
         const focused = tabster.focusedElement.getFocusedElement();
 
-        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
+        if (
+            !focused ||
+            (await tabster.internal.inputChecker?.isIgnoredInput?.(
+                focused,
+                keyCode
+            ))
+        ) {
             return;
         }
 
@@ -1203,214 +1188,23 @@ export class MoverAPI implements Types.MoverAPI {
             next = targetElement;
         }
 
-        if (next) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+        // If the currently focused element is changed already (because something else
+        // in the application has moved focus), we don't need to handle the keypress.
+        if (next && tabster.focusedElement.getFocusedElement() === focused) {
+            if (event.eventPhase) {
+                // isIgnoredInput result could come asynchronously for the contentEditable
+                // elements. In that case, the event is already handled by the focused
+                // contentEditable element. But when we set focus synchronously, we need
+                // to prevent default, otherwise if the next element is input, it will
+                // handle current keypress event as if it was happened on the input itself
+                // (i. e. will move the caret right after receiving focus).
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
 
-            nativeFocus(next);
+            if (next !== focused) {
+                next.focus();
+            }
         }
     };
-
-    private async _isIgnoredInput(
-        element: HTMLElement,
-        keyCode: number
-    ): Promise<boolean> {
-        if (
-            element.getAttribute("aria-expanded") === "true" &&
-            element.hasAttribute("aria-activedescendant")
-        ) {
-            // It is likely a combobox with expanded options and arrow keys are
-            // controlled by it.
-            return true;
-        }
-
-        if (matchesSelector(element, _inputSelector)) {
-            let selectionStart = 0;
-            let selectionEnd = 0;
-            let textLength = 0;
-            let asyncRet: Promise<boolean> | undefined;
-
-            if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-                const type = (element as HTMLInputElement).type;
-                const value = (element as HTMLInputElement).value;
-
-                textLength = (value || "").length;
-
-                if (type === "email" || type === "number") {
-                    // For these types Chromium doesn't provide selectionStart and selectionEnd.
-                    // Hence the ugly workaround to find if the caret position is changed with
-                    // the keypress.
-                    // TODO: Have a look at range, week, time, time, date, datetime-local.
-                    if (textLength) {
-                        const selection =
-                            element.ownerDocument.defaultView?.getSelection();
-
-                        if (selection) {
-                            const initialLength = selection.toString().length;
-                            const isBackward =
-                                keyCode === Keys.Left || keyCode === Keys.Up;
-
-                            selection.modify(
-                                "extend",
-                                isBackward ? "backward" : "forward",
-                                "character"
-                            );
-
-                            if (initialLength !== selection.toString().length) {
-                                // The caret is moved, so, we're not on the edge of the value.
-                                // Restore original selection.
-                                selection.modify(
-                                    "extend",
-                                    isBackward ? "forward" : "backward",
-                                    "character"
-                                );
-
-                                return true;
-                            } else {
-                                textLength = 0;
-                            }
-                        }
-                    }
-                } else {
-                    const selStart = (element as HTMLInputElement)
-                        .selectionStart;
-
-                    if (selStart === null) {
-                        // Do not ignore not text editable inputs like checkboxes and radios (but ignore hidden).
-                        return type === "hidden";
-                    }
-
-                    selectionStart = selStart || 0;
-                    selectionEnd =
-                        (element as HTMLInputElement).selectionEnd || 0;
-                }
-            } else if (element.contentEditable === "true") {
-                asyncRet = new (getPromise(this._win))((resolve) => {
-                    this._ignoredInputResolve = (value: boolean) => {
-                        delete this._ignoredInputResolve;
-                        resolve(value);
-                    };
-
-                    const win = this._win();
-
-                    if (this._ignoredInputTimer) {
-                        win.clearTimeout(this._ignoredInputTimer);
-                    }
-
-                    const {
-                        anchorNode: prevAnchorNode,
-                        focusNode: prevFocusNode,
-                        anchorOffset: prevAnchorOffset,
-                        focusOffset: prevFocusOffset,
-                    } = win.getSelection() || {};
-
-                    // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    this._ignoredInputTimer = win.setTimeout(() => {
-                        delete this._ignoredInputTimer;
-
-                        const {
-                            anchorNode,
-                            focusNode,
-                            anchorOffset,
-                            focusOffset,
-                        } = win.getSelection() || {};
-
-                        if (
-                            anchorNode !== prevAnchorNode ||
-                            focusNode !== prevFocusNode ||
-                            anchorOffset !== prevAnchorOffset ||
-                            focusOffset !== prevFocusOffset
-                        ) {
-                            this._ignoredInputResolve?.(false);
-                            return;
-                        }
-
-                        selectionStart = anchorOffset || 0;
-                        selectionEnd = focusOffset || 0;
-                        textLength = element.textContent?.length || 0;
-
-                        if (anchorNode && focusNode) {
-                            if (
-                                element.contains(anchorNode) &&
-                                element.contains(focusNode)
-                            ) {
-                                if (anchorNode !== element) {
-                                    let anchorFound = false;
-
-                                    const addOffsets = (
-                                        node: ChildNode
-                                    ): boolean => {
-                                        if (node === anchorNode) {
-                                            anchorFound = true;
-                                        } else if (node === focusNode) {
-                                            return true;
-                                        }
-
-                                        const nodeText = node.textContent;
-
-                                        if (nodeText && !node.firstChild) {
-                                            const len = nodeText.length;
-
-                                            if (anchorFound) {
-                                                if (focusNode !== anchorNode) {
-                                                    selectionEnd += len;
-                                                }
-                                            } else {
-                                                selectionStart += len;
-                                                selectionEnd += len;
-                                            }
-                                        }
-
-                                        let stop = false;
-
-                                        for (
-                                            let e = node.firstChild;
-                                            e && !stop;
-                                            e = e.nextSibling
-                                        ) {
-                                            stop = addOffsets(e);
-                                        }
-
-                                        return stop;
-                                    };
-
-                                    addOffsets(element);
-                                }
-                            }
-                        }
-
-                        this._ignoredInputResolve?.(true);
-                    }, 0);
-                });
-            }
-
-            if (asyncRet && !(await asyncRet)) {
-                return true;
-            }
-
-            if (selectionStart !== selectionEnd) {
-                return true;
-            }
-
-            if (
-                selectionStart > 0 &&
-                (keyCode === Keys.Left ||
-                    keyCode === Keys.Up ||
-                    keyCode === Keys.Home)
-            ) {
-                return true;
-            }
-
-            if (
-                selectionStart < textLength &&
-                (keyCode === Keys.Right ||
-                    keyCode === Keys.Down ||
-                    keyCode === Keys.End)
-            ) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
