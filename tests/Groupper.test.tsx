@@ -120,7 +120,7 @@ describe("Groupper - default", () => {
                 )
                 .eval(() => (window as WindowWithEscFlag).__escPressed1)
                 .check((escPressed: number) => {
-                    expect(escPressed).toBe(0);
+                    expect(escPressed).toBe(1);
                 });
         }
     );
@@ -215,6 +215,32 @@ describe("Groupper - default", () => {
                 .check((escPressed: number) => {
                     expect(escPressed).toBe(1);
                 });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should not escape groupper as <%s> with Escape key if the application has moved the focus",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .eval(() => {
+                    const keyEsc = 27;
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEsc) {
+                            // Focusing next button.
+                            (
+                                document.activeElement?.nextElementSibling as
+                                    | HTMLElement
+                                    | undefined
+                            )?.focus();
+                        }
+                    });
+                })
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .pressEsc()
+                .activeElement((el) => expect(el?.textContent).toEqual("Bar1"));
         }
     );
 });

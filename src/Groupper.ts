@@ -416,6 +416,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
+    private _handleKeyPressTimer: number | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -435,6 +436,11 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     dispose(): void {
         const win = this._win();
+
+        if (this._handleKeyPressTimer) {
+            win.clearTimeout(this._handleKeyPressTimer);
+            delete this._handleKeyPressTimer;
+        }
 
         this._current = {};
 
@@ -601,6 +607,13 @@ export class GroupperAPI implements Types.GroupperAPI {
         let groupper = ctx?.groupper || modalizerInGroupper;
 
         if (ctx && groupper) {
+            const win = this._win();
+
+            if (this._handleKeyPressTimer) {
+                win.clearTimeout(this._handleKeyPressTimer);
+                delete this._handleKeyPressTimer;
+            }
+
             if (ctx.ignoreKeydown(event)) {
                 return;
             }
@@ -608,6 +621,18 @@ export class GroupperAPI implements Types.GroupperAPI {
             let next: HTMLElement | null | undefined;
 
             const groupperElement = groupper.getElement();
+
+            const moveFocusToNext = (isAsync?: boolean) => {
+                if (next) {
+                    if (!isAsync) {
+                        // No sense to prevent default of the event that is already handled.
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    }
+
+                    next.focus();
+                }
+            };
 
             if (event.keyCode === Keys.Enter) {
                 if (
@@ -622,35 +647,56 @@ export class GroupperAPI implements Types.GroupperAPI {
                         useActiveModalizer: true,
                     });
                 }
+
+                moveFocusToNext();
             } else if (event.keyCode === Keys.Esc) {
-                if (groupperElement && groupperElement.contains(element)) {
-                    if (element !== groupperElement || noGoUp) {
-                        next = groupper.getFirst(true);
-                    } else {
-                        const parentElement = groupperElement.parentElement;
-                        const parentCtx = parentElement
-                            ? RootAPI.getTabsterContext(tabster, parentElement)
-                            : undefined;
+                // We will handle Esc asynchronously, if something in the application will
+                // move focus during the keypress handling, we will not interfere.
+                const focusedElement =
+                    tabster.focusedElement.getFocusedElement();
 
-                        groupper = parentCtx?.groupper;
-                        next = groupper?.getFirst(true);
+                this._handleKeyPressTimer = win.setTimeout(() => {
+                    delete this._handleKeyPressTimer;
+
+                    if (
+                        focusedElement !==
+                        tabster.focusedElement.getFocusedElement()
+                    ) {
+                        // Something else in the application has moved focus, we will not handle Esc.
+                        return;
                     }
-                }
 
-                if (groupper) {
-                    groupper.makeTabbable(false);
+                    if (
+                        groupper &&
+                        groupperElement &&
+                        groupperElement.contains(element)
+                    ) {
+                        if (element !== groupperElement || noGoUp) {
+                            next = groupper.getFirst(true);
+                        } else {
+                            const parentElement = groupperElement.parentElement;
+                            const parentCtx = parentElement
+                                ? RootAPI.getTabsterContext(
+                                      tabster,
+                                      parentElement
+                                  )
+                                : undefined;
 
-                    if (modalizerInGroupper) {
-                        tabster.modalizer?.setActive(undefined);
+                            groupper = parentCtx?.groupper;
+                            next = groupper?.getFirst(true);
+                        }
                     }
-                }
-            }
 
-            if (next) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
+                    if (groupper) {
+                        groupper.makeTabbable(false);
 
-                next.focus();
+                        if (modalizerInGroupper) {
+                            tabster.modalizer?.setActive(undefined);
+                        }
+                    }
+
+                    moveFocusToNext(true);
+                }, 0);
             }
         }
     }
