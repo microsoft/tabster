@@ -622,18 +622,6 @@ export class GroupperAPI implements Types.GroupperAPI {
 
             const groupperElement = groupper.getElement();
 
-            const moveFocusToNext = (isAsync?: boolean) => {
-                if (next) {
-                    if (!isAsync) {
-                        // No sense to prevent default of the event that is already handled.
-                        event.preventDefault();
-                        event.stopImmediatePropagation();
-                    }
-
-                    next.focus();
-                }
-            };
-
             if (event.keyCode === Keys.Enter) {
                 if (
                     groupperElement &&
@@ -648,7 +636,12 @@ export class GroupperAPI implements Types.GroupperAPI {
                     });
                 }
 
-                moveFocusToNext();
+                if (next) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    next.focus();
+                }
             } else if (event.keyCode === Keys.Esc) {
                 // We will handle Esc asynchronously, if something in the application will
                 // move focus during the keypress handling, we will not interfere.
@@ -695,7 +688,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                         }
                     }
 
-                    moveFocusToNext(true);
+                    next?.focus();
                 }, 0);
             }
         }
