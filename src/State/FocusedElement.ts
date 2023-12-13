@@ -15,6 +15,7 @@ import {
     shouldIgnoreFocus,
     WeakHTMLElement,
     triggerEvent,
+    triggerMoveFocusEvent,
 } from "../Utils";
 import { getTabsterOnElement } from "../Instance";
 import { Subscribable } from "./Subscribable";
@@ -480,8 +481,8 @@ export class FocusedElementState
         // TODO: Make sure this is not needed anymore and write tests.
     };
 
-    private _onKeyDown = (e: KeyboardEvent): void => {
-        if (e.keyCode !== Keys.Tab || e.ctrlKey) {
+    private _onKeyDown = (event: KeyboardEvent): void => {
+        if (event.keyCode !== Keys.Tab || event.ctrlKey) {
             return;
         }
 
@@ -499,11 +500,11 @@ export class FocusedElementState
         const controlTab = tabster.controlTab;
         const ctx = RootAPI.getTabsterContext(tabster, currentElement);
 
-        if (!ctx || ctx.ignoreKeydown(e)) {
+        if (!ctx || ctx.ignoreKeydown(event)) {
             return;
         }
 
-        const isBackward = e.shiftKey;
+        const isBackward = event.shiftKey;
 
         const next = FocusedElementState.findNextTabbable(
             tabster,
@@ -514,6 +515,12 @@ export class FocusedElementState
             isBackward,
             true
         );
+
+        const rootElement = ctx.root.getElement();
+
+        if (!rootElement) {
+            return;
+        }
 
         const nextElement = next?.element;
         const uncontrolledCompletelyContainer =
@@ -555,28 +562,55 @@ export class FocusedElementState
             if (nextUncontrolled || nextElement.tagName === "IFRAME") {
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
-                DummyInputManager.moveWithPhantomDummy(
-                    this._tabster,
-                    nextUncontrolled ?? nextElement,
-                    false,
-                    isBackward
-                );
+                if (
+                    triggerMoveFocusEvent({
+                        by: "root",
+                        owner: rootElement,
+                        next: nextElement,
+                        relatedEvent: event,
+                    })
+                ) {
+                    DummyInputManager.moveWithPhantomDummy(
+                        this._tabster,
+                        nextUncontrolled ?? nextElement,
+                        false,
+                        isBackward,
+                        event
+                    );
+                }
 
                 return;
             }
 
             if (controlTab || next?.outOfDOMOrder) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+                if (
+                    triggerMoveFocusEvent({
+                        by: "root",
+                        owner: rootElement,
+                        next: nextElement,
+                        relatedEvent: event,
+                    })
+                ) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
 
-                nativeFocus(nextElement);
+                    nativeFocus(nextElement);
+                }
             } else {
                 // We are in uncontrolled mode and the next element is in DOM order.
                 // Just allow the default action.
             }
         } else {
-            if (!uncontrolledCompletelyContainer) {
-                ctx.root.moveOutWithDefaultAction(isBackward);
+            if (
+                !uncontrolledCompletelyContainer &&
+                triggerMoveFocusEvent({
+                    by: "root",
+                    owner: rootElement,
+                    next: null,
+                    relatedEvent: event,
+                })
+            ) {
+                ctx.root.moveOutWithDefaultAction(isBackward, event);
             }
         }
     };

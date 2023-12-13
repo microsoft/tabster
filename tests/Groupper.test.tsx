@@ -611,3 +611,94 @@ describe("Groupper - empty", () => {
         }
     );
 });
+
+describe("Groupper with tabster:groupper:key-handler-focus", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should properly move the focus when tabbing from outside of the groupper as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <Tag
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </Tag>
+                        <button id="button4">Button4</button>
+                    </div>
+                )
+            )
+                .eval(() => {
+                    interface WindowWithButton2 extends Window {
+                        __hadButton3?: boolean;
+                    }
+
+                    delete (window as WindowWithButton2).__hadButton3;
+
+                    document.addEventListener(
+                        "tabster:movefocus",
+                        (e: Types.TabsterMoveFocusEvent) => {
+                            if (
+                                document.activeElement?.textContent ===
+                                "Button3"
+                            ) {
+                                // For the sake of test, we will move focus after Button3 is focused for the second time.
+                                if (
+                                    (window as WindowWithButton2).__hadButton3
+                                ) {
+                                    e.preventDefault();
+                                    e.details.relatedEvent.preventDefault();
+                                    document.getElementById("button4")?.focus();
+                                }
+
+                                (window as WindowWithButton2).__hadButton3 =
+                                    true;
+                            }
+                        }
+                    );
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2Button3");
+                })
+                .pressEnter()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                });
+        }
+    );
+});

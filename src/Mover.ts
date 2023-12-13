@@ -22,6 +22,7 @@ import {
     scrollIntoView,
     TabsterPart,
     triggerEvent,
+    triggerMoveFocusEvent,
     WeakHTMLElement,
 } from "./Utils";
 
@@ -873,6 +874,7 @@ export class MoverAPI implements Types.MoverAPI {
         const isCyclic = moverProps.cyclic;
 
         let next: HTMLElement | null | undefined;
+        let scrollIntoViewArg: boolean | undefined;
 
         let focusedElementRect: DOMRect;
         let focusedElementX1 = 0;
@@ -1060,9 +1062,7 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
 
-            if (next) {
-                scrollIntoView(this._win, next, false);
-            }
+            scrollIntoViewArg = false;
         } else if (keyCode === Keys.PageDown) {
             focusable.findElement({
                 currentElement: focused,
@@ -1118,9 +1118,7 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
 
-            if (next) {
-                scrollIntoView(this._win, next, true);
-            }
+            scrollIntoViewArg = true;
         } else if (isGrid) {
             const isBackward = keyCode === Keys.Up;
             const ax1 = focusedElementX1;
@@ -1203,7 +1201,19 @@ export class MoverAPI implements Types.MoverAPI {
             next = targetElement;
         }
 
-        if (next) {
+        if (
+            next &&
+            triggerMoveFocusEvent({
+                by: "mover",
+                owner: container,
+                next,
+                relatedEvent: event,
+            })
+        ) {
+            if (scrollIntoViewArg !== undefined) {
+                scrollIntoView(this._win, next, scrollIntoViewArg);
+            }
+
             event.preventDefault();
             event.stopImmediatePropagation();
 

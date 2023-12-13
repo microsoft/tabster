@@ -16,6 +16,11 @@ export const MoverEventName = "tabster:mover";
 export const FocusInEventName = "tabster:focusin";
 export const FocusOutEventName = "tabster:focusout";
 
+// Event to be triggered when Tabster wants to move focus as the result of
+// keyboard event. This allows to preventDefault() if you want to have
+// some custom logic.
+export const MoveFocusEventName = "tabster:movefocus";
+
 export const FocusableSelector = [
     "a[href]",
     "button:not([disabled])",
@@ -29,6 +34,16 @@ export const FocusableSelector = [
 export interface TabsterEventWithDetails<D> extends Event {
     details: D;
 }
+
+export interface TabsterMoveFocusEventDetails {
+    by: "mover" | "groupper" | "modalizer" | "root";
+    owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
+    next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
+    relatedEvent: KeyboardEvent; // The original keyboard event that triggered the move.
+}
+
+export type TabsterMoveFocusEvent =
+    TabsterEventWithDetails<TabsterMoveFocusEventDetails>;
 
 export interface TabsterDOMAttribute {
     [TabsterAttributeName]: string | undefined;
@@ -594,7 +609,10 @@ export interface FocusableAPI extends Disposable {
 
 export interface DummyInputManager {
     moveOut: (backwards: boolean) => void;
-    moveOutWithDefaultAction: (backwards: boolean) => void;
+    moveOutWithDefaultAction: (
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ) => void;
 }
 
 export interface Visibilities {
@@ -846,7 +864,10 @@ export interface Root extends TabsterPart<RootProps> {
 
     readonly uid: string;
     dispose(): void;
-    moveOutWithDefaultAction(backwards: boolean): void;
+    moveOutWithDefaultAction(
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ): void;
 }
 
 export type RootConstructor = (

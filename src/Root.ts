@@ -166,11 +166,11 @@ export class Root
         this._remove();
     }
 
-    moveOutWithDefaultAction(isBackward: boolean) {
+    moveOutWithDefaultAction(isBackward: boolean, relatedEvent: KeyboardEvent) {
         const dummyManager = this._dummyManager;
 
         if (dummyManager) {
-            dummyManager.moveOutWithDefaultAction(isBackward);
+            dummyManager.moveOutWithDefaultAction(isBackward, relatedEvent);
         } else {
             const el = this.getElement();
 
@@ -179,7 +179,8 @@ export class Root
                     this._tabster,
                     el,
                     true,
-                    isBackward
+                    isBackward,
+                    relatedEvent
                 );
             }
         }
