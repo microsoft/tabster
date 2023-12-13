@@ -2709,3 +2709,59 @@ describe("Mover with default element", () => {
             });
     });
 });
+
+describe("Mover with tabster:movefocus event handling", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should allow to custom handle the focus movement", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                        <button>Button5</button>
+                    </div>
+                    <button id="button-6">Button6</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                document.addEventListener(
+                    "tabster:movefocus",
+                    (e: Types.TabsterMoveFocusEvent) => {
+                        if (document.activeElement?.textContent === "Button3") {
+                            e.preventDefault();
+                            e.details.relatedEvent.preventDefault();
+                            document.getElementById("button-6")?.focus();
+                        }
+
+                        if (document.activeElement?.textContent === "Button4") {
+                            e.preventDefault();
+                            e.details.relatedEvent.preventDefault();
+                            document.getElementById("button-1")?.focus();
+                        }
+                    }
+                );
+            })
+            .pressTab()
+            .pressTab()
+            .pressDown()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .pressDown()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button6"))
+            .pressTab(true)
+            .pressUp()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
+            .press("PageDown")
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
+    });
+});

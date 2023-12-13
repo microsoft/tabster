@@ -893,8 +893,11 @@ export class DummyInputManager {
         this._instance?.moveOut(backwards);
     }
 
-    moveOutWithDefaultAction(backwards: boolean): void {
-        this._instance?.moveOutWithDefaultAction(backwards);
+    moveOutWithDefaultAction(
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ): void {
+        this._instance?.moveOutWithDefaultAction(backwards, relatedEvent);
     }
 
     getHandler(isIn: boolean): DummyInputFocusCallback | undefined {
@@ -919,7 +922,8 @@ export class DummyInputManager {
         tabster: Types.TabsterCore,
         element: HTMLElement, // The target element to move to or out of.
         moveOutOfElement: boolean, // Whether to move out of the element or into it.
-        isBackward: boolean // Are we tabbing of shift-tabbing?
+        isBackward: boolean, // Are we tabbing of shift-tabbing?
+        relatedEvent: KeyboardEvent // The event that triggered the move.
     ): void {
         // Phantom dummy is a hack to use browser's default action to move
         // focus from a specific point in the application to the next/previous
@@ -1034,7 +1038,15 @@ export class DummyInputManager {
                 } while (dummyFor);
             }
 
-            if (parent) {
+            if (
+                parent &&
+                triggerMoveFocusEvent({
+                    by: "root",
+                    owner: parent,
+                    next: null,
+                    relatedEvent,
+                })
+            ) {
                 parent.insertBefore(input, insertBefore);
                 nativeFocus(input);
             }
@@ -1495,7 +1507,10 @@ class DummyInputManagerCore {
      * one of the dummy inputs and setting the `useDefaultAction` flag
      * @param backwards focus moving to an element behind the given element
      */
-    moveOutWithDefaultAction = (backwards: boolean): void => {
+    moveOutWithDefaultAction = (
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ): void => {
         const first = this._firstDummy;
         const last = this._lastDummy;
 
@@ -1534,7 +1549,15 @@ class DummyInputManagerCore {
                     toFocus = lastInput;
                 }
 
-                if (toFocus) {
+                if (
+                    toFocus &&
+                    triggerMoveFocusEvent({
+                        by: "root",
+                        owner: element,
+                        next: null,
+                        relatedEvent,
+                    })
+                ) {
                     nativeFocus(toFocus);
                 }
             }
@@ -1763,6 +1786,12 @@ export function triggerEvent<D>(
     target.dispatchEvent(event);
 
     return !event.defaultPrevented;
+}
+
+export function triggerMoveFocusEvent(
+    details: Types.TabsterMoveFocusEventDetails
+): boolean {
+    return triggerEvent(details.owner, Types.MoveFocusEventName, details);
 }
 
 export function augmentAttribute(

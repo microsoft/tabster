@@ -18,6 +18,7 @@ import {
     TabsterPart,
     WeakHTMLElement,
     getAdjacentElement,
+    triggerMoveFocusEvent,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
@@ -646,7 +647,16 @@ export class GroupperAPI implements Types.GroupperAPI {
                 }
             }
 
-            if (next) {
+            if (
+                next &&
+                groupperElement &&
+                triggerMoveFocusEvent({
+                    by: "groupper",
+                    owner: groupperElement,
+                    next,
+                    relatedEvent: event,
+                })
+            ) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
 

@@ -668,31 +668,22 @@ describeIfUncontrolled("DummyInputManager", () => {
 
                 const tabster = getTabsterTestVariables().core?.core;
 
-                if (tabster && rootElement) {
-                    // Calling an internal API to force the dummy inputs update.
-                    const root = (
-                        tabster.root.constructor as unknown as {
-                            getRoot: (
-                                tabster: Types.TabsterCore,
-                                element: HTMLElement
-                            ) => Types.Root | undefined;
+                return new Promise((resolve) => {
+                    // Waiting for the dummy inputs to update.
+                    setTimeout(() => {
+                        if (tabster && rootElement) {
+                            isDummyLast.push(
+                                rootElement?.lastElementChild
+                                    ? rootElement.lastElementChild.hasAttribute(
+                                          dummyAttribute
+                                      )
+                                    : null
+                            );
                         }
-                    ).getRoot(tabster, rootElement);
 
-                    root?.moveOutWithDefaultAction(false);
-
-                    // After the internal API call above, the dummy input should be
-                    // forced to become the last element again.
-                    isDummyLast.push(
-                        rootElement?.lastElementChild
-                            ? rootElement.lastElementChild.hasAttribute(
-                                  dummyAttribute
-                              )
-                            : null
-                    );
-                }
-
-                return isDummyLast;
+                        resolve(isDummyLast);
+                    }, 200);
+                });
             }, Types.TabsterDummyInputAttributeName)
             .check((isDummyLast: (boolean | null)[]) => {
                 expect(isDummyLast).toEqual([false, true]);
