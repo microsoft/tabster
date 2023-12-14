@@ -2195,3 +2195,73 @@ describe("Modalizer with checkAccessible callback", () => {
             });
     });
 });
+
+describe("Modalizer with tabster:movefocus event handling", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
+
+    it("should allow to custom handle the focus movement in both not trapped and trapped modalizers", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal" },
+                        })}
+                    >
+                        <button id="modal-button">ModalButton1</button>
+                    </div>
+                    <button>Button2</button>
+                    <div
+                        aria-label="modal2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal2", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                    <button id="button-3">Button3</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                document.addEventListener(
+                    "tabster:movefocus",
+                    (e: Types.TabsterMoveFocusEvent) => {
+                        if (
+                            document.activeElement?.textContent ===
+                            "ModalButton1"
+                        ) {
+                            e.preventDefault();
+                            e.details.relatedEvent.preventDefault();
+                            document.getElementById("button-3")?.focus();
+                        }
+
+                        if (
+                            document.activeElement?.textContent ===
+                            "ModalButton2"
+                        ) {
+                            e.preventDefault();
+                            e.details.relatedEvent.preventDefault();
+                            document.getElementById("button-1")?.focus();
+                        }
+                    }
+                );
+            })
+            .focusElement("#modal-button")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button3"))
+            .focusElement("#modal-button-2")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
+    });
+});

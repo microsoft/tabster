@@ -18,6 +18,7 @@ import {
     TabsterPart,
     WeakHTMLElement,
     getAdjacentElement,
+    triggerMoveFocusEvent,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
@@ -678,17 +679,27 @@ export class GroupperAPI implements Types.GroupperAPI {
                             groupper = parentCtx?.groupper;
                             next = groupper?.getFirst(true);
                         }
-                    }
 
-                    if (groupper) {
-                        groupper.makeTabbable(false);
+                        if (
+                            next &&
+                            triggerMoveFocusEvent({
+                                by: "groupper",
+                                owner: groupperElement,
+                                next,
+                                relatedEvent: event,
+                            })
+                        ) {
+                            if (groupper) {
+                                groupper.makeTabbable(false);
 
-                        if (modalizerInGroupper) {
-                            tabster.modalizer?.setActive(undefined);
+                                if (modalizerInGroupper) {
+                                    tabster.modalizer?.setActive(undefined);
+                                }
+                            }
+
+                            next.focus();
                         }
                     }
-
-                    next?.focus();
                 }, 0);
             }
         }
