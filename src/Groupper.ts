@@ -417,6 +417,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
+    private _handleKeyPressTimer: number | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -436,6 +437,11 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     dispose(): void {
         const win = this._win();
+
+        if (this._handleKeyPressTimer) {
+            win.clearTimeout(this._handleKeyPressTimer);
+            delete this._handleKeyPressTimer;
+        }
 
         this._current = {};
 
@@ -602,6 +608,13 @@ export class GroupperAPI implements Types.GroupperAPI {
         let groupper = ctx?.groupper || modalizerInGroupper;
 
         if (ctx && groupper) {
+            const win = this._win();
+
+            if (this._handleKeyPressTimer) {
+                win.clearTimeout(this._handleKeyPressTimer);
+                delete this._handleKeyPressTimer;
+            }
+
             if (ctx.ignoreKeydown(event)) {
                 return;
             }
@@ -623,44 +636,86 @@ export class GroupperAPI implements Types.GroupperAPI {
                         useActiveModalizer: true,
                     });
                 }
+
+                if (
+                    next &&
+                    groupperElement &&
+                    triggerMoveFocusEvent({
+                        by: "groupper",
+                        owner: groupperElement,
+                        next,
+                        relatedEvent: event,
+                    })
+                ) {
+                    // When the application hasn't prevented default,
+                    // we consider the event completely handled, hence we
+                    // prevent the initial event's default action and stop
+                    // propagation.
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    next.focus();
+                }
             } else if (event.keyCode === Keys.Esc) {
-                if (groupperElement && groupperElement.contains(element)) {
-                    if (element !== groupperElement || noGoUp) {
-                        next = groupper.getFirst(true);
-                    } else {
-                        const parentElement = groupperElement.parentElement;
-                        const parentCtx = parentElement
-                            ? RootAPI.getTabsterContext(tabster, parentElement)
-                            : undefined;
+                // We will handle Esc asynchronously, if something in the application will
+                // move focus during the keypress handling, we will not interfere.
+                const focusedElement =
+                    tabster.focusedElement.getFocusedElement();
 
-                        groupper = parentCtx?.groupper;
-                        next = groupper?.getFirst(true);
+                this._handleKeyPressTimer = win.setTimeout(() => {
+                    delete this._handleKeyPressTimer;
+
+                    if (
+                        focusedElement !==
+                        tabster.focusedElement.getFocusedElement()
+                    ) {
+                        // Something else in the application has moved focus, we will not handle Esc.
+                        return;
                     }
-                }
 
-                if (groupper) {
-                    groupper.makeTabbable(false);
+                    if (
+                        groupper &&
+                        groupperElement &&
+                        groupperElement.contains(element)
+                    ) {
+                        if (element !== groupperElement || noGoUp) {
+                            next = groupper.getFirst(true);
+                        } else {
+                            const parentElement = groupperElement.parentElement;
+                            const parentCtx = parentElement
+                                ? RootAPI.getTabsterContext(
+                                      tabster,
+                                      parentElement
+                                  )
+                                : undefined;
 
-                    if (modalizerInGroupper) {
-                        tabster.modalizer?.setActive(undefined);
+                            groupper = parentCtx?.groupper;
+                            next = groupper?.getFirst(true);
+                        }
+
+                        if (
+                            next &&
+                            triggerMoveFocusEvent({
+                                by: "groupper",
+                                owner: groupperElement,
+                                next,
+                                relatedEvent: event,
+                            })
+                        ) {
+                            if (groupper) {
+                                groupper.makeTabbable(false);
+
+                                if (modalizerInGroupper) {
+                                    tabster.modalizer?.setActive(undefined);
+                                }
+                            }
+
+                            // This part happens asynchronously inside setTimeout,
+                            // so no need to prevent default or stop propagation.
+                            next.focus();
+                        }
                     }
-                }
-            }
-
-            if (
-                next &&
-                groupperElement &&
-                triggerMoveFocusEvent({
-                    by: "groupper",
-                    owner: groupperElement,
-                    next,
-                    relatedEvent: event,
-                })
-            ) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-
-                next.focus();
+                }, 0);
             }
         }
     }
