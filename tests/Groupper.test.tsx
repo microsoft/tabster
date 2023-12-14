@@ -638,7 +638,7 @@ describe("Groupper - empty", () => {
     );
 });
 
-describe("Groupper with tabster:groupper:key-handler-focus", () => {
+describe("Groupper with tabster:groupper:movefocus", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ groupper: true });
     });
@@ -650,7 +650,7 @@ describe("Groupper with tabster:groupper:key-handler-focus", () => {
             await new BroTest.BroTest(
                 (
                     <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
+                        <button id="button1">Button1</button>
                         <Tag
                             tabIndex={0}
                             {...getTabsterAttribute({
@@ -670,6 +670,7 @@ describe("Groupper with tabster:groupper:key-handler-focus", () => {
             )
                 .eval(() => {
                     interface WindowWithButton2 extends Window {
+                        __enteredGroupper?: boolean;
                         __hadButton3?: boolean;
                     }
 
@@ -678,6 +679,22 @@ describe("Groupper with tabster:groupper:key-handler-focus", () => {
                     document.addEventListener(
                         "tabster:movefocus",
                         (e: Types.TabsterMoveFocusEvent) => {
+                            if (e.details.relatedEvent.key === "Enter") {
+                                if (
+                                    (window as WindowWithButton2)
+                                        .__enteredGroupper
+                                ) {
+                                    // Enter was pressed for the second time, let's alter the default behaviour.
+                                    e.preventDefault();
+                                    e.details.relatedEvent.preventDefault();
+                                    document.getElementById("button1")?.focus();
+                                }
+
+                                (
+                                    window as WindowWithButton2
+                                ).__enteredGroupper = true;
+                            }
+
                             if (
                                 document.activeElement?.textContent ===
                                 "Button3"
@@ -724,6 +741,14 @@ describe("Groupper with tabster:groupper:key-handler-focus", () => {
                 .pressTab()
                 .activeElement((el) => {
                     expect(el?.textContent).toEqual("Button4");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2Button3");
+                })
+                .pressEnter()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
                 });
         }
     );

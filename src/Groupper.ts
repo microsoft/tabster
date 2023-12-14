@@ -637,7 +637,20 @@ export class GroupperAPI implements Types.GroupperAPI {
                     });
                 }
 
-                if (next) {
+                if (
+                    next &&
+                    groupperElement &&
+                    triggerMoveFocusEvent({
+                        by: "groupper",
+                        owner: groupperElement,
+                        next,
+                        relatedEvent: event,
+                    })
+                ) {
+                    // When the application hasn't prevented default,
+                    // we consider the event completely handled, hence we
+                    // prevent the initial event's default action and stop
+                    // propagation.
                     event.preventDefault();
                     event.stopImmediatePropagation();
 
@@ -697,6 +710,8 @@ export class GroupperAPI implements Types.GroupperAPI {
                                 }
                             }
 
+                            // This part happens asynchronously inside setTimeout,
+                            // so no need to prevent default or stop propagation.
                             next.focus();
                         }
                     }
