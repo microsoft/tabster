@@ -244,7 +244,7 @@ describe("Deloser created lazily", () => {
             })
             .eval(() => {
                 const el = document.getElementById("second");
-                el?.parentElement?.removeChild(el);
+                el?.parentNode?.removeChild(el);
             })
             .wait(500)
             .activeElement((el) => {

@@ -14,6 +14,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _containerHistoryLength = 10;
 
@@ -340,7 +341,7 @@ function buildSelector(element: HTMLElement): string | undefined {
 
     const selector: string[] = [buildElementSelector(element)];
 
-    let el = element.parentElement;
+    let el = dom.getParentElement(element);
 
     while (el) {
         const isBody = el.tagName === "BODY";
@@ -350,7 +351,7 @@ function buildSelector(element: HTMLElement): string | undefined {
             break;
         }
 
-        el = el.parentElement;
+        el = dom.getParentElement(el);
     }
 
     return selector.join(" ");
@@ -571,7 +572,7 @@ export class Deloser
             this._snapshotIndex
         ].filter((we) => {
             const e = we.get();
-            return e && preserveExisting ? element.contains(e) : false;
+            return e && preserveExisting ? dom.nodeContains(element, e) : false;
         });
     };
 
@@ -589,7 +590,7 @@ export class Deloser
             const e = we.get();
             const element = this._element.get();
 
-            if (e && element && element.contains(e)) {
+            if (e && element && dom.nodeContains(element, e)) {
                 if (this._tabster.focusable.isFocusable(e)) {
                     return e;
                 }
@@ -733,7 +734,8 @@ export class DeloserAPI implements Types.DeloserAPI {
         );
 
         if (
-            element.contains(
+            dom.nodeContains(
+                element,
                 this._tabster.focusedElement.getFocusedElement() ?? null
             )
         ) {
@@ -744,7 +746,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
-        for (let e: HTMLElement | null = element; e; e = e.parentElement) {
+        for (
+            let e: HTMLElement | null = element;
+            e;
+            e = dom.getParentElement(e)
+        ) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
             if (tabsterOnElement && tabsterOnElement.deloser) {
@@ -874,7 +880,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     ): Types.Deloser | undefined {
         let root: Types.Root | undefined;
 
-        for (let e: HTMLElement | null = element; e; e = e.parentElement) {
+        for (
+            let e: HTMLElement | null = element;
+            e;
+            e = dom.getParentElement(e)
+        ) {
             const tabsterOnElement = getTabsterOnElement(tabster, e);
 
             if (tabsterOnElement) {

@@ -66,7 +66,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const current = document.getElementById(elementId) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
-            current.parentElement?.insertBefore(newElement, current);
+            current.parentNode?.insertBefore(newElement, current);
         };
 
         const insertElementAfter = (elementId: string) => {
@@ -74,7 +74,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             const nextSibling = current.nextElementSibling;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
-            current.parentElement?.insertBefore(newElement, nextSibling);
+            current.parentNode?.insertBefore(newElement, nextSibling);
         };
 
         it("mover", async () => {
@@ -439,10 +439,10 @@ describeIfUncontrolled("DummyInputManager", () => {
                     const current = document.getElementById(
                         elementId
                     ) as HTMLElement;
-                    const parent = current.parentElement as HTMLElement;
+                    const parent = current.parentNode;
                     const firstDummy =
                         current.previousElementSibling as HTMLElement;
-                    parent.removeChild(firstDummy);
+                    parent?.removeChild(firstDummy);
                 }, groupperId)
                 .eval(
                     evaluateDummy,
@@ -466,9 +466,9 @@ describeIfUncontrolled("DummyInputManager", () => {
                     const current = document.getElementById(
                         elementId
                     ) as HTMLElement;
-                    const parent = current.parentElement as HTMLElement;
+                    const parent = current.parentNode;
                     const lastDummy = current.nextElementSibling as HTMLElement;
-                    parent.removeChild(lastDummy);
+                    parent?.removeChild(lastDummy);
                 }, groupperId)
                 .eval(
                     evaluateDummy,

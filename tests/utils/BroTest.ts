@@ -728,14 +728,14 @@ export class BroTest implements PromiseLike<undefined> {
                             ? document.querySelector(selector)
                             : document.activeElement;
 
-                        if (el && el.parentElement) {
+                        if (el && el.parentNode) {
                             if (async) {
                                 setTimeout(
-                                    () => el.parentElement?.removeChild(el),
+                                    () => el.parentNode?.removeChild(el),
                                     0
                                 );
                             } else {
-                                el.parentElement.removeChild(el);
+                                el.parentNode.removeChild(el);
                             }
                         }
                     },

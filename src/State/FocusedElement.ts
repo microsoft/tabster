@@ -18,6 +18,7 @@ import {
     triggerMoveFocusEvent,
 } from "../Utils";
 import { getTabsterOnElement } from "../Instance";
+import { dom } from "../DOMAPI";
 import { Subscribable } from "./Subscribable";
 
 function getUncontrolledCompletelyContainer(
@@ -120,18 +121,18 @@ export class FocusedElementState
     ): void {
         let wel = FocusedElementState._lastResetElement;
         let el = wel && wel.get();
-        if (el && parent.contains(el)) {
+        if (el && dom.nodeContains(parent, el)) {
             delete FocusedElementState._lastResetElement;
         }
 
         el = (instance as FocusedElementState)._nextVal?.element?.get();
-        if (el && parent.contains(el)) {
+        if (el && dom.nodeContains(parent, el)) {
             delete (instance as FocusedElementState)._nextVal;
         }
 
         wel = (instance as FocusedElementState)._lastVal;
         el = wel && wel.get();
-        if (el && parent.contains(el)) {
+        if (el && dom.nodeContains(parent, el)) {
             delete (instance as FocusedElementState)._lastVal;
         }
     }
@@ -209,7 +210,7 @@ export class FocusedElementState
             }
         }
 
-        if (toFocus && !container?.contains(toFocus)) {
+        if (toFocus && !dom.nodeContains(container, toFocus)) {
             toFocus = undefined;
         }
 
@@ -406,7 +407,8 @@ export class FocusedElementState
 
             if (currentElement && !next?.element) {
                 const parentElement =
-                    what !== modalizer && what.getElement()?.parentElement;
+                    what !== modalizer &&
+                    dom.getParentElement(what.getElement());
 
                 if (parentElement) {
                     const parentCtx = RootAPI.getTabsterContext(
@@ -531,13 +533,16 @@ export class FocusedElementState
 
             if (
                 ctx.uncontrolled ||
-                nextUncontrolled?.contains(currentElement)
+                dom.nodeContains(nextUncontrolled, currentElement)
             ) {
                 if (
                     (!next.outOfDOMOrder &&
                         nextUncontrolled === ctx.uncontrolled) ||
                     (uncontrolledCompletelyContainer &&
-                        !uncontrolledCompletelyContainer.contains(nextElement))
+                        !dom.nodeContains(
+                            uncontrolledCompletelyContainer,
+                            nextElement
+                        ))
                 ) {
                     // Nothing to do, everything will be done by the browser or something
                     // that controls the uncontrolled area.

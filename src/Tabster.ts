@@ -29,6 +29,7 @@ import {
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
+import { dom } from "./DOMAPI";
 
 export { Types };
 export * from "./AttributeHelpers";
@@ -109,7 +110,7 @@ class TabsterCore implements Types.TabsterCore {
 
         this._dummyObserver = new DummyInputObserver(getWindow);
 
-        this.getParent = props?.getParent ?? ((el) => el.parentElement);
+        this.getParent = props?.getParent ?? dom.getParentNode;
 
         this.internal = {
             stopObserver: (): void => {

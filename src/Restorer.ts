@@ -15,6 +15,7 @@ import type {
 } from "./Types";
 import { RestorerTypes } from "./Types";
 import { TabsterPart, WeakHTMLElement } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
@@ -64,7 +65,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
         }
         if (
             element &&
-            !element.contains(e.relatedTarget as HTMLElement | null)
+            !dom.nodeContains(element, e.relatedTarget as HTMLElement | null)
         ) {
             this._hasFocus = false;
         }
@@ -156,7 +157,7 @@ export class RestorerAPI implements RestorerAPIType {
             // clicking on any empty space focuses body - this is can be a false positive
             !this._keyboardNavState.isNavigatingWithKeyboard() &&
             // Source no longer exists on DOM - always restore focus
-            doc.body.contains(source)
+            dom.nodeContains(doc.body, source)
         ) {
             return;
         }
@@ -164,7 +165,7 @@ export class RestorerAPI implements RestorerAPIType {
         let weakElement = this._history.pop();
         while (
             weakElement &&
-            !doc.body.contains(weakElement.get()?.parentElement ?? null)
+            !dom.nodeContains(doc.body, dom.getParentElement(weakElement.get()))
         ) {
             weakElement = this._history.pop();
         }

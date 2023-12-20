@@ -7,6 +7,7 @@ import { nativeFocus } from "keyborg";
 
 import * as Types from "./Types";
 import { GetWindow, Visibilities, Visibility } from "./Types";
+import { dom } from "./DOMAPI";
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -284,7 +285,8 @@ export function createElementTreeWalker(
         ? acceptNode
         : ({ acceptNode } as NodeFilter)) as unknown as NodeFilter;
 
-    return doc.createTreeWalker(
+    return dom.createTreeWalker(
+        doc,
         root,
         NodeFilter.SHOW_ELEMENT,
         filter,
@@ -455,9 +457,9 @@ export function getScrollableContainer(
 
     if (doc) {
         for (
-            let el: HTMLElement | null = element.parentElement;
+            let el: HTMLElement | null = dom.getParentElement(element);
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             if (
                 el.scrollWidth > el.clientWidth ||
@@ -557,7 +559,7 @@ export function clearElementCache(
         const el = wel && wel.get();
 
         if (el && parent) {
-            if (!parent.contains(el)) {
+            if (!dom.nodeContains(parent, el)) {
                 continue;
             }
         }
@@ -571,7 +573,7 @@ export function documentContains(
     doc: HTMLDocument | null | undefined,
     element: HTMLElement
 ): boolean {
-    return !!doc?.body?.contains(element);
+    return dom.nodeContains(doc?.body, element);
 }
 
 export function matchesSelector(
@@ -772,7 +774,7 @@ export class DummyInput {
 
         delete (input as HTMLElementWithDummyContainer).__tabsterDummyContainer;
 
-        input.parentElement?.removeChild(input);
+        dom.getParentNode(input)?.removeChild(input);
     }
 
     setTopLeft(top: number, left: number): void {
@@ -1001,7 +1003,7 @@ export class DummyInputManager {
                         ? (element.firstElementChild as HTMLElementWithDummyContainer | null)
                         : null;
                 } else {
-                    parent = element.parentElement as HTMLElement | null;
+                    parent = dom.getParentElement(element);
                     insertBefore =
                         (moveOutOfElement && isBackward) ||
                         (!moveOutOfElement && !isBackward)
@@ -1081,7 +1083,7 @@ export class DummyInputManager {
                 insertBefore =
                     sourceElement.firstElementChild as HTMLElement | null;
             } else {
-                dummyParent = sourceElement.parentElement;
+                dummyParent = dom.getParentElement(sourceElement);
                 insertBefore = isBackward
                     ? sourceElement
                     : (sourceElement.nextElementSibling as HTMLElement | null);
@@ -1133,7 +1135,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     > = new Set();
     private _updateTimer?: number;
     private _lastUpdateQueueTime = 0;
-    private _changedParents: WeakSet<HTMLElement> = new WeakSet();
+    private _changedParents: WeakSet<Node> = new WeakSet();
     private _updateDummyInputsTimer?: number;
     private _dummyElements: WeakHTMLElement<HTMLElement>[] = [];
     private _dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
@@ -1207,7 +1209,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
                     const callback = this._dummyCallbacks.get(dummyElement);
 
                     if (callback) {
-                        const dummyParent = dummyElement.parentElement;
+                        const dummyParent = dom.getParentNode(dummyElement);
 
                         if (
                             !dummyParent ||
@@ -1645,7 +1647,7 @@ class DummyInputManagerCore {
         }
 
         if (this._isOutside) {
-            const elementParent = element.parentElement;
+            const elementParent = dom.getParentElement(element);
 
             if (elementParent) {
                 const nextSibling = element.nextElementSibling;
@@ -1694,7 +1696,7 @@ class DummyInputManagerCore {
         for (
             let element: HTMLElement | undefined | null = from;
             element && element.nodeType === Node.ELEMENT_NODE;
-            element = element.parentElement
+            element = dom.getParentElement(element)
         ) {
             let scrollTopLeft = scrollTopLeftCache.get(element);
 
@@ -1764,7 +1766,7 @@ export function getAdjacentElement(
         adjacent = (
             prev ? cur.previousElementSibling : cur.nextElementSibling
         ) as HTMLElement | null;
-        cur = cur.parentElement;
+        cur = dom.getParentElement(cur);
     }
 
     return adjacent || undefined;

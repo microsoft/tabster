@@ -251,8 +251,8 @@ describe("Focusable", () => {
             })
             .eval(() => {
                 const b = document.getElementById("test-button");
-                if (b && b.parentElement) {
-                    b.parentElement.removeChild(b);
+                if (b && b.parentNode) {
+                    b.parentNode.removeChild(b);
                 }
             })
             .wait(300)

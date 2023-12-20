@@ -25,6 +25,7 @@ import {
     triggerMoveFocusEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
@@ -254,7 +255,7 @@ export class Mover
         if (
             this._props.tabbable ||
             currentIsDummy ||
-            (currentElement && !container.contains(currentElement))
+            (currentElement && !dom.nodeContains(container, currentElement))
         ) {
             const findProps: Types.FindNextProps = {
                 currentElement,
@@ -301,7 +302,7 @@ export class Mover
         if (
             moverElement &&
             (memorizeCurrent || visibilityAware || hasDefault) &&
-            (!moverElement.contains(state.from) ||
+            (!dom.nodeContains(moverElement, state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === moverElement)
@@ -417,38 +418,42 @@ export class Mover
         const tabsterFocusable = this._tabster.focusable;
         let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
-        const observer = new MutationObserver((mutations: MutationRecord[]) => {
-            for (const mutation of mutations) {
-                const target = mutation.target;
-                const removed = mutation.removedNodes;
-                const added = mutation.addedNodes;
+        const observer = dom.createMutationObserver(
+            (mutations: MutationRecord[]) => {
+                for (const mutation of mutations) {
+                    const target = mutation.target;
+                    const removed = mutation.removedNodes;
+                    const added = mutation.addedNodes;
 
-                if (mutation.type === "attributes") {
-                    if (mutation.attributeName === "tabindex") {
-                        updateQueue.push({
-                            element: target as HTMLElement,
-                            type: _moverUpdateAttr,
-                        });
-                    }
-                } else {
-                    for (let i = 0; i < removed.length; i++) {
-                        updateQueue.push({
-                            element: removed[i] as HTMLElement as HTMLElement,
-                            type: _moverUpdateRemove,
-                        });
-                    }
+                    if (mutation.type === "attributes") {
+                        if (mutation.attributeName === "tabindex") {
+                            updateQueue.push({
+                                element: target as HTMLElement,
+                                type: _moverUpdateAttr,
+                            });
+                        }
+                    } else {
+                        for (let i = 0; i < removed.length; i++) {
+                            updateQueue.push({
+                                element: removed[
+                                    i
+                                ] as HTMLElement as HTMLElement,
+                                type: _moverUpdateRemove,
+                            });
+                        }
 
-                    for (let i = 0; i < added.length; i++) {
-                        updateQueue.push({
-                            element: added[i] as HTMLElement,
-                            type: _moverUpdateAdd,
-                        });
+                        for (let i = 0; i < added.length; i++) {
+                            updateQueue.push({
+                                element: added[i] as HTMLElement,
+                                type: _moverUpdateAdd,
+                            });
+                        }
                     }
                 }
-            }
 
-            requestUpdate();
-        });
+                requestUpdate();
+            }
+        );
 
         const setElement = (element: HTMLElement, remove?: boolean): void => {
             const current = allElements.get(element);
@@ -584,7 +589,7 @@ export class Mover
             for (
                 let el: HTMLElement | null = element;
                 el;
-                el = el.parentElement
+                el = dom.getParentElement(el)
             ) {
                 const toe = getTabsterOnElement(this._tabster, el);
 
@@ -756,9 +761,10 @@ export class MoverAPI implements Types.MoverAPI {
         let deepestFocusableElement = element;
 
         for (
-            let el: HTMLElement | null | undefined = element?.parentElement;
+            let el: HTMLElement | null | undefined =
+                dom.getParentElement(element);
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             // We go through all Movers up from the focused element and
             // set their current element to the deepest focusable of that
@@ -840,9 +846,9 @@ export class MoverAPI implements Types.MoverAPI {
                 // the grouppers between the current element and the current mover.
                 for (
                     let el: HTMLElement | null | undefined =
-                        groupper.getElement()?.parentElement;
+                        dom.getParentElement(groupper.getElement());
                     el && el !== container;
-                    el = el.parentElement
+                    el = dom.getParentElement(el)
                 ) {
                     if (
                         getTabsterOnElement(tabster, el)?.groupper?.isActive(
@@ -1341,8 +1347,8 @@ export class MoverAPI implements Types.MoverAPI {
 
                         if (anchorNode && focusNode) {
                             if (
-                                element.contains(anchorNode) &&
-                                element.contains(focusNode)
+                                dom.nodeContains(element, anchorNode) &&
+                                dom.nodeContains(element, focusNode)
                             ) {
                                 if (anchorNode !== element) {
                                     let anchorFound = false;

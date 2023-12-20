@@ -19,6 +19,7 @@ import {
     triggerEvent,
     augmentAttribute,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 let _wasFocusedCounter = 0;
 
@@ -226,7 +227,7 @@ export class Modalizer
     }
 
     contains(element: HTMLElement) {
-        return !!this.getElement()?.contains(element);
+        return dom.nodeContains(this.getElement(), element);
     }
 
     findNextTabbable(
@@ -433,7 +434,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         // Adding a modalizer which is already focused, activate it
         if (
-            element.contains(
+            dom.nodeContains(
+                element,
                 this._tabster.focusedElement.getFocusedElement() ?? null
             )
         ) {
@@ -652,7 +654,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             for (const e of this.activeElements) {
                 const el = e.get();
 
-                if (el && (element.contains(el) || el === element)) {
+                if (el && (dom.nodeContains(element, el) || el === element)) {
                     // We have a part of currently active modalizer somewhere deeper in the DOM,
                     // skipping all other checks.
                     return NodeFilter.FILTER_SKIP;
@@ -771,7 +773,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                             break;
                         }
 
-                        if (el.contains(c)) {
+                        if (dom.nodeContains(el, c)) {
                             containsModalizer = true;
                             break;
                         }
@@ -833,7 +835,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         for (
             let e: HTMLElement | null = focusedElement;
             e;
-            e = e.parentElement
+            e = dom.getParentElement(e)
         ) {
             // If the newly focused element is inside some of the hidden containers,
             // remove aria-hidden from those synchronously for the screen readers
