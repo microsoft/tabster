@@ -229,9 +229,9 @@ describe("Groupper - default", () => {
                         if (e.keyCode === keyEsc) {
                             // Focusing next button.
                             (
-                                document.activeElement?.nextElementSibling as
-                                    | HTMLElement
-                                    | undefined
+                                getTabsterTestVariables().dom?.getActiveElement(
+                                    document
+                                )?.nextElementSibling as HTMLElement | undefined
                             )?.focus();
                         }
                     });
@@ -696,8 +696,9 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                             }
 
                             if (
-                                document.activeElement?.textContent ===
-                                "Button3"
+                                getTabsterTestVariables().dom?.getActiveElement(
+                                    document
+                                )?.textContent === "Button3"
                             ) {
                                 // For the sake of test, we will move focus after Button3 is focused for the second time.
                                 if (

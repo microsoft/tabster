@@ -546,9 +546,9 @@ export class Mover
             }
 
             for (
-                let el = element.firstElementChild;
+                let el = dom.getFirstElementChild(element);
                 el;
-                el = el.nextElementSibling
+                el = dom.getNextElementSibling(el)
             ) {
                 removeWalk(el as HTMLElement);
             }
@@ -1364,7 +1364,10 @@ export class MoverAPI implements Types.MoverAPI {
 
                                         const nodeText = node.textContent;
 
-                                        if (nodeText && !node.firstChild) {
+                                        if (
+                                            nodeText &&
+                                            !dom.getFirstChild(node)
+                                        ) {
                                             const len = nodeText.length;
 
                                             if (anchorFound) {
@@ -1380,7 +1383,7 @@ export class MoverAPI implements Types.MoverAPI {
                                         let stop = false;
 
                                         for (
-                                            let e = node.firstChild;
+                                            let e = dom.getFirstChild(node);
                                             e && !stop;
                                             e = e.nextSibling
                                         ) {

@@ -20,6 +20,7 @@
                 getTabsterAttribute,
                 setTabsterAttribute,
             } from "../src";
+            import { dom } from "../src/DOMAPI";
 
             const tabsterTest = {};
 
@@ -47,6 +48,7 @@
             tabsterTest.getTabsterAttribute = getTabsterAttribute;
             tabsterTest.setTabsterAttribute = setTabsterAttribute;
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
+            tabsterTest.dom = dom;
 
             if (parts !== undefined) {
                 for (let part of parts) {
@@ -112,5 +114,6 @@
             window.getTabsterTestVariables = () => tabsterTest;
         </script>
     </head>
+
     <body></body>
 </html>

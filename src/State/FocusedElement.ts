@@ -85,7 +85,7 @@ export class FocusedElementState
         doc.addEventListener("focusout", this._onFocusOut, true);
         win.addEventListener("keydown", this._onKeyDown, true);
 
-        const activeElement = doc.activeElement;
+        const activeElement = dom.getActiveElement(doc);
 
         if (activeElement && activeElement !== doc.body) {
             this._setFocusedElement(activeElement as HTMLElement);
@@ -347,11 +347,17 @@ export class FocusedElementState
     }
 
     private _onFocusIn = (e: KeyborgFocusInEvent): void => {
-        this._setFocusedElement(
-            e.target as HTMLElement,
-            e.details.relatedTarget as HTMLElement | undefined,
-            e.details.isFocusedProgrammatically
+        const activeElement = dom.getActiveElement(
+            (e.target as HTMLElement).ownerDocument
         );
+
+        if (activeElement) {
+            this._setFocusedElement(
+                activeElement as HTMLElement, //e.target as HTMLElement,
+                e.detail.relatedTarget as HTMLElement | undefined,
+                e.detail.isFocusedProgrammatically
+            );
+        }
     };
 
     private _onFocusOut = (e: FocusEvent): void => {

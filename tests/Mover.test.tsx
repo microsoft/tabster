@@ -2738,13 +2738,21 @@ describe("Mover with tabster:movefocus event handling", () => {
                 document.addEventListener(
                     "tabster:movefocus",
                     (e: Types.TabsterMoveFocusEvent) => {
-                        if (document.activeElement?.textContent === "Button3") {
+                        if (
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "Button3"
+                        ) {
                             e.preventDefault();
                             e.details.relatedEvent.preventDefault();
                             document.getElementById("button-6")?.focus();
                         }
 
-                        if (document.activeElement?.textContent === "Button4") {
+                        if (
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "Button4"
+                        ) {
                             e.preventDefault();
                             e.details.relatedEvent.preventDefault();
                             document.getElementById("button-1")?.focus();

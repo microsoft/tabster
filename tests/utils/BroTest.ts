@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { EvaluateFunc, Page, Frame, KeyInput } from "puppeteer";
+import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
@@ -23,6 +23,9 @@ import {
     Types,
     getRestorer,
 } from "tabster";
+import { DOMAPI } from "../../src/DOMAPI";
+
+// jest.setTimeout(30000000);
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -120,6 +123,8 @@ export interface BroTestTabsterTestVariables {
     groupper?: Types.GroupperAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
+
+    dom?: DOMAPI;
 }
 
 export function getTestPageURL(parts?: TabsterParts): string {
@@ -244,11 +249,23 @@ class BroTestItemHTML extends BroTestItem {
 
         await frame.evaluate(
             (el, html) => {
+                const shadowHost = document.createElement("div");
+
+                shadowHost.attachShadow({ mode: "open" });
+
+                const shadowRoot = shadowHost.shadowRoot;
+
+                if (shadowRoot) {
+                    shadowRoot.innerHTML = html;
+                }
+
                 if (el) {
-                    el.innerHTML = html;
+                    el.appendChild(shadowHost);
                 }
             },
-            await frame.$("body"),
+            await frame.evaluateHandle(() =>
+                getTabsterTestVariables().dom?.querySelector(document, "body")
+            ),
             renderToStaticMarkup(this._html)
         );
         await sleep(100);
@@ -264,9 +281,14 @@ class BroTestItemFrame extends BroTestItem {
     }
 
     async run() {
-        const frameHandle = await this._frameStack[0].frame.$(
-            `iframe[id='${this._id}']`
-        );
+        const frameHandle = (await this._frameStack[0].frame.evaluateHandle(
+            (id) =>
+                getTabsterTestVariables().dom?.querySelector(
+                    document,
+                    `iframe[id='${id}']`
+                ),
+            this._id
+        )) as ElementHandle<HTMLIFrameElement> | null;
 
         if (frameHandle) {
             const frame = await frameHandle.contentFrame();
@@ -594,7 +616,15 @@ export class BroTest implements PromiseLike<undefined> {
     click(selector: string) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                await this._frameStack[0].frame.click(selector);
+                const el = (await this._frameStack[0].frame.evaluateHandle(
+                    (selector) =>
+                        getTabsterTestVariables().dom?.querySelector(
+                            document,
+                            selector
+                        ),
+                    selector
+                )) as ElementHandle<Element> | null;
+                await el?.click();
             })
         );
 
@@ -666,8 +696,11 @@ export class BroTest implements PromiseLike<undefined> {
                 await page.waitForSelector(selector);
                 await page.evaluate(
                     (selector: string, x: number, y: number) => {
-                        const scrollContainer: HTMLElement | null =
-                            document.querySelector(selector);
+                        const scrollContainer: Element | null | undefined =
+                            getTabsterTestVariables().dom?.querySelector(
+                                document,
+                                selector
+                            );
                         scrollContainer?.scroll(x, y);
                     },
                     selector,
@@ -685,7 +718,10 @@ export class BroTest implements PromiseLike<undefined> {
             new BroTestItemCallback(this._frameStack, async () => {
                 const activeElement = await this._frameStack[0].frame.evaluate(
                     () => {
-                        const ae = document.activeElement;
+                        const ae =
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            );
 
                         if (ae && ae !== document.body) {
                             const attributes: BrowserElement["attributes"] = {};
@@ -725,8 +761,13 @@ export class BroTest implements PromiseLike<undefined> {
                 await this._frameStack[0].frame.evaluate(
                     (selector: string, async?: boolean) => {
                         const el = selector
-                            ? document.querySelector(selector)
-                            : document.activeElement;
+                            ? getTabsterTestVariables().dom?.querySelector(
+                                  document,
+                                  selector
+                              )
+                            : getTabsterTestVariables().dom?.getActiveElement(
+                                  document
+                              );
 
                         if (el && el.parentNode) {
                             if (async) {
@@ -754,7 +795,11 @@ export class BroTest implements PromiseLike<undefined> {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 await this._frameStack[0].frame.evaluate((selector: string) => {
-                    const el = document.querySelector(selector);
+                    const el = getTabsterTestVariables().dom?.querySelector(
+                        document,
+                        selector
+                    );
+
                     if (!el) {
                         throw new Error(
                             `focusElement: could not find element with selector ${selector}`
@@ -772,16 +817,23 @@ export class BroTest implements PromiseLike<undefined> {
                     el.removeEventListener("focus", onFocus);
 
                     // only simulate the focus events if the element was sucessfully focused
-                    if (!hasFocused && document.activeElement === el) {
+                    if (
+                        !hasFocused &&
+                        getTabsterTestVariables().dom?.getActiveElement(
+                            document
+                        ) === el
+                    ) {
                         const focusinEvt = new FocusEvent("focusin", {
                             bubbles: true,
                             view: window,
                             relatedTarget: null,
+                            composed: true,
                         });
 
                         const focusEvt = new FocusEvent("focus", {
                             view: window,
                             relatedTarget: null,
+                            composed: true,
                         });
 
                         el.dispatchEvent(focusinEvt);

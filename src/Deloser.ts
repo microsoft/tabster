@@ -683,7 +683,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._tabster.focusedElement.subscribe(this._onFocus);
             const doc = this._win().document;
 
-            const activeElement = doc.activeElement;
+            const activeElement = dom.getActiveElement(doc);
 
             if (activeElement && activeElement !== doc.body) {
                 // Adding currently focused element to the deloser history.

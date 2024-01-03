@@ -686,7 +686,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const hiddenElements: HTMLElement[] = [];
         const alwaysAccessibleSelector = this._alwaysAccessibleSelector;
         const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
-            ? Array.from(body.querySelectorAll(alwaysAccessibleSelector))
+            ? Array.from(
+                  dom.querySelectorAll(
+                      body,
+                      alwaysAccessibleSelector
+                  ) as HTMLElement[]
+              )
             : [];
         const activeModalizerElements: HTMLElement[] = [];
 
@@ -759,9 +764,9 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         const walk = (element: HTMLElement) => {
             for (
-                let el = element.firstElementChild;
+                let el = dom.getFirstElementChild(element);
                 el;
-                el = el.nextElementSibling
+                el = dom.getNextElementSibling(el)
             ) {
                 let skip = false;
                 let containsModalizer = false;

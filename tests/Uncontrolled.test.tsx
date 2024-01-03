@@ -921,7 +921,9 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                                 ) as NodeListOf<HTMLElement>;
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {
@@ -1027,7 +1029,9 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                                 ) as NodeListOf<HTMLElement>;
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {
@@ -1167,7 +1171,9 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                                 ) as NodeListOf<HTMLElement>;
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {

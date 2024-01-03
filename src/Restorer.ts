@@ -149,7 +149,7 @@ export class RestorerAPI implements RestorerAPIType {
     private _restoreFocus = (source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
         const doc = this._getWindow().document;
-        if (doc.activeElement !== doc.body) {
+        if (dom.getActiveElement(doc) !== doc.body) {
             return;
         }
 
@@ -178,7 +178,7 @@ export class RestorerAPI implements RestorerAPIType {
         // Focus might already be on a restorer target when it gets created so the focusin will not do anything
         if (
             props.type === RestorerTypes.Target &&
-            element.ownerDocument.activeElement === element
+            dom.getActiveElement(element.ownerDocument) === element
         ) {
             this._addToHistory(element);
         }
