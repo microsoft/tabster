@@ -188,7 +188,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -226,7 +228,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))

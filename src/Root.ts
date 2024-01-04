@@ -17,6 +17,7 @@ import {
     WeakHTMLElement,
 } from "./Utils";
 import { setTabsterAttribute } from "./AttributeHelpers";
+import { dom } from "./DOMAPI";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -227,10 +228,12 @@ export class Root
         }
     };
 
-    private _onFocusIn = (event: FocusEvent) => {
+    private _onFocusIn = () => {
         const getParent = this._tabster.getParent;
         const rootElement = this._element.get();
-        let curElement = event.target as HTMLElement | null;
+        let curElement = dom.getActiveElement(
+            this._tabster.getWindow().document
+        );
 
         do {
             if (curElement === rootElement) {

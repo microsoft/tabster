@@ -687,7 +687,12 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                                     // Enter was pressed for the second time, let's alter the default behaviour.
                                     e.preventDefault();
                                     e.details.relatedEvent.preventDefault();
-                                    document.getElementById("button1")?.focus();
+                                    getTabsterTestVariables()
+                                        .dom?.getElementById(
+                                            document,
+                                            "button1"
+                                        )
+                                        ?.focus();
                                 }
 
                                 (
@@ -706,7 +711,12 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                                 ) {
                                     e.preventDefault();
                                     e.details.relatedEvent.preventDefault();
-                                    document.getElementById("button4")?.focus();
+                                    getTabsterTestVariables()
+                                        .dom?.getElementById(
+                                            document,
+                                            "button4"
+                                        )
+                                        ?.focus();
                                 }
 
                                 (window as WindowWithButton2).__hadButton3 =

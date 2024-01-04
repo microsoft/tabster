@@ -59,13 +59,17 @@ describe("Modalizer", () => {
             .focusElement("#foo")
             .wait(300)
             .eval(() =>
-                document.getElementById("hidden")?.getAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.getAttribute("aria-hidden")
             )
             .check((ariaHidden: string | undefined) =>
                 expect(ariaHidden).toBe("true")
             )
             .eval(() =>
-                document.getElementById("outside")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "outside")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -77,8 +81,8 @@ describe("Modalizer", () => {
             const ret: string[] = [];
             const pushAriaHidden = (id: string): void => {
                 ret.push(
-                    `${id}: ${document
-                        .getElementById(id)
+                    `${id}: ${getTabsterTestVariables()
+                        .dom?.getElementById(document, id)
                         ?.getAttribute("aria-hidden")}`
                 );
             };
@@ -258,10 +262,16 @@ describe("Modalizer", () => {
     it("should deactivate and restore aria-hidden when removed from DOM", async () => {
         await new BroTest.BroTest(getTestHtml())
             .focusElement("#foo")
-            .eval(() => document.getElementById("modal")?.remove())
+            .eval(() =>
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "modal")
+                    ?.remove()
+            )
             .wait(300)
             .eval(() =>
-                document.getElementById("hidden")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -273,7 +283,9 @@ describe("Modalizer", () => {
             .focusElement("#foo")
             .focusElement("#outside")
             .eval(() =>
-                document.getElementById("hidden")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -319,7 +331,9 @@ describe("Modalizer", () => {
                 .eval(() => {
                     // Simulates user clicking outside a modal dialog to close it
                     document.addEventListener("click", () => {
-                        document.getElementById("modal")?.remove();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "modal")
+                            ?.remove();
                     });
                 })
                 .click("#outside")
@@ -335,8 +349,8 @@ describe("Modalizer", () => {
                 .focusElement("#foo")
                 .wait(300)
                 .eval(() =>
-                    document
-                        .getElementById("hidden")
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "hidden")
                         ?.hasAttribute("aria-hidden")
                 )
                 .check((hasAriaHidden: boolean | undefined) =>
@@ -355,8 +369,8 @@ describe("Modalizer", () => {
             await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
                 .focusElement("#foo")
                 .eval(() =>
-                    document
-                        .getElementById("hidden")
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "hidden")
                         ?.hasAttribute("aria-hidden")
                 )
                 .check((hasAriaHidden: boolean | undefined) =>

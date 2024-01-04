@@ -283,8 +283,8 @@ describe("CrossOrigin", () => {
                 expect(el).toBeNull();
             })
             .eval(() => {
-                document
-                    .getElementById("inner-button")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "inner-button")
                     ?.removeAttribute("aria-hidden");
             })
             .wait(200)
@@ -294,8 +294,8 @@ describe("CrossOrigin", () => {
             .eval(() => {
                 // Setting it back to try again from the outer iframe.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                document
-                    .getElementById("inner-button")!
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "inner-button")!
                     .setAttribute("aria-hidden", "true");
             })
             .unframe()
@@ -309,8 +309,8 @@ describe("CrossOrigin", () => {
                 expect(el?.tag).toEqual("iframe");
             })
             .eval(() => {
-                document
-                    .getElementById("outer-button")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "outer-button")
                     ?.removeAttribute("aria-hidden");
             })
             .wait(200)
@@ -320,8 +320,8 @@ describe("CrossOrigin", () => {
             .eval((observedName) => {
                 // Setting it back to try again from the inner iframe.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                document
-                    .getElementById("outer-button")!
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "outer-button")!
                     .setAttribute("aria-hidden", "true");
 
                 // Trying the inner iframe again.
@@ -336,8 +336,8 @@ describe("CrossOrigin", () => {
             })
             .frame("frame1")
             .eval(() => {
-                document
-                    .getElementById("inner-button")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "inner-button")
                     ?.removeAttribute("aria-hidden");
             })
             .unframe()
@@ -364,8 +364,8 @@ describe("CrossOrigin", () => {
                 expect(el?.tag).toEqual("iframe");
             })
             .eval(() => {
-                document
-                    .getElementById("outer-button")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "outer-button")
                     ?.removeAttribute("aria-hidden");
             })
             .wait(200)

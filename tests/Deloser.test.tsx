@@ -107,7 +107,11 @@ describe("Deloser", () => {
             })
             .eval(
                 (attrName, tabsterAttr) => {
-                    const newDeloser = document.getElementById("newDeloser");
+                    const newDeloser =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "newDeloser"
+                        );
                     newDeloser?.setAttribute(attrName, tabsterAttr);
                 },
                 Types.TabsterAttributeName,
@@ -243,7 +247,10 @@ describe("Deloser created lazily", () => {
                 expect(el?.textContent).toEqual("Button2");
             })
             .eval(() => {
-                const el = document.getElementById("second");
+                const el = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "second"
+                );
                 el?.parentNode?.removeChild(el);
             })
             .wait(500)

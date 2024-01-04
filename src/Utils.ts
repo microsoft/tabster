@@ -1806,7 +1806,7 @@ export function getAdjacentElement(
 export function triggerEvent<D>(
     target: HTMLElement | EventTarget,
     name: string,
-    detail: D
+    detail?: D
 ): boolean {
     const event = new CustomEvent(name, {
         bubbles: true,

@@ -439,7 +439,15 @@ export class GroupperAPI implements Types.GroupperAPI {
         // Making sure groupper's onFocus is called before modalizer's onFocus.
         this._tabster.focusedElement.subscribeFirst(this._onFocus);
 
-        win.document.addEventListener("mousedown", this._onMouseDown, true);
+        const doc = win.document;
+
+        const activeElement = dom.getActiveElement(doc);
+
+        if (activeElement) {
+            this._onFocus(activeElement as HTMLElement);
+        }
+
+        doc.addEventListener("mousedown", this._onMouseDown, true);
         win.addEventListener("keydown", this._onKeyDown, true);
     };
 

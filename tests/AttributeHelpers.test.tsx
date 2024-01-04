@@ -65,8 +65,14 @@ describe("getTabsterAttribute()", () => {
             )
         )
             .eval(() => {
-                const div1 = document.getElementById("div1");
-                const div2 = document.getElementById("div2");
+                const div1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div1"
+                );
+                const div2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div2"
+                );
 
                 if (div1) {
                     getTabsterTestVariables().setTabsterAttribute?.(div1, {
@@ -103,8 +109,14 @@ describe("getTabsterAttribute()", () => {
                 );
             })
             .eval(() => {
-                const div1 = document.getElementById("div1");
-                const div2 = document.getElementById("div2");
+                const div1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div1"
+                );
+                const div2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div2"
+                );
 
                 if (div1) {
                     getTabsterTestVariables().setTabsterAttribute?.(

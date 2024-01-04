@@ -14,7 +14,7 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { TabsterPart, WeakHTMLElement } from "./Utils";
+import { TabsterPart, WeakHTMLElement, triggerEvent } from "./Utils";
 import { dom } from "./DOMAPI";
 
 const EVENT_NAME = "restorer:restorefocus";
@@ -45,11 +45,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
-                doc.body?.dispatchEvent(
-                    new Event(EVENT_NAME, {
-                        bubbles: true,
-                    })
-                );
+                triggerEvent(doc.body, EVENT_NAME);
             }
         }
     }
@@ -57,11 +53,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _onFocusOut = (e: FocusEvent) => {
         const element = this._element?.get();
         if (element && e.relatedTarget === null) {
-            element.dispatchEvent(
-                new Event(EVENT_NAME, {
-                    bubbles: true,
-                })
-            );
+            triggerEvent(element, EVENT_NAME);
         }
         if (
             element &&
@@ -105,15 +97,21 @@ export class RestorerAPI implements RestorerAPIType {
         }
     }
 
-    private _onRestoreFocus = (e: Event) => {
+    private _onRestoreFocus = (e: CustomEvent) => {
         const win = this._getWindow();
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);
+            this._restoreFocusTimeout = 0;
         }
 
-        this._restoreFocusTimeout = win.setTimeout(() =>
-            this._restoreFocus(e.target as HTMLElement)
-        );
+        // ShadowDOM will have shadowRoot as e.target.
+        const target = e.composedPath()[0];
+
+        if (target) {
+            this._restoreFocusTimeout = win.setTimeout(() =>
+                this._restoreFocus(target as HTMLElement)
+            );
+        }
     };
 
     private _onFocusIn = (element: HTMLElement | undefined) => {

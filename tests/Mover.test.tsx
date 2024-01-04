@@ -310,12 +310,14 @@ describe("NestedMovers", () => {
             )
         )
             .eval(() => {
-                document
-                    .getElementById("mover")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "mover")
                     ?.addEventListener("keydown", (e) => {
                         if (e.key === "Tab" && e.shiftKey) {
                             e.preventDefault();
-                            document.getElementById("target")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "target")
+                                ?.focus();
                         }
                     });
             })
@@ -1219,8 +1221,8 @@ describe("Mover with trackState", () => {
                 );
 
                 // Adding mover after the event subscription.
-                document
-                    .getElementById("container")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "container")
                     ?.setAttribute("data-tabster", moverAttribute);
             }, getTabsterAttribute({ mover: { trackState: true } }, true))
             .wait(300)
@@ -2745,7 +2747,9 @@ describe("Mover with tabster:movefocus event handling", () => {
                         ) {
                             e.preventDefault();
                             e.details.relatedEvent.preventDefault();
-                            document.getElementById("button-6")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-6")
+                                ?.focus();
                         }
 
                         if (
@@ -2755,7 +2759,9 @@ describe("Mover with tabster:movefocus event handling", () => {
                         ) {
                             e.preventDefault();
                             e.details.relatedEvent.preventDefault();
-                            document.getElementById("button-1")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-1")
+                                ?.focus();
                         }
                     }
                 );

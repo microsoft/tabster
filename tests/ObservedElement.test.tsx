@@ -108,7 +108,9 @@ describe("Focusable", () => {
 
                 const observedButton = document.createElement("button");
                 observedButton.textContent = name;
-                document.getElementById("root")?.appendChild(observedButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "root")
+                    ?.appendChild(observedButton);
                 const observed: Types.TabsterOnElement = {
                     observed: { names: [name] },
                 };
@@ -150,7 +152,11 @@ describe("Focusable", () => {
                             );
                             button1.textContent = "Button1";
 
-                            const root = document.getElementById("root");
+                            const root =
+                                getTabsterTestVariables().dom?.getElementById(
+                                    document,
+                                    "root"
+                                );
 
                             root?.appendChild(button1);
 
@@ -212,8 +218,8 @@ describe("Focusable", () => {
                 expect(el?.textContent).toBeUndefined();
             })
             .eval(() => {
-                document
-                    .getElementById("test-button")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "test-button")
                     ?.removeAttribute("aria-hidden");
             })
             .wait(500)
@@ -250,7 +256,10 @@ describe("Focusable", () => {
                 expect(el?.textContent).toBeUndefined();
             })
             .eval(() => {
-                const b = document.getElementById("test-button");
+                const b = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "test-button"
+                );
                 if (b && b.parentNode) {
                     b.parentNode.removeChild(b);
                 }
@@ -268,7 +277,9 @@ describe("Focusable", () => {
                     "data-tabster",
                     `{"observed": {"names": ["${name}"]}}`
                 );
-                document.getElementById("root")?.appendChild(b);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "root")
+                    ?.appendChild(b);
             }, name)
             .wait(300)
             .activeElement((el) => {

@@ -45,7 +45,7 @@
         "prepare-pages-deploy": "rimraf ./.pages-deploy && npm run build-docs && npm run build-storybook && copyfiles -u 2 -a \"./docs/build/**/*\" ./.pages-deploy && copyfiles -u 1 -a \"./storybook-static/**/*\" ./.pages-deploy/storybook"
     },
     "dependencies": {
-        "keyborg": "2.3.0",
+        "keyborg": "2.4.0",
         "tslib": "^2.3.1"
     },
     "devDependencies": {

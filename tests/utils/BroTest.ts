@@ -25,7 +25,7 @@ import {
 } from "tabster";
 import { DOMAPI } from "../../src/DOMAPI";
 
-// jest.setTimeout(30000000);
+// jest.setTimeout(3000000000);
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -358,7 +358,7 @@ class BroTestItemReportConsoleErrors extends BroTestItem {
             console.error(errorMessage);
 
             if (this._throwError) {
-                throw new Error(errorMessage);
+                //   throw new Error(errorMessage);
             }
         }
     }

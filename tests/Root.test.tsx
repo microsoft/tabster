@@ -33,18 +33,20 @@ describe("Root", () => {
                 )
             )
                 .eval((dummyAttribute) => {
-                    return document.querySelectorAll(`[${dummyAttribute}]`)
-                        .length;
+                    return getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        `[${dummyAttribute}]`
+                    ).length;
                 }, TabsterTypes.TabsterDummyInputAttributeName)
                 .check((dummyCount: number) => {
                     expect(dummyCount).toBe(2);
                 })
                 .eval((dummyAttribute) => {
-                    const first = document
-                        .getElementById("root")
+                    const first = getTabsterTestVariables()
+                        .dom?.getElementById(document, "root")
                         ?.children[0].hasAttribute(dummyAttribute);
-                    const second = document
-                        .getElementById("root")
+                    const second = getTabsterTestVariables()
+                        .dom?.getElementById(document, "root")
                         ?.children[2].hasAttribute(dummyAttribute);
                     return first && second;
                 }, TabsterTypes.TabsterDummyInputAttributeName)
@@ -288,7 +290,9 @@ describe("Root", () => {
                 }
             )
             .eval(() => {
-                document.getElementById("button1")?.focus();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.focus();
                 return (window as unknown as WindowWithTabsterCoreAndFocusState)
                     .__tabsterFocusedRoot;
             })
