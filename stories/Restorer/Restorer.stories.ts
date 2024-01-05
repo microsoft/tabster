@@ -42,7 +42,9 @@ export const RestorerBasicExample: Story = () => {
     target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
-        const initialFocus = source.querySelector("#unmount") as HTMLButtonElement;
+        const initialFocus = source.querySelector(
+            "#unmount"
+        ) as HTMLButtonElement;
         initialFocus?.focus();
         document.getElementById("unmount")?.addEventListener("click", () => {
             source.remove();
@@ -86,7 +88,9 @@ export const UseTargetHistory: Story = () => {
     target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
-        const initialFocus = source.querySelector("#unmount") as HTMLButtonElement;
+        const initialFocus = source.querySelector(
+            "#unmount"
+        ) as HTMLButtonElement;
         initialFocus?.focus();
         document.getElementById("unmount")?.addEventListener("click", () => {
             source.remove();
