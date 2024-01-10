@@ -8,8 +8,6 @@ A set of tools and concepts for making a dynamic web application properly access
 
 ## About
 
-_This project is pretty much in a work-in-progress proof-of-concept state. More docs and examples are to come._
-
 The way a browser and the screen readers handle a web application is evolved from the static web era. A process of making a modern dynamic web application accessible presents a number of challenges like, for example, the proper focus management between modal dialogs, popups, lists and other parts of the dynamically changing application. This project is an attempt to solve some of those challenges.
 
 ## Dependencies
