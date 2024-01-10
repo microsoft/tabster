@@ -20,11 +20,13 @@
                 getTabsterAttribute,
                 setTabsterAttribute,
             } from "../src";
+            import * as shadowDOM from "../src/Shadowdomize";
             import { dom } from "../src/DOMAPI";
 
             const tabsterTest = {};
 
             const params = new URL(location.href).searchParams;
+            const enableShadowDOM = params.get("shadowdom") !== "false";
             const controlTab = params.get("controlTab") !== "false";
             const rootDummyInputs = params.get("rootDummyInputs") !== "false";
             const partsValue = params.get("parts");
@@ -34,7 +36,11 @@
                     : undefined;
             const partsToEnable = {};
 
-            tabsterTest.createTabster = createTabster;
+            tabsterTest.createTabster = (win, props) => {
+                const newProps = props || {};
+                newProps.DOMAPI = enableShadowDOM ? shadowDOM : undefined;
+                return createTabster(win, newProps);
+            };
             tabsterTest.disposeTabster = disposeTabster;
             tabsterTest.getTabster = getTabster;
             tabsterTest.getCrossOrigin = getCrossOrigin;
@@ -49,13 +55,14 @@
             tabsterTest.setTabsterAttribute = setTabsterAttribute;
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
             tabsterTest.dom = dom;
+            tabsterTest.shadowDOM = shadowDOM;
 
             if (parts !== undefined) {
                 for (let part of parts) {
                     partsToEnable[part] = true;
                 }
 
-                const tabster = createTabster(window, {
+                const tabster = tabsterTest.createTabster(window, {
                     controlTab,
                     rootDummyInputs,
                 });

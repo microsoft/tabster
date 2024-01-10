@@ -65,3 +65,7 @@ export function querySelector(
 ): Element | null {
     return shadowQuerySelector(node, selector, false)[0] || null;
 }
+
+export function getElementById(doc: Document, id: string): HTMLElement | null {
+    return querySelector(doc, "#" + id) as HTMLElement | null;
+}

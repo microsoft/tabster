@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { DOMAPI } from "./DOMAPI";
+
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
 export const DeloserEventName = "tabster:deloser";
@@ -83,6 +85,11 @@ export interface TabsterCoreProps {
      * Currently only used to detect tabster contexts
      */
     getParent?(el: Node): Node | null;
+    /**
+     * Ability to redefine all DOM API calls used by Tabster. For example, for
+     * ShadowDOM support.
+     */
+    DOMAPI?: Partial<DOMAPI>;
 }
 
 export type GetTabster = () => TabsterCore;

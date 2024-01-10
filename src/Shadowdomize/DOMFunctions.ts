@@ -3,6 +3,49 @@
  * Licensed under the MIT License.
  */
 
+export function getActiveElement(doc: Document): Element | null {
+    let activeElement = doc.activeElement;
+
+    while (activeElement?.shadowRoot?.activeElement) {
+        activeElement = activeElement.shadowRoot.activeElement;
+    }
+
+    return activeElement;
+}
+
+export function nodeContains(
+    node: Node | null | undefined,
+    otherNode: Node | null | undefined
+): boolean {
+    if (!node || !otherNode) {
+        return false;
+    }
+
+    let currentNode: HTMLElement | Node | null | undefined = otherNode;
+
+    while (currentNode) {
+        if (currentNode === node) {
+            return true;
+        }
+
+        if (
+            typeof (currentNode as HTMLSlotElement).assignedElements !==
+                "function" &&
+            (currentNode as HTMLElement).assignedSlot?.parentNode
+        ) {
+            // Element is slotted
+            currentNode = (currentNode as HTMLElement).assignedSlot?.parentNode;
+        } else if (currentNode.nodeType === document.DOCUMENT_FRAGMENT_NODE) {
+            // Element is in shadow root
+            currentNode = (currentNode as ShadowRoot).host;
+        } else {
+            currentNode = currentNode.parentNode;
+        }
+    }
+
+    return false;
+}
+
 export function getParentNode(
     node: Node | null | undefined
 ): ParentNode | null {
@@ -137,28 +180,22 @@ export function getPreviousElementSibling(
     return sibling as Element | null;
 }
 
-export function appendChild(parent: Node, child: Node): void {
+export function appendChild(parent: Node, child: Node): Node {
     const shadowRoot = (parent as Element).shadowRoot;
-
-    if (shadowRoot) {
-        shadowRoot.appendChild(child);
-    } else {
-        parent.appendChild(child);
-    }
+    return shadowRoot
+        ? shadowRoot.appendChild(child)
+        : parent.appendChild(child);
 }
 
 export function insertBefore(
     parent: Node,
     child: Node,
     referenceChild: Node | null
-): void {
+): Node {
     const shadowRoot = (parent as Element).shadowRoot;
-
-    if (shadowRoot) {
-        shadowRoot.insertBefore(child, referenceChild);
-    } else {
-        parent.insertBefore(child, referenceChild);
-    }
+    return shadowRoot
+        ? shadowRoot.insertBefore(child, referenceChild)
+        : parent.insertBefore(child, referenceChild);
 }
 
 interface ShadowRootWithGetSelection extends ShadowRoot {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { elementContains } from "../elementContains";
+import { nodeContains } from "./DOMFunctions";
 
 interface OverridenAttachShadow {
     __origAttachShadow?: typeof Element.prototype.attachShadow;
@@ -83,7 +83,7 @@ export class ShadowMutationObserver implements MutationObserver {
             return;
         }
 
-        if (this._options.subtree && elementContains(this._root, shadowRoot)) {
+        if (this._options.subtree && nodeContains(this._root, shadowRoot)) {
             const subObserver = new MutationObserver(this._callbackWrapper);
 
             this._subObservers.set(shadowRoot, subObserver);
@@ -192,4 +192,10 @@ export class ShadowMutationObserver implements MutationObserver {
 
         return records;
     }
+}
+
+export function createShadowMutationObserver(
+    callback: MutationCallback
+): MutationObserver {
+    return new ShadowMutationObserver(callback);
 }

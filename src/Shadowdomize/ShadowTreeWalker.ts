@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { elementContains } from "../elementContains";
-import { getLastElementChild } from "../getParentElement/getParentElement";
+import { getLastElementChild, nodeContains } from "./DOMFunctions";
 
 function getLastChild(container: HTMLElement): HTMLElement | undefined {
     let lastChild: HTMLElement | null = null;
@@ -20,7 +19,7 @@ function getLastChild(container: HTMLElement): HTMLElement | undefined {
     return lastChild || undefined;
 }
 
-export class MyTreeWalker implements TreeWalker {
+export class ShadowTreeWalker implements TreeWalker {
     public readonly filter: NodeFilter | null;
     public readonly root: Node;
     public readonly whatToShow: number;
@@ -90,7 +89,7 @@ export class MyTreeWalker implements TreeWalker {
     }
 
     public set currentNode(node: Node) {
-        if (!elementContains(this.root, node)) {
+        if (!nodeContains(this.root, node)) {
             throw new Error(
                 "Cannot set currentNode to a node that is not contained by the root node."
             );
@@ -263,11 +262,11 @@ export class MyTreeWalker implements TreeWalker {
     }
 }
 
-// export function createShadowDomTreeWalker(
-//     doc: Document,
-//     root: Node,
-//     whatToShow?: number,
-//     filter?: NodeFilter | null
-// ): TreeWalker {
-//     return new ShadowDomTreeWalker(root, whatToShow, filter, doc);
-// }
+export function createShadowTreeWalker(
+    doc: Document,
+    root: Node,
+    whatToShow?: number,
+    filter?: NodeFilter | null
+) {
+    return new ShadowTreeWalker(doc, root, whatToShow, filter);
+}
