@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    KeyborgFocusInEvent,
-    KeyborgFocusOutEvent,
-    KEYBORG_FOCUSIN,
-    KEYBORG_FOCUSOUT,
-    nativeFocus,
-} from "keyborg";
+import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
 import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";

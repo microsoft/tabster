@@ -364,7 +364,7 @@ export class FocusedElementState
     private _onFocusOut = (e: KeyborgFocusOutEvent): void => {
         this._setFocusedElement(
             undefined,
-            e.relatedTarget as HTMLElement | undefined
+            e.detail?.originalEvent.relatedTarget as HTMLElement | undefined
         );
     };
 
