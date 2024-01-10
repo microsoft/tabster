@@ -2276,13 +2276,6 @@ describe("Modalizer with tabster:movefocus event handling", () => {
                         ) {
                             e.preventDefault();
                             e.details.relatedEvent.preventDefault();
-                            console.error(
-                                88788,
-                                getTabsterTestVariables().dom?.getElementById(
-                                    document,
-                                    "button-3"
-                                )
-                            );
                             getTabsterTestVariables()
                                 .dom?.getElementById(document, "button-3")
                                 ?.focus();

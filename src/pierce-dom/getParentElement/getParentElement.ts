@@ -160,3 +160,30 @@ export function insertBefore(
         parent.insertBefore(child, referenceChild);
     }
 }
+
+interface ShadowRootWithGetSelection extends ShadowRoot {
+    getSelection?: typeof Window.prototype.getSelection;
+}
+
+export function getSelection(ref: Node): Selection | null {
+    const win = ref.ownerDocument?.defaultView;
+
+    if (!win) {
+        return null;
+    }
+
+    for (let el: Node | null = ref; el; el = el.parentNode) {
+        if (el.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+            const tmp = el as ShadowRootWithGetSelection;
+
+            // ShadowRoot.getSelection() exists only in Chrome.
+            if (tmp.getSelection) {
+                return tmp.getSelection() || null;
+            }
+
+            break;
+        }
+    }
+
+    return win.getSelection() || null;
+}

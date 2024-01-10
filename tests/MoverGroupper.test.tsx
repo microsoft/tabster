@@ -915,7 +915,9 @@ describe("MoverGroupper", () => {
 
                     if (
                         e.key === "Escape" &&
-                        innerGroupper?.contains(e.target as HTMLElement)
+                        innerGroupper?.contains(
+                            e.composedPath()[0] as HTMLElement
+                        )
                     ) {
                         getTabsterTestVariables()
                             .dom?.getElementById(document, "outer-groupper")

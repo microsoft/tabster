@@ -341,17 +341,27 @@ function buildSelector(element: HTMLElement): string | undefined {
 
     const selector: string[] = [buildElementSelector(element)];
 
-    let el = dom.getParentElement(element);
+    let node = dom.getParentNode(element);
 
-    while (el) {
-        const isBody = el.tagName === "BODY";
-        selector.unshift(buildElementSelector(el, false, !isBody));
-
-        if (isBody) {
+    while (node) {
+        if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+            // We have reached the shadow root top, cross shadow selectors won't work, stopping.
             break;
         }
 
-        el = dom.getParentElement(el);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const isBody = (node as HTMLElement).tagName === "BODY";
+
+            selector.unshift(
+                buildElementSelector(node as HTMLElement, false, !isBody)
+            );
+
+            if (isBody) {
+                break;
+            }
+        }
+
+        node = dom.getParentNode(node);
     }
 
     return selector.join(" ");
@@ -601,10 +611,13 @@ export class Deloser
                 const selector = we.getData();
 
                 if (selector && element) {
-                    let els: NodeListOf<Element>;
+                    let els: Element[];
 
                     try {
-                        els = element.ownerDocument.querySelectorAll(selector);
+                        els = dom.querySelectorAll(
+                            element.ownerDocument,
+                            selector
+                        );
                     } catch (e) {
                         if (__DEV__) {
                             // This should never happen, unless there is some bug in buildElementSelector().

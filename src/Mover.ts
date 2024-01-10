@@ -1258,8 +1258,7 @@ export class MoverAPI implements Types.MoverAPI {
                     // the keypress.
                     // TODO: Have a look at range, week, time, time, date, datetime-local.
                     if (textLength) {
-                        const selection =
-                            element.ownerDocument.defaultView?.getSelection();
+                        const selection = dom.getSelection(element);
 
                         if (selection) {
                             const initialLength = selection.toString().length;
@@ -1318,7 +1317,7 @@ export class MoverAPI implements Types.MoverAPI {
                         focusNode: prevFocusNode,
                         anchorOffset: prevAnchorOffset,
                         focusOffset: prevFocusOffset,
-                    } = win.getSelection() || {};
+                    } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
                     this._ignoredInputTimer = win.setTimeout(() => {
@@ -1329,7 +1328,7 @@ export class MoverAPI implements Types.MoverAPI {
                             focusNode,
                             anchorOffset,
                             focusOffset,
-                        } = win.getSelection() || {};
+                        } = dom.getSelection(element) || {};
 
                         if (
                             anchorNode !== prevAnchorNode ||

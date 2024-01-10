@@ -1216,7 +1216,9 @@ describe("Mover with trackState", () => {
                             className += " active";
                         }
 
-                        (e.target as HTMLElement).className = className;
+                        const target = e.composedPath()[0] as HTMLElement;
+
+                        target.className = className;
                     }
                 );
 
@@ -1228,7 +1230,10 @@ describe("Mover with trackState", () => {
             .wait(300)
             .eval(() =>
                 Array.prototype.map.call(
-                    document.querySelectorAll(".item"),
+                    getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        ".item"
+                    ),
                     (el: HTMLElement) => el.className
                 )
             )
@@ -1244,7 +1249,10 @@ describe("Mover with trackState", () => {
             .wait(300)
             .eval(() =>
                 Array.prototype.map.call(
-                    document.querySelectorAll(".item"),
+                    getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        ".item"
+                    ),
                     (el: HTMLElement) => el.className
                 )
             )

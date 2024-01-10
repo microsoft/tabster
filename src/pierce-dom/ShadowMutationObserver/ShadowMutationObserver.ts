@@ -146,32 +146,39 @@ export class ShadowMutationObserver implements MutationObserver {
             return;
         }
 
-        const walker = doc.createTreeWalker(
-            target === doc ? doc.body : target,
-            NodeFilter.SHOW_ELEMENT,
-            {
-                acceptNode: (node) => {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (remove) {
-                            const subObserver = this._subObservers.get(node);
+        if (target === doc) {
+            target = doc.body;
+        } else {
+            const shadowRoot = (target as Element).shadowRoot;
 
-                            if (subObserver) {
-                                subObserver.disconnect();
-                                this._subObservers.delete(node);
-                            }
-                        } else {
-                            const shadowRoot = (node as Element).shadowRoot;
+            if (shadowRoot) {
+                this._addSubObserver(shadowRoot);
+                return;
+            }
+        }
 
-                            if (shadowRoot) {
-                                this._addSubObserver(shadowRoot);
-                            }
+        const walker = doc.createTreeWalker(target, NodeFilter.SHOW_ELEMENT, {
+            acceptNode: (node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (remove) {
+                        const subObserver = this._subObservers.get(node);
+
+                        if (subObserver) {
+                            subObserver.disconnect();
+                            this._subObservers.delete(node);
+                        }
+                    } else {
+                        const shadowRoot = (node as Element).shadowRoot;
+
+                        if (shadowRoot) {
+                            this._addSubObserver(shadowRoot);
                         }
                     }
+                }
 
-                    return NodeFilter.FILTER_SKIP;
-                },
-            }
-        );
+                return NodeFilter.FILTER_SKIP;
+            },
+        });
 
         walker.nextNode();
     }

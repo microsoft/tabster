@@ -578,6 +578,7 @@ describe("Tabster create", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             })
+            .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3");
             })

@@ -294,7 +294,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             out.outOfDOMOrder = true;
         }
 
-        if (currentElement) {
+        if (currentElement && dom.nodeContains(container, currentElement)) {
             walker.currentNode = currentElement;
         } else if (isBackward) {
             const lastChild = getLastChild(container);

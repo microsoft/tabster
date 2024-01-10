@@ -286,8 +286,8 @@ describe("Focusable", () => {
                 expect(el?.textContent).toBeUndefined();
             })
             .eval(() => {
-                document
-                    .getElementById("test-button-2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "test-button-2")
                     ?.removeAttribute("aria-hidden");
             })
             .wait(300)

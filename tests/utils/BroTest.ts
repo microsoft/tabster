@@ -25,7 +25,7 @@ import {
 } from "tabster";
 import { DOMAPI } from "../../src/DOMAPI";
 
-// jest.setTimeout(3000000000);
+// jest.setTimeout(900000000);
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -259,6 +259,8 @@ class BroTestItemHTML extends BroTestItem {
                     shadowRoot.innerHTML = html;
                 }
 
+                // shadowHost.innerHTML = html;
+
                 if (el) {
                     el.appendChild(shadowHost);
                 }
@@ -358,7 +360,7 @@ class BroTestItemReportConsoleErrors extends BroTestItem {
             console.error(errorMessage);
 
             if (this._throwError) {
-                //   throw new Error(errorMessage);
+                throw new Error(errorMessage);
             }
         }
     }
@@ -693,7 +695,15 @@ export class BroTest implements PromiseLike<undefined> {
     scrollTo(selector: string, x: number, y: number) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                await page.waitForSelector(selector);
+                await page.waitForFunction(
+                    (selector) =>
+                        getTabsterTestVariables().dom?.querySelector(
+                            document,
+                            selector
+                        ),
+                    {},
+                    selector
+                );
                 await page.evaluate(
                     (selector: string, x: number, y: number) => {
                         const scrollContainer: Element | null | undefined =

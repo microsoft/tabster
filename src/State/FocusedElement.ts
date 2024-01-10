@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { KeyborgFocusInEvent, KEYBORG_FOCUSIN, nativeFocus } from "keyborg";
+import {
+    KeyborgFocusInEvent,
+    KeyborgFocusOutEvent,
+    KEYBORG_FOCUSIN,
+    KEYBORG_FOCUSOUT,
+    nativeFocus,
+} from "keyborg";
 
 import { Keys } from "../Keys";
 import { RootAPI } from "../Root";
@@ -82,7 +88,7 @@ export class FocusedElementState
 
         // Add these event listeners as capture - we want Tabster to run before user event handlers
         doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
-        doc.addEventListener("focusout", this._onFocusOut, true);
+        doc.addEventListener(KEYBORG_FOCUSOUT, this._onFocusOut, true);
         win.addEventListener("keydown", this._onKeyDown, true);
 
         const activeElement = dom.getActiveElement(doc);
@@ -98,13 +104,10 @@ export class FocusedElementState
         super.dispose();
 
         const win = this._win();
+        const doc = win.document;
 
-        win.document.removeEventListener(
-            KEYBORG_FOCUSIN,
-            this._onFocusIn,
-            true
-        );
-        win.document.removeEventListener("focusout", this._onFocusOut, true);
+        doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn, true);
+        doc.removeEventListener(KEYBORG_FOCUSOUT, this._onFocusOut, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
 
         this.unsubscribe(this._onChanged);
@@ -347,20 +350,18 @@ export class FocusedElementState
     }
 
     private _onFocusIn = (e: KeyborgFocusInEvent): void => {
-        const activeElement = dom.getActiveElement(
-            (e.target as HTMLElement).ownerDocument
-        );
+        const target = e.composedPath()[0] as HTMLElement;
 
-        if (activeElement) {
+        if (target) {
             this._setFocusedElement(
-                activeElement as HTMLElement, //e.target as HTMLElement,
+                target,
                 e.detail.relatedTarget as HTMLElement | undefined,
                 e.detail.isFocusedProgrammatically
             );
         }
     };
 
-    private _onFocusOut = (e: FocusEvent): void => {
+    private _onFocusOut = (e: KeyborgFocusOutEvent): void => {
         this._setFocusedElement(
             undefined,
             e.relatedTarget as HTMLElement | undefined

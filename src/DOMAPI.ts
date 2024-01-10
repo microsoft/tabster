@@ -20,6 +20,7 @@ import {
     getPreviousElementSibling,
     appendChild,
     insertBefore,
+    getSelection,
 } from "./pierce-dom/getParentElement/getParentElement";
 import {
     querySelector,
@@ -65,6 +66,7 @@ const _getNextElementSibling = getNextElementSibling;
 const _getPreviousElementSibling = getPreviousElementSibling;
 const _appendChild = appendChild;
 const _insertBefore = insertBefore;
+const _getSelection = getSelection;
 
 export interface DOMAPI {
     createMutationObserver: (callback: MutationCallback) => MutationObserver;
@@ -102,6 +104,8 @@ export interface DOMAPI {
 
     appendChild(parent: Node, child: Node): void;
     insertBefore(parent: Node, child: Node, referenceChild: Node | null): void;
+
+    getSelection(ref: Node): Selection | null;
 }
 
 export const dom: DOMAPI = {
@@ -124,6 +128,7 @@ export const dom: DOMAPI = {
     getPreviousElementSibling: _getPreviousElementSibling,
     appendChild: _appendChild,
     insertBefore: _insertBefore,
+    getSelection: _getSelection,
 };
 
 export function setDOMAPI(domapi: Partial<DOMAPI>) {
