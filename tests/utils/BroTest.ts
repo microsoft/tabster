@@ -23,7 +23,6 @@ import {
     Types,
     getRestorer,
 } from "tabster";
-import { DOMAPI } from "../../src/DOMAPI";
 
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 
@@ -125,8 +124,8 @@ export interface BroTestTabsterTestVariables {
     groupper?: Types.GroupperAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
-    dom?: DOMAPI;
-    shadowDOM?: DOMAPI;
+    dom?: Types.DOMAPI;
+    shadowDOM?: Types.DOMAPI;
 }
 
 export function getTestPageURL(parts?: TabsterParts): string {

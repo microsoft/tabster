@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { DOMAPI } from "./DOMAPI";
-
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
 export const DeloserEventName = "tabster:deloser";
@@ -92,7 +90,40 @@ export interface TabsterCoreProps {
     DOMAPI?: Partial<DOMAPI>;
 }
 
-export { DOMAPI };
+export interface DOMAPI {
+    createMutationObserver: (callback: MutationCallback) => MutationObserver;
+    createTreeWalker(
+        doc: Document,
+        root: Node,
+        whatToShow?: number,
+        filter?: NodeFilter | null
+    ): TreeWalker;
+    getParentNode(node: Node | null | undefined): ParentNode | null;
+    getParentElement(
+        element: HTMLElement | null | undefined
+    ): HTMLElement | null;
+    nodeContains(
+        parent: Node | null | undefined,
+        child: Node | null | undefined
+    ): boolean;
+    getActiveElement(doc: Document): Element | null;
+    querySelector(element: ParentNode, selector: string): Element | null;
+    querySelectorAll(element: ParentNode, selector: string): Element[];
+    getElementById(doc: Document, id: string): HTMLElement | null;
+    getFirstChild(node: Node | null | undefined): ChildNode | null;
+    getLastChild(node: Node | null | undefined): ChildNode | null;
+    getNextSibling(node: Node | null | undefined): ChildNode | null;
+    getPreviousSibling(node: Node | null | undefined): ChildNode | null;
+    getFirstElementChild(element: Element | null | undefined): Element | null;
+    getLastElementChild(element: Element | null | undefined): Element | null;
+    getNextElementSibling(element: Element | null | undefined): Element | null;
+    getPreviousElementSibling(
+        element: Element | null | undefined
+    ): Element | null;
+    appendChild(parent: Node, child: Node): Node;
+    insertBefore(parent: Node, child: Node, referenceChild: Node | null): Node;
+    getSelection(ref: Node): Selection | null;
+}
 
 export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;

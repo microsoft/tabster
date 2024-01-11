@@ -29,7 +29,7 @@ import {
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
-import { DOMAPI, dom, setDOMAPI } from "./DOMAPI";
+import { dom, setDOMAPI } from "./DOMAPI";
 import * as shadowDOMAPI from "./Shadowdomize";
 
 export { Types };
@@ -350,7 +350,7 @@ export function getTabster(win: Window): Types.Tabster | null {
     return tabster ? tabster.createTabster(true) : null;
 }
 
-export function getShadowDOMAPI(): DOMAPI {
+export function getShadowDOMAPI(): Types.DOMAPI {
     return shadowDOMAPI;
 }
 
