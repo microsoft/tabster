@@ -22,5 +22,6 @@ export {
     getRestorer,
     makeNoOp,
     isNoOp,
+    getShadowDOMAPI,
     Types,
 } from "./Tabster";
