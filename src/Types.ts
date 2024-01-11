@@ -92,6 +92,8 @@ export interface TabsterCoreProps {
     DOMAPI?: Partial<DOMAPI>;
 }
 
+export { DOMAPI };
+
 export type GetTabster = () => TabsterCore;
 export type GetWindow = () => Window;
 
