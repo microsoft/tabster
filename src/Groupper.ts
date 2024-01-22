@@ -600,7 +600,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     handleKeyPress(
         element: HTMLElement,
         event: KeyboardEvent,
-        noGoUp?: boolean
+        fromModalizer?: boolean
     ): void {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, element);
@@ -667,7 +667,10 @@ export class GroupperAPI implements Types.GroupperAPI {
 
                     if (
                         focusedElement !==
-                        tabster.focusedElement.getFocusedElement()
+                            tabster.focusedElement.getFocusedElement() &&
+                        // A part of Modalizer that has called this handler to escape the active groupper
+                        // might have been removed from DOM, if the focus is on body, we still want to handle Esc.
+                        ((fromModalizer && !focusedElement) || !fromModalizer)
                     ) {
                         // Something else in the application has moved focus, we will not handle Esc.
                         return;
@@ -678,7 +681,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                         groupperElement &&
                         groupperElement.contains(element)
                     ) {
-                        if (element !== groupperElement || noGoUp) {
+                        if (element !== groupperElement || fromModalizer) {
                             next = groupper.getFirst(true);
                         } else {
                             const parentElement = groupperElement.parentElement;

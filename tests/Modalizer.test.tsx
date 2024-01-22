@@ -1681,6 +1681,91 @@ describe("Modalizer with multiple containers", () => {
             .pressTab(true)
             .activeElement((el) => expect(el?.textContent).toEqual("Button2"));
     });
+
+    it("should not lose focus when escape is pressed on the modalizer combined with groupper and a part of modalizer goes away", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: Types.MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                    isAlwaysAccessible: true,
+                                    isOthersAccessible: true,
+                                    isTrapped: true,
+                                },
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <button>Button2</button>
+                    </div>
+                    <div
+                        tabIndex={0}
+                        id="remove-me-on-esc"
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isAlwaysAccessible: false,
+                                isOthersAccessible: false,
+                                isTrapped: true,
+                            },
+                        })}
+                    >
+                        <button>ModalButton3</button>
+                        <button>ModalButton4</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                document
+                    .getElementById("remove-me-on-esc")
+                    ?.addEventListener("keydown", (e) => {
+                        if (e.keyCode === 27) {
+                            document
+                                .getElementById("remove-me-on-esc")
+                                ?.remove();
+                        }
+                    });
+            })
+            .pressTab()
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1ModalButton2")
+            );
+    });
 });
 
 describe("Modalizer events", () => {

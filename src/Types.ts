@@ -793,7 +793,7 @@ export interface GroupperAPIInternal {
     handleKeyPress(
         element: HTMLElement,
         event: KeyboardEvent,
-        noGoUp?: boolean
+        fromModalizer?: boolean
     ): void;
 }
 
