@@ -847,8 +847,10 @@ export interface GroupperAPIInternal {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface GroupperAPI extends GroupperAPIInternal, Disposable {
-    enterGroupper(element: HTMLElement): HTMLElement | null;
-    escapeGroupper(element: HTMLElement): HTMLElement | null;
+    moveFocus(
+        element: HTMLElement,
+        action: GroupperMoveFocusAction
+    ): HTMLElement | null;
 }
 
 export interface GroupperAPIInternal {

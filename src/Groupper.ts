@@ -727,12 +727,13 @@ export class GroupperAPI implements Types.GroupperAPI {
         return null;
     }
 
-    enterGroupper(element: HTMLElement): HTMLElement | null {
-        return this._enterGroupper(element);
-    }
-
-    escapeGroupper(element: HTMLElement): HTMLElement | null {
-        return this._escapeGroupper(element);
+    moveFocus(
+        element: HTMLElement,
+        action: Types.GroupperMoveFocusAction
+    ): HTMLElement | null {
+        return action === Types.GroupperMoveFocusActions.Enter
+            ? this._enterGroupper(element)
+            : this._escapeGroupper(element);
     }
 
     handleKeyPress(
