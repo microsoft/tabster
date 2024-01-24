@@ -26,12 +26,16 @@ import {
     disposeInstanceContext,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
+    triggerGroupperMoveFocusEvent,
+    triggerMoverMoveFocusEvent,
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 
 export { Types };
 export * from "./AttributeHelpers";
+
+export { triggerGroupperMoveFocusEvent, triggerMoverMoveFocusEvent };
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;

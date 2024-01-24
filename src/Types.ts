@@ -21,6 +21,13 @@ export const FocusOutEventName = "tabster:focusout";
 // some custom logic.
 export const MoveFocusEventName = "tabster:movefocus";
 
+// Event that can be triggered by the application to programmatically move
+// focus inside Mover.
+export const MoverMoveFocusEventName = "tabster:mover:movefocus";
+// Event that can be triggered by the application to programmatically enter
+// or escape Groupper.
+export const GroupperMoveFocusEventName = "tabster:groupper:movefocus";
+
 export const FocusableSelector = [
     "a[href]",
     "button:not([disabled])",
@@ -31,9 +38,15 @@ export const FocusableSelector = [
     "*[contenteditable]",
 ].join(", ");
 
-export interface TabsterEventWithDetails<D> extends Event {
-    details: D;
-}
+// Trigger move focus event on a Mover element.
+export type MoverMoveFocusEvent = CustomEvent<{ key: MoverKey } | undefined>;
+
+// Enter or escape Groupper. Enter when `enter` is true, escape when `enter` is false.
+export type GroupperMoveFocusEvent = CustomEvent<
+    { enter: boolean } | undefined
+>;
+
+export type TabsterEventWithDetails<D> = CustomEvent<D | undefined>;
 
 export interface TabsterMoveFocusEventDetails {
     by: "mover" | "groupper" | "modalizer" | "root";

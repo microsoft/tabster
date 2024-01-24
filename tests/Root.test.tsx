@@ -147,9 +147,9 @@ describe("Root", () => {
                     (
                         e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
                     ) => {
-                        if (e.details.element.id) {
+                        if (e.detail?.element.id) {
                             focusedRoot.events.push({
-                                elementId: e.details.element.id,
+                                elementId: e.detail.element.id,
                                 type: "focus",
                             });
                         }
@@ -161,9 +161,9 @@ describe("Root", () => {
                     (
                         e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
                     ) => {
-                        if (e.details.element.id) {
+                        if (e.detail?.element.id) {
                             focusedRoot.events.push({
-                                elementId: e.details.element.id,
+                                elementId: e.detail.element.id,
                                 type: "blur",
                             });
                         }

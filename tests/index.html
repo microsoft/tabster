@@ -19,6 +19,8 @@
                 mergeTabsterProps,
                 getTabsterAttribute,
                 setTabsterAttribute,
+                triggerGroupperMoveFocusEvent,
+                triggerMoverMoveFocusEvent,
             } from "../src";
 
             const tabsterTest = {};
@@ -47,6 +49,9 @@
             tabsterTest.getTabsterAttribute = getTabsterAttribute;
             tabsterTest.setTabsterAttribute = setTabsterAttribute;
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
+            tabsterTest.triggerGroupperMoveFocusEvent =
+                triggerGroupperMoveFocusEvent;
+            tabsterTest.triggerMoverMoveFocusEvent = triggerMoverMoveFocusEvent;
 
             if (parts !== undefined) {
                 for (let part of parts) {
@@ -112,5 +117,6 @@
             window.getTabsterTestVariables = () => tabsterTest;
         </script>
     </head>
+
     <body></body>
 </html>

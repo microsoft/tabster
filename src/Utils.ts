@@ -1773,15 +1773,18 @@ export function getAdjacentElement(
 export function triggerEvent<D>(
     target: HTMLElement | EventTarget,
     name: string,
-    details: D
+    detail?: D
 ): boolean {
-    const event = document.createEvent(
-        "HTMLEvents"
-    ) as Types.TabsterEventWithDetails<D>;
+    const event = new CustomEvent(name, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail,
+    });
 
-    event.initEvent(name, true, true);
-
-    event.details = details;
+    // For the sake of backward compatibility, we're adding `details` property.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (event as any).details = detail;
 
     target.dispatchEvent(event);
 
@@ -1792,6 +1795,20 @@ export function triggerMoveFocusEvent(
     details: Types.TabsterMoveFocusEventDetails
 ): boolean {
     return triggerEvent(details.owner, Types.MoveFocusEventName, details);
+}
+
+export function triggerMoverMoveFocusEvent(
+    target: HTMLElement,
+    key: Types.MoverKey
+) {
+    return triggerEvent(target, Types.MoverMoveFocusEventName, { key });
+}
+
+export function triggerGroupperMoveFocusEvent(
+    target: HTMLElement,
+    enter: boolean
+) {
+    return triggerEvent(target, Types.GroupperMoveFocusEventName, { enter });
 }
 
 export function augmentAttribute(

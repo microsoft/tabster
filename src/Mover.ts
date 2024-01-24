@@ -695,6 +695,7 @@ export class MoverAPI implements Types.MoverAPI {
         const win = this._win();
 
         win.addEventListener("keydown", this._onKeyDown, true);
+        win.addEventListener(Types.MoverMoveFocusEventName, this._onMoveFocus);
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -712,6 +713,10 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
+        win.removeEventListener(
+            Types.MoverMoveFocusEventName,
+            this._onMoveFocus
+        );
 
         Object.keys(this._movers).forEach((moverId) => {
             if (this._movers[moverId]) {
@@ -1251,6 +1256,16 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         this._moveFocus(focused, moverKey, event);
+    };
+
+    private _onMoveFocus = (e: Types.MoverMoveFocusEvent): void => {
+        const element = e.target as HTMLElement | null | undefined;
+        const key = e.detail?.key;
+
+        if (element && key !== undefined && !e.defaultPrevented) {
+            this._moveFocus(element, key);
+            e.stopImmediatePropagation();
+        }
     };
 
     private async _isIgnoredInput(

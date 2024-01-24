@@ -433,6 +433,10 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         win.document.addEventListener("mousedown", this._onMouseDown, true);
         win.addEventListener("keydown", this._onKeyDown, true);
+        win.addEventListener(
+            Types.GroupperMoveFocusEventName,
+            this._onMoveFocus
+        );
     };
 
     dispose(): void {
@@ -454,6 +458,10 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         win.document.removeEventListener("mousedown", this._onMouseDown, true);
         win.removeEventListener("keydown", this._onKeyDown, true);
+        win.removeEventListener(
+            Types.GroupperMoveFocusEventName,
+            this._onMoveFocus
+        );
 
         Object.keys(this._grouppers).forEach((groupperId) => {
             if (this._grouppers[groupperId]) {
@@ -594,6 +602,21 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (element) {
             this.handleKeyPress(element, event);
+        }
+    };
+
+    private _onMoveFocus = (e: Types.GroupperMoveFocusEvent): void => {
+        const element = e.target as HTMLElement | null | undefined;
+        const enter = e.detail?.enter;
+
+        if (element && enter !== undefined && !e.defaultPrevented) {
+            if (enter) {
+                this._enterGroupper(element);
+            } else {
+                this._escapeGroupper(element);
+            }
+
+            e.stopImmediatePropagation();
         }
     };
 
