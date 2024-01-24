@@ -41,9 +41,20 @@ export const FocusableSelector = [
 // Trigger move focus event on a Mover element.
 export type MoverMoveFocusEvent = CustomEvent<{ key: MoverKey } | undefined>;
 
+export interface GroupperMoveFocusActions {
+    Enter: 1;
+    Escape: 2;
+}
+export type GroupperMoveFocusAction =
+    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
+export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
+    Enter: 1,
+    Escape: 2,
+};
+
 // Enter or escape Groupper. Enter when `enter` is true, escape when `enter` is false.
 export type GroupperMoveFocusEvent = CustomEvent<
-    { enter: boolean } | undefined
+    { action: GroupperMoveFocusAction } | undefined
 >;
 
 export type TabsterEventWithDetails<D> = CustomEvent<D | undefined>;

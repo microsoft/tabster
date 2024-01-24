@@ -22,7 +22,7 @@ import {
     scrollIntoView,
     TabsterPart,
     triggerEvent,
-    triggerMoveFocusEvent,
+    dispatchMoveFocusEvent,
     WeakHTMLElement,
 } from "./Utils";
 
@@ -1186,7 +1186,7 @@ export class MoverAPI implements Types.MoverAPI {
             next &&
             (!relatedEvent ||
                 (relatedEvent &&
-                    triggerMoveFocusEvent({
+                    dispatchMoveFocusEvent({
                         by: "mover",
                         owner: container,
                         next,

@@ -15,7 +15,7 @@ import {
     shouldIgnoreFocus,
     WeakHTMLElement,
     triggerEvent,
-    triggerMoveFocusEvent,
+    dispatchMoveFocusEvent,
 } from "../Utils";
 import { getTabsterOnElement } from "../Instance";
 import { Subscribable } from "./Subscribable";
@@ -563,7 +563,7 @@ export class FocusedElementState
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 if (
-                    triggerMoveFocusEvent({
+                    dispatchMoveFocusEvent({
                         by: "root",
                         owner: rootElement,
                         next: nextElement,
@@ -584,7 +584,7 @@ export class FocusedElementState
 
             if (controlTab || next?.outOfDOMOrder) {
                 if (
-                    triggerMoveFocusEvent({
+                    dispatchMoveFocusEvent({
                         by: "root",
                         owner: rootElement,
                         next: nextElement,
@@ -603,7 +603,7 @@ export class FocusedElementState
         } else {
             if (
                 !uncontrolledCompletelyContainer &&
-                triggerMoveFocusEvent({
+                dispatchMoveFocusEvent({
                     by: "root",
                     owner: rootElement,
                     next: null,

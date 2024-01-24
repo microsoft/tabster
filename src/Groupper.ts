@@ -18,7 +18,7 @@ import {
     TabsterPart,
     WeakHTMLElement,
     getAdjacentElement,
-    triggerMoveFocusEvent,
+    dispatchMoveFocusEvent,
 } from "./Utils";
 
 class GroupperDummyManager extends DummyInputManager {
@@ -607,10 +607,10 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     private _onMoveFocus = (e: Types.GroupperMoveFocusEvent): void => {
         const element = e.target as HTMLElement | null | undefined;
-        const enter = e.detail?.enter;
+        const action = e.detail?.action;
 
-        if (element && enter !== undefined && !e.defaultPrevented) {
-            if (enter) {
+        if (element && action !== undefined && !e.defaultPrevented) {
+            if (action === Types.GroupperMoveFocusActions.Enter) {
                 this._enterGroupper(element);
             } else {
                 this._escapeGroupper(element);
@@ -646,7 +646,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        triggerMoveFocusEvent({
+                        dispatchMoveFocusEvent({
                             by: "groupper",
                             owner: groupperElement,
                             next,
@@ -701,7 +701,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        triggerMoveFocusEvent({
+                        dispatchMoveFocusEvent({
                             by: "groupper",
                             owner: groupperElement,
                             next,

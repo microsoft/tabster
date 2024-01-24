@@ -19,8 +19,8 @@
                 mergeTabsterProps,
                 getTabsterAttribute,
                 setTabsterAttribute,
-                triggerGroupperMoveFocusEvent,
-                triggerMoverMoveFocusEvent,
+                dispatchGroupperMoveFocusEvent,
+                dispatchMoverMoveFocusEvent,
             } from "../src";
 
             const tabsterTest = {};
@@ -49,9 +49,10 @@
             tabsterTest.getTabsterAttribute = getTabsterAttribute;
             tabsterTest.setTabsterAttribute = setTabsterAttribute;
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
-            tabsterTest.triggerGroupperMoveFocusEvent =
-                triggerGroupperMoveFocusEvent;
-            tabsterTest.triggerMoverMoveFocusEvent = triggerMoverMoveFocusEvent;
+            tabsterTest.dispatchGroupperMoveFocusEvent =
+                dispatchGroupperMoveFocusEvent;
+            tabsterTest.dispatchMoverMoveFocusEvent =
+                dispatchMoverMoveFocusEvent;
 
             if (parts !== undefined) {
                 for (let part of parts) {

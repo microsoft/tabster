@@ -22,7 +22,7 @@ export {
     getRestorer,
     makeNoOp,
     isNoOp,
-    triggerGroupperMoveFocusEvent,
-    triggerMoverMoveFocusEvent,
+    dispatchGroupperMoveFocusEvent,
+    dispatchMoverMoveFocusEvent,
     Types,
 } from "./Tabster";

@@ -413,19 +413,19 @@ describe("Groupper - limited focus trap", () => {
                 .activeElement((el) =>
                     expect(el?.textContent).toEqual("Foo1Bar1")
                 )
-                .eval(() => {
-                    getTabsterTestVariables()?.triggerGroupperMoveFocusEvent?.(
+                .eval((action) => {
+                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
                         document.activeElement as HTMLElement,
-                        true
+                        action
                     );
-                })
+                }, Types.GroupperMoveFocusActions.Enter)
                 .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
-                .eval(() => {
-                    getTabsterTestVariables()?.triggerGroupperMoveFocusEvent?.(
+                .eval((action) => {
+                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
                         document.activeElement as HTMLElement,
-                        false
+                        action
                     );
-                })
+                }, Types.GroupperMoveFocusActions.Escape)
                 .activeElement((el) =>
                     expect(el?.textContent).toEqual("Foo1Bar1")
                 );

@@ -2818,7 +2818,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
@@ -2827,7 +2827,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button2");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
@@ -2836,7 +2836,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button5");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
@@ -2845,7 +2845,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button4");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
@@ -2854,7 +2854,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
@@ -2863,7 +2863,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button5");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.triggerMoverMoveFocusEvent?.(
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
                     document.activeElement as HTMLElement,
                     key
                 );
