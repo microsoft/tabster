@@ -39,7 +39,7 @@ export interface TabsterMoveFocusEventDetails {
     by: "mover" | "groupper" | "modalizer" | "root";
     owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
     next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
-    relatedEvent: KeyboardEvent; // The original keyboard event that triggered the move.
+    relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
 }
 
 export type TabsterMoveFocusEvent =
@@ -737,8 +737,32 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
+export interface MoverKeys {
+    ArrowUp: 1;
+    ArrowDown: 2;
+    ArrowLeft: 3;
+    ArrowRight: 4;
+    PageUp: 5;
+    PageDown: 6;
+    Home: 7;
+    End: 8;
+}
+export type MoverKey = MoverKeys[keyof MoverKeys];
+export const MoverKeys: MoverKeys = {
+    ArrowUp: 1,
+    ArrowDown: 2,
+    ArrowLeft: 3,
+    ArrowRight: 4,
+    PageUp: 5,
+    PageDown: 6,
+    Home: 7,
+    End: 8,
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MoverAPI extends MoverAPIInternal, Disposable {}
+export interface MoverAPI extends MoverAPIInternal, Disposable {
+    moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
+}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;
@@ -798,7 +822,10 @@ export interface GroupperAPIInternal {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface GroupperAPI extends GroupperAPIInternal, Disposable {}
+export interface GroupperAPI extends GroupperAPIInternal, Disposable {
+    enterGroupper(element: HTMLElement): HTMLElement | null;
+    escapeGroupper(element: HTMLElement): HTMLElement | null;
+}
 
 export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
