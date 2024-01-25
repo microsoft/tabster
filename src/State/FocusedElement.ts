@@ -348,8 +348,8 @@ export class FocusedElementState
     private _onFocusIn = (e: KeyborgFocusInEvent): void => {
         this._setFocusedElement(
             e.target as HTMLElement,
-            e.details.relatedTarget as HTMLElement | undefined,
-            e.details.isFocusedProgrammatically
+            e.detail.relatedTarget as HTMLElement | undefined,
+            e.detail.isFocusedProgrammatically
         );
     };
 
