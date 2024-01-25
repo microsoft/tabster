@@ -1831,7 +1831,7 @@ describe("Modalizer events", () => {
                                 (
                                     window as WindowWithModalizerEventsHistory
                                 ).__tabsterModalizerEvents?.push(
-                                    `${e.details.eventName} ${e.details.id} ${e.details.element.id}`
+                                    `${e.detail?.eventName} ${e.detail?.id} ${e.detail?.element.id}`
                                 );
                             }
                         );
@@ -2321,7 +2321,7 @@ describe("Modalizer with tabster:movefocus event handling", () => {
                             "ModalButton1"
                         ) {
                             e.preventDefault();
-                            e.details.relatedEvent.preventDefault();
+                            e.detail?.relatedEvent?.preventDefault();
                             document.getElementById("button-3")?.focus();
                         }
 
@@ -2330,7 +2330,7 @@ describe("Modalizer with tabster:movefocus event handling", () => {
                             "ModalButton2"
                         ) {
                             e.preventDefault();
-                            e.details.relatedEvent.preventDefault();
+                            e.detail?.relatedEvent?.preventDefault();
                             document.getElementById("button-1")?.focus();
                         }
                     }

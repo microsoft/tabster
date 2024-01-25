@@ -1040,7 +1040,7 @@ export class DummyInputManager {
 
             if (
                 parent &&
-                triggerMoveFocusEvent({
+                dispatchMoveFocusEvent({
                     by: "root",
                     owner: parent,
                     next: null,
@@ -1551,7 +1551,7 @@ class DummyInputManagerCore {
 
                 if (
                     toFocus &&
-                    triggerMoveFocusEvent({
+                    dispatchMoveFocusEvent({
                         by: "root",
                         owner: element,
                         next: null,
@@ -1773,25 +1773,42 @@ export function getAdjacentElement(
 export function triggerEvent<D>(
     target: HTMLElement | EventTarget,
     name: string,
-    details: D
+    detail?: D
 ): boolean {
-    const event = document.createEvent(
-        "HTMLEvents"
-    ) as Types.TabsterEventWithDetails<D>;
+    const event = new CustomEvent(name, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail,
+    });
 
-    event.initEvent(name, true, true);
-
-    event.details = details;
+    // For the sake of backward compatibility, we're adding `details` property.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (event as any).details = detail;
 
     target.dispatchEvent(event);
 
     return !event.defaultPrevented;
 }
 
-export function triggerMoveFocusEvent(
+export function dispatchMoveFocusEvent(
     details: Types.TabsterMoveFocusEventDetails
 ): boolean {
     return triggerEvent(details.owner, Types.MoveFocusEventName, details);
+}
+
+export function dispatchMoverMoveFocusEvent(
+    target: HTMLElement,
+    key: Types.MoverKey
+) {
+    return triggerEvent(target, Types.MoverMoveFocusEventName, { key });
+}
+
+export function dispatchGroupperMoveFocusEvent(
+    target: HTMLElement,
+    action: Types.GroupperMoveFocusAction
+) {
+    return triggerEvent(target, Types.GroupperMoveFocusEventName, { action });
 }
 
 export function augmentAttribute(

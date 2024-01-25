@@ -1198,7 +1198,7 @@ describe("Mover with trackState", () => {
                     (e: Types.MoverEvent) => {
                         let className = "item";
 
-                        switch (e.details.visibility) {
+                        switch (e.detail?.visibility) {
                             case 0:
                                 className += " invisible";
                                 break;
@@ -1210,7 +1210,7 @@ describe("Mover with trackState", () => {
                                 break;
                         }
 
-                        if (e.details.isCurrent) {
+                        if (e.detail?.isCurrent) {
                             className += " active";
                         }
 
@@ -2740,13 +2740,13 @@ describe("Mover with tabster:movefocus event handling", () => {
                     (e: Types.TabsterMoveFocusEvent) => {
                         if (document.activeElement?.textContent === "Button3") {
                             e.preventDefault();
-                            e.details.relatedEvent.preventDefault();
+                            e.detail?.relatedEvent?.preventDefault();
                             document.getElementById("button-6")?.focus();
                         }
 
                         if (document.activeElement?.textContent === "Button4") {
                             e.preventDefault();
-                            e.details.relatedEvent.preventDefault();
+                            e.detail?.relatedEvent?.preventDefault();
                             document.getElementById("button-1")?.focus();
                         }
                     }
@@ -2763,5 +2763,113 @@ describe("Mover with tabster:movefocus event handling", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("Button4"))
             .press("PageDown")
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
+    });
+});
+
+describe("Mover moves focus by tabster:mover:movefocus", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it("should move focus with tabster:mover:movefocus", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                        <button>Button5</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .press("PageDown")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .press("PageUp")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .press("End")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .press("Home")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.ArrowDown)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.PageDown)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.ArrowUp)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.PageUp)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.End)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .eval((key) => {
+                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                    document.activeElement as HTMLElement,
+                    key
+                );
+            }, Types.MoverKeys.Home)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
     });
 });

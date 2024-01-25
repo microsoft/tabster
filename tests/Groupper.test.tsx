@@ -398,6 +398,39 @@ describe("Groupper - limited focus trap", () => {
                 );
         }
     );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should enter and escape groupper as <%s> with tabster:groupper:movefocus event",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName, true, false))
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
+                )
+                .pressEnter()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .pressEsc()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
+                )
+                .eval((action) => {
+                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
+                        document.activeElement as HTMLElement,
+                        action
+                    );
+                }, Types.GroupperMoveFocusActions.Enter)
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .eval((action) => {
+                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
+                        document.activeElement as HTMLElement,
+                        action
+                    );
+                }, Types.GroupperMoveFocusActions.Escape)
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
+                );
+        }
+    );
 });
 
 describe("Groupper tabbing forward and backwards", () => {
@@ -679,14 +712,14 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                     document.addEventListener(
                         "tabster:movefocus",
                         (e: Types.TabsterMoveFocusEvent) => {
-                            if (e.details.relatedEvent.key === "Enter") {
+                            if (e.detail?.relatedEvent?.key === "Enter") {
                                 if (
                                     (window as WindowWithButton2)
                                         .__enteredGroupper
                                 ) {
                                     // Enter was pressed for the second time, let's alter the default behaviour.
                                     e.preventDefault();
-                                    e.details.relatedEvent.preventDefault();
+                                    e.detail.relatedEvent.preventDefault();
                                     document.getElementById("button1")?.focus();
                                 }
 
@@ -704,7 +737,7 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                                     (window as WindowWithButton2).__hadButton3
                                 ) {
                                     e.preventDefault();
-                                    e.details.relatedEvent.preventDefault();
+                                    e.detail?.relatedEvent?.preventDefault();
                                     document.getElementById("button4")?.focus();
                                 }
 

@@ -22,6 +22,8 @@ import {
     setTabsterAttribute,
     Types,
     getRestorer,
+    dispatchGroupperMoveFocusEvent,
+    dispatchMoverMoveFocusEvent,
 } from "tabster";
 
 // Importing the production version so that React doesn't complain in the test output.
@@ -112,6 +114,8 @@ export interface BroTestTabsterTestVariables {
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
     mergeTabsterProps?: typeof mergeTabsterProps;
+    dispatchGroupperMoveFocusEvent?: typeof dispatchGroupperMoveFocusEvent;
+    dispatchMoverMoveFocusEvent?: typeof dispatchMoverMoveFocusEvent;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;
