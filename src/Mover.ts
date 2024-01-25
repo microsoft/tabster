@@ -308,19 +308,19 @@ export class Mover
         ) {
             let found: HTMLElement | undefined | null;
 
-            if (memorizeCurrent) {
+            if (hasDefault) {
+                found = this._tabster.focusable.findDefault({
+                    container: moverElement,
+                    useActiveModalizer: true,
+                });
+            }
+
+            if (!found && memorizeCurrent) {
                 const current = this._current?.get();
 
                 if (current && state.acceptCondition(current)) {
                     found = current;
                 }
-            }
-
-            if (!found && hasDefault) {
-                found = this._tabster.focusable.findDefault({
-                    container: moverElement,
-                    useActiveModalizer: true,
-                });
             }
 
             if (!found && visibilityAware) {

@@ -2576,7 +2576,7 @@ describe("Mover with default element", () => {
             });
     });
 
-    it("should focus memorized element or default focusable when tabbing from outside", async () => {
+    it("should focus prioritize isDefault over memorizeCurrent when tabbing from outside", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -2619,7 +2619,7 @@ describe("Mover with default element", () => {
             })
             .pressTab(true)
             .activeElement((el) => {
-                expect(el?.textContent).toEqual("Button3");
+                expect(el?.textContent).toEqual("Button4");
             });
     });
 
