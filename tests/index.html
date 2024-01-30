@@ -19,6 +19,8 @@
                 mergeTabsterProps,
                 getTabsterAttribute,
                 setTabsterAttribute,
+                dispatchGroupperMoveFocusEvent,
+                dispatchMoverMoveFocusEvent,
             } from "../src";
             import * as shadowDOM from "../src/Shadowdomize";
             import { dom } from "../src/DOMAPI";
@@ -56,6 +58,10 @@
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
             tabsterTest.dom = dom;
             tabsterTest.shadowDOM = shadowDOM;
+            tabsterTest.dispatchGroupperMoveFocusEvent =
+                dispatchGroupperMoveFocusEvent;
+            tabsterTest.dispatchMoverMoveFocusEvent =
+                dispatchMoverMoveFocusEvent;
 
             if (parts !== undefined) {
                 for (let part of parts) {

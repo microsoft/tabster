@@ -21,6 +21,13 @@ export const FocusOutEventName = "tabster:focusout";
 // some custom logic.
 export const MoveFocusEventName = "tabster:movefocus";
 
+// Event that can be triggered by the application to programmatically move
+// focus inside Mover.
+export const MoverMoveFocusEventName = "tabster:mover:movefocus";
+// Event that can be triggered by the application to programmatically enter
+// or escape Groupper.
+export const GroupperMoveFocusEventName = "tabster:groupper:movefocus";
+
 export const FocusableSelector = [
     "a[href]",
     "button:not([disabled])",
@@ -31,15 +38,32 @@ export const FocusableSelector = [
     "*[contenteditable]",
 ].join(", ");
 
-export interface TabsterEventWithDetails<D> extends Event {
-    details: D;
+// Trigger move focus event on a Mover element.
+export type MoverMoveFocusEvent = CustomEvent<{ key: MoverKey } | undefined>;
+
+export interface GroupperMoveFocusActions {
+    Enter: 1;
+    Escape: 2;
 }
+export type GroupperMoveFocusAction =
+    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
+export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
+    Enter: 1,
+    Escape: 2,
+};
+
+// Enter or escape Groupper. Enter when `enter` is true, escape when `enter` is false.
+export type GroupperMoveFocusEvent = CustomEvent<
+    { action: GroupperMoveFocusAction } | undefined
+>;
+
+export type TabsterEventWithDetails<D> = CustomEvent<D | undefined>;
 
 export interface TabsterMoveFocusEventDetails {
     by: "mover" | "groupper" | "modalizer" | "root";
     owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
     next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
-    relatedEvent: KeyboardEvent; // The original keyboard event that triggered the move.
+    relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
 }
 
 export type TabsterMoveFocusEvent =
@@ -777,8 +801,33 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
+export interface MoverKeys {
+    ArrowUp: 1;
+    ArrowDown: 2;
+    ArrowLeft: 3;
+    ArrowRight: 4;
+    PageUp: 5;
+    PageDown: 6;
+    Home: 7;
+    End: 8;
+}
+export type MoverKey = MoverKeys[keyof MoverKeys];
+export const MoverKeys: MoverKeys = {
+    ArrowUp: 1,
+    ArrowDown: 2,
+    ArrowLeft: 3,
+    ArrowRight: 4,
+    PageUp: 5,
+    PageDown: 6,
+    Home: 7,
+    End: 8,
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MoverAPI extends MoverAPIInternal, Disposable {}
+export interface MoverAPI extends MoverAPIInternal, Disposable {
+    /** @internal (will likely be exposed once the API is fully stable) */
+    moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
+}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;
@@ -833,12 +882,18 @@ export interface GroupperAPIInternal {
     handleKeyPress(
         element: HTMLElement,
         event: KeyboardEvent,
-        noGoUp?: boolean
+        fromModalizer?: boolean
     ): void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface GroupperAPI extends GroupperAPIInternal, Disposable {}
+export interface GroupperAPI extends GroupperAPIInternal, Disposable {
+    /** @internal (will likely be exposed once the API is fully stable) */
+    moveFocus(
+        element: HTMLElement,
+        action: GroupperMoveFocusAction
+    ): HTMLElement | null;
+}
 
 export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;

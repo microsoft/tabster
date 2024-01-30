@@ -1048,7 +1048,7 @@ export class DummyInputManager {
 
             if (
                 parent &&
-                triggerMoveFocusEvent({
+                dispatchMoveFocusEvent({
                     by: "root",
                     owner: parent,
                     next: null,
@@ -1564,7 +1564,7 @@ class DummyInputManagerCore {
 
                 if (
                     toFocus &&
-                    triggerMoveFocusEvent({
+                    dispatchMoveFocusEvent({
                         by: "root",
                         owner: element,
                         next: null,
@@ -1824,10 +1824,24 @@ export function triggerEvent<D>(
     return !event.defaultPrevented;
 }
 
-export function triggerMoveFocusEvent(
+export function dispatchMoveFocusEvent(
     details: Types.TabsterMoveFocusEventDetails
 ): boolean {
     return triggerEvent(details.owner, Types.MoveFocusEventName, details);
+}
+
+export function dispatchMoverMoveFocusEvent(
+    target: HTMLElement,
+    key: Types.MoverKey
+) {
+    return triggerEvent(target, Types.MoverMoveFocusEventName, { key });
+}
+
+export function dispatchGroupperMoveFocusEvent(
+    target: HTMLElement,
+    action: Types.GroupperMoveFocusAction
+) {
+    return triggerEvent(target, Types.GroupperMoveFocusEventName, { action });
 }
 
 export function augmentAttribute(

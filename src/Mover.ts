@@ -22,7 +22,7 @@ import {
     scrollIntoView,
     TabsterPart,
     triggerEvent,
-    triggerMoveFocusEvent,
+    dispatchMoveFocusEvent,
     WeakHTMLElement,
 } from "./Utils";
 import { dom } from "./DOMAPI";
@@ -700,6 +700,7 @@ export class MoverAPI implements Types.MoverAPI {
         const win = this._win();
 
         win.addEventListener("keydown", this._onKeyDown, true);
+        win.addEventListener(Types.MoverMoveFocusEventName, this._onMoveFocus);
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -717,6 +718,10 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
+        win.removeEventListener(
+            Types.MoverMoveFocusEventName,
+            this._onMoveFocus
+        );
 
         Object.keys(this._movers).forEach((moverId) => {
             if (this._movers[moverId]) {
@@ -785,44 +790,20 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
+    moveFocus(
+        fromElement: HTMLElement,
+        key: Types.MoverKey
+    ): HTMLElement | null {
+        return this._moveFocus(fromElement, key);
+    }
 
-        this._ignoredInputResolve?.(false);
-
-        let keyCode = event.keyCode;
-
-        // Give a chance to other listeners to handle the event (for example,
-        // to scroll instead of moving focus).
-        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
-            return;
-        }
-
-        switch (keyCode) {
-            case Keys.Down:
-            case Keys.Right:
-            case Keys.Up:
-            case Keys.Left:
-            case Keys.PageDown:
-            case Keys.PageUp:
-            case Keys.Home:
-            case Keys.End:
-                break;
-            default:
-                return;
-        }
-
+    private _moveFocus(
+        fromElement: HTMLElement,
+        key: Types.MoverKey,
+        relatedEvent?: KeyboardEvent
+    ): HTMLElement | null {
         const tabster = this._tabster;
-        const focused = tabster.focusedElement.getFocusedElement();
-
-        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
-            return;
-        }
-
-        const ctx = RootAPI.getTabsterContext(tabster, focused, {
+        const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
 
@@ -830,9 +811,9 @@ export class MoverAPI implements Types.MoverAPI {
             !ctx ||
             !ctx.mover ||
             ctx.excludedFromMover ||
-            ctx.ignoreKeydown(event)
+            (relatedEvent && ctx.ignoreKeydown(relatedEvent))
         ) {
-            return;
+            return null;
         }
 
         const mover = ctx.mover;
@@ -855,16 +836,16 @@ export class MoverAPI implements Types.MoverAPI {
                             true
                         )
                     ) {
-                        return;
+                        return null;
                     }
                 }
             } else {
-                return;
+                return null;
             }
         }
 
         if (!container) {
-            return;
+            return null;
         }
 
         const focusable = tabster.focusable;
@@ -887,25 +868,25 @@ export class MoverAPI implements Types.MoverAPI {
         let focusedElementX2 = 0;
 
         if (isGrid) {
-            focusedElementRect = focused.getBoundingClientRect();
+            focusedElementRect = fromElement.getBoundingClientRect();
             focusedElementX1 = Math.ceil(focusedElementRect.left);
             focusedElementX2 = Math.floor(focusedElementRect.right);
         }
 
         if (ctx.rtl) {
-            if (keyCode === Keys.Right) {
-                keyCode = Keys.Left;
-            } else if (keyCode === Keys.Left) {
-                keyCode = Keys.Right;
+            if (key === Types.MoverKeys.ArrowRight) {
+                key = Types.MoverKeys.ArrowLeft;
+            } else if (key === Types.MoverKeys.ArrowLeft) {
+                key = Types.MoverKeys.ArrowRight;
             }
         }
 
         if (
-            (keyCode === Keys.Down && isVertical) ||
-            (keyCode === Keys.Right && (isHorizontal || isGrid))
+            (key === Types.MoverKeys.ArrowDown && isVertical) ||
+            (key === Types.MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
             next = focusable.findNext({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
             });
@@ -925,11 +906,11 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (
-            (keyCode === Keys.Up && isVertical) ||
-            (keyCode === Keys.Left && (isHorizontal || isGrid))
+            (key === Types.MoverKeys.ArrowUp && isVertical) ||
+            (key === Types.MoverKeys.ArrowLeft && (isHorizontal || isGrid))
         ) {
             next = focusable.findPrev({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
             });
@@ -948,11 +929,11 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.Home) {
+        } else if (key === Types.MoverKeys.Home) {
             if (isGrid) {
                 focusable.findElement({
                     container,
-                    currentElement: focused,
+                    currentElement: fromElement,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
@@ -965,7 +946,7 @@ export class MoverAPI implements Types.MoverAPI {
                         );
 
                         if (
-                            el !== focused &&
+                            el !== fromElement &&
                             focusedElementX1 <= nextElementX1
                         ) {
                             return true;
@@ -981,11 +962,11 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.End) {
+        } else if (key === Types.MoverKeys.End) {
             if (isGrid) {
                 focusable.findElement({
                     container,
-                    currentElement: focused,
+                    currentElement: fromElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
                         if (!focusable.isFocusable(el)) {
@@ -997,7 +978,7 @@ export class MoverAPI implements Types.MoverAPI {
                         );
 
                         if (
-                            el !== focused &&
+                            el !== fromElement &&
                             focusedElementX1 >= nextElementX1
                         ) {
                             return true;
@@ -1013,9 +994,9 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.PageUp) {
+        } else if (key === Types.MoverKeys.PageUp) {
             focusable.findElement({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 isBackward: true,
@@ -1069,9 +1050,9 @@ export class MoverAPI implements Types.MoverAPI {
             }
 
             scrollIntoViewArg = false;
-        } else if (keyCode === Keys.PageDown) {
+        } else if (key === Types.MoverKeys.PageDown) {
             focusable.findElement({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 acceptCondition: (el) => {
@@ -1126,7 +1107,7 @@ export class MoverAPI implements Types.MoverAPI {
 
             scrollIntoViewArg = true;
         } else if (isGrid) {
-            const isBackward = keyCode === Keys.Up;
+            const isBackward = key === Types.MoverKeys.ArrowUp;
             const ax1 = focusedElementX1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const ay1 = Math.ceil(focusedElementRect!.top);
@@ -1139,7 +1120,7 @@ export class MoverAPI implements Types.MoverAPI {
 
             focusable.findAll({
                 container,
-                currentElement: focused,
+                currentElement: fromElement,
                 isBackward,
                 onElement: (el) => {
                     // Find element which has maximal intersection with the focused element horizontally,
@@ -1209,21 +1190,87 @@ export class MoverAPI implements Types.MoverAPI {
 
         if (
             next &&
-            triggerMoveFocusEvent({
-                by: "mover",
-                owner: container,
-                next,
-                relatedEvent: event,
-            })
+            (!relatedEvent ||
+                (relatedEvent &&
+                    dispatchMoveFocusEvent({
+                        by: "mover",
+                        owner: container,
+                        next,
+                        relatedEvent,
+                    })))
         ) {
             if (scrollIntoViewArg !== undefined) {
                 scrollIntoView(this._win, next, scrollIntoViewArg);
             }
 
-            event.preventDefault();
-            event.stopImmediatePropagation();
+            if (relatedEvent) {
+                relatedEvent.preventDefault();
+                relatedEvent.stopImmediatePropagation();
+            }
 
             nativeFocus(next);
+
+            return next;
+        }
+
+        return null;
+    }
+
+    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
+        if (this._ignoredInputTimer) {
+            this._win().clearTimeout(this._ignoredInputTimer);
+            delete this._ignoredInputTimer;
+        }
+
+        this._ignoredInputResolve?.(false);
+
+        // Give a chance to other listeners to handle the event (for example,
+        // to scroll instead of moving focus).
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+            return;
+        }
+
+        const keyCode = event.keyCode;
+        let moverKey: Types.MoverKey | undefined;
+
+        if (keyCode === Keys.Down) {
+            moverKey = Types.MoverKeys.ArrowDown;
+        } else if (keyCode === Keys.Right) {
+            moverKey = Types.MoverKeys.ArrowRight;
+        } else if (keyCode === Keys.Up) {
+            moverKey = Types.MoverKeys.ArrowUp;
+        } else if (keyCode === Keys.Left) {
+            moverKey = Types.MoverKeys.ArrowLeft;
+        } else if (keyCode === Keys.PageDown) {
+            moverKey = Types.MoverKeys.PageDown;
+        } else if (keyCode === Keys.PageUp) {
+            moverKey = Types.MoverKeys.PageUp;
+        } else if (keyCode === Keys.Home) {
+            moverKey = Types.MoverKeys.Home;
+        } else if (keyCode === Keys.End) {
+            moverKey = Types.MoverKeys.End;
+        }
+
+        if (!moverKey) {
+            return;
+        }
+
+        const focused = this._tabster.focusedElement.getFocusedElement();
+
+        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
+            return;
+        }
+
+        this._moveFocus(focused, moverKey, event);
+    };
+
+    private _onMoveFocus = (e: Types.MoverMoveFocusEvent): void => {
+        const element = e.composedPath()[0] as HTMLElement | null | undefined;
+        const key = e.detail?.key;
+
+        if (element && key !== undefined && !e.defaultPrevented) {
+            this._moveFocus(element, key);
+            e.stopImmediatePropagation();
         }
     };
 

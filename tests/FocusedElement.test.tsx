@@ -99,8 +99,8 @@ describe("onKeyDown", () => {
                                 window as WindowWithFocusEventsHistory
                             ).__tabsterFocusEvents?.push(
                                 `${eventName} ${(target as HTMLElement)?.id} ${
-                                    e.details.isFocusedProgrammatically
-                                } ${e.details.modalizerId}`
+                                    e.detail?.isFocusedProgrammatically
+                                } ${e.detail?.modalizerId}`
                             );
                         }
                     );

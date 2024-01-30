@@ -34,6 +34,12 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
             const element = this._element?.get();
             element?.addEventListener("focusout", this._onFocusOut);
             element?.addEventListener("focusin", this._onFocusIn);
+
+            // set hasFocus when the instance is created, in case focus has already moved within it
+            this._hasFocus = dom.nodeContains(
+                element,
+                element && dom.getActiveElement(element.ownerDocument)
+            );
         }
     }
 
