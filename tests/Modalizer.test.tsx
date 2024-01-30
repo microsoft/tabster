@@ -59,13 +59,17 @@ describe("Modalizer", () => {
             .focusElement("#foo")
             .wait(300)
             .eval(() =>
-                document.getElementById("hidden")?.getAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.getAttribute("aria-hidden")
             )
             .check((ariaHidden: string | undefined) =>
                 expect(ariaHidden).toBe("true")
             )
             .eval(() =>
-                document.getElementById("outside")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "outside")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -77,8 +81,8 @@ describe("Modalizer", () => {
             const ret: string[] = [];
             const pushAriaHidden = (id: string): void => {
                 ret.push(
-                    `${id}: ${document
-                        .getElementById(id)
+                    `${id}: ${getTabsterTestVariables()
+                        .dom?.getElementById(document, id)
                         ?.getAttribute("aria-hidden")}`
                 );
             };
@@ -258,10 +262,16 @@ describe("Modalizer", () => {
     it("should deactivate and restore aria-hidden when removed from DOM", async () => {
         await new BroTest.BroTest(getTestHtml())
             .focusElement("#foo")
-            .eval(() => document.getElementById("modal")?.remove())
+            .eval(() =>
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "modal")
+                    ?.remove()
+            )
             .wait(300)
             .eval(() =>
-                document.getElementById("hidden")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -273,7 +283,9 @@ describe("Modalizer", () => {
             .focusElement("#foo")
             .focusElement("#outside")
             .eval(() =>
-                document.getElementById("hidden")?.hasAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.hasAttribute("aria-hidden")
             )
             .check((hasAriaHidden: boolean | undefined) =>
                 expect(hasAriaHidden).toBe(false)
@@ -319,7 +331,9 @@ describe("Modalizer", () => {
                 .eval(() => {
                     // Simulates user clicking outside a modal dialog to close it
                     document.addEventListener("click", () => {
-                        document.getElementById("modal")?.remove();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "modal")
+                            ?.remove();
                     });
                 })
                 .click("#outside")
@@ -335,8 +349,8 @@ describe("Modalizer", () => {
                 .focusElement("#foo")
                 .wait(300)
                 .eval(() =>
-                    document
-                        .getElementById("hidden")
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "hidden")
                         ?.hasAttribute("aria-hidden")
                 )
                 .check((hasAriaHidden: boolean | undefined) =>
@@ -355,8 +369,8 @@ describe("Modalizer", () => {
             await new BroTest.BroTest(getTestHtml({ isOthersAccessible: true }))
                 .focusElement("#foo")
                 .eval(() =>
-                    document
-                        .getElementById("hidden")
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "hidden")
                         ?.hasAttribute("aria-hidden")
                 )
                 .check((hasAriaHidden: boolean | undefined) =>
@@ -452,7 +466,11 @@ describe("New Modalizer that already has focus", () => {
             .focusElement("#foo")
             .eval(
                 (attrName, tabsterAttr) => {
-                    const newModalizer = document.getElementById("modal");
+                    const newModalizer =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "modal"
+                        );
                     newModalizer?.setAttribute(attrName, tabsterAttr);
                 },
                 Types.TabsterAttributeName,
@@ -460,7 +478,9 @@ describe("New Modalizer that already has focus", () => {
             )
             .wait(300)
             .eval(() =>
-                document.getElementById("hidden")?.getAttribute("aria-hidden")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "hidden")
+                    ?.getAttribute("aria-hidden")
             )
             .check((ariaHidden: string | undefined) =>
                 expect(ariaHidden).toBe("true")
@@ -937,7 +957,9 @@ describe("Modalizer with multiple containers", () => {
             .eval(() => {
                 document.addEventListener("keydown", (e) => {
                     if (e.keyCode === 13) {
-                        document.getElementById("modal-button-1")?.focus();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "modal-button-1")
+                            ?.focus();
                     }
                 });
             })
@@ -1823,8 +1845,8 @@ describe("Modalizer events", () => {
                     eventName: Types.ModalizerEventName,
                     elementId: string
                 ) => {
-                    document
-                        .getElementById(elementId)
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, elementId)
                         ?.addEventListener(
                             eventName,
                             (e: Types.ModalizerEvent) => {
@@ -2169,13 +2191,17 @@ describe("Modalizer with alwaysAccessibleSelector", () => {
             })
             .wait(500)
             .eval(() => [
-                document.getElementById("button1")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("button2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button2")
                     ?.parentElement?.hasAttribute("aria-hidden"),
-                document.getElementById("button3")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("aria-live")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "aria-live")
                     ?.hasAttribute("aria-hidden"),
             ])
             .check(([button1, button2, button3, ariaLive]) => {
@@ -2190,13 +2216,17 @@ describe("Modalizer with alwaysAccessibleSelector", () => {
             })
             .wait(500)
             .eval(() => [
-                document.getElementById("button1")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("button2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button2")
                     ?.parentElement?.hasAttribute("aria-hidden"),
-                document.getElementById("button3")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("aria-live")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "aria-live")
                     ?.hasAttribute("aria-hidden"),
             ])
             .check(([button1, button2, button3, ariaLive]) => {
@@ -2250,11 +2280,15 @@ describe("Modalizer with checkAccessible callback", () => {
             })
             .wait(500)
             .eval(() => [
-                document.getElementById("button1")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("button2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button2")
                     ?.parentElement?.hasAttribute("aria-hidden"),
-                document.getElementById("button3")?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
             ])
             .check(([button1, button2, button3]) => {
                 expect(button1).toEqual(true);
@@ -2267,11 +2301,15 @@ describe("Modalizer with checkAccessible callback", () => {
             })
             .wait(500)
             .eval(() => [
-                document.getElementById("button1")?.hasAttribute("aria-hidden"),
-                document
-                    .getElementById("button2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button2")
                     ?.parentElement?.hasAttribute("aria-hidden"),
-                document.getElementById("button3")?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
             ])
             .check(([button1, button2, button3]) => {
                 expect(button1).toEqual(false);
@@ -2317,21 +2355,27 @@ describe("Modalizer with tabster:movefocus event handling", () => {
                     "tabster:movefocus",
                     (e: Types.TabsterMoveFocusEvent) => {
                         if (
-                            document.activeElement?.textContent ===
-                            "ModalButton1"
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "ModalButton1"
                         ) {
                             e.preventDefault();
                             e.detail?.relatedEvent?.preventDefault();
-                            document.getElementById("button-3")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-3")
+                                ?.focus();
                         }
 
                         if (
-                            document.activeElement?.textContent ===
-                            "ModalButton2"
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "ModalButton2"
                         ) {
                             e.preventDefault();
                             e.detail?.relatedEvent?.preventDefault();
-                            document.getElementById("button-1")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-1")
+                                ?.focus();
                         }
                     }
                 );

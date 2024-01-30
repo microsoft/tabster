@@ -36,7 +36,9 @@ describe("Restorer", () => {
             .focusElement("#source button")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
@@ -66,7 +68,9 @@ describe("Restorer", () => {
             .focusElement("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
@@ -100,7 +104,9 @@ describe("Restorer", () => {
             .focusElement("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target 2"));
     });
@@ -134,8 +140,12 @@ describe("Restorer", () => {
             .focusElement("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("target-2")?.remove();
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target-2")
+                    ?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
     });
@@ -168,8 +178,12 @@ describe("Restorer", () => {
             .focusElement("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
-                document.getElementById("other")?.focus();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "other")
+                    ?.focus();
             })
             .wait(100)
             .activeElement((el) => expect(el?.textContent).toEqual("other"));
@@ -197,7 +211,9 @@ describe("Restorer", () => {
                 expect(el?.textContent).toEqual("not source")
             )
             .eval(() => {
-                document.getElementById("not-source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "not-source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el).toBeNull());
     });
@@ -257,7 +273,9 @@ describe("Restorer", () => {
             .click("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
@@ -288,10 +306,14 @@ describe("Restorer", () => {
             .click("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("target")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target")
+                    ?.remove();
             })
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             });
     }, 10000);
 
@@ -319,8 +341,8 @@ describe("Restorer", () => {
                     const target = document.createElement("button");
                     target.textContent = "target";
                     target.setAttribute(tabsterAttrName, targetAttr);
-                    document
-                        .getElementById("target-container")
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "target-container")
                         ?.appendChild(target);
                     target.focus();
                 },
@@ -331,7 +353,9 @@ describe("Restorer", () => {
             .click("#source")
             .activeElement((el) => expect(el?.textContent).toEqual("source"))
             .eval(() => {
-                document.getElementById("source")?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });

@@ -310,12 +310,14 @@ describe("NestedMovers", () => {
             )
         )
             .eval(() => {
-                document
-                    .getElementById("mover")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "mover")
                     ?.addEventListener("keydown", (e) => {
                         if (e.key === "Tab" && e.shiftKey) {
                             e.preventDefault();
-                            document.getElementById("target")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "target")
+                                ?.focus();
                         }
                     });
             })
@@ -1214,19 +1216,24 @@ describe("Mover with trackState", () => {
                             className += " active";
                         }
 
-                        (e.target as HTMLElement).className = className;
+                        const target = e.composedPath()[0] as HTMLElement;
+
+                        target.className = className;
                     }
                 );
 
                 // Adding mover after the event subscription.
-                document
-                    .getElementById("container")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "container")
                     ?.setAttribute("data-tabster", moverAttribute);
             }, getTabsterAttribute({ mover: { trackState: true } }, true))
             .wait(300)
             .eval(() =>
                 Array.prototype.map.call(
-                    document.querySelectorAll(".item"),
+                    getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        ".item"
+                    ),
                     (el: HTMLElement) => el.className
                 )
             )
@@ -1242,7 +1249,10 @@ describe("Mover with trackState", () => {
             .wait(300)
             .eval(() =>
                 Array.prototype.map.call(
-                    document.querySelectorAll(".item"),
+                    getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        ".item"
+                    ),
                     (el: HTMLElement) => el.className
                 )
             )
@@ -2738,16 +2748,28 @@ describe("Mover with tabster:movefocus event handling", () => {
                 document.addEventListener(
                     "tabster:movefocus",
                     (e: Types.TabsterMoveFocusEvent) => {
-                        if (document.activeElement?.textContent === "Button3") {
+                        if (
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "Button3"
+                        ) {
                             e.preventDefault();
                             e.detail?.relatedEvent?.preventDefault();
-                            document.getElementById("button-6")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-6")
+                                ?.focus();
                         }
 
-                        if (document.activeElement?.textContent === "Button4") {
+                        if (
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "Button4"
+                        ) {
                             e.preventDefault();
                             e.detail?.relatedEvent?.preventDefault();
-                            document.getElementById("button-1")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-1")
+                                ?.focus();
                         }
                     }
                 );
@@ -2818,55 +2840,79 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.ArrowDown)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.PageDown)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button5");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.ArrowUp)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.PageUp)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.End)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button5");
             })
             .eval((key) => {
-                getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                    document.activeElement as HTMLElement,
-                    key
-                );
+                const activeElement =
+                    getTabsterTestVariables()?.dom?.getActiveElement(document);
+
+                activeElement &&
+                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
+                        activeElement as HTMLElement,
+                        key
+                    );
             }, Types.MoverKeys.Home)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");

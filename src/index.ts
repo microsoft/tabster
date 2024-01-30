@@ -22,6 +22,7 @@ export {
     getRestorer,
     makeNoOp,
     isNoOp,
+    getShadowDOMAPI,
     dispatchGroupperMoveFocusEvent,
     dispatchMoverMoveFocusEvent,
     Types,

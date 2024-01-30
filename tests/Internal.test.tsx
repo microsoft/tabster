@@ -26,8 +26,8 @@ describe("Internal", () => {
             )
         )
             .eval(() => {
-                document
-                    .getElementById("element1")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "element1")
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval(() => {
@@ -35,8 +35,14 @@ describe("Internal", () => {
             })
             .eval((): string | void => {
                 const tabster = getTabsterTestVariables().core;
-                const el1 = document.getElementById("element1");
-                const el2 = document.getElementById("element2");
+                const el1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element1"
+                );
+                const el2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element2"
+                );
                 if (tabster && el1 && el2) {
                     const t1 = tabster.core.storageEntry(el1)?.tabster;
                     const t2 = tabster.core.storageEntry(el2)?.tabster;
@@ -47,14 +53,20 @@ describe("Internal", () => {
                 expect(res).toEqual("true-false");
             })
             .eval(() => {
-                document
-                    .getElementById("element2")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "element2")
                     ?.setAttribute("data-tabster", '{"groupper": {}}');
             })
             .eval((): string | void => {
                 const tabster = getTabsterTestVariables().core;
-                const el1 = document.getElementById("element1");
-                const el2 = document.getElementById("element2");
+                const el1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element1"
+                );
+                const el2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element2"
+                );
                 if (tabster && el1 && el2) {
                     const t1 = tabster.core.storageEntry(el1)?.tabster;
                     const t2 = tabster.core.storageEntry(el2)?.tabster;
@@ -71,8 +83,14 @@ describe("Internal", () => {
             })
             .eval((): string | void => {
                 const tabster = getTabsterTestVariables().core;
-                const el1 = document.getElementById("element1");
-                const el2 = document.getElementById("element2");
+                const el1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element1"
+                );
+                const el2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "element2"
+                );
                 if (tabster && el1 && el2) {
                     const t1 = tabster.core.storageEntry(el1)?.tabster;
                     const t2 = tabster.core.storageEntry(el2)?.tabster;

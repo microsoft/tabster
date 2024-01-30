@@ -20,6 +20,7 @@ import {
     getWindowUId,
     HTMLElementWithUID,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;
@@ -755,7 +756,7 @@ class GetElementTransaction extends CrossOriginTransaction<
             (!data.ownerId || data.ownerId === getWindowUId(getOwner()))
         ) {
             if (data.id) {
-                element = getOwner().document.getElementById(data.id);
+                element = dom.getElementById(getOwner().document, data.id);
 
                 if (element && data.rootId) {
                     const ctx = RootAPI.getTabsterContext(tabster, element);

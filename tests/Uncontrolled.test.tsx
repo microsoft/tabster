@@ -56,12 +56,14 @@ describe("Uncontrolled", () => {
             )
         )
             .eval(() => {
-                document
-                    .getElementById("container")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "container")
                     ?.addEventListener("keydown", (e) => {
                         if (e.key === "Tab") {
                             e.preventDefault();
-                            document.getElementById("destination")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "destination")
+                                ?.focus();
                         }
                     });
             })
@@ -773,15 +775,20 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
             .eval(() => {
                 // Quick and dirty partial implementation of roving tabindex
                 // to test coexistence.
-                const roving = document.getElementById("roving");
+                const roving = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "roving"
+                );
 
                 let activeElement: HTMLElement | undefined;
 
                 if (roving) {
                     const updateTabIndex = () => {
-                        const buttons = roving.querySelectorAll(
-                            "button, *[tabindex]"
-                        ) as NodeListOf<HTMLElement>;
+                        const buttons =
+                            (getTabsterTestVariables().dom?.querySelectorAll(
+                                roving,
+                                "button, *[tabindex]"
+                            ) || []) as HTMLElement[];
 
                         let hasTabbable: HTMLElement | undefined =
                             activeElement;
@@ -796,7 +803,10 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
 
                         if (
                             activeElement &&
-                            document.body.contains(activeElement)
+                            getTabsterTestVariables().dom?.nodeContains(
+                                document.body,
+                                activeElement
+                            )
                         ) {
                             if (hasTabbable && activeElement !== hasTabbable) {
                                 hasTabbable.tabIndex = -1;
@@ -812,17 +822,26 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
                         }
                     };
 
-                    const observer = new MutationObserver((mutations) => {
-                        if (mutations.some((m) => m.type !== "attributes")) {
-                            updateTabIndex();
-                        }
-                    });
+                    const observer =
+                        getTabsterTestVariables().dom?.createMutationObserver(
+                            (mutations) => {
+                                if (
+                                    mutations.some(
+                                        (m) => m.type !== "attributes"
+                                    )
+                                ) {
+                                    updateTabIndex();
+                                }
+                            }
+                        );
 
-                    observer.observe(roving, {
-                        childList: true,
-                        subtree: true,
-                        attributes: true,
-                    });
+                    if (observer) {
+                        observer.observe(roving, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true,
+                        });
+                    }
 
                     roving.addEventListener("focusin", (e) => {
                         activeElement = e.target as HTMLElement;
@@ -831,7 +850,12 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
 
                     roving.addEventListener("keydown", (e) => {
                         if (e.key === "ArrowDown") {
-                            const buttons = roving.querySelectorAll("button");
+                            const buttons =
+                                (getTabsterTestVariables().dom?.querySelectorAll(
+                                    roving,
+                                    "button"
+                                ) || []) as HTMLElement[];
+
                             const index = Array.prototype.indexOf.call(
                                 buttons,
                                 e.target
@@ -911,17 +935,25 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                 });
 
                 const trapFocus = (parentId: string) => {
-                    const parent = document.getElementById(parentId);
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
 
                     if (parent) {
                         parent.addEventListener("keydown", (e) => {
                             if (e.key === "Tab") {
-                                const buttons = parent.querySelectorAll(
-                                    "button, *[tabindex]"
-                                ) as NodeListOf<HTMLElement>;
+                                const buttons =
+                                    getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]" || []
+                                    ) as HTMLElement[];
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {
@@ -1017,17 +1049,25 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                 getTabsterTestVariables().createTabster?.(window, {});
 
                 const trapFocus = (parentId: string) => {
-                    const parent = document.getElementById(parentId);
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
 
                     if (parent) {
                         parent.addEventListener("keydown", (e) => {
                             if (e.key === "Tab") {
-                                const buttons = parent.querySelectorAll(
-                                    "button, *[tabindex]"
-                                ) as NodeListOf<HTMLElement>;
+                                const buttons =
+                                    (getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]"
+                                    ) || []) as HTMLElement[];
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {
@@ -1157,17 +1197,25 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                 });
 
                 const trapFocus = (parentId: string) => {
-                    const parent = document.getElementById(parentId);
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
 
                     if (parent) {
                         parent.addEventListener("keydown", (e) => {
                             if (e.key === "Tab") {
-                                const buttons = parent.querySelectorAll(
-                                    "button, *[tabindex]"
-                                ) as NodeListOf<HTMLElement>;
+                                const buttons =
+                                    (getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]"
+                                    ) || []) as HTMLElement[];
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {

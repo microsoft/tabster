@@ -229,9 +229,9 @@ describe("Groupper - default", () => {
                         if (e.keyCode === keyEsc) {
                             // Focusing next button.
                             (
-                                document.activeElement?.nextElementSibling as
-                                    | HTMLElement
-                                    | undefined
+                                getTabsterTestVariables().dom?.getActiveElement(
+                                    document
+                                )?.nextElementSibling as HTMLElement | undefined
                             )?.focus();
                         }
                     });
@@ -414,17 +414,29 @@ describe("Groupper - limited focus trap", () => {
                     expect(el?.textContent).toEqual("Foo1Bar1")
                 )
                 .eval((action) => {
-                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
-                        document.activeElement as HTMLElement,
-                        action
-                    );
+                    const activeElement =
+                        getTabsterTestVariables()?.dom?.getActiveElement(
+                            document
+                        );
+
+                    activeElement &&
+                        getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
+                            activeElement as HTMLElement,
+                            action
+                        );
                 }, Types.GroupperMoveFocusActions.Enter)
                 .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
                 .eval((action) => {
-                    getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
-                        document.activeElement as HTMLElement,
-                        action
-                    );
+                    const activeElement =
+                        getTabsterTestVariables()?.dom?.getActiveElement(
+                            document
+                        );
+
+                    activeElement &&
+                        getTabsterTestVariables()?.dispatchGroupperMoveFocusEvent?.(
+                            activeElement as HTMLElement,
+                            action
+                        );
                 }, Types.GroupperMoveFocusActions.Escape)
                 .activeElement((el) =>
                     expect(el?.textContent).toEqual("Foo1Bar1")
@@ -720,7 +732,12 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                                     // Enter was pressed for the second time, let's alter the default behaviour.
                                     e.preventDefault();
                                     e.detail.relatedEvent.preventDefault();
-                                    document.getElementById("button1")?.focus();
+                                    getTabsterTestVariables()
+                                        .dom?.getElementById(
+                                            document,
+                                            "button1"
+                                        )
+                                        ?.focus();
                                 }
 
                                 (
@@ -729,8 +746,9 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                             }
 
                             if (
-                                document.activeElement?.textContent ===
-                                "Button3"
+                                getTabsterTestVariables().dom?.getActiveElement(
+                                    document
+                                )?.textContent === "Button3"
                             ) {
                                 // For the sake of test, we will move focus after Button3 is focused for the second time.
                                 if (
@@ -738,7 +756,12 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                                 ) {
                                     e.preventDefault();
                                     e.detail?.relatedEvent?.preventDefault();
-                                    document.getElementById("button4")?.focus();
+                                    getTabsterTestVariables()
+                                        .dom?.getElementById(
+                                            document,
+                                            "button4"
+                                        )
+                                        ?.focus();
                                 }
 
                                 (window as WindowWithButton2).__hadButton3 =

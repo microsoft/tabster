@@ -7,6 +7,7 @@ import { nativeFocus } from "keyborg";
 
 import * as Types from "./Types";
 import { GetWindow, Visibilities, Visibility } from "./Types";
+import { dom } from "./DOMAPI";
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;
@@ -284,7 +285,8 @@ export function createElementTreeWalker(
         ? acceptNode
         : ({ acceptNode } as NodeFilter)) as unknown as NodeFilter;
 
-    return doc.createTreeWalker(
+    return dom.createTreeWalker(
+        doc,
         root,
         NodeFilter.SHOW_ELEMENT,
         filter,
@@ -455,9 +457,9 @@ export function getScrollableContainer(
 
     if (doc) {
         for (
-            let el: HTMLElement | null = element.parentElement;
+            let el: HTMLElement | null = dom.getParentElement(element);
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             if (
                 el.scrollWidth > el.clientWidth ||
@@ -557,7 +559,7 @@ export function clearElementCache(
         const el = wel && wel.get();
 
         if (el && parent) {
-            if (!parent.contains(el)) {
+            if (!dom.nodeContains(parent, el)) {
                 continue;
             }
         }
@@ -571,7 +573,7 @@ export function documentContains(
     doc: HTMLDocument | null | undefined,
     element: HTMLElement
 ): boolean {
-    return !!doc?.body?.contains(element);
+    return dom.nodeContains(doc?.body, element);
 }
 
 export function matchesSelector(
@@ -772,7 +774,7 @@ export class DummyInput {
 
         delete (input as HTMLElementWithDummyContainer).__tabsterDummyContainer;
 
-        input.parentElement?.removeChild(input);
+        dom.getParentNode(input)?.removeChild(input);
     }
 
     setTopLeft(top: number, left: number): void {
@@ -982,7 +984,9 @@ export class DummyInputManager {
                 insertBefore =
                     (moveOutOfElement && isBackward) ||
                     (!moveOutOfElement && !isBackward)
-                        ? (element.firstElementChild as HTMLElement | null)
+                        ? (dom.getFirstElementChild(
+                              element
+                          ) as HTMLElement | null)
                         : null;
             } else {
                 if (
@@ -1001,12 +1005,14 @@ export class DummyInputManager {
                         ? (element.firstElementChild as HTMLElementWithDummyContainer | null)
                         : null;
                 } else {
-                    parent = element.parentElement as HTMLElement | null;
+                    parent = dom.getParentElement(element);
                     insertBefore =
                         (moveOutOfElement && isBackward) ||
                         (!moveOutOfElement && !isBackward)
                             ? element
-                            : (element.nextElementSibling as HTMLElement | null);
+                            : (dom.getNextElementSibling(
+                                  element
+                              ) as HTMLElement | null);
                 }
 
                 let potentialDummy: HTMLElementWithDummyContainer | null;
@@ -1020,7 +1026,7 @@ export class DummyInputManager {
                     potentialDummy = (
                         (moveOutOfElement && isBackward) ||
                         (!moveOutOfElement && !isBackward)
-                            ? insertBefore?.previousElementSibling
+                            ? dom.getPreviousElementSibling(insertBefore)
                             : insertBefore
                     ) as HTMLElementWithDummyContainer | null;
 
@@ -1031,7 +1037,9 @@ export class DummyInputManager {
                             (moveOutOfElement && isBackward) ||
                             (!moveOutOfElement && !isBackward)
                                 ? potentialDummy
-                                : (potentialDummy?.nextElementSibling as HTMLElement | null);
+                                : (dom.getNextElementSibling(
+                                      potentialDummy
+                                  ) as HTMLElement | null);
                     } else {
                         dummyFor = undefined;
                     }
@@ -1047,7 +1055,7 @@ export class DummyInputManager {
                     relatedEvent,
                 })
             ) {
-                parent.insertBefore(input, insertBefore);
+                dom.insertBefore(parent, input, insertBefore);
                 nativeFocus(input);
             }
         }
@@ -1078,16 +1086,21 @@ export class DummyInputManager {
 
             if (hasSubFocusable(sourceElement) && !isBackward) {
                 dummyParent = sourceElement;
-                insertBefore =
-                    sourceElement.firstElementChild as HTMLElement | null;
+                insertBefore = dom.getFirstElementChild(
+                    sourceElement
+                ) as HTMLElement | null;
             } else {
-                dummyParent = sourceElement.parentElement;
+                dummyParent = dom.getParentElement(sourceElement);
                 insertBefore = isBackward
                     ? sourceElement
-                    : (sourceElement.nextElementSibling as HTMLElement | null);
+                    : (dom.getNextElementSibling(
+                          sourceElement
+                      ) as HTMLElement | null);
             }
 
-            dummyParent?.insertBefore(input, insertBefore);
+            if (dummyParent) {
+                dom.insertBefore(dummyParent, input, insertBefore);
+            }
         }
     }
 }
@@ -1133,7 +1146,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
     > = new Set();
     private _updateTimer?: number;
     private _lastUpdateQueueTime = 0;
-    private _changedParents: WeakSet<HTMLElement> = new WeakSet();
+    private _changedParents: WeakSet<Node> = new WeakSet();
     private _updateDummyInputsTimer?: number;
     private _dummyElements: WeakHTMLElement<HTMLElement>[] = [];
     private _dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
@@ -1207,7 +1220,7 @@ export class DummyInputObserver implements Types.DummyInputObserver {
                     const callback = this._dummyCallbacks.get(dummyElement);
 
                     if (callback) {
-                        const dummyParent = dummyElement.parentElement;
+                        const dummyParent = dom.getParentNode(dummyElement);
 
                         if (
                             !dummyParent ||
@@ -1645,28 +1658,42 @@ class DummyInputManagerCore {
         }
 
         if (this._isOutside) {
-            const elementParent = element.parentElement;
+            const elementParent = dom.getParentNode(element);
 
             if (elementParent) {
-                const nextSibling = element.nextElementSibling;
+                const nextSibling = dom.getNextSibling(element);
 
                 if (nextSibling !== lastDummyInput) {
-                    elementParent.insertBefore(lastDummyInput, nextSibling);
+                    dom.insertBefore(
+                        elementParent,
+                        lastDummyInput,
+                        nextSibling
+                    );
                 }
 
-                if (element.previousElementSibling !== firstDummyInput) {
-                    elementParent.insertBefore(firstDummyInput, element);
+                if (
+                    dom.getPreviousElementSibling(element) !== firstDummyInput
+                ) {
+                    dom.insertBefore(elementParent, firstDummyInput, element);
                 }
             }
         } else {
-            if (element.lastElementChild !== lastDummyInput) {
-                element.appendChild(lastDummyInput);
+            if (dom.getLastElementChild(element) !== lastDummyInput) {
+                dom.appendChild(element, lastDummyInput);
             }
 
-            const firstElementChild = element.firstElementChild;
+            const firstElementChild = dom.getFirstElementChild(element);
 
-            if (firstElementChild && firstElementChild !== firstDummyInput) {
-                element.insertBefore(firstDummyInput, firstElementChild);
+            if (
+                firstElementChild &&
+                firstElementChild !== firstDummyInput &&
+                firstElementChild.parentNode
+            ) {
+                dom.insertBefore(
+                    firstElementChild.parentNode,
+                    firstDummyInput,
+                    firstElementChild
+                );
             }
         }
     }
@@ -1694,7 +1721,7 @@ class DummyInputManagerCore {
         for (
             let element: HTMLElement | undefined | null = from;
             element && element.nodeType === Node.ELEMENT_NODE;
-            element = element.parentElement
+            element = dom.getParentElement(element)
         ) {
             let scrollTopLeft = scrollTopLeftCache.get(element);
 
@@ -1746,7 +1773,11 @@ class DummyInputManagerCore {
 export function getLastChild(container: HTMLElement): HTMLElement | undefined {
     let lastChild: HTMLElement | null = null;
 
-    for (let i = container.lastElementChild; i; i = i.lastElementChild) {
+    for (
+        let i = dom.getLastElementChild(container);
+        i;
+        i = dom.getLastElementChild(i)
+    ) {
         lastChild = i as HTMLElement;
     }
 
@@ -1762,9 +1793,11 @@ export function getAdjacentElement(
 
     while (cur && !adjacent) {
         adjacent = (
-            prev ? cur.previousElementSibling : cur.nextElementSibling
+            prev
+                ? dom.getPreviousElementSibling(cur)
+                : dom.getNextElementSibling(cur)
         ) as HTMLElement | null;
-        cur = cur.parentElement;
+        cur = dom.getParentElement(cur);
     }
 
     return adjacent || undefined;

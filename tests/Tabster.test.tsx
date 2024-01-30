@@ -275,7 +275,10 @@ describe("Tabster dispose", () => {
             <div id="root" {...getTabsterAttribute({ root: {} })} />
         )
             .eval(() => {
-                const root = document.getElementById("root");
+                const root = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "root"
+                );
                 return !!(
                     root &&
                     getTabsterTestVariables().core?.core.storageEntry(root)
@@ -291,7 +294,10 @@ describe("Tabster dispose", () => {
                     tabsterTest.makeNoOp?.(tabsterTest.core, true);
                 }
 
-                const root = document.getElementById("root");
+                const root = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "root"
+                );
 
                 return !!(root && tabsterTest.core?.core.storageEntry(root));
             })
@@ -305,7 +311,10 @@ describe("Tabster dispose", () => {
                     tabsterTest.makeNoOp?.(tabsterTest.core, false);
                 }
 
-                const root = document.getElementById("root");
+                const root = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "root"
+                );
 
                 return !!(root && tabsterTest.core?.core.storageEntry(root));
             })
@@ -428,7 +437,11 @@ describe("Tabster create", () => {
                 const tabster = vars.createTabster?.(window, { autoRoot: {} });
                 tabster && vars.getModalizer?.(tabster);
 
-                const modalContainer = document.getElementById("modal");
+                const modalContainer =
+                    getTabsterTestVariables().dom?.getElementById(
+                        document,
+                        "modal"
+                    );
 
                 if (modalContainer && tabster) {
                     const first = tabster.focusable.findFirst({
@@ -554,6 +567,7 @@ describe("Tabster create", () => {
             .check((hasInstance: boolean) => {
                 expect(hasInstance).toBe(true);
             })
+            .wait(500)
             .eval(() => {
                 return document.body.getAttribute("data-tabster");
             })

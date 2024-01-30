@@ -107,6 +107,46 @@ export interface TabsterCoreProps {
      * Currently only used to detect tabster contexts
      */
     getParent?(el: Node): Node | null;
+    /**
+     * Ability to redefine all DOM API calls used by Tabster. For example, for
+     * ShadowDOM support.
+     */
+    DOMAPI?: Partial<DOMAPI>;
+}
+
+export interface DOMAPI {
+    createMutationObserver: (callback: MutationCallback) => MutationObserver;
+    createTreeWalker(
+        doc: Document,
+        root: Node,
+        whatToShow?: number,
+        filter?: NodeFilter | null
+    ): TreeWalker;
+    getParentNode(node: Node | null | undefined): ParentNode | null;
+    getParentElement(
+        element: HTMLElement | null | undefined
+    ): HTMLElement | null;
+    nodeContains(
+        parent: Node | null | undefined,
+        child: Node | null | undefined
+    ): boolean;
+    getActiveElement(doc: Document): Element | null;
+    querySelector(element: ParentNode, selector: string): Element | null;
+    querySelectorAll(element: ParentNode, selector: string): Element[];
+    getElementById(doc: Document, id: string): HTMLElement | null;
+    getFirstChild(node: Node | null | undefined): ChildNode | null;
+    getLastChild(node: Node | null | undefined): ChildNode | null;
+    getNextSibling(node: Node | null | undefined): ChildNode | null;
+    getPreviousSibling(node: Node | null | undefined): ChildNode | null;
+    getFirstElementChild(element: Element | null | undefined): Element | null;
+    getLastElementChild(element: Element | null | undefined): Element | null;
+    getNextElementSibling(element: Element | null | undefined): Element | null;
+    getPreviousElementSibling(
+        element: Element | null | undefined
+    ): Element | null;
+    appendChild(parent: Node, child: Node): Node;
+    insertBefore(parent: Node, child: Node, referenceChild: Node | null): Node;
+    getSelection(ref: Node): Selection | null;
 }
 
 export type GetTabster = () => TabsterCore;

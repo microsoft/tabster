@@ -20,6 +20,7 @@ import {
     getAdjacentElement,
     dispatchMoveFocusEvent,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 class GroupperDummyManager extends DummyInputManager {
     constructor(
@@ -153,7 +154,7 @@ export class Groupper
         if (
             !this._shouldTabInside &&
             currentElement &&
-            groupperElement.contains(currentElement) &&
+            dom.nodeContains(groupperElement, currentElement) &&
             !currentIsDummy
         ) {
             return { element: undefined, outOfDOMOrder: true };
@@ -163,7 +164,7 @@ export class Groupper
 
         if (
             !currentElement ||
-            !groupperElement.contains(currentElement) ||
+            !dom.nodeContains(groupperElement, currentElement) ||
             currentIsDummy
         ) {
             return {
@@ -234,7 +235,11 @@ export class Groupper
         const element = this.getElement() || null;
         let isParentActive = true;
 
-        for (let e = element?.parentElement; e; e = e.parentElement) {
+        for (
+            let e = dom.getParentElement(element);
+            e;
+            e = dom.getParentElement(e)
+        ) {
             const g = getTabsterOnElement(this._tabster, e)?.groupper as
                 | Groupper
                 | undefined;
@@ -307,7 +312,7 @@ export class Groupper
     ): number | undefined {
         const cachedGrouppers = state.cachedGrouppers;
 
-        const parentElement = this.getElement()?.parentElement;
+        const parentElement = dom.getParentElement(this.getElement());
         const parentCtx =
             parentElement &&
             RootAPI.getTabsterContext(this._tabster, parentElement);
@@ -341,7 +346,7 @@ export class Groupper
                 !getIsActive(parentGroupper) &&
                 parentGroupperElement &&
                 state.container !== parentGroupperElement &&
-                state.container.contains(parentGroupperElement)
+                dom.nodeContains(state.container, parentGroupperElement)
             ) {
                 // Do not fall into a child groupper of inactive parent groupper if it's in the scope of the search.
                 state.skippedFocusable = true;
@@ -362,7 +367,10 @@ export class Groupper
                     if (
                         parentGroupperElement &&
                         !getIsActive(parentCtxGroupper) &&
-                        state.container.contains(parentGroupperElement) &&
+                        dom.nodeContains(
+                            state.container,
+                            parentGroupperElement
+                        ) &&
                         parentGroupperElement !== state.container
                     ) {
                         state.skippedFocusable = true;
@@ -372,7 +380,7 @@ export class Groupper
 
                 if (
                     groupperElement !== element &&
-                    groupperElement.contains(element)
+                    dom.nodeContains(groupperElement, element)
                 ) {
                     state.skippedFocusable = true;
                     return NodeFilter.FILTER_REJECT;
@@ -431,7 +439,15 @@ export class GroupperAPI implements Types.GroupperAPI {
         // Making sure groupper's onFocus is called before modalizer's onFocus.
         this._tabster.focusedElement.subscribeFirst(this._onFocus);
 
-        win.document.addEventListener("mousedown", this._onMouseDown, true);
+        const doc = win.document;
+
+        const activeElement = dom.getActiveElement(doc);
+
+        if (activeElement) {
+            this._onFocus(activeElement as HTMLElement);
+        }
+
+        doc.addEventListener("mousedown", this._onMouseDown, true);
         win.addEventListener("keydown", this._onKeyDown, true);
         win.addEventListener(
             Types.GroupperMoveFocusEventName,
@@ -496,7 +512,7 @@ export class GroupperAPI implements Types.GroupperAPI {
         // make sure all grouppers are processed).
         if (
             focusedElement &&
-            element.contains(focusedElement) &&
+            dom.nodeContains(element, focusedElement) &&
             !this._updateTimer
         ) {
             this._updateTimer = this._win().setTimeout(() => {
@@ -551,7 +567,7 @@ export class GroupperAPI implements Types.GroupperAPI {
         for (
             let el = element as HTMLElement | null;
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             const groupper = getTabsterOnElement(this._tabster, el)?.groupper;
 
@@ -606,7 +622,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     };
 
     private _onMoveFocus = (e: Types.GroupperMoveFocusEvent): void => {
-        const element = e.target as HTMLElement | null | undefined;
+        const element = e.composedPath()[0] as HTMLElement | null | undefined;
         const action = e.detail?.action;
 
         if (element && action !== undefined && !e.defaultPrevented) {
@@ -682,13 +698,17 @@ export class GroupperAPI implements Types.GroupperAPI {
         let groupper = ctx?.groupper || modalizerInGroupper;
         const groupperElement = groupper?.getElement();
 
-        if (groupper && groupperElement && groupperElement.contains(element)) {
+        if (
+            groupper &&
+            groupperElement &&
+            dom.nodeContains(groupperElement, element)
+        ) {
             let next: HTMLElement | null | undefined;
 
             if (element !== groupperElement || fromModalizer) {
                 next = groupper.getFirst(true);
             } else {
-                const parentElement = groupperElement.parentElement;
+                const parentElement = dom.getParentElement(groupperElement);
                 const parentCtx = parentElement
                     ? RootAPI.getTabsterContext(tabster, parentElement)
                     : undefined;

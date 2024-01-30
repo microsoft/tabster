@@ -94,14 +94,13 @@ describe("onKeyDown", () => {
                         (
                             e: Types.TabsterEventWithDetails<Types.FocusedElementDetails>
                         ) => {
+                            const target = e.composedPath()[0];
                             (
                                 window as WindowWithFocusEventsHistory
                             ).__tabsterFocusEvents?.push(
-                                `${eventName} ${
-                                    (e.target as HTMLElement)?.id
-                                } ${e.detail?.isFocusedProgrammatically} ${
-                                    e.detail?.modalizerId
-                                }`
+                                `${eventName} ${(target as HTMLElement)?.id} ${
+                                    e.detail?.isFocusedProgrammatically
+                                } ${e.detail?.modalizerId}`
                             );
                         }
                     );
@@ -111,6 +110,9 @@ describe("onKeyDown", () => {
                 addEvent("tabster:focusout");
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -118,6 +120,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-2")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -126,6 +131,7 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) => expect(el).toBeNull())
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -133,6 +139,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-2")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -140,6 +149,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .focusElement("#modal-button-1")
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("modal-button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -148,6 +160,7 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab(true)
+            .activeElement((el) => expect(el).toBeNull())
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -155,6 +168,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("modal-button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -188,7 +204,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -226,7 +244,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))

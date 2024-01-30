@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from "keyborg";
+import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
 import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
@@ -131,9 +131,10 @@ export class Root
         }
 
         const w = win();
+        const doc = w.document;
 
-        w.document.addEventListener("focusin", this._onFocusIn);
-        w.document.addEventListener("focusout", this._onFocusOut);
+        doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
+        doc.addEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
 
         this._add();
     }
@@ -153,9 +154,10 @@ export class Root
         this._onDispose(this);
 
         const win = this._tabster.getWindow();
+        const doc = win.document;
 
-        win.document.removeEventListener("focusin", this._onFocusIn);
-        win.document.removeEventListener("focusout", this._onFocusOut);
+        doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
+        doc.removeEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
 
         if (this._setFocusedTimer) {
             win.clearTimeout(this._setFocusedTimer);
@@ -230,7 +232,7 @@ export class Root
     private _onFocusIn = (event: FocusEvent) => {
         const getParent = this._tabster.getParent;
         const rootElement = this._element.get();
-        let curElement = event.target as HTMLElement | null;
+        let curElement = event.composedPath()[0] as HTMLElement | null;
 
         do {
             if (curElement === rootElement) {
@@ -526,7 +528,9 @@ export class RootAPI implements Types.RootAPI {
         }
 
         const shouldIgnoreKeydown = (event: KeyboardEvent) =>
-            !!ignoreKeydown[event.key as "Tab"];
+            !!ignoreKeydown[
+                event.key as keyof Types.FocusableProps["ignoreKeydown"]
+            ];
 
         return root
             ? {

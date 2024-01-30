@@ -124,7 +124,11 @@ describe("Focusable", () => {
                     ]);
                 })
                 .eval(() => {
-                    const container = document.getElementById("groupper");
+                    const container =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "groupper"
+                        );
 
                     return container
                         ? getTabsterTestVariables()
@@ -204,7 +208,11 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const container = document.getElementById("groupper")!;
+                    const container =
+                        getTabsterTestVariables().dom!.getElementById(
+                            document,
+                            "groupper"
+                        )!;
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
                         .core?.focusable.findAll({
@@ -234,7 +242,11 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const container = document.getElementById("groupper")!;
+                    const container =
+                        getTabsterTestVariables().dom!.getElementById(
+                            document,
+                            "groupper"
+                        )!;
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
                         .core?.focusable.findAll({
@@ -265,8 +277,15 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const container = document.getElementById("groupper")!;
-                    const from = document.getElementById("button8");
+                    const container =
+                        getTabsterTestVariables().dom!.getElementById(
+                            document,
+                            "groupper"
+                        )!;
+                    const from = getTabsterTestVariables().dom?.getElementById(
+                        document,
+                        "button8"
+                    );
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
                         .core?.focusable.findAll({
@@ -291,8 +310,15 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const container = document.getElementById("groupper")!;
-                    const from = document.getElementById("button8");
+                    const container =
+                        getTabsterTestVariables().dom!.getElementById(
+                            document,
+                            "groupper"
+                        )!;
+                    const from = getTabsterTestVariables().dom?.getElementById(
+                        document,
+                        "button8"
+                    );
                     const ret: (string | null)[] = [];
                     const found = getTabsterTestVariables()
                         .core?.focusable.findAll({
@@ -397,7 +423,11 @@ describe("Focusable", () => {
                     ]);
                 })
                 .eval(() => {
-                    const container = document.getElementById("modalizer");
+                    const container =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "modalizer"
+                        );
                     return (
                         container &&
                         getTabsterTestVariables()
@@ -411,7 +441,11 @@ describe("Focusable", () => {
                     expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
                 })
                 .eval(() => {
-                    const container = document.getElementById("modalizer2");
+                    const container =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "modalizer2"
+                        );
                     return (
                         container &&
                         getTabsterTestVariables()

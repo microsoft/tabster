@@ -25,6 +25,7 @@ import {
     dispatchMoveFocusEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
@@ -254,7 +255,7 @@ export class Mover
         if (
             this._props.tabbable ||
             currentIsDummy ||
-            (currentElement && !container.contains(currentElement))
+            (currentElement && !dom.nodeContains(container, currentElement))
         ) {
             const findProps: Types.FindNextProps = {
                 currentElement,
@@ -301,7 +302,7 @@ export class Mover
         if (
             moverElement &&
             (memorizeCurrent || visibilityAware || hasDefault) &&
-            (!moverElement.contains(state.from) ||
+            (!dom.nodeContains(moverElement, state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === moverElement)
@@ -417,38 +418,42 @@ export class Mover
         const tabsterFocusable = this._tabster.focusable;
         let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
-        const observer = new MutationObserver((mutations: MutationRecord[]) => {
-            for (const mutation of mutations) {
-                const target = mutation.target;
-                const removed = mutation.removedNodes;
-                const added = mutation.addedNodes;
+        const observer = dom.createMutationObserver(
+            (mutations: MutationRecord[]) => {
+                for (const mutation of mutations) {
+                    const target = mutation.target;
+                    const removed = mutation.removedNodes;
+                    const added = mutation.addedNodes;
 
-                if (mutation.type === "attributes") {
-                    if (mutation.attributeName === "tabindex") {
-                        updateQueue.push({
-                            element: target as HTMLElement,
-                            type: _moverUpdateAttr,
-                        });
-                    }
-                } else {
-                    for (let i = 0; i < removed.length; i++) {
-                        updateQueue.push({
-                            element: removed[i] as HTMLElement as HTMLElement,
-                            type: _moverUpdateRemove,
-                        });
-                    }
+                    if (mutation.type === "attributes") {
+                        if (mutation.attributeName === "tabindex") {
+                            updateQueue.push({
+                                element: target as HTMLElement,
+                                type: _moverUpdateAttr,
+                            });
+                        }
+                    } else {
+                        for (let i = 0; i < removed.length; i++) {
+                            updateQueue.push({
+                                element: removed[
+                                    i
+                                ] as HTMLElement as HTMLElement,
+                                type: _moverUpdateRemove,
+                            });
+                        }
 
-                    for (let i = 0; i < added.length; i++) {
-                        updateQueue.push({
-                            element: added[i] as HTMLElement,
-                            type: _moverUpdateAdd,
-                        });
+                        for (let i = 0; i < added.length; i++) {
+                            updateQueue.push({
+                                element: added[i] as HTMLElement,
+                                type: _moverUpdateAdd,
+                            });
+                        }
                     }
                 }
-            }
 
-            requestUpdate();
-        });
+                requestUpdate();
+            }
+        );
 
         const setElement = (element: HTMLElement, remove?: boolean): void => {
             const current = allElements.get(element);
@@ -541,9 +546,9 @@ export class Mover
             }
 
             for (
-                let el = element.firstElementChild;
+                let el = dom.getFirstElementChild(element);
                 el;
-                el = el.nextElementSibling
+                el = dom.getNextElementSibling(el)
             ) {
                 removeWalk(el as HTMLElement);
             }
@@ -584,7 +589,7 @@ export class Mover
             for (
                 let el: HTMLElement | null = element;
                 el;
-                el = el.parentElement
+                el = dom.getParentElement(el)
             ) {
                 const toe = getTabsterOnElement(this._tabster, el);
 
@@ -761,9 +766,10 @@ export class MoverAPI implements Types.MoverAPI {
         let deepestFocusableElement = element;
 
         for (
-            let el: HTMLElement | null | undefined = element?.parentElement;
+            let el: HTMLElement | null | undefined =
+                dom.getParentElement(element);
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             // We go through all Movers up from the focused element and
             // set their current element to the deepest focusable of that
@@ -821,9 +827,9 @@ export class MoverAPI implements Types.MoverAPI {
                 // the grouppers between the current element and the current mover.
                 for (
                     let el: HTMLElement | null | undefined =
-                        groupper.getElement()?.parentElement;
+                        dom.getParentElement(groupper.getElement());
                     el && el !== container;
-                    el = el.parentElement
+                    el = dom.getParentElement(el)
                 ) {
                     if (
                         getTabsterOnElement(tabster, el)?.groupper?.isActive(
@@ -1259,7 +1265,7 @@ export class MoverAPI implements Types.MoverAPI {
     };
 
     private _onMoveFocus = (e: Types.MoverMoveFocusEvent): void => {
-        const element = e.target as HTMLElement | null | undefined;
+        const element = e.composedPath()[0] as HTMLElement | null | undefined;
         const key = e.detail?.key;
 
         if (element && key !== undefined && !e.defaultPrevented) {
@@ -1299,8 +1305,7 @@ export class MoverAPI implements Types.MoverAPI {
                     // the keypress.
                     // TODO: Have a look at range, week, time, time, date, datetime-local.
                     if (textLength) {
-                        const selection =
-                            element.ownerDocument.defaultView?.getSelection();
+                        const selection = dom.getSelection(element);
 
                         if (selection) {
                             const initialLength = selection.toString().length;
@@ -1359,7 +1364,7 @@ export class MoverAPI implements Types.MoverAPI {
                         focusNode: prevFocusNode,
                         anchorOffset: prevAnchorOffset,
                         focusOffset: prevFocusOffset,
-                    } = win.getSelection() || {};
+                    } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
                     this._ignoredInputTimer = win.setTimeout(() => {
@@ -1370,7 +1375,7 @@ export class MoverAPI implements Types.MoverAPI {
                             focusNode,
                             anchorOffset,
                             focusOffset,
-                        } = win.getSelection() || {};
+                        } = dom.getSelection(element) || {};
 
                         if (
                             anchorNode !== prevAnchorNode ||
@@ -1388,8 +1393,8 @@ export class MoverAPI implements Types.MoverAPI {
 
                         if (anchorNode && focusNode) {
                             if (
-                                element.contains(anchorNode) &&
-                                element.contains(focusNode)
+                                dom.nodeContains(element, anchorNode) &&
+                                dom.nodeContains(element, focusNode)
                             ) {
                                 if (anchorNode !== element) {
                                     let anchorFound = false;
@@ -1405,7 +1410,10 @@ export class MoverAPI implements Types.MoverAPI {
 
                                         const nodeText = node.textContent;
 
-                                        if (nodeText && !node.firstChild) {
+                                        if (
+                                            nodeText &&
+                                            !dom.getFirstChild(node)
+                                        ) {
                                             const len = nodeText.length;
 
                                             if (anchorFound) {
@@ -1421,7 +1429,7 @@ export class MoverAPI implements Types.MoverAPI {
                                         let stop = false;
 
                                         for (
-                                            let e = node.firstChild;
+                                            let e = dom.getFirstChild(node);
                                             e && !stop;
                                             e = e.nextSibling
                                         ) {

@@ -14,6 +14,7 @@ import {
     triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _containerHistoryLength = 10;
 
@@ -340,17 +341,23 @@ function buildSelector(element: HTMLElement): string | undefined {
 
     const selector: string[] = [buildElementSelector(element)];
 
-    let el = element.parentElement;
+    let node = dom.getParentNode(element);
 
-    while (el) {
-        const isBody = el.tagName === "BODY";
-        selector.unshift(buildElementSelector(el, false, !isBody));
+    while (node && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+        // Stop at the shadow root as cross shadow selectors won't work.
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const isBody = (node as HTMLElement).tagName === "BODY";
 
-        if (isBody) {
-            break;
+            selector.unshift(
+                buildElementSelector(node as HTMLElement, false, !isBody)
+            );
+
+            if (isBody) {
+                break;
+            }
         }
 
-        el = el.parentElement;
+        node = dom.getParentNode(node);
     }
 
     return selector.join(" ");
@@ -571,7 +578,7 @@ export class Deloser
             this._snapshotIndex
         ].filter((we) => {
             const e = we.get();
-            return e && preserveExisting ? element.contains(e) : false;
+            return e && preserveExisting ? dom.nodeContains(element, e) : false;
         });
     };
 
@@ -589,7 +596,7 @@ export class Deloser
             const e = we.get();
             const element = this._element.get();
 
-            if (e && element && element.contains(e)) {
+            if (e && element && dom.nodeContains(element, e)) {
                 if (this._tabster.focusable.isFocusable(e)) {
                     return e;
                 }
@@ -600,10 +607,13 @@ export class Deloser
                 const selector = we.getData();
 
                 if (selector && element) {
-                    let els: NodeListOf<Element>;
+                    let els: Element[];
 
                     try {
-                        els = element.ownerDocument.querySelectorAll(selector);
+                        els = dom.querySelectorAll(
+                            element.ownerDocument,
+                            selector
+                        );
                     } catch (e) {
                         if (__DEV__) {
                             // This should never happen, unless there is some bug in buildElementSelector().
@@ -682,7 +692,7 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._tabster.focusedElement.subscribe(this._onFocus);
             const doc = this._win().document;
 
-            const activeElement = doc.activeElement;
+            const activeElement = dom.getActiveElement(doc);
 
             if (activeElement && activeElement !== doc.body) {
                 // Adding currently focused element to the deloser history.
@@ -733,7 +743,8 @@ export class DeloserAPI implements Types.DeloserAPI {
         );
 
         if (
-            element.contains(
+            dom.nodeContains(
+                element,
                 this._tabster.focusedElement.getFocusedElement() ?? null
             )
         ) {
@@ -744,7 +755,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {
-        for (let e: HTMLElement | null = element; e; e = e.parentElement) {
+        for (
+            let e: HTMLElement | null = element;
+            e;
+            e = dom.getParentElement(e)
+        ) {
             const tabsterOnElement = getTabsterOnElement(this._tabster, e);
 
             if (tabsterOnElement && tabsterOnElement.deloser) {
@@ -874,7 +889,11 @@ export class DeloserAPI implements Types.DeloserAPI {
     ): Types.Deloser | undefined {
         let root: Types.Root | undefined;
 
-        for (let e: HTMLElement | null = element; e; e = e.parentElement) {
+        for (
+            let e: HTMLElement | null = element;
+            e;
+            e = dom.getParentElement(e)
+        ) {
             const tabsterOnElement = getTabsterOnElement(tabster, e);
 
             if (tabsterOnElement) {

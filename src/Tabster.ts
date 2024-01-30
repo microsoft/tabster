@@ -31,6 +31,8 @@ import {
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
+import { dom, setDOMAPI } from "./DOMAPI";
+import * as shadowDOMAPI from "./Shadowdomize";
 
 export { Types };
 export * from "./AttributeHelpers";
@@ -99,6 +101,10 @@ class TabsterCore implements Types.TabsterCore {
 
         const getWindow = this.getWindow;
 
+        if (props?.DOMAPI) {
+            setDOMAPI({ ...props.DOMAPI });
+        }
+
         this.keyboardNavigation = new KeyboardNavigationState(getWindow);
         this.focusedElement = new FocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this);
@@ -113,7 +119,7 @@ class TabsterCore implements Types.TabsterCore {
 
         this._dummyObserver = new DummyInputObserver(getWindow);
 
-        this.getParent = props?.getParent ?? ((el) => el.parentElement);
+        this.getParent = props?.getParent ?? dom.getParentNode;
 
         this.internal = {
             stopObserver: (): void => {
@@ -333,7 +339,9 @@ export function createTabster(
     }
 
     tabster = new TabsterCore(win, props);
+
     (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
+
     return tabster.createTabster();
 }
 
@@ -346,12 +354,17 @@ export function getTabster(win: Window): Types.Tabster | null {
     return tabster ? tabster.createTabster(true) : null;
 }
 
+export function getShadowDOMAPI(): Types.DOMAPI {
+    return shadowDOMAPI;
+}
+
 /**
  * Creates a new groupper instance or returns an existing one
  * @param tabster Tabster instance
  */
 export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.groupper) {
         tabsterCore.groupper = new GroupperAPI(
             tabsterCore,
@@ -368,6 +381,7 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
  */
 export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.mover) {
         tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
     }
@@ -377,6 +391,7 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
 
 export function getOutline(tabster: Types.Tabster): Types.OutlineAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.outline) {
         tabsterCore.outline = new OutlineAPI(tabsterCore);
     }
@@ -394,6 +409,7 @@ export function getDeloser(
     props?: { autoDeloser: Types.DeloserProps }
 ): Types.DeloserAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.deloser) {
         tabsterCore.deloser = new DeloserAPI(tabsterCore, props);
     }
@@ -422,6 +438,7 @@ export function getModalizer(
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.modalizer) {
         tabsterCore.modalizer = new ModalizerAPI(
             tabsterCore,
@@ -437,6 +454,7 @@ export function getObservedElement(
     tabster: Types.Tabster
 ): Types.ObservedElementAPI {
     const tabsterCore = tabster.core;
+
     if (!tabsterCore.observedElement) {
         tabsterCore.observedElement = new ObservedElementAPI(tabsterCore);
     }

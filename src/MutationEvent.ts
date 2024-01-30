@@ -12,6 +12,7 @@ import {
     InstanceContext,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 export function observeMutations(
     doc: HTMLDocument,
@@ -107,7 +108,7 @@ export function observeMutations(
         return NodeFilter.FILTER_SKIP;
     }
 
-    const observer = new MutationObserver(onMutation);
+    const observer = dom.createMutationObserver(onMutation);
 
     if (syncState) {
         updateTabsterElements(getWindow().document.body);
