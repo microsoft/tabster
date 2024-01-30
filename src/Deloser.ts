@@ -343,12 +343,8 @@ function buildSelector(element: HTMLElement): string | undefined {
 
     let node = dom.getParentNode(element);
 
-    while (node) {
-        if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-            // We have reached the shadow root top, cross shadow selectors won't work, stopping.
-            break;
-        }
-
+    while (node && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+        // Stop at the shadow root as cross shadow selectors won't work.
         if (node.nodeType === Node.ELEMENT_NODE) {
             const isBody = (node as HTMLElement).tagName === "BODY";
 

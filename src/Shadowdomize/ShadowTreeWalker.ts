@@ -137,11 +137,19 @@ export class ShadowTreeWalker implements TreeWalker {
     }
 
     public firstChild(): Node | null {
-        throw new Error("Method not implemented.");
+        if (__DEV__) {
+            throw new Error("Method not implemented.");
+        }
+
+        return null;
     }
 
     public lastChild(): Node | null {
-        throw new Error("Method not implemented.");
+        if (__DEV__) {
+            throw new Error("Method not implemented.");
+        }
+
+        return null;
     }
 
     public nextNode(): Node | null {
@@ -250,15 +258,27 @@ export class ShadowTreeWalker implements TreeWalker {
     }
 
     public nextSibling(): Node | null {
-        throw new Error("Method not implemented.");
+        if (__DEV__) {
+            throw new Error("Method not implemented.");
+        }
+
+        return null;
     }
 
     public previousSibling(): Node | null {
-        throw new Error("Method not implemented.");
+        if (__DEV__) {
+            throw new Error("Method not implemented.");
+        }
+
+        return null;
     }
 
     public parentNode(): Node | null {
-        throw new Error("Method not implemented.");
+        if (__DEV__) {
+            throw new Error("Method not implemented.");
+        }
+
+        return null;
     }
 }
 
