@@ -770,8 +770,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             ) {
                 let skip = false;
                 let containsModalizer = false;
+                let containedByModalizer = false;
 
                 if (allVisibleElements) {
+                    const elParent = tabster.getParent(el);
+
                     for (const c of allVisibleElements) {
                         if (el === c) {
                             skip = true;
@@ -781,12 +784,18 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                         if (dom.nodeContains(el, c)) {
                             containsModalizer = true;
                             break;
+                        } else if (dom.nodeContains(c, elParent)) {
+                            // tabster.getParent() could be provided by the application to
+                            // handle, for example, virtual parents. Making sure, we are
+                            // not setting aria-hidden on elements which are virtually
+                            // inside modalizer.
+                            containedByModalizer = true;
                         }
                     }
 
                     if (containsModalizer) {
                         walk(el as HTMLElement);
-                    } else if (!skip) {
+                    } else if (!skip && !containedByModalizer) {
                         toggle(el as HTMLElement, true);
                     }
                 } else {
