@@ -2495,6 +2495,12 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
                     );
                 }
 
+                const tabster = vars.createTabster?.(window, {
+                    getParent,
+                });
+
+                tabster && vars.getModalizer?.(tabster);
+
                 const parent1 = vars.dom?.getElementById(
                     document,
                     "modal-container-1"
@@ -2514,12 +2520,6 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
 
                 child1 && setVirtualParent(child1, parent1);
                 child2 && setVirtualParent(child2, parent2);
-
-                const tabster = vars.createTabster?.(window, {
-                    getParent,
-                });
-
-                tabster && vars.getModalizer?.(tabster);
             })
             .focusElement("#modal-button")
             .activeElement((el) =>
