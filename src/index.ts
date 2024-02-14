@@ -25,5 +25,6 @@ export {
     getShadowDOMAPI,
     dispatchGroupperMoveFocusEvent,
     dispatchMoverMoveFocusEvent,
+    dispatchMoverMemorizedElementEvent,
     Types,
 } from "./Tabster";

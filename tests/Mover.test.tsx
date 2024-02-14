@@ -526,6 +526,74 @@ describe("Mover memorizing current", () => {
                 expect(el?.textContent).toEqual("Button3");
             });
     });
+
+    it("should forget or modify memorized element when tabster:mover:memorized-element is dispatched", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        id="mover"
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button id="button4">Button4</button>
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                const target = vars.dom?.getElementById(document, "mover");
+
+                if (target && vars.dispatchMoverMemorizedElementEvent) {
+                    vars.dispatchMoverMemorizedElementEvent?.(
+                        target,
+                        undefined
+                    );
+                }
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                const target = vars.dom?.getElementById(document, "button4");
+
+                if (target && vars.dispatchMoverMemorizedElementEvent) {
+                    vars.dispatchMoverMemorizedElementEvent?.(target, target);
+                }
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
 });
 
 describe("Mover with excluded part", () => {
