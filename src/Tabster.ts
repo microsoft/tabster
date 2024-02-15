@@ -28,6 +28,7 @@ import {
     stopFakeWeakRefsCleanupAndClearStorage,
     dispatchGroupperMoveFocusEvent,
     dispatchMoverMoveFocusEvent,
+    dispatchMoverMemorizedElementEvent,
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
@@ -37,7 +38,11 @@ import * as shadowDOMAPI from "./Shadowdomize";
 export { Types };
 export * from "./AttributeHelpers";
 
-export { dispatchGroupperMoveFocusEvent, dispatchMoverMoveFocusEvent };
+export {
+    dispatchGroupperMoveFocusEvent,
+    dispatchMoverMoveFocusEvent,
+    dispatchMoverMemorizedElementEvent,
+};
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;

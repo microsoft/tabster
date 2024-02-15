@@ -24,6 +24,7 @@ import {
     getRestorer,
     dispatchGroupperMoveFocusEvent,
     dispatchMoverMoveFocusEvent,
+    dispatchMoverMemorizedElementEvent,
 } from "tabster";
 
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
@@ -120,6 +121,7 @@ export interface BroTestTabsterTestVariables {
     mergeTabsterProps?: typeof mergeTabsterProps;
     dispatchGroupperMoveFocusEvent?: typeof dispatchGroupperMoveFocusEvent;
     dispatchMoverMoveFocusEvent?: typeof dispatchMoverMoveFocusEvent;
+    dispatchMoverMemorizedElementEvent?: typeof dispatchMoverMemorizedElementEvent;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;

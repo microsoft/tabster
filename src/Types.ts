@@ -16,17 +16,21 @@ export const MoverEventName = "tabster:mover";
 export const FocusInEventName = "tabster:focusin";
 export const FocusOutEventName = "tabster:focusout";
 
-// Event to be triggered when Tabster wants to move focus as the result of
+// Event to be dispatched when Tabster wants to move focus as the result of
 // keyboard event. This allows to preventDefault() if you want to have
 // some custom logic.
 export const MoveFocusEventName = "tabster:movefocus";
 
-// Event that can be triggered by the application to programmatically move
+// Event that can be dispatched by the application to programmatically move
 // focus inside Mover.
 export const MoverMoveFocusEventName = "tabster:mover:movefocus";
-// Event that can be triggered by the application to programmatically enter
+// Event that can be dispatched by the application to programmatically enter
 // or escape Groupper.
 export const GroupperMoveFocusEventName = "tabster:groupper:movefocus";
+
+// Event that can be dispatched by the application to forget or modify
+// memorized element in Mover with memorizeCurrent property.
+export const MoverMemorizedElementEventName = "tabster:mover:memorized-element";
 
 export const FocusableSelector = [
     "a[href]",
@@ -38,8 +42,17 @@ export const FocusableSelector = [
     "*[contenteditable]",
 ].join(", ");
 
-// Trigger move focus event on a Mover element.
+// Dispatch move focus event on a Mover element.
 export type MoverMoveFocusEvent = CustomEvent<{ key: MoverKey } | undefined>;
+
+export interface MoverMemorizedElementEventDetails {
+    memorizedElement: HTMLElement | undefined;
+}
+// To be dispatched by the application to forget or modify memorized element
+// in Mover with memorizeCurrent property.
+export type MoverMemorizedElementEvent = CustomEvent<
+    MoverMemorizedElementEventDetails | undefined
+>;
 
 export interface GroupperMoveFocusActions {
     Enter: 1;

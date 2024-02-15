@@ -21,6 +21,7 @@
                 setTabsterAttribute,
                 dispatchGroupperMoveFocusEvent,
                 dispatchMoverMoveFocusEvent,
+                dispatchMoverMemorizedElementEvent,
             } from "../src";
             import * as shadowDOM from "../src/Shadowdomize";
             import { dom } from "../src/DOMAPI";
@@ -62,6 +63,8 @@
                 dispatchGroupperMoveFocusEvent;
             tabsterTest.dispatchMoverMoveFocusEvent =
                 dispatchMoverMoveFocusEvent;
+            tabsterTest.dispatchMoverMemorizedElementEvent =
+                dispatchMoverMemorizedElementEvent;
 
             if (parts !== undefined) {
                 for (let part of parts) {

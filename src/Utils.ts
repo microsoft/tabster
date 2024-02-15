@@ -1837,6 +1837,17 @@ export function dispatchMoverMoveFocusEvent(
     return triggerEvent(target, Types.MoverMoveFocusEventName, { key });
 }
 
+export function dispatchMoverMemorizedElementEvent(
+    target: HTMLElement,
+    memorizedElement: HTMLElement | undefined
+) {
+    return triggerEvent<Types.MoverMemorizedElementEventDetails>(
+        target,
+        Types.MoverMemorizedElementEventName,
+        { memorizedElement }
+    );
+}
+
 export function dispatchGroupperMoveFocusEvent(
     target: HTMLElement,
     action: Types.GroupperMoveFocusAction

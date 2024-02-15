@@ -701,6 +701,10 @@ export class MoverAPI implements Types.MoverAPI {
 
         win.addEventListener("keydown", this._onKeyDown, true);
         win.addEventListener(Types.MoverMoveFocusEventName, this._onMoveFocus);
+        win.addEventListener(
+            Types.MoverMemorizedElementEventName,
+            this._onMemorizedElement
+        );
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -721,6 +725,10 @@ export class MoverAPI implements Types.MoverAPI {
         win.removeEventListener(
             Types.MoverMoveFocusEventName,
             this._onMoveFocus
+        );
+        win.removeEventListener(
+            Types.MoverMemorizedElementEventName,
+            this._onMemorizedElement
         );
 
         Object.keys(this._movers).forEach((moverId) => {
@@ -1271,6 +1279,31 @@ export class MoverAPI implements Types.MoverAPI {
         if (element && key !== undefined && !e.defaultPrevented) {
             this._moveFocus(element, key);
             e.stopImmediatePropagation();
+        }
+    };
+
+    private _onMemorizedElement = (
+        e: Types.MoverMemorizedElementEvent
+    ): void => {
+        const target = e.composedPath()[0] as HTMLElement | null | undefined;
+        let memorizedElement = e.detail?.memorizedElement;
+
+        if (target) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, target);
+            const mover = ctx?.mover;
+
+            if (mover) {
+                if (
+                    memorizedElement &&
+                    !dom.nodeContains(mover.getElement(), memorizedElement)
+                ) {
+                    memorizedElement = undefined;
+                }
+
+                mover.setCurrent(memorizedElement);
+
+                e.stopImmediatePropagation();
+            }
         }
     };
 
