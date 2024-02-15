@@ -61,7 +61,13 @@ export type GroupperMoveFocusEvent = CustomEvent<
  * Tabster event type - uses `details` for backwards compat with previous versions
  * @see triggerEvent()
  */
-export type TabsterEventWithDetails<D> = CustomEvent<D | undefined> & { details: D | undefined };
+export type TabsterEventWithDetails<D> = CustomEvent<D | undefined> & {
+    /**
+     * @deprecated - please use the detail property
+     * @see detail
+     */
+    details: D | undefined;
+};
 
 export interface TabsterMoveFocusEventDetails {
     by: "mover" | "groupper" | "modalizer" | "root";
