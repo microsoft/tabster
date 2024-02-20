@@ -6,12 +6,12 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
+import { DeloserFocusLostEvent } from "./Events";
 import {
     documentContains,
     getElementUId,
     getPromise,
     TabsterPart,
-    triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
 import { dom } from "./DOMAPI";
@@ -583,7 +583,9 @@ export class Deloser
     };
 
     customFocusLostHandler(element: HTMLElement): boolean {
-        return triggerEvent(element, Types.DeloserEventName, this.getActions());
+        return element.dispatchEvent(
+            new DeloserFocusLostEvent(this.getActions())
+        );
     }
 
     private _findInHistory(): HTMLElement | null {

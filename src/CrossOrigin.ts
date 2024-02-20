@@ -1478,7 +1478,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
 export class CrossOriginFocusedElementState
     extends Subscribable<
         CrossOriginElement | undefined,
-        Types.FocusedElementDetails
+        Types.FocusedElementDetail
     >
     implements Types.CrossOriginFocusedElementState
 {
@@ -1557,7 +1557,7 @@ export class CrossOriginFocusedElementState
     static setVal(
         instance: Types.CrossOriginFocusedElementState,
         val: CrossOriginElement | undefined,
-        details: Types.FocusedElementDetails
+        details: Types.FocusedElementDetail
     ): void {
         (instance as CrossOriginFocusedElementState).setVal(val, details);
     }

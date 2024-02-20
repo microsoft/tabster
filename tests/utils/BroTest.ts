@@ -20,11 +20,9 @@ import {
     makeNoOp,
     mergeTabsterProps,
     setTabsterAttribute,
-    Types,
     getRestorer,
-    dispatchGroupperMoveFocusEvent,
-    dispatchMoverMoveFocusEvent,
-    dispatchMoverMemorizedElementEvent,
+    Types,
+    Events,
 } from "tabster";
 
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
@@ -119,9 +117,6 @@ export interface BroTestTabsterTestVariables {
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
     mergeTabsterProps?: typeof mergeTabsterProps;
-    dispatchGroupperMoveFocusEvent?: typeof dispatchGroupperMoveFocusEvent;
-    dispatchMoverMoveFocusEvent?: typeof dispatchMoverMoveFocusEvent;
-    dispatchMoverMemorizedElementEvent?: typeof dispatchMoverMemorizedElementEvent;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;
@@ -132,6 +127,7 @@ export interface BroTestTabsterTestVariables {
     crossOrigin?: Types.CrossOriginAPI;
     dom?: Types.DOMAPI;
     shadowDOM?: Types.DOMAPI;
+    Events?: typeof Events;
 }
 
 export function getTestPageURL(parts?: TabsterParts): string {

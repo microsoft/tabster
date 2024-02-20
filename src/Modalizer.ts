@@ -9,6 +9,7 @@ import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
 import * as Types from "./Types";
+import * as Events from "./Events";
 import {
     DummyInput,
     DummyInputManager,
@@ -16,7 +17,6 @@ import {
     HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
-    triggerEvent,
     augmentAttribute,
 } from "./Utils";
 import { dom } from "./DOMAPI";
@@ -189,11 +189,7 @@ export class Modalizer
                 );
             }
 
-            this.triggerFocusEvent(
-                isActive
-                    ? Types.ModalizerActiveEventName
-                    : Types.ModalizerInactiveEventName
-            );
+            this._dispatchFocusEvent(isActive);
         }
     }
 
@@ -292,8 +288,8 @@ export class Modalizer
         };
     }
 
-    triggerFocusEvent(
-        eventName: Types.ModalizerEventName,
+    private _dispatchFocusEvent(
+        isActive: boolean,
         allElements?: boolean
     ): boolean {
         const element = this.getElement();
@@ -305,15 +301,21 @@ export class Modalizer
                 : [element];
 
             for (const el of elements) {
-                if (
-                    el &&
-                    !triggerEvent<Types.ModalizerEventDetails>(el, eventName, {
+                if (el) {
+                    const eventDetail: Events.ModalizerEventDetail = {
                         id: this.userId,
                         element,
-                        eventName,
-                    })
-                ) {
-                    defaultPrevented = true;
+                    };
+
+                    const event = isActive
+                        ? new Events.ModalizerActiveEvent(eventDetail)
+                        : new Events.ModalizerInactiveEvent(eventDetail);
+
+                    el.dispatchEvent(event);
+
+                    if (event.defaultPrevented) {
+                        defaultPrevented = true;
+                    }
                 }
             }
         }
@@ -833,7 +835,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
      */
     private _onFocus = (
         focusedElement: HTMLElement | undefined,
-        details: Types.FocusedElementDetails
+        details: Types.FocusedElementDetail
     ): void => {
         const ctx =
             focusedElement &&

@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute, Events } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { BrowserElement } from "./utils/BroTest";
 
@@ -88,22 +88,21 @@ describe("onKeyDown", () => {
                 (window as WindowWithFocusEventsHistory).__tabsterFocusEvents =
                     [];
 
-                const addEvent = (eventName: string) => {
-                    document.body.addEventListener(
-                        eventName,
+                const addEvent = (
+                    eventName:
+                        | typeof Events.TabsterFocusInEventName
+                        | typeof Events.TabsterFocusOutEventName
+                ) => {
+                    document.body.addEventListener(eventName, (e) => {
+                        const target = e.composedPath()[0];
                         (
-                            e: Types.TabsterEventWithDetails<Types.FocusedElementDetails>
-                        ) => {
-                            const target = e.composedPath()[0];
-                            (
-                                window as WindowWithFocusEventsHistory
-                            ).__tabsterFocusEvents?.push(
-                                `${eventName} ${(target as HTMLElement)?.id} ${
-                                    e.detail?.isFocusedProgrammatically
-                                } ${e.detail?.modalizerId}`
-                            );
-                        }
-                    );
+                            window as WindowWithFocusEventsHistory
+                        ).__tabsterFocusEvents?.push(
+                            `${eventName} ${(target as HTMLElement)?.id} ${
+                                e.detail?.isFocusedProgrammatically
+                            } ${e.detail?.modalizerId}`
+                        );
+                    });
                 };
 
                 addEvent("tabster:focusin");

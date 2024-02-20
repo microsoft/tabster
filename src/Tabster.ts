@@ -17,6 +17,7 @@ import { ObservedElementAPI } from "./State/ObservedElement";
 import { OutlineAPI } from "./Outline";
 import { RootAPI, WindowWithTabsterInstance } from "./Root";
 import * as Types from "./Types";
+import * as Events from "./Events";
 import { UncontrolledAPI } from "./Uncontrolled";
 import {
     cleanupFakeWeakRefs,
@@ -26,9 +27,6 @@ import {
     disposeInstanceContext,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
-    dispatchGroupperMoveFocusEvent,
-    dispatchMoverMoveFocusEvent,
-    dispatchMoverMemorizedElementEvent,
     DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
@@ -36,13 +34,8 @@ import { dom, setDOMAPI } from "./DOMAPI";
 import * as shadowDOMAPI from "./Shadowdomize";
 
 export { Types };
+export { Events };
 export * from "./AttributeHelpers";
-
-export {
-    dispatchGroupperMoveFocusEvent,
-    dispatchMoverMoveFocusEvent,
-    dispatchMoverMemorizedElementEvent,
-};
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;

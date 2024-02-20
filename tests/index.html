@@ -19,10 +19,8 @@
                 mergeTabsterProps,
                 getTabsterAttribute,
                 setTabsterAttribute,
-                dispatchGroupperMoveFocusEvent,
-                dispatchMoverMoveFocusEvent,
-                dispatchMoverMemorizedElementEvent,
             } from "../src";
+            import * as Events from "../src/Events";
             import * as shadowDOM from "../src/Shadowdomize";
             import { dom } from "../src/DOMAPI";
 
@@ -59,12 +57,7 @@
             tabsterTest.mergeTabsterProps = mergeTabsterProps;
             tabsterTest.dom = dom;
             tabsterTest.shadowDOM = shadowDOM;
-            tabsterTest.dispatchGroupperMoveFocusEvent =
-                dispatchGroupperMoveFocusEvent;
-            tabsterTest.dispatchMoverMoveFocusEvent =
-                dispatchMoverMoveFocusEvent;
-            tabsterTest.dispatchMoverMemorizedElementEvent =
-                dispatchMoverMemorizedElementEvent;
+            tabsterTest.Events = Events;
 
             if (parts !== undefined) {
                 for (let part of parts) {
