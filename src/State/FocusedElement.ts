@@ -14,7 +14,11 @@ import {
 import { Keys } from "../Keys";
 import { RootAPI } from "../Root";
 import * as Types from "../Types";
-import * as Events from "../Events";
+import {
+    TabsterFocusInEvent,
+    TabsterFocusOutEvent,
+    TabsterMoveFocusEvent,
+} from "../Events";
 import {
     documentContains,
     DummyInputManager,
@@ -575,7 +579,7 @@ export class FocusedElementState
                 // move focus into.
                 if (
                     rootElement.dispatchEvent(
-                        new Events.TabsterMoveFocusEvent({
+                        new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
                             next: nextElement,
@@ -598,7 +602,7 @@ export class FocusedElementState
             if (controlTab || next?.outOfDOMOrder) {
                 if (
                     rootElement.dispatchEvent(
-                        new Events.TabsterMoveFocusEvent({
+                        new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
                             next: nextElement,
@@ -619,7 +623,7 @@ export class FocusedElementState
             if (
                 !uncontrolledCompletelyContainer &&
                 rootElement.dispatchEvent(
-                    new Events.TabsterMoveFocusEvent({
+                    new TabsterMoveFocusEvent({
                         by: "root",
                         owner: rootElement,
                         next: null,
@@ -637,7 +641,7 @@ export class FocusedElementState
         detail: Types.FocusedElementDetail
     ): void => {
         if (element) {
-            element.dispatchEvent(new Events.TabsterFocusInEvent(detail));
+            element.dispatchEvent(new TabsterFocusInEvent(detail));
         } else {
             const last = this._lastVal?.get();
 
@@ -650,7 +654,7 @@ export class FocusedElementState
                     d.modalizerId = modalizerId;
                 }
 
-                last.dispatchEvent(new Events.TabsterFocusOutEvent(d));
+                last.dispatchEvent(new TabsterFocusOutEvent(d));
             }
         }
     };

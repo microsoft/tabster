@@ -9,7 +9,11 @@ import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
 import * as Types from "./Types";
-import * as Events from "./Events";
+import {
+    ModalizerActiveEvent,
+    ModalizerEventDetail,
+    ModalizerInactiveEvent,
+} from "./Events";
 import {
     DummyInput,
     DummyInputManager,
@@ -299,14 +303,14 @@ export class Modalizer
 
             for (const el of elements) {
                 if (el) {
-                    const eventDetail: Events.ModalizerEventDetail = {
+                    const eventDetail: ModalizerEventDetail = {
                         id: this.userId,
                         element,
                     };
 
                     const event = isActive
-                        ? new Events.ModalizerActiveEvent(eventDetail)
-                        : new Events.ModalizerInactiveEvent(eventDetail);
+                        ? new ModalizerActiveEvent(eventDetail)
+                        : new ModalizerInactiveEvent(eventDetail);
 
                     el.dispatchEvent(event);
 

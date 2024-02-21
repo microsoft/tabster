@@ -7,7 +7,7 @@ import { nativeFocus } from "keyborg";
 
 import * as Types from "./Types";
 import { GetWindow, Visibilities, Visibility } from "./Types";
-import * as Events from "./Events";
+import { TabsterMoveFocusEvent } from "./Events";
 import { dom } from "./DOMAPI";
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
@@ -1049,7 +1049,7 @@ export class DummyInputManager {
 
             if (
                 parent?.dispatchEvent(
-                    new Events.TabsterMoveFocusEvent({
+                    new TabsterMoveFocusEvent({
                         by: "root",
                         owner: parent,
                         next: null,
@@ -1567,7 +1567,7 @@ class DummyInputManagerCore {
                 if (
                     toFocus &&
                     element.dispatchEvent(
-                        new Events.TabsterMoveFocusEvent({
+                        new TabsterMoveFocusEvent({
                             by: "root",
                             owner: element,
                             next: null,

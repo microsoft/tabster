@@ -9,7 +9,14 @@ import { getTabsterOnElement } from "./Instance";
 import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
-import * as Events from "./Events";
+import {
+    MoverMemorizedElementEvent,
+    MoverMemorizedElementEventName,
+    MoverMoveFocusEvent,
+    MoverMoveFocusEventName,
+    MoverStateEvent,
+    TabsterMoveFocusEvent,
+} from "./Events";
 import {
     createElementTreeWalker,
     DummyInput,
@@ -217,9 +224,7 @@ export class Mover
                             const state = this.getState(el);
 
                             if (state) {
-                                el.dispatchEvent(
-                                    new Events.MoverStateEvent(state)
-                                );
+                                el.dispatchEvent(new MoverStateEvent(state));
                             }
                         }
                     }
@@ -397,7 +402,7 @@ export class Mover
                 const state = this.getState(el);
 
                 if (state) {
-                    el.dispatchEvent(new Events.MoverStateEvent(state));
+                    el.dispatchEvent(new MoverStateEvent(state));
                 }
             }
         }
@@ -701,9 +706,9 @@ export class MoverAPI implements Types.MoverAPI {
         const win = this._win();
 
         win.addEventListener("keydown", this._onKeyDown, true);
-        win.addEventListener(Events.MoverMoveFocusEventName, this._onMoveFocus);
+        win.addEventListener(MoverMoveFocusEventName, this._onMoveFocus);
         win.addEventListener(
-            Events.MoverMemorizedElementEventName,
+            MoverMemorizedElementEventName,
             this._onMemorizedElement
         );
 
@@ -723,12 +728,9 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
+        win.removeEventListener(MoverMoveFocusEventName, this._onMoveFocus);
         win.removeEventListener(
-            Events.MoverMoveFocusEventName,
-            this._onMoveFocus
-        );
-        win.removeEventListener(
-            Events.MoverMemorizedElementEventName,
+            MoverMemorizedElementEventName,
             this._onMemorizedElement
         );
 
@@ -1202,7 +1204,7 @@ export class MoverAPI implements Types.MoverAPI {
             (!relatedEvent ||
                 (relatedEvent &&
                     container.dispatchEvent(
-                        new Events.TabsterMoveFocusEvent({
+                        new TabsterMoveFocusEvent({
                             by: "mover",
                             owner: container,
                             next,
@@ -1275,7 +1277,7 @@ export class MoverAPI implements Types.MoverAPI {
         this._moveFocus(focused, moverKey, event);
     };
 
-    private _onMoveFocus = (e: Events.MoverMoveFocusEvent): void => {
+    private _onMoveFocus = (e: MoverMoveFocusEvent): void => {
         const element = e.composedPath()[0] as HTMLElement | null | undefined;
         const key = e.detail?.key;
 
@@ -1285,9 +1287,7 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onMemorizedElement = (
-        e: Events.MoverMemorizedElementEvent
-    ): void => {
+    private _onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
         const target = e.composedPath()[0] as HTMLElement | null | undefined;
         let memorizedElement = e.detail?.memorizedElement;
 
