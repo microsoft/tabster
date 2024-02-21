@@ -189,7 +189,7 @@ export class Modalizer
                 );
             }
 
-            this._dispatchFocusEvent(isActive);
+            this._dispatchEvent(isActive);
         }
     }
 
@@ -288,10 +288,7 @@ export class Modalizer
         };
     }
 
-    private _dispatchFocusEvent(
-        isActive: boolean,
-        allElements?: boolean
-    ): boolean {
+    private _dispatchEvent(isActive: boolean, allElements?: boolean): boolean {
         const element = this.getElement();
         let defaultPrevented = false;
 
@@ -830,12 +827,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     /**
      * Subscribes to the focus state and handles modalizer related focus events
-     * @param e - Element that is focused
-     * @param details - Additional data about the focus event
+     * @param focusedElement - Element that is focused
+     * @param detail - Additional data about the focus event
      */
     private _onFocus = (
         focusedElement: HTMLElement | undefined,
-        details: Types.FocusedElementDetail
+        detail: Types.FocusedElementDetail
     ): void => {
         const ctx =
             focusedElement &&
@@ -882,7 +879,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         // Developers calling `element.focus()` should change/deactivate active modalizer
         if (
-            details.isFocusedProgrammatically ||
+            detail.isFocusedProgrammatically ||
             this.currentIsOthersAccessible ||
             modalizer?.getProps().isAlwaysAccessible
         ) {

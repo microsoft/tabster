@@ -28,10 +28,8 @@ export const DeloserFocusLostEventName = "tabster:deloser:focus-lost";
  */
 export const ModalizerActiveEventName = "tabster:modalizer:active";
 export const ModalizerInactiveEventName = "tabster:modalizer:inactive";
-// export const ModalizerFocusInEventName = "tabster:modalizer:focusin";
-// export const ModalizerFocusOutEventName = "tabster:modalizer:focusout";
-// export const ModalizerBeforeFocusOutEventName =
-//     "tabster:modalizer:beforefocusout";
+export const ModalizerFocusInEventName = "tabster:modalizer:focusin";
+export const ModalizerFocusOutEventName = "tabster:modalizer:focusout";
 
 /**
  * Events sent by Mover.

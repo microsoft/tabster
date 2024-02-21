@@ -1584,6 +1584,7 @@ describe("Mover with visibilityAware", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
+            .wait(100) // Give time for intersection observer to process changes.
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
