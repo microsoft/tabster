@@ -44,25 +44,25 @@ export abstract class Subscribable<A, B = undefined>
         }
     }
 
-    protected setVal(val: A, details: B): void {
+    protected setVal(val: A, detail: B): void {
         if (this._val === val) {
             return;
         }
 
         this._val = val;
 
-        this._callCallbacks(val, details);
+        this._callCallbacks(val, detail);
     }
 
     protected getVal(): A | undefined {
         return this._val;
     }
 
-    protected trigger(val: A, details: B): void {
-        this._callCallbacks(val, details);
+    protected trigger(val: A, detail: B): void {
+        this._callCallbacks(val, detail);
     }
 
-    private _callCallbacks(val: A, details: B): void {
-        this._callbacks.forEach((callback) => callback(val, details));
+    private _callCallbacks(val: A, detail: B): void {
+        this._callbacks.forEach((callback) => callback(val, detail));
     }
 }

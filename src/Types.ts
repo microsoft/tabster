@@ -101,7 +101,7 @@ export type GetWindow = () => Window;
 
 export type SubscribableCallback<A, B = undefined> = (
     val: A,
-    details: B
+    detail: B
 ) => void;
 
 export interface Disposable {

@@ -72,7 +72,7 @@ export class FocusedElementState
     private _nextVal:
         | {
               element: WeakHTMLElement | undefined;
-              details: Types.FocusedElementDetail;
+              detail: Types.FocusedElementDetail;
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
@@ -325,7 +325,7 @@ export class FocusedElementState
             element: element
                 ? new WeakHTMLElement(this._win, element)
                 : undefined,
-            details: detail,
+            detail: detail,
         });
 
         if (element && element !== this._val) {
