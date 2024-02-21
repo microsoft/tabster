@@ -1557,9 +1557,9 @@ export class CrossOriginFocusedElementState
     static setVal(
         instance: Types.CrossOriginFocusedElementState,
         val: CrossOriginElement | undefined,
-        details: Types.FocusedElementDetail
+        detail: Types.FocusedElementDetail
     ): void {
-        (instance as CrossOriginFocusedElementState).setVal(val, details);
+        (instance as CrossOriginFocusedElementState).setVal(val, detail);
     }
 }
 

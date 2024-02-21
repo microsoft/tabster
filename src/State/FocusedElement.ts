@@ -325,7 +325,7 @@ export class FocusedElementState
             element: element
                 ? new WeakHTMLElement(this._win, element)
                 : undefined,
-            detail: detail,
+            detail,
         });
 
         if (element && element !== this._val) {
@@ -343,9 +343,9 @@ export class FocusedElementState
 
     protected setVal(
         val: HTMLElement | undefined,
-        details: Types.FocusedElementDetail
+        detail: Types.FocusedElementDetail
     ): void {
-        super.setVal(val, details);
+        super.setVal(val, detail);
 
         if (val) {
             this._lastVal = new WeakHTMLElement(this._win, val);
