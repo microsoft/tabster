@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute, Types, Events } from "tabster";
 import { WindowWithTabsterInstance } from "../src/Root";
 import * as BroTest from "./utils/BroTest";
 
@@ -1842,21 +1842,20 @@ describe("Modalizer events", () => {
                 ).__tabsterModalizerEvents = [];
 
                 const addEvent = (
-                    eventName: Types.ModalizerEventName,
+                    eventName:
+                        | typeof Events.ModalizerActiveEventName
+                        | typeof Events.ModalizerInactiveEventName,
                     elementId: string
                 ) => {
                     getTabsterTestVariables()
                         .dom?.getElementById(document, elementId)
-                        ?.addEventListener(
-                            eventName,
-                            (e: Types.ModalizerEvent) => {
-                                (
-                                    window as WindowWithModalizerEventsHistory
-                                ).__tabsterModalizerEvents?.push(
-                                    `${e.detail?.eventName} ${e.detail?.id} ${e.detail?.element.id}`
-                                );
-                            }
-                        );
+                        ?.addEventListener(eventName, (e) => {
+                            (
+                                window as WindowWithModalizerEventsHistory
+                            ).__tabsterModalizerEvents?.push(
+                                `${e.type} ${e.detail?.id} ${e.detail?.element.id}`
+                            );
+                        });
                 };
 
                 addEvent("tabster:modalizer:active", "modal-part-1");
@@ -2351,34 +2350,31 @@ describe("Modalizer with tabster:movefocus event handling", () => {
             )
         )
             .eval(() => {
-                document.addEventListener(
-                    "tabster:movefocus",
-                    (e: Types.TabsterMoveFocusEvent) => {
-                        if (
-                            getTabsterTestVariables().dom?.getActiveElement(
-                                document
-                            )?.textContent === "ModalButton1"
-                        ) {
-                            e.preventDefault();
-                            e.detail?.relatedEvent?.preventDefault();
-                            getTabsterTestVariables()
-                                .dom?.getElementById(document, "button-3")
-                                ?.focus();
-                        }
-
-                        if (
-                            getTabsterTestVariables().dom?.getActiveElement(
-                                document
-                            )?.textContent === "ModalButton2"
-                        ) {
-                            e.preventDefault();
-                            e.detail?.relatedEvent?.preventDefault();
-                            getTabsterTestVariables()
-                                .dom?.getElementById(document, "button-1")
-                                ?.focus();
-                        }
+                document.addEventListener("tabster:movefocus", (e) => {
+                    if (
+                        getTabsterTestVariables().dom?.getActiveElement(
+                            document
+                        )?.textContent === "ModalButton1"
+                    ) {
+                        e.preventDefault();
+                        e.detail?.relatedEvent?.preventDefault();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "button-3")
+                            ?.focus();
                     }
-                );
+
+                    if (
+                        getTabsterTestVariables().dom?.getActiveElement(
+                            document
+                        )?.textContent === "ModalButton2"
+                    ) {
+                        e.preventDefault();
+                        e.detail?.relatedEvent?.preventDefault();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "button-1")
+                            ?.focus();
+                    }
+                });
             })
             .focusElement("#modal-button")
             .activeElement((el) =>

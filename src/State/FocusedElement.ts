@@ -15,13 +15,16 @@ import { Keys } from "../Keys";
 import { RootAPI } from "../Root";
 import * as Types from "../Types";
 import {
+    TabsterFocusInEvent,
+    TabsterFocusOutEvent,
+    TabsterMoveFocusEvent,
+} from "../Events";
+import {
     documentContains,
     DummyInputManager,
     getLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement,
-    triggerEvent,
-    dispatchMoveFocusEvent,
 } from "../Utils";
 import { getTabsterOnElement } from "../Instance";
 import { dom } from "../DOMAPI";
@@ -57,7 +60,7 @@ function getUncontrolledCompletelyContainer(
 }
 
 export class FocusedElementState
-    extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetails>
+    extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetail>
     implements Types.FocusedElementState
 {
     private static _lastResetElement: WeakHTMLElement | undefined;
@@ -69,7 +72,7 @@ export class FocusedElementState
     private _nextVal:
         | {
               element: WeakHTMLElement | undefined;
-              details: Types.FocusedElementDetails;
+              detail: Types.FocusedElementDetail;
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
@@ -296,7 +299,7 @@ export class FocusedElementState
             return;
         }
 
-        const details: Types.FocusedElementDetails = { relatedTarget };
+        const detail: Types.FocusedElementDetail = { relatedTarget };
 
         if (element) {
             const lastResetElement =
@@ -307,14 +310,14 @@ export class FocusedElementState
                 return;
             }
 
-            details.isFocusedProgrammatically = isFocusedProgrammatically;
+            detail.isFocusedProgrammatically = isFocusedProgrammatically;
 
             const ctx = RootAPI.getTabsterContext(this._tabster, element);
 
             const modalizerId = ctx?.modalizer?.userId;
 
             if (modalizerId) {
-                details.modalizerId = modalizerId;
+                detail.modalizerId = modalizerId;
             }
         }
 
@@ -322,7 +325,7 @@ export class FocusedElementState
             element: element
                 ? new WeakHTMLElement(this._win, element)
                 : undefined,
-            details,
+            detail,
         });
 
         if (element && element !== this._val) {
@@ -332,7 +335,7 @@ export class FocusedElementState
         // _validateFocusedElement() might cause the refocus which will trigger
         // another call to this function. Making sure that the value is correct.
         if (this._nextVal === nextVal) {
-            this.setVal(element, details);
+            this.setVal(element, detail);
         }
 
         this._nextVal = undefined;
@@ -340,9 +343,9 @@ export class FocusedElementState
 
     protected setVal(
         val: HTMLElement | undefined,
-        details: Types.FocusedElementDetails
+        detail: Types.FocusedElementDetail
     ): void {
-        super.setVal(val, details);
+        super.setVal(val, detail);
 
         if (val) {
             this._lastVal = new WeakHTMLElement(this._win, val);
@@ -575,12 +578,14 @@ export class FocusedElementState
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 if (
-                    dispatchMoveFocusEvent({
-                        by: "root",
-                        owner: rootElement,
-                        next: nextElement,
-                        relatedEvent: event,
-                    })
+                    rootElement.dispatchEvent(
+                        new TabsterMoveFocusEvent({
+                            by: "root",
+                            owner: rootElement,
+                            next: nextElement,
+                            relatedEvent: event,
+                        })
+                    )
                 ) {
                     DummyInputManager.moveWithPhantomDummy(
                         this._tabster,
@@ -596,12 +601,14 @@ export class FocusedElementState
 
             if (controlTab || next?.outOfDOMOrder) {
                 if (
-                    dispatchMoveFocusEvent({
-                        by: "root",
-                        owner: rootElement,
-                        next: nextElement,
-                        relatedEvent: event,
-                    })
+                    rootElement.dispatchEvent(
+                        new TabsterMoveFocusEvent({
+                            by: "root",
+                            owner: rootElement,
+                            next: nextElement,
+                            relatedEvent: event,
+                        })
+                    )
                 ) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
@@ -615,12 +622,14 @@ export class FocusedElementState
         } else {
             if (
                 !uncontrolledCompletelyContainer &&
-                dispatchMoveFocusEvent({
-                    by: "root",
-                    owner: rootElement,
-                    next: null,
-                    relatedEvent: event,
-                })
+                rootElement.dispatchEvent(
+                    new TabsterMoveFocusEvent({
+                        by: "root",
+                        owner: rootElement,
+                        next: null,
+                        relatedEvent: event,
+                    })
+                )
             ) {
                 ctx.root.moveOutWithDefaultAction(isBackward, event);
             }
@@ -629,15 +638,15 @@ export class FocusedElementState
 
     _onChanged = (
         element: HTMLElement | undefined,
-        details: Types.FocusedElementDetails
+        detail: Types.FocusedElementDetail
     ): void => {
         if (element) {
-            triggerEvent(element, Types.FocusInEventName, details);
+            element.dispatchEvent(new TabsterFocusInEvent(detail));
         } else {
             const last = this._lastVal?.get();
 
             if (last) {
-                const d = { ...details };
+                const d = { ...detail };
                 const lastCtx = RootAPI.getTabsterContext(this._tabster, last);
                 const modalizerId = lastCtx?.modalizer?.userId;
 
@@ -645,7 +654,7 @@ export class FocusedElementState
                     d.modalizerId = modalizerId;
                 }
 
-                triggerEvent(last, Types.FocusOutEventName, d);
+                last.dispatchEvent(new TabsterFocusOutEvent(d));
             }
         }
     };

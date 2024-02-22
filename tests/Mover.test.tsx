@@ -564,11 +564,14 @@ describe("Mover memorizing current", () => {
                 const vars = getTabsterTestVariables();
 
                 const target = vars.dom?.getElementById(document, "mover");
+                const MoverMemorizedElementEvent =
+                    vars.Events?.MoverMemorizedElementEvent;
 
-                if (target && vars.dispatchMoverMemorizedElementEvent) {
-                    vars.dispatchMoverMemorizedElementEvent?.(
-                        target,
-                        undefined
+                if (target && MoverMemorizedElementEvent) {
+                    target.dispatchEvent(
+                        new MoverMemorizedElementEvent({
+                            memorizedElement: undefined,
+                        })
                     );
                 }
             })
@@ -582,12 +585,16 @@ describe("Mover memorizing current", () => {
             })
             .eval(() => {
                 const vars = getTabsterTestVariables();
-
                 const target = vars.dom?.getElementById(document, "button4");
+                const MoverMemorizedElementEvent =
+                    vars.Events?.MoverMemorizedElementEvent;
 
-                if (target && vars.dispatchMoverMemorizedElementEvent) {
-                    vars.dispatchMoverMemorizedElementEvent?.(target, target);
-                }
+                MoverMemorizedElementEvent &&
+                    target?.dispatchEvent(
+                        new MoverMemorizedElementEvent({
+                            memorizedElement: target,
+                        })
+                    );
             })
             .pressTab()
             .activeElement((el) => {
@@ -1263,32 +1270,29 @@ describe("Mover with trackState", () => {
             )
         )
             .eval((moverAttribute: string) => {
-                document.addEventListener(
-                    "tabster:mover",
-                    (e: Types.MoverEvent) => {
-                        let className = "item";
+                document.addEventListener("tabster:mover:state", (e) => {
+                    let className = "item";
 
-                        switch (e.detail?.visibility) {
-                            case 0:
-                                className += " invisible";
-                                break;
-                            case 1:
-                                className += " partially-visible";
-                                break;
-                            case 2:
-                                className += " visible";
-                                break;
-                        }
-
-                        if (e.detail?.isCurrent) {
-                            className += " active";
-                        }
-
-                        const target = e.composedPath()[0] as HTMLElement;
-
-                        target.className = className;
+                    switch (e.detail?.visibility) {
+                        case 0:
+                            className += " invisible";
+                            break;
+                        case 1:
+                            className += " partially-visible";
+                            break;
+                        case 2:
+                            className += " visible";
+                            break;
                     }
-                );
+
+                    if (e.detail?.isCurrent) {
+                        className += " active";
+                    }
+
+                    const target = e.composedPath()[0] as HTMLElement;
+
+                    target.className = className;
+                });
 
                 // Adding mover after the event subscription.
                 getTabsterTestVariables()
@@ -1580,6 +1584,7 @@ describe("Mover with visibilityAware", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
+            .wait(100) // Give time for intersection observer to process changes.
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
@@ -2813,34 +2818,31 @@ describe("Mover with tabster:movefocus event handling", () => {
             )
         )
             .eval(() => {
-                document.addEventListener(
-                    "tabster:movefocus",
-                    (e: Types.TabsterMoveFocusEvent) => {
-                        if (
-                            getTabsterTestVariables().dom?.getActiveElement(
-                                document
-                            )?.textContent === "Button3"
-                        ) {
-                            e.preventDefault();
-                            e.detail?.relatedEvent?.preventDefault();
-                            getTabsterTestVariables()
-                                .dom?.getElementById(document, "button-6")
-                                ?.focus();
-                        }
-
-                        if (
-                            getTabsterTestVariables().dom?.getActiveElement(
-                                document
-                            )?.textContent === "Button4"
-                        ) {
-                            e.preventDefault();
-                            e.detail?.relatedEvent?.preventDefault();
-                            getTabsterTestVariables()
-                                .dom?.getElementById(document, "button-1")
-                                ?.focus();
-                        }
+                document.addEventListener("tabster:movefocus", (e) => {
+                    if (
+                        getTabsterTestVariables().dom?.getActiveElement(
+                            document
+                        )?.textContent === "Button3"
+                    ) {
+                        e.preventDefault();
+                        e.detail?.relatedEvent?.preventDefault();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "button-6")
+                            ?.focus();
                     }
-                );
+
+                    if (
+                        getTabsterTestVariables().dom?.getActiveElement(
+                            document
+                        )?.textContent === "Button4"
+                    ) {
+                        e.preventDefault();
+                        e.detail?.relatedEvent?.preventDefault();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "button-1")
+                            ?.focus();
+                    }
+                });
             })
             .pressTab()
             .pressTab()
@@ -2910,11 +2912,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.ArrowDown)
             .activeElement((el) => {
@@ -2923,11 +2927,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.PageDown)
             .activeElement((el) => {
@@ -2936,11 +2942,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.ArrowUp)
             .activeElement((el) => {
@@ -2949,11 +2957,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.PageUp)
             .activeElement((el) => {
@@ -2962,11 +2972,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.End)
             .activeElement((el) => {
@@ -2975,11 +2987,13 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             .eval((key) => {
                 const activeElement =
                     getTabsterTestVariables()?.dom?.getActiveElement(document);
+                const MoverMoveFocusEvent =
+                    getTabsterTestVariables()?.Events?.MoverMoveFocusEvent;
 
                 activeElement &&
-                    getTabsterTestVariables()?.dispatchMoverMoveFocusEvent?.(
-                        activeElement as HTMLElement,
-                        key
+                    MoverMoveFocusEvent &&
+                    activeElement.dispatchEvent(
+                        new MoverMoveFocusEvent({ key })
                     );
             }, Types.MoverKeys.Home)
             .activeElement((el) => {

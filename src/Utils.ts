@@ -7,6 +7,7 @@ import { nativeFocus } from "keyborg";
 
 import * as Types from "./Types";
 import { GetWindow, Visibilities, Visibility } from "./Types";
+import { TabsterMoveFocusEvent } from "./Events";
 import { dom } from "./DOMAPI";
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
@@ -1047,13 +1048,14 @@ export class DummyInputManager {
             }
 
             if (
-                parent &&
-                dispatchMoveFocusEvent({
-                    by: "root",
-                    owner: parent,
-                    next: null,
-                    relatedEvent,
-                })
+                parent?.dispatchEvent(
+                    new TabsterMoveFocusEvent({
+                        by: "root",
+                        owner: parent,
+                        next: null,
+                        relatedEvent,
+                    })
+                )
             ) {
                 dom.insertBefore(parent, input, insertBefore);
                 nativeFocus(input);
@@ -1564,12 +1566,14 @@ class DummyInputManagerCore {
 
                 if (
                     toFocus &&
-                    dispatchMoveFocusEvent({
-                        by: "root",
-                        owner: element,
-                        next: null,
-                        relatedEvent,
-                    })
+                    element.dispatchEvent(
+                        new TabsterMoveFocusEvent({
+                            by: "root",
+                            owner: element,
+                            next: null,
+                            relatedEvent,
+                        })
+                    )
                 ) {
                     nativeFocus(toFocus);
                 }
@@ -1801,58 +1805,6 @@ export function getAdjacentElement(
     }
 
     return adjacent || undefined;
-}
-
-export function triggerEvent<D>(
-    target: HTMLElement | EventTarget,
-    name: string,
-    detail?: D
-): boolean {
-    const event = new CustomEvent(name, {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        detail,
-    });
-
-    // For the sake of backward compatibility, we're adding `details` property.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (event as any).details = detail;
-
-    target.dispatchEvent(event);
-
-    return !event.defaultPrevented;
-}
-
-export function dispatchMoveFocusEvent(
-    details: Types.TabsterMoveFocusEventDetails
-): boolean {
-    return triggerEvent(details.owner, Types.MoveFocusEventName, details);
-}
-
-export function dispatchMoverMoveFocusEvent(
-    target: HTMLElement,
-    key: Types.MoverKey
-) {
-    return triggerEvent(target, Types.MoverMoveFocusEventName, { key });
-}
-
-export function dispatchMoverMemorizedElementEvent(
-    target: HTMLElement,
-    memorizedElement: HTMLElement | undefined
-) {
-    return triggerEvent<Types.MoverMemorizedElementEventDetails>(
-        target,
-        Types.MoverMemorizedElementEventName,
-        { memorizedElement }
-    );
-}
-
-export function dispatchGroupperMoveFocusEvent(
-    target: HTMLElement,
-    action: Types.GroupperMoveFocusAction
-) {
-    return triggerEvent(target, Types.GroupperMoveFocusEventName, { action });
 }
 
 export function augmentAttribute(

@@ -14,10 +14,13 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
-import { TabsterPart, WeakHTMLElement, triggerEvent } from "./Utils";
+import {
+    RestorerRestoreFocusEventName,
+    RestorerRestoreFocusEvent,
+} from "./Events";
+import { TabsterPart, WeakHTMLElement } from "./Utils";
 import { dom } from "./DOMAPI";
 
-const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
@@ -51,7 +54,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
-                triggerEvent(doc.body, EVENT_NAME);
+                doc.body.dispatchEvent(new RestorerRestoreFocusEvent());
             }
         }
     }
@@ -59,7 +62,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _onFocusOut = (e: FocusEvent) => {
         const element = this._element?.get();
         if (element && e.relatedTarget === null) {
-            triggerEvent(element, EVENT_NAME);
+            element.dispatchEvent(new RestorerRestoreFocusEvent());
         }
         if (
             element &&
@@ -85,7 +88,10 @@ export class RestorerAPI implements RestorerAPIType {
     constructor(tabster: TabsterCore) {
         this._tabster = tabster;
         this._getWindow = tabster.getWindow;
-        this._getWindow().addEventListener(EVENT_NAME, this._onRestoreFocus);
+        this._getWindow().addEventListener(
+            RestorerRestoreFocusEventName,
+            this._onRestoreFocus
+        );
 
         this._keyboardNavState = tabster.keyboardNavigation;
         this._focusedElementState = tabster.focusedElement;
@@ -96,14 +102,18 @@ export class RestorerAPI implements RestorerAPIType {
     dispose(): void {
         const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
-        win.removeEventListener(EVENT_NAME, this._onRestoreFocus);
+
+        win.removeEventListener(
+            RestorerRestoreFocusEventName,
+            this._onRestoreFocus
+        );
 
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);
         }
     }
 
-    private _onRestoreFocus = (e: CustomEvent) => {
+    private _onRestoreFocus = (e: Event) => {
         const win = this._getWindow();
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);

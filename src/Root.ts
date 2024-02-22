@@ -4,16 +4,15 @@
  */
 
 import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
-import { createEventTarget } from "./EventTarget";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
+import { RootFocusEvent, RootBlurEvent } from "./Events";
 import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
     TabsterPart,
-    triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
 import { setTabsterAttribute } from "./AttributeHelpers";
@@ -204,12 +203,7 @@ export class Root
             if (hasFocused) {
                 this._isFocused = true;
                 this._dummyManager?.setTabbable(false);
-
-                triggerEvent<Types.RootFocusEventDetails>(
-                    this._tabster.root.eventTarget,
-                    "focus",
-                    { element }
-                );
+                element.dispatchEvent(new RootFocusEvent({ element }));
             } else {
                 this._setFocusedTimer = this._tabster
                     .getWindow()
@@ -218,12 +212,7 @@ export class Root
 
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
-
-                        triggerEvent<Types.RootFocusEventDetails>(
-                            this._tabster.root.eventTarget,
-                            "blur",
-                            { element }
-                        );
+                        element.dispatchEvent(new RootBlurEvent({ element }));
                     }, 0);
             }
         }
@@ -275,13 +264,11 @@ export class RootAPI implements Types.RootAPI {
     private _roots: Record<string, Types.Root> = {};
     private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
-    eventTarget: EventTarget;
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._autoRoot = autoRoot;
-        this.eventTarget = createEventTarget(this._win);
 
         tabster.queueInit(() => {
             if (this._autoRoot) {

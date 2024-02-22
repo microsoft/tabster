@@ -143,34 +143,33 @@ describe("Root", () => {
                     });
 
                 const tabster = getTabsterTestVariables().core;
+                const Events = getTabsterTestVariables().Events;
 
-                tabster?.root.eventTarget.addEventListener(
-                    "focus",
-                    (
-                        e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
-                    ) => {
-                        if (e.detail?.element.id) {
-                            focusedRoot.events.push({
-                                elementId: e.detail.element.id,
-                                type: "focus",
-                            });
+                if (tabster && Events) {
+                    document.body.addEventListener(
+                        Events.RootFocusEventName,
+                        (e) => {
+                            if (e.detail?.element.id) {
+                                focusedRoot.events.push({
+                                    elementId: e.detail.element.id,
+                                    type: "focus",
+                                });
+                            }
                         }
-                    }
-                );
+                    );
 
-                tabster?.root.eventTarget.addEventListener(
-                    "blur",
-                    (
-                        e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
-                    ) => {
-                        if (e.detail?.element.id) {
-                            focusedRoot.events.push({
-                                elementId: e.detail.element.id,
-                                type: "blur",
-                            });
+                    document.body.addEventListener(
+                        Events.RootBlurEventName,
+                        (e) => {
+                            if (e.detail?.element.id) {
+                                focusedRoot.events.push({
+                                    elementId: e.detail.element.id,
+                                    type: "blur",
+                                });
+                            }
                         }
-                    }
-                );
+                    );
+                }
             })
             .pressTab()
             .activeElement((el) => {

@@ -23,8 +23,6 @@ export {
     makeNoOp,
     isNoOp,
     getShadowDOMAPI,
-    dispatchGroupperMoveFocusEvent,
-    dispatchMoverMoveFocusEvent,
-    dispatchMoverMemorizedElementEvent,
     Types,
+    Events,
 } from "./Tabster";

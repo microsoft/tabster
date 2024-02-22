@@ -5,32 +5,6 @@
 
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
-export const DeloserEventName = "tabster:deloser";
-export const ModalizerActiveEventName = "tabster:modalizer:active";
-export const ModalizerInactiveEventName = "tabster:modalizer:inactive";
-export const ModalizerFocusInEventName = "tabster:modalizer:focusin";
-export const ModalizerFocusOutEventName = "tabster:modalizer:focusout";
-export const ModalizerBeforeFocusOutEventName =
-    "tabster:modalizer:beforefocusout";
-export const MoverEventName = "tabster:mover";
-export const FocusInEventName = "tabster:focusin";
-export const FocusOutEventName = "tabster:focusout";
-
-// Event to be dispatched when Tabster wants to move focus as the result of
-// keyboard event. This allows to preventDefault() if you want to have
-// some custom logic.
-export const MoveFocusEventName = "tabster:movefocus";
-
-// Event that can be dispatched by the application to programmatically move
-// focus inside Mover.
-export const MoverMoveFocusEventName = "tabster:mover:movefocus";
-// Event that can be dispatched by the application to programmatically enter
-// or escape Groupper.
-export const GroupperMoveFocusEventName = "tabster:groupper:movefocus";
-
-// Event that can be dispatched by the application to forget or modify
-// memorized element in Mover with memorizeCurrent property.
-export const MoverMemorizedElementEventName = "tabster:mover:memorized-element";
 
 export const FocusableSelector = [
     "a[href]",
@@ -41,46 +15,6 @@ export const FocusableSelector = [
     "*[tabindex]",
     "*[contenteditable]",
 ].join(", ");
-
-// Dispatch move focus event on a Mover element.
-export type MoverMoveFocusEvent = CustomEvent<{ key: MoverKey } | undefined>;
-
-export interface MoverMemorizedElementEventDetails {
-    memorizedElement: HTMLElement | undefined;
-}
-// To be dispatched by the application to forget or modify memorized element
-// in Mover with memorizeCurrent property.
-export type MoverMemorizedElementEvent = CustomEvent<
-    MoverMemorizedElementEventDetails | undefined
->;
-
-export interface GroupperMoveFocusActions {
-    Enter: 1;
-    Escape: 2;
-}
-export type GroupperMoveFocusAction =
-    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
-export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
-    Enter: 1,
-    Escape: 2,
-};
-
-// Enter or escape Groupper. Enter when `enter` is true, escape when `enter` is false.
-export type GroupperMoveFocusEvent = CustomEvent<
-    { action: GroupperMoveFocusAction } | undefined
->;
-
-export type TabsterEventWithDetails<D> = CustomEvent<D | undefined>;
-
-export interface TabsterMoveFocusEventDetails {
-    by: "mover" | "groupper" | "modalizer" | "root";
-    owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
-    next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
-    relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
-}
-
-export type TabsterMoveFocusEvent =
-    TabsterEventWithDetails<TabsterMoveFocusEventDetails>;
 
 export interface TabsterDOMAttribute {
     [TabsterAttributeName]: string | undefined;
@@ -167,7 +101,7 @@ export type GetWindow = () => Window;
 
 export type SubscribableCallback<A, B = undefined> = (
     val: A,
-    details: B
+    detail: B
 ) => void;
 
 export interface Disposable {
@@ -189,14 +123,14 @@ export interface KeyboardNavigationState
     setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void;
 }
 
-export interface FocusedElementDetails {
+export interface FocusedElementDetail {
     relatedTarget?: HTMLElement;
     isFocusedProgrammatically?: boolean;
     modalizerId?: string;
 }
 
 export interface FocusedElementState
-    extends Subscribable<HTMLElement | undefined, FocusedElementDetails>,
+    extends Subscribable<HTMLElement | undefined, FocusedElementDetail>,
         Disposable {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
@@ -349,7 +283,7 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState
-    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails>,
+    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetail>,
         Disposable {
     focus(
         element: CrossOriginElement,
@@ -782,8 +716,6 @@ export interface MoverProps {
     visibilityTolerance?: number;
 }
 
-export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
-
 export interface Mover
     extends TabsterPart<MoverProps>,
         TabsterPartWithFindNextTabbable,
@@ -899,6 +831,17 @@ export interface GroupperAPIInternal {
     ): void;
 }
 
+export interface GroupperMoveFocusActions {
+    Enter: 1;
+    Escape: 2;
+}
+export type GroupperMoveFocusAction =
+    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
+export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
+    Enter: 1,
+    Escape: 2,
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface GroupperAPI extends GroupperAPIInternal, Disposable {
     /** @internal (will likely be exposed once the API is fully stable) */
@@ -922,21 +865,6 @@ export interface ModalizerProps {
     isTrapped?: boolean;
 }
 
-export type ModalizerEventName =
-    | typeof ModalizerActiveEventName
-    | typeof ModalizerInactiveEventName
-    | typeof ModalizerBeforeFocusOutEventName
-    | typeof ModalizerFocusInEventName
-    | typeof ModalizerFocusOutEventName;
-
-export type ModalizerEventDetails = {
-    id: string;
-    element: HTMLElement;
-    eventName: ModalizerEventName;
-};
-
-export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
-
 export interface Modalizer
     extends TabsterPart<ModalizerProps>,
         TabsterPartWithFindNextTabbable {
@@ -950,10 +878,6 @@ export interface Modalizer
     isActive(): boolean;
     makeActive(isActive: boolean): void;
     focused(noIncrement?: boolean): number;
-    triggerFocusEvent(
-        eventName: ModalizerEventName,
-        allElements: boolean
-    ): boolean;
 }
 
 export type ModalizerConstructor = (
@@ -1050,10 +974,6 @@ export interface TabsterContext {
     ignoreKeydown: (e: KeyboardEvent) => boolean;
 }
 
-export interface RootFocusEventDetails {
-    element: HTMLElement;
-}
-
 interface RootAPIInternal {
     /**@internal*/
     createRoot(
@@ -1067,9 +987,7 @@ interface RootAPIInternal {
     addDummyInputs(): void;
 }
 
-export interface RootAPI extends Disposable, RootAPIInternal {
-    eventTarget: EventTarget;
-}
+export interface RootAPI extends Disposable, RootAPIInternal {}
 
 export interface UncontrolledAPI {
     isUncontrolledCompletely(
