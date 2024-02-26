@@ -70,7 +70,7 @@ class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
         return deloser.deloserUId === this._deloser.deloserUId;
     }
 
-    async focusAvailable(): Promise<boolean> {
+    async focusAvailable(): Promise<boolean | null> {
         const data: RestoreFocusInDeloserTransactionData = {
             ...this._deloser,
             reset: false,
@@ -132,7 +132,7 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<
         this._history.splice(10, this._history.length - 10);
     }
 
-    async focusAvailable(): Promise<boolean> {
+    async focusAvailable(): Promise<boolean | null> {
         for (const i of this._history) {
             if (await i.focusAvailable()) {
                 return true;
@@ -917,7 +917,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<
         ownerId: string,
         transactions: CrossOriginTransactions,
         forwardResult: Promise<boolean | undefined>
-    ): Promise<boolean> {
+    ): Promise<boolean | null> {
         const forwardRet = await forwardResult;
         const begin = !forwardRet && data.beginData;
         const uid = begin && begin.deloserUId;
