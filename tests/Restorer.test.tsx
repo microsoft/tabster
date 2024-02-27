@@ -369,7 +369,7 @@ describe("Restorer focus priority", () => {
             modalizer: true,
         });
     });
-    it("should restore focus when focus is moved to body from source", async () => {
+    it("should prioritize Restorer before Groupper when both want to move focus", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
