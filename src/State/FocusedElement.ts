@@ -59,6 +59,35 @@ function getUncontrolledCompletelyContainer(
     return undefined;
 }
 
+const AsyncFocusIntentPriorityBySource = {
+    [Types.AsyncFocusIntentSources.Restorer]: 0,
+    [Types.AsyncFocusIntentSources.Deloser]: 1,
+    [Types.AsyncFocusIntentSources.EscapeGroupper]: 2,
+};
+
+class AsyncFocusIntent implements Types.AsyncFocusIntent {
+    readonly source: Types.AsyncFocusIntentSource;
+
+    private _allowed = true;
+    private _cleanup: () => void;
+
+    constructor(source: Types.AsyncFocusIntentSource, cleanup: () => void) {
+        this.source = source;
+        // cleanup removes the reference to this instance from the FocusedElementState.
+        this._cleanup = cleanup;
+    }
+
+    cancel(): void {
+        this._allowed = false;
+        this._cleanup();
+    }
+
+    commit(): boolean {
+        this._cleanup();
+        return this._allowed;
+    }
+}
+
 export class FocusedElementState
     extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetail>
     implements Types.FocusedElementState
@@ -76,6 +105,7 @@ export class FocusedElementState
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
+    private _asyncFocusIntent?: AsyncFocusIntent;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
@@ -276,6 +306,35 @@ export class FocusedElementState
         }
 
         return true;
+    }
+
+    registerAsyncFocusIntent(
+        source: Types.AsyncFocusIntentSource
+    ): Types.AsyncFocusIntent {
+        const intent = new AsyncFocusIntent(source, () => {
+            if (this._asyncFocusIntent === intent) {
+                delete this._asyncFocusIntent;
+            }
+        });
+
+        if (this._asyncFocusIntent) {
+            if (
+                AsyncFocusIntentPriorityBySource[source] >
+                AsyncFocusIntentPriorityBySource[this._asyncFocusIntent.source]
+            ) {
+                // Previously registered intent has higher priority.
+                intent.cancel();
+
+                return intent;
+            }
+
+            // New intent has higher priority.
+            this._asyncFocusIntent.cancel();
+        }
+
+        this._asyncFocusIntent = intent;
+
+        return intent;
     }
 
     private _setOrRemoveAttribute(

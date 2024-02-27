@@ -430,6 +430,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
     private _handleKeyPressTimer: number | undefined;
+    private _asyncFocusIntent: Types.AsyncFocusIntent | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -458,6 +459,11 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     dispose(): void {
         const win = this._win();
+
+        if (this._asyncFocusIntent) {
+            this._asyncFocusIntent.cancel();
+            delete this._asyncFocusIntent;
+        }
 
         if (this._handleKeyPressTimer) {
             win.clearTimeout(this._handleKeyPressTimer);
@@ -774,6 +780,11 @@ export class GroupperAPI implements Types.GroupperAPI {
                 delete this._handleKeyPressTimer;
             }
 
+            if (this._asyncFocusIntent) {
+                this._asyncFocusIntent.cancel();
+                delete this._asyncFocusIntent;
+            }
+
             if (ctx.ignoreKeydown(event)) {
                 return;
             }
@@ -786,8 +797,22 @@ export class GroupperAPI implements Types.GroupperAPI {
                 const focusedElement =
                     tabster.focusedElement.getFocusedElement();
 
+                this._asyncFocusIntent =
+                    tabster.focusedElement.registerAsyncFocusIntent(
+                        Types.AsyncFocusIntentSources.EscapeGroupper
+                    );
+
                 this._handleKeyPressTimer = win.setTimeout(() => {
                     delete this._handleKeyPressTimer;
+
+                    const asyncFocusIntent = this._asyncFocusIntent;
+
+                    delete this._asyncFocusIntent;
+
+                    if (!asyncFocusIntent?.commit()) {
+                        // Some other focus intent has won.
+                        return;
+                    }
 
                     if (
                         focusedElement !==
