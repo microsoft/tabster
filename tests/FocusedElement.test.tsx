@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute, Events } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { BrowserElement } from "./utils/BroTest";
 
@@ -88,29 +88,30 @@ describe("onKeyDown", () => {
                 (window as WindowWithFocusEventsHistory).__tabsterFocusEvents =
                     [];
 
-                const addEvent = (eventName: string) => {
-                    document.body.addEventListener(
-                        eventName,
+                const addEvent = (
+                    eventName:
+                        | typeof Events.TabsterFocusInEventName
+                        | typeof Events.TabsterFocusOutEventName
+                ) => {
+                    document.body.addEventListener(eventName, (e) => {
+                        const target = e.composedPath()[0];
                         (
-                            e: Types.TabsterEventWithDetails<Types.FocusedElementDetails>
-                        ) => {
-                            (
-                                window as WindowWithFocusEventsHistory
-                            ).__tabsterFocusEvents?.push(
-                                `${eventName} ${
-                                    (e.target as HTMLElement)?.id
-                                } ${e.details.isFocusedProgrammatically} ${
-                                    e.details.modalizerId
-                                }`
-                            );
-                        }
-                    );
+                            window as WindowWithFocusEventsHistory
+                        ).__tabsterFocusEvents?.push(
+                            `${eventName} ${(target as HTMLElement)?.id} ${
+                                e.detail?.isFocusedProgrammatically
+                            } ${e.detail?.modalizerId}`
+                        );
+                    });
                 };
 
                 addEvent("tabster:focusin");
                 addEvent("tabster:focusout");
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -118,6 +119,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-2")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -126,6 +130,7 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) => expect(el).toBeNull())
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -133,6 +138,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("button-2")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -140,6 +148,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .focusElement("#modal-button-1")
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("modal-button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -148,6 +159,7 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab(true)
+            .activeElement((el) => expect(el).toBeNull())
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -155,6 +167,9 @@ describe("onKeyDown", () => {
                 ]);
             })
             .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes.id).toEqual("modal-button-1")
+            )
             .eval(getEvents)
             .check((tabsterModalizerEvents: string[]) => {
                 expect(tabsterModalizerEvents).toEqual([
@@ -188,7 +203,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -226,7 +243,9 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .eval(() => {
                 const innerButton = document.createElement("button");
                 innerButton.innerText = "Button3";
-                document.getElementById("button")?.appendChild(innerButton);
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button")
+                    ?.appendChild(innerButton);
             })
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))

@@ -56,12 +56,14 @@ describe("Uncontrolled", () => {
             )
         )
             .eval(() => {
-                document
-                    .getElementById("container")
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "container")
                     ?.addEventListener("keydown", (e) => {
                         if (e.key === "Tab") {
                             e.preventDefault();
-                            document.getElementById("destination")?.focus();
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "destination")
+                                ?.focus();
                         }
                     });
             })
@@ -773,15 +775,20 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
             .eval(() => {
                 // Quick and dirty partial implementation of roving tabindex
                 // to test coexistence.
-                const roving = document.getElementById("roving");
+                const roving = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "roving"
+                );
 
                 let activeElement: HTMLElement | undefined;
 
                 if (roving) {
                     const updateTabIndex = () => {
-                        const buttons = roving.querySelectorAll(
-                            "button, *[tabindex]"
-                        ) as NodeListOf<HTMLElement>;
+                        const buttons =
+                            (getTabsterTestVariables().dom?.querySelectorAll(
+                                roving,
+                                "button, *[tabindex]"
+                            ) || []) as HTMLElement[];
 
                         let hasTabbable: HTMLElement | undefined =
                             activeElement;
@@ -796,7 +803,10 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
 
                         if (
                             activeElement &&
-                            document.body.contains(activeElement)
+                            getTabsterTestVariables().dom?.nodeContains(
+                                document.body,
+                                activeElement
+                            )
                         ) {
                             if (hasTabbable && activeElement !== hasTabbable) {
                                 hasTabbable.tabIndex = -1;
@@ -812,17 +822,26 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
                         }
                     };
 
-                    const observer = new MutationObserver((mutations) => {
-                        if (mutations.some((m) => m.type !== "attributes")) {
-                            updateTabIndex();
-                        }
-                    });
+                    const observer =
+                        getTabsterTestVariables().dom?.createMutationObserver(
+                            (mutations) => {
+                                if (
+                                    mutations.some(
+                                        (m) => m.type !== "attributes"
+                                    )
+                                ) {
+                                    updateTabIndex();
+                                }
+                            }
+                        );
 
-                    observer.observe(roving, {
-                        childList: true,
-                        subtree: true,
-                        attributes: true,
-                    });
+                    if (observer) {
+                        observer.observe(roving, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true,
+                        });
+                    }
 
                     roving.addEventListener("focusin", (e) => {
                         activeElement = e.target as HTMLElement;
@@ -831,7 +850,12 @@ describe("Uncontrolled with 3rd party roving tabindex", () => {
 
                     roving.addEventListener("keydown", (e) => {
                         if (e.key === "ArrowDown") {
-                            const buttons = roving.querySelectorAll("button");
+                            const buttons =
+                                (getTabsterTestVariables().dom?.querySelectorAll(
+                                    roving,
+                                    "button"
+                                ) || []) as HTMLElement[];
+
                             const index = Array.prototype.indexOf.call(
                                 buttons,
                                 e.target
@@ -881,7 +905,7 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it("should coexist with custom focus trap implementation", async () => {
+    it("should coexist with custom focus trap implementation, using checkUncontrolledCompletely() callback", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
@@ -906,22 +930,30 @@ describe("Uncontrolled with 3rd party focus trap", () => {
         )
             .eval(() => {
                 getTabsterTestVariables().createTabster?.(window, {
-                    checkUncontrolledTrappingFocus: (e) =>
+                    checkUncontrolledCompletely: (e) =>
                         e.id === "trap1" || e.id === "trap2",
                 });
 
                 const trapFocus = (parentId: string) => {
-                    const parent = document.getElementById(parentId);
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
 
                     if (parent) {
                         parent.addEventListener("keydown", (e) => {
                             if (e.key === "Tab") {
-                                const buttons = parent.querySelectorAll(
-                                    "button, *[tabindex]"
-                                ) as NodeListOf<HTMLElement>;
+                                const buttons =
+                                    getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]" || []
+                                    ) as HTMLElement[];
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
-                                    document.activeElement
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
                                 );
 
                                 if (index >= 0) {
@@ -983,6 +1015,318 @@ describe("Uncontrolled with 3rd party focus trap", () => {
             .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button6");
+            });
+    });
+
+    it("should coexist with custom focus trap implementation, using completely property", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="trap1"
+                        {...getTabsterAttribute({
+                            uncontrolled: { completely: true },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <button id="button-4">Button4</button>
+                    <div
+                        id="trap2"
+                        {...getTabsterAttribute({
+                            uncontrolled: { completely: true },
+                        })}
+                    >
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                getTabsterTestVariables().createTabster?.(window, {});
+
+                const trapFocus = (parentId: string) => {
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
+
+                    if (parent) {
+                        parent.addEventListener("keydown", (e) => {
+                            if (e.key === "Tab") {
+                                const buttons =
+                                    (getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]"
+                                    ) || []) as HTMLElement[];
+                                const index = Array.prototype.indexOf.call(
+                                    buttons,
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
+                                );
+
+                                if (index >= 0) {
+                                    if (index === 0 && e.shiftKey) {
+                                        e.preventDefault();
+                                        buttons[buttons.length - 1].focus();
+                                    } else if (
+                                        index === buttons.length - 1 &&
+                                        !e.shiftKey
+                                    ) {
+                                        e.preventDefault();
+                                        buttons[0].focus();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                };
+
+                trapFocus("trap1");
+                trapFocus("trap2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .focusElement("#button-4")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            });
+    });
+
+    it("should coexist with custom focus trap implementation, using checkUncontrolledCompletely() callback and completely property defaulting to the property when the callback returns undefined", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="trap1"
+                        {...getTabsterAttribute({ uncontrolled: {} })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    <button id="button-4">Button4</button>
+                    <div
+                        id="trap2"
+                        {...getTabsterAttribute({
+                            uncontrolled: { completely: true },
+                        })}
+                    >
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
+                    <button id="button-7">Button7</button>
+                    <div
+                        id="trap3"
+                        {...getTabsterAttribute({
+                            uncontrolled: { completely: false },
+                        })}
+                    >
+                        <button>Button8</button>
+                        <button>Button9</button>
+                    </div>
+                    <button id="button-10">Button10</button>
+                    <div
+                        id="no-trap4"
+                        {...getTabsterAttribute({
+                            uncontrolled: { completely: true },
+                        })}
+                    >
+                        <button>Button11</button>
+                        <button>Button12</button>
+                    </div>
+                    <button id="button-13">Button13</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                getTabsterTestVariables().createTabster?.(window, {
+                    checkUncontrolledCompletely: (e) => {
+                        switch (true) {
+                            case e.id === "trap1":
+                                return true;
+                            case e.id === "trap2":
+                                return undefined;
+                            case e.id === "trap3":
+                                return true;
+                            case e.id === "no-trap4":
+                                return false;
+                            default:
+                                return undefined;
+                        }
+                    },
+                });
+
+                const trapFocus = (parentId: string) => {
+                    const parent =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            parentId
+                        );
+
+                    if (parent) {
+                        parent.addEventListener("keydown", (e) => {
+                            if (e.key === "Tab") {
+                                const buttons =
+                                    (getTabsterTestVariables().dom?.querySelectorAll(
+                                        parent,
+                                        "button, *[tabindex]"
+                                    ) || []) as HTMLElement[];
+                                const index = Array.prototype.indexOf.call(
+                                    buttons,
+                                    getTabsterTestVariables().dom?.getActiveElement(
+                                        document
+                                    )
+                                );
+
+                                if (index >= 0) {
+                                    if (index === 0 && e.shiftKey) {
+                                        e.preventDefault();
+                                        buttons[buttons.length - 1].focus();
+                                    } else if (
+                                        index === buttons.length - 1 &&
+                                        !e.shiftKey
+                                    ) {
+                                        e.preventDefault();
+                                        buttons[0].focus();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                };
+
+                trapFocus("trap1");
+                trapFocus("trap2");
+                trapFocus("trap3");
+                trapFocus("no-trap4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .focusElement("#button-4")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .focusElement("#button-7")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button8");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button9");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button8");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button9");
+            })
+            .focusElement("#button-10")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button10");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button11");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button12");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button13");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button12");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button11");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button10");
             });
     });
 });

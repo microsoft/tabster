@@ -20,6 +20,7 @@ import {
     getWindowUId,
     HTMLElementWithUID,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;
@@ -755,7 +756,7 @@ class GetElementTransaction extends CrossOriginTransaction<
             (!data.ownerId || data.ownerId === getWindowUId(getOwner()))
         ) {
             if (data.id) {
-                element = getOwner().document.getElementById(data.id);
+                element = dom.getElementById(getOwner().document, data.id);
 
                 if (element && data.rootId) {
                     const ctx = RootAPI.getTabsterContext(tabster, element);
@@ -1477,7 +1478,7 @@ export class CrossOriginElement implements Types.CrossOriginElement {
 export class CrossOriginFocusedElementState
     extends Subscribable<
         CrossOriginElement | undefined,
-        Types.FocusedElementDetails
+        Types.FocusedElementDetail
     >
     implements Types.CrossOriginFocusedElementState
 {
@@ -1556,9 +1557,9 @@ export class CrossOriginFocusedElementState
     static setVal(
         instance: Types.CrossOriginFocusedElementState,
         val: CrossOriginElement | undefined,
-        details: Types.FocusedElementDetails
+        detail: Types.FocusedElementDetail
     ): void {
-        (instance as CrossOriginFocusedElementState).setVal(val, details);
+        (instance as CrossOriginFocusedElementState).setVal(val, detail);
     }
 }
 

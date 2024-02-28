@@ -30,11 +30,11 @@ export const RestorerBasicExample: Story = () => {
     source.setAttribute(TabsterTypes.TabsterAttributeName, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
-        <button>Foo</button>
-        <button>Foo</button>
-        <button>Foo</button>
-        <button>Foo</button>
         <button id="unmount">unmount</button>
+        <button>Foo</button>
+        <button>Foo</button>
+        <button>Foo</button>
+        <button>Foo</button>
     `;
 
     const target = document.createElement("button");
@@ -42,6 +42,10 @@ export const RestorerBasicExample: Story = () => {
     target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
+        const initialFocus = source.querySelector(
+            "#unmount"
+        ) as HTMLButtonElement;
+        initialFocus?.focus();
         document.getElementById("unmount")?.addEventListener("click", () => {
             source.remove();
         });
@@ -72,11 +76,11 @@ export const UseTargetHistory: Story = () => {
     source.setAttribute(TabsterTypes.TabsterAttributeName, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
-        <button>Foo</button>
-        <button>Foo</button>
-        <button>Foo</button>
-        <button>Foo</button>
         <button id="unmount">unmount</button>
+        <button>Foo</button>
+        <button>Foo</button>
+        <button>Foo</button>
+        <button>Foo</button>
     `;
 
     const target = document.createElement("button");
@@ -84,6 +88,10 @@ export const UseTargetHistory: Story = () => {
     target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
+        const initialFocus = source.querySelector(
+            "#unmount"
+        ) as HTMLButtonElement;
+        initialFocus?.focus();
         document.getElementById("unmount")?.addEventListener("click", () => {
             source.remove();
         });

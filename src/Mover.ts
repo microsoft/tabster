@@ -10,6 +10,14 @@ import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
 import {
+    MoverMemorizedElementEvent,
+    MoverMemorizedElementEventName,
+    MoverMoveFocusEvent,
+    MoverMoveFocusEventName,
+    MoverStateEvent,
+    TabsterMoveFocusEvent,
+} from "./Events";
+import {
     createElementTreeWalker,
     DummyInput,
     DummyInputManager,
@@ -21,9 +29,9 @@ import {
     matchesSelector,
     scrollIntoView,
     TabsterPart,
-    triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
@@ -216,7 +224,7 @@ export class Mover
                             const state = this.getState(el);
 
                             if (state) {
-                                triggerEvent(el, Types.MoverEventName, state);
+                                el.dispatchEvent(new MoverStateEvent(state));
                             }
                         }
                     }
@@ -253,7 +261,7 @@ export class Mover
         if (
             this._props.tabbable ||
             currentIsDummy ||
-            (currentElement && !container.contains(currentElement))
+            (currentElement && !dom.nodeContains(container, currentElement))
         ) {
             const findProps: Types.FindNextProps = {
                 currentElement,
@@ -300,7 +308,7 @@ export class Mover
         if (
             moverElement &&
             (memorizeCurrent || visibilityAware || hasDefault) &&
-            (!moverElement.contains(state.from) ||
+            (!dom.nodeContains(moverElement, state.from) ||
                 (
                     state.from as HTMLElementWithDummyContainer
                 ).__tabsterDummyContainer?.get() === moverElement)
@@ -394,7 +402,7 @@ export class Mover
                 const state = this.getState(el);
 
                 if (state) {
-                    triggerEvent(el, Types.MoverEventName, state);
+                    el.dispatchEvent(new MoverStateEvent(state));
                 }
             }
         }
@@ -416,38 +424,42 @@ export class Mover
         const tabsterFocusable = this._tabster.focusable;
         let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
-        const observer = new MutationObserver((mutations: MutationRecord[]) => {
-            for (const mutation of mutations) {
-                const target = mutation.target;
-                const removed = mutation.removedNodes;
-                const added = mutation.addedNodes;
+        const observer = dom.createMutationObserver(
+            (mutations: MutationRecord[]) => {
+                for (const mutation of mutations) {
+                    const target = mutation.target;
+                    const removed = mutation.removedNodes;
+                    const added = mutation.addedNodes;
 
-                if (mutation.type === "attributes") {
-                    if (mutation.attributeName === "tabindex") {
-                        updateQueue.push({
-                            element: target as HTMLElement,
-                            type: _moverUpdateAttr,
-                        });
-                    }
-                } else {
-                    for (let i = 0; i < removed.length; i++) {
-                        updateQueue.push({
-                            element: removed[i] as HTMLElement as HTMLElement,
-                            type: _moverUpdateRemove,
-                        });
-                    }
+                    if (mutation.type === "attributes") {
+                        if (mutation.attributeName === "tabindex") {
+                            updateQueue.push({
+                                element: target as HTMLElement,
+                                type: _moverUpdateAttr,
+                            });
+                        }
+                    } else {
+                        for (let i = 0; i < removed.length; i++) {
+                            updateQueue.push({
+                                element: removed[
+                                    i
+                                ] as HTMLElement as HTMLElement,
+                                type: _moverUpdateRemove,
+                            });
+                        }
 
-                    for (let i = 0; i < added.length; i++) {
-                        updateQueue.push({
-                            element: added[i] as HTMLElement,
-                            type: _moverUpdateAdd,
-                        });
+                        for (let i = 0; i < added.length; i++) {
+                            updateQueue.push({
+                                element: added[i] as HTMLElement,
+                                type: _moverUpdateAdd,
+                            });
+                        }
                     }
                 }
-            }
 
-            requestUpdate();
-        });
+                requestUpdate();
+            }
+        );
 
         const setElement = (element: HTMLElement, remove?: boolean): void => {
             const current = allElements.get(element);
@@ -540,9 +552,9 @@ export class Mover
             }
 
             for (
-                let el = element.firstElementChild;
+                let el = dom.getFirstElementChild(element);
                 el;
-                el = el.nextElementSibling
+                el = dom.getNextElementSibling(el)
             ) {
                 removeWalk(el as HTMLElement);
             }
@@ -583,7 +595,7 @@ export class Mover
             for (
                 let el: HTMLElement | null = element;
                 el;
-                el = el.parentElement
+                el = dom.getParentElement(el)
             ) {
                 const toe = getTabsterOnElement(this._tabster, el);
 
@@ -694,6 +706,11 @@ export class MoverAPI implements Types.MoverAPI {
         const win = this._win();
 
         win.addEventListener("keydown", this._onKeyDown, true);
+        win.addEventListener(MoverMoveFocusEventName, this._onMoveFocus);
+        win.addEventListener(
+            MoverMemorizedElementEventName,
+            this._onMemorizedElement
+        );
 
         this._tabster.focusedElement.subscribe(this._onFocus);
     };
@@ -711,6 +728,11 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         win.removeEventListener("keydown", this._onKeyDown, true);
+        win.removeEventListener(MoverMoveFocusEventName, this._onMoveFocus);
+        win.removeEventListener(
+            MoverMemorizedElementEventName,
+            this._onMemorizedElement
+        );
 
         Object.keys(this._movers).forEach((moverId) => {
             if (this._movers[moverId]) {
@@ -755,9 +777,10 @@ export class MoverAPI implements Types.MoverAPI {
         let deepestFocusableElement = element;
 
         for (
-            let el: HTMLElement | null | undefined = element?.parentElement;
+            let el: HTMLElement | null | undefined =
+                dom.getParentElement(element);
             el;
-            el = el.parentElement
+            el = dom.getParentElement(el)
         ) {
             // We go through all Movers up from the focused element and
             // set their current element to the deepest focusable of that
@@ -778,44 +801,20 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
+    moveFocus(
+        fromElement: HTMLElement,
+        key: Types.MoverKey
+    ): HTMLElement | null {
+        return this._moveFocus(fromElement, key);
+    }
 
-        this._ignoredInputResolve?.(false);
-
-        let keyCode = event.keyCode;
-
-        // Give a chance to other listeners to handle the event (for example,
-        // to scroll instead of moving focus).
-        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
-            return;
-        }
-
-        switch (keyCode) {
-            case Keys.Down:
-            case Keys.Right:
-            case Keys.Up:
-            case Keys.Left:
-            case Keys.PageDown:
-            case Keys.PageUp:
-            case Keys.Home:
-            case Keys.End:
-                break;
-            default:
-                return;
-        }
-
+    private _moveFocus(
+        fromElement: HTMLElement,
+        key: Types.MoverKey,
+        relatedEvent?: KeyboardEvent
+    ): HTMLElement | null {
         const tabster = this._tabster;
-        const focused = tabster.focusedElement.getFocusedElement();
-
-        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
-            return;
-        }
-
-        const ctx = RootAPI.getTabsterContext(tabster, focused, {
+        const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
 
@@ -823,9 +822,9 @@ export class MoverAPI implements Types.MoverAPI {
             !ctx ||
             !ctx.mover ||
             ctx.excludedFromMover ||
-            ctx.ignoreKeydown(event)
+            (relatedEvent && ctx.ignoreKeydown(relatedEvent))
         ) {
-            return;
+            return null;
         }
 
         const mover = ctx.mover;
@@ -839,25 +838,25 @@ export class MoverAPI implements Types.MoverAPI {
                 // the grouppers between the current element and the current mover.
                 for (
                     let el: HTMLElement | null | undefined =
-                        groupper.getElement()?.parentElement;
+                        dom.getParentElement(groupper.getElement());
                     el && el !== container;
-                    el = el.parentElement
+                    el = dom.getParentElement(el)
                 ) {
                     if (
                         getTabsterOnElement(tabster, el)?.groupper?.isActive(
                             true
                         )
                     ) {
-                        return;
+                        return null;
                     }
                 }
             } else {
-                return;
+                return null;
             }
         }
 
         if (!container) {
-            return;
+            return null;
         }
 
         const focusable = tabster.focusable;
@@ -873,31 +872,32 @@ export class MoverAPI implements Types.MoverAPI {
         const isCyclic = moverProps.cyclic;
 
         let next: HTMLElement | null | undefined;
+        let scrollIntoViewArg: boolean | undefined;
 
         let focusedElementRect: DOMRect;
         let focusedElementX1 = 0;
         let focusedElementX2 = 0;
 
         if (isGrid) {
-            focusedElementRect = focused.getBoundingClientRect();
+            focusedElementRect = fromElement.getBoundingClientRect();
             focusedElementX1 = Math.ceil(focusedElementRect.left);
             focusedElementX2 = Math.floor(focusedElementRect.right);
         }
 
         if (ctx.rtl) {
-            if (keyCode === Keys.Right) {
-                keyCode = Keys.Left;
-            } else if (keyCode === Keys.Left) {
-                keyCode = Keys.Right;
+            if (key === Types.MoverKeys.ArrowRight) {
+                key = Types.MoverKeys.ArrowLeft;
+            } else if (key === Types.MoverKeys.ArrowLeft) {
+                key = Types.MoverKeys.ArrowRight;
             }
         }
 
         if (
-            (keyCode === Keys.Down && isVertical) ||
-            (keyCode === Keys.Right && (isHorizontal || isGrid))
+            (key === Types.MoverKeys.ArrowDown && isVertical) ||
+            (key === Types.MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
             next = focusable.findNext({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
             });
@@ -917,11 +917,11 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (
-            (keyCode === Keys.Up && isVertical) ||
-            (keyCode === Keys.Left && (isHorizontal || isGrid))
+            (key === Types.MoverKeys.ArrowUp && isVertical) ||
+            (key === Types.MoverKeys.ArrowLeft && (isHorizontal || isGrid))
         ) {
             next = focusable.findPrev({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
             });
@@ -940,11 +940,11 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.Home) {
+        } else if (key === Types.MoverKeys.Home) {
             if (isGrid) {
                 focusable.findElement({
                     container,
-                    currentElement: focused,
+                    currentElement: fromElement,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
@@ -957,7 +957,7 @@ export class MoverAPI implements Types.MoverAPI {
                         );
 
                         if (
-                            el !== focused &&
+                            el !== fromElement &&
                             focusedElementX1 <= nextElementX1
                         ) {
                             return true;
@@ -973,11 +973,11 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.End) {
+        } else if (key === Types.MoverKeys.End) {
             if (isGrid) {
                 focusable.findElement({
                     container,
-                    currentElement: focused,
+                    currentElement: fromElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
                         if (!focusable.isFocusable(el)) {
@@ -989,7 +989,7 @@ export class MoverAPI implements Types.MoverAPI {
                         );
 
                         if (
-                            el !== focused &&
+                            el !== fromElement &&
                             focusedElementX1 >= nextElementX1
                         ) {
                             return true;
@@ -1005,9 +1005,9 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (keyCode === Keys.PageUp) {
+        } else if (key === Types.MoverKeys.PageUp) {
             focusable.findElement({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 isBackward: true,
@@ -1060,12 +1060,10 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
 
-            if (next) {
-                scrollIntoView(this._win, next, false);
-            }
-        } else if (keyCode === Keys.PageDown) {
+            scrollIntoViewArg = false;
+        } else if (key === Types.MoverKeys.PageDown) {
             focusable.findElement({
-                currentElement: focused,
+                currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 acceptCondition: (el) => {
@@ -1118,11 +1116,9 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
 
-            if (next) {
-                scrollIntoView(this._win, next, true);
-            }
+            scrollIntoViewArg = true;
         } else if (isGrid) {
-            const isBackward = keyCode === Keys.Up;
+            const isBackward = key === Types.MoverKeys.ArrowUp;
             const ax1 = focusedElementX1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const ay1 = Math.ceil(focusedElementRect!.top);
@@ -1135,7 +1131,7 @@ export class MoverAPI implements Types.MoverAPI {
 
             focusable.findAll({
                 container,
-                currentElement: focused,
+                currentElement: fromElement,
                 isBackward,
                 onElement: (el) => {
                     // Find element which has maximal intersection with the focused element horizontally,
@@ -1203,11 +1199,114 @@ export class MoverAPI implements Types.MoverAPI {
             next = targetElement;
         }
 
-        if (next) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+        if (
+            next &&
+            (!relatedEvent ||
+                (relatedEvent &&
+                    container.dispatchEvent(
+                        new TabsterMoveFocusEvent({
+                            by: "mover",
+                            owner: container,
+                            next,
+                            relatedEvent,
+                        })
+                    )))
+        ) {
+            if (scrollIntoViewArg !== undefined) {
+                scrollIntoView(this._win, next, scrollIntoViewArg);
+            }
+
+            if (relatedEvent) {
+                relatedEvent.preventDefault();
+                relatedEvent.stopImmediatePropagation();
+            }
 
             nativeFocus(next);
+
+            return next;
+        }
+
+        return null;
+    }
+
+    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
+        if (this._ignoredInputTimer) {
+            this._win().clearTimeout(this._ignoredInputTimer);
+            delete this._ignoredInputTimer;
+        }
+
+        this._ignoredInputResolve?.(false);
+
+        // Give a chance to other listeners to handle the event (for example,
+        // to scroll instead of moving focus).
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+            return;
+        }
+
+        const keyCode = event.keyCode;
+        let moverKey: Types.MoverKey | undefined;
+
+        if (keyCode === Keys.Down) {
+            moverKey = Types.MoverKeys.ArrowDown;
+        } else if (keyCode === Keys.Right) {
+            moverKey = Types.MoverKeys.ArrowRight;
+        } else if (keyCode === Keys.Up) {
+            moverKey = Types.MoverKeys.ArrowUp;
+        } else if (keyCode === Keys.Left) {
+            moverKey = Types.MoverKeys.ArrowLeft;
+        } else if (keyCode === Keys.PageDown) {
+            moverKey = Types.MoverKeys.PageDown;
+        } else if (keyCode === Keys.PageUp) {
+            moverKey = Types.MoverKeys.PageUp;
+        } else if (keyCode === Keys.Home) {
+            moverKey = Types.MoverKeys.Home;
+        } else if (keyCode === Keys.End) {
+            moverKey = Types.MoverKeys.End;
+        }
+
+        if (!moverKey) {
+            return;
+        }
+
+        const focused = this._tabster.focusedElement.getFocusedElement();
+
+        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
+            return;
+        }
+
+        this._moveFocus(focused, moverKey, event);
+    };
+
+    private _onMoveFocus = (e: MoverMoveFocusEvent): void => {
+        const element = e.composedPath()[0] as HTMLElement | null | undefined;
+        const key = e.detail?.key;
+
+        if (element && key !== undefined && !e.defaultPrevented) {
+            this._moveFocus(element, key);
+            e.stopImmediatePropagation();
+        }
+    };
+
+    private _onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
+        const target = e.composedPath()[0] as HTMLElement | null | undefined;
+        let memorizedElement = e.detail?.memorizedElement;
+
+        if (target) {
+            const ctx = RootAPI.getTabsterContext(this._tabster, target);
+            const mover = ctx?.mover;
+
+            if (mover) {
+                if (
+                    memorizedElement &&
+                    !dom.nodeContains(mover.getElement(), memorizedElement)
+                ) {
+                    memorizedElement = undefined;
+                }
+
+                mover.setCurrent(memorizedElement);
+
+                e.stopImmediatePropagation();
+            }
         }
     };
 
@@ -1242,8 +1341,7 @@ export class MoverAPI implements Types.MoverAPI {
                     // the keypress.
                     // TODO: Have a look at range, week, time, time, date, datetime-local.
                     if (textLength) {
-                        const selection =
-                            element.ownerDocument.defaultView?.getSelection();
+                        const selection = dom.getSelection(element);
 
                         if (selection) {
                             const initialLength = selection.toString().length;
@@ -1302,7 +1400,7 @@ export class MoverAPI implements Types.MoverAPI {
                         focusNode: prevFocusNode,
                         anchorOffset: prevAnchorOffset,
                         focusOffset: prevFocusOffset,
-                    } = win.getSelection() || {};
+                    } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
                     this._ignoredInputTimer = win.setTimeout(() => {
@@ -1313,7 +1411,7 @@ export class MoverAPI implements Types.MoverAPI {
                             focusNode,
                             anchorOffset,
                             focusOffset,
-                        } = win.getSelection() || {};
+                        } = dom.getSelection(element) || {};
 
                         if (
                             anchorNode !== prevAnchorNode ||
@@ -1331,8 +1429,8 @@ export class MoverAPI implements Types.MoverAPI {
 
                         if (anchorNode && focusNode) {
                             if (
-                                element.contains(anchorNode) &&
-                                element.contains(focusNode)
+                                dom.nodeContains(element, anchorNode) &&
+                                dom.nodeContains(element, focusNode)
                             ) {
                                 if (anchorNode !== element) {
                                     let anchorFound = false;
@@ -1348,7 +1446,10 @@ export class MoverAPI implements Types.MoverAPI {
 
                                         const nodeText = node.textContent;
 
-                                        if (nodeText && !node.firstChild) {
+                                        if (
+                                            nodeText &&
+                                            !dom.getFirstChild(node)
+                                        ) {
                                             const len = nodeText.length;
 
                                             if (anchorFound) {
@@ -1364,7 +1465,7 @@ export class MoverAPI implements Types.MoverAPI {
                                         let stop = false;
 
                                         for (
-                                            let e = node.firstChild;
+                                            let e = dom.getFirstChild(node);
                                             e && !stop;
                                             e = e.nextSibling
                                         ) {

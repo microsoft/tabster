@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { EvaluateFunc, Page, Frame, KeyInput } from "puppeteer";
+import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
@@ -20,9 +20,14 @@ import {
     makeNoOp,
     mergeTabsterProps,
     setTabsterAttribute,
-    Types,
     getRestorer,
+    Types,
+    Events,
 } from "tabster";
+
+const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
+
+// jest.setTimeout(900000000);
 
 // Importing the production version so that React doesn't complain in the test output.
 declare function require(name: string): any;
@@ -120,13 +125,17 @@ export interface BroTestTabsterTestVariables {
     groupper?: Types.GroupperAPI;
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
+    dom?: Types.DOMAPI;
+    shadowDOM?: Types.DOMAPI;
+    Events?: typeof Events;
 }
 
 export function getTestPageURL(parts?: TabsterParts): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
+    const enableShadowDOM = !!process.env.SHADOWDOM;
     const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
     const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
-    return `http://localhost:${port}/?controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}${
+    return `http://localhost:${port}/?shadowdom=${enableShadowDOM}&controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}${
         parts
             ? `&parts=${Object.keys(parts)
                   .filter((part: keyof TabsterParts) => parts[part])
@@ -243,12 +252,34 @@ class BroTestItemHTML extends BroTestItem {
         const frame = this._frameStack[0].frame;
 
         await frame.evaluate(
-            (el, html) => {
+            (enabeShadowDOM, el, html) => {
+                const shadowHost = document.createElement("div");
+
+                if (enabeShadowDOM) {
+                    shadowHost.attachShadow({ mode: "open" });
+
+                    const shadowRoot = shadowHost.shadowRoot;
+
+                    if (shadowRoot) {
+                        shadowRoot.innerHTML = html;
+                    }
+                } else {
+                    shadowHost.innerHTML = html;
+                }
+
                 if (el) {
-                    el.innerHTML = html;
+                    el.appendChild(shadowHost);
                 }
             },
-            await frame.$("body"),
+            process.env.SHADOWDOM,
+            await frame.evaluateHandle(
+                (domKey: "dom" | "shadowDOM") =>
+                    getTabsterTestVariables()[domKey]?.querySelector(
+                        document,
+                        "body"
+                    ),
+                domKey
+            ),
             renderToStaticMarkup(this._html)
         );
         await sleep(100);
@@ -264,9 +295,15 @@ class BroTestItemFrame extends BroTestItem {
     }
 
     async run() {
-        const frameHandle = await this._frameStack[0].frame.$(
-            `iframe[id='${this._id}']`
-        );
+        const frameHandle = (await this._frameStack[0].frame.evaluateHandle(
+            (id, domKey: "dom" | "shadowDOM") =>
+                getTabsterTestVariables()[domKey]?.querySelector(
+                    document,
+                    `iframe[id='${id}']`
+                ),
+            this._id,
+            domKey
+        )) as ElementHandle<HTMLIFrameElement> | null;
 
         if (frameHandle) {
             const frame = await frameHandle.contentFrame();
@@ -594,7 +631,16 @@ export class BroTest implements PromiseLike<undefined> {
     click(selector: string) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                await this._frameStack[0].frame.click(selector);
+                const el = (await this._frameStack[0].frame.evaluateHandle(
+                    (selector, domKey: "dom" | "shadowDOM") =>
+                        getTabsterTestVariables()[domKey]?.querySelector(
+                            document,
+                            selector
+                        ),
+                    selector,
+                    domKey
+                )) as ElementHandle<Element> | null;
+                await el?.click();
             })
         );
 
@@ -663,16 +709,34 @@ export class BroTest implements PromiseLike<undefined> {
     scrollTo(selector: string, x: number, y: number) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                await page.waitForSelector(selector);
+                await page.waitForFunction(
+                    (selector, domKey: "dom" | "shadowDOM") =>
+                        getTabsterTestVariables()[domKey]?.querySelector(
+                            document,
+                            selector
+                        ),
+                    {},
+                    selector,
+                    domKey
+                );
                 await page.evaluate(
-                    (selector: string, x: number, y: number) => {
-                        const scrollContainer: HTMLElement | null =
-                            document.querySelector(selector);
+                    (
+                        selector: string,
+                        x: number,
+                        y: number,
+                        domKey: "dom" | "shadowDOM"
+                    ) => {
+                        const scrollContainer: Element | null | undefined =
+                            getTabsterTestVariables()[domKey]?.querySelector(
+                                document,
+                                selector
+                            );
                         scrollContainer?.scroll(x, y);
                     },
                     selector,
                     x,
-                    y
+                    y,
+                    domKey
                 );
             })
         );
@@ -684,8 +748,11 @@ export class BroTest implements PromiseLike<undefined> {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 const activeElement = await this._frameStack[0].frame.evaluate(
-                    () => {
-                        const ae = document.activeElement;
+                    (domKey: "dom" | "shadowDOM") => {
+                        const ae =
+                            getTabsterTestVariables()[domKey]?.getActiveElement(
+                                document
+                            );
 
                         if (ae && ae !== document.body) {
                             const attributes: BrowserElement["attributes"] = {};
@@ -707,7 +774,8 @@ export class BroTest implements PromiseLike<undefined> {
                         }
 
                         return null;
-                    }
+                    },
+                    domKey
                 );
 
                 callback(activeElement);
@@ -723,22 +791,32 @@ export class BroTest implements PromiseLike<undefined> {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 await this._frameStack[0].frame.evaluate(
-                    (selector: string, async?: boolean) => {
+                    (
+                        domKey: "dom" | "shadowDOM",
+                        selector: string,
+                        async?: boolean
+                    ) => {
                         const el = selector
-                            ? document.querySelector(selector)
-                            : document.activeElement;
+                            ? getTabsterTestVariables()[domKey]?.querySelector(
+                                  document,
+                                  selector
+                              )
+                            : getTabsterTestVariables()[
+                                  domKey
+                              ]?.getActiveElement(document);
 
-                        if (el && el.parentElement) {
+                        if (el && el.parentNode) {
                             if (async) {
                                 setTimeout(
-                                    () => el.parentElement?.removeChild(el),
+                                    () => el.parentNode?.removeChild(el),
                                     0
                                 );
                             } else {
-                                el.parentElement.removeChild(el);
+                                el.parentNode.removeChild(el);
                             }
                         }
                     },
+                    domKey,
                     selector || "",
                     async
                 );
@@ -753,41 +831,55 @@ export class BroTest implements PromiseLike<undefined> {
     focusElement(selector: string) {
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
-                await this._frameStack[0].frame.evaluate((selector: string) => {
-                    const el = document.querySelector(selector);
-                    if (!el) {
-                        throw new Error(
-                            `focusElement: could not find element with selector ${selector}`
-                        );
-                    }
+                await this._frameStack[0].frame.evaluate(
+                    (domKey: "dom" | "shadowDOM", selector: string) => {
+                        const el = getTabsterTestVariables()[
+                            domKey
+                        ]?.querySelector(document, selector);
 
-                    // TODO remove this if ever switching to cypress
-                    // tslint:disable-next-line
-                    // https://github.com/cypress-io/cypress/blob/56234e52d6d1cbd292acdfd5f5d547f0c4706b51/packages/driver/src/cy/focused.js#L101
-                    let hasFocused = false;
-                    const onFocus = () => (hasFocused = true);
+                        if (!el) {
+                            throw new Error(
+                                `focusElement: could not find element with selector ${selector}`
+                            );
+                        }
 
-                    el.addEventListener("focus", onFocus);
-                    (el as HTMLElement).focus();
-                    el.removeEventListener("focus", onFocus);
+                        // TODO remove this if ever switching to cypress
+                        // tslint:disable-next-line
+                        // https://github.com/cypress-io/cypress/blob/56234e52d6d1cbd292acdfd5f5d547f0c4706b51/packages/driver/src/cy/focused.js#L101
+                        let hasFocused = false;
+                        const onFocus = () => (hasFocused = true);
 
-                    // only simulate the focus events if the element was sucessfully focused
-                    if (!hasFocused && document.activeElement === el) {
-                        const focusinEvt = new FocusEvent("focusin", {
-                            bubbles: true,
-                            view: window,
-                            relatedTarget: null,
-                        });
+                        el.addEventListener("focus", onFocus);
+                        (el as HTMLElement).focus();
+                        el.removeEventListener("focus", onFocus);
 
-                        const focusEvt = new FocusEvent("focus", {
-                            view: window,
-                            relatedTarget: null,
-                        });
+                        // only simulate the focus events if the element was sucessfully focused
+                        if (
+                            !hasFocused &&
+                            getTabsterTestVariables()[domKey]?.getActiveElement(
+                                document
+                            ) === el
+                        ) {
+                            const focusinEvt = new FocusEvent("focusin", {
+                                bubbles: true,
+                                view: window,
+                                relatedTarget: null,
+                                composed: true,
+                            });
 
-                        el.dispatchEvent(focusinEvt);
-                        el.dispatchEvent(focusEvt);
-                    }
-                }, selector);
+                            const focusEvt = new FocusEvent("focus", {
+                                view: window,
+                                relatedTarget: null,
+                                composed: true,
+                            });
+
+                            el.dispatchEvent(focusinEvt);
+                            el.dispatchEvent(focusEvt);
+                        }
+                    },
+                    domKey,
+                    selector
+                );
             })
         );
 

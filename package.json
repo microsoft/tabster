@@ -1,6 +1,6 @@
 {
     "name": "tabster",
-    "version": "5.0.2",
+    "version": "6.1.0",
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
@@ -27,8 +27,12 @@
         "lint": "eslint src/ --fix",
         "lint:check": "eslint src/",
         "test": "node tests/utils/runner.js",
-        "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true node tests/utils/runner.js",
+        "test:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm test",
         "test:root-dummy-inputs": "STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm test",
+        "test:shadowdom": "SHADOWDOM=true npm test",
+        "test:shadowdom:uncontrolled": "SHADOWDOM=true STORYBOOK_UNCONTROLLED=true npm test",
+        "test:shadowdom:root-dummy-inputs": "SHADOWDOM=true STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm test",
+        "test:all": "npm run test && npm run test:uncontrolled && npm run test:root-dummy-inputs && npm run test:shadowdom && npm run test:shadowdom:uncontrolled && npm run test:shadowdom:root-dummy-inputs",
         "prepublishOnly": "npm run build",
         "release": "release-it",
         "serve": "npx http-serve storybook-static",
@@ -45,7 +49,7 @@
         "prepare-pages-deploy": "rimraf ./.pages-deploy && npm run build-docs && npm run build-storybook && copyfiles -u 2 -a \"./docs/build/**/*\" ./.pages-deploy && copyfiles -u 1 -a \"./storybook-static/**/*\" ./.pages-deploy/storybook"
     },
     "dependencies": {
-        "keyborg": "^2.2.0",
+        "keyborg": "2.5.0",
         "tslib": "^2.3.1"
     },
     "devDependencies": {

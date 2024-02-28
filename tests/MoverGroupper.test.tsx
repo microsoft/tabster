@@ -908,13 +908,20 @@ describe("MoverGroupper", () => {
             .eval(() => {
                 window.addEventListener("keydown", (e) => {
                     const innerGroupper =
-                        document.getElementById("inner-groupper");
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "inner-groupper"
+                        );
 
                     if (
                         e.key === "Escape" &&
-                        innerGroupper?.contains(e.target as HTMLElement)
+                        innerGroupper?.contains(
+                            e.composedPath()[0] as HTMLElement
+                        )
                     ) {
-                        document.getElementById("outer-groupper")?.focus();
+                        getTabsterTestVariables()
+                            .dom?.getElementById(document, "outer-groupper")
+                            ?.focus();
                     }
                 });
             })
@@ -1576,13 +1583,17 @@ describe("MoverGroupper", () => {
                 expect(el?.textContent).toEqual("Button3Button4");
             })
             .eval(() => {
-                document.getElementById("button6")?.focus();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button6")
+                    ?.focus();
             })
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button6");
             })
             .eval(() => {
-                document.getElementById("foo")?.focus();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "foo")
+                    ?.focus();
             })
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Foo");

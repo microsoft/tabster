@@ -5,16 +5,6 @@
 
 export const TabsterAttributeName = "data-tabster";
 export const TabsterDummyInputAttributeName = "data-tabster-dummy";
-export const DeloserEventName = "tabster:deloser";
-export const ModalizerActiveEventName = "tabster:modalizer:active";
-export const ModalizerInactiveEventName = "tabster:modalizer:inactive";
-export const ModalizerFocusInEventName = "tabster:modalizer:focusin";
-export const ModalizerFocusOutEventName = "tabster:modalizer:focusout";
-export const ModalizerBeforeFocusOutEventName =
-    "tabster:modalizer:beforefocusout";
-export const MoverEventName = "tabster:mover";
-export const FocusInEventName = "tabster:focusin";
-export const FocusOutEventName = "tabster:focusout";
 
 export const FocusableSelector = [
     "a[href]",
@@ -25,10 +15,6 @@ export const FocusableSelector = [
     "*[tabindex]",
     "*[contenteditable]",
 ].join(", ");
-
-export interface TabsterEventWithDetails<D> extends Event {
-    details: D;
-}
 
 export interface TabsterDOMAttribute {
     [TabsterAttributeName]: string | undefined;
@@ -47,9 +33,20 @@ export interface TabsterCoreProps {
      */
     rootDummyInputs?: boolean;
     /**
-     * A callback that will be called for the uncontrolled areas with `trapsFocus`
-     * when Tabster wants to know is the element is currently trapping focus and
-     * Tabster should not interfere with handling Tab.
+     * A callback that will be called for the uncontrolled areas when Tabster wants
+     * to know is the uncontrolled element wants complete control (for example it
+     * is trapping focus) and Tabster should not interfere with handling Tab.
+     * If the callback returns undefined, then the default behaviour is to return
+     * the uncontrolled.completely value from the element. If the callback returns
+     * non-undefined value, the callback's value will dominate the element's
+     * uncontrolled.completely value.
+     */
+    checkUncontrolledCompletely?: (
+        element: HTMLElement,
+        completely: boolean // A uncontrolled.completely value from the element.
+    ) => boolean | undefined;
+    /**
+     * @deprecated use checkUncontrolledCompletely.
      */
     checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
     /**
@@ -57,6 +54,46 @@ export interface TabsterCoreProps {
      * Currently only used to detect tabster contexts
      */
     getParent?(el: Node): Node | null;
+    /**
+     * Ability to redefine all DOM API calls used by Tabster. For example, for
+     * ShadowDOM support.
+     */
+    DOMAPI?: Partial<DOMAPI>;
+}
+
+export interface DOMAPI {
+    createMutationObserver: (callback: MutationCallback) => MutationObserver;
+    createTreeWalker(
+        doc: Document,
+        root: Node,
+        whatToShow?: number,
+        filter?: NodeFilter | null
+    ): TreeWalker;
+    getParentNode(node: Node | null | undefined): ParentNode | null;
+    getParentElement(
+        element: HTMLElement | null | undefined
+    ): HTMLElement | null;
+    nodeContains(
+        parent: Node | null | undefined,
+        child: Node | null | undefined
+    ): boolean;
+    getActiveElement(doc: Document): Element | null;
+    querySelector(element: ParentNode, selector: string): Element | null;
+    querySelectorAll(element: ParentNode, selector: string): Element[];
+    getElementById(doc: Document, id: string): HTMLElement | null;
+    getFirstChild(node: Node | null | undefined): ChildNode | null;
+    getLastChild(node: Node | null | undefined): ChildNode | null;
+    getNextSibling(node: Node | null | undefined): ChildNode | null;
+    getPreviousSibling(node: Node | null | undefined): ChildNode | null;
+    getFirstElementChild(element: Element | null | undefined): Element | null;
+    getLastElementChild(element: Element | null | undefined): Element | null;
+    getNextElementSibling(element: Element | null | undefined): Element | null;
+    getPreviousElementSibling(
+        element: Element | null | undefined
+    ): Element | null;
+    appendChild(parent: Node, child: Node): Node;
+    insertBefore(parent: Node, child: Node, referenceChild: Node | null): Node;
+    getSelection(ref: Node): Selection | null;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -64,7 +101,7 @@ export type GetWindow = () => Window;
 
 export type SubscribableCallback<A, B = undefined> = (
     val: A,
-    details: B
+    detail: B
 ) => void;
 
 export interface Disposable {
@@ -86,14 +123,14 @@ export interface KeyboardNavigationState
     setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void;
 }
 
-export interface FocusedElementDetails {
+export interface FocusedElementDetail {
     relatedTarget?: HTMLElement;
     isFocusedProgrammatically?: boolean;
     modalizerId?: string;
 }
 
 export interface FocusedElementState
-    extends Subscribable<HTMLElement | undefined, FocusedElementDetails>,
+    extends Subscribable<HTMLElement | undefined, FocusedElementDetail>,
         Disposable {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
@@ -246,7 +283,7 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState
-    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetails>,
+    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetail>,
         Disposable {
     focus(
         element: CrossOriginElement,
@@ -583,7 +620,10 @@ export interface FocusableAPI extends Disposable {
 
 export interface DummyInputManager {
     moveOut: (backwards: boolean) => void;
-    moveOutWithDefaultAction: (backwards: boolean) => void;
+    moveOutWithDefaultAction: (
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ) => void;
 }
 
 export interface Visibilities {
@@ -676,8 +716,6 @@ export interface MoverProps {
     visibilityTolerance?: number;
 }
 
-export type MoverEvent = TabsterEventWithDetails<MoverElementState>;
-
 export interface Mover
     extends TabsterPart<MoverProps>,
         TabsterPartWithFindNextTabbable,
@@ -708,8 +746,33 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
+export interface MoverKeys {
+    ArrowUp: 1;
+    ArrowDown: 2;
+    ArrowLeft: 3;
+    ArrowRight: 4;
+    PageUp: 5;
+    PageDown: 6;
+    Home: 7;
+    End: 8;
+}
+export type MoverKey = MoverKeys[keyof MoverKeys];
+export const MoverKeys: MoverKeys = {
+    ArrowUp: 1,
+    ArrowDown: 2,
+    ArrowLeft: 3,
+    ArrowRight: 4,
+    PageUp: 5,
+    PageDown: 6,
+    Home: 7,
+    End: 8,
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MoverAPI extends MoverAPIInternal, Disposable {}
+export interface MoverAPI extends MoverAPIInternal, Disposable {
+    /** @internal (will likely be exposed once the API is fully stable) */
+    moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
+}
 
 export interface GroupperTabbabilities {
     Unlimited: 0;
@@ -764,12 +827,29 @@ export interface GroupperAPIInternal {
     handleKeyPress(
         element: HTMLElement,
         event: KeyboardEvent,
-        noGoUp?: boolean
+        fromModalizer?: boolean
     ): void;
 }
 
+export interface GroupperMoveFocusActions {
+    Enter: 1;
+    Escape: 2;
+}
+export type GroupperMoveFocusAction =
+    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
+export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
+    Enter: 1,
+    Escape: 2,
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface GroupperAPI extends GroupperAPIInternal, Disposable {}
+export interface GroupperAPI extends GroupperAPIInternal, Disposable {
+    /** @internal (will likely be exposed once the API is fully stable) */
+    moveFocus(
+        element: HTMLElement,
+        action: GroupperMoveFocusAction
+    ): HTMLElement | null;
+}
 
 export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
@@ -785,21 +865,6 @@ export interface ModalizerProps {
     isTrapped?: boolean;
 }
 
-export type ModalizerEventName =
-    | typeof ModalizerActiveEventName
-    | typeof ModalizerInactiveEventName
-    | typeof ModalizerBeforeFocusOutEventName
-    | typeof ModalizerFocusInEventName
-    | typeof ModalizerFocusOutEventName;
-
-export type ModalizerEventDetails = {
-    id: string;
-    element: HTMLElement;
-    eventName: ModalizerEventName;
-};
-
-export type ModalizerEvent = TabsterEventWithDetails<ModalizerEventDetails>;
-
 export interface Modalizer
     extends TabsterPart<ModalizerProps>,
         TabsterPartWithFindNextTabbable {
@@ -813,10 +878,6 @@ export interface Modalizer
     isActive(): boolean;
     makeActive(isActive: boolean): void;
     focused(noIncrement?: boolean): number;
-    triggerFocusEvent(
-        eventName: ModalizerEventName,
-        allElements: boolean
-    ): boolean;
 }
 
 export type ModalizerConstructor = (
@@ -835,7 +896,10 @@ export interface Root extends TabsterPart<RootProps> {
 
     readonly uid: string;
     dispose(): void;
-    moveOutWithDefaultAction(backwards: boolean): void;
+    moveOutWithDefaultAction(
+        backwards: boolean,
+        relatedEvent: KeyboardEvent
+    ): void;
 }
 
 export type RootConstructor = (
@@ -910,10 +974,6 @@ export interface TabsterContext {
     ignoreKeydown: (e: KeyboardEvent) => boolean;
 }
 
-export interface RootFocusEventDetails {
-    element: HTMLElement;
-}
-
 interface RootAPIInternal {
     /**@internal*/
     createRoot(
@@ -927,12 +987,13 @@ interface RootAPIInternal {
     addDummyInputs(): void;
 }
 
-export interface RootAPI extends Disposable, RootAPIInternal {
-    eventTarget: EventTarget;
-}
+export interface RootAPI extends Disposable, RootAPIInternal {}
 
 export interface UncontrolledAPI {
-    isTrappingFocus(element: HTMLElement): boolean;
+    isUncontrolledCompletely(
+        element: HTMLElement,
+        completely: boolean
+    ): boolean;
 }
 
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
@@ -1000,6 +1061,25 @@ export type ModalizerElementAccessibleCheck = (
     activeModalizerElements?: HTMLElement[]
 ) => boolean;
 
+export interface UncontrolledProps {
+    // Normally, even uncontrolled areas should not be completely uncontrolled
+    // to be able to interact with the rest of the application properly.
+    // For example, if an uncontrolled area implements something like
+    // roving tabindex, it should be uncontrolled inside the area, but it
+    // still should be able to be an organic part of the application.
+    // However, in some cases, third party component might want to be able
+    // to gain full control of the area, for example, if it implements
+    // some custom trap focus logic.
+    // `completely` indicates that uncontrolled area must gain full control over
+    // Tab handling. If not set, Tabster might still handle Tab in the
+    // uncontrolled area, when, for example, there is an inactive Modalizer
+    // (that needs to be skipped) after the last focusable element of the
+    // uncontrolled area.
+    // WARNING: Use with caution, as it might break the normal keyboard navigation
+    // between the uncontrolled area and the rest of the application.
+    completely?: boolean;
+}
+
 export interface DeloserOnElement {
     deloser: Deloser;
 }
@@ -1029,7 +1109,7 @@ export interface GroupperOnElement {
 }
 
 export interface UncontrolledOnElement {
-    uncontrolled: Record<string, never>;
+    uncontrolled: UncontrolledProps;
 }
 
 export interface ObservedOnElement {
@@ -1051,7 +1131,7 @@ export interface RestorerProps {
 export type TabsterAttributeProps = Partial<{
     deloser: DeloserProps;
     root: RootProps;
-    uncontrolled: UncontrolledOnElement["uncontrolled"];
+    uncontrolled: UncontrolledProps;
     modalizer: ModalizerProps;
     focusable: FocusableProps;
     groupper: GroupperProps;

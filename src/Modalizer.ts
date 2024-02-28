@@ -10,15 +10,20 @@ import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
 import * as Types from "./Types";
 import {
+    ModalizerActiveEvent,
+    ModalizerEventDetail,
+    ModalizerInactiveEvent,
+} from "./Events";
+import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
-    triggerEvent,
     augmentAttribute,
 } from "./Utils";
+import { dom } from "./DOMAPI";
 
 let _wasFocusedCounter = 0;
 
@@ -188,11 +193,7 @@ export class Modalizer
                 );
             }
 
-            this.triggerFocusEvent(
-                isActive
-                    ? Types.ModalizerActiveEventName
-                    : Types.ModalizerInactiveEventName
-            );
+            this._dispatchEvent(isActive);
         }
     }
 
@@ -226,7 +227,7 @@ export class Modalizer
     }
 
     contains(element: HTMLElement) {
-        return !!this.getElement()?.contains(element);
+        return dom.nodeContains(this.getElement(), element);
     }
 
     findNextTabbable(
@@ -291,10 +292,7 @@ export class Modalizer
         };
     }
 
-    triggerFocusEvent(
-        eventName: Types.ModalizerEventName,
-        allElements?: boolean
-    ): boolean {
+    private _dispatchEvent(isActive: boolean, allElements?: boolean): boolean {
         const element = this.getElement();
         let defaultPrevented = false;
 
@@ -304,15 +302,21 @@ export class Modalizer
                 : [element];
 
             for (const el of elements) {
-                if (
-                    el &&
-                    !triggerEvent<Types.ModalizerEventDetails>(el, eventName, {
+                if (el) {
+                    const eventDetail: ModalizerEventDetail = {
                         id: this.userId,
                         element,
-                        eventName,
-                    })
-                ) {
-                    defaultPrevented = true;
+                    };
+
+                    const event = isActive
+                        ? new ModalizerActiveEvent(eventDetail)
+                        : new ModalizerInactiveEvent(eventDetail);
+
+                    el.dispatchEvent(event);
+
+                    if (event.defaultPrevented) {
+                        defaultPrevented = true;
+                    }
                 }
             }
         }
@@ -433,7 +437,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         // Adding a modalizer which is already focused, activate it
         if (
-            element.contains(
+            dom.nodeContains(
+                element,
                 this._tabster.focusedElement.getFocusedElement() ?? null
             )
         ) {
@@ -652,7 +657,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             for (const e of this.activeElements) {
                 const el = e.get();
 
-                if (el && (element.contains(el) || el === element)) {
+                if (el && (dom.nodeContains(element, el) || el === element)) {
                     // We have a part of currently active modalizer somewhere deeper in the DOM,
                     // skipping all other checks.
                     return NodeFilter.FILTER_SKIP;
@@ -684,7 +689,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         const hiddenElements: HTMLElement[] = [];
         const alwaysAccessibleSelector = this._alwaysAccessibleSelector;
         const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
-            ? Array.from(body.querySelectorAll(alwaysAccessibleSelector))
+            ? Array.from(
+                  dom.querySelectorAll(
+                      body,
+                      alwaysAccessibleSelector
+                  ) as HTMLElement[]
+              )
             : [];
         const activeModalizerElements: HTMLElement[] = [];
 
@@ -757,29 +767,38 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         const walk = (element: HTMLElement) => {
             for (
-                let el = element.firstElementChild;
+                let el = dom.getFirstElementChild(element);
                 el;
-                el = el.nextElementSibling
+                el = dom.getNextElementSibling(el)
             ) {
                 let skip = false;
                 let containsModalizer = false;
+                let containedByModalizer = false;
 
                 if (allVisibleElements) {
+                    const elParent = tabster.getParent(el);
+
                     for (const c of allVisibleElements) {
                         if (el === c) {
                             skip = true;
                             break;
                         }
 
-                        if (el.contains(c)) {
+                        if (dom.nodeContains(el, c)) {
                             containsModalizer = true;
                             break;
+                        } else if (dom.nodeContains(c, elParent)) {
+                            // tabster.getParent() could be provided by the application to
+                            // handle, for example, virtual parents. Making sure, we are
+                            // not setting aria-hidden on elements which are virtually
+                            // inside modalizer.
+                            containedByModalizer = true;
                         }
                     }
 
                     if (containsModalizer) {
                         walk(el as HTMLElement);
-                    } else if (!skip) {
+                    } else if (!skip && !containedByModalizer) {
                         toggle(el as HTMLElement, true);
                     }
                 } else {
@@ -812,12 +831,12 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     /**
      * Subscribes to the focus state and handles modalizer related focus events
-     * @param e - Element that is focused
-     * @param details - Additional data about the focus event
+     * @param focusedElement - Element that is focused
+     * @param detail - Additional data about the focus event
      */
     private _onFocus = (
         focusedElement: HTMLElement | undefined,
-        details: Types.FocusedElementDetails
+        detail: Types.FocusedElementDetail
     ): void => {
         const ctx =
             focusedElement &&
@@ -833,7 +852,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         for (
             let e: HTMLElement | null = focusedElement;
             e;
-            e = e.parentElement
+            e = dom.getParentElement(e)
         ) {
             // If the newly focused element is inside some of the hidden containers,
             // remove aria-hidden from those synchronously for the screen readers
@@ -864,7 +883,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         // Developers calling `element.focus()` should change/deactivate active modalizer
         if (
-            details.isFocusedProgrammatically ||
+            detail.isFocusedProgrammatically ||
             this.currentIsOthersAccessible ||
             modalizer?.getProps().isAlwaysAccessible
         ) {

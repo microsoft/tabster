@@ -18,7 +18,10 @@ describeIfUncontrolled("DummyInputManager", () => {
     });
     describe("should update dummy inputs when DOM children update for", () => {
         const evaluateDummy = (dummyAttribute: string, elementId: string) => {
-            const element = document.getElementById(elementId) as HTMLElement;
+            const element = getTabsterTestVariables().dom?.getElementById(
+                document,
+                elementId
+            ) as HTMLElement;
 
             return {
                 first: !!element.firstElementChild?.hasAttribute(
@@ -49,32 +52,44 @@ describeIfUncontrolled("DummyInputManager", () => {
         };
 
         const appendElement = (elementId: string) => {
-            const current = document.getElementById(elementId) as HTMLElement;
+            const current = getTabsterTestVariables().dom?.getElementById(
+                document,
+                elementId
+            ) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element append";
             current.appendChild(newElement);
         };
 
         const prependElement = (elementId: string) => {
-            const current = document.getElementById(elementId) as HTMLElement;
+            const current = getTabsterTestVariables().dom?.getElementById(
+                document,
+                elementId
+            ) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
             current.prepend(newElement);
         };
 
         const insertElementBefore = (elementId: string) => {
-            const current = document.getElementById(elementId) as HTMLElement;
+            const current = getTabsterTestVariables().dom?.getElementById(
+                document,
+                elementId
+            ) as HTMLElement;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
-            current.parentElement?.insertBefore(newElement, current);
+            current.parentNode?.insertBefore(newElement, current);
         };
 
         const insertElementAfter = (elementId: string) => {
-            const current = document.getElementById(elementId) as HTMLElement;
+            const current = getTabsterTestVariables().dom?.getElementById(
+                document,
+                elementId
+            ) as HTMLElement;
             const nextSibling = current.nextElementSibling;
             const newElement = document.createElement("button");
             newElement.textContent = "New element prepend";
-            current.parentElement?.insertBefore(newElement, nextSibling);
+            current.parentNode?.insertBefore(newElement, nextSibling);
         };
 
         it("mover", async () => {
@@ -167,7 +182,8 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             const evaluateScrollTop = (scrollableId: string) => {
-                const element = document.getElementById(
+                const element = getTabsterTestVariables().dom?.getElementById(
+                    document,
                     scrollableId
                 ) as HTMLElement;
                 return element.scrollTop;
@@ -436,13 +452,15 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval((elementId) => {
-                    const current = document.getElementById(
-                        elementId
-                    ) as HTMLElement;
-                    const parent = current.parentElement as HTMLElement;
+                    const current =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            elementId
+                        ) as HTMLElement;
+                    const parent = current.parentNode;
                     const firstDummy =
                         current.previousElementSibling as HTMLElement;
-                    parent.removeChild(firstDummy);
+                    parent?.removeChild(firstDummy);
                 }, groupperId)
                 .eval(
                     evaluateDummy,
@@ -463,12 +481,14 @@ describeIfUncontrolled("DummyInputManager", () => {
                 )
                 .check(checkDummyOutside)
                 .eval((elementId) => {
-                    const current = document.getElementById(
-                        elementId
-                    ) as HTMLElement;
-                    const parent = current.parentElement as HTMLElement;
+                    const current =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            elementId
+                        ) as HTMLElement;
+                    const parent = current.parentNode;
                     const lastDummy = current.nextElementSibling as HTMLElement;
-                    parent.removeChild(lastDummy);
+                    parent?.removeChild(lastDummy);
                 }, groupperId)
                 .eval(
                     evaluateDummy,
@@ -647,7 +667,11 @@ describeIfUncontrolled("DummyInputManager", () => {
             )
         )
             .eval((dummyAttribute: string) => {
-                const rootElement = document.getElementById("root");
+                const rootElement =
+                    getTabsterTestVariables().dom?.getElementById(
+                        document,
+                        "root"
+                    );
                 const buttonElement = document.createElement("button");
                 buttonElement.textContent = "Button2";
 
@@ -668,31 +692,22 @@ describeIfUncontrolled("DummyInputManager", () => {
 
                 const tabster = getTabsterTestVariables().core?.core;
 
-                if (tabster && rootElement) {
-                    // Calling an internal API to force the dummy inputs update.
-                    const root = (
-                        tabster.root.constructor as unknown as {
-                            getRoot: (
-                                tabster: Types.TabsterCore,
-                                element: HTMLElement
-                            ) => Types.Root | undefined;
+                return new Promise((resolve) => {
+                    // Waiting for the dummy inputs to update.
+                    setTimeout(() => {
+                        if (tabster && rootElement) {
+                            isDummyLast.push(
+                                rootElement?.lastElementChild
+                                    ? rootElement.lastElementChild.hasAttribute(
+                                          dummyAttribute
+                                      )
+                                    : null
+                            );
                         }
-                    ).getRoot(tabster, rootElement);
 
-                    root?.moveOutWithDefaultAction(false);
-
-                    // After the internal API call above, the dummy input should be
-                    // forced to become the last element again.
-                    isDummyLast.push(
-                        rootElement?.lastElementChild
-                            ? rootElement.lastElementChild.hasAttribute(
-                                  dummyAttribute
-                              )
-                            : null
-                    );
-                }
-
-                return isDummyLast;
+                        resolve(isDummyLast);
+                    }, 200);
+                });
             }, Types.TabsterDummyInputAttributeName)
             .check((isDummyLast: (boolean | null)[]) => {
                 expect(isDummyLast).toEqual([false, true]);

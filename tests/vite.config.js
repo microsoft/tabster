@@ -3,6 +3,7 @@ import replace from "@rollup/plugin-replace";
 
 module.exports = defineConfig({
     build: {
+        minify: false,
         rollupOptions: {
             plugins: [
                 replace({

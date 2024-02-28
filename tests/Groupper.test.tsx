@@ -120,7 +120,7 @@ describe("Groupper - default", () => {
                 )
                 .eval(() => (window as WindowWithEscFlag).__escPressed1)
                 .check((escPressed: number) => {
-                    expect(escPressed).toBe(0);
+                    expect(escPressed).toBe(1);
                 });
         }
     );
@@ -215,6 +215,32 @@ describe("Groupper - default", () => {
                 .check((escPressed: number) => {
                     expect(escPressed).toBe(1);
                 });
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should not escape groupper as <%s> with Escape key if the application has moved the focus",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName))
+                .eval(() => {
+                    const keyEsc = 27;
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.keyCode === keyEsc) {
+                            // Focusing next button.
+                            (
+                                getTabsterTestVariables().dom?.getActiveElement(
+                                    document
+                                )?.nextElementSibling as HTMLElement | undefined
+                            )?.focus();
+                        }
+                    });
+                })
+                .pressTab()
+                .pressTab()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .pressEsc()
+                .activeElement((el) => expect(el?.textContent).toEqual("Bar1"));
         }
     );
 });
@@ -369,6 +395,57 @@ describe("Groupper - limited focus trap", () => {
                 .pressEsc()
                 .activeElement((el) =>
                     expect(el?.textContent).toEqual("Button1Button2")
+                );
+        }
+    );
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should enter and escape groupper as <%s> with tabster:groupper:movefocus event",
+        async (tagName) => {
+            await new BroTest.BroTest(getTestHtml(tagName, true, false))
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
+                )
+                .pressEnter()
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .pressEsc()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
+                )
+                .eval((action) => {
+                    const activeElement =
+                        getTabsterTestVariables()?.dom?.getActiveElement(
+                            document
+                        );
+                    const GroupperMoveFocusEvent =
+                        getTabsterTestVariables()?.Events
+                            ?.GroupperMoveFocusEvent;
+
+                    activeElement &&
+                        GroupperMoveFocusEvent &&
+                        activeElement.dispatchEvent(
+                            new GroupperMoveFocusEvent({ action })
+                        );
+                }, Types.GroupperMoveFocusActions.Enter)
+                .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
+                .eval((action) => {
+                    const activeElement =
+                        getTabsterTestVariables()?.dom?.getActiveElement(
+                            document
+                        );
+                    const GroupperMoveFocusEvent =
+                        getTabsterTestVariables()?.Events
+                            ?.GroupperMoveFocusEvent;
+
+                    activeElement &&
+                        GroupperMoveFocusEvent &&
+                        activeElement.dispatchEvent(
+                            new GroupperMoveFocusEvent({ action })
+                        );
+                }, Types.GroupperMoveFocusActions.Escape)
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Foo1Bar1")
                 );
         }
     );
@@ -605,6 +682,119 @@ describe("Groupper - empty", () => {
                     expect(el?.textContent).toEqual("Hello");
                 })
                 .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        }
+    );
+});
+
+describe("Groupper with tabster:groupper:movefocus", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    it.each<["div" | "li"]>([["div"], ["li"]])(
+        "should properly move the focus when tabbing from outside of the groupper as <%s>",
+        async (tagName) => {
+            const Tag = tagName;
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button id="button1">Button1</button>
+                        <Tag
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        Types.GroupperTabbabilities
+                                            .LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button2</button>
+                            <button>Button3</button>
+                        </Tag>
+                        <button id="button4">Button4</button>
+                    </div>
+                )
+            )
+                .eval(() => {
+                    interface WindowWithButton2 extends Window {
+                        __enteredGroupper?: boolean;
+                        __hadButton3?: boolean;
+                    }
+
+                    delete (window as WindowWithButton2).__hadButton3;
+
+                    document.addEventListener("tabster:movefocus", (e) => {
+                        if (e.detail?.relatedEvent?.key === "Enter") {
+                            if (
+                                (window as WindowWithButton2).__enteredGroupper
+                            ) {
+                                // Enter was pressed for the second time, let's alter the default behaviour.
+                                e.preventDefault();
+                                e.detail.relatedEvent.preventDefault();
+                                getTabsterTestVariables()
+                                    .dom?.getElementById(document, "button1")
+                                    ?.focus();
+                            }
+
+                            (window as WindowWithButton2).__enteredGroupper =
+                                true;
+                        }
+
+                        if (
+                            getTabsterTestVariables().dom?.getActiveElement(
+                                document
+                            )?.textContent === "Button3"
+                        ) {
+                            // For the sake of test, we will move focus after Button3 is focused for the second time.
+                            if ((window as WindowWithButton2).__hadButton3) {
+                                e.preventDefault();
+                                e.detail?.relatedEvent?.preventDefault();
+                                getTabsterTestVariables()
+                                    .dom?.getElementById(document, "button4")
+                                    ?.focus();
+                            }
+
+                            (window as WindowWithButton2).__hadButton3 = true;
+                        }
+                    });
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2Button3");
+                })
+                .pressEnter()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2Button3");
+                })
+                .pressEnter()
                 .activeElement((el) => {
                     expect(el?.textContent).toEqual("Button1");
                 });

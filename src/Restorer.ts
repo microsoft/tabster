@@ -14,9 +14,13 @@ import type {
     TabsterCore,
 } from "./Types";
 import { RestorerTypes } from "./Types";
+import {
+    RestorerRestoreFocusEventName,
+    RestorerRestoreFocusEvent,
+} from "./Events";
 import { TabsterPart, WeakHTMLElement } from "./Utils";
+import { dom } from "./DOMAPI";
 
-const EVENT_NAME = "restorer:restorefocus";
 const HISOTRY_DEPTH = 10;
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
@@ -33,6 +37,12 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
             const element = this._element?.get();
             element?.addEventListener("focusout", this._onFocusOut);
             element?.addEventListener("focusin", this._onFocusIn);
+
+            // set hasFocus when the instance is created, in case focus has already moved within it
+            this._hasFocus = dom.nodeContains(
+                element,
+                element && dom.getActiveElement(element.ownerDocument)
+            );
         }
     }
 
@@ -44,11 +54,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
-                doc.body?.dispatchEvent(
-                    new Event(EVENT_NAME, {
-                        bubbles: true,
-                    })
-                );
+                doc.body.dispatchEvent(new RestorerRestoreFocusEvent());
             }
         }
     }
@@ -56,15 +62,11 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _onFocusOut = (e: FocusEvent) => {
         const element = this._element?.get();
         if (element && e.relatedTarget === null) {
-            element.dispatchEvent(
-                new Event(EVENT_NAME, {
-                    bubbles: true,
-                })
-            );
+            element.dispatchEvent(new RestorerRestoreFocusEvent());
         }
         if (
             element &&
-            !element.contains(e.relatedTarget as HTMLElement | null)
+            !dom.nodeContains(element, e.relatedTarget as HTMLElement | null)
         ) {
             this._hasFocus = false;
         }
@@ -86,7 +88,10 @@ export class RestorerAPI implements RestorerAPIType {
     constructor(tabster: TabsterCore) {
         this._tabster = tabster;
         this._getWindow = tabster.getWindow;
-        this._getWindow().addEventListener(EVENT_NAME, this._onRestoreFocus);
+        this._getWindow().addEventListener(
+            RestorerRestoreFocusEventName,
+            this._onRestoreFocus
+        );
 
         this._keyboardNavState = tabster.keyboardNavigation;
         this._focusedElementState = tabster.focusedElement;
@@ -97,7 +102,11 @@ export class RestorerAPI implements RestorerAPIType {
     dispose(): void {
         const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
-        win.removeEventListener(EVENT_NAME, this._onRestoreFocus);
+
+        win.removeEventListener(
+            RestorerRestoreFocusEventName,
+            this._onRestoreFocus
+        );
 
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);
@@ -108,11 +117,17 @@ export class RestorerAPI implements RestorerAPIType {
         const win = this._getWindow();
         if (this._restoreFocusTimeout) {
             win.clearTimeout(this._restoreFocusTimeout);
+            this._restoreFocusTimeout = 0;
         }
 
-        this._restoreFocusTimeout = win.setTimeout(() =>
-            this._restoreFocus(e.target as HTMLElement)
-        );
+        // ShadowDOM will have shadowRoot as e.target.
+        const target = e.composedPath()[0];
+
+        if (target) {
+            this._restoreFocusTimeout = win.setTimeout(() =>
+                this._restoreFocus(target as HTMLElement)
+            );
+        }
     };
 
     private _onFocusIn = (element: HTMLElement | undefined) => {
@@ -148,7 +163,7 @@ export class RestorerAPI implements RestorerAPIType {
     private _restoreFocus = (source: HTMLElement) => {
         // don't restore focus if focus isn't lost to body
         const doc = this._getWindow().document;
-        if (doc.activeElement !== doc.body) {
+        if (dom.getActiveElement(doc) !== doc.body) {
             return;
         }
 
@@ -156,7 +171,7 @@ export class RestorerAPI implements RestorerAPIType {
             // clicking on any empty space focuses body - this is can be a false positive
             !this._keyboardNavState.isNavigatingWithKeyboard() &&
             // Source no longer exists on DOM - always restore focus
-            doc.body.contains(source)
+            dom.nodeContains(doc.body, source)
         ) {
             return;
         }
@@ -164,7 +179,7 @@ export class RestorerAPI implements RestorerAPIType {
         let weakElement = this._history.pop();
         while (
             weakElement &&
-            !doc.body.contains(weakElement.get()?.parentElement ?? null)
+            !dom.nodeContains(doc.body, dom.getParentElement(weakElement.get()))
         ) {
             weakElement = this._history.pop();
         }
@@ -177,7 +192,7 @@ export class RestorerAPI implements RestorerAPIType {
         // Focus might already be on a restorer target when it gets created so the focusin will not do anything
         if (
             props.type === RestorerTypes.Target &&
-            element.ownerDocument.activeElement === element
+            dom.getActiveElement(element.ownerDocument) === element
         ) {
             this._addToHistory(element);
         }

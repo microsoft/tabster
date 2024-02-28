@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from "keyborg";
-import { createEventTarget } from "./EventTarget";
+import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
 import * as Types from "./Types";
+import { RootFocusEvent, RootBlurEvent } from "./Events";
 import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
     TabsterPart,
-    triggerEvent,
     WeakHTMLElement,
 } from "./Utils";
 import { setTabsterAttribute } from "./AttributeHelpers";
@@ -131,9 +130,10 @@ export class Root
         }
 
         const w = win();
+        const doc = w.document;
 
-        w.document.addEventListener("focusin", this._onFocusIn);
-        w.document.addEventListener("focusout", this._onFocusOut);
+        doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
+        doc.addEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
 
         this._add();
     }
@@ -153,9 +153,10 @@ export class Root
         this._onDispose(this);
 
         const win = this._tabster.getWindow();
+        const doc = win.document;
 
-        win.document.removeEventListener("focusin", this._onFocusIn);
-        win.document.removeEventListener("focusout", this._onFocusOut);
+        doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
+        doc.removeEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
 
         if (this._setFocusedTimer) {
             win.clearTimeout(this._setFocusedTimer);
@@ -166,11 +167,11 @@ export class Root
         this._remove();
     }
 
-    moveOutWithDefaultAction(isBackward: boolean) {
+    moveOutWithDefaultAction(isBackward: boolean, relatedEvent: KeyboardEvent) {
         const dummyManager = this._dummyManager;
 
         if (dummyManager) {
-            dummyManager.moveOutWithDefaultAction(isBackward);
+            dummyManager.moveOutWithDefaultAction(isBackward, relatedEvent);
         } else {
             const el = this.getElement();
 
@@ -179,7 +180,8 @@ export class Root
                     this._tabster,
                     el,
                     true,
-                    isBackward
+                    isBackward,
+                    relatedEvent
                 );
             }
         }
@@ -201,12 +203,7 @@ export class Root
             if (hasFocused) {
                 this._isFocused = true;
                 this._dummyManager?.setTabbable(false);
-
-                triggerEvent<Types.RootFocusEventDetails>(
-                    this._tabster.root.eventTarget,
-                    "focus",
-                    { element }
-                );
+                element.dispatchEvent(new RootFocusEvent({ element }));
             } else {
                 this._setFocusedTimer = this._tabster
                     .getWindow()
@@ -215,12 +212,7 @@ export class Root
 
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
-
-                        triggerEvent<Types.RootFocusEventDetails>(
-                            this._tabster.root.eventTarget,
-                            "blur",
-                            { element }
-                        );
+                        element.dispatchEvent(new RootBlurEvent({ element }));
                     }, 0);
             }
         }
@@ -229,7 +221,7 @@ export class Root
     private _onFocusIn = (event: FocusEvent) => {
         const getParent = this._tabster.getParent;
         const rootElement = this._element.get();
-        let curElement = event.target as HTMLElement | null;
+        let curElement = event.composedPath()[0] as HTMLElement | null;
 
         do {
             if (curElement === rootElement) {
@@ -272,13 +264,11 @@ export class RootAPI implements Types.RootAPI {
     private _roots: Record<string, Types.Root> = {};
     private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
-    eventTarget: EventTarget;
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
         this._autoRoot = autoRoot;
-        this.eventTarget = createEventTarget(this._win);
 
         tabster.queueInit(() => {
             if (this._autoRoot) {
@@ -525,7 +515,9 @@ export class RootAPI implements Types.RootAPI {
         }
 
         const shouldIgnoreKeydown = (event: KeyboardEvent) =>
-            !!ignoreKeydown[event.key as "Tab"];
+            !!ignoreKeydown[
+                event.key as keyof Types.FocusableProps["ignoreKeydown"]
+            ];
 
         return root
             ? {

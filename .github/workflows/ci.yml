@@ -52,6 +52,42 @@ jobs:
           PORT: '8082'
           STORYBOOK_UNCONTROLLED: 'true'
           STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+      - name: "Rebuild test container (ShadowDOM)"
+        run: |
+          npm run build
+        env:
+          SHADOWDOM: 'true'
+      - name: "Run tests (ShadowDOM)"
+        run: npm run test
+        env:
+          PORT: '8083'
+          SHADOWDOM: 'true'
+      - name: "Rebuild test container (ShadowDOM uncontrolled)"
+        run: |
+          npm run build
+        env:
+          SHADOWDOM: 'true'
+          STORYBOOK_UNCONTROLLED: 'true'
+      - name: "Run tests (ShadowDOM uncontrolled)"
+        run: npm run test
+        env:
+          PORT: '8084'
+          SHADOWDOM: 'true'
+          STORYBOOK_UNCONTROLLED: 'true'
+      - name: "Rebuild test container (ShadowDOM root-dummy-inputs)"
+        run: |
+          npm run build
+        env:
+          SHADOWDOM: 'true'
+          STORYBOOK_UNCONTROLLED: 'true'
+          STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
+      - name: "Run tests (ShadowDOM root-dummy-inputs)"
+        run: npm run test
+        env:
+          PORT: '8085'
+          SHADOWDOM: 'true'
+          STORYBOOK_UNCONTROLLED: 'true'
+          STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
       - name: "Check for unstaged changes"
         run: |
           git status --porcelain

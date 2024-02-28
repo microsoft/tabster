@@ -33,18 +33,20 @@ describe("Root", () => {
                 )
             )
                 .eval((dummyAttribute) => {
-                    return document.querySelectorAll(`[${dummyAttribute}]`)
-                        .length;
+                    return getTabsterTestVariables().dom?.querySelectorAll(
+                        document,
+                        `[${dummyAttribute}]`
+                    ).length;
                 }, TabsterTypes.TabsterDummyInputAttributeName)
                 .check((dummyCount: number) => {
                     expect(dummyCount).toBe(2);
                 })
                 .eval((dummyAttribute) => {
-                    const first = document
-                        .getElementById("root")
+                    const first = getTabsterTestVariables()
+                        .dom?.getElementById(document, "root")
                         ?.children[0].hasAttribute(dummyAttribute);
-                    const second = document
-                        .getElementById("root")
+                    const second = getTabsterTestVariables()
+                        .dom?.getElementById(document, "root")
                         ?.children[2].hasAttribute(dummyAttribute);
                     return first && second;
                 }, TabsterTypes.TabsterDummyInputAttributeName)
@@ -141,34 +143,33 @@ describe("Root", () => {
                     });
 
                 const tabster = getTabsterTestVariables().core;
+                const Events = getTabsterTestVariables().Events;
 
-                tabster?.root.eventTarget.addEventListener(
-                    "focus",
-                    (
-                        e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
-                    ) => {
-                        if (e.details.element.id) {
-                            focusedRoot.events.push({
-                                elementId: e.details.element.id,
-                                type: "focus",
-                            });
+                if (tabster && Events) {
+                    document.body.addEventListener(
+                        Events.RootFocusEventName,
+                        (e) => {
+                            if (e.detail?.element.id) {
+                                focusedRoot.events.push({
+                                    elementId: e.detail.element.id,
+                                    type: "focus",
+                                });
+                            }
                         }
-                    }
-                );
+                    );
 
-                tabster?.root.eventTarget.addEventListener(
-                    "blur",
-                    (
-                        e: TabsterTypes.TabsterEventWithDetails<TabsterTypes.RootFocusEventDetails>
-                    ) => {
-                        if (e.details.element.id) {
-                            focusedRoot.events.push({
-                                elementId: e.details.element.id,
-                                type: "blur",
-                            });
+                    document.body.addEventListener(
+                        Events.RootBlurEventName,
+                        (e) => {
+                            if (e.detail?.element.id) {
+                                focusedRoot.events.push({
+                                    elementId: e.detail.element.id,
+                                    type: "blur",
+                                });
+                            }
                         }
-                    }
-                );
+                    );
+                }
             })
             .pressTab()
             .activeElement((el) => {
@@ -288,7 +289,9 @@ describe("Root", () => {
                 }
             )
             .eval(() => {
-                document.getElementById("button1")?.focus();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button1")
+                    ?.focus();
                 return (window as unknown as WindowWithTabsterCoreAndFocusState)
                     .__tabsterFocusedRoot;
             })
