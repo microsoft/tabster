@@ -372,13 +372,35 @@ export const RestoreFocusOrders: RestoreFocusOrders = {
     RootFirst: 4,
 };
 
+export interface DeloserStrategies {
+    /**
+     * If the focus is lost, the focus will be restored automatically using all available focus history.
+     * This is the default strategy.
+     */
+    Auto: 0;
+    /**
+     * If the focus is lost from this Deloser instance, the focus will not be restored automatically.
+     * The application might listen to the event and restore the focus manually.
+     * But if it is lost from another Deloser instance, the history of this Deloser could be used finding
+     * the element to focus.
+     */
+    Manual: 1;
+}
+export type DeloserStrategy = DeloserStrategies[keyof DeloserStrategies];
+export const DeloserStrategies: DeloserStrategies = {
+    Auto: 0,
+    Manual: 1,
+};
+
 export interface DeloserProps {
     restoreFocusOrder?: RestoreFocusOrder;
     noSelectorCheck?: boolean;
+    strategy?: DeloserStrategy;
 }
 
 export interface Deloser extends TabsterPart<DeloserProps> {
     readonly uid: string;
+    readonly strategy: DeloserStrategy;
     dispose(): void;
     isActive(): boolean;
     setActive(active: boolean): void;

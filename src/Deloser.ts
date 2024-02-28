@@ -6,7 +6,12 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
-import { DeloserFocusLostEvent } from "./Events";
+import {
+    DeloserFocusLostEvent,
+    TabsterMoveFocusEvent,
+    DeloserRestoreFocusEvent,
+    DeloserRestoreFocusEventName,
+} from "./Events";
 import {
     documentContains,
     getElementUId,
@@ -43,11 +48,28 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
         this._deloser.unshift(element);
     }
 
-    async focusAvailable(): Promise<boolean> {
+    async focusAvailable(): Promise<boolean | null> {
         const available = this._deloser.findAvailable();
-        return available
-            ? this._tabster.focusedElement.focus(available)
-            : false;
+        const deloserElement = this._deloser.getElement();
+
+        if (available && deloserElement) {
+            if (
+                !deloserElement.dispatchEvent(
+                    new TabsterMoveFocusEvent({
+                        by: "deloser",
+                        owner: deloserElement,
+                        next: available,
+                    })
+                )
+            ) {
+                // Default action is prevented, don't look further.
+                return null;
+            }
+
+            return this._tabster.focusedElement.focus(available);
+        }
+
+        return false;
     }
 
     async resetFocus(): Promise<boolean> {
@@ -81,7 +103,7 @@ export abstract class DeloserHistoryByRootBase<
         return this._history.some((d) => d.belongsTo(deloser));
     }
 
-    abstract focusAvailable(from: I | null): Promise<boolean>;
+    abstract focusAvailable(from: I | null): Promise<boolean | null>;
     abstract resetFocus(from: I | null): Promise<boolean>;
 }
 
@@ -114,7 +136,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
         );
     }
 
-    async focusAvailable(from: Types.Deloser | null): Promise<boolean> {
+    async focusAvailable(from: Types.Deloser | null): Promise<boolean | null> {
         let skip = !!from;
 
         for (const i of this._history) {
@@ -122,8 +144,14 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
                 skip = false;
             }
 
-            if (!skip && (await i.focusAvailable())) {
-                return true;
+            if (!skip) {
+                const result = await i.focusAvailable();
+
+                // Result is null when the default action is prevented by the application
+                // and we don't need to look further.
+                if (result || result === null) {
+                    return result;
+                }
             }
         }
 
@@ -231,7 +259,7 @@ export class DeloserHistory {
         this._history = this._history.filter((i) => i.getLength() > 0);
     }
 
-    async focusAvailable(from: Types.Deloser | null): Promise<boolean> {
+    async focusAvailable(from: Types.Deloser | null): Promise<boolean | null> {
         let skip = !!from;
 
         for (const h of this._history) {
@@ -239,8 +267,14 @@ export class DeloserHistory {
                 skip = false;
             }
 
-            if (!skip && (await h.focusAvailable(from))) {
-                return true;
+            if (!skip) {
+                const result = await h.focusAvailable(from);
+
+                // Result is null when the default action is prevented by the application
+                // and we don't need to look further.
+                if (result || result === null) {
+                    return result;
+                }
             }
         }
 
@@ -368,6 +402,7 @@ export class Deloser
     implements Types.Deloser
 {
     readonly uid: string;
+    readonly strategy: Types.DeloserStrategy;
     private _isActive = false;
     private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
     private _snapshotIndex = 0;
@@ -382,6 +417,7 @@ export class Deloser
         super(tabster, element, props);
 
         this.uid = getElementUId(tabster.getWindow, element);
+        this.strategy = props.strategy || Types.DeloserStrategies.Auto;
         this._onDispose = onDispose;
 
         if (__DEV__) {
@@ -536,10 +572,6 @@ export class Deloser
         }
 
         const availableInHistory = this._findInHistory();
-        const availableDefault = this._tabster.focusable.findDefault({
-            container: element,
-        });
-        const availableFirst = this._findFirst(element);
 
         if (
             availableInHistory &&
@@ -548,12 +580,18 @@ export class Deloser
             return availableInHistory;
         }
 
+        const availableDefault = this._tabster.focusable.findDefault({
+            container: element,
+        });
+
         if (
             availableDefault &&
             restoreFocusOrder === Types.RestoreFocusOrders.DeloserDefault
         ) {
             return availableDefault;
         }
+
+        const availableFirst = this._findFirst(element);
 
         if (
             availableFirst &&
@@ -694,6 +732,11 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._tabster.focusedElement.subscribe(this._onFocus);
             const doc = this._win().document;
 
+            doc.addEventListener(
+                DeloserRestoreFocusEventName,
+                this._onRestoreFocus
+            );
+
             const activeElement = dom.getActiveElement(doc);
 
             if (activeElement && activeElement !== doc.body) {
@@ -723,6 +766,11 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
+
+        win.document.removeEventListener(
+            DeloserRestoreFocusEventName,
+            this._onRestoreFocus
+        );
 
         this._history.dispose();
 
@@ -789,6 +837,26 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
     }
 
+    private _onRestoreFocus = (event: DeloserRestoreFocusEvent): void => {
+        const target = event.composedPath()[0] as
+            | HTMLElement
+            | null
+            | undefined;
+
+        if (target) {
+            const available = DeloserAPI.getDeloser(
+                this._tabster,
+                target
+            )?.findAvailable();
+
+            if (available) {
+                this._tabster.focusedElement.focus(available);
+            }
+
+            event.stopImmediatePropagation();
+        }
+    };
+
     private _onFocus = (e: HTMLElement | undefined): void => {
         if (this._restoreFocusTimer) {
             this._win().clearTimeout(this._restoreFocusTimer);
@@ -852,6 +920,8 @@ export class DeloserAPI implements Types.DeloserAPI {
             }
 
             const curDeloser = this._curDeloser;
+            let isManual = false;
+
             if (curDeloser) {
                 if (
                     lastFocused &&
@@ -860,18 +930,39 @@ export class DeloserAPI implements Types.DeloserAPI {
                     return;
                 }
 
-                const el = curDeloser.findAvailable();
+                if (curDeloser.strategy === Types.DeloserStrategies.Manual) {
+                    isManual = true;
+                } else {
+                    const curDeloserElement = curDeloser.getElement();
+                    const el = curDeloser.findAvailable();
 
-                if (el && this._tabster.focusedElement.focus(el)) {
-                    return;
+                    if (
+                        el &&
+                        (!curDeloserElement?.dispatchEvent(
+                            new TabsterMoveFocusEvent({
+                                by: "deloser",
+                                owner: curDeloserElement,
+                                next: el,
+                            })
+                        ) ||
+                            this._tabster.focusedElement.focus(el))
+                    ) {
+                        return;
+                    }
                 }
             }
 
             this._deactivate();
 
+            if (isManual) {
+                return;
+            }
+
             this._isRestoringFocus = true;
 
-            if (!(await this._history.focusAvailable(null))) {
+            // focusAvailable returns null when the default action is prevented by the application, false
+            // when nothing was focused and true when something was focused.
+            if ((await this._history.focusAvailable(null)) === false) {
                 await this._history.resetFocus(null);
             }
 

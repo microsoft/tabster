@@ -24,6 +24,12 @@ export const TabsterMoveFocusEventName = "tabster:movefocus";
 export const DeloserFocusLostEventName = "tabster:deloser:focus-lost";
 
 /**
+ * Events to be sent to Deloser by the application.
+ */
+
+export const DeloserRestoreFocusEventName = "tabster:deloser:restore-focus";
+
+/**
  * Events sent by Modalizer.
  */
 export const ModalizerActiveEventName = "tabster:modalizer:active";
@@ -90,7 +96,7 @@ export abstract class TabsterCustomEvent<D> extends CustomEvent<D> {
 }
 
 export interface TabsterMoveFocusEventDetail {
-    by: "mover" | "groupper" | "modalizer" | "root";
+    by: "mover" | "groupper" | "modalizer" | "root" | "deloser";
     owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
     next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
     relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
@@ -171,6 +177,12 @@ export class DeloserFocusLostEvent extends TabsterCustomEvent<Types.DeloserEleme
     }
 }
 
+export class DeloserRestoreFocusEvent extends TabsterCustomEvent<undefined> {
+    constructor() {
+        super(DeloserRestoreFocusEventName);
+    }
+}
+
 export class RestorerRestoreFocusEvent extends TabsterCustomEvent<undefined> {
     constructor() {
         super(RestorerRestoreFocusEventName);
@@ -210,6 +222,7 @@ declare global {
         [ModalizerInactiveEventName]: ModalizerInactiveEvent;
 
         [DeloserFocusLostEventName]: DeloserFocusLostEvent;
+        [DeloserRestoreFocusEventName]: DeloserRestoreFocusEvent;
 
         [RestorerRestoreFocusEventName]: RestorerRestoreFocusEvent;
 
