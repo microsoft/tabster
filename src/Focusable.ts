@@ -342,10 +342,6 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_ACCEPT;
         }
 
-        if (isDisplayNone(element)) {
-            return NodeFilter.FILTER_REJECT;
-        }
-
         const container = state.container;
 
         if (element === container) {
