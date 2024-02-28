@@ -297,7 +297,7 @@ export class FocusedElementState
         return true;
     }
 
-    registerAsyncFocus(
+    requestAsyncFocus(
         source: Types.AsyncFocusSource,
         callback: () => void,
         delay: number

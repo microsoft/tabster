@@ -117,7 +117,7 @@ export class RestorerAPI implements RestorerAPIType {
         const target = e.composedPath()[0];
 
         if (target) {
-            this._focusedElementState.registerAsyncFocus(
+            this._focusedElementState.requestAsyncFocus(
                 AsyncFocusSources.Restorer,
                 () => this._restoreFocus(target as HTMLElement),
                 0

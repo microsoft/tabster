@@ -167,7 +167,7 @@ export interface FocusedElementState
      * is removed from DOM).
      */
     /** @internal */
-    registerAsyncFocus(
+    requestAsyncFocus(
         source: AsyncFocusSource,
         callback: () => void,
         delay: number

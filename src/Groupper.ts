@@ -781,7 +781,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                 const focusedElement =
                     tabster.focusedElement.getFocusedElement();
 
-                tabster.focusedElement.registerAsyncFocus(
+                tabster.focusedElement.requestAsyncFocus(
                     Types.AsyncFocusSources.EscapeGroupper,
                     () => {
                         if (
