@@ -13,11 +13,7 @@ import type {
     FocusedElementState,
     TabsterCore,
 } from "./Types";
-import {
-    RestorerTypes,
-    AsyncFocusIntent,
-    AsyncFocusIntentSources,
-} from "./Types";
+import { RestorerTypes, AsyncFocusSources } from "./Types";
 import {
     RestorerRestoreFocusEventName,
     RestorerRestoreFocusEvent,
@@ -86,9 +82,7 @@ export class RestorerAPI implements RestorerAPIType {
     private _history: WeakHTMLElement<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
-    private _restoreFocusTimeout = 0;
     private _getWindow: GetWindow;
-    private _asyncFocusIntent: AsyncFocusIntent | undefined;
 
     constructor(tabster: TabsterCore) {
         this._tabster = tabster;
@@ -108,50 +102,26 @@ export class RestorerAPI implements RestorerAPIType {
         const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
 
-        if (this._asyncFocusIntent) {
-            this._asyncFocusIntent.cancel();
-            delete this._asyncFocusIntent;
-        }
+        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
 
         win.removeEventListener(
             RestorerRestoreFocusEventName,
             this._onRestoreFocus
         );
-
-        if (this._restoreFocusTimeout) {
-            win.clearTimeout(this._restoreFocusTimeout);
-        }
     }
 
     private _onRestoreFocus = (e: Event) => {
-        const win = this._getWindow();
-
-        if (this._asyncFocusIntent) {
-            this._asyncFocusIntent.cancel();
-            delete this._asyncFocusIntent;
-        }
-
-        if (this._restoreFocusTimeout) {
-            win.clearTimeout(this._restoreFocusTimeout);
-            this._restoreFocusTimeout = 0;
-        }
+        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
 
         // ShadowDOM will have shadowRoot as e.target.
         const target = e.composedPath()[0];
 
         if (target) {
-            this._asyncFocusIntent =
-                this._tabster.focusedElement.registerAsyncFocusIntent(
-                    AsyncFocusIntentSources.Restorer
-                );
-
-            this._restoreFocusTimeout = win.setTimeout(() => {
-                if (this._asyncFocusIntent?.commit()) {
-                    this._restoreFocus(target as HTMLElement);
-                }
-
-                delete this._asyncFocusIntent;
-            });
+            this._focusedElementState.registerAsyncFocus(
+                AsyncFocusSources.Restorer,
+                () => this._restoreFocus(target as HTMLElement),
+                0
+            );
         }
     };
 
