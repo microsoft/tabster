@@ -259,3 +259,162 @@ describe("Deloser created lazily", () => {
             });
     });
 });
+
+describe("Deloser with manual strategy", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ deloser: true });
+    });
+
+    it("should not restore focus automatically", async () => {
+        await new BroTest.BroTest(
+            (
+                <div
+                    id="deloser"
+                    {...getTabsterAttribute({
+                        root: {},
+                        deloser: { strategy: 1 },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .removeElement()
+            .wait(300)
+            .activeElement((el) => expect(el?.textContent).toEqual(undefined))
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+                const Events = vars.Events;
+                Events &&
+                    vars.dom
+                        ?.getElementById(document, "deloser")
+                        ?.dispatchEvent(new Events.DeloserRestoreFocusEvent());
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});
+
+describe("Deloser events", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ deloser: true });
+    });
+
+    interface WindowWithDeloserEvents extends Window {
+        __deloserEvents?: string[];
+    }
+
+    it("should dispatch tabster:movefocus that is preventable", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div id="deloser" {...getTabsterAttribute({ deloser: {} })}>
+                        <button>Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+
+                    <div
+                        id="deloser2"
+                        {...getTabsterAttribute({ deloser: {} })}
+                    >
+                        <button>Button5</button>
+                        <button>Button6</button>
+                        <button>Button7</button>
+                        <button>Button8</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                const Events = getTabsterTestVariables().Events;
+                (window as WindowWithDeloserEvents).__deloserEvents = [];
+
+                if (Events) {
+                    document.addEventListener(
+                        Events.TabsterMoveFocusEventName,
+                        (e) => {
+                            if (e.detail.by !== "deloser") {
+                                return;
+                            }
+
+                            (
+                                window as WindowWithDeloserEvents
+                            ).__deloserEvents?.push(
+                                e.type + " " + e.detail.next?.textContent
+                            );
+
+                            if (
+                                e.detail.next?.textContent === "Button7" ||
+                                e.detail.next?.textContent === "Button4"
+                            ) {
+                                e.preventDefault();
+                            }
+                        }
+                    );
+                }
+            })
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .removeElement()
+            .wait(300)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressTab()
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            })
+            .removeElement()
+            .wait(300)
+            .activeElement((el) => expect(el?.textContent).toEqual(undefined))
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+                const Events = vars.Events;
+                Events &&
+                    vars.dom
+                        ?.getElementById(document, "deloser2")
+                        ?.dispatchEvent(new Events.DeloserRestoreFocusEvent());
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5");
+            })
+            .removeElement("#deloser2")
+            .wait(300)
+            .activeElement((el) => expect(el?.textContent).toEqual(undefined))
+            .eval(() => (window as WindowWithDeloserEvents).__deloserEvents)
+            .check((events: string[]) => {
+                expect(events).toEqual([
+                    "tabster:movefocus Button3",
+                    "tabster:movefocus Button7",
+                    "tabster:movefocus Button4",
+                ]);
+            })
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+                const Events = vars.Events;
+                Events &&
+                    vars.dom
+                        ?.getElementById(document, "deloser")
+                        ?.dispatchEvent(new Events.DeloserRestoreFocusEvent());
+            })
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
+});

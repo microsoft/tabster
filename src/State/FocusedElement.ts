@@ -59,6 +59,18 @@ function getUncontrolledCompletelyContainer(
     return undefined;
 }
 
+const AsyncFocusIntentPriorityBySource = {
+    [Types.AsyncFocusSources.Restorer]: 0,
+    [Types.AsyncFocusSources.Deloser]: 1,
+    [Types.AsyncFocusSources.EscapeGroupper]: 2,
+};
+
+interface AsyncFocus {
+    source: Types.AsyncFocusSource;
+    callback: () => void;
+    timeout: number;
+}
+
 export class FocusedElementState
     extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetail>
     implements Types.FocusedElementState
@@ -76,6 +88,7 @@ export class FocusedElementState
           }
         | undefined;
     private _lastVal: WeakHTMLElement | undefined;
+    private _asyncFocus?: AsyncFocus;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         super();
@@ -114,6 +127,12 @@ export class FocusedElementState
         win.removeEventListener("keydown", this._onKeyDown, true);
 
         this.unsubscribe(this._onChanged);
+
+        const asyncFocus = this._asyncFocus;
+        if (asyncFocus) {
+            win.clearTimeout(asyncFocus.timeout);
+            delete this._asyncFocus;
+        }
 
         delete FocusedElementState._lastResetElement;
 
@@ -276,6 +295,46 @@ export class FocusedElementState
         }
 
         return true;
+    }
+
+    requestAsyncFocus(
+        source: Types.AsyncFocusSource,
+        callback: () => void,
+        delay: number
+    ): void {
+        const win = this._tabster.getWindow();
+        const currentAsyncFocus = this._asyncFocus;
+
+        if (currentAsyncFocus) {
+            if (
+                AsyncFocusIntentPriorityBySource[source] >
+                AsyncFocusIntentPriorityBySource[currentAsyncFocus.source]
+            ) {
+                // Previously registered intent has higher priority.
+                return;
+            }
+
+            // New intent has higher priority.
+            win.clearTimeout(currentAsyncFocus.timeout);
+        }
+
+        this._asyncFocus = {
+            source,
+            callback,
+            timeout: win.setTimeout(() => {
+                this._asyncFocus = undefined;
+                callback();
+            }, delay),
+        };
+    }
+
+    cancelAsyncFocus(source: Types.AsyncFocusSource): void {
+        const asyncFocus = this._asyncFocus;
+
+        if (asyncFocus?.source === source) {
+            this._tabster.getWindow().clearTimeout(asyncFocus.timeout);
+            this._asyncFocus = undefined;
+        }
     }
 
     private _setOrRemoveAttribute(

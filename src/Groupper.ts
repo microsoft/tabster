@@ -429,7 +429,6 @@ export class GroupperAPI implements Types.GroupperAPI {
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
-    private _handleKeyPressTimer: number | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
         this._tabster = tabster;
@@ -459,10 +458,9 @@ export class GroupperAPI implements Types.GroupperAPI {
     dispose(): void {
         const win = this._win();
 
-        if (this._handleKeyPressTimer) {
-            win.clearTimeout(this._handleKeyPressTimer);
-            delete this._handleKeyPressTimer;
-        }
+        this._tabster.focusedElement.cancelAsyncFocus(
+            Types.AsyncFocusSources.EscapeGroupper
+        );
 
         this._current = {};
 
@@ -767,12 +765,9 @@ export class GroupperAPI implements Types.GroupperAPI {
         const ctx = RootAPI.getTabsterContext(tabster, element);
 
         if (ctx && (ctx?.groupper || ctx?.modalizerInGroupper)) {
-            const win = this._win();
-
-            if (this._handleKeyPressTimer) {
-                win.clearTimeout(this._handleKeyPressTimer);
-                delete this._handleKeyPressTimer;
-            }
+            tabster.focusedElement.cancelAsyncFocus(
+                Types.AsyncFocusSources.EscapeGroupper
+            );
 
             if (ctx.ignoreKeydown(event)) {
                 return;
@@ -786,22 +781,25 @@ export class GroupperAPI implements Types.GroupperAPI {
                 const focusedElement =
                     tabster.focusedElement.getFocusedElement();
 
-                this._handleKeyPressTimer = win.setTimeout(() => {
-                    delete this._handleKeyPressTimer;
+                tabster.focusedElement.requestAsyncFocus(
+                    Types.AsyncFocusSources.EscapeGroupper,
+                    () => {
+                        if (
+                            focusedElement !==
+                                tabster.focusedElement.getFocusedElement() &&
+                            // A part of Modalizer that has called this handler to escape the active groupper
+                            // might have been removed from DOM, if the focus is on body, we still want to handle Esc.
+                            ((fromModalizer && !focusedElement) ||
+                                !fromModalizer)
+                        ) {
+                            // Something else in the application has moved focus, we will not handle Esc.
+                            return;
+                        }
 
-                    if (
-                        focusedElement !==
-                            tabster.focusedElement.getFocusedElement() &&
-                        // A part of Modalizer that has called this handler to escape the active groupper
-                        // might have been removed from DOM, if the focus is on body, we still want to handle Esc.
-                        ((fromModalizer && !focusedElement) || !fromModalizer)
-                    ) {
-                        // Something else in the application has moved focus, we will not handle Esc.
-                        return;
-                    }
-
-                    this._escapeGroupper(element, event, fromModalizer);
-                }, 0);
+                        this._escapeGroupper(element, event, fromModalizer);
+                    },
+                    0
+                );
             }
         }
     }

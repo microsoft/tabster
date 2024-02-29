@@ -360,3 +360,85 @@ describe("Restorer", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
 });
+
+describe("Restorer focus priority", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({
+            restorer: true,
+            groupper: true,
+            modalizer: true,
+        });
+    });
+    it("should prioritize Restorer before Groupper when both want to move focus", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: { tabbability: 2 },
+                            modalizer: { id: "modal" },
+                        })}
+                    >
+                        <button
+                            id="target"
+                            {...getTabsterAttribute({
+                                restorer: { type: Types.RestorerTypes.Target },
+                            })}
+                        >
+                            target
+                        </button>
+                        <button>button</button>
+                    </div>
+
+                    <div
+                        id="source"
+                        {...getTabsterAttribute({
+                            restorer: { type: Types.RestorerTypes.Source },
+                            modalizer: { id: "modal" },
+                        })}
+                    >
+                        <button>source</button>
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#target")
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("button"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .pressEsc()
+            // When Esc is pressed, groupper handles is asynchronously, and restorer is not
+            // involved, because the source is still in the DOM. So, the groupper should handle
+            // the Esc normally.
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("targetbutton")
+            )
+            .pressEnter()
+            .pressTab()
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                const source = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "source"
+                );
+
+                if (source) {
+                    // This will trigger both async Esc handling and restorer focus restoration at the same time.
+                    // The async focus intent from the Restorer should win.
+                    source.dispatchEvent(
+                        new KeyboardEvent("keydown", {
+                            key: "Esc",
+                            keyCode: 27,
+                            bubbles: true,
+                            composed: true,
+                        })
+                    );
+                    source.remove();
+                }
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target"));
+    });
+});

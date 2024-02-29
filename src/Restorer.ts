@@ -13,7 +13,7 @@ import type {
     FocusedElementState,
     TabsterCore,
 } from "./Types";
-import { RestorerTypes } from "./Types";
+import { RestorerTypes, AsyncFocusSources } from "./Types";
 import {
     RestorerRestoreFocusEventName,
     RestorerRestoreFocusEvent,
@@ -82,7 +82,6 @@ export class RestorerAPI implements RestorerAPIType {
     private _history: WeakHTMLElement<HTMLElement>[] = [];
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
-    private _restoreFocusTimeout = 0;
     private _getWindow: GetWindow;
 
     constructor(tabster: TabsterCore) {
@@ -103,29 +102,25 @@ export class RestorerAPI implements RestorerAPIType {
         const win = this._getWindow();
         this._focusedElementState.unsubscribe(this._onFocusIn);
 
+        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
+
         win.removeEventListener(
             RestorerRestoreFocusEventName,
             this._onRestoreFocus
         );
-
-        if (this._restoreFocusTimeout) {
-            win.clearTimeout(this._restoreFocusTimeout);
-        }
     }
 
     private _onRestoreFocus = (e: Event) => {
-        const win = this._getWindow();
-        if (this._restoreFocusTimeout) {
-            win.clearTimeout(this._restoreFocusTimeout);
-            this._restoreFocusTimeout = 0;
-        }
+        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
 
         // ShadowDOM will have shadowRoot as e.target.
         const target = e.composedPath()[0];
 
         if (target) {
-            this._restoreFocusTimeout = win.setTimeout(() =>
-                this._restoreFocus(target as HTMLElement)
+            this._focusedElementState.requestAsyncFocus(
+                AsyncFocusSources.Restorer,
+                () => this._restoreFocus(target as HTMLElement),
+                0
             );
         }
     };
