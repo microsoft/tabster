@@ -129,6 +129,18 @@ export interface FocusedElementDetail {
     modalizerId?: string;
 }
 
+export interface AsyncFocusSources {
+    EscapeGroupper: 1;
+    Restorer: 2;
+    Deloser: 3;
+}
+export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
+export const AsyncFocusSources: AsyncFocusSources = {
+    EscapeGroupper: 1,
+    Restorer: 2,
+    Deloser: 3,
+};
+
 export interface FocusedElementState
     extends Subscribable<HTMLElement | undefined, FocusedElementDetail>,
         Disposable {
@@ -148,6 +160,20 @@ export interface FocusedElementState
     focusFirst(props: FindFirstProps): boolean;
     focusLast(props: FindFirstProps): boolean;
     resetFocus(container: HTMLElement): boolean;
+    /**
+     * When Tabster wants to move focus asynchronously, it it should call this method to register its intent.
+     * This is a way to avoid conflicts between different parts that might want to move focus asynchronously
+     * at the same moment (for example when both Deloser and Restorer want to move focus when the focused element
+     * is removed from DOM).
+     */
+    /** @internal */
+    requestAsyncFocus(
+        source: AsyncFocusSource,
+        callback: () => void,
+        delay: number
+    ): void;
+    /** @internal */
+    cancelAsyncFocus(source: AsyncFocusSource): void;
 }
 
 export interface WeakHTMLElement<D = undefined> {
