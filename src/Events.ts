@@ -77,26 +77,17 @@ export const RestorerRestoreFocusEventName = "tabster:restorer:restore-focus";
 export const RootFocusEventName = "tabster:root:focus";
 export const RootBlurEventName = "tabster:root:blur";
 
-if (typeof CustomEvent === "undefined") {
-    try {
-        if (
-            typeof global !== undefined &&
-            typeof global.CustomEvent === "undefined"
-        ) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (global as any).CustomEvent = function () {
-                // Node.js environments do not have CustomEvent and it is needed for the events to be
-                // built properly. It doesn't matter if it works or not in Node.js environment, because
-                // it will only run in the browser. So, we just need to make sure that it doesn't
-                // throw undefined reference.
-            };
-        }
-    } catch (e) {
-        /** Just making sure we don't throw exceptions.  */
-    }
-}
+// Node.js environments do not have CustomEvent and it is needed for the events to be
+// evaluated. It doesn't matter if it works or not in Node.js environment.
+// So, we just need to make sure that it doesn't throw undefined reference.
+const CustomEvent_ =
+    typeof CustomEvent !== "undefined"
+        ? CustomEvent
+        : (function () {
+              /* no-op */
+          } as typeof CustomEvent);
 
-export abstract class TabsterCustomEvent<D> extends CustomEvent<D> {
+export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
     /**
      * @deprecated use `detail`.
      */
