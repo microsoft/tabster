@@ -26,5 +26,3 @@ export {
     Types,
     Events,
 } from "./Tabster";
-
-export * from "./Deprecated";

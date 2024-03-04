@@ -77,17 +77,7 @@ export const RestorerRestoreFocusEventName = "tabster:restorer:restore-focus";
 export const RootFocusEventName = "tabster:root:focus";
 export const RootBlurEventName = "tabster:root:blur";
 
-// Node.js environments do not have CustomEvent and it is needed for the events to be
-// evaluated. It doesn't matter if it works or not in Node.js environment.
-// So, we just need to make sure that it doesn't throw undefined reference.
-const CustomEvent_ =
-    typeof CustomEvent !== "undefined"
-        ? CustomEvent
-        : (function () {
-              /* no-op */
-          } as typeof CustomEvent);
-
-export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
+export abstract class TabsterCustomEvent<D> extends CustomEvent<D> {
     /**
      * @deprecated use `detail`.
      */
