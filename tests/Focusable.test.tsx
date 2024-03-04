@@ -488,4 +488,33 @@ describe("Focusable", () => {
                 });
         });
     });
+
+    describe("isVisible", () => {
+        it("should correctly detect visibility for position:fixed elements", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button
+                            style={{
+                                position: "fixed",
+                                width: 100,
+                                height: 50,
+                            }}
+                            id="button"
+                        >
+                            Button1
+                        </button>
+                    </div>
+                )
+            )
+                .eval(() => {
+                    const vars = getTabsterTestVariables();
+                    const button = vars.dom?.getElementById(document, "button");
+                    return button && vars.core?.focusable.isVisible(button);
+                })
+                .check((isVisible: boolean) => {
+                    expect(isVisible).toEqual(true);
+                });
+        });
+    });
 });

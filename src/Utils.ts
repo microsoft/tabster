@@ -1887,3 +1887,26 @@ export function getTabsterAttributeOnElement(
 
     return tabsterAttribute;
 }
+
+export function isDisplayNone(element: HTMLElement): boolean {
+    const elementDocument = element.ownerDocument;
+    const computedStyle =
+        elementDocument.defaultView?.getComputedStyle(element);
+
+    // offsetParent is null for elements with display:none, display:fixed and for <body>.
+    if (
+        element.offsetParent === null &&
+        elementDocument.body !== element &&
+        computedStyle?.position !== "fixed"
+    ) {
+        return true;
+    }
+
+    // For our purposes of looking for focusable elements, visibility:hidden has the same
+    // effect as display:none.
+    if (computedStyle?.visibility === "hidden") {
+        return true;
+    }
+
+    return false;
+}

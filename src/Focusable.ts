@@ -12,6 +12,7 @@ import {
     matchesSelector,
     shouldIgnoreFocus,
     HTMLElementWithDummyContainer,
+    isDisplayNone,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -55,13 +56,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return false;
         }
 
-        if (el.offsetParent === null && el.ownerDocument.body !== el) {
-            return false;
-        }
-
-        const win = el.ownerDocument.defaultView;
-
-        if (!win) {
+        if (isDisplayNone(el)) {
             return false;
         }
 
@@ -69,12 +64,6 @@ export class FocusableAPI implements Types.FocusableAPI {
 
         if (rect.width === 0 && rect.height === 0) {
             // This might happen, for example, if our <body> is in hidden <iframe>.
-            return false;
-        }
-
-        const computedStyle = win.getComputedStyle(el);
-
-        if (computedStyle.visibility === "hidden") {
             return false;
         }
 
