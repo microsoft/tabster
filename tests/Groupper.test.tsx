@@ -101,12 +101,10 @@ describe("Groupper - default", () => {
 
             await new BroTest.BroTest(getTestHtml(tagName))
                 .eval(() => {
-                    const keyEsc = 27;
-
                     (window as WindowWithEscFlag).__escPressed1 = 0;
 
                     window.addEventListener("keydown", (e) => {
-                        if (e.keyCode === keyEsc) {
+                        if (e.key === "Escape") {
                             (window as WindowWithEscFlag).__escPressed1!++;
                         }
                     });
@@ -134,12 +132,10 @@ describe("Groupper - default", () => {
 
             await new BroTest.BroTest(getTestHtml(tagName, true))
                 .eval(() => {
-                    const keyEsc = 27;
-
                     (window as WindowWithEscFlag).__escPressed2 = 0;
 
                     window.addEventListener("keydown", (e) => {
-                        if (e.keyCode === keyEsc) {
+                        if (e.key === "Escape") {
                             (window as WindowWithEscFlag).__escPressed2!++;
                         }
                     });
@@ -165,12 +161,10 @@ describe("Groupper - default", () => {
 
             await new BroTest.BroTest(getTestHtml(tagName))
                 .eval(() => {
-                    const keyEnter = 13;
-
                     (window as WindowWithEnterFlag).__enterPressed1 = 0;
 
                     window.addEventListener("keydown", (e) => {
-                        if (e.keyCode === keyEnter) {
+                        if (e.key === "Enter") {
                             (window as WindowWithEnterFlag).__enterPressed1!++;
                         }
                     });
@@ -196,12 +190,10 @@ describe("Groupper - default", () => {
                 getTestHtml(tagName, undefined, true, true)
             )
                 .eval(() => {
-                    const keyEnter = 13;
-
                     (window as WindowWithEnterFlag).__enterPressed2 = 0;
 
                     window.addEventListener("keydown", (e) => {
-                        if (e.keyCode === keyEnter) {
+                        if (e.key === "Enter") {
                             (window as WindowWithEnterFlag).__enterPressed2!++;
                         }
                     });
@@ -223,10 +215,8 @@ describe("Groupper - default", () => {
         async (tagName) => {
             await new BroTest.BroTest(getTestHtml(tagName))
                 .eval(() => {
-                    const keyEsc = 27;
-
                     window.addEventListener("keydown", (e) => {
-                        if (e.keyCode === keyEsc) {
+                        if (e.key === "Escape") {
                             // Focusing next button.
                             (
                                 getTabsterTestVariables().dom?.getActiveElement(
