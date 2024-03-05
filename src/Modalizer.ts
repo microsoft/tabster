@@ -473,7 +473,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     };
 
     private _onKeyDown = (event: KeyboardEvent): void => {
-        if (event.keyCode !== Keys.Esc) {
+        if (event.key !== Keys.Escape) {
             return;
         }
 

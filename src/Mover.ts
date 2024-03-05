@@ -1243,24 +1243,24 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        const keyCode = event.keyCode;
+        const key = event.key;
         let moverKey: Types.MoverKey | undefined;
 
-        if (keyCode === Keys.Down) {
+        if (key === Keys.ArrowDown) {
             moverKey = Types.MoverKeys.ArrowDown;
-        } else if (keyCode === Keys.Right) {
+        } else if (key === Keys.ArrowRight) {
             moverKey = Types.MoverKeys.ArrowRight;
-        } else if (keyCode === Keys.Up) {
+        } else if (key === Keys.ArrowUp) {
             moverKey = Types.MoverKeys.ArrowUp;
-        } else if (keyCode === Keys.Left) {
+        } else if (key === Keys.ArrowLeft) {
             moverKey = Types.MoverKeys.ArrowLeft;
-        } else if (keyCode === Keys.PageDown) {
+        } else if (key === Keys.PageDown) {
             moverKey = Types.MoverKeys.PageDown;
-        } else if (keyCode === Keys.PageUp) {
+        } else if (key === Keys.PageUp) {
             moverKey = Types.MoverKeys.PageUp;
-        } else if (keyCode === Keys.Home) {
+        } else if (key === Keys.Home) {
             moverKey = Types.MoverKeys.Home;
-        } else if (keyCode === Keys.End) {
+        } else if (key === Keys.End) {
             moverKey = Types.MoverKeys.End;
         }
 
@@ -1270,7 +1270,7 @@ export class MoverAPI implements Types.MoverAPI {
 
         const focused = this._tabster.focusedElement.getFocusedElement();
 
-        if (!focused || (await this._isIgnoredInput(focused, keyCode))) {
+        if (!focused || (await this._isIgnoredInput(focused, key))) {
             return;
         }
 
@@ -1312,7 +1312,7 @@ export class MoverAPI implements Types.MoverAPI {
 
     private async _isIgnoredInput(
         element: HTMLElement,
-        keyCode: number
+        key: string
     ): Promise<boolean> {
         if (
             element.getAttribute("aria-expanded") === "true" &&
@@ -1346,7 +1346,7 @@ export class MoverAPI implements Types.MoverAPI {
                         if (selection) {
                             const initialLength = selection.toString().length;
                             const isBackward =
-                                keyCode === Keys.Left || keyCode === Keys.Up;
+                                key === Keys.ArrowLeft || key === Keys.ArrowUp;
 
                             selection.modify(
                                 "extend",
@@ -1495,18 +1495,18 @@ export class MoverAPI implements Types.MoverAPI {
 
             if (
                 selectionStart > 0 &&
-                (keyCode === Keys.Left ||
-                    keyCode === Keys.Up ||
-                    keyCode === Keys.Home)
+                (key === Keys.ArrowLeft ||
+                    key === Keys.ArrowUp ||
+                    key === Keys.Home)
             ) {
                 return true;
             }
 
             if (
                 selectionStart < textLength &&
-                (keyCode === Keys.Right ||
-                    keyCode === Keys.Down ||
-                    keyCode === Keys.End)
+                (key === Keys.ArrowRight ||
+                    key === Keys.ArrowDown ||
+                    key === Keys.End)
             ) {
                 return true;
             }

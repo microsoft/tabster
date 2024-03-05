@@ -430,8 +430,7 @@ describe("Restorer focus priority", () => {
                     // The async focus intent from the Restorer should win.
                     source.dispatchEvent(
                         new KeyboardEvent("keydown", {
-                            key: "Esc",
-                            keyCode: 27,
+                            key: "Escape",
                             bubbles: true,
                             composed: true,
                         })

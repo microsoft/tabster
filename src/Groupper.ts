@@ -601,7 +601,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     }
 
     private _onKeyDown = (event: KeyboardEvent): void => {
-        if (event.keyCode !== Keys.Enter && event.keyCode !== Keys.Esc) {
+        if (event.key !== Keys.Enter && event.key !== Keys.Escape) {
             return;
         }
 
@@ -773,9 +773,9 @@ export class GroupperAPI implements Types.GroupperAPI {
                 return;
             }
 
-            if (event.keyCode === Keys.Enter) {
+            if (event.key === Keys.Enter) {
                 this._enterGroupper(element, event);
-            } else if (event.keyCode === Keys.Esc) {
+            } else if (event.key === Keys.Escape) {
                 // We will handle Esc asynchronously, if something in the application will
                 // move focus during the keypress handling, we will not interfere.
                 const focusedElement =

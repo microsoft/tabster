@@ -553,7 +553,7 @@ export class FocusedElementState
     };
 
     private _onKeyDown = (event: KeyboardEvent): void => {
-        if (event.keyCode !== Keys.Tab || event.ctrlKey) {
+        if (event.key !== Keys.Tab || event.ctrlKey) {
             return;
         }
 

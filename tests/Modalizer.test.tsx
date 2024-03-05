@@ -956,7 +956,7 @@ describe("Modalizer with multiple containers", () => {
         )
             .eval(() => {
                 document.addEventListener("keydown", (e) => {
-                    if (e.keyCode === 13) {
+                    if (e.key === "Enter") {
                         getTabsterTestVariables()
                             .dom?.getElementById(document, "modal-button-1")
                             ?.focus();
@@ -1759,7 +1759,7 @@ describe("Modalizer with multiple containers", () => {
                 document
                     .getElementById("remove-me-on-esc")
                     ?.addEventListener("keydown", (e) => {
-                        if (e.keyCode === 27) {
+                        if (e.key === "Escape") {
                             document
                                 .getElementById("remove-me-on-esc")
                                 ?.remove();
