@@ -15,7 +15,7 @@ import {
 import { dom } from "./DOMAPI";
 
 export function observeMutations(
-    doc: HTMLDocument,
+    doc: Document,
     tabster: Types.TabsterCore,
     updateTabsterByAttribute: (
         tabster: Types.TabsterCore,
@@ -35,6 +35,8 @@ export function observeMutations(
     let elementByUId: InstanceContext["elementByUId"] | undefined;
 
     const onMutation = (mutations: MutationRecord[]) => {
+        const removedNodes = new Set<Node>();
+
         for (const mutation of mutations) {
             const target = mutation.target;
             const removed = mutation.removedNodes;
@@ -42,11 +44,25 @@ export function observeMutations(
 
             if (mutation.type === "attributes") {
                 if (mutation.attributeName === Types.TabsterAttributeName) {
-                    updateTabsterByAttribute(tabster, target as HTMLElement);
+                    // removedNodes helps to make sure we are not recreating things
+                    // for the removed elements.
+                    // For some reason, if we do removeChild() and setAttribute() on the
+                    // removed child in the same tick, both the child removal and the attribute
+                    // change will be present in the mutation records. And the attribute change
+                    // will follow the child removal.
+                    // So, we remember the removed nodes and ignore attribute changes for them.
+                    if (!removedNodes.has(target)) {
+                        updateTabsterByAttribute(
+                            tabster,
+                            target as HTMLElement
+                        );
+                    }
                 }
             } else {
                 for (let i = 0; i < removed.length; i++) {
-                    updateTabsterElements(removed[i], true);
+                    const removedNode = removed[i];
+                    removedNodes.add(removedNode);
+                    updateTabsterElements(removedNode, true);
                     tabster._dummyObserver.domChanged?.(target as HTMLElement);
                 }
 
@@ -56,6 +72,8 @@ export function observeMutations(
                 }
             }
         }
+
+        removedNodes.clear();
 
         tabster.modalizer?.hiddenUpdate();
     };
