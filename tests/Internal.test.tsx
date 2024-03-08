@@ -101,4 +101,58 @@ describe("Internal", () => {
                 expect(res).toEqual("true-true");
             });
     });
+
+    it("should not recreate groupper for removed element", async () => {
+        interface WindowWithTabsterInstance extends Window {
+            __tabsterInstance?: any;
+        }
+
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="groupper"
+                        {...getTabsterAttribute({
+                            groupper: { tabbability: 0 },
+                        })}
+                    >
+                        <button>Button</button>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                return Object.keys(
+                    (window as WindowWithTabsterInstance).__tabsterInstance
+                        .groupper._grouppers
+                ).length;
+            })
+            .check((groupperCount) => {
+                expect(groupperCount).toEqual(1);
+            })
+            .eval(() => {
+                const dom = getTabsterTestVariables().dom;
+                const groupper = dom?.getElementById(document, "groupper");
+
+                if (groupper) {
+                    // The following gives the mutation event with two records:
+                    // one for the removed element, and one for the attribute change.
+                    // Not sure why we get attribute change for the removed element,
+                    // but we need to make sure that the attribute change doesn't
+                    // trigger groupper recreation for the removed element.
+                    groupper.remove();
+                    groupper.setAttribute("data-tabster", '{"groupper":{}}');
+                }
+            })
+            .wait(300)
+            .eval(() => {
+                return Object.keys(
+                    (window as WindowWithTabsterInstance).__tabsterInstance
+                        .groupper._grouppers
+                ).length;
+            })
+            .check((groupperCount) => {
+                expect(groupperCount).toEqual(0);
+            });
+    });
 });
