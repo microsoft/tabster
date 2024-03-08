@@ -1902,7 +1902,8 @@ export function isDisplayNone(element: HTMLElement): boolean {
         return true;
     }
 
-    // check visibility:hidden
+    // For our purposes of looking for focusable elements, visibility:hidden has the same
+    // effect as display:none.
     if (computedStyle?.visibility === "hidden") {
         return true;
     }

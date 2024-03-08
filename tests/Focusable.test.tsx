@@ -564,6 +564,11 @@ describe("Focusable", () => {
                         <div style={{ visibility: "hidden" }}>
                             <button style={{ position: "fixed" }}>Button6</button>
                         </div>
+                        <div style={{ visibility: "hidden" }}>
+                            <div>
+                                <button style={{ position: "fixed" }}>Button6</button>
+                            </div>
+                        </div>
                         <button>Button7</button>
                     </div>
                 )
