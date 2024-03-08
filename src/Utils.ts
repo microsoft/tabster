@@ -1902,10 +1902,21 @@ export function isDisplayNone(element: HTMLElement): boolean {
         return true;
     }
 
-    // For our purposes of looking for focusable elements, visibility:hidden has the same
-    // effect as display:none.
+    // check visibility:hidden
     if (computedStyle?.visibility === "hidden") {
         return true;
+    }
+
+    // if an element has display: fixed, we need to check if it is also hidden with CSS,
+    // or within a parent hidden with CSS
+    if (computedStyle?.position === "fixed") {
+        if (computedStyle.display === "none") {
+            return true;
+        }
+
+        if (element.parentElement?.offsetParent === null && elementDocument.body !== element.parentElement) {
+            return true;
+        }
     }
 
     return false;
