@@ -14,6 +14,9 @@ export const FocusableSelector = [
     "textarea:not([disabled])",
     "*[tabindex]",
     "*[contenteditable]",
+    'details > summary',
+    'audio[controls]',
+    'video[controls]',
 ].join(", ");
 
 export interface TabsterDOMAttribute {
