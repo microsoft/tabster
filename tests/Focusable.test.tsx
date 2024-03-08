@@ -530,59 +530,71 @@ describe("Focusable", () => {
                         <div style={{ visibility: "hidden" }}>
                             <button>Button3</button>
                         </div>
-                        <button style={{ visibility: "hidden" }}>Button4</button>
+                        <button style={{ visibility: "hidden" }}>
+                            Button4
+                        </button>
                         <button>Button5</button>
                     </div>
                 )
             )
-            .eval(() => {
-                return getTabsterTestVariables()
-                    .core?.focusable.findAll({ container: document.body })
-                    .map((el) => el.textContent);
-            })
-            .check((evalRet: string[]) => {
-                expect(evalRet).toEqual([
-                    "Button5",
-                ]);
-            });
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({ container: document.body })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["Button5"]);
+                });
         });
         it("should handle hidden fixed elements", async () => {
             await new BroTest.BroTest(
                 (
                     <div {...getTabsterAttribute({ root: {} })}>
-                        <button style={{ position: "fixed", display: "none" }}>Button1</button>
+                        <button style={{ position: "fixed", display: "none" }}>
+                            Button1
+                        </button>
                         <div style={{ position: "fixed", display: "none" }}>
                             <button>Button2</button>
                         </div>
                         <div style={{ display: "none" }}>
-                            <button style={{ position: "fixed" }}>Button3</button>
+                            <button style={{ position: "fixed" }}>
+                                Button3
+                            </button>
                         </div>
-                        <button style={{ position: "fixed", visibility: "hidden" }}>Button4</button>
-                        <div style={{ position: "fixed", visibility: "hidden" }}>
+                        <button
+                            style={{ position: "fixed", visibility: "hidden" }}
+                        >
+                            Button4
+                        </button>
+                        <div
+                            style={{ position: "fixed", visibility: "hidden" }}
+                        >
                             <button>Button5</button>
                         </div>
                         <div style={{ visibility: "hidden" }}>
-                            <button style={{ position: "fixed" }}>Button6</button>
+                            <button style={{ position: "fixed" }}>
+                                Button6
+                            </button>
                         </div>
                         <div style={{ visibility: "hidden" }}>
                             <div>
-                                <button style={{ position: "fixed" }}>Button6</button>
+                                <button style={{ position: "fixed" }}>
+                                    Button6
+                                </button>
                             </div>
                         </div>
                         <button>Button7</button>
                     </div>
                 )
             )
-            .eval(() => {
-                return getTabsterTestVariables()
-                    .core?.focusable.findAll({ container: document.body })
-                    .map((el) => el.textContent);
-            })
-            .check((evalRet: string[]) => {
-                expect(evalRet).toEqual([
-                    "Button7",
-                ]);
-            });
-        })
+                .eval(() => {
+                    return getTabsterTestVariables()
+                        .core?.focusable.findAll({ container: document.body })
+                        .map((el) => el.textContent);
+                })
+                .check((evalRet: string[]) => {
+                    expect(evalRet).toEqual(["Button7"]);
+                });
+        });
     });
 });

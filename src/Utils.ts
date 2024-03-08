@@ -1915,7 +1915,10 @@ export function isDisplayNone(element: HTMLElement): boolean {
             return true;
         }
 
-        if (element.parentElement?.offsetParent === null && elementDocument.body !== element.parentElement) {
+        if (
+            element.parentElement?.offsetParent === null &&
+            elementDocument.body !== element.parentElement
+        ) {
             return true;
         }
     }
