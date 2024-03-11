@@ -707,7 +707,7 @@ export const RestorerTypes = {
     Target: 1,
 } as const;
 
-export type RestorerType = (typeof RestorerTypes)[keyof typeof RestorerTypes];
+export type RestorerType = typeof RestorerTypes[keyof typeof RestorerTypes];
 
 export const MoverDirections: MoverDirections = {
     Both: 0,
