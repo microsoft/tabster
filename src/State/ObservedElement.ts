@@ -129,7 +129,7 @@ export class ObservedElementAPI
      */
     getElement(
         observedName: string,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): HTMLElement | null {
         const o = this._observedByName[observedName];
 
@@ -170,7 +170,7 @@ export class ObservedElementAPI
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
         const el = this.getElement(observedName, accessibility);
 
@@ -359,7 +359,7 @@ export class ObservedElementAPI
             element: HTMLElement,
             key: string,
             waiting: ObservedWaiting,
-            accessibility: Types.ObservedElementAccesibility
+            accessibility: Types.ObservedElementAccessibility
         ) => {
             const observed = getTabsterOnElement(
                 this._tabster,

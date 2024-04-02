@@ -132,17 +132,14 @@ export interface FocusedElementDetail {
     modalizerId?: string;
 }
 
-export interface AsyncFocusSources {
-    EscapeGroupper: 1;
-    Restorer: 2;
-    Deloser: 3;
-}
-export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
-export const AsyncFocusSources: AsyncFocusSources = {
+export const AsyncFocusSources = {
     EscapeGroupper: 1,
     Restorer: 2,
     Deloser: 3,
-};
+} as const;
+
+export type AsyncFocusSource =
+    typeof AsyncFocusSources[keyof typeof AsyncFocusSources];
 
 export interface FocusedElementState
     extends Subscribable<HTMLElement | undefined, FocusedElementDetail>,
@@ -214,21 +211,17 @@ export interface ObservedElementProps {
 }
 
 export interface ObservedElementDetails extends ObservedElementProps {
-    accessibility?: ObservedElementAccesibility;
+    accessibility?: ObservedElementAccessibility;
 }
 
-export interface ObservedElementAccesibilities {
-    Any: 0;
-    Accessible: 1;
-    Focusable: 2;
-}
-export type ObservedElementAccesibility =
-    ObservedElementAccesibilities[keyof ObservedElementAccesibilities];
-export const ObservedElementAccesibilities: ObservedElementAccesibilities = {
+export const ObservedElementAccesibilities = {
     Any: 0,
     Accessible: 1,
     Focusable: 2,
-};
+} as const;
+
+export type ObservedElementAccessibility =
+    typeof ObservedElementAccesibilities[keyof typeof ObservedElementAccesibilities];
 
 export interface ObservedElementAsyncRequest<T> {
     result: Promise<T>;
@@ -246,12 +239,12 @@ export interface ObservedElementAPI
         ObservedElementAPIInternal {
     getElement(
         observedName: string,
-        accessibility?: ObservedElementAccesibility
+        accessibility?: ObservedElementAccessibility
     ): HTMLElement | null;
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: ObservedElementAccesibility
+        accessibility?: ObservedElementAccessibility
     ): ObservedElementAsyncRequest<HTMLElement | null>;
     requestFocus(
         observedName: string,
@@ -339,12 +332,12 @@ export interface CrossOriginObservedElementState
         Disposable {
     getElement(
         observedName: string,
-        accessibility?: ObservedElementAccesibility
+        accessibility?: ObservedElementAccessibility
     ): Promise<CrossOriginElement | null>;
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: ObservedElementAccesibility
+        accessibility?: ObservedElementAccessibility
     ): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
@@ -385,41 +378,34 @@ export interface DeloserElementActions {
     isActive: () => boolean;
 }
 
-export interface RestoreFocusOrders {
-    History: 0;
-    DeloserDefault: 1;
-    RootDefault: 2;
-    DeloserFirst: 3;
-    RootFirst: 4;
-}
-export type RestoreFocusOrder = RestoreFocusOrders[keyof RestoreFocusOrders];
-export const RestoreFocusOrders: RestoreFocusOrders = {
+export const RestoreFocusOrders = {
     History: 0,
     DeloserDefault: 1,
     RootDefault: 2,
     DeloserFirst: 3,
     RootFirst: 4,
-};
+} as const;
 
-export interface DeloserStrategies {
+export type RestoreFocusOrder =
+    typeof RestoreFocusOrders[keyof typeof RestoreFocusOrders];
+
+export const DeloserStrategies = {
     /**
      * If the focus is lost, the focus will be restored automatically using all available focus history.
      * This is the default strategy.
      */
-    Auto: 0;
+    Auto: 0,
     /**
      * If the focus is lost from this Deloser instance, the focus will not be restored automatically.
      * The application might listen to the event and restore the focus manually.
      * But if it is lost from another Deloser instance, the history of this Deloser could be used finding
      * the element to focus.
      */
-    Manual: 1;
-}
-export type DeloserStrategy = DeloserStrategies[keyof DeloserStrategies];
-export const DeloserStrategies: DeloserStrategies = {
-    Auto: 0,
     Manual: 1,
-};
+} as const;
+
+export type DeloserStrategy =
+    typeof DeloserStrategies[keyof typeof DeloserStrategies];
 
 export interface DeloserProps {
     restoreFocusOrder?: RestoreFocusOrder;
@@ -677,17 +663,13 @@ export interface DummyInputManager {
     ) => void;
 }
 
-export interface Visibilities {
-    Invisible: 0;
-    PartiallyVisible: 1;
-    Visible: 2;
-}
-export const Visibilities: Visibilities = {
+export const Visibilities = {
     Invisible: 0,
     PartiallyVisible: 1,
     Visible: 2,
-};
-export type Visibility = Visibilities[keyof Visibilities];
+} as const;
+
+export type Visibility = typeof Visibilities[keyof typeof Visibilities];
 
 export interface MoverElementState {
     isCurrent: boolean | undefined; // Tri-state bool. Undefined when there is no current in the container.
@@ -709,14 +691,16 @@ export const RestorerTypes = {
 
 export type RestorerType = typeof RestorerTypes[keyof typeof RestorerTypes];
 
-export const MoverDirections: MoverDirections = {
+export const MoverDirections = {
     Both: 0,
     Vertical: 1,
     Horizontal: 2,
     Grid: 3,
     GridLinear: 4,
-};
-export type MoverDirection = MoverDirections[keyof MoverDirections];
+} as const;
+
+export type MoverDirection =
+    typeof MoverDirections[keyof typeof MoverDirections];
 
 export type NextTabbable = {
     element: HTMLElement | null | undefined;
@@ -797,18 +781,7 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
-export interface MoverKeys {
-    ArrowUp: 1;
-    ArrowDown: 2;
-    ArrowLeft: 3;
-    ArrowRight: 4;
-    PageUp: 5;
-    PageDown: 6;
-    Home: 7;
-    End: 8;
-}
-export type MoverKey = MoverKeys[keyof MoverKeys];
-export const MoverKeys: MoverKeys = {
+export const MoverKeys = {
     ArrowUp: 1,
     ArrowDown: 2,
     ArrowLeft: 3,
@@ -817,7 +790,9 @@ export const MoverKeys: MoverKeys = {
     PageDown: 6,
     Home: 7,
     End: 8,
-};
+} as const;
+
+export type MoverKey = typeof MoverKeys[keyof typeof MoverKeys];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface MoverAPI extends MoverAPIInternal, Disposable {
@@ -825,18 +800,14 @@ export interface MoverAPI extends MoverAPIInternal, Disposable {
     moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
 }
 
-export interface GroupperTabbabilities {
-    Unlimited: 0;
-    Limited: 1; // The tabbability is limited to the container and explicit Enter is needed to go inside.
-    LimitedTrapFocus: 2; // The focus is limited as above, plus trapped when inside.
-}
-export const GroupperTabbabilities: GroupperTabbabilities = {
+export const GroupperTabbabilities = {
     Unlimited: 0,
-    Limited: 1,
-    LimitedTrapFocus: 2,
-};
+    Limited: 1, // The tabbability is limited to the container and explicit Enter is needed to go inside.
+    LimitedTrapFocus: 2, // The focus is limited as above, plus trapped when inside.
+} as const;
+
 export type GroupperTabbability =
-    GroupperTabbabilities[keyof GroupperTabbabilities];
+    typeof GroupperTabbabilities[keyof typeof GroupperTabbabilities];
 
 export interface GroupperProps {
     tabbability?: GroupperTabbability;
@@ -882,16 +853,13 @@ export interface GroupperAPIInternal {
     ): void;
 }
 
-export interface GroupperMoveFocusActions {
-    Enter: 1;
-    Escape: 2;
-}
-export type GroupperMoveFocusAction =
-    GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
-export const GroupperMoveFocusActions: GroupperMoveFocusActions = {
+export const GroupperMoveFocusActions = {
     Enter: 1,
     Escape: 2,
-};
+} as const;
+
+export type GroupperMoveFocusAction =
+    typeof GroupperMoveFocusActions[keyof typeof GroupperMoveFocusActions];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface GroupperAPI extends GroupperAPIInternal, Disposable {
@@ -959,18 +927,15 @@ export type RootConstructor = (
     props: RootProps
 ) => Root;
 
-export interface SysDummyInputsPositions {
-    Auto: 0; // Tabster will place dummy inputs depending on the container tag name and on the default behaviour.
-    Inside: 1; // Tabster will always place dummy inputs inside the container.
-    Outside: 2; // Tabster will always place dummy inputs outside of the container.
-}
-export const SysDummyInputsPositions: SysDummyInputsPositions = {
-    Auto: 0,
-    Inside: 1,
-    Outside: 2,
-};
+export const SysDummyInputsPositions = {
+    Auto: 0, // Tabster will place dummy inputs depending on the container tag name and on the default behaviour.
+    Inside: 1, // Tabster will always place dummy inputs inside the container.
+    Outside: 2, // Tabster will always place dummy inputs outside of the container.
+} as const;
+
 export type SysDummyInputsPosition =
-    SysDummyInputsPositions[keyof SysDummyInputsPositions];
+    typeof SysDummyInputsPositions[keyof typeof SysDummyInputsPositions];
+
 /**
  * Ability to fine-tune Tabster internal behaviour in rare cases of need.
  * Normally, should not be used. A deep understanding of the intention and the effect

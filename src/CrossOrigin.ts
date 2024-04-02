@@ -401,7 +401,7 @@ interface CrossOriginElementDataIn {
     /**
      * Optionally wait if the element is accessible or focusable before returning it
      */
-    accessibility?: Types.ObservedElementAccesibility;
+    accessibility?: Types.ObservedElementAccessibility;
 }
 
 interface FocusElementData extends CrossOriginElementDataIn {
@@ -1582,7 +1582,7 @@ export class CrossOriginObservedElementState
 
     async getElement(
         observedName: string,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Promise<CrossOriginElement | null> {
         return this.waitElement(observedName, 0, accessibility);
     }
@@ -1590,7 +1590,7 @@ export class CrossOriginObservedElementState
     async waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Promise<CrossOriginElement | null> {
         return this._transactions
             .beginTransaction(
