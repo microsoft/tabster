@@ -211,7 +211,7 @@ export interface ObservedElementProps {
 }
 
 export interface ObservedElementDetails extends ObservedElementProps {
-    accessibility?: ObservedElementAccessibility;
+    accessibility?: ObservedElementAccesibility;
 }
 
 export const ObservedElementAccesibilities = {
@@ -220,7 +220,7 @@ export const ObservedElementAccesibilities = {
     Focusable: 2,
 } as const;
 
-export type ObservedElementAccessibility =
+export type ObservedElementAccesibility =
     typeof ObservedElementAccesibilities[keyof typeof ObservedElementAccesibilities];
 
 export interface ObservedElementAsyncRequest<T> {
@@ -239,12 +239,12 @@ export interface ObservedElementAPI
         ObservedElementAPIInternal {
     getElement(
         observedName: string,
-        accessibility?: ObservedElementAccessibility
+        accessibility?: ObservedElementAccesibility
     ): HTMLElement | null;
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: ObservedElementAccessibility
+        accessibility?: ObservedElementAccesibility
     ): ObservedElementAsyncRequest<HTMLElement | null>;
     requestFocus(
         observedName: string,
@@ -332,12 +332,12 @@ export interface CrossOriginObservedElementState
         Disposable {
     getElement(
         observedName: string,
-        accessibility?: ObservedElementAccessibility
+        accessibility?: ObservedElementAccesibility
     ): Promise<CrossOriginElement | null>;
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: ObservedElementAccessibility
+        accessibility?: ObservedElementAccesibility
     ): Promise<CrossOriginElement | null>;
     requestFocus(observedName: string, timeout: number): Promise<boolean>;
 }
