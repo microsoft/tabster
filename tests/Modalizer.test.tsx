@@ -2318,6 +2318,188 @@ describe("Modalizer with checkAccessible callback", () => {
     });
 });
 
+describe("Modalizer with noDirectAriaHidden flag", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
+
+    it.only("should not set aria-hidden on elements with noDirectAriaHidden flag", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div id="div1">
+                        <button>Button1</button>
+                    </div>
+                    <div
+                        id="div2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal", isTrapped: true },
+                        })}
+                    >
+                        <button id="button2">Button2</button>
+                    </div>
+                    <div id="div3">
+                        <button id="button3">Button3</button>
+                        <div id="div4">
+                            <button id="button4">Button4</button>
+                        </div>
+                        <div id="div5">
+                            <button id="button5">Button5</button>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .focusElement("#button2")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .wait(500)
+            .eval(() => [
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div2")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div5")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button5")
+                    ?.hasAttribute("aria-hidden"),
+            ])
+            .check(
+                ([div1, div2, div3, div4, div5, button3, button4, button5]) => {
+                    expect(div1).toEqual(true);
+                    expect(div2).toEqual(false);
+                    expect(div3).toEqual(true);
+                    expect(div4).toEqual(false);
+                    expect(div5).toEqual(false);
+                    expect(button3).toEqual(false);
+                    expect(button4).toEqual(false);
+                    expect(button5).toEqual(false);
+                }
+            )
+            .focusElement("#button3")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .wait(500)
+            .eval(() => [
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div2")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div5")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button5")
+                    ?.hasAttribute("aria-hidden"),
+            ])
+            .check(
+                ([div1, div2, div3, div4, div5, button3, button4, button5]) => {
+                    expect(div1).toEqual(false);
+                    expect(div2).toEqual(true);
+                    expect(div3).toEqual(false);
+                    expect(div4).toEqual(false);
+                    expect(div5).toEqual(false);
+                    expect(button3).toEqual(false);
+                    expect(button4).toEqual(false);
+                    expect(button5).toEqual(false);
+                }
+            )
+            .eval(() => {
+                const div3 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div3"
+                ) as Types.HTMLElementWithTabsterFlags | null;
+                const div4 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "div4"
+                ) as Types.HTMLElementWithTabsterFlags | null;
+
+                if (div3) {
+                    div3.__tabsterElementFlags = { noDirectAriaHidden: true };
+                }
+
+                if (div4) {
+                    div4.__tabsterElementFlags = { noDirectAriaHidden: true };
+                }
+            })
+            .focusElement("#button2")
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .wait(500)
+            .eval(() => [
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div1")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div2")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "div5")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button3")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button4")
+                    ?.hasAttribute("aria-hidden"),
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "button5")
+                    ?.hasAttribute("aria-hidden"),
+            ])
+            .check(
+                ([div1, div2, div3, div4, div5, button3, button4, button5]) => {
+                    expect(div1).toEqual(true);
+                    expect(div2).toEqual(false);
+                    expect(div3).toEqual(false);
+                    expect(div4).toEqual(false);
+                    expect(div5).toEqual(true);
+                    expect(button3).toEqual(true);
+                    expect(button4).toEqual(true);
+                    expect(button5).toEqual(false);
+                }
+            );
+    });
+});
+
 describe("Modalizer with tabster:movefocus event handling", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ modalizer: true });

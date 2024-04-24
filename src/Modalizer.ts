@@ -767,9 +767,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
         const walk = (element: HTMLElement) => {
             for (
-                let el = dom.getFirstElementChild(element);
+                let el = dom.getFirstElementChild(
+                    element
+                ) as Types.HTMLElementWithTabsterFlags | null;
                 el;
-                el = dom.getNextElementSibling(el)
+                el = dom.getNextElementSibling(
+                    el
+                ) as Types.HTMLElementWithTabsterFlags | null
             ) {
                 let skip = false;
                 let containsModalizer = false;
@@ -796,7 +800,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                         }
                     }
 
-                    if (containsModalizer) {
+                    if (
+                        containsModalizer ||
+                        el.__tabsterElementFlags?.noDirectAriaHidden
+                    ) {
                         walk(el as HTMLElement);
                     } else if (!skip && !containedByModalizer) {
                         toggle(el as HTMLElement, true);

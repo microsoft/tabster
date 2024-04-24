@@ -19,6 +19,19 @@ export const FocusableSelector = [
     "video[controls]",
 ].join(", ");
 
+export interface HTMLElementWithTabsterFlags extends HTMLElement {
+    __tabsterElementFlags?: {
+        /**
+         * @deprecated This option is added to support interop between Fluent UI V9 and Fluent UI V8.
+         * Once Fluent UI V8 is not supported anymore, this option should be removed.
+         */
+        noDirectAriaHidden?: boolean; // When Modalizer sets aria-hidden on everything outside of the modal,
+        // do not set aria-hidden directly on this element, go inside and check its children,
+        // and set aria-hidden on the children. This is to be set on a container that hosts
+        // elements which have the active modal dialog as virtual parent.
+    };
+}
+
 export interface TabsterDOMAttribute {
     [TabsterAttributeName]: string | undefined;
 }
