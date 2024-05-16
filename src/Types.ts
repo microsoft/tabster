@@ -110,6 +110,10 @@ export interface DOMAPI {
     appendChild(parent: Node, child: Node): Node;
     insertBefore(parent: Node, child: Node, referenceChild: Node | null): Node;
     getSelection(ref: Node): Selection | null;
+    getElementsByName(
+        referenceElement: HTMLElement,
+        name: string
+    ): NodeListOf<HTMLElement>;
 }
 
 export type GetTabster = () => TabsterCore;
@@ -488,6 +492,12 @@ export interface FocusableProps {
     };
 }
 
+export interface RadioButtonGroup {
+    name: string;
+    buttons: Set<HTMLInputElement>;
+    checked?: HTMLInputElement;
+}
+
 export interface FocusableAcceptElementState {
     container: HTMLElement;
     modalizerUserId?: string;
@@ -509,6 +519,9 @@ export interface FocusableAcceptElementState {
             isActive: boolean | undefined;
             first?: HTMLElement | null;
         };
+    };
+    cachedRadioGroups: {
+        [name: string]: RadioButtonGroup;
     };
     isFindAll?: boolean;
     /**

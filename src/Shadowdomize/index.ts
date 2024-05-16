@@ -22,6 +22,7 @@ export {
     getPreviousElementSibling,
     getPreviousSibling,
     getSelection,
+    getElementsByName,
     insertBefore,
     nodeContains,
 } from "./DOMFunctions";

@@ -13,6 +13,8 @@ import {
     shouldIgnoreFocus,
     HTMLElementWithDummyContainer,
     isDisplayNone,
+    isRadio,
+    getRadioButtonGroup,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -176,7 +178,7 @@ export class FocusableAPI implements Types.FocusableAPI {
     }
 
     private _findElements(
-        findAll: boolean,
+        isFindAll: boolean,
         options: Types.FindFocusableProps,
         out?: Types.FindFocusableOutputProps
     ): HTMLElement[] | null | undefined {
@@ -224,11 +226,13 @@ export class FocusableAPI implements Types.FocusableAPI {
                           ?.modalizer?.userId,
             from: currentElement || container,
             isBackward,
+            isFindAll,
             acceptCondition,
             hasCustomCondition,
             includeProgrammaticallyFocusable,
             ignoreAccessibility,
             cachedGrouppers: {},
+            cachedRadioGroups: {},
         };
 
         const walker = createElementTreeWalker(
@@ -253,7 +257,7 @@ export class FocusableAPI implements Types.FocusableAPI {
                 elements.push(foundElement);
             }
 
-            if (findAll) {
+            if (isFindAll) {
                 if (foundElement) {
                     acceptElementState.found = false;
                     delete acceptElementState.foundElement;
@@ -490,6 +494,30 @@ export class FocusableAPI implements Types.FocusableAPI {
         }
 
         if (result === NodeFilter.FILTER_ACCEPT && !state.found) {
+            if (
+                !state.isFindAll &&
+                isRadio(element) &&
+                !(element as HTMLInputElement).checked
+            ) {
+                // We need to mimic the browser's behaviour to skip unchecked radio buttons.
+                const radioGroupName = (element as HTMLInputElement).name;
+                let radioGroup: Types.RadioButtonGroup | undefined =
+                    state.cachedRadioGroups[radioGroupName];
+
+                if (!radioGroup) {
+                    radioGroup = getRadioButtonGroup(element);
+
+                    if (radioGroup) {
+                        state.cachedRadioGroups[radioGroupName] = radioGroup;
+                    }
+                }
+
+                if (radioGroup?.checked && radioGroup.checked !== element) {
+                    // Currently found element is a radio button in a group that has another radio button checked.
+                    return NodeFilter.FILTER_SKIP;
+                }
+            }
+
             if (state.isBackward) {
                 // When TreeWalker goes backwards, it visits the container first,
                 // then it goes inside. So, if the container is accepted, we remember it,

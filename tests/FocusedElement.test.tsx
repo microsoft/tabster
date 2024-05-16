@@ -259,3 +259,168 @@ describe("does not skip bizarre inaccessible things in the end of the root", () 
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
     });
 });
+
+describe("Radio buttons", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ groupper: true });
+    });
+
+    it("Should skip unchecked radio buttons", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <input type="radio" name="ololo" value="111" />
+                        <input type="radio" name="ololo" value="222" checked />
+                        <input type="radio" name="ololo" value="333" />
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
+            .pressTab()
+            .activeElement((el) => expect(el).toBeNull())
+            .pressTab(true)
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
+            .pressTab(true)
+            .activeElement((el) => expect(el).toBeNull);
+    });
+
+    it("Should skip unchecked radio buttons mixed with other focusables while not skipping other focusables", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <input type="radio" name="ololo" value="111" />
+                        <button value="button1">Button1</button>
+                        <input type="radio" name="ololo" value="222" />
+                        <button value="button2">Button2</button>
+                        <input type="radio" name="ololo" value="333" checked />
+                        <button value="button3">Button3</button>
+                        <input type="radio" name="ololo" value="444" />
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button2")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("333"))
+            .pressUp()
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button2")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button3")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el).toBeNull())
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button3")
+            )
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button2")
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button1")
+            )
+            .pressTab(true)
+            .activeElement((el) => expect(el).toBeNull);
+    });
+
+    it("Should skip unchecked radio buttons when entering Groupper", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: { tabbability: 2 },
+                        })}
+                    >
+                        Radio
+                        <input type="radio" name="ololo" value="111" />
+                        <input type="radio" name="ololo" value="222" checked />
+                        <button value="button1">Button1</button>
+                        <input type="radio" name="ololo" value="333" />
+                        Buttons
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("RadioButton1Buttons")
+            )
+            .pressTab()
+            .activeElement((el) => expect(el).toBeNull())
+            .pressTab(true)
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("RadioButton1Buttons")
+            )
+            .pressEnter()
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
+            .pressDown()
+            .activeElement((el) => expect(el?.attributes?.value).toEqual("333"))
+            .pressEsc()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("RadioButton1Buttons")
+            )
+            .pressEnter()
+            .activeElement((el) =>
+                expect(el?.attributes?.value).toEqual("button1")
+            );
+    });
+
+    it("Should find all radios buttons when findAll() is called", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <input type="radio" name="ololo" value="111" />
+                        <input type="radio" name="ololo" value="222" checked />
+                        <button value="button1">Button1</button>
+                        <input type="radio" name="ololo" value="333" />
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                const root = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "root"
+                );
+
+                if (root) {
+                    const buttons =
+                        getTabsterTestVariables().core?.focusable.findAll({
+                            container: root,
+                        });
+
+                    return buttons?.map((button) =>
+                        button.getAttribute("value")
+                    );
+                }
+
+                return null;
+            })
+            .check((buttons: string[]) => {
+                expect(buttons).toEqual(["111", "222", "button1", "333"]);
+            });
+    });
+});
