@@ -470,7 +470,8 @@ export class RootAPI implements Types.RootAPI {
                 !mover &&
                 curMover &&
                 (!modalizer || curModalizer) &&
-                (!curGroupper || curElement !== element)
+                (!curGroupper || curElement !== element) &&
+                curElement.contains(element) // Mover makes sense only for really inside elements, not for virutal out of the DOM order children.
             ) {
                 mover = curMover;
                 groupperBeforeMover = !!groupper && groupper !== curGroupper;
