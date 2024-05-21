@@ -4,7 +4,11 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { Types as TabsterTypes, getTabsterAttribute } from "tabster";
+import {
+    getTabsterAttribute,
+    RestorerTypes,
+    TabsterAttributeName,
+} from "tabster";
 import "./restorer.css";
 
 export default {
@@ -14,20 +18,20 @@ export default {
 export const RestorerBasicExample: Story = () => {
     const sourceAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         },
         true
     );
 
     const targetAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         },
         true
     );
     const example = document.createElement("div");
     const source = document.createElement("div");
-    source.setAttribute(TabsterTypes.TabsterAttributeName, sourceAttr);
+    source.setAttribute(TabsterAttributeName, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
         <button id="unmount">unmount</button>
@@ -39,7 +43,7 @@ export const RestorerBasicExample: Story = () => {
 
     const target = document.createElement("button");
     target.textContent = "Target";
-    target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
+    target.setAttribute(TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
         const initialFocus = source.querySelector(
@@ -59,21 +63,21 @@ export const RestorerBasicExample: Story = () => {
 export const UseTargetHistory: Story = () => {
     const sourceAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         },
         true
     );
 
     const targetAttr = getTabsterAttribute(
         {
-            restorer: { type: TabsterTypes.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         },
         true
     );
     const example = document.createElement("div");
     const source = document.createElement("div");
     source.tabIndex = -1;
-    source.setAttribute(TabsterTypes.TabsterAttributeName, sourceAttr);
+    source.setAttribute(TabsterAttributeName, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
         <button id="unmount">unmount</button>
@@ -85,7 +89,7 @@ export const UseTargetHistory: Story = () => {
 
     const target = document.createElement("button");
     target.textContent = "Target";
-    target.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
+    target.setAttribute(TabsterAttributeName, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
         const initialFocus = source.querySelector(
@@ -100,7 +104,7 @@ export const UseTargetHistory: Story = () => {
 
     const secondTarget = document.createElement("button");
     secondTarget.textContent = "secondTarget";
-    secondTarget.setAttribute(TabsterTypes.TabsterAttributeName, targetAttr);
+    secondTarget.setAttribute(TabsterAttributeName, targetAttr);
 
     example.append(secondTarget);
     example.append(target);

@@ -4,14 +4,14 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { Types as TabsterTypes } from "tabster";
+import { MoverDirections } from "tabster";
 import { createBasicMover, createTableMover, MoverProps } from "./Mover";
 
 export default {
     title: "Mover",
     argTypes: {
         cyclic: { control: "boolean" },
-        direction: { control: "select", options: TabsterTypes.MoverDirections },
+        direction: { control: "select", options: MoverDirections },
         memorizeCurrent: { control: "boolean" },
         tabbable: { control: "boolean" },
         trackState: { control: "boolean" },
@@ -29,10 +29,10 @@ export const Circular = SimpleFocusableCollection.bind({});
 Circular.args = { cyclic: true };
 
 export const VerticalOnly = SimpleFocusableCollection.bind({});
-VerticalOnly.args = { direction: TabsterTypes.MoverDirections.Vertical };
+VerticalOnly.args = { direction: MoverDirections.Vertical };
 
 export const HorizontalOnly = SimpleFocusableCollection.bind({});
-HorizontalOnly.args = { direction: TabsterTypes.MoverDirections.Horizontal };
+HorizontalOnly.args = { direction: MoverDirections.Horizontal };
 
 export const Tabbable = SimpleFocusableCollection.bind({});
 Tabbable.args = { tabbable: true };

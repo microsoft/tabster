@@ -8,9 +8,6 @@ export {
     getTabster,
     disposeTabster,
     forceCleanup,
-    mergeTabsterProps,
-    getTabsterAttribute,
-    setTabsterAttribute,
     getGroupper,
     getMover,
     getCrossOrigin,
@@ -23,8 +20,16 @@ export {
     makeNoOp,
     isNoOp,
     getShadowDOMAPI,
-    Types,
-    Events,
 } from "./Tabster";
+
+export * from "./AttributeHelpers";
+
+export * as Types from "./Types";
+
+export * from "./Events";
+
+export * as EventsTypes from "./EventsTypes";
+
+export * from "./Consts";
 
 export * from "./Deprecated";

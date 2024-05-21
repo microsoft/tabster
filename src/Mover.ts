@@ -9,6 +9,7 @@ import { getTabsterOnElement } from "./Instance";
 import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
+import { Visibilities, MoverDirections, MoverKeys } from "./Consts";
 import {
     MoverMemorizedElementEvent,
     MoverMemorizedElementEventName,
@@ -343,11 +344,10 @@ export class Mover
                             moverElement !== el &&
                             !!this._allElements?.get(el) &&
                             state.acceptCondition(el) &&
-                            (visibility === Types.Visibilities.Visible ||
-                                (visibility ===
-                                    Types.Visibilities.PartiallyVisible &&
+                            (visibility === Visibilities.Visible ||
+                                (visibility === Visibilities.PartiallyVisible &&
                                     (visibilityAware ===
-                                        Types.Visibilities.PartiallyVisible ||
+                                        Visibilities.PartiallyVisible ||
                                         !this._fullyVisible)))
                         );
                     },
@@ -377,14 +377,14 @@ export class Mover
             if (entry.intersectionRatio >= 0.25) {
                 newVisibility =
                     entry.intersectionRatio >= 0.75
-                        ? Types.Visibilities.Visible
-                        : Types.Visibilities.PartiallyVisible;
+                        ? Visibilities.Visible
+                        : Visibilities.PartiallyVisible;
 
-                if (newVisibility === Types.Visibilities.Visible) {
+                if (newVisibility === Visibilities.Visible) {
                     fullyVisible = id;
                 }
             } else {
-                newVisibility = Types.Visibilities.Invisible;
+                newVisibility = Visibilities.Invisible;
             }
 
             if (this._visible[id] !== newVisibility) {
@@ -633,8 +633,7 @@ export class Mover
         const id = getElementUId(this._win, element);
 
         if (id in this._visible) {
-            const visibility =
-                this._visible[id] || Types.Visibilities.Invisible;
+            const visibility = this._visible[id] || Visibilities.Invisible;
             const isCurrent = this._current
                 ? this._current.get() === element
                 : undefined;
@@ -861,14 +860,12 @@ export class MoverAPI implements Types.MoverAPI {
 
         const focusable = tabster.focusable;
         const moverProps = mover.getProps();
-        const direction = moverProps.direction || Types.MoverDirections.Both;
-        const isBoth = direction === Types.MoverDirections.Both;
-        const isVertical =
-            isBoth || direction === Types.MoverDirections.Vertical;
-        const isHorizontal =
-            isBoth || direction === Types.MoverDirections.Horizontal;
-        const isGridLinear = direction === Types.MoverDirections.GridLinear;
-        const isGrid = isGridLinear || direction === Types.MoverDirections.Grid;
+        const direction = moverProps.direction || MoverDirections.Both;
+        const isBoth = direction === MoverDirections.Both;
+        const isVertical = isBoth || direction === MoverDirections.Vertical;
+        const isHorizontal = isBoth || direction === MoverDirections.Horizontal;
+        const isGridLinear = direction === MoverDirections.GridLinear;
+        const isGrid = isGridLinear || direction === MoverDirections.Grid;
         const isCyclic = moverProps.cyclic;
 
         let next: HTMLElement | null | undefined;
@@ -885,16 +882,16 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         if (ctx.rtl) {
-            if (key === Types.MoverKeys.ArrowRight) {
-                key = Types.MoverKeys.ArrowLeft;
-            } else if (key === Types.MoverKeys.ArrowLeft) {
-                key = Types.MoverKeys.ArrowRight;
+            if (key === MoverKeys.ArrowRight) {
+                key = MoverKeys.ArrowLeft;
+            } else if (key === MoverKeys.ArrowLeft) {
+                key = MoverKeys.ArrowRight;
             }
         }
 
         if (
-            (key === Types.MoverKeys.ArrowDown && isVertical) ||
-            (key === Types.MoverKeys.ArrowRight && (isHorizontal || isGrid))
+            (key === MoverKeys.ArrowDown && isVertical) ||
+            (key === MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
             next = focusable.findNext({
                 currentElement: fromElement,
@@ -917,8 +914,8 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             }
         } else if (
-            (key === Types.MoverKeys.ArrowUp && isVertical) ||
-            (key === Types.MoverKeys.ArrowLeft && (isHorizontal || isGrid))
+            (key === MoverKeys.ArrowUp && isVertical) ||
+            (key === MoverKeys.ArrowLeft && (isHorizontal || isGrid))
         ) {
             next = focusable.findPrev({
                 currentElement: fromElement,
@@ -940,7 +937,7 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (key === Types.MoverKeys.Home) {
+        } else if (key === MoverKeys.Home) {
             if (isGrid) {
                 focusable.findElement({
                     container,
@@ -973,7 +970,7 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (key === Types.MoverKeys.End) {
+        } else if (key === MoverKeys.End) {
             if (isGrid) {
                 focusable.findElement({
                     container,
@@ -1005,7 +1002,7 @@ export class MoverAPI implements Types.MoverAPI {
                     useActiveModalizer: true,
                 });
             }
-        } else if (key === Types.MoverKeys.PageUp) {
+        } else if (key === MoverKeys.PageUp) {
             focusable.findElement({
                 currentElement: fromElement,
                 container,
@@ -1061,7 +1058,7 @@ export class MoverAPI implements Types.MoverAPI {
             }
 
             scrollIntoViewArg = false;
-        } else if (key === Types.MoverKeys.PageDown) {
+        } else if (key === MoverKeys.PageDown) {
             focusable.findElement({
                 currentElement: fromElement,
                 container,
@@ -1118,7 +1115,7 @@ export class MoverAPI implements Types.MoverAPI {
 
             scrollIntoViewArg = true;
         } else if (isGrid) {
-            const isBackward = key === Types.MoverKeys.ArrowUp;
+            const isBackward = key === MoverKeys.ArrowUp;
             const ax1 = focusedElementX1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const ay1 = Math.ceil(focusedElementRect!.top);
@@ -1247,21 +1244,21 @@ export class MoverAPI implements Types.MoverAPI {
         let moverKey: Types.MoverKey | undefined;
 
         if (key === Keys.ArrowDown) {
-            moverKey = Types.MoverKeys.ArrowDown;
+            moverKey = MoverKeys.ArrowDown;
         } else if (key === Keys.ArrowRight) {
-            moverKey = Types.MoverKeys.ArrowRight;
+            moverKey = MoverKeys.ArrowRight;
         } else if (key === Keys.ArrowUp) {
-            moverKey = Types.MoverKeys.ArrowUp;
+            moverKey = MoverKeys.ArrowUp;
         } else if (key === Keys.ArrowLeft) {
-            moverKey = Types.MoverKeys.ArrowLeft;
+            moverKey = MoverKeys.ArrowLeft;
         } else if (key === Keys.PageDown) {
-            moverKey = Types.MoverKeys.PageDown;
+            moverKey = MoverKeys.PageDown;
         } else if (key === Keys.PageUp) {
-            moverKey = Types.MoverKeys.PageUp;
+            moverKey = MoverKeys.PageUp;
         } else if (key === Keys.Home) {
-            moverKey = Types.MoverKeys.Home;
+            moverKey = MoverKeys.Home;
         } else if (key === Keys.End) {
-            moverKey = Types.MoverKeys.End;
+            moverKey = MoverKeys.End;
         }
 
         if (!moverKey) {

@@ -6,13 +6,14 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
+import { FocusableSelector } from "./Consts";
 import {
     createElementTreeWalker,
     getLastChild,
-    matchesSelector,
-    shouldIgnoreFocus,
     HTMLElementWithDummyContainer,
     isDisplayNone,
+    matchesSelector,
+    shouldIgnoreFocus,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -39,7 +40,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         noAccessibleCheck?: boolean
     ): boolean {
         if (
-            matchesSelector(el, Types.FocusableSelector) &&
+            matchesSelector(el, FocusableSelector) &&
             (includeProgrammaticallyFocusable || el.tabIndex !== -1)
         ) {
             return (

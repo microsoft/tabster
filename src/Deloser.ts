@@ -6,11 +6,12 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
+import { DeloserStrategies, RestoreFocusOrders } from "./Consts";
 import {
     DeloserFocusLostEvent,
-    TabsterMoveFocusEvent,
     DeloserRestoreFocusEvent,
     DeloserRestoreFocusEventName,
+    TabsterMoveFocusEvent,
 } from "./Events";
 import {
     documentContains,
@@ -418,7 +419,7 @@ export class Deloser
         super(tabster, element, props);
 
         this.uid = getElementUId(tabster.getWindow, element);
-        this.strategy = props.strategy || Types.DeloserStrategies.Auto;
+        this.strategy = props.strategy || DeloserStrategies.Auto;
         this._onDispose = onDispose;
 
         if (__DEV__) {
@@ -555,16 +556,13 @@ export class Deloser
             restoreFocusOrder = root.getProps().restoreFocusOrder;
         }
 
-        if (restoreFocusOrder === Types.RestoreFocusOrders.RootDefault) {
+        if (restoreFocusOrder === RestoreFocusOrders.RootDefault) {
             available = this._tabster.focusable.findDefault({
                 container: rootElement,
             });
         }
 
-        if (
-            !available &&
-            restoreFocusOrder === Types.RestoreFocusOrders.RootFirst
-        ) {
+        if (!available && restoreFocusOrder === RestoreFocusOrders.RootFirst) {
             available = this._findFirst(rootElement);
         }
 
@@ -576,7 +574,7 @@ export class Deloser
 
         if (
             availableInHistory &&
-            restoreFocusOrder === Types.RestoreFocusOrders.History
+            restoreFocusOrder === RestoreFocusOrders.History
         ) {
             return availableInHistory;
         }
@@ -587,7 +585,7 @@ export class Deloser
 
         if (
             availableDefault &&
-            restoreFocusOrder === Types.RestoreFocusOrders.DeloserDefault
+            restoreFocusOrder === RestoreFocusOrders.DeloserDefault
         ) {
             return availableDefault;
         }
@@ -596,7 +594,7 @@ export class Deloser
 
         if (
             availableFirst &&
-            restoreFocusOrder === Types.RestoreFocusOrders.DeloserFirst
+            restoreFocusOrder === RestoreFocusOrders.DeloserFirst
         ) {
             return availableFirst;
         }
@@ -931,7 +929,7 @@ export class DeloserAPI implements Types.DeloserAPI {
                     return;
                 }
 
-                if (curDeloser.strategy === Types.DeloserStrategies.Manual) {
+                if (curDeloser.strategy === DeloserStrategies.Manual) {
                     isManual = true;
                 } else {
                     const curDeloserElement = curDeloser.getElement();

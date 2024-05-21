@@ -17,7 +17,7 @@ import { ObservedElementAPI } from "./State/ObservedElement";
 import { OutlineAPI } from "./Outline";
 import { RootAPI, WindowWithTabsterInstance } from "./Root";
 import * as Types from "./Types";
-import * as Events from "./Events";
+import { TabsterAttributeName } from "./Consts";
 import { UncontrolledAPI } from "./Uncontrolled";
 import {
     cleanupFakeWeakRefs,
@@ -25,17 +25,13 @@ import {
     createElementTreeWalker,
     createWeakMap,
     disposeInstanceContext,
+    DummyInputObserver,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
-    DummyInputObserver,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 import { dom, setDOMAPI } from "./DOMAPI";
 import * as shadowDOMAPI from "./Shadowdomize";
-
-export { Types };
-export { Events };
-export * from "./AttributeHelpers";
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
@@ -524,7 +520,7 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
 
             if (
                 getTabsterOnElement(core, element) ||
-                element.hasAttribute(Types.TabsterAttributeName)
+                element.hasAttribute(TabsterAttributeName)
             ) {
                 updateTabsterByAttribute(core, element);
             }

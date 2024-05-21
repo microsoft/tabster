@@ -4,6 +4,7 @@
  */
 
 import * as Types from "./Types";
+import * as EventsTypes from "./EventsTypes";
 
 /**
  * Events sent by Tabster.
@@ -105,13 +106,6 @@ export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
     }
 }
 
-export interface TabsterMoveFocusEventDetail {
-    by: "mover" | "groupper" | "modalizer" | "root" | "deloser";
-    owner: HTMLElement; // Mover, Groupper, Modalizer or Root, the initiator.
-    next: HTMLElement | null; // Next element to focus or null if Tabster wants to go outside of Root (i.e. to the address bar of the browser).
-    relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
-}
-
 export class TabsterFocusInEvent extends TabsterCustomEvent<Types.FocusedElementDetail> {
     constructor(detail: Types.FocusedElementDetail) {
         super(TabsterFocusInEventName, detail);
@@ -124,8 +118,8 @@ export class TabsterFocusOutEvent extends TabsterCustomEvent<Types.FocusedElemen
     }
 }
 
-export class TabsterMoveFocusEvent extends TabsterCustomEvent<TabsterMoveFocusEventDetail> {
-    constructor(detail: TabsterMoveFocusEventDetail) {
+export class TabsterMoveFocusEvent extends TabsterCustomEvent<EventsTypes.TabsterMoveFocusEventDetail> {
+    constructor(detail: EventsTypes.TabsterMoveFocusEventDetail) {
         super(TabsterMoveFocusEventName, detail);
     }
 }
@@ -136,47 +130,32 @@ export class MoverStateEvent extends TabsterCustomEvent<Types.MoverElementState>
     }
 }
 
-export type MoverMoveFocusEventDetail = { key: Types.MoverKey };
-
-export class MoverMoveFocusEvent extends TabsterCustomEvent<MoverMoveFocusEventDetail> {
-    constructor(detail: MoverMoveFocusEventDetail) {
+export class MoverMoveFocusEvent extends TabsterCustomEvent<EventsTypes.MoverMoveFocusEventDetail> {
+    constructor(detail: EventsTypes.MoverMoveFocusEventDetail) {
         super(MoverMoveFocusEventName, detail);
     }
 }
 
-export interface MoverMemorizedElementEventDetail {
-    memorizedElement: HTMLElement | undefined;
-}
-
-export class MoverMemorizedElementEvent extends TabsterCustomEvent<MoverMemorizedElementEventDetail> {
-    constructor(detail: MoverMemorizedElementEventDetail) {
+export class MoverMemorizedElementEvent extends TabsterCustomEvent<EventsTypes.MoverMemorizedElementEventDetail> {
+    constructor(detail: EventsTypes.MoverMemorizedElementEventDetail) {
         super(MoverMemorizedElementEventName, detail);
     }
 }
 
-export type GroupperMoveFocusEventDetail = {
-    action: Types.GroupperMoveFocusAction;
-};
-
-export class GroupperMoveFocusEvent extends TabsterCustomEvent<GroupperMoveFocusEventDetail> {
-    constructor(detail: GroupperMoveFocusEventDetail) {
+export class GroupperMoveFocusEvent extends TabsterCustomEvent<EventsTypes.GroupperMoveFocusEventDetail> {
+    constructor(detail: EventsTypes.GroupperMoveFocusEventDetail) {
         super(GroupperMoveFocusEventName, detail);
     }
 }
 
-export type ModalizerEventDetail = {
-    id: string;
-    element: HTMLElement;
-};
-
-export class ModalizerActiveEvent extends TabsterCustomEvent<ModalizerEventDetail> {
-    constructor(detail: ModalizerEventDetail) {
+export class ModalizerActiveEvent extends TabsterCustomEvent<EventsTypes.ModalizerEventDetail> {
+    constructor(detail: EventsTypes.ModalizerEventDetail) {
         super(ModalizerActiveEventName, detail);
     }
 }
 
-export class ModalizerInactiveEvent extends TabsterCustomEvent<ModalizerEventDetail> {
-    constructor(detail: ModalizerEventDetail) {
+export class ModalizerInactiveEvent extends TabsterCustomEvent<EventsTypes.ModalizerEventDetail> {
+    constructor(detail: EventsTypes.ModalizerEventDetail) {
         super(ModalizerInactiveEventName, detail);
     }
 }
@@ -199,18 +178,14 @@ export class RestorerRestoreFocusEvent extends TabsterCustomEvent<undefined> {
     }
 }
 
-export interface RootFocusEventDetail {
-    element: HTMLElement;
-}
-
-export class RootFocusEvent extends TabsterCustomEvent<RootFocusEventDetail> {
-    constructor(detail: RootFocusEventDetail) {
+export class RootFocusEvent extends TabsterCustomEvent<EventsTypes.RootFocusEventDetail> {
+    constructor(detail: EventsTypes.RootFocusEventDetail) {
         super(RootFocusEventName, detail);
     }
 }
 
-export class RootBlurEvent extends TabsterCustomEvent<RootFocusEventDetail> {
-    constructor(detail: RootFocusEventDetail) {
+export class RootBlurEvent extends TabsterCustomEvent<EventsTypes.RootFocusEventDetail> {
+    constructor(detail: EventsTypes.RootFocusEventDetail) {
         super(RootBlurEventName, detail);
     }
 }

@@ -12,6 +12,7 @@ import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import { Subscribable } from "./State/Subscribable";
 import * as Types from "./Types";
+import { ObservedElementAccesibilities } from "./Consts";
 import {
     getElementUId,
     getInstanceContext,
@@ -1616,7 +1617,7 @@ export class CrossOriginObservedElementState
         return this.waitElement(
             observedName,
             timeout,
-            Types.ObservedElementAccesibilities.Focusable
+            ObservedElementAccesibilities.Focusable
         ).then((element) =>
             this._lastRequestFocusId === requestId && element
                 ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

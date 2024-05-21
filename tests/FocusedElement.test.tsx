@@ -4,7 +4,11 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Events } from "tabster";
+import {
+    getTabsterAttribute,
+    TabsterFocusInEventName,
+    TabsterFocusOutEventName,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { BrowserElement } from "./utils/BroTest";
 
@@ -90,8 +94,8 @@ describe("onKeyDown", () => {
 
                 const addEvent = (
                     eventName:
-                        | typeof Events.TabsterFocusInEventName
-                        | typeof Events.TabsterFocusOutEventName
+                        | typeof TabsterFocusInEventName
+                        | typeof TabsterFocusOutEventName
                 ) => {
                     document.body.addEventListener(eventName, (e) => {
                         const target = e.composedPath()[0];

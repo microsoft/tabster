@@ -5,18 +5,18 @@
 
 import { getTabsterOnElement } from "./Instance";
 import type {
-    RestorerAPI as RestorerAPIType,
-    GetWindow,
-    Restorer as RestorerInterface,
-    RestorerProps,
-    KeyboardNavigationState,
     FocusedElementState,
+    GetWindow,
+    KeyboardNavigationState,
+    Restorer as RestorerInterface,
+    RestorerAPI as RestorerAPIType,
+    RestorerProps,
     TabsterCore,
 } from "./Types";
-import { RestorerTypes, AsyncFocusSources } from "./Types";
+import { RestorerTypes, AsyncFocusSources } from "./Consts";
 import {
-    RestorerRestoreFocusEventName,
     RestorerRestoreFocusEvent,
+    RestorerRestoreFocusEventName,
 } from "./Events";
 import { TabsterPart, WeakHTMLElement } from "./Utils";
 import { dom } from "./DOMAPI";
