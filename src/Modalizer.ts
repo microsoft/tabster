@@ -18,10 +18,10 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    HTMLElementWithDummyContainer,
     TabsterPart,
     WeakHTMLElement,
     augmentAttribute,
+    getDummyInputContainer,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -78,9 +78,7 @@ class ModalizerDummyManager extends DummyInputManager {
             let toFocus: HTMLElement | null | undefined;
 
             if (container && input) {
-                const dummyContainer = (
-                    input as HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get();
+                const dummyContainer = getDummyInputContainer(input);
 
                 const ctx = RootAPI.getTabsterContext(
                     tabster,

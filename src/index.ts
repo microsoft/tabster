@@ -23,6 +23,7 @@ export {
     makeNoOp,
     isNoOp,
     getShadowDOMAPI,
+    getDummyInputContainer,
     Types,
     Events,
 } from "./Tabster";

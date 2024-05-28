@@ -28,6 +28,7 @@ import {
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
     DummyInputObserver,
+    getDummyInputContainer,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 import { dom, setDOMAPI } from "./DOMAPI";
@@ -36,6 +37,7 @@ import * as shadowDOMAPI from "./Shadowdomize";
 export { Types };
 export { Events };
 export * from "./AttributeHelpers";
+export { getDummyInputContainer };
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
