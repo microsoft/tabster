@@ -24,12 +24,12 @@ import {
     DummyInputManagerPriorities,
     getElementUId,
     getPromise,
-    HTMLElementWithDummyContainer,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
+    getDummyInputContainer,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -245,10 +245,7 @@ export class Mover
     ): Types.NextTabbable | null {
         const container = this.getElement();
         const currentIsDummy =
-            container &&
-            (
-                currentElement as HTMLElementWithDummyContainer
-            )?.__tabsterDummyContainer?.get() === container;
+            container && getDummyInputContainer(currentElement) === container;
 
         if (!container) {
             return null;
@@ -309,9 +306,7 @@ export class Mover
             moverElement &&
             (memorizeCurrent || visibilityAware || hasDefault) &&
             (!dom.nodeContains(moverElement, state.from) ||
-                (
-                    state.from as HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get() === moverElement)
+                getDummyInputContainer(state.from) === moverElement)
         ) {
             let found: HTMLElement | undefined | null;
 
