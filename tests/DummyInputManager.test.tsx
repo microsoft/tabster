@@ -714,3 +714,84 @@ describeIfUncontrolled("DummyInputManager", () => {
             });
     });
 });
+
+describeIfUncontrolled("getDummyInputContainer utility function", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({
+            mover: true,
+            groupper: true,
+        });
+    });
+
+    it("should return dummy input container for dummy inputs", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="groupper"
+                        {...getTabsterAttribute({
+                            groupper: {},
+                            sys: { dummyInputsPosition: 1 },
+                        })}
+                    >
+                        <div id="inside-groupper"></div>
+                    </div>
+                    <div
+                        id="mover"
+                        {...getTabsterAttribute({
+                            mover: {},
+                            sys: { dummyInputsPosition: 2 },
+                        })}
+                    >
+                        <div id="inside-mover"></div>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                const elements: string[] = [];
+                const tabsterTest = getTabsterTestVariables();
+                const root = tabsterTest.dom?.getElementById(document, "root");
+
+                if (root) {
+                    const treeWalker = tabsterTest.dom?.createTreeWalker(
+                        document,
+                        root,
+                        NodeFilter.SHOW_ELEMENT
+                    );
+
+                    for (
+                        let element =
+                            treeWalker?.currentNode as HTMLElement | null;
+                        element;
+                        element = treeWalker?.nextNode() as HTMLElement | null
+                    ) {
+                        const dummyContainer =
+                            tabsterTest.getDummyInputContainer?.(element);
+                        elements.push(
+                            `${element.tagName}#${element.id}: ${
+                                dummyContainer
+                                    ? `${dummyContainer?.tagName}#${dummyContainer?.id}`
+                                    : "not dummy"
+                            }`
+                        );
+                    }
+                }
+
+                return elements;
+            })
+            .check((elements: string[]) => {
+                expect(elements).toEqual([
+                    "DIV#root: not dummy",
+                    "DIV#groupper: not dummy",
+                    "I#: DIV#groupper",
+                    "DIV#inside-groupper: not dummy",
+                    "I#: DIV#groupper",
+                    "I#: DIV#mover",
+                    "DIV#mover: not dummy",
+                    "DIV#inside-mover: not dummy",
+                    "I#: DIV#mover",
+                ]);
+            });
+    });
+});

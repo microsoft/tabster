@@ -1925,3 +1925,18 @@ export function isDisplayNone(element: HTMLElement): boolean {
 
     return false;
 }
+
+/**
+ * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
+ * @param element Element to check for being dummy input.
+ * @returns Dummy input container element (if the passed element is a dummy input) or null.
+ */
+export function getDummyInputContainer(
+    element: HTMLElement
+): HTMLElement | null {
+    return (
+        (
+            element as HTMLElementWithDummyContainer
+        ).__tabsterDummyContainer?.get() || null
+    );
+}
