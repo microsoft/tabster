@@ -726,7 +726,13 @@ describeIfUncontrolled("getDummyInputContainer utility function", () => {
     it("should return dummy input container for dummy inputs", async () => {
         await new BroTest.BroTest(
             (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div
+                    id="root"
+                    {...getTabsterAttribute({
+                        root: {},
+                        sys: { dummyInputsPosition: 2 },
+                    })}
+                >
                     <div
                         id="groupper"
                         {...getTabsterAttribute({
