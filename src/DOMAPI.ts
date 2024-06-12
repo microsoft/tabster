@@ -57,6 +57,8 @@ const _insertBefore = (
 ): Node => parent.insertBefore(child, referenceChild);
 const _getSelection = (ref: Node): Selection | null =>
     ref.ownerDocument?.getSelection() || null;
+const _getElementsByName = (referenceElement: HTMLElement, name: string) =>
+    referenceElement.ownerDocument.getElementsByName(name);
 
 export const dom: DOMAPI = {
     createMutationObserver: _createMutationObserver,
@@ -79,6 +81,7 @@ export const dom: DOMAPI = {
     appendChild: _appendChild,
     insertBefore: _insertBefore,
     getSelection: _getSelection,
+    getElementsByName: _getElementsByName,
 };
 
 export function setDOMAPI(domapi: Partial<DOMAPI>) {

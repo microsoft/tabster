@@ -1926,6 +1926,42 @@ export function isDisplayNone(element: HTMLElement): boolean {
     return false;
 }
 
+export function isRadio(element: HTMLElement): boolean {
+    return (
+        element.tagName === "INPUT" &&
+        !!(element as HTMLInputElement).name &&
+        (element as HTMLInputElement).type === "radio"
+    );
+}
+
+export function getRadioButtonGroup(
+    element: HTMLElement
+): Types.RadioButtonGroup | undefined {
+    if (!isRadio(element)) {
+        return;
+    }
+
+    const name = (element as HTMLInputElement).name;
+    let radioButtons = Array.from(dom.getElementsByName(element, name));
+    let checked: HTMLInputElement | undefined;
+
+    radioButtons = radioButtons.filter((el) => {
+        if (isRadio(el)) {
+            if ((el as HTMLInputElement).checked) {
+                checked = el as HTMLInputElement;
+            }
+            return true;
+        }
+        return false;
+    });
+
+    return {
+        name,
+        buttons: new Set(radioButtons as HTMLInputElement[]),
+        checked,
+    };
+}
+
 /**
  * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
  * @param element Element to check for being dummy input.
