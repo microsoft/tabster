@@ -27,7 +27,7 @@ export const AsyncFocusSources: Types.AsyncFocusSources = {
     Deloser: 3,
 } as const;
 
-export const ObservedElementAccesibilities: Types.ObservedElementAccesibilities =
+export const ObservedElementAccessibilities: Types.ObservedElementAccessibilities =
     {
         Any: 0,
         Accessible: 1,

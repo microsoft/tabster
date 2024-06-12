@@ -56,7 +56,7 @@ let observedElement = getObservedElement(tabsterCore);
 let wait = observed.waitElement(
     "observedButton", // Name set using Tabster attribute.
     100500, // Timeout.
-    Types.ObservedElementAccesibilities.Focusable // Only return when the
+    Types.ObservedElementAccessibilities.Focusable // Only return when the
     // element becomes focusable.
 );
 
