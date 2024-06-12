@@ -689,11 +689,11 @@ export type RestorerType = RestorerTypes[keyof RestorerTypes];
 
 export type MoverDirection = MoverDirections[keyof MoverDirections];
 
-export type NextTabbable = {
+export interface NextTabbable {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement | null;
     outOfDOMOrder?: boolean;
-};
+}
 
 export interface MoverProps {
     direction?: MoverDirection;

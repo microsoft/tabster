@@ -12,20 +12,22 @@ export interface TabsterMoveFocusEventDetail {
     relatedEvent?: KeyboardEvent; // The original keyboard event that triggered the move.
 }
 
-export type MoverMoveFocusEventDetail = { key: Types.MoverKey };
+export interface MoverMoveFocusEventDetail {
+    key: Types.MoverKey;
+}
 
 export interface MoverMemorizedElementEventDetail {
     memorizedElement: HTMLElement | undefined;
 }
 
-export type GroupperMoveFocusEventDetail = {
+export interface GroupperMoveFocusEventDetail {
     action: Types.GroupperMoveFocusAction;
-};
+}
 
-export type ModalizerEventDetail = {
+export interface ModalizerEventDetail {
     id: string;
     element: HTMLElement;
-};
+}
 
 export interface RootFocusEventDetail {
     element: HTMLElement;
