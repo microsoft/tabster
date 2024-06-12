@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "./Types";
-
 export const TabsterAttributeName = "data-tabster" as const;
 export const TabsterDummyInputAttributeName = "data-tabster-dummy" as const;
 
@@ -21,20 +19,19 @@ export const FocusableSelector = [
     "video[controls]",
 ].join(", ");
 
-export const AsyncFocusSources: Types.AsyncFocusSources = {
+export const AsyncFocusSources = {
     EscapeGroupper: 1,
     Restorer: 2,
     Deloser: 3,
 } as const;
 
-export const ObservedElementAccessibilities: Types.ObservedElementAccessibilities =
-    {
-        Any: 0,
-        Accessible: 1,
-        Focusable: 2,
-    } as const;
+export const ObservedElementAccessibilities = {
+    Any: 0,
+    Accessible: 1,
+    Focusable: 2,
+} as const;
 
-export const RestoreFocusOrders: Types.RestoreFocusOrders = {
+export const RestoreFocusOrders = {
     History: 0,
     DeloserDefault: 1,
     RootDefault: 2,
@@ -42,7 +39,7 @@ export const RestoreFocusOrders: Types.RestoreFocusOrders = {
     RootFirst: 4,
 } as const;
 
-export const DeloserStrategies: Types.DeloserStrategies = {
+export const DeloserStrategies = {
     /**
      * If the focus is lost, the focus will be restored automatically using all available focus history.
      * This is the default strategy.
@@ -57,26 +54,26 @@ export const DeloserStrategies: Types.DeloserStrategies = {
     Manual: 1,
 } as const;
 
-export const Visibilities: Types.Visibilities = {
+export const Visibilities = {
     Invisible: 0,
     PartiallyVisible: 1,
     Visible: 2,
 } as const;
 
-export const RestorerTypes: Types.RestorerTypes = {
+export const RestorerTypes = {
     Source: 0,
     Target: 1,
 } as const;
 
-export const MoverDirections: Types.MoverDirections = {
-    Both: 0,
-    Vertical: 1,
-    Horizontal: 2,
-    Grid: 3,
-    GridLinear: 4,
+export const MoverDirections = {
+    Both: 0, // Default, both left/up keys move to the previous, right/down move to the next.
+    Vertical: 1, // Only up/down arrows move to the next/previous.
+    Horizontal: 2, // Only left/right arrows move to the next/previous.
+    Grid: 3, // Two-dimentional movement depending on the visual placement.
+    GridLinear: 4, // Two-dimentional movement depending on the visual placement. Allows linear movement.
 } as const;
 
-export const MoverKeys: Types.MoverKeys = {
+export const MoverKeys = {
     ArrowUp: 1,
     ArrowDown: 2,
     ArrowLeft: 3,
@@ -87,18 +84,18 @@ export const MoverKeys: Types.MoverKeys = {
     End: 8,
 } as const;
 
-export const GroupperTabbabilities: Types.GroupperTabbabilities = {
+export const GroupperTabbabilities = {
     Unlimited: 0,
     Limited: 1, // The tabbability is limited to the container and explicit Enter is needed to go inside.
     LimitedTrapFocus: 2, // The focus is limited as above, plus trapped when inside.
 } as const;
 
-export const GroupperMoveFocusActions: Types.GroupperMoveFocusActions = {
+export const GroupperMoveFocusActions = {
     Enter: 1,
     Escape: 2,
 } as const;
 
-export const SysDummyInputsPositions: Types.SysDummyInputsPositions = {
+export const SysDummyInputsPositions = {
     Auto: 0, // Tabster will place dummy inputs depending on the container tag name and on the default behaviour.
     Inside: 1, // Tabster will always place dummy inputs inside the container.
     Outside: 2, // Tabster will always place dummy inputs outside of the container.
