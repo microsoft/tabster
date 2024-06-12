@@ -11,7 +11,7 @@ import {
     getLastChild,
     matchesSelector,
     shouldIgnoreFocus,
-    HTMLElementWithDummyContainer,
+    getDummyInputContainer,
     isDisplayNone,
     isRadio,
     getRadioButtonGroup,
@@ -356,9 +356,7 @@ export class FocusableAPI implements Types.FocusableAPI {
             return NodeFilter.FILTER_REJECT;
         }
 
-        if (
-            (element as HTMLElementWithDummyContainer).__tabsterDummyContainer
-        ) {
+        if (getDummyInputContainer(element)) {
             return NodeFilter.FILTER_REJECT;
         }
 

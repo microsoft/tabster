@@ -3001,3 +3001,128 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
             });
     });
 });
+
+interface NodeWithVirtualParent extends Node {
+    _virtual: {
+        parent?: Node;
+    };
+}
+
+describe("Mover with virtual children provided by getParent()", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should not consider virtual children parts of the mover", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {},
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button id="virtual-parent">Button2</button>
+                    </div>
+                    <div id="virtual-child">
+                        <button>VButton1</button>
+                        <button>VButton2</button>
+                    </div>
+                    <button>Button3</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                function isVirtualElement(
+                    element: Node
+                ): element is NodeWithVirtualParent {
+                    // eslint-disable-next-line no-prototype-builtins
+                    return element && element.hasOwnProperty("_virtual");
+                }
+
+                function getVirtualParent(child: Node): Node | null {
+                    return isVirtualElement(child)
+                        ? child._virtual.parent || null
+                        : null;
+                }
+
+                function setVirtualParent(
+                    child: Node,
+                    parent?: Node | null
+                ): void {
+                    const virtualChild = child;
+
+                    if (
+                        !(virtualChild as unknown as NodeWithVirtualParent)
+                            ._virtual
+                    ) {
+                        (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual = {};
+                    }
+
+                    if (parent) {
+                        (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual.parent = parent;
+                    } else {
+                        delete (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual.parent;
+                    }
+                }
+
+                function getParent(child: Node | null): Node | null {
+                    if (!child) {
+                        return null;
+                    }
+
+                    const virtualParent = getVirtualParent(child);
+
+                    if (virtualParent) {
+                        return virtualParent;
+                    }
+
+                    return (
+                        vars.dom?.getParentElement(child as HTMLElement) || null
+                    );
+                }
+
+                const tabster = vars.createTabster?.(window, {
+                    getParent,
+                });
+
+                tabster && vars.getMover?.(tabster);
+
+                const virtualParent = vars.dom?.getElementById(
+                    document,
+                    "virtual-parent"
+                );
+                const virtualChild = vars.dom?.getElementById(
+                    document,
+                    "virtual-child"
+                );
+
+                virtualChild && setVirtualParent(virtualChild, virtualParent);
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("VButton1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("VButton2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});

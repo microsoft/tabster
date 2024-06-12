@@ -21,6 +21,7 @@ import {
     mergeTabsterProps,
     setTabsterAttribute,
     getRestorer,
+    getDummyInputContainer,
     Types,
     Events,
 } from "tabster";
@@ -117,6 +118,7 @@ export interface BroTestTabsterTestVariables {
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
     mergeTabsterProps?: typeof mergeTabsterProps;
+    getDummyInputContainer?: typeof getDummyInputContainer;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;

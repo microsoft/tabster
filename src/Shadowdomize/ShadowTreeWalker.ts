@@ -77,6 +77,8 @@ export class ShadowTreeWalker implements TreeWalker {
                     return this.filter(node);
                 } else if (this.filter?.acceptNode) {
                     return this.filter.acceptNode(node);
+                } else if (this.filter === null) {
+                    return NodeFilter.FILTER_ACCEPT;
                 }
             }
         }

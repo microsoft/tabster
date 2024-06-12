@@ -26,7 +26,7 @@ export interface HTMLElementWithUID extends HTMLElement {
     __tabsterElementUID?: string;
 }
 
-export interface HTMLElementWithDummyContainer extends HTMLElement {
+interface HTMLElementWithDummyContainer extends HTMLElement {
     __tabsterDummyContainer?: WeakHTMLElement;
 }
 
@@ -947,7 +947,7 @@ export class DummyInputManager {
 
         if (input) {
             let parent: HTMLElement | null;
-            let insertBefore: HTMLElementWithDummyContainer | null;
+            let insertBefore: HTMLElement | null;
 
             // Let's say we have a following DOM structure:
             // <div>
@@ -1003,7 +1003,7 @@ export class DummyInputManager {
                 ) {
                     parent = element;
                     insertBefore = isBackward
-                        ? (element.firstElementChild as HTMLElementWithDummyContainer | null)
+                        ? (element.firstElementChild as HTMLElement | null)
                         : null;
                 } else {
                     parent = dom.getParentElement(element);
@@ -1016,8 +1016,8 @@ export class DummyInputManager {
                               ) as HTMLElement | null);
                 }
 
-                let potentialDummy: HTMLElementWithDummyContainer | null;
-                let dummyFor: HTMLElement | undefined;
+                let potentialDummy: HTMLElement | null;
+                let dummyFor: HTMLElement | null;
 
                 do {
                     // This is a safety pillow for the cases when someone, combines
@@ -1029,9 +1029,9 @@ export class DummyInputManager {
                         (!moveOutOfElement && !isBackward)
                             ? dom.getPreviousElementSibling(insertBefore)
                             : insertBefore
-                    ) as HTMLElementWithDummyContainer | null;
+                    ) as HTMLElement | null;
 
-                    dummyFor = potentialDummy?.__tabsterDummyContainer?.get();
+                    dummyFor = getDummyInputContainer(potentialDummy);
 
                     if (dummyFor === element) {
                         insertBefore =
@@ -1042,7 +1042,7 @@ export class DummyInputManager {
                                       potentialDummy
                                   ) as HTMLElement | null);
                     } else {
-                        dummyFor = undefined;
+                        dummyFor = null;
                     }
                 } while (dummyFor);
             }
@@ -1960,4 +1960,19 @@ export function getRadioButtonGroup(
         buttons: new Set(radioButtons as HTMLInputElement[]),
         checked,
     };
+}
+
+/**
+ * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
+ * @param element Element to check for being dummy input.
+ * @returns Dummy input container element (if the passed element is a dummy input) or null.
+ */
+export function getDummyInputContainer(
+    element: HTMLElement | null | undefined
+): HTMLElement | null {
+    return (
+        (
+            element as HTMLElementWithDummyContainer | null | undefined
+        )?.__tabsterDummyContainer?.get() || null
+    );
 }
