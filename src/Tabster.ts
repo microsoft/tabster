@@ -26,12 +26,15 @@ import {
     createWeakMap,
     disposeInstanceContext,
     DummyInputObserver,
+    getDummyInputContainer,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 import { dom, setDOMAPI } from "./DOMAPI";
 import * as shadowDOMAPI from "./Shadowdomize";
+
+export { getDummyInputContainer };
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;

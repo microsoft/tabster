@@ -5,21 +5,22 @@
 
 export {
     createTabster,
-    getTabster,
     disposeTabster,
     forceCleanup,
-    getGroupper,
-    getMover,
     getCrossOrigin,
     getDeloser,
+    getDummyInputContainer,
+    getGroupper,
+    getInternal,
     getModalizer,
+    getMover,
     getObservedElement,
     getOutline,
-    getInternal,
     getRestorer,
-    makeNoOp,
-    isNoOp,
     getShadowDOMAPI,
+    getTabster,
+    isNoOp,
+    makeNoOp,
 } from "./Tabster";
 
 export * from "./AttributeHelpers";

@@ -25,7 +25,7 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getAdjacentElement,
-    HTMLElementWithDummyContainer,
+    getDummyInputContainer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils";
@@ -156,9 +156,7 @@ export class Groupper
         }
 
         const currentIsDummy =
-            (
-                currentElement as HTMLElementWithDummyContainer
-            )?.__tabsterDummyContainer?.get() === groupperElement;
+            getDummyInputContainer(currentElement) === groupperElement;
 
         if (
             !this._shouldTabInside &&

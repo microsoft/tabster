@@ -2996,7 +2996,7 @@ describe("Mover with virtual children provided by getParent()", () => {
         await BroTest.bootstrapTabsterPage();
     });
 
-    it.only("should not consider virtual children parts of the mover", async () => {
+    it("should not consider virtual children parts of the mover", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>

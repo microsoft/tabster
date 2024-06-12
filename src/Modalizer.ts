@@ -16,7 +16,7 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    HTMLElementWithDummyContainer,
+    getDummyInputContainer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils";
@@ -75,9 +75,7 @@ class ModalizerDummyManager extends DummyInputManager {
             let toFocus: HTMLElement | null | undefined;
 
             if (container && input) {
-                const dummyContainer = (
-                    input as HTMLElementWithDummyContainer
-                ).__tabsterDummyContainer?.get();
+                const dummyContainer = getDummyInputContainer(input);
 
                 const ctx = RootAPI.getTabsterContext(
                     tabster,

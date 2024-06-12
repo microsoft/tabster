@@ -224,3 +224,17 @@ export function getSelection(ref: Node): Selection | null {
 
     return win.getSelection() || null;
 }
+
+export function getElementsByName(
+    referenceElement: HTMLElement,
+    name: string
+): NodeListOf<HTMLElement> {
+    for (let el: Node | null = referenceElement; el; el = el.parentNode) {
+        if (el.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+            // Shadow root doesn't have getElementsByName()...
+            return (el as ShadowRoot).querySelectorAll(`[name=${name}]`);
+        }
+    }
+
+    return referenceElement.ownerDocument.getElementsByName(name);
+}

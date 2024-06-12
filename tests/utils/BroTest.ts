@@ -10,6 +10,7 @@ import {
     disposeTabster,
     getCrossOrigin,
     getDeloser,
+    getDummyInputContainer,
     getGroupper,
     getModalizer,
     getMover,
@@ -118,6 +119,7 @@ export interface BroTestTabsterTestVariables {
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
     mergeTabsterProps?: typeof mergeTabsterProps;
+    getDummyInputContainer?: typeof getDummyInputContainer;
     core?: Types.Tabster;
     modalizer?: Types.ModalizerAPI;
     deloser?: Types.DeloserAPI;

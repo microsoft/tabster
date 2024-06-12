@@ -2305,7 +2305,7 @@ describe("Modalizer with noDirectAriaHidden flag", () => {
         await BroTest.bootstrapTabsterPage({ modalizer: true });
     });
 
-    it.only("should not set aria-hidden on elements with noDirectAriaHidden flag", async () => {
+    it("should not set aria-hidden on elements with noDirectAriaHidden flag", async () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
