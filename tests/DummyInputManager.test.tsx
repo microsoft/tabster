@@ -9,7 +9,7 @@ import {
     GroupperTabbabilities,
     MoverDirections,
     SysDummyInputsPositions,
-    TabsterDummyInputAttributeName,
+    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
 } from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { describeIfUncontrolled } from "./utils/test-utils";
@@ -121,15 +121,27 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyInside)
                 .eval(appendElement, moverId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyInside)
                 .eval(prependElement, moverId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyInside);
         });
 
@@ -186,7 +198,11 @@ describeIfUncontrolled("DummyInputManager", () => {
             let lastScrollTop = 0;
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyOutside)
                 .pressTab()
                 .activeElement((el) => expect(el?.textContent).toBe("Button1"))
@@ -249,15 +265,27 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside)
                 .eval(appendElement, groupperId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside)
                 .eval(prependElement, groupperId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside);
         });
 
@@ -286,7 +314,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     "modalizer-outer"
                 )
                 .check(checkDummyInside)
@@ -294,7 +322,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerOuterId
                 )
                 .check(checkDummyInside)
@@ -302,7 +330,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerOuterId
                 )
                 .check(checkDummyInside);
@@ -333,7 +361,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 await new BroTest.BroTest(testHtml)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside)
@@ -341,7 +369,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside)
@@ -349,7 +377,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside);
@@ -381,7 +409,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 await new BroTest.BroTest(testHtml)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside)
@@ -389,7 +417,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside)
@@ -397,7 +425,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside);
@@ -422,7 +450,11 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside)
                 .eval((elementId) => {
                     const current =
@@ -435,7 +467,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                         current.previousElementSibling as HTMLElement;
                     parent?.removeChild(firstDummy);
                 }, groupperId)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check((res: ReturnType<typeof evaluateDummy>) => {
                     expect(res.first).toBe(false);
                     expect(res.last).toBe(false);
@@ -443,7 +479,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                     expect(res.next).toBe(true);
                 })
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside)
                 .eval((elementId) => {
                     const current =
@@ -455,7 +495,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                     const lastDummy = current.nextElementSibling as HTMLElement;
                     parent?.removeChild(lastDummy);
                 }, groupperId)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check((res: ReturnType<typeof evaluateDummy>) => {
                     expect(res.first).toBe(false);
                     expect(res.last).toBe(false);
@@ -463,7 +507,11 @@ describeIfUncontrolled("DummyInputManager", () => {
                     expect(res.next).toBe(false);
                 })
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyOutside);
         });
 
@@ -494,15 +542,27 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyOutside)
                 .eval(insertElementBefore, moverId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyOutside)
                 .eval(insertElementAfter, moverId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, moverId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    moverId
+                )
                 .check(checkDummyOutside);
         });
 
@@ -530,15 +590,27 @@ describeIfUncontrolled("DummyInputManager", () => {
             );
 
             await new BroTest.BroTest(testHtml)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyInside)
                 .eval(appendElement, groupperId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyInside)
                 .eval(prependElement, groupperId)
                 .wait(300)
-                .eval(evaluateDummy, TabsterDummyInputAttributeName, groupperId)
+                .eval(
+                    evaluateDummy,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+                    groupperId
+                )
                 .check(checkDummyInside);
         });
 
@@ -568,7 +640,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside)
@@ -576,7 +648,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside)
@@ -584,7 +656,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside);
@@ -641,7 +713,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                         resolve(isDummyLast);
                     }, 200);
                 });
-            }, TabsterDummyInputAttributeName)
+            }, TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME)
             .check((isDummyLast: (boolean | null)[]) => {
                 expect(isDummyLast).toEqual([false, true]);
             });

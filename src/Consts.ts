@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export const TabsterAttributeName = "data-tabster" as const;
-export const TabsterDummyInputAttributeName = "data-tabster-dummy" as const;
+export const TABSTER_ATTRIBUTE_NAME = "data-tabster" as const;
+export const TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME = "data-tabster-dummy" as const;
 
-export const FocusableSelector = [
+export const FOCUSABLE_SELECTOR = [
     "a[href]",
     "button:not([disabled])",
     "input:not([disabled])",

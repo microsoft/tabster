@@ -7,7 +7,7 @@ import { Meta, Story } from "@storybook/html";
 import {
     getTabsterAttribute,
     RestorerTypes,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
 } from "tabster";
 import "./restorer.css";
 
@@ -31,7 +31,7 @@ export const RestorerBasicExample: Story = () => {
     );
     const example = document.createElement("div");
     const source = document.createElement("div");
-    source.setAttribute(TabsterAttributeName, sourceAttr);
+    source.setAttribute(TABSTER_ATTRIBUTE_NAME, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
         <button id="unmount">unmount</button>
@@ -43,7 +43,7 @@ export const RestorerBasicExample: Story = () => {
 
     const target = document.createElement("button");
     target.textContent = "Target";
-    target.setAttribute(TabsterAttributeName, targetAttr);
+    target.setAttribute(TABSTER_ATTRIBUTE_NAME, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
         const initialFocus = source.querySelector(
@@ -77,7 +77,7 @@ export const UseTargetHistory: Story = () => {
     const example = document.createElement("div");
     const source = document.createElement("div");
     source.tabIndex = -1;
-    source.setAttribute(TabsterAttributeName, sourceAttr);
+    source.setAttribute(TABSTER_ATTRIBUTE_NAME, sourceAttr);
     source.classList.add("source");
     source.innerHTML = `
         <button id="unmount">unmount</button>
@@ -89,7 +89,7 @@ export const UseTargetHistory: Story = () => {
 
     const target = document.createElement("button");
     target.textContent = "Target";
-    target.setAttribute(TabsterAttributeName, targetAttr);
+    target.setAttribute(TABSTER_ATTRIBUTE_NAME, targetAttr);
     target.addEventListener("click", () => {
         example.append(source);
         const initialFocus = source.querySelector(
@@ -104,7 +104,7 @@ export const UseTargetHistory: Story = () => {
 
     const secondTarget = document.createElement("button");
     secondTarget.textContent = "secondTarget";
-    secondTarget.setAttribute(TabsterAttributeName, targetAttr);
+    secondTarget.setAttribute(TABSTER_ATTRIBUTE_NAME, targetAttr);
 
     example.append(secondTarget);
     example.append(target);

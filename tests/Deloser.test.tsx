@@ -7,7 +7,7 @@ import * as React from "react";
 import {
     getTabsterAttribute,
     GroupperTabbabilities,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
 } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -118,7 +118,7 @@ describe("Deloser", () => {
                         );
                     newDeloser?.setAttribute(attrName, tabsterAttr);
                 },
-                TabsterAttributeName,
+                TABSTER_ATTRIBUTE_NAME,
                 tabsterAttr
             )
             .removeElement("#newDeloser")

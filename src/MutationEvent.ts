@@ -5,7 +5,7 @@
 
 import { getTabsterOnElement } from "./Instance";
 import * as Types from "./Types";
-import { TabsterAttributeName } from "./Consts";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 import {
     createElementTreeWalker,
     getInstanceContext,
@@ -44,7 +44,7 @@ export function observeMutations(
             const added = mutation.addedNodes;
 
             if (mutation.type === "attributes") {
-                if (mutation.attributeName === TabsterAttributeName) {
+                if (mutation.attributeName === TABSTER_ATTRIBUTE_NAME) {
                     // removedNodes helps to make sure we are not recreating things
                     // for the removed elements.
                     // For some reason, if we do removeChild() and setAttribute() on the
@@ -119,7 +119,7 @@ export function observeMutations(
 
         if (
             getTabsterOnElement(tabster, element) ||
-            element.hasAttribute(TabsterAttributeName)
+            element.hasAttribute(TABSTER_ATTRIBUTE_NAME)
         ) {
             updateTabsterByAttribute(tabster, element, removed);
         }
@@ -137,7 +137,7 @@ export function observeMutations(
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: [TabsterAttributeName],
+        attributeFilter: [TABSTER_ATTRIBUTE_NAME],
     });
 
     return () => {

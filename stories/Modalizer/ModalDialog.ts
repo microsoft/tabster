@@ -7,7 +7,7 @@ import "./modalizer.css";
 import {
     createTabster,
     getTabsterAttribute,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -102,7 +102,7 @@ export const createModalDialog = (props: ModalDialogProps) => {
         true
     );
 
-    dialog.setAttribute(TabsterAttributeName, attr);
+    dialog.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
 
     return wrapper;
 };

@@ -16,10 +16,10 @@ import {
     WeakHTMLElement as WeakHTMLElementInterface,
 } from "./Types";
 import {
-    FocusableSelector,
+    FOCUSABLE_SELECTOR,
     SysDummyInputsPositions,
-    TabsterAttributeName,
-    TabsterDummyInputAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
+    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
     Visibilities,
 } from "./Consts";
 import { TabsterMoveFocusEvent } from "./Events";
@@ -167,7 +167,7 @@ export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
 }
 
 export function hasSubFocusable(element: HTMLElement): boolean {
-    return !!element.querySelector(FocusableSelector);
+    return !!element.querySelector(FOCUSABLE_SELECTOR);
 }
 
 interface TabsterWeakRef<T> {
@@ -728,7 +728,7 @@ export class DummyInput {
         input.tabIndex = 0;
         input.setAttribute("role", "none");
 
-        input.setAttribute(TabsterDummyInputAttributeName, "");
+        input.setAttribute(TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME, "");
         input.setAttribute("aria-hidden", "true");
 
         const style = input.style;
@@ -870,7 +870,7 @@ export const DummyInputManagerPriorities = {
     Modalizer: 2,
     Mover: 3,
     Groupper: 4,
-};
+} as const;
 
 export class DummyInputManager {
     private _instance?: DummyInputManagerCore;
@@ -1140,7 +1140,7 @@ function setDummyInputDebugValue(
     };
 
     dummy.input?.setAttribute(
-        TabsterDummyInputAttributeName,
+        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
         [
             `isFirst=${dummy.isFirst}`,
             `isOutside=${dummy.isOutside}`,
@@ -1885,13 +1885,13 @@ export function augmentAttribute(
 export function getTabsterAttributeOnElement(
     element: HTMLElement
 ): TabsterAttributeProps | null {
-    if (!element.hasAttribute(TabsterAttributeName)) {
+    if (!element.hasAttribute(TABSTER_ATTRIBUTE_NAME)) {
         return null;
     }
 
     // We already checked the presence with `hasAttribute`
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rawAttribute = element.getAttribute(TabsterAttributeName)!;
+    const rawAttribute = element.getAttribute(TABSTER_ATTRIBUTE_NAME)!;
     let tabsterAttribute: TabsterAttributeProps;
     try {
         tabsterAttribute = JSON.parse(rawAttribute);

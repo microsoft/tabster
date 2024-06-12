@@ -17,7 +17,7 @@ import { ObservedElementAPI } from "./State/ObservedElement";
 import { OutlineAPI } from "./Outline";
 import { RootAPI, WindowWithTabsterInstance } from "./Root";
 import * as Types from "./Types";
-import { TabsterAttributeName } from "./Consts";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 import { UncontrolledAPI } from "./Uncontrolled";
 import {
     cleanupFakeWeakRefs,
@@ -520,7 +520,7 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
 
             if (
                 getTabsterOnElement(core, element) ||
-                element.hasAttribute(TabsterAttributeName)
+                element.hasAttribute(TABSTER_ATTRIBUTE_NAME)
             ) {
                 updateTabsterByAttribute(core, element);
             }

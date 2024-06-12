@@ -6,7 +6,7 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
-import { FocusableSelector } from "./Consts";
+import { FOCUSABLE_SELECTOR } from "./Consts";
 import {
     createElementTreeWalker,
     getLastChild,
@@ -40,7 +40,7 @@ export class FocusableAPI implements Types.FocusableAPI {
         noAccessibleCheck?: boolean
     ): boolean {
         if (
-            matchesSelector(el, FocusableSelector) &&
+            matchesSelector(el, FOCUSABLE_SELECTOR) &&
             (includeProgrammaticallyFocusable || el.tabIndex !== -1)
         ) {
             return (

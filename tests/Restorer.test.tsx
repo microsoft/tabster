@@ -7,7 +7,7 @@ import * as React from "react";
 import {
     getTabsterAttribute,
     RestorerTypes,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
 } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -350,8 +350,8 @@ describe("Restorer", () => {
                         ?.appendChild(target);
                     target.focus();
                 },
-                TabsterAttributeName,
-                targetAttr[TabsterAttributeName] as string
+                TABSTER_ATTRIBUTE_NAME,
+                targetAttr[TABSTER_ATTRIBUTE_NAME] as string
             )
             .activeElement((el) => expect(el?.textContent).toEqual("target"))
             .click("#source")

@@ -4,7 +4,7 @@
  */
 
 import * as Types from "./Types";
-import { TabsterAttributeName } from "./Consts";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 
 export function getTabsterAttribute(
     props: Types.TabsterAttributeProps
@@ -24,7 +24,7 @@ export function getTabsterAttribute(
     }
 
     return {
-        [TabsterAttributeName]: attr,
+        [TABSTER_ATTRIBUTE_NAME]: attr,
     };
 }
 
@@ -70,7 +70,7 @@ export function setTabsterAttribute(
     let props: Types.TabsterAttributeProps | undefined;
 
     if (update) {
-        const attr = element.getAttribute(TabsterAttributeName);
+        const attr = element.getAttribute(TABSTER_ATTRIBUTE_NAME);
 
         if (attr) {
             try {
@@ -94,10 +94,10 @@ export function setTabsterAttribute(
 
     if (Object.keys(props).length > 0) {
         element.setAttribute(
-            TabsterAttributeName,
+            TABSTER_ATTRIBUTE_NAME,
             getTabsterAttribute(props, true)
         );
     } else {
-        element.removeAttribute(TabsterAttributeName);
+        element.removeAttribute(TABSTER_ATTRIBUTE_NAME);
     }
 }

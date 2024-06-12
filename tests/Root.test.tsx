@@ -4,7 +4,10 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, TabsterDummyInputAttributeName } from "tabster";
+import {
+    getTabsterAttribute,
+    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { itIfControlled } from "./utils/test-utils";
 
@@ -37,7 +40,7 @@ describe("Root", () => {
                         document,
                         `[${dummyAttribute}]`
                     ).length;
-                }, TabsterDummyInputAttributeName)
+                }, TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME)
                 .check((dummyCount: number) => {
                     expect(dummyCount).toBe(2);
                 })
@@ -49,7 +52,7 @@ describe("Root", () => {
                         .dom?.getElementById(document, "root")
                         ?.children[2].hasAttribute(dummyAttribute);
                     return first && second;
-                }, TabsterDummyInputAttributeName)
+                }, TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME)
                 .check((areFirstAndLast: boolean) => {
                     expect(areFirstAndLast).toBe(true);
                 });

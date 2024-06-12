@@ -6,7 +6,7 @@
 import "./mover.css";
 import {
     getTabsterAttribute,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -48,7 +48,7 @@ export const createBasicMover = ({
         true
     );
 
-    wrapper.setAttribute(TabsterAttributeName, attr);
+    wrapper.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
 
     return wrapper;
 };
@@ -110,6 +110,6 @@ export const createTableMover = ({
 
     const table = document.createElement("table");
     table.innerHTML = html;
-    table.setAttribute(TabsterAttributeName, attr);
+    table.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
     return table;
 };

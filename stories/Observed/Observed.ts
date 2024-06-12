@@ -9,7 +9,7 @@ import {
     getCrossOrigin,
     getObservedElement,
     getTabsterAttribute,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -154,7 +154,7 @@ const createObserved = (
         true
     );
 
-    observed.setAttribute(TabsterAttributeName, attr);
+    observed.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
 
     return observed;
 };

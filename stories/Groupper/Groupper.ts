@@ -6,7 +6,7 @@
 import "./groupper.css";
 import {
     getTabsterAttribute,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
 } from "tabster";
 
@@ -28,7 +28,7 @@ export const createFocusableContainer = (props: FocusableContainerProps) => {
         true
     );
 
-    wrapper.setAttribute(TabsterAttributeName, attr);
+    wrapper.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
 
     wrapper.innerHTML = `
     <button>Focusable button</button>

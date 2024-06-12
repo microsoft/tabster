@@ -10,7 +10,7 @@ import {
     ModalizerActiveEventName,
     ModalizerInactiveEventName,
     MoverDirections,
-    TabsterAttributeName,
+    TABSTER_ATTRIBUTE_NAME,
     Types,
 } from "tabster";
 import { WindowWithTabsterInstance } from "../src/Root";
@@ -481,7 +481,7 @@ describe("New Modalizer that already has focus", () => {
                         );
                     newModalizer?.setAttribute(attrName, tabsterAttr);
                 },
-                TabsterAttributeName,
+                TABSTER_ATTRIBUTE_NAME,
                 tabsterAttr
             )
             .wait(300)

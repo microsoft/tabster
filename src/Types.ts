@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TabsterAttributeName } from "./Consts";
+import type { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
     __tabsterElementFlags?: {
@@ -19,7 +19,7 @@ export interface HTMLElementWithTabsterFlags extends HTMLElement {
 }
 
 export interface TabsterDOMAttribute {
-    [TabsterAttributeName]: string | undefined;
+    [TABSTER_ATTRIBUTE_NAME]: string | undefined;
 }
 
 export interface TabsterCoreProps {
