@@ -4,7 +4,15 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types, Events } from "tabster";
+import {
+    getTabsterAttribute,
+    GroupperTabbabilities,
+    ModalizerActiveEventName,
+    ModalizerInactiveEventName,
+    MoverDirections,
+    TABSTER_ATTRIBUTE_NAME,
+    Types,
+} from "tabster";
 import { WindowWithTabsterInstance } from "../src/Root";
 import * as BroTest from "./utils/BroTest";
 
@@ -473,7 +481,7 @@ describe("New Modalizer that already has focus", () => {
                         );
                     newModalizer?.setAttribute(attrName, tabsterAttr);
                 },
-                Types.TabsterAttributeName,
+                TABSTER_ATTRIBUTE_NAME,
                 tabsterAttr
             )
             .wait(300)
@@ -559,7 +567,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -574,8 +582,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -594,8 +601,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -667,7 +673,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -683,8 +689,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -784,7 +789,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -800,8 +805,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -820,8 +824,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -912,7 +915,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -928,8 +931,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                                 focusable: {
                                     ignoreKeydown: { Enter: true },
@@ -1003,8 +1005,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1019,8 +1020,7 @@ describe("Modalizer with multiple containers", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .Unlimited,
+                                                GroupperTabbabilities.Unlimited,
                                         },
                                         modalizer: {
                                             id: "modal",
@@ -1039,9 +1039,7 @@ describe("Modalizer with multiple containers", () => {
                                             {...getTabsterAttribute({
                                                 groupper: {
                                                     tabbability:
-                                                        Types
-                                                            .GroupperTabbabilities
-                                                            .LimitedTrapFocus,
+                                                        GroupperTabbabilities.LimitedTrapFocus,
                                                 },
                                             })}
                                         >
@@ -1053,9 +1051,7 @@ describe("Modalizer with multiple containers", () => {
                                             {...getTabsterAttribute({
                                                 groupper: {
                                                     tabbability:
-                                                        Types
-                                                            .GroupperTabbabilities
-                                                            .LimitedTrapFocus,
+                                                        GroupperTabbabilities.LimitedTrapFocus,
                                                 },
                                             })}
                                         >
@@ -1071,8 +1067,7 @@ describe("Modalizer with multiple containers", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                         modalizer: {
                                             id: "modal2",
@@ -1091,8 +1086,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1107,8 +1101,7 @@ describe("Modalizer with multiple containers", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                         modalizer: {
                                             id: "modal3",
@@ -1128,8 +1121,7 @@ describe("Modalizer with multiple containers", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -1144,9 +1136,7 @@ describe("Modalizer with multiple containers", () => {
                                             {...getTabsterAttribute({
                                                 groupper: {
                                                     tabbability:
-                                                        Types
-                                                            .GroupperTabbabilities
-                                                            .LimitedTrapFocus,
+                                                        GroupperTabbabilities.LimitedTrapFocus,
                                                 },
                                             })}
                                         >
@@ -1159,9 +1149,7 @@ describe("Modalizer with multiple containers", () => {
                                             {...getTabsterAttribute({
                                                 groupper: {
                                                     tabbability:
-                                                        Types
-                                                            .GroupperTabbabilities
-                                                            .LimitedTrapFocus,
+                                                        GroupperTabbabilities.LimitedTrapFocus,
                                                 },
                                                 modalizer: {
                                                     id: "modal3",
@@ -1516,7 +1504,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -1525,8 +1513,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                                 modalizer: {
                                     id: "modal",
@@ -1541,8 +1528,7 @@ describe("Modalizer with multiple containers", () => {
                                 {...getTabsterAttribute({
                                     mover: {
                                         cyclic: true,
-                                        direction:
-                                            Types.MoverDirections.Vertical,
+                                        direction: MoverDirections.Vertical,
                                     },
                                 })}
                             >
@@ -1565,7 +1551,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 mover: {
                                     cyclic: true,
-                                    direction: Types.MoverDirections.Vertical,
+                                    direction: MoverDirections.Vertical,
                                 },
                             })}
                         >
@@ -1609,7 +1595,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -1618,8 +1604,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                                 modalizer: {
                                     id: "modal",
@@ -1634,8 +1619,7 @@ describe("Modalizer with multiple containers", () => {
                                 {...getTabsterAttribute({
                                     mover: {
                                         cyclic: true,
-                                        direction:
-                                            Types.MoverDirections.Vertical,
+                                        direction: MoverDirections.Vertical,
                                     },
                                 })}
                             >
@@ -1658,7 +1642,7 @@ describe("Modalizer with multiple containers", () => {
                             {...getTabsterAttribute({
                                 mover: {
                                     cyclic: true,
-                                    direction: Types.MoverDirections.Vertical,
+                                    direction: MoverDirections.Vertical,
                                 },
                             })}
                         >
@@ -1711,7 +1695,7 @@ describe("Modalizer with multiple containers", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -1727,8 +1711,7 @@ describe("Modalizer with multiple containers", () => {
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1843,8 +1826,8 @@ describe("Modalizer events", () => {
 
                 const addEvent = (
                     eventName:
-                        | typeof Events.ModalizerActiveEventName
-                        | typeof Events.ModalizerInactiveEventName,
+                        | typeof ModalizerActiveEventName
+                        | typeof ModalizerInactiveEventName,
                     elementId: string
                 ) => {
                     getTabsterTestVariables()
@@ -1924,8 +1907,7 @@ describe("Modalizer with uncontrolled areas", () => {
                 {...getTabsterAttribute({
                     modalizer: { id: "modal", isTrapped: true },
                     groupper: {
-                        tabbability:
-                            Types.GroupperTabbabilities.LimitedTrapFocus,
+                        tabbability: GroupperTabbabilities.LimitedTrapFocus,
                     },
                 })}
             >

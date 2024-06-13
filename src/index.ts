@@ -5,27 +5,32 @@
 
 export {
     createTabster,
-    getTabster,
     disposeTabster,
     forceCleanup,
-    mergeTabsterProps,
-    getTabsterAttribute,
-    setTabsterAttribute,
-    getGroupper,
-    getMover,
     getCrossOrigin,
     getDeloser,
+    getDummyInputContainer,
+    getGroupper,
+    getInternal,
     getModalizer,
+    getMover,
     getObservedElement,
     getOutline,
-    getInternal,
     getRestorer,
-    makeNoOp,
-    isNoOp,
     getShadowDOMAPI,
-    getDummyInputContainer,
-    Types,
-    Events,
+    getTabster,
+    isNoOp,
+    makeNoOp,
 } from "./Tabster";
+
+export * from "./AttributeHelpers";
+
+export * as Types from "./Types";
+
+export * from "./Events";
+
+export * as EventsTypes from "./EventsTypes";
+
+export * from "./Consts";
 
 export * from "./Deprecated";

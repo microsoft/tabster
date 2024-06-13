@@ -10,6 +10,11 @@ import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
 import {
+    AsyncFocusSources,
+    GroupperMoveFocusActions,
+    GroupperTabbabilities,
+} from "./Consts";
+import {
     GroupperMoveFocusEvent,
     GroupperMoveFocusEventName,
     TabsterMoveFocusEvent,
@@ -19,10 +24,10 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    TabsterPart,
-    WeakHTMLElement,
     getAdjacentElement,
     getDummyInputContainer,
+    TabsterPart,
+    WeakHTMLElement,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -201,7 +206,7 @@ export class Groupper
             if (
                 !next &&
                 this._props.tabbability ===
-                    Types.GroupperTabbabilities.LimitedTrapFocus
+                    GroupperTabbabilities.LimitedTrapFocus
             ) {
                 next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
                     {
@@ -457,7 +462,7 @@ export class GroupperAPI implements Types.GroupperAPI {
         const win = this._win();
 
         this._tabster.focusedElement.cancelAsyncFocus(
-            Types.AsyncFocusSources.EscapeGroupper
+            AsyncFocusSources.EscapeGroupper
         );
 
         this._current = {};
@@ -620,7 +625,7 @@ export class GroupperAPI implements Types.GroupperAPI {
         const action = e.detail?.action;
 
         if (element && action !== undefined && !e.defaultPrevented) {
-            if (action === Types.GroupperMoveFocusActions.Enter) {
+            if (action === GroupperMoveFocusActions.Enter) {
                 this._enterGroupper(element);
             } else {
                 this._escapeGroupper(element);
@@ -749,7 +754,7 @@ export class GroupperAPI implements Types.GroupperAPI {
         element: HTMLElement,
         action: Types.GroupperMoveFocusAction
     ): HTMLElement | null {
-        return action === Types.GroupperMoveFocusActions.Enter
+        return action === GroupperMoveFocusActions.Enter
             ? this._enterGroupper(element)
             : this._escapeGroupper(element);
     }
@@ -764,7 +769,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         if (ctx && (ctx?.groupper || ctx?.modalizerInGroupper)) {
             tabster.focusedElement.cancelAsyncFocus(
-                Types.AsyncFocusSources.EscapeGroupper
+                AsyncFocusSources.EscapeGroupper
             );
 
             if (ctx.ignoreKeydown(event)) {
@@ -780,7 +785,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                     tabster.focusedElement.getFocusedElement();
 
                 tabster.focusedElement.requestAsyncFocus(
-                    Types.AsyncFocusSources.EscapeGroupper,
+                    AsyncFocusSources.EscapeGroupper,
                     () => {
                         if (
                             focusedElement !==

@@ -4,7 +4,13 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    GroupperTabbabilities,
+    MoverDirections,
+    SysDummyInputsPositions,
+    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { describeIfUncontrolled } from "./utils/test-utils";
 
@@ -95,7 +101,7 @@ describeIfUncontrolled("DummyInputManager", () => {
         it("mover", async () => {
             const attr = getTabsterAttribute({
                 mover: {
-                    direction: Types.MoverDirections.Vertical,
+                    direction: MoverDirections.Vertical,
                     cyclic: true,
                 },
             });
@@ -117,7 +123,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyInside)
@@ -125,7 +131,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyInside)
@@ -133,7 +139,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyInside);
@@ -142,7 +148,7 @@ describeIfUncontrolled("DummyInputManager", () => {
         it("mover should not scroll when the dummy inputs are focused", async () => {
             const attr = getTabsterAttribute({
                 mover: {
-                    direction: Types.MoverDirections.Vertical,
+                    direction: MoverDirections.Vertical,
                     cyclic: true,
                     memorizeCurrent: true,
                 },
@@ -194,7 +200,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyOutside)
@@ -261,7 +267,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside)
@@ -269,7 +275,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside)
@@ -277,7 +283,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside);
@@ -308,7 +314,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     "modalizer-outer"
                 )
                 .check(checkDummyInside)
@@ -316,7 +322,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerOuterId
                 )
                 .check(checkDummyInside)
@@ -324,7 +330,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerOuterId
                 )
                 .check(checkDummyInside);
@@ -355,7 +361,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 await new BroTest.BroTest(testHtml)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside)
@@ -363,7 +369,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside)
@@ -371,7 +377,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyOutside);
@@ -383,8 +389,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             async (tagName) => {
                 const attr = getTabsterAttribute({
                     groupper: {
-                        tabbability:
-                            Types.GroupperTabbabilities.LimitedTrapFocus,
+                        tabbability: GroupperTabbabilities.LimitedTrapFocus,
                     },
                 });
                 const containerId = "inside";
@@ -404,7 +409,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 await new BroTest.BroTest(testHtml)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside)
@@ -412,7 +417,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside)
@@ -420,7 +425,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                     .wait(300)
                     .eval(
                         evaluateDummy,
-                        Types.TabsterDummyInputAttributeName,
+                        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                         containerId
                     )
                     .check(checkDummyInside);
@@ -447,7 +452,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside)
@@ -464,7 +469,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 }, groupperId)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check((res: ReturnType<typeof evaluateDummy>) => {
@@ -476,7 +481,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside)
@@ -492,7 +497,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 }, groupperId)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check((res: ReturnType<typeof evaluateDummy>) => {
@@ -504,7 +509,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyOutside);
@@ -522,7 +527,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                                 // Force inputs out.
                                 sys: {
                                     dummyInputsPosition:
-                                        Types.SysDummyInputsPositions.Outside,
+                                        SysDummyInputsPositions.Outside,
                                 },
                             })}
                             id={moverId}
@@ -539,7 +544,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyOutside)
@@ -547,7 +552,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyOutside)
@@ -555,7 +560,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     moverId
                 )
                 .check(checkDummyOutside);
@@ -573,7 +578,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                                 // Force inputs in.
                                 sys: {
                                     dummyInputsPosition:
-                                        Types.SysDummyInputsPositions.Inside,
+                                        SysDummyInputsPositions.Inside,
                                 },
                             })}
                             id={groupperId}
@@ -587,7 +592,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyInside)
@@ -595,7 +600,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyInside)
@@ -603,7 +608,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     groupperId
                 )
                 .check(checkDummyInside);
@@ -621,7 +626,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                                 // Force inputs outside.
                                 sys: {
                                     dummyInputsPosition:
-                                        Types.SysDummyInputsPositions.Outside,
+                                        SysDummyInputsPositions.Outside,
                                 },
                             })}
                             id={modalizerId}
@@ -635,7 +640,7 @@ describeIfUncontrolled("DummyInputManager", () => {
             await new BroTest.BroTest(testHtml)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside)
@@ -643,7 +648,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside)
@@ -651,7 +656,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                 .wait(300)
                 .eval(
                     evaluateDummy,
-                    Types.TabsterDummyInputAttributeName,
+                    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
                     modalizerId
                 )
                 .check(checkDummyOutside);
@@ -708,7 +713,7 @@ describeIfUncontrolled("DummyInputManager", () => {
                         resolve(isDummyLast);
                     }, 200);
                 });
-            }, Types.TabsterDummyInputAttributeName)
+            }, TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME)
             .check((isDummyLast: (boolean | null)[]) => {
                 expect(isDummyLast).toEqual([false, true]);
             });

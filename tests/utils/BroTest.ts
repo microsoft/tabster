@@ -8,23 +8,24 @@ import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
-    getTabster,
     getCrossOrigin,
     getDeloser,
+    getDummyInputContainer,
     getGroupper,
     getModalizer,
     getMover,
     getObservedElement,
     getOutline,
+    getRestorer,
+    getTabster,
     getTabsterAttribute,
     makeNoOp,
     mergeTabsterProps,
     setTabsterAttribute,
-    getRestorer,
-    getDummyInputContainer,
     Types,
-    Events,
 } from "tabster";
+
+import type * as Events from "../../src/Events";
 
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 

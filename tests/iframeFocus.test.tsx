@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute, GroupperTabbabilities } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("<iframe />", () => {
@@ -56,8 +56,7 @@ describe("<iframe />", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >

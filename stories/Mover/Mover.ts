@@ -4,7 +4,11 @@
  */
 
 import "./mover.css";
-import { getTabsterAttribute, Types as TabsterTypes } from "tabster";
+import {
+    getTabsterAttribute,
+    TABSTER_ATTRIBUTE_NAME,
+    Types as TabsterTypes,
+} from "tabster";
 
 export type MoverProps = TabsterTypes.MoverProps;
 
@@ -44,7 +48,7 @@ export const createBasicMover = ({
         true
     );
 
-    wrapper.setAttribute(TabsterTypes.TabsterAttributeName, attr);
+    wrapper.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
 
     return wrapper;
 };
@@ -106,6 +110,6 @@ export const createTableMover = ({
 
     const table = document.createElement("table");
     table.innerHTML = html;
-    table.setAttribute(TabsterTypes.TabsterAttributeName, attr);
+    table.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
     return table;
 };

@@ -4,6 +4,7 @@
  */
 
 import * as Types from "./Types";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 
 export function getTabsterOnElement(
     tabster: Types.TabsterCore,
@@ -20,7 +21,7 @@ export function updateTabsterByAttribute(
     const newAttrValue =
         dispose || tabster._noop
             ? undefined
-            : element.getAttribute(Types.TabsterAttributeName);
+            : element.getAttribute(TABSTER_ATTRIBUTE_NAME);
 
     let entry = tabster.storageEntry(element);
     let newAttr: Types.TabsterAttributeOnElement | undefined;

@@ -17,7 +17,7 @@ import { ObservedElementAPI } from "./State/ObservedElement";
 import { OutlineAPI } from "./Outline";
 import { RootAPI, WindowWithTabsterInstance } from "./Root";
 import * as Types from "./Types";
-import * as Events from "./Events";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
 import { UncontrolledAPI } from "./Uncontrolled";
 import {
     cleanupFakeWeakRefs,
@@ -25,18 +25,15 @@ import {
     createElementTreeWalker,
     createWeakMap,
     disposeInstanceContext,
-    startFakeWeakRefsCleanup,
-    stopFakeWeakRefsCleanupAndClearStorage,
     DummyInputObserver,
     getDummyInputContainer,
+    startFakeWeakRefsCleanup,
+    stopFakeWeakRefsCleanupAndClearStorage,
 } from "./Utils";
 import { RestorerAPI } from "./Restorer";
 import { dom, setDOMAPI } from "./DOMAPI";
 import * as shadowDOMAPI from "./Shadowdomize";
 
-export { Types };
-export { Events };
-export * from "./AttributeHelpers";
 export { getDummyInputContainer };
 
 class Tabster implements Types.Tabster {
@@ -526,7 +523,7 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
 
             if (
                 getTabsterOnElement(core, element) ||
-                element.hasAttribute(Types.TabsterAttributeName)
+                element.hasAttribute(TABSTER_ATTRIBUTE_NAME)
             ) {
                 updateTabsterByAttribute(core, element);
             }

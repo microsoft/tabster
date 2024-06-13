@@ -4,16 +4,17 @@
  */
 
 import {
-    KeyborgFocusInEvent,
-    KeyborgFocusOutEvent,
     KEYBORG_FOCUSIN,
     KEYBORG_FOCUSOUT,
+    KeyborgFocusInEvent,
+    KeyborgFocusOutEvent,
     nativeFocus,
 } from "keyborg";
 
 import { Keys } from "../Keys";
 import { RootAPI } from "../Root";
 import * as Types from "../Types";
+import { AsyncFocusSources } from "../Consts";
 import {
     TabsterFocusInEvent,
     TabsterFocusOutEvent,
@@ -60,9 +61,9 @@ function getUncontrolledCompletelyContainer(
 }
 
 const AsyncFocusIntentPriorityBySource = {
-    [Types.AsyncFocusSources.Restorer]: 0,
-    [Types.AsyncFocusSources.Deloser]: 1,
-    [Types.AsyncFocusSources.EscapeGroupper]: 2,
+    [AsyncFocusSources.Restorer]: 0,
+    [AsyncFocusSources.Deloser]: 1,
+    [AsyncFocusSources.EscapeGroupper]: 2,
 };
 
 interface AsyncFocus {

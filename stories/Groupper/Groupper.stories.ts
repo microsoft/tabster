@@ -4,7 +4,7 @@
  */
 
 import { Meta, Story } from "@storybook/html";
-import { Types as TabsterTypes } from "tabster";
+import { GroupperTabbabilities } from "tabster";
 import { createFocusableContainer, FocusableContainerProps } from "./Groupper";
 
 export default {
@@ -12,7 +12,7 @@ export default {
     argTypes: {
         tabbability: {
             control: "select",
-            options: TabsterTypes.GroupperTabbabilities,
+            options: GroupperTabbabilities,
         },
     },
 } as Meta;
@@ -23,13 +23,13 @@ const FocusableContainer: Story<FocusableContainerProps> = (args) => {
 
 export const WithFocusTrap = FocusableContainer.bind({});
 WithFocusTrap.args = {
-    tabbability: TabsterTypes.GroupperTabbabilities.LimitedTrapFocus,
+    tabbability: GroupperTabbabilities.LimitedTrapFocus,
 };
 
 export const OnlyTabOut = FocusableContainer.bind({});
-OnlyTabOut.args = { tabbability: TabsterTypes.GroupperTabbabilities.Limited };
+OnlyTabOut.args = { tabbability: GroupperTabbabilities.Limited };
 
 export const TabInAndOut = FocusableContainer.bind({});
 TabInAndOut.args = {
-    tabbability: TabsterTypes.GroupperTabbabilities.Unlimited,
+    tabbability: GroupperTabbabilities.Unlimited,
 };

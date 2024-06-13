@@ -4,7 +4,12 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    GroupperMoveFocusActions,
+    GroupperTabbabilities,
+    Types,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 import { describeIfUncontrolled } from "./utils/test-utils";
 
@@ -55,7 +60,7 @@ describe("Groupper - default", () => {
         const groupperAttr = getTabsterAttribute({
             groupper: {
                 ...(limited
-                    ? { tabbability: Types.GroupperTabbabilities.Limited }
+                    ? { tabbability: GroupperTabbabilities.Limited }
                     : null),
             },
             ...(ignoreKeydown ? { focusable: { ignoreKeydown } } : null),
@@ -248,7 +253,7 @@ describe("Groupper - limited focus trap", () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const groupperAttr = getTabsterAttribute({
             groupper: {
-                tabbability: Types.GroupperTabbabilities.LimitedTrapFocus,
+                tabbability: GroupperTabbabilities.LimitedTrapFocus,
                 ...(delegated ? { delegated: true } : null),
             },
         });
@@ -358,8 +363,7 @@ describe("Groupper - limited focus trap", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -417,7 +421,7 @@ describe("Groupper - limited focus trap", () => {
                         activeElement.dispatchEvent(
                             new GroupperMoveFocusEvent({ action })
                         );
-                }, Types.GroupperMoveFocusActions.Enter)
+                }, GroupperMoveFocusActions.Enter)
                 .activeElement((el) => expect(el?.textContent).toEqual("Foo1"))
                 .eval((action) => {
                     const activeElement =
@@ -433,7 +437,7 @@ describe("Groupper - limited focus trap", () => {
                         activeElement.dispatchEvent(
                             new GroupperMoveFocusEvent({ action })
                         );
-                }, Types.GroupperMoveFocusActions.Escape)
+                }, GroupperMoveFocusActions.Escape)
                 .activeElement((el) =>
                     expect(el?.textContent).toEqual("Foo1Bar1")
                 );
@@ -458,8 +462,7 @@ describe("Groupper tabbing forward and backwards", () => {
                             tabIndex={0}
                             {...getTabsterAttribute({
                                 groupper: {
-                                    tabbability:
-                                        Types.GroupperTabbabilities.Limited,
+                                    tabbability: GroupperTabbabilities.Limited,
                                 },
                             })}
                         >
@@ -504,8 +507,7 @@ describe("Groupper tabbing forward and backwards", () => {
                             tabIndex={0}
                             {...getTabsterAttribute({
                                 groupper: {
-                                    tabbability:
-                                        Types.GroupperTabbabilities.Limited,
+                                    tabbability: GroupperTabbabilities.Limited,
                                 },
                             })}
                         >
@@ -554,8 +556,7 @@ describeIfUncontrolled("Groupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -605,8 +606,7 @@ describe("Groupper - empty", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -644,8 +644,7 @@ describe("Groupper - empty", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -697,8 +696,7 @@ describe("Groupper with tabster:groupper:movefocus", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >

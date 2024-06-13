@@ -12,6 +12,7 @@ import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import { Subscribable } from "./State/Subscribable";
 import * as Types from "./Types";
+import { ObservedElementAccessibilities } from "./Consts";
 import {
     getElementUId,
     getInstanceContext,
@@ -401,7 +402,7 @@ interface CrossOriginElementDataIn {
     /**
      * Optionally wait if the element is accessible or focusable before returning it
      */
-    accessibility?: Types.ObservedElementAccesibility;
+    accessibility?: Types.ObservedElementAccessibility;
 }
 
 interface FocusElementData extends CrossOriginElementDataIn {
@@ -1582,7 +1583,7 @@ export class CrossOriginObservedElementState
 
     async getElement(
         observedName: string,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Promise<CrossOriginElement | null> {
         return this.waitElement(observedName, 0, accessibility);
     }
@@ -1590,7 +1591,7 @@ export class CrossOriginObservedElementState
     async waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Promise<CrossOriginElement | null> {
         return this._transactions
             .beginTransaction(
@@ -1616,7 +1617,7 @@ export class CrossOriginObservedElementState
         return this.waitElement(
             observedName,
             timeout,
-            Types.ObservedElementAccesibilities.Focusable
+            ObservedElementAccessibilities.Focusable
         ).then((element) =>
             this._lastRequestFocusId === requestId && element
                 ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
