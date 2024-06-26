@@ -592,6 +592,42 @@ describe("Mover memorizing current", () => {
                 expect(el?.textContent).toEqual("Button4");
             });
     });
+
+    it("should move to first element when the previously memorized one is removed from DOM", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button id="button2">Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .removeElement("#button2")
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
 });
 
 describe("Mover with excluded part", () => {
