@@ -76,7 +76,8 @@ class MoverDummyManager extends DummyInputManager {
             }
 
             const memorized = this._getMemorized()?.get();
-            if (memorized) {
+
+            if (memorized && this._tabster.focusable.isFocusable(memorized)) {
                 toFocus = memorized;
             }
 
