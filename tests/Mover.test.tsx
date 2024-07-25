@@ -7,6 +7,7 @@ import * as React from "react";
 import {
     getTabsterAttribute,
     MoverDirections,
+    MoverConnections,
     MoverKeys,
     Types,
     Visibilities,
@@ -3142,6 +3143,296 @@ describe("Mover with virtual children provided by getParent()", () => {
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button3");
+            });
+    });
+});
+
+describe("Mover connected with other Movers", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true, groupper: true });
+    });
+
+    it("should move between connected Movers", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: MoverDirections.Horizontal,
+                                connected: MoverConnections.Child,
+                                cyclic: true,
+                                memorizeCurrent: true,
+                            },
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {},
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    connected: MoverConnections.Parent,
+                                    cyclic: true,
+                                },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {},
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    cyclic: true,
+                                },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                    </div>
+                    <button>After</button>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("After");
+            })
+            .pressTab(true)
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            });
+    });
+
+    it("should move between more levels of connected Movers", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: MoverDirections.Horizontal,
+                                connected: MoverConnections.Child,
+                            },
+                        })}
+                    >
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {},
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    connected: MoverConnections.All,
+                                },
+                            })}
+                        >
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {},
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        connected: MoverConnections.Parent,
+                                    },
+                                })}
+                            >
+                                <button>Button1</button>
+                                <button>Button2</button>
+                            </div>
+
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {},
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        connected: MoverConnections.Parent,
+                                    },
+                                })}
+                            >
+                                <button>Button3</button>
+                                <button>Button4</button>
+                            </div>
+                        </div>
+
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {},
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    connected: MoverConnections.All,
+                                },
+                            })}
+                        >
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {},
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        connected: MoverConnections.Parent,
+                                    },
+                                })}
+                            >
+                                <button>Button5</button>
+                                <button>Button6</button>
+                            </div>
+
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {},
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        connected: MoverConnections.Parent,
+                                    },
+                                })}
+                            >
+                                <button>Button7</button>
+                                <button>Button8</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6Button7Button8");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7Button8");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button8");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button7");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6Button7Button8");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2Button3Button4");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1Button2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button5Button6Button7Button8");
             });
     });
 });

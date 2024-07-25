@@ -9,7 +9,12 @@ import { getTabsterOnElement } from "./Instance";
 import { Keys } from "./Keys";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
-import { Visibilities, MoverDirections, MoverKeys } from "./Consts";
+import {
+    Visibilities,
+    MoverDirections,
+    MoverKeys,
+    MoverConnections,
+} from "./Consts";
 import {
     MoverMemorizedElementEvent,
     MoverMemorizedElementEventName,
@@ -682,6 +687,21 @@ function getDistance(
         : Math.sqrt(xDistance * xDistance + yDistance * yDistance);
 }
 
+function isMoverConnected(
+    parentMover: Types.Mover,
+    childMover: Types.Mover
+): boolean {
+    const parentMoverConnected = parentMover.getProps().connected;
+    const childMoverConnected = childMover.getProps().connected;
+
+    return (
+        (parentMoverConnected === MoverConnections.All ||
+            parentMoverConnected === MoverConnections.Child) &&
+        (childMoverConnected === MoverConnections.All ||
+            childMoverConnected === MoverConnections.Parent)
+    );
+}
+
 export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
@@ -806,11 +826,15 @@ export class MoverAPI implements Types.MoverAPI {
     private _moveFocus(
         fromElement: HTMLElement,
         key: Types.MoverKey,
-        relatedEvent?: KeyboardEvent
+        relatedEvent?: KeyboardEvent,
+        connectedMover?: Types.Mover
     ): HTMLElement | null {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
-            checkRtl: true,
+            // No need to check RTL when going through the chain of
+            // connected Movers, because the first in chain handler has
+            // checked it already and flipped the key values accordingly.
+            checkRtl: !connectedMover,
         });
 
         if (
@@ -822,10 +846,38 @@ export class MoverAPI implements Types.MoverAPI {
             return null;
         }
 
-        const mover = ctx.mover;
-        const container = mover.getElement();
+        const mover = connectedMover || ctx.mover;
+        const moverElement = mover?.getElement();
 
-        if (ctx.groupperBeforeMover) {
+        if (!connectedMover && ctx.groupperBeforeMover) {
+            // Groupper has dominance over Mover when they are on the same node: the context
+            // of the element which has Mover and Groupper on the same node,
+            // will return the Groupper of that element and a parent Mover (if any).
+            // The code below pokes into that same node Mover and allows it to handle the key
+            // press if the Mover is connected with the parent Mover.
+            connectedMover = getTabsterOnElement(tabster, fromElement)?.mover;
+            const connectedMoverElement = connectedMover?.getElement();
+
+            if (
+                connectedMover &&
+                isMoverConnected(mover, connectedMover) &&
+                connectedMoverElement
+            ) {
+                const next = this._moveFocus(
+                    connectedMoverElement,
+                    key,
+                    relatedEvent,
+                    connectedMover
+                );
+
+                if (next) {
+                    // The element is found in the inner Mover, we don't need to do anything else.
+                    return next;
+                }
+
+                // Resuming the fromElement's context Mover handling.
+            }
+
             const groupper = ctx.groupper;
 
             if (groupper && !groupper.isActive(true)) {
@@ -834,7 +886,7 @@ export class MoverAPI implements Types.MoverAPI {
                 for (
                     let el: HTMLElement | null | undefined =
                         dom.getParentElement(groupper.getElement());
-                    el && el !== container;
+                    el && el !== moverElement;
                     el = dom.getParentElement(el)
                 ) {
                     if (
@@ -850,7 +902,7 @@ export class MoverAPI implements Types.MoverAPI {
             }
         }
 
-        if (!container) {
+        if (!moverElement || !mover) {
             return null;
         }
 
@@ -891,7 +943,7 @@ export class MoverAPI implements Types.MoverAPI {
         ) {
             next = focusable.findNext({
                 currentElement: fromElement,
-                container,
+                container: moverElement,
                 useActiveModalizer: true,
             });
 
@@ -905,7 +957,7 @@ export class MoverAPI implements Types.MoverAPI {
                 }
             } else if (!next && isCyclic) {
                 next = focusable.findFirst({
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                 });
             }
@@ -915,7 +967,7 @@ export class MoverAPI implements Types.MoverAPI {
         ) {
             next = focusable.findPrev({
                 currentElement: fromElement,
-                container,
+                container: moverElement,
                 useActiveModalizer: true,
             });
 
@@ -929,14 +981,14 @@ export class MoverAPI implements Types.MoverAPI {
                 }
             } else if (!next && isCyclic) {
                 next = focusable.findLast({
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                 });
             }
         } else if (key === MoverKeys.Home) {
             if (isGrid) {
                 focusable.findElement({
-                    container,
+                    container: moverElement,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     isBackward: true,
@@ -962,14 +1014,14 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             } else {
                 next = focusable.findFirst({
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                 });
             }
         } else if (key === MoverKeys.End) {
             if (isGrid) {
                 focusable.findElement({
-                    container,
+                    container: moverElement,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
@@ -994,14 +1046,14 @@ export class MoverAPI implements Types.MoverAPI {
                 });
             } else {
                 next = focusable.findLast({
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                 });
             }
         } else if (key === MoverKeys.PageUp) {
             focusable.findElement({
                 currentElement: fromElement,
-                container,
+                container: moverElement,
                 useActiveModalizer: true,
                 isBackward: true,
                 acceptCondition: (el) => {
@@ -1031,7 +1083,7 @@ export class MoverAPI implements Types.MoverAPI {
                 );
                 focusable.findElement({
                     currentElement: next,
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
                         if (!focusable.isFocusable(el)) {
@@ -1057,7 +1109,7 @@ export class MoverAPI implements Types.MoverAPI {
         } else if (key === MoverKeys.PageDown) {
             focusable.findElement({
                 currentElement: fromElement,
-                container,
+                container: moverElement,
                 useActiveModalizer: true,
                 acceptCondition: (el) => {
                     if (!focusable.isFocusable(el)) {
@@ -1086,7 +1138,7 @@ export class MoverAPI implements Types.MoverAPI {
                 );
                 focusable.findElement({
                     currentElement: next,
-                    container,
+                    container: moverElement,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
@@ -1123,7 +1175,7 @@ export class MoverAPI implements Types.MoverAPI {
             let lastIntersection = 0;
 
             focusable.findAll({
-                container,
+                container: moverElement,
                 currentElement: fromElement,
                 isBackward,
                 onElement: (el) => {
@@ -1196,10 +1248,10 @@ export class MoverAPI implements Types.MoverAPI {
             next &&
             (!relatedEvent ||
                 (relatedEvent &&
-                    container.dispatchEvent(
+                    moverElement.dispatchEvent(
                         new TabsterMoveFocusEvent({
                             by: "mover",
-                            owner: container,
+                            owner: moverElement,
                             next,
                             relatedEvent,
                         })
@@ -1217,6 +1269,36 @@ export class MoverAPI implements Types.MoverAPI {
             nativeFocus(next);
 
             return next;
+        }
+
+        if (!connectedMover || connectedMover === ctx.mover) {
+            // Arrow key has no result in the current conext Mover, let's go up the DOM to
+            // see if there is a connected Mover that can handle the key.
+            for (
+                let el: HTMLElement | null = moverElement.parentElement;
+                el;
+                el = el.parentElement
+            ) {
+                const moverOnElement = getTabsterOnElement(
+                    this._tabster,
+                    el
+                )?.mover;
+
+                if (moverOnElement) {
+                    if (isMoverConnected(moverOnElement, mover)) {
+                        // Found connected Mover, trying within its context.
+                        return this._moveFocus(
+                            moverElement,
+                            key,
+                            relatedEvent,
+                            moverOnElement
+                        );
+                    }
+
+                    // Closest Mover is not connected, stop going up.
+                    break;
+                }
+            }
         }
 
         return null;
