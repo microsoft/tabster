@@ -3435,4 +3435,77 @@ describe("Mover connected with other Movers", () => {
                 expect(el?.textContent).toEqual("Button5Button6Button7Button8");
             });
     });
+
+    it("should move between connected Movers in the same direction", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: MoverDirections.Vertical,
+                                connected: MoverConnections.Child,
+                            },
+                        })}
+                    >
+                        <div
+                            {...getTabsterAttribute({
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    connected: MoverConnections.Parent,
+                                },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+
+                        <div
+                            {...getTabsterAttribute({
+                                mover: {
+                                    direction: MoverDirections.Vertical,
+                                    connected: MoverConnections.Parent,
+                                },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button3");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            });
+    });
 });

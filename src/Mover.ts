@@ -36,6 +36,7 @@ import {
     TabsterPart,
     WeakHTMLElement,
     getDummyInputContainer,
+    getLastChild,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -827,7 +828,8 @@ export class MoverAPI implements Types.MoverAPI {
         fromElement: HTMLElement,
         key: Types.MoverKey,
         relatedEvent?: KeyboardEvent,
-        connectedMover?: Types.Mover
+        connectedMover?: Types.Mover,
+        connectedMoverLookInside?: boolean
     ): HTMLElement | null {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
@@ -867,7 +869,8 @@ export class MoverAPI implements Types.MoverAPI {
                     connectedMoverElement,
                     key,
                     relatedEvent,
-                    connectedMover
+                    connectedMover,
+                    true
                 );
 
                 if (next) {
@@ -941,6 +944,15 @@ export class MoverAPI implements Types.MoverAPI {
             (key === MoverKeys.ArrowDown && isVertical) ||
             (key === MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
+            if (!connectedMoverLookInside) {
+                // If we are poking inside the connected Mover, we want first focusable
+                // element insinde that connected Mover to be found.
+                // But if we are asking parent connected Mover to find next element,
+                // we want it to start looking past the current Mover, so, we're setting,
+                // the very last child of the current Mover as the starting point.
+                fromElement = getLastChild(fromElement) || fromElement;
+            }
+
             next = focusable.findNext({
                 currentElement: fromElement,
                 container: moverElement,
