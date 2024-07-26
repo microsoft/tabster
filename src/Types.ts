@@ -670,6 +670,11 @@ export type MoverDirections = typeof _MoverDirections;
 
 export type MoverDirection = MoverDirections[keyof MoverDirections];
 
+import { MoverConnections as _MoverConnections } from "./Consts";
+export type MoverConnections = typeof _MoverConnections;
+
+export type MoverConnected = MoverConnections[keyof MoverConnections];
+
 export interface NextTabbable {
     element: HTMLElement | null | undefined;
     uncontrolled?: HTMLElement | null;
@@ -717,6 +722,40 @@ export interface MoverProps {
      * @default 0.8
      */
     visibilityTolerance?: number;
+    /**
+     * Movers could be connected via DOM hierarchy.
+     *
+     * Could be undefined, MoverConnections.All, MoverConnections.Parent or
+     * MoverConnections.Child.
+     *
+     * When nested Movers are mutually connected in the DOM (meaning that
+     * parent Mover DOM element has `connected` property set to Child and child
+     * Mover is connected to Parent), the focus is inside child Mover and pressing
+     * arrow key hasn't moved focus (for example Right arrow was pressed in a
+     * Vertical Mover), the parent connected Mover will proceed with handling
+     * the arrow key press within the parent Mover context.
+     *
+     * This allows to handle some complex navigation scenarios.
+     * For example we have grids where each cell has focusable subelements
+     * with vertical arrow keys navigation (i.e. Vertical Mover). In combination
+     * with Groupper for the parent Mover cells, we can navigate inside the cell
+     * with Up/Down arrows and navigate between cells with Left/Right arrows,
+     * without extra Esc/Enter to enter the Groupper. In the example below,
+     * Left/Right arrow keys move between Grouppers (<div>s with `tabindex={0}`),
+     * Up/Down arrow keys move between buttons inside each respective groupper.
+     *
+     * <div mover={connected: Child, direction: Horizontal}>
+     *  <div tabindex={0} groupper mover={connected: Parent, direction: Vertical}>
+     *     <button>Button1</button>
+     *     <button>Button2</button>
+     *  </div>
+     *  <div tabindex={0} groupper mover={connected: Parent, direction: Vertical}>
+     *     <button>Button3</button>
+     *     <button>Button4</button>
+     *  </div>
+     * </div>
+     */
+    connected?: MoverConnected;
 }
 
 export interface Mover
