@@ -516,7 +516,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                     focusedElement ===
                     this._tabster.focusedElement.getFocusedElement()
                 ) {
-                    this._updateCurrent(focusedElement, true, true);
+                    this._updateCurrent(focusedElement);
                 }
             }, 0);
         }
@@ -534,21 +534,25 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
-            this._updateCurrent(element, true, true);
+            this._updateCurrent(element);
         }
     };
 
     private _onMouseDown = (e: MouseEvent): void => {
         if (e.target) {
-            this._updateCurrent(e.target as HTMLElement, true);
+            let target = e.target as HTMLElement | null;
+
+            while (target && !this._tabster.focusable.isFocusable(target)) {
+                target = dom.getParentElement(target);
+            }
+
+            if (target) {
+                this._updateCurrent(target);
+            }
         }
     };
 
-    private _updateCurrent(
-        element: HTMLElement,
-        includeTarget?: boolean,
-        checkTarget?: boolean
-    ): void {
+    private _updateCurrent(element: HTMLElement): void {
         if (this._updateTimer) {
             this._win().clearTimeout(this._updateTimer);
             delete this._updateTimer;
@@ -556,10 +560,8 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         const newIds: Record<string, true> = {};
 
-        let isTarget = true;
-
         for (
-            let el = element as HTMLElement | null;
+            let el = dom.getParentElement(element);
             el;
             el = dom.getParentElement(el)
         ) {
@@ -568,22 +570,14 @@ export class GroupperAPI implements Types.GroupperAPI {
             if (groupper) {
                 newIds[groupper.id] = true;
 
-                if (isTarget && checkTarget && el !== element) {
-                    isTarget = false;
-                }
+                this._current[groupper.id] = groupper;
+                const isTabbable =
+                    groupper.isActive() ||
+                    (element !== el &&
+                        (!groupper.getProps().delegated ||
+                            groupper.getFirst(false) !== element));
 
-                if (includeTarget || !isTarget) {
-                    this._current[groupper.id] = groupper;
-                    const isTabbable =
-                        groupper.isActive() ||
-                        (element !== el &&
-                            (!groupper.getProps().delegated ||
-                                groupper.getFirst(false) !== element));
-
-                    groupper.makeTabbable(isTabbable);
-                }
-
-                isTarget = false;
+                groupper.makeTabbable(isTabbable);
             }
         }
 
