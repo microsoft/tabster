@@ -433,12 +433,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
         part[id] = modalizer;
 
+        const focusedElement =
+            this._tabster.focusedElement.getFocusedElement() ?? null;
+
         // Adding a modalizer which is already focused, activate it
         if (
-            dom.nodeContains(
-                element,
-                this._tabster.focusedElement.getFocusedElement() ?? null
-            )
+            element !== focusedElement &&
+            dom.nodeContains(element, focusedElement)
         ) {
             if (userId !== this.activeId) {
                 this.setActive(modalizer);
@@ -870,14 +871,25 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         }
 
+        const modalizerOnFocusedElement = getTabsterOnElement(
+            this._tabster,
+            focusedElement
+        )?.modalizer;
+
+        if (modalizerOnFocusedElement) {
+            modalizerOnFocusedElement.focused();
+
+            if (modalizerOnFocusedElement.userId === this.activeId) {
+                this.setActive(undefined);
+                return;
+            }
+        }
+
         const modalizer = ctx.modalizer;
 
         // An inactive groupper with the modalizer on the same node will not give the modalizer
         // in the context, yet we still want to track that the modalizer's container was focused.
-        (
-            modalizer ||
-            getTabsterOnElement(this._tabster, focusedElement)?.modalizer
-        )?.focused();
+        modalizer?.focused();
 
         if (modalizer?.userId === this.activeId) {
             this.currentIsOthersAccessible =
