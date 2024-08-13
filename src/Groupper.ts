@@ -684,8 +684,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     ): HTMLElement | null {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, element);
-        const modalizerInGroupper = ctx?.modalizerInGroupper;
-        let groupper = ctx?.groupper || modalizerInGroupper;
+        let groupper = ctx?.groupper || ctx?.modalizerInGroupper;
         const groupperElement = groupper?.getElement();
 
         if (
@@ -722,10 +721,6 @@ export class GroupperAPI implements Types.GroupperAPI {
             ) {
                 if (groupper) {
                     groupper.makeTabbable(false);
-
-                    if (modalizerInGroupper) {
-                        tabster.modalizer?.setActive(undefined);
-                    }
                 }
 
                 // This part happens asynchronously inside setTimeout,

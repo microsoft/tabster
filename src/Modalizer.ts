@@ -871,6 +871,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         }
 
+        let modalizer: Types.Modalizer | undefined;
+
         const modalizerOnFocusedElement = getTabsterOnElement(
             this._tabster,
             focusedElement
@@ -880,12 +882,24 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             modalizerOnFocusedElement.focused();
 
             if (modalizerOnFocusedElement.userId === this.activeId) {
-                this.setActive(undefined);
-                return;
+                const parentElement = dom.getParentElement(focusedElement);
+                const parentModalizer =
+                    parentElement &&
+                    RootAPI.getTabsterContext(this._tabster, parentElement)
+                        ?.modalizer;
+
+                if (parentModalizer) {
+                    modalizer = parentModalizer;
+                } else {
+                    this.setActive(undefined);
+                    return;
+                }
             }
         }
 
-        const modalizer = ctx.modalizer;
+        if (!modalizer) {
+            modalizer = ctx.modalizer;
+        }
 
         // An inactive groupper with the modalizer on the same node will not give the modalizer
         // in the context, yet we still want to track that the modalizer's container was focused.
