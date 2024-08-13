@@ -490,8 +490,9 @@ export class GroupperAPI implements Types.GroupperAPI {
             validateGroupperProps(props);
         }
 
+        const tabster = this._tabster;
         const newGroupper = new Groupper(
-            this._tabster,
+            tabster,
             element,
             this._onGroupperDispose,
             props,
@@ -500,7 +501,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._grouppers[newGroupper.id] = newGroupper;
 
-        const focusedElement = this._tabster.focusedElement.getFocusedElement();
+        const focusedElement = tabster.focusedElement.getFocusedElement();
 
         // Newly created groupper contains currently focused element, update the state on the next tick (to
         // make sure all grouppers are processed).
@@ -514,7 +515,7 @@ export class GroupperAPI implements Types.GroupperAPI {
                 // Making sure the focused element hasn't changed.
                 if (
                     focusedElement ===
-                    this._tabster.focusedElement.getFocusedElement()
+                    tabster.focusedElement.getFocusedElement()
                 ) {
                     this._updateCurrent(focusedElement);
                 }
@@ -543,7 +544,7 @@ export class GroupperAPI implements Types.GroupperAPI {
             let target = e.target as HTMLElement | null;
 
             while (target && !this._tabster.focusable.isFocusable(target)) {
-                target = dom.getParentElement(target);
+                target = this._tabster.getParent(target) as HTMLElement | null;
             }
 
             if (target) {
@@ -558,14 +559,18 @@ export class GroupperAPI implements Types.GroupperAPI {
             delete this._updateTimer;
         }
 
+        const tabster = this._tabster;
         const newIds: Record<string, true> = {};
 
         for (
-            let el = dom.getParentElement(element);
+            let el = tabster.getParent(element);
             el;
-            el = dom.getParentElement(el)
+            el = tabster.getParent(el)
         ) {
-            const groupper = getTabsterOnElement(this._tabster, el)?.groupper;
+            const groupper = getTabsterOnElement(
+                tabster,
+                el as HTMLElement
+            )?.groupper;
 
             if (groupper) {
                 newIds[groupper.id] = true;
