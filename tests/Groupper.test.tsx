@@ -791,3 +791,112 @@ describe("Groupper with tabster:groupper:movefocus", () => {
         }
     );
 });
+
+describe("Groupper - activate on focus and click", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({
+            groupper: true,
+            mover: true,
+            modalizer: true,
+        });
+    });
+
+    const getTestHtml = (tagName: "div" | "li") => {
+        const Tag = tagName;
+
+        return (
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <Tag
+                        id="groupper1"
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    Types.GroupperTabbabilities
+                                        .LimitedTrapFocus,
+                            },
+                            modalizer: {
+                                id: "modalizer1",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
+                            },
+                        })}
+                    >
+                        <div id="groupper1-inner">
+                            <button>Button1</button>
+                            <button>Button2</button>
+                        </div>
+                    </Tag>
+                    <Tag
+                        id="groupper2"
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    Types.GroupperTabbabilities
+                                        .LimitedTrapFocus,
+                            },
+                            modalizer: {
+                                id: "modalizer2",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
+                            },
+                        })}
+                    >
+                        <div id="groupper2-inner">
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                    </Tag>
+                </div>
+            </div>
+        );
+    };
+
+    it.each<["div" | "li"]>([["div"], ["li"]])("should", async (tagName) => {
+        await new BroTest.BroTest(getTestHtml(tagName))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button1Button2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button3Button4")
+            )
+            .click("#groupper1-inner")
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button1Button2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button3Button4")
+            )
+            .focusElement("#groupper1")
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button1Button2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button3Button4")
+            );
+    });
+
+    it.each<["div" | "li"]>([["div"], ["li"]])("should", async (tagName) => {
+        await new BroTest.BroTest(getTestHtml(tagName))
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button1Button2")
+            )
+            .pressEnter()
+            .activeElement((el) => expect(el?.textContent).toBe("Button1"))
+            .click("#groupper1-inner")
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button1Button2")
+            )
+            .pressDown()
+            .activeElement((el) =>
+                expect(el?.textContent).toBe("Button3Button4")
+            );
+    });
+});
