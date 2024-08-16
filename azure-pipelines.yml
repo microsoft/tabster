@@ -1,6 +1,7 @@
 # Variable 'prerelease' was defined in the Variables tab
 # Variable 'prereleaseTag' was defined in the Variables tab
 # Variable 'publishVersion' was defined in the Variables tab
+# Variable 'skipPublish' was defined in the Variables tab with default value 'false'
 
 variables:
   - group: 'Github and NPM secrets'
@@ -71,10 +72,11 @@ extends:
                 displayName: Write npmrc for publish token
                 inputs:
                   script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+                condition: eq(variables.skipPublish, false)
             
               - task: CmdLine@2
                 displayName: Publish (official)
-                condition: eq(variables.prerelease, false)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, false))
                 inputs:
                   script: 'npm run release -- $(publishVersion) --ci '
                 env:
@@ -82,7 +84,7 @@ extends:
             
               - task: CmdLine@2
                 displayName: Publish (prerelease)
-                condition: eq(variables.prerelease, true)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
                 inputs:
                   script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
                 env:
