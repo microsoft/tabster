@@ -84,7 +84,7 @@ extends:
             
               - task: CmdLine@2
                 displayName: Publish (prerelease)
-                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))  
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
                 inputs:
                   script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
                 env:
