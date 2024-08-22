@@ -53,10 +53,9 @@ extends:
                 inputs:
                   version: '16.x'
             
-              - task: Npm@1
+              - script: | 
+                  npm install --no-audit --verbose
                 displayName: npm install
-                inputs:
-                  verbose: true
             
               # - task: CmdLine@2
               #   displayName: Authenticate git for pushes
