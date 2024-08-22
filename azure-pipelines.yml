@@ -55,6 +55,7 @@ extends:
             
               - task: Npm@1.241.1
                 inputs:
+                  command: 'ci'
                   verbose: true
                 displayName: npm install
             
