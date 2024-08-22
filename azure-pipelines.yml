@@ -51,7 +51,7 @@ extends:
               - task: UseNode@1
                 displayName: Use Node 16.x
                 inputs:
-                  versionSpec: 16.x
+                  version: '16.x'
             
               - task: Npm@1
                 displayName: npm install
