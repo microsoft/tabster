@@ -56,34 +56,34 @@ extends:
               - script: npm install 
                 displayName: 'npm install'
             
-              # - task: CmdLine@2
-              #   displayName: Authenticate git for pushes
-              #   inputs:
-              #     script: >-
-              #       git config user.name "Tabster Build"
+              - task: CmdLine@2
+                displayName: Authenticate git for pushes
+                inputs:
+                  script: >-
+                    git config user.name "Tabster Build"
             
-              #       git config user.email "fluentui-internal@service.microsoft.com"
+                    git config user.email "fluentui-internal@service.microsoft.com"
             
-              #       git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
+                    git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
             
-              # - task: CmdLine@2
-              #   displayName: Write npmrc for publish token
-              #   inputs:
-              #     script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
-              #   condition: eq(variables.skipPublish, false)
+              - task: CmdLine@2
+                displayName: Write npmrc for publish token
+                inputs:
+                  script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+                condition: eq(variables.skipPublish, false)
             
-              # - task: CmdLine@2
-              #   displayName: Publish (official)
-              #   condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, false))
-              #   inputs:
-              #     script: 'npm run release -- $(publishVersion) --ci '
-              #   env:
-              #       NPM_TOKEN: $(npmToken)
+              - task: CmdLine@2
+                displayName: Publish (official)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, false))
+                inputs:
+                  script: 'npm run release -- $(publishVersion) --ci '
+                env:
+                    NPM_TOKEN: $(npmToken)
             
-              # - task: CmdLine@2
-              #   displayName: Publish (prerelease)
-              #   condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
-              #   inputs:
-              #     script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
-              #   env:
-              #       NPM_TOKEN: $(npmToken)
+              - task: CmdLine@2
+                displayName: Publish (prerelease)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
+                inputs:
+                  script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+                env:
+                    NPM_TOKEN: $(npmToken)
