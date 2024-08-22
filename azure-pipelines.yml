@@ -41,19 +41,19 @@ extends:
               - checkout: self
                 clean: true
             
-              # - task: CmdLine@2
-              #   displayName: Re-attach head
-              #   inputs:
-              #     script: |
-              #       git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
-              #       git pull
+              - task: CmdLine@2
+                displayName: Re-attach head
+                inputs:
+                  script: |
+                    git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
+                    git pull
             
               - task: UseNode@1
                 displayName: Use Node 16.x
                 inputs:
                   version: 16.x
             
-              - script: npm install --verbose
+              - script: npm ci 
                 displayName: 'npm install'
             
               # - task: CmdLine@2
