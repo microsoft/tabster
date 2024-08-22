@@ -48,16 +48,13 @@ extends:
                     git checkout --track "origin/${BUILD_SOURCEBRANCH//refs\/heads\/}"
                     git pull
             
-              - task: NodeTool@0
+              - task: UseNode@1
                 displayName: Use Node 16.x
                 inputs:
-                  versionSpec: 16.x
+                  version: 16.x
             
-              - task: Npm@1.241.1
-                inputs:
-                  command: 'ci'
-                  verbose: true
-                displayName: npm install
+              - script: npm ci --verbose
+                displayName: 'npm install'
             
               # - task: CmdLine@2
               #   displayName: Authenticate git for pushes
