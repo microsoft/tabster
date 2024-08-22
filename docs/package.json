@@ -37,5 +37,9 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
+    },
+    "overrides": {
+        "loader-utils": "^2.0.3",
+        "shell-quote": "^1.7.3"
     }
 }
