@@ -54,7 +54,7 @@ extends:
                   version: '18.x'
             
               - script: | 
-                  npm install --verbose
+                  npm install --verbose --no-audit
                 displayName: npm install
             
               # - task: CmdLine@2
