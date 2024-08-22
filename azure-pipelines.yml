@@ -54,7 +54,7 @@ extends:
                   versionSpec: 16.x
             
               - script: | 
-                  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install
+                  PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public npm install
                 displayName: npm install
             
               # - task: CmdLine@2
