@@ -54,7 +54,7 @@ extends:
                   versionSpec: 16.x
             
               - script: | 
-                  npm install --verbose
+                  npm install --no-audit --verbose
                 displayName: npm install 
             
               # - task: CmdLine@2
