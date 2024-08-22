@@ -49,11 +49,11 @@ extends:
                     git pull
             
               - task: UseNode@1
-                displayName: Use Node 16.x
+                displayName: Use Node 18.x
                 inputs:
-                  version: 16.x
+                  version: 18.x
             
-              - script: npm ci --verbose
+              - script: npm ci --no-audit --verbose
                 displayName: 'npm install'
             
               # - task: CmdLine@2
