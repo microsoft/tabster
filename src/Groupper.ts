@@ -495,8 +495,9 @@ export class GroupperAPI implements Types.GroupperAPI {
             validateGroupperProps(props);
         }
 
+        const tabster = this._tabster;
         const newGroupper = new Groupper(
-            this._tabster,
+            tabster,
             element,
             this._onGroupperDispose,
             props,
@@ -505,7 +506,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._grouppers[newGroupper.id] = newGroupper;
 
-        const focusedElement = this._tabster.focusedElement.getFocusedElement();
+        const focusedElement = tabster.focusedElement.getFocusedElement();
 
         // Newly created groupper contains currently focused element, update the state on the next tick (to
         // make sure all grouppers are processed).
@@ -519,9 +520,9 @@ export class GroupperAPI implements Types.GroupperAPI {
                 // Making sure the focused element hasn't changed.
                 if (
                     focusedElement ===
-                    this._tabster.focusedElement.getFocusedElement()
+                    tabster.focusedElement.getFocusedElement()
                 ) {
-                    this._updateCurrent(focusedElement, true, true);
+                    this._updateCurrent(focusedElement);
                 }
             }, 0);
         }
@@ -539,56 +540,52 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     private _onFocus = (element: HTMLElement | undefined): void => {
         if (element) {
-            this._updateCurrent(element, true, true);
+            this._updateCurrent(element);
         }
     };
 
     private _onMouseDown = (e: MouseEvent): void => {
-        if (e.target) {
-            this._updateCurrent(e.target as HTMLElement, true);
+        let target = e.target as HTMLElement | null;
+
+        while (target && !this._tabster.focusable.isFocusable(target)) {
+            target = this._tabster.getParent(target) as HTMLElement | null;
+        }
+
+        if (target) {
+            this._updateCurrent(target);
         }
     };
 
-    private _updateCurrent(
-        element: HTMLElement,
-        includeTarget?: boolean,
-        checkTarget?: boolean
-    ): void {
+    private _updateCurrent(element: HTMLElement): void {
         if (this._updateTimer) {
             this._win().clearTimeout(this._updateTimer);
             delete this._updateTimer;
         }
 
+        const tabster = this._tabster;
         const newIds: Record<string, true> = {};
 
-        let isTarget = true;
-
         for (
-            let el = element as HTMLElement | null;
+            let el = tabster.getParent(element);
             el;
-            el = dom.getParentElement(el)
+            el = tabster.getParent(el)
         ) {
-            const groupper = getTabsterOnElement(this._tabster, el)?.groupper;
+            const groupper = getTabsterOnElement(
+                tabster,
+                el as HTMLElement
+            )?.groupper;
 
             if (groupper) {
                 newIds[groupper.id] = true;
 
-                if (isTarget && checkTarget && el !== element) {
-                    isTarget = false;
-                }
+                this._current[groupper.id] = groupper;
+                const isTabbable =
+                    groupper.isActive() ||
+                    (element !== el &&
+                        (!groupper.getProps().delegated ||
+                            groupper.getFirst(false) !== element));
 
-                if (includeTarget || !isTarget) {
-                    this._current[groupper.id] = groupper;
-                    const isTabbable =
-                        groupper.isActive() ||
-                        (element !== el &&
-                            (!groupper.getProps().delegated ||
-                                groupper.getFirst(false) !== element));
-
-                    groupper.makeTabbable(isTabbable);
-                }
-
-                isTarget = false;
+                groupper.makeTabbable(isTabbable);
             }
         }
 
@@ -695,8 +692,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     ): HTMLElement | null {
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, element);
-        const modalizerInGroupper = ctx?.modalizerInGroupper;
-        let groupper = ctx?.groupper || modalizerInGroupper;
+        let groupper = ctx?.groupper || ctx?.modalizerInGroupper;
         const groupperElement = groupper?.getElement();
 
         if (
@@ -733,10 +729,6 @@ export class GroupperAPI implements Types.GroupperAPI {
             ) {
                 if (groupper) {
                     groupper.makeTabbable(false);
-
-                    if (modalizerInGroupper) {
-                        tabster.modalizer?.setActive(undefined);
-                    }
                 }
 
                 // This part happens asynchronously inside setTimeout,
