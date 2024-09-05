@@ -6,6 +6,7 @@
 import "./mover.css";
 import {
     getTabsterAttribute,
+    MoverDirections,
     TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
 } from "tabster";
@@ -111,5 +112,137 @@ export const createTableMover = ({
     const table = document.createElement("table");
     table.innerHTML = html;
     table.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
+    return table;
+};
+
+export const createTestTableMover = () => {
+    const attr = getTabsterAttribute(
+        {
+            mover: {
+                cyclic: false,
+                direction: MoverDirections.GridLinear,
+                memorizeCurrent: true,
+                tabbable: false,
+            },
+        },
+        true
+    );
+    const theadHtml = `
+    <thead>
+        <tr>
+            <td class="mover-table-select"><input type="checkbox" /></td>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+            <th tabindex="0">Company</th>
+            <th tabindex="0">Contact</th>
+            <th tabindex="0">Country</th>
+        </tr>
+    </thead>
+    `;
+    const rows = [
+        {
+            company: "Alfreds Futterkiste",
+            contact: "Maria Anders",
+            country: "Germany",
+        },
+        {
+            company: "Centro comercial Moctezuma",
+            contact: "Francisco Chang",
+            country: "Mexico",
+        },
+        {
+            company: "Ernst Handel",
+            contact: "Roland Mendel",
+            country: "Austria",
+        },
+        {
+            company: "Island Trading",
+            contact: "Helen Bennett",
+            country: "UK",
+        },
+    ];
+    const lotsOfRows = [];
+    for (let i = 0; i < 35; i++) {
+        lotsOfRows.push(rows[0]);
+        lotsOfRows.push(rows[1]);
+        lotsOfRows.push(rows[2]);
+        lotsOfRows.push(rows[3]);
+    }
+
+    let tbodyHtml = "";
+    lotsOfRows.forEach(row => {
+        tbodyHtml += `
+        <tr>
+            <td class="mover-table-select"><input type="checkbox" /></td>
+            <td tabindex="0">${row.company}</td>
+            <td tabindex="0">${row.contact}</td>
+            <td tabindex="0">${row.country}</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+            <td tabindex="0">Alfreds Futterkiste</td>
+            <td tabindex="0">Maria Anders</td>
+            <td tabindex="0">Germany</td>
+        </tr>
+        `;
+    });
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = theadHtml;
+
+    const tbody = document.createElement("tbody");
+    tbody.classList.add("mover-grid");
+    tbody.innerHTML = tbodyHtml;
+    tbody.setAttribute(TABSTER_ATTRIBUTE_NAME, attr);
+
+    const table = document.createElement("table");
+    table.innerHTML = thead.outerHTML + tbody.outerHTML;
+
     return table;
 };

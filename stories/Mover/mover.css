@@ -7,3 +7,25 @@
 .mover-item {
     margin: 0;
 }
+
+.mover-table-select {
+    position: sticky;
+    z-index: 1;
+    left: 0;
+}
+
+.mover-grid {
+    overflow: scroll;
+    height: 200px;
+}
+
+.mover-table th {
+    text-align: left;
+}
+.mover-table tr {
+    display: grid;
+    grid-template-columns: 32px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px 225px 150px 100px;
+}
+.mover-table td {
+    white-space: nowrap;
+}
