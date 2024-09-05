@@ -34,3 +34,5 @@ export * as EventsTypes from "./EventsTypes";
 export * from "./Consts";
 
 export * from "./Deprecated";
+
+export { scrollIntoView } from "./Utils";
