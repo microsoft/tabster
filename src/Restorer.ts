@@ -116,14 +116,15 @@ class History {
     ): HTMLElement | undefined {
         const doc = this._getWindow().document;
         for (let index = this._stack.length - 1; index >= 0; index--) {
-            const maybeElement = this._stack[index].get();
+            const maybeElement = this._stack.pop()?.get();
             if (
-                !maybeElement ||
-                !dom.nodeContains(doc.body, dom.getParentElement(maybeElement))
+                maybeElement &&
+                dom.nodeContains(
+                    doc.body,
+                    dom.getParentElement(maybeElement)
+                ) &&
+                filter(maybeElement)
             ) {
-                this._stack.pop();
-            } else if (filter(maybeElement)) {
-                this._stack.splice(index, 1);
                 return maybeElement;
             }
         }
