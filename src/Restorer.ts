@@ -21,8 +21,6 @@ import {
 import { TabsterPart, WeakHTMLElement } from "./Utils";
 import { dom } from "./DOMAPI";
 
-const HISOTRY_DEPTH = 10;
-
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _hasFocus = false;
 
@@ -77,9 +75,66 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     };
 }
 
+class History {
+    private static readonly DEPTH = 10;
+    private _stack: WeakHTMLElement<HTMLElement>[] = [];
+    private _getWindow: GetWindow;
+    constructor(getWindow: GetWindow) {
+        this._getWindow = getWindow;
+    }
+    /**
+     * Push a weak element to the top of the history stack.
+     * If the stack is full, the bottom weak element is removed.
+     * If the element is already at the top of the stack, it is not duplicated.
+     */
+    push(element: HTMLElement): void {
+        // Don't duplicate the top of history
+        if (this._stack[this._stack.length - 1]?.get() === element) {
+            return;
+        }
+
+        if (this._stack.length > History.DEPTH) {
+            this._stack.shift();
+        }
+        this._stack.push(
+            new WeakHTMLElement<HTMLElement>(this._getWindow, element)
+        );
+    }
+    /**
+     * Pop the first element from the history that satisfies the callback.
+     * The history is searched from the top to the bottom (from the most recent to the least recent).
+     *
+     * If a weak reference to the element is broken,
+     * or the element is no longer in the DOM,
+     * the element is removed from the top of the stack while popping.
+     *
+     * If no matching element is found, undefined is returned.
+     * If the stack is empty, undefined is returned.
+     */
+    pop(
+        filter: (element: HTMLElement) => boolean = () => true
+    ): HTMLElement | undefined {
+        const doc = this._getWindow().document;
+        for (let index = this._stack.length - 1; index >= 0; index--) {
+            const maybeElement = this._stack.pop()?.get();
+            if (
+                maybeElement &&
+                dom.nodeContains(
+                    doc.body,
+                    dom.getParentElement(maybeElement)
+                ) &&
+                filter(maybeElement)
+            ) {
+                return maybeElement;
+            }
+        }
+        return undefined;
+    }
+}
+
 export class RestorerAPI implements RestorerAPIType {
     private _tabster: TabsterCore;
-    private _history: WeakHTMLElement<HTMLElement>[] = [];
+    private _history: History;
     private _keyboardNavState: KeyboardNavigationState;
     private _focusedElementState: FocusedElementState;
     private _getWindow: GetWindow;
@@ -91,6 +146,7 @@ export class RestorerAPI implements RestorerAPIType {
             RestorerRestoreFocusEventName,
             this._onRestoreFocus
         );
+        this._history = new History(this._getWindow);
 
         this._keyboardNavState = tabster.keyboardNavigation;
         this._focusedElementState = tabster.focusedElement;
@@ -114,12 +170,20 @@ export class RestorerAPI implements RestorerAPIType {
         this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
 
         // ShadowDOM will have shadowRoot as e.target.
-        const target = e.composedPath()[0];
+        const source = e.composedPath()[0] as HTMLElement | undefined;
 
-        if (target) {
+        if (source) {
+            // source id must be recovered before source is removed from DOM
+            // otherwise it'll be unreachable
+            // (as tabster on element will not be available through getTabsterOnElement)
+            const sourceId = getTabsterOnElement(
+                this._tabster,
+                source
+            )?.restorer?.getProps().id;
+
             this._focusedElementState.requestAsyncFocus(
                 AsyncFocusSources.Restorer,
-                () => this._restoreFocus(target as HTMLElement),
+                () => this._restoreFocus(source, sourceId),
                 0
             );
         }
@@ -137,31 +201,15 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
-        this._addToHistory(element);
+        this._history.push(element);
     };
 
-    private _addToHistory(element: HTMLElement) {
-        // Don't duplicate the top of history
-        if (this._history[this._history.length - 1]?.get() === element) {
-            return;
-        }
-
-        if (this._history.length > HISOTRY_DEPTH) {
-            this._history.shift();
-        }
-
-        this._history.push(
-            new WeakHTMLElement<HTMLElement>(this._getWindow, element)
-        );
-    }
-
-    private _restoreFocus = (source: HTMLElement) => {
+    private _restoreFocus = (source: HTMLElement, sourceId?: string) => {
         // don't restore focus if focus isn't lost to body
         const doc = this._getWindow().document;
         if (dom.getActiveElement(doc) !== doc.body) {
             return;
         }
-
         if (
             // clicking on any empty space focuses body - this is can be a false positive
             !this._keyboardNavState.isNavigatingWithKeyboard() &&
@@ -171,15 +219,11 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
-        let weakElement = this._history.pop();
-        while (
-            weakElement &&
-            !dom.nodeContains(doc.body, dom.getParentElement(weakElement.get()))
-        ) {
-            weakElement = this._history.pop();
-        }
+        const getId = (element: HTMLElement) =>
+            getTabsterOnElement(this._tabster, element)?.restorer?.getProps()
+                .id;
 
-        weakElement?.get()?.focus();
+        this._history.pop((target) => sourceId === getId(target))?.focus();
     };
 
     public createRestorer(element: HTMLElement, props: RestorerProps) {
@@ -189,7 +233,7 @@ export class RestorerAPI implements RestorerAPIType {
             props.type === RestorerTypes.Target &&
             dom.getActiveElement(element.ownerDocument) === element
         ) {
-            this._addToHistory(element);
+            this._history.push(element);
         }
 
         return restorer;

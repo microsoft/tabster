@@ -1094,6 +1094,7 @@ export interface SysOnElement {
 
 export interface RestorerProps {
     type: RestorerType;
+    id?: string;
 }
 
 export type TabsterAttributeProps = Partial<{
