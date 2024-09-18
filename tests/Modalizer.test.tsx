@@ -2716,10 +2716,12 @@ describe("Modal with focus trap", () => {
             (
                 <div {...getTabsterAttribute({ root: {} })}>
                     <div
+                        id="modal"
                         aria-label="modal"
                         {...getTabsterAttribute({
                             modalizer: { id: "modal", isTrapped: true },
                         })}
+                        tabIndex={0}
                     >
                         Hello
                     </div>
