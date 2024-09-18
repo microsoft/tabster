@@ -450,10 +450,12 @@ describe("Modalizer", () => {
                     </div>
                 )
             )
-            .focusElement('#modal')
-            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
-            .pressTab()
-            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+                .focusElement("#modal")
+                .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+                .pressTab()
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Hello")
+                );
         });
     });
 });
