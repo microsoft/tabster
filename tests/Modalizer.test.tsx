@@ -432,6 +432,29 @@ describe("Modalizer", () => {
                 .pressTab()
                 .activeElement((el) => expect(el?.attributes.id).toBe("foo"));
         });
+
+        it("if trapped, should not escape modalizer if it has no focusables", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <div
+                            id="modal"
+                            aria-label="modal"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "modal", isTrapped: true },
+                            })}
+                            tabIndex={0}
+                        >
+                            Hello
+                        </div>
+                    </div>
+                )
+            )
+            .focusElement('#modal')
+            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
+        });
     });
 });
 
@@ -2705,32 +2728,3 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
             );
     });
 });
-
-describe("Modal with focus trap", () => {
-    beforeEach(async () => {
-        await BroTest.bootstrapTabsterPage();
-    });
-
-    it("should not escape modalizer if it has no focusables", async () => {
-        await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        id="modal"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                        tabIndex={0}
-                    >
-                        Hello
-                    </div>
-                </div>
-            )
-        )
-        .focusElement('#modal')
-        .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
-        .pressTab()
-        .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
-    });
-})
