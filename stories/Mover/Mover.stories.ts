@@ -5,7 +5,7 @@
 
 import { Meta, Story } from "@storybook/html";
 import { MoverDirections } from "tabster";
-import { createBasicMover, createTableMover, MoverProps } from "./Mover";
+import { createBasicMover, createTableMover, createTestTableMover, MoverProps } from "./Mover";
 
 export default {
     title: "Mover",
@@ -41,3 +41,8 @@ const TableWithFocusableCells: Story<MoverProps> = (args) =>
     createTableMover(args);
 
 export const TableWithMoverGrid = TableWithFocusableCells.bind({});
+
+const TestTableWithFocusableCells: Story<MoverProps> = () =>
+    createTestTableMover();
+
+export const TestTableWithMoverGrid = TestTableWithFocusableCells.bind({});
