@@ -240,7 +240,8 @@ export class ObservedElementAPI
 
     requestFocus(
         observedName: string,
-        timeout: number
+        timeout: number,
+        options: Pick<FocusOptions, "preventScroll"> = {}
     ): Types.ObservedElementAsyncRequest<boolean> {
         const requestId = ++this._lastRequestFocusId;
         const currentRequestFocus = this._currentRequest;
@@ -267,7 +268,12 @@ export class ObservedElementAPI
         return {
             result: request.result.then((element) =>
                 this._lastRequestFocusId === requestId && element
-                    ? this._tabster.focusedElement.focus(element, true)
+                    ? this._tabster.focusedElement.focus(
+                          element,
+                          true,
+                          undefined,
+                          options.preventScroll
+                      )
                     : false
             ),
             cancel: () => {
