@@ -148,7 +148,8 @@ export interface FocusedElementState
     focus(
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
+        noAccessibleCheck?: boolean,
+        preventScroll?: boolean
     ): boolean;
     focusDefault(container: HTMLElement): boolean;
     /** @internal */
