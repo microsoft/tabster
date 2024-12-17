@@ -4,7 +4,11 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    GroupperTabbabilities,
+    TABSTER_ATTRIBUTE_NAME,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("Deloser", () => {
@@ -114,7 +118,7 @@ describe("Deloser", () => {
                         );
                     newDeloser?.setAttribute(attrName, tabsterAttr);
                 },
-                Types.TabsterAttributeName,
+                TABSTER_ATTRIBUTE_NAME,
                 tabsterAttr
             )
             .removeElement("#newDeloser")
@@ -133,8 +137,7 @@ describe("Deloser", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
@@ -147,8 +150,7 @@ describe("Deloser", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >

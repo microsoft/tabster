@@ -1,6 +1,7 @@
 # Variable 'prerelease' was defined in the Variables tab
 # Variable 'prereleaseTag' was defined in the Variables tab
 # Variable 'publishVersion' was defined in the Variables tab
+# Variable 'skipPublish' was defined in the Variables tab with default value 'false'
 
 variables:
   - group: 'Github and NPM secrets'
@@ -51,11 +52,12 @@ extends:
                 displayName: Use Node 16.x
                 inputs:
                   versionSpec: 16.x
-            
-              - task: Npm@1
+              # PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public is a workaround for puppeteer 
+              # as puppeteer versions <22.0.0 will cause npm install to hang in CI environments.
+              # see issue: https://github.com/puppeteer/puppeteer/issues/12833
+              - script: | 
+                  PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public npm install
                 displayName: npm install
-                inputs:
-                  verbose: false
             
               - task: CmdLine@2
                 displayName: Authenticate git for pushes
@@ -71,10 +73,11 @@ extends:
                 displayName: Write npmrc for publish token
                 inputs:
                   script: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+                condition: eq(variables.skipPublish, false)
             
               - task: CmdLine@2
                 displayName: Publish (official)
-                condition: eq(variables.prerelease, false)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, false))
                 inputs:
                   script: 'npm run release -- $(publishVersion) --ci '
                 env:
@@ -82,7 +85,7 @@ extends:
             
               - task: CmdLine@2
                 displayName: Publish (prerelease)
-                condition: eq(variables.prerelease, true)
+                condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
                 inputs:
                   script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
                 env:

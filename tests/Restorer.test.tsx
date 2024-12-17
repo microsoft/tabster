@@ -4,7 +4,11 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    RestorerTypes,
+    TABSTER_ATTRIBUTE_NAME,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("Restorer", () => {
@@ -14,10 +18,10 @@ describe("Restorer", () => {
     it("should restore focus when focus is moved to body from source", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -46,10 +50,10 @@ describe("Restorer", () => {
     it("should restore focus when source is a focusable element", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -78,10 +82,10 @@ describe("Restorer", () => {
     it("should follow target history", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -114,10 +118,10 @@ describe("Restorer", () => {
     it("should follow target history when element is removed", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -153,10 +157,10 @@ describe("Restorer", () => {
     it("should not restore focus when lost focus is not on body", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -192,7 +196,7 @@ describe("Restorer", () => {
     it("should not restore focus when focus is not lost from source", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
             (
@@ -221,10 +225,10 @@ describe("Restorer", () => {
     it("should not restore focus during mouse navigation mode", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (
@@ -250,10 +254,10 @@ describe("Restorer", () => {
     it("should restore focus during mouse navigation mode if source is removed from DOM", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (
@@ -283,10 +287,10 @@ describe("Restorer", () => {
     it("should not run infinite loop when there is no history", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (
@@ -320,10 +324,10 @@ describe("Restorer", () => {
     it("should register already focused target", async () => {
         const rootAttr = getTabsterAttribute({ root: {} });
         const targetAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Target },
+            restorer: { type: RestorerTypes.Target },
         });
         const sourceAttr = getTabsterAttribute({
-            restorer: { type: Types.RestorerTypes.Source },
+            restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
             (
@@ -346,8 +350,8 @@ describe("Restorer", () => {
                         ?.appendChild(target);
                     target.focus();
                 },
-                Types.TabsterAttributeName,
-                targetAttr[Types.TabsterAttributeName] as string
+                TABSTER_ATTRIBUTE_NAME,
+                targetAttr[TABSTER_ATTRIBUTE_NAME] as string
             )
             .activeElement((el) => expect(el?.textContent).toEqual("target"))
             .click("#source")
@@ -383,7 +387,7 @@ describe("Restorer focus priority", () => {
                         <button
                             id="target"
                             {...getTabsterAttribute({
-                                restorer: { type: Types.RestorerTypes.Target },
+                                restorer: { type: RestorerTypes.Target },
                             })}
                         >
                             target
@@ -394,7 +398,7 @@ describe("Restorer focus priority", () => {
                     <div
                         id="source"
                         {...getTabsterAttribute({
-                            restorer: { type: Types.RestorerTypes.Source },
+                            restorer: { type: RestorerTypes.Source },
                             modalizer: { id: "modal" },
                         })}
                     >
@@ -439,5 +443,120 @@ describe("Restorer focus priority", () => {
                 }
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
+    });
+});
+
+describe("Restorer focus link", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ restorer: true });
+    });
+    it('should restore focus to the last "linked" target', async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target },
+        });
+        const linkedTargetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target, id: "link" },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...linkedTargetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 2
+                    </button>
+
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
+    });
+    it('should not restore focus if no "linked" target is available', async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 2
+                    </button>
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el).toEqual(null));
+    });
+    it("should not restore focus to target that is not in DOM anymore", async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target, id: "link" },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target-2")
+                    ?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
     });
 });

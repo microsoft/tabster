@@ -5,6 +5,7 @@
 
 import { getTabsterOnElement } from "../Instance";
 import * as Types from "../Types";
+import { ObservedElementAccessibilities } from "../Consts";
 import {
     documentContains,
     getElementUId,
@@ -129,7 +130,7 @@ export class ObservedElementAPI
      */
     getElement(
         observedName: string,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): HTMLElement | null {
         const o = this._observedByName[observedName];
 
@@ -139,10 +140,10 @@ export class ObservedElementAPI
                 if (el) {
                     if (
                         (accessibility ===
-                            Types.ObservedElementAccesibilities.Accessible &&
+                            ObservedElementAccessibilities.Accessible &&
                             !this._tabster.focusable.isAccessible(el)) ||
                         (accessibility ===
-                            Types.ObservedElementAccesibilities.Focusable &&
+                            ObservedElementAccessibilities.Focusable &&
                             !this._tabster.focusable.isFocusable(el, true))
                     ) {
                         el = null;
@@ -170,7 +171,7 @@ export class ObservedElementAPI
     waitElement(
         observedName: string,
         timeout: number,
-        accessibility?: Types.ObservedElementAccesibility
+        accessibility?: Types.ObservedElementAccessibility
     ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
         const el = this.getElement(observedName, accessibility);
 
@@ -185,11 +186,9 @@ export class ObservedElementAPI
 
         let prefix: string;
 
-        if (accessibility === Types.ObservedElementAccesibilities.Accessible) {
+        if (accessibility === ObservedElementAccessibilities.Accessible) {
             prefix = "a";
-        } else if (
-            accessibility === Types.ObservedElementAccesibilities.Focusable
-        ) {
+        } else if (accessibility === ObservedElementAccessibilities.Focusable) {
             prefix = "f";
         } else {
             prefix = "_";
@@ -241,7 +240,8 @@ export class ObservedElementAPI
 
     requestFocus(
         observedName: string,
-        timeout: number
+        timeout: number,
+        options: Pick<FocusOptions, "preventScroll"> = {}
     ): Types.ObservedElementAsyncRequest<boolean> {
         const requestId = ++this._lastRequestFocusId;
         const currentRequestFocus = this._currentRequest;
@@ -253,7 +253,7 @@ export class ObservedElementAPI
         const request = this.waitElement(
             observedName,
             timeout,
-            Types.ObservedElementAccesibilities.Focusable
+            ObservedElementAccessibilities.Focusable
         );
 
         this._currentRequest = request;
@@ -268,7 +268,12 @@ export class ObservedElementAPI
         return {
             result: request.result.then((element) =>
                 this._lastRequestFocusId === requestId && element
-                    ? this._tabster.focusedElement.focus(element, true)
+                    ? this._tabster.focusedElement.focus(
+                          element,
+                          true,
+                          undefined,
+                          options.preventScroll
+                      )
                     : false
             ),
             cancel: () => {
@@ -359,7 +364,7 @@ export class ObservedElementAPI
             element: HTMLElement,
             key: string,
             waiting: ObservedWaiting,
-            accessibility: Types.ObservedElementAccesibility
+            accessibility: Types.ObservedElementAccessibility
         ) => {
             const observed = getTabsterOnElement(
                 this._tabster,
@@ -395,7 +400,7 @@ export class ObservedElementAPI
                     element,
                     waitingElementKey,
                     waitingElement,
-                    Types.ObservedElementAccesibilities.Any
+                    ObservedElementAccessibilities.Any
                 );
             }
         }
@@ -416,7 +421,7 @@ export class ObservedElementAPI
                         element,
                         waitingAccessibleElementKey,
                         waitingAccessibleElement,
-                        Types.ObservedElementAccesibilities.Accessible
+                        ObservedElementAccessibilities.Accessible
                     );
                 } else {
                     waitingAccessibleElement.conditionTimer = win.setTimeout(
@@ -445,7 +450,7 @@ export class ObservedElementAPI
                         element,
                         waitingFocusableElementKey,
                         waitingFocusableElement,
-                        Types.ObservedElementAccesibilities.Focusable
+                        ObservedElementAccessibilities.Focusable
                     );
                 } else {
                     waitingFocusableElement.conditionTimer = win.setTimeout(

@@ -5,8 +5,24 @@
 
 import { nativeFocus } from "keyborg";
 
-import * as Types from "./Types";
-import { GetWindow, Visibilities, Visibility } from "./Types";
+import {
+    DummyInputObserver as DummyInputObserverInterface,
+    GetWindow,
+    RadioButtonGroup,
+    SysProps,
+    TabsterAttributeProps,
+    TabsterCore,
+    TabsterPart as TabsterPartInterface,
+    Visibility,
+    WeakHTMLElement as WeakHTMLElementInterface,
+} from "./Types";
+import {
+    FOCUSABLE_SELECTOR,
+    SysDummyInputsPositions,
+    TABSTER_ATTRIBUTE_NAME,
+    TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
+    Visibilities,
+} from "./Consts";
 import { TabsterMoveFocusEvent } from "./Events";
 import { dom } from "./DOMAPI";
 
@@ -152,7 +168,7 @@ export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
 }
 
 export function hasSubFocusable(element: HTMLElement): boolean {
-    return !!element.querySelector(Types.FocusableSelector);
+    return !!element.querySelector(FOCUSABLE_SELECTOR);
 }
 
 interface TabsterWeakRef<T> {
@@ -190,7 +206,7 @@ class FakeWeakRef<T extends HTMLElement = HTMLElement>
 }
 
 export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
-    implements Types.WeakHTMLElement<D>
+    implements WeakHTMLElementInterface<D>
 {
     private _ref: TabsterWeakRef<T> | undefined;
     private _data: D | undefined;
@@ -640,15 +656,15 @@ export function setBasics(win: Window, basics: InternalBasics): void {
 let _lastTabsterPartId = 0;
 
 export abstract class TabsterPart<P, D = undefined>
-    implements Types.TabsterPart<P>
+    implements TabsterPartInterface<P>
 {
-    protected _tabster: Types.TabsterCore;
+    protected _tabster: TabsterCore;
     protected _element: WeakHTMLElement<HTMLElement, D>;
     protected _props: P;
 
     readonly id: string;
 
-    constructor(tabster: Types.TabsterCore, element: HTMLElement, props: P) {
+    constructor(tabster: TabsterCore, element: HTMLElement, props: P) {
         const getWindow = tabster.getWindow;
         this._tabster = tabster;
         this._element = new WeakHTMLElement(getWindow, element);
@@ -701,7 +717,7 @@ export class DummyInput {
     onFocusOut?: DummyInputFocusCallback;
 
     constructor(
-        getWindow: Types.GetWindow,
+        getWindow: GetWindow,
         isOutside: boolean,
         props: DummyInputProps,
         element?: WeakHTMLElement,
@@ -713,7 +729,7 @@ export class DummyInput {
         input.tabIndex = 0;
         input.setAttribute("role", "none");
 
-        input.setAttribute(Types.TabsterDummyInputAttributeName, "");
+        input.setAttribute(TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME, "");
         input.setAttribute("aria-hidden", "true");
 
         const style = input.style;
@@ -855,7 +871,7 @@ export const DummyInputManagerPriorities = {
     Modalizer: 2,
     Mover: 3,
     Groupper: 4,
-};
+} as const;
 
 export class DummyInputManager {
     private _instance?: DummyInputManagerCore;
@@ -864,10 +880,10 @@ export class DummyInputManager {
     protected _element: WeakHTMLElement;
 
     constructor(
-        tabster: Types.TabsterCore,
+        tabster: TabsterCore,
         element: WeakHTMLElement,
         priority: number,
-        sys: Types.SysProps | undefined,
+        sys: SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -922,7 +938,7 @@ export class DummyInputManager {
     }
 
     static moveWithPhantomDummy(
-        tabster: Types.TabsterCore,
+        tabster: TabsterCore,
         element: HTMLElement, // The target element to move to or out of.
         moveOutOfElement: boolean, // Whether to move out of the element or into it.
         isBackward: boolean, // Are we tabbing of shift-tabbing?
@@ -1064,7 +1080,7 @@ export class DummyInputManager {
     }
 
     static addPhantomDummyWithTarget(
-        tabster: Types.TabsterCore,
+        tabster: TabsterCore,
         sourceElement: HTMLElement,
         isBackward: boolean,
         targetElement: HTMLElement
@@ -1125,7 +1141,7 @@ function setDummyInputDebugValue(
     };
 
     dummy.input?.setAttribute(
-        Types.TabsterDummyInputAttributeName,
+        TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
         [
             `isFirst=${dummy.isFirst}`,
             `isOutside=${dummy.isOutside}`,
@@ -1136,7 +1152,7 @@ function setDummyInputDebugValue(
     );
 }
 
-export class DummyInputObserver implements Types.DummyInputObserver {
+export class DummyInputObserver implements DummyInputObserverInterface {
     private _win?: GetWindow;
     private _updateQueue: Set<
         (
@@ -1310,9 +1326,9 @@ export class DummyInputObserver implements Types.DummyInputObserver {
  * Parent class that encapsulates the behaviour of dummy inputs (focus sentinels)
  */
 class DummyInputManagerCore {
-    private _tabster: Types.TabsterCore;
+    private _tabster: TabsterCore;
     private _addTimer: number | undefined;
-    private _getWindow: Types.GetWindow;
+    private _getWindow: GetWindow;
     private _wrappers: DummyInputWrapper[] = [];
     private _element: WeakHTMLElement | undefined;
     private _isOutside = false;
@@ -1322,11 +1338,11 @@ class DummyInputManagerCore {
     private _callForDefaultAction: boolean | undefined;
 
     constructor(
-        tabster: Types.TabsterCore,
+        tabster: TabsterCore,
         element: WeakHTMLElement,
         manager: DummyInputManager,
         priority: number,
-        sys: Types.SysProps | undefined,
+        sys: SysProps | undefined,
         outsideByDefault?: boolean,
         callForDefaultAction?: boolean
     ) {
@@ -1377,7 +1393,7 @@ class DummyInputManagerCore {
                   tagName === "OL" ||
                   tagName === "TABLE") &&
               !(tagName === "LI" || tagName === "TD" || tagName === "TH")
-            : forcedDummyPosition === Types.SysDummyInputsPositions.Outside;
+            : forcedDummyPosition === SysDummyInputsPositions.Outside;
 
         this._firstDummy = new DummyInput(
             this._getWindow,
@@ -1808,7 +1824,7 @@ export function getAdjacentElement(
 }
 
 export function augmentAttribute(
-    tabster: Types.TabsterCore,
+    tabster: TabsterCore,
     element: HTMLElement,
     name: string,
     value?: string | null // Restore original value when undefined.
@@ -1869,15 +1885,15 @@ export function augmentAttribute(
 
 export function getTabsterAttributeOnElement(
     element: HTMLElement
-): Types.TabsterAttributeProps | null {
-    if (!element.hasAttribute(Types.TabsterAttributeName)) {
+): TabsterAttributeProps | null {
+    if (!element.hasAttribute(TABSTER_ATTRIBUTE_NAME)) {
         return null;
     }
 
     // We already checked the presence with `hasAttribute`
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rawAttribute = element.getAttribute(Types.TabsterAttributeName)!;
-    let tabsterAttribute: Types.TabsterAttributeProps;
+    const rawAttribute = element.getAttribute(TABSTER_ATTRIBUTE_NAME)!;
+    let tabsterAttribute: TabsterAttributeProps;
     try {
         tabsterAttribute = JSON.parse(rawAttribute);
     } catch {
@@ -1936,7 +1952,7 @@ export function isRadio(element: HTMLElement): boolean {
 
 export function getRadioButtonGroup(
     element: HTMLElement
-): Types.RadioButtonGroup | undefined {
+): RadioButtonGroup | undefined {
     if (!isRadio(element)) {
         return;
     }

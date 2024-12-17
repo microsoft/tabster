@@ -9,19 +9,16 @@ import { RootAPI } from "./Root";
 import { FocusedElementState } from "./State/FocusedElement";
 import { Keys } from "./Keys";
 import * as Types from "./Types";
+import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events";
+import { ModalizerEventDetail } from "./EventsTypes";
 import {
-    ModalizerActiveEvent,
-    ModalizerEventDetail,
-    ModalizerInactiveEvent,
-} from "./Events";
-import {
+    augmentAttribute,
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
+    getDummyInputContainer,
     TabsterPart,
     WeakHTMLElement,
-    augmentAttribute,
-    getDummyInputContainer,
 } from "./Utils";
 import { dom } from "./DOMAPI";
 
@@ -274,6 +271,10 @@ export class Modalizer
                     },
                     findPropsOut
                 );
+
+                if (next === null) {
+                    next = currentElement;
+                }
 
                 outOfDOMOrder = true;
             } else {

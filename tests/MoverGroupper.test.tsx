@@ -4,7 +4,13 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    GroupperTabbabilities,
+    MoverDirections,
+    Types,
+    Visibilities,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("MoverGroupper", () => {
@@ -13,9 +19,9 @@ describe("MoverGroupper", () => {
     });
 
     it.each<[string, Types.GroupperTabbability | undefined]>([
-        ["Limited", Types.GroupperTabbabilities.Limited],
-        ["LimitedTrapFocus", Types.GroupperTabbabilities.LimitedTrapFocus],
-        ["Unlimited", Types.GroupperTabbabilities.Unlimited],
+        ["Limited", GroupperTabbabilities.Limited],
+        ["LimitedTrapFocus", GroupperTabbabilities.LimitedTrapFocus],
+        ["Unlimited", GroupperTabbabilities.Unlimited],
         ["undefined", undefined],
     ])(
         "should properly move the focus when focusable grouppers with %s tabbability are in mover",
@@ -99,9 +105,9 @@ describe("MoverGroupper", () => {
     );
 
     it.each<[string, Types.GroupperTabbability | undefined]>([
-        ["Limited", Types.GroupperTabbabilities.Limited],
-        ["LimitedTrapFocus", Types.GroupperTabbabilities.LimitedTrapFocus],
-        ["Unlimited", Types.GroupperTabbabilities.Unlimited],
+        ["Limited", GroupperTabbabilities.Limited],
+        ["LimitedTrapFocus", GroupperTabbabilities.LimitedTrapFocus],
+        ["Unlimited", GroupperTabbabilities.Unlimited],
         ["undefined", undefined],
     ])(
         "should properly move the focus when not focusable grouppers with %s tabbability are in mover",
@@ -157,7 +163,7 @@ describe("MoverGroupper", () => {
                     expect(el?.textContent).toEqual("Button1");
                 });
 
-            if (tabbability === Types.GroupperTabbabilities.LimitedTrapFocus) {
+            if (tabbability === GroupperTabbabilities.LimitedTrapFocus) {
                 test = test.pressEsc();
             }
 
@@ -306,8 +312,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -328,8 +333,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -401,8 +405,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -424,8 +427,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -511,8 +513,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -527,8 +528,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -586,8 +586,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -597,8 +596,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -615,8 +613,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -635,8 +632,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -646,8 +642,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -664,8 +659,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -753,8 +747,7 @@ describe("MoverGroupper", () => {
                     <ul
                         {...getTabsterAttribute({
                             mover: {
-                                visibilityAware:
-                                    Types.Visibilities.PartiallyVisible,
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                     >
@@ -763,8 +756,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -772,7 +764,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     mover: {
                                         visibilityAware:
-                                            Types.Visibilities.PartiallyVisible,
+                                            Visibilities.PartiallyVisible,
                                     },
                                 })}
                             >
@@ -781,8 +773,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -797,8 +788,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -806,7 +796,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     mover: {
                                         visibilityAware:
-                                            Types.Visibilities.PartiallyVisible,
+                                            Visibilities.PartiallyVisible,
                                     },
                                 })}
                             >
@@ -815,8 +805,7 @@ describe("MoverGroupper", () => {
                                     {...getTabsterAttribute({
                                         groupper: {
                                             tabbability:
-                                                Types.GroupperTabbabilities
-                                                    .LimitedTrapFocus,
+                                                GroupperTabbabilities.LimitedTrapFocus,
                                         },
                                     })}
                                 >
@@ -867,8 +856,7 @@ describe("MoverGroupper", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
@@ -877,7 +865,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 mover: {
                                     visibilityAware:
-                                        Types.Visibilities.PartiallyVisible,
+                                        Visibilities.PartiallyVisible,
                                 },
                             })}
                         >
@@ -887,8 +875,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                     focusable: {
                                         ignoreKeydown: { Escape: true },
@@ -1000,8 +987,7 @@ describe("MoverGroupper", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
@@ -1010,7 +996,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 mover: {
                                     visibilityAware:
-                                        Types.Visibilities.PartiallyVisible,
+                                        Visibilities.PartiallyVisible,
                                 },
                             })}
                         >
@@ -1021,8 +1007,7 @@ describe("MoverGroupper", () => {
                                     groupper: {
                                         delegated: true,
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -1130,8 +1115,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1140,8 +1124,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -1153,8 +1136,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -1249,8 +1231,7 @@ describe("MoverGroupper", () => {
                                 {...getTabsterAttribute({
                                     groupper: {
                                         tabbability:
-                                            Types.GroupperTabbabilities
-                                                .LimitedTrapFocus,
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
@@ -1331,8 +1312,7 @@ describe("MoverGroupper", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
@@ -1405,8 +1385,7 @@ describe("MoverGroupper", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                                 mover: {},
                             })}
@@ -1470,7 +1449,7 @@ describe("MoverGroupper", () => {
                         {...getTabsterAttribute({
                             mover: {
                                 memorizeCurrent: true,
-                                direction: Types.MoverDirections.Vertical,
+                                direction: MoverDirections.Vertical,
                             },
                         })}
                     >
@@ -1478,13 +1457,12 @@ describe("MoverGroupper", () => {
                             tabIndex={0}
                             {...getTabsterAttribute({
                                 mover: {
-                                    direction: Types.MoverDirections.Horizontal,
+                                    direction: MoverDirections.Horizontal,
                                     cyclic: true,
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1495,13 +1473,12 @@ describe("MoverGroupper", () => {
                             tabIndex={0}
                             {...getTabsterAttribute({
                                 mover: {
-                                    direction: Types.MoverDirections.Horizontal,
+                                    direction: MoverDirections.Horizontal,
                                     cyclic: true,
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
@@ -1512,13 +1489,12 @@ describe("MoverGroupper", () => {
                             tabIndex={0}
                             {...getTabsterAttribute({
                                 mover: {
-                                    direction: Types.MoverDirections.Horizontal,
+                                    direction: MoverDirections.Horizontal,
                                     cyclic: true,
                                 },
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >

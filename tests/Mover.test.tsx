@@ -4,7 +4,13 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    MoverDirections,
+    MoverKeys,
+    Types,
+    Visibilities,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("Mover", () => {
@@ -37,13 +43,8 @@ describe("Mover", () => {
             "pressUp" | "pressLeft"
         ]
     >([
-        ["vertical", Types.MoverDirections.Vertical, "pressDown", "pressUp"],
-        [
-            "horizontal",
-            Types.MoverDirections.Horizontal,
-            "pressRight",
-            "pressLeft",
-        ],
+        ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
+        ["horizontal", MoverDirections.Horizontal, "pressRight", "pressLeft"],
     ])(
         "should use arrow keys on %s axis",
         async (_, direction, next, previous) => {
@@ -92,13 +93,8 @@ describe("Mover", () => {
             "pressUp" | "pressLeft"
         ]
     >([
-        ["vertical", Types.MoverDirections.Vertical, "pressDown", "pressUp"],
-        [
-            "horizontal",
-            Types.MoverDirections.Horizontal,
-            "pressRight",
-            "pressLeft",
-        ],
+        ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
+        ["horizontal", MoverDirections.Horizontal, "pressRight", "pressLeft"],
     ])(
         "should not escape boundaries with arrow keys on %s axis",
         async (_, direction, next, previous) => {
@@ -130,13 +126,8 @@ describe("Mover", () => {
             "pressUp" | "pressLeft"
         ]
     >([
-        ["vertical", Types.MoverDirections.Vertical, "pressDown", "pressUp"],
-        [
-            "horizontal",
-            Types.MoverDirections.Horizontal,
-            "pressRight",
-            "pressLeft",
-        ],
+        ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
+        ["horizontal", MoverDirections.Horizontal, "pressRight", "pressLeft"],
     ])(
         "should allow circular navigation on %s axis",
         async (_, direction, next, previous) => {
@@ -164,7 +155,7 @@ describe("Mover", () => {
     it("should navigate using tab keys", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Horizontal,
+                direction: MoverDirections.Horizontal,
                 tabbable: true,
             },
         });
@@ -190,7 +181,7 @@ describe("Mover", () => {
     it("should leave the mover using tab if navigation type is arrows only", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
             },
         });
 
@@ -238,7 +229,7 @@ describe("NestedMovers", () => {
     it("should move from from parent to nested mover with arrow keys", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
             },
         });
 
@@ -251,7 +242,7 @@ describe("NestedMovers", () => {
     it("should not move from from nested to parent mover with arrow keys", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
             },
         });
 
@@ -264,7 +255,7 @@ describe("NestedMovers", () => {
     it("should not move from nested to parent mover with arrow keys with circular navigation", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
                 cyclic: true,
             },
         });
@@ -281,7 +272,7 @@ describe("NestedMovers", () => {
     it("should allow user to prevent default and control tab focus", async () => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
                 cyclic: true,
             },
             focusable: {
@@ -338,7 +329,7 @@ describe("NestedMovers", () => {
     ] as const)("should ignore %s key", async (key) => {
         const attr = getTabsterAttribute({
             mover: {
-                direction: Types.MoverDirections.Vertical,
+                direction: MoverDirections.Vertical,
                 cyclic: true,
             },
             focusable: {
@@ -383,7 +374,7 @@ describe("NestedMovers", () => {
         async (key) => {
             const attr = getTabsterAttribute({
                 mover: {
-                    direction: Types.MoverDirections.Both,
+                    direction: MoverDirections.Both,
                     cyclic: true,
                 },
             });
@@ -597,6 +588,42 @@ describe("Mover memorizing current", () => {
                     );
             })
             .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button4");
+            });
+    });
+
+    it("should move to first element when the previously memorized one is removed from DOM", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { memorizeCurrent: true },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button id="button2">Button2</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
+            )
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toBeUndefined();
+            })
+            .removeElement("#button2")
+            .pressTab(true)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
             });
@@ -1374,8 +1401,7 @@ describe("Mover with visibilityAware", () => {
                         id="container"
                         {...getTabsterAttribute({
                             mover: {
-                                visibilityAware:
-                                    Types.Visibilities.PartiallyVisible,
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                         style={containerStyles}
@@ -1438,8 +1464,7 @@ describe("Mover with visibilityAware", () => {
                         id="container"
                         {...getTabsterAttribute({
                             mover: {
-                                visibilityAware:
-                                    Types.Visibilities.PartiallyVisible,
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                         style={containerStyles}
@@ -1500,8 +1525,7 @@ describe("Mover with visibilityAware", () => {
                         id="container"
                         {...getTabsterAttribute({
                             mover: {
-                                visibilityAware:
-                                    Types.Visibilities.PartiallyVisible,
+                                visibilityAware: Visibilities.PartiallyVisible,
                                 visibilityTolerance: 0.1,
                             },
                         })}
@@ -1538,8 +1562,7 @@ describe("Mover with visibilityAware", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                visibilityAware:
-                                    Types.Visibilities.PartiallyVisible,
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                         style={{ height: 200, overflow: "scroll" }}
@@ -1604,7 +1627,7 @@ describe("Mover with grid", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Grid,
+                                direction: MoverDirections.Grid,
                             },
                         })}
                     >
@@ -1737,7 +1760,7 @@ describe("Mover with grid", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Grid,
+                                direction: MoverDirections.Grid,
                             },
                         })}
                         style={{
@@ -1866,7 +1889,7 @@ describe("Mover with grid", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Grid,
+                                direction: MoverDirections.Grid,
                             },
                         })}
                         style={{
@@ -2055,7 +2078,7 @@ describe("Mover with grid", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.Grid,
+                                direction: MoverDirections.Grid,
                             },
                         })}
                         style={{
@@ -2176,7 +2199,7 @@ describe("Mover with linear grid", () => {
                     <div
                         {...getTabsterAttribute({
                             mover: {
-                                direction: Types.MoverDirections.GridLinear,
+                                direction: MoverDirections.GridLinear,
                             },
                         })}
                     >
@@ -2439,8 +2462,7 @@ describe("Adjacent Movers", () => {
                                     {...getTabsterAttribute({
                                         mover: {
                                             direction:
-                                                Types.MoverDirections
-                                                    .Horizontal,
+                                                MoverDirections.Horizontal,
                                         },
                                     })}
                                 >
@@ -2455,8 +2477,7 @@ describe("Adjacent Movers", () => {
                                     {...getTabsterAttribute({
                                         mover: {
                                             direction:
-                                                Types.MoverDirections
-                                                    .Horizontal,
+                                                MoverDirections.Horizontal,
                                         },
                                     })}
                                 >
@@ -2528,8 +2549,7 @@ describe("Adjacent Movers", () => {
                                     {...getTabsterAttribute({
                                         mover: {
                                             direction:
-                                                Types.MoverDirections
-                                                    .Horizontal,
+                                                MoverDirections.Horizontal,
                                             memorizeCurrent: true,
                                         },
                                     })}
@@ -2545,8 +2565,7 @@ describe("Adjacent Movers", () => {
                                     {...getTabsterAttribute({
                                         mover: {
                                             direction:
-                                                Types.MoverDirections
-                                                    .Horizontal,
+                                                MoverDirections.Horizontal,
                                             memorizeCurrent: true,
                                         },
                                     })}
@@ -2920,7 +2939,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.ArrowDown)
+            }, MoverKeys.ArrowDown)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             })
@@ -2935,7 +2954,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.PageDown)
+            }, MoverKeys.PageDown)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button5");
             })
@@ -2950,7 +2969,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.ArrowUp)
+            }, MoverKeys.ArrowUp)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button4");
             })
@@ -2965,7 +2984,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.PageUp)
+            }, MoverKeys.PageUp)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
@@ -2980,7 +2999,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.End)
+            }, MoverKeys.End)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button5");
             })
@@ -2995,7 +3014,7 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
                     activeElement.dispatchEvent(
                         new MoverMoveFocusEvent({ key })
                     );
-            }, Types.MoverKeys.Home)
+            }, MoverKeys.Home)
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             });

@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import { getTabsterAttribute, Types, GroupperTabbabilities } from "tabster";
 import { WindowWithTabsterInstance } from "../src/Root";
 import * as BroTest from "./utils/BroTest";
 
@@ -484,8 +484,7 @@ describe("Tabster create", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
@@ -494,8 +493,7 @@ describe("Tabster create", () => {
                             {...getTabsterAttribute({
                                 groupper: {
                                     tabbability:
-                                        Types.GroupperTabbabilities
-                                            .LimitedTrapFocus,
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
