@@ -811,8 +811,7 @@ describe("Groupper - activate on focus and click", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                             modalizer: {
                                 id: "modalizer1",
@@ -832,8 +831,7 @@ describe("Groupper - activate on focus and click", () => {
                         {...getTabsterAttribute({
                             groupper: {
                                 tabbability:
-                                    Types.GroupperTabbabilities
-                                        .LimitedTrapFocus,
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                             modalizer: {
                                 id: "modalizer2",
