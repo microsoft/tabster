@@ -272,6 +272,10 @@ export class Modalizer
                     findPropsOut
                 );
 
+                if (next === null) {
+                    next = currentElement;
+                }
+
                 outOfDOMOrder = true;
             } else {
                 outOfDOMOrder = !!findPropsOut.outOfDOMOrder;

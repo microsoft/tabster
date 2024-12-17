@@ -180,7 +180,8 @@ export class FocusedElementState
     focus(
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
+        noAccessibleCheck?: boolean,
+        preventScroll?: boolean
     ): boolean {
         if (
             !this._tabster.focusable.isFocusable(
@@ -193,7 +194,7 @@ export class FocusedElementState
             return false;
         }
 
-        element.focus();
+        element.focus({ preventScroll });
 
         return true;
     }

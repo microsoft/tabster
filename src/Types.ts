@@ -148,7 +148,8 @@ export interface FocusedElementState
     focus(
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
+        noAccessibleCheck?: boolean,
+        preventScroll?: boolean
     ): boolean;
     focusDefault(container: HTMLElement): boolean;
     /** @internal */
@@ -1094,6 +1095,7 @@ export interface SysOnElement {
 
 export interface RestorerProps {
     type: RestorerType;
+    id?: string;
 }
 
 export type TabsterAttributeProps = Partial<{

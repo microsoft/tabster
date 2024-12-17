@@ -445,3 +445,118 @@ describe("Restorer focus priority", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("target"));
     });
 });
+
+describe("Restorer focus link", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ restorer: true });
+    });
+    it('should restore focus to the last "linked" target', async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target },
+        });
+        const linkedTargetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target, id: "link" },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...linkedTargetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 2
+                    </button>
+
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
+    });
+    it('should not restore focus if no "linked" target is available', async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 2
+                    </button>
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el).toEqual(null));
+    });
+    it("should not restore focus to target that is not in DOM anymore", async () => {
+        const rootAttr = getTabsterAttribute({ root: {} });
+        const linkedSourceAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Source, id: "link" },
+        });
+        const targetAttr = getTabsterAttribute({
+            restorer: { type: RestorerTypes.Target, id: "link" },
+        });
+        await new BroTest.BroTest(
+            (
+                <div {...rootAttr}>
+                    <button id="target-1" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="target-2" {...targetAttr}>
+                        target 1
+                    </button>
+                    <button id="source" {...linkedSourceAttr}>
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target-2")
+                    ?.remove();
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
+    });
+});
