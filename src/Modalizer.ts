@@ -438,7 +438,10 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this._tabster.focusedElement.getFocusedElement() ?? null;
 
         // Adding a modalizer which is already focused, activate it
-        if (dom.nodeContains(element, focusedElement)) {
+        if (
+            element !== focusedElement &&
+            dom.nodeContains(element, focusedElement)
+        ) {
             if (userId !== this.activeId) {
                 this.setActive(modalizer);
             } else {
