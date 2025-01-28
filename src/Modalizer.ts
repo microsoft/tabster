@@ -346,6 +346,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     private _hiddenUpdateTimer: number | undefined;
     private _alwaysAccessibleSelector: string | undefined;
     private _accessibleCheck: Types.ModalizerElementAccessibleCheck | undefined;
+    private _activationHistory: (string | undefined)[];
 
     activeId: string | undefined;
     currentIsOthersAccessible: boolean | undefined;
@@ -365,6 +366,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         this._aug = [];
         this._alwaysAccessibleSelector = alwaysAccessibleSelector;
         this._accessibleCheck = accessibleCheck;
+        this._activationHistory = [];
         this.activeElements = [];
 
         if (!tabster.controlTab) {
@@ -465,8 +467,38 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             if (Object.keys(part).length === 0) {
                 delete this._parts[userId];
 
+                const activationHistory = this._activationHistory;
+                const cleanActivationHistory: (string | undefined)[] = [];
+                let prevHistoryItem: string | undefined;
+
+                // The history order is from most recent to oldest.
+                for (let i = activationHistory.length; i--; ) {
+                    // Remove from activation history, making sure there are no duplicates
+                    // for cases like [modal2, modal1, modal2, modal1]: just removing modal2
+                    // will result in [modal1, modal1] and we want just [modal1].
+                    const mid = activationHistory[i];
+
+                    if (mid === userId) {
+                        continue;
+                    }
+
+                    if (mid !== prevHistoryItem) {
+                        prevHistoryItem = mid;
+
+                        if (mid || cleanActivationHistory.length > 0) {
+                            cleanActivationHistory.unshift(mid);
+                        }
+                    }
+                }
+
+                this._activationHistory = cleanActivationHistory;
+
                 if (this.activeId === userId) {
-                    this.setActive(undefined);
+                    const prevActiveId = cleanActivationHistory[0];
+                    const prevActive = prevActiveId
+                        ? Object.values(this._parts[prevActiveId])[0]
+                        : undefined;
+                    this.setActive(prevActive);
                 }
             }
         }
@@ -591,6 +623,14 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             modalizer?.getProps().isOthersAccessible;
 
         this.hiddenUpdate();
+
+        const activationHistory = this._activationHistory;
+        if (
+            activationHistory[0] !== userId &&
+            (userId !== undefined || activationHistory.length > 0)
+        ) {
+            activationHistory.unshift(userId);
+        }
     }
 
     focus(
