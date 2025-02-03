@@ -379,6 +379,13 @@ describe("Focusable", () => {
                     }
                 ).__tabsterTestRequest;
 
+                // Clean up the global variable.
+                delete (
+                    window as {
+                        __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                    }
+                ).__tabsterTestRequest;
+
                 return request ? [await request.result, request.status] : [];
             })
             .check(
