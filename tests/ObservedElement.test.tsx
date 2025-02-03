@@ -372,18 +372,26 @@ describe("Focusable", () => {
                     .dom?.getElementById(document, "test-button")
                     ?.removeAttribute("aria-hidden");
             })
-            .wait(500)
-            .eval(
-                () =>
-                    (
-                        window as {
-                            __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
-                        }
-                    ).__tabsterTestRequest?.status
-            )
-            .check((status: Types.ObservedElementRequestStatus) => {
-                expect(status).toBe(ObservedElementRequestStatuses.Succeeded);
+            .eval(async () => {
+                const request = (
+                    window as {
+                        __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                    }
+                ).__tabsterTestRequest;
+
+                return request ? [await request.result, request.status] : [];
             })
+            .check(
+                ([res, status]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             });
