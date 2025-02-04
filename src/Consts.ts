@@ -31,6 +31,13 @@ export const ObservedElementAccessibilities = {
     Focusable: 2,
 } as const;
 
+export const ObservedElementRequestStatuses = {
+    Waiting: 0,
+    Succeeded: 1,
+    Canceled: 2,
+    TimedOut: 3,
+} as const;
+
 export const RestoreFocusOrders = {
     History: 0,
     DeloserDefault: 1,
