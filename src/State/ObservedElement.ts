@@ -233,7 +233,9 @@ export class ObservedElementAPI
         const request: Types.ObservedElementAsyncRequest<HTMLElement | null> = {
             result: promise,
             cancel: () => {
-                request.status = ObservedElementRequestStatuses.Canceled;
+                if (request.status === ObservedElementRequestStatuses.Waiting) {
+                    request.status = ObservedElementRequestStatuses.Canceled;
+                }
                 this._rejectWaiting(key, true);
             },
             status: ObservedElementRequestStatuses.Waiting,
