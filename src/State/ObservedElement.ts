@@ -234,6 +234,8 @@ export class ObservedElementAPI
             result: promise,
             cancel: () => {
                 if (request.status === ObservedElementRequestStatuses.Waiting) {
+                    // cancel() function is callable by user, someone might call it after request is finished,
+                    // we are making sure that status of a finished request is not overriden.
                     request.status = ObservedElementRequestStatuses.Canceled;
                 }
                 this._rejectWaiting(key, true);
