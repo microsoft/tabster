@@ -488,8 +488,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                     if (modalizerUserIdFromHistory !== prevHistoryItem) {
                         prevHistoryItem = modalizerUserIdFromHistory;
 
-                        if (modalizerUserIdFromHistory || cleanActivationHistory.length > 0) {
-                            cleanActivationHistory.unshift(modalizerUserIdFromHistory);
+                        if (
+                            modalizerUserIdFromHistory ||
+                            cleanActivationHistory.length > 0
+                        ) {
+                            cleanActivationHistory.unshift(
+                                modalizerUserIdFromHistory
+                            );
                         }
                     }
                 }
