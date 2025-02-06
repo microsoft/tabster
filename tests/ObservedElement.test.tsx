@@ -4,7 +4,11 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, Types } from "tabster";
+import {
+    getTabsterAttribute,
+    Types,
+    ObservedElementRequestStatuses,
+} from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("Focusable", () => {
@@ -33,13 +37,35 @@ describe("Focusable", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
-            .eval((name) => {
-                return getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    0
-                ).result;
+            .eval(async (name) => {
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        name,
+                        0
+                    );
+
+                const initialStatus = request?.status;
+
+                return request
+                    ? [await request.result, request.status, initialStatus]
+                    : [];
             }, name)
-            .check((res: boolean) => expect(res).toBe(true))
+            .check(
+                ([res, status, initialStatus]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    // Given the element is already there, the initial status is Succeeded too.
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             });
@@ -67,13 +93,35 @@ describe("Focusable", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
-            .eval((name) => {
-                return getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    0
-                ).result;
+            .eval(async (name) => {
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        name,
+                        0
+                    );
+
+                const initialStatus = request?.status;
+
+                return request
+                    ? [await request.result, request.status, initialStatus]
+                    : [];
             }, names[0])
-            .check((res: boolean) => expect(res).toBe(true))
+            .check(
+                ([res, status, initialStatus]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    // Given the element is already there, the initial status is Succeeded too.
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             })
@@ -82,13 +130,35 @@ describe("Focusable", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             })
-            .eval((name) => {
-                return getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    0
-                ).result;
+            .eval(async (name) => {
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        name,
+                        0
+                    );
+
+                const initialStatus = request?.status;
+
+                return request
+                    ? [await request.result, request.status, initialStatus]
+                    : [];
             }, names[1])
-            .check((res: boolean) => expect(res).toBe(true))
+            .check(
+                ([res, status, initialStatus]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    // Given the element is already there, the initial status is Succeeded too.
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             });
@@ -99,12 +169,14 @@ describe("Focusable", () => {
         await new BroTest.BroTest(
             <div id="root" {...getTabsterAttribute({ root: {} })}></div>
         )
-            .eval((name) => {
+            .eval(async (name) => {
                 const request =
                     getTabsterTestVariables().observedElement?.requestFocus(
                         name,
                         5000
-                    ).result;
+                    );
+
+                const initialStatus = request?.status;
 
                 const observedButton = document.createElement("button");
                 observedButton.textContent = name;
@@ -119,9 +191,25 @@ describe("Focusable", () => {
                     JSON.stringify(observed)
                 );
 
-                return request;
+                return request
+                    ? [await request.result, request.status, initialStatus]
+                    : [];
             }, name)
-            .check((res: boolean) => expect(res).toBe(true))
+            .check(
+                ([res, status, initialStatus]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Waiting
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual(name);
             });
@@ -129,13 +217,14 @@ describe("Focusable", () => {
 
     it("should cancel the focus request when the next one is happened", async () => {
         await new BroTest.BroTest(<div id="root"></div>)
-            .eval(() => {
-                return new Promise((resolve) => {
+            .eval(async () => {
+                return await new Promise((resolve) => {
                     const request1 =
                         getTabsterTestVariables().observedElement?.requestFocus(
                             "button1",
                             10005000
                         );
+                    const initialRequest1Status = request1?.status;
 
                     setTimeout(() => {
                         const request2 =
@@ -143,6 +232,7 @@ describe("Focusable", () => {
                                 "button2",
                                 10005000
                             );
+                        const initialRequest2Status = request2?.status;
 
                         setTimeout(() => {
                             const button1 = document.createElement("button");
@@ -160,7 +250,7 @@ describe("Focusable", () => {
 
                             root?.appendChild(button1);
 
-                            setTimeout(() => {
+                            setTimeout(async () => {
                                 const button2 =
                                     document.createElement("button");
                                 button2.setAttribute(
@@ -170,21 +260,56 @@ describe("Focusable", () => {
                                 button2.textContent = "Button2";
                                 root?.appendChild(button2);
 
-                                Promise.all([
-                                    request1?.result,
-                                    request2?.result,
-                                ]).then((onfulfilled) => {
-                                    resolve(onfulfilled);
-                                });
+                                resolve(
+                                    request1 && request2
+                                        ? [
+                                              await request1.result,
+                                              request1.status,
+                                              initialRequest1Status,
+                                              await request2.result,
+                                              request2.status,
+                                              initialRequest2Status,
+                                          ]
+                                        : []
+                                );
                             }, 100);
                         }, 100);
                     }, 100);
                 });
             })
-            .check((result: [boolean, boolean]) => {
-                expect(result[0]).toBe(false);
-                expect(result[1]).toBe(true);
-            })
+            .check(
+                ([
+                    res1,
+                    status1,
+                    initialStatus1,
+                    res2,
+                    status2,
+                    initialStatus2,
+                ]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus,
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res1).toBe(false);
+                    expect(status1).toBe(
+                        ObservedElementRequestStatuses.Canceled
+                    );
+                    expect(initialStatus1).toBe(
+                        ObservedElementRequestStatuses.Waiting
+                    );
+
+                    expect(res2).toBe(true);
+                    expect(status2).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    expect(initialStatus2).toBe(
+                        ObservedElementRequestStatuses.Waiting
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button2");
             });
@@ -208,12 +333,37 @@ describe("Focusable", () => {
             )
         )
             .eval((name) => {
-                getTabsterTestVariables().observedElement?.requestFocus(
-                    name,
-                    100500
-                );
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        name,
+                        100500
+                    );
+
+                (
+                    window as {
+                        __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                    }
+                ).__tabsterTestRequest = request;
+
+                return request?.status;
             }, name)
+            .check((initialStatus: Types.ObservedElementRequestStatus) => {
+                expect(initialStatus).toBe(
+                    ObservedElementRequestStatuses.Waiting
+                );
+            })
             .wait(500)
+            .eval(
+                () =>
+                    (
+                        window as {
+                            __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                        }
+                    ).__tabsterTestRequest?.status
+            )
+            .check((status: Types.ObservedElementRequestStatus) => {
+                expect(status).toBe(ObservedElementRequestStatuses.Waiting);
+            })
             .activeElement((el) => {
                 expect(el?.textContent).toBeUndefined();
             })
@@ -222,7 +372,33 @@ describe("Focusable", () => {
                     .dom?.getElementById(document, "test-button")
                     ?.removeAttribute("aria-hidden");
             })
-            .wait(500)
+            .eval(async () => {
+                const request = (
+                    window as {
+                        __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                    }
+                ).__tabsterTestRequest;
+
+                // Clean up the global variable.
+                delete (
+                    window as {
+                        __tabsterTestRequest?: Types.ObservedElementAsyncRequest<boolean>;
+                    }
+                ).__tabsterTestRequest;
+
+                return request ? [await request.result, request.status] : [];
+            })
+            .check(
+                ([res, status]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                }
+            )
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1");
             });
@@ -295,5 +471,43 @@ describe("Focusable", () => {
                 expect(el?.attributes.id).toEqual("test-button-2");
                 expect(el?.textContent).toEqual("CreatedButton");
             });
+    });
+
+    it("should time out waiting for nonexistent element", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                </div>
+            )
+        )
+            .eval(async () => {
+                const request =
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        "SomeName",
+                        600 // Set timeout relatively low to not wait forever
+                    );
+
+                const initialStatus = request?.status;
+
+                return request
+                    ? [await request.result, request.status, initialStatus]
+                    : [];
+            })
+            .check(
+                ([res, status, initialStatus]: [
+                    boolean,
+                    Types.ObservedElementRequestStatus,
+                    Types.ObservedElementRequestStatus
+                ]) => {
+                    expect(res).toBe(false);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.TimedOut
+                    );
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Waiting
+                    );
+                }
+            );
     });
 });

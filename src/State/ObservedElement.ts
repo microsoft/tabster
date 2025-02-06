@@ -5,7 +5,10 @@
 
 import { getTabsterOnElement } from "../Instance";
 import * as Types from "../Types";
-import { ObservedElementAccessibilities } from "../Consts";
+import {
+    ObservedElementAccessibilities,
+    ObservedElementRequestStatuses,
+} from "../Consts";
 import {
     documentContains,
     getElementUId,
@@ -181,6 +184,7 @@ export class ObservedElementAPI
                 cancel: () => {
                     /**/
                 },
+                status: ObservedElementRequestStatuses.Succeeded,
             };
         }
 
@@ -209,6 +213,10 @@ export class ObservedElementAPI
 
                 delete this._waiting[key];
 
+                if (w.request) {
+                    w.request.status = ObservedElementRequestStatuses.TimedOut;
+                }
+
                 if (w.resolve) {
                     w.resolve(null);
                 }
@@ -222,12 +230,20 @@ export class ObservedElementAPI
             }
         );
 
-        w.request = {
+        const request: Types.ObservedElementAsyncRequest<HTMLElement | null> = {
             result: promise,
             cancel: () => {
+                if (request.status === ObservedElementRequestStatuses.Waiting) {
+                    // cancel() function is callable by user, someone might call it after request is finished,
+                    // we are making sure that status of a finished request is not overriden.
+                    request.status = ObservedElementRequestStatuses.Canceled;
+                }
                 this._rejectWaiting(key, true);
             },
+            status: ObservedElementRequestStatuses.Waiting,
         };
+
+        w.request = request;
 
         if (accessibility && this.getElement(observedName)) {
             // If the observed element is alread in DOM, but not accessible yet,
@@ -235,7 +251,7 @@ export class ObservedElementAPI
             this._waitConditional(observedName);
         }
 
-        return w.request;
+        return request;
     }
 
     requestFocus(
@@ -259,13 +275,7 @@ export class ObservedElementAPI
         this._currentRequest = request;
         this._currentRequestTimestamp = Date.now();
 
-        request.result.finally(() => {
-            if (this._currentRequest === request) {
-                delete this._currentRequest;
-            }
-        });
-
-        return {
+        const ret: Types.ObservedElementAsyncRequest<boolean> = {
             result: request.result.then((element) =>
                 this._lastRequestFocusId === requestId && element
                     ? this._tabster.focusedElement.focus(
@@ -279,7 +289,18 @@ export class ObservedElementAPI
             cancel: () => {
                 request.cancel();
             },
+            status: request.status,
         };
+
+        request.result.finally(() => {
+            if (this._currentRequest === request) {
+                delete this._currentRequest;
+            }
+
+            ret.status = request.status;
+        });
+
+        return ret;
     }
 
     onObservedElementUpdate = (element: HTMLElement): void => {
@@ -380,6 +401,11 @@ export class ObservedElementAPI
             }
 
             delete this._waiting[key];
+
+            if (waiting.request) {
+                waiting.request.status =
+                    ObservedElementRequestStatuses.Succeeded;
+            }
 
             if (waiting.resolve) {
                 waiting.resolve(element);

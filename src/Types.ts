@@ -221,9 +221,17 @@ export type ObservedElementAccessibilities =
 export type ObservedElementAccessibility =
     ObservedElementAccessibilities[keyof ObservedElementAccessibilities];
 
+import { ObservedElementRequestStatuses as _ObservedElementRequestStatuses } from "./Consts";
+export type ObservedElementRequestStatuses =
+    typeof _ObservedElementRequestStatuses;
+
+export type ObservedElementRequestStatus =
+    ObservedElementRequestStatuses[keyof ObservedElementRequestStatuses];
+
 export interface ObservedElementAsyncRequest<T> {
     result: Promise<T>;
     cancel(): void;
+    status?: ObservedElementRequestStatus; // Making status optional for the interface backwards compatibility.
 }
 
 interface ObservedElementAPIInternal {
