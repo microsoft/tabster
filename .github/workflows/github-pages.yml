@@ -31,7 +31,7 @@ jobs:
         run: npm run prepare-pages-deploy
 
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: './.pages-deploy/'
 
