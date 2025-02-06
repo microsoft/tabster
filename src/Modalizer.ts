@@ -475,18 +475,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 for (let i = activationHistory.length; i--; ) {
                     // Remove from activation history, making sure there are no duplicates
                     // for cases like [modal2, modal1, modal2, modal1]: just removing modal2
-                    // will result in [modal1, modal1] and we want just [modal1].
-                    const mid = activationHistory[i];
+                    // will result in [modal1, modal1] and we want just [modal1]. Otherwise,
+                    // there is a chance for this array to grow forever in a narrow case of
+                    // a modalizer that stays in DOM forever and is being activated/deactivated
+                    // switching between other modalizers that come and go.
+                    const modalizerUserIdFromHistory = activationHistory[i];
 
-                    if (mid === userId) {
+                    if (modalizerUserIdFromHistory === userId) {
                         continue;
                     }
 
-                    if (mid !== prevHistoryItem) {
-                        prevHistoryItem = mid;
+                    if (modalizerUserIdFromHistory !== prevHistoryItem) {
+                        prevHistoryItem = modalizerUserIdFromHistory;
 
-                        if (mid || cleanActivationHistory.length > 0) {
-                            cleanActivationHistory.unshift(mid);
+                        if (modalizerUserIdFromHistory || cleanActivationHistory.length > 0) {
+                            cleanActivationHistory.unshift(modalizerUserIdFromHistory);
                         }
                     }
                 }
