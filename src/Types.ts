@@ -231,7 +231,7 @@ export type ObservedElementRequestStatus =
 export interface ObservedElementAsyncRequest<T> {
     result: Promise<T>;
     cancel(): void;
-    status: ObservedElementRequestStatus;
+    status?: ObservedElementRequestStatus; // Making status optional for the interface backwards compatibility.
 }
 
 interface ObservedElementAPIInternal {
