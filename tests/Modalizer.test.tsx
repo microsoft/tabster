@@ -2878,3 +2878,75 @@ describe("Modalizer activation on creation", () => {
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"));
     });
 });
+
+describe("Modalizer activation history", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
+
+    it("should activate most recently active modalizer when currently active one disappears", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="modal-1"
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-1", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                    </div>
+                    <button>Button2</button>
+                    <div
+                        id="modal-2"
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-2", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                    <button>Button3</button>
+                    <div
+                        id="modal-3"
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-3", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-3">ModalButton3</button>
+                    </div>
+                    <button>Button4</button>
+                </div>
+            )
+        )
+            .focusElement("#modal-button-1")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .focusElement("#modal-button-3")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .focusElement("#modal-button-2")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton2")
+            )
+            .removeElement("#modal-2")
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab()
+            .wait(300) // Give Modalizer time to restore focus to active modalizer.
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton3")
+            )
+            .removeElement("#modal-3")
+            .activeElement((el) => expect(el?.textContent).toBeUndefined())
+            .pressTab()
+            .wait(300) // Give Modalizer time to restore focus to active modalizer.
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            );
+    });
+});
