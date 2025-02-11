@@ -3023,7 +3023,7 @@ describe("Modalizer activation", () => {
             .check((result: boolean[]) => {
                 expect(result).toEqual([true]);
             })
-            .pressTab()
+            .pressTab(true)
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1")
             );
