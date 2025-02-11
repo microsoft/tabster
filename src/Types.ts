@@ -1021,7 +1021,7 @@ export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
      * already).
      *
      * @param modalizerElementOrContainer The element that belongs to a Modalizer or the Modalizer container,
-     * or null to active main app (deactivating any active modalizer).
+     * or undefined to active main app (deactivating any active modalizer).
      * @returns true if the modalizer was activated.
      */
     activate(modalizerElementOrContainer: HTMLElement | undefined): boolean;
