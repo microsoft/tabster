@@ -692,6 +692,23 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         return false;
     }
 
+    activate(modalizerElementOrContainer: HTMLElement | undefined): boolean {
+        const modalizerToActivate: Types.Modalizer | undefined =
+            modalizerElementOrContainer
+                ? RootAPI.getTabsterContext(
+                      this._tabster,
+                      modalizerElementOrContainer
+                  )?.modalizer
+                : undefined;
+
+        if (!modalizerElementOrContainer || modalizerToActivate) {
+            this.setActive(modalizerToActivate);
+            return true;
+        }
+
+        return false;
+    }
+
     acceptElement(
         element: HTMLElement,
         state: Types.FocusableAcceptElementState

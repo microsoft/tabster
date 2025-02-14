@@ -1014,6 +1014,17 @@ export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
         noFocusFirst?: boolean,
         noFocusDefault?: boolean
     ): boolean;
+
+    /**
+     * Just activates the modalizer without focusing on any element. Might be useful,
+     * when the modalizer doesn't have focusable elements yet (but you want it active
+     * already).
+     *
+     * @param modalizerElementOrContainer The element that belongs to a Modalizer or the Modalizer container,
+     * or undefined to activate main app (deactivating any active modalizer).
+     * @returns true if the modalizer was activated.
+     */
+    activate(modalizerElementOrContainer: HTMLElement | undefined): boolean;
 }
 
 interface RestorerAPIInternal {

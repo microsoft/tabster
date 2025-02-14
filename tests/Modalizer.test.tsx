@@ -2879,7 +2879,7 @@ describe("Modalizer activation on creation", () => {
     });
 });
 
-describe("Modalizer activation history", () => {
+describe("Modalizer activation", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ modalizer: true });
     });
@@ -2945,6 +2945,85 @@ describe("Modalizer activation history", () => {
             .activeElement((el) => expect(el?.textContent).toBeUndefined())
             .pressTab()
             .wait(300) // Give Modalizer time to restore focus to active modalizer.
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            );
+    });
+
+    it("should activate modalizer by element from modalizer or modalizer container", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div
+                        id="modal-1"
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-1", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                    </div>
+                    <button>Button2</button>
+                </div>
+            )
+        )
+            .focusElement("#button-1")
+            .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
+            .eval(() => {
+                const tabsterTestVariables = getTabsterTestVariables();
+                const element = tabsterTestVariables.dom?.getElementById(
+                    document,
+                    "modal-button-1"
+                );
+
+                if (element) {
+                    // Activate by element from modalizer.
+                    return [tabsterTestVariables.modalizer?.activate(element)];
+                }
+
+                return [];
+            })
+            .check((result: boolean[]) => {
+                expect(result).toEqual([true]);
+            })
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .pressTab()
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .eval(() => {
+                return [
+                    // Deactivate modalizer.
+                    getTabsterTestVariables().modalizer?.activate(undefined),
+                ];
+            })
+            .check((result: boolean[]) => {
+                expect(result).toEqual([true]);
+            })
+            .pressTab()
+            .activeElement((el) => expect(el?.textContent).toEqual("Button2"))
+            .eval(() => {
+                const tabsterTestVariables = getTabsterTestVariables();
+                const element = tabsterTestVariables.dom?.getElementById(
+                    document,
+                    "modal-1"
+                );
+
+                if (element) {
+                    // Activate by modalizer container.
+                    return [tabsterTestVariables.modalizer?.activate(element)];
+                }
+
+                return [];
+            })
+            .check((result: boolean[]) => {
+                expect(result).toEqual([true]);
+            })
+            .pressTab(true)
             .activeElement((el) =>
                 expect(el?.textContent).toEqual("ModalButton1")
             );
