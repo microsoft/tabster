@@ -347,6 +347,133 @@ describe("Modalizer", () => {
                 .click("#outside")
                 .activeElement((el) => expect(el?.textContent).toBe("Outside"));
         });
+
+        it("should not restore focus when inactive modalizer is clicked and focus is already returned to the active one which is undefined", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <button id="button-2">Button2</button>
+                        <div
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                },
+                            })}
+                        >
+                            <button id="modal-button-1">ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <button id="button-3">Button3</button>
+                    </div>
+                )
+            )
+                .pressTab()
+                .eval(() => {
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "modal-button-1")
+                        ?.addEventListener("click", () => {
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "button-2")
+                                ?.focus();
+                        });
+                })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                )
+                .click("#modal-button-1")
+                .wait(300)
+                .activeElement((el) => expect(el?.textContent).toBe("Button2"));
+        });
+
+        it("should not restore focus when inactive modalizer is clicked and focus is already returned to the active one which is another modalizer", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <button id="button-2">Button2</button>
+                        <div
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal-1",
+                                },
+                            })}
+                        >
+                            <button id="modal-button-1">ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <div
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal-2",
+                                },
+                            })}
+                        >
+                            <button id="modal-button-3">ModalButton3</button>
+                            <button id="modal-button-4">ModalButton4</button>
+                            <button id="modal-button-5">ModalButton5</button>
+                        </div>
+                        <button id="button-3">Button3</button>
+                    </div>
+                )
+            )
+                .eval(() => {
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "modal-button-1")
+                        ?.addEventListener("click", () => {
+                            getTabsterTestVariables()
+                                .dom?.getElementById(document, "modal-button-4")
+                                ?.focus();
+                        });
+                })
+                .focusElement("#modal-button-5")
+                .wait(300)
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("ModalButton5")
+                )
+                .click("#modal-button-1")
+                .wait(300)
+                .activeElement((el) =>
+                    expect(el?.textContent).toBe("ModalButton4")
+                );
+        });
+
+        it("should not restore focus when inactive modalizer is clicked and there is no focused element", async () => {
+            await new BroTest.BroTest(
+                (
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <div
+                            {...getTabsterAttribute({
+                                modalizer: {
+                                    id: "modal",
+                                },
+                            })}
+                        >
+                            <button id="modal-button-1">ModalButton1</button>
+                            <button>ModalButton2</button>
+                        </div>
+                        <button>Button2</button>
+                    </div>
+                )
+            )
+                .pressTab()
+                .eval(() => {
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "modal-button-1")
+                        ?.addEventListener("click", () => {
+                            (
+                                document.activeElement as HTMLElement | null
+                            )?.blur();
+                        });
+                })
+                .activeElement((el) =>
+                    expect(el?.textContent).toEqual("Button1")
+                )
+                .click("#modal-button-1")
+                .wait(300)
+                .activeElement((el) => expect(el?.textContent).toBeUndefined());
+        });
     });
 
     describe("Others content accessible", () => {
