@@ -1011,6 +1011,21 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             return;
         }
 
+        const focusedElement = this._tabster.focusedElement.getFocusedElement();
+        const focusedElementModalizer =
+            focusedElement &&
+            RootAPI.getTabsterContext(this._tabster, focusedElement)?.modalizer;
+
+        if (
+            !focusedElement ||
+            (focusedElement &&
+                focusedElementModalizer?.userId === this.activeId)
+        ) {
+            // If there is no currently focused element, or the currently focused element
+            // is in the active modalizer, we don't need to do anything.
+            return;
+        }
+
         const tabster = this._tabster;
         const ctx = RootAPI.getTabsterContext(tabster, outsideElement);
         const modalizer = ctx?.modalizer;
