@@ -425,9 +425,10 @@ export class RootAPI implements Types.RootAPI {
             const tagName = (curElement as HTMLElement).tagName;
 
             if (
-                tabsterOnElement.uncontrolled ||
-                tagName === "IFRAME" ||
-                tagName === "WEBVIEW"
+                (tabsterOnElement.uncontrolled ||
+                    tagName === "IFRAME" ||
+                    tagName === "WEBVIEW") &&
+                tabster.focusable.isVisible(curElement as HTMLElement)
             ) {
                 uncontrolled = curElement as HTMLElement;
             }
