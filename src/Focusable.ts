@@ -390,7 +390,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             !state.hasCustomCondition &&
             (element.tagName === "IFRAME" || element.tagName === "WEBVIEW")
         ) {
-            if (ctx.modalizer?.userId === this._tabster.modalizer?.activeId) {
+            if (
+                this.isVisible(element) &&
+                ctx.modalizer?.userId === this._tabster.modalizer?.activeId
+            ) {
                 state.found = true;
                 state.rejectElementsFrom = state.foundElement = element;
 
