@@ -635,7 +635,12 @@ export class FocusedElementState
                 return;
             }
 
-            if (nextUncontrolled || nextElement.tagName === "IFRAME") {
+            if (
+                (nextUncontrolled &&
+                    tabster.focusable.isVisible(nextUncontrolled)) ||
+                (nextElement.tagName === "IFRAME" &&
+                    tabster.focusable.isVisible(nextElement))
+            ) {
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 if (
@@ -649,7 +654,7 @@ export class FocusedElementState
                     )
                 ) {
                     DummyInputManager.moveWithPhantomDummy(
-                        this._tabster,
+                        tabster,
                         nextUncontrolled ?? nextElement,
                         false,
                         isBackward,
