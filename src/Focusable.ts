@@ -452,12 +452,17 @@ export class FocusableAPI implements Types.FocusableAPI {
             if (
                 groupperElement &&
                 (groupperElement === container ||
-                    !dom.nodeContains(container, groupperElement))
+                    !dom.nodeContains(container, groupperElement) ||
+                    !dom.nodeContains(groupperElement, element))
             ) {
                 groupper = undefined;
             }
 
-            if (moverElement && !dom.nodeContains(container, moverElement)) {
+            if (
+                moverElement &&
+                (!dom.nodeContains(container, moverElement) ||
+                    !dom.nodeContains(moverElement, element))
+            ) {
                 mover = undefined;
             }
 
