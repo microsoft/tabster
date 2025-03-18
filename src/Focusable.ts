@@ -390,7 +390,10 @@ export class FocusableAPI implements Types.FocusableAPI {
             !state.hasCustomCondition &&
             (element.tagName === "IFRAME" || element.tagName === "WEBVIEW")
         ) {
-            if (ctx.modalizer?.userId === this._tabster.modalizer?.activeId) {
+            if (
+                this.isVisible(element) &&
+                ctx.modalizer?.userId === this._tabster.modalizer?.activeId
+            ) {
                 state.found = true;
                 state.rejectElementsFrom = state.foundElement = element;
 
@@ -446,16 +449,31 @@ export class FocusableAPI implements Types.FocusableAPI {
                 moverElement = fromMoverElement;
             }
 
-            if (
-                groupperElement &&
-                (groupperElement === container ||
-                    !dom.nodeContains(container, groupperElement))
-            ) {
-                groupper = undefined;
+            if (groupperElement) {
+                if (
+                    groupperElement === container ||
+                    !dom.nodeContains(container, groupperElement)
+                ) {
+                    groupper = undefined;
+                } else if (!dom.nodeContains(groupperElement, element)) {
+                    // _acceptElement() callback is called during the tree walking.
+                    // Given the potentiality of virtual parents (driven by the custom getParent() function),
+                    // we need to make sure that the groupper from the current element's context is not,
+                    // portaling us out of the DOM order.
+                    return NodeFilter.FILTER_REJECT;
+                }
             }
 
-            if (moverElement && !dom.nodeContains(container, moverElement)) {
-                mover = undefined;
+            if (moverElement) {
+                if (!dom.nodeContains(container, moverElement)) {
+                    mover = undefined;
+                } else if (!dom.nodeContains(moverElement, element)) {
+                    // _acceptElement() callback is called during the tree walking.
+                    // Given the potentiality of virtual parents (driven by the custom getParent() function),
+                    // we need to make sure that the mover from the current element's context is not,
+                    // portaling us out of the DOM order.
+                    return NodeFilter.FILTER_REJECT;
+                }
             }
 
             if (groupper && mover) {

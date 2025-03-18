@@ -942,10 +942,10 @@ describe("Uncontrolled with 3rd party focus trap", () => {
                         parent.addEventListener("keydown", (e) => {
                             if (e.key === "Tab") {
                                 const buttons =
-                                    getTabsterTestVariables().dom?.querySelectorAll(
+                                    (getTabsterTestVariables().dom?.querySelectorAll(
                                         parent,
-                                        "button, *[tabindex]" || []
-                                    ) as HTMLElement[];
+                                        "button, *[tabindex]"
+                                    ) || []) as HTMLElement[];
                                 const index = Array.prototype.indexOf.call(
                                     buttons,
                                     getTabsterTestVariables().dom?.getActiveElement(

@@ -896,3 +896,78 @@ describe("Groupper - activate on focus and click", () => {
             );
     });
 });
+
+describe("Groupper with virtual parents", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage();
+    });
+
+    it("should skip virtual children of a groupper which are not in DOM order", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    {/* <div tabIndex={0} {...getTabsterAttribute({ groupper: {tabbability: 2} })}> */}
+                    <button>Button1</button>
+                    <div
+                        id="virtualParent"
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: { tabbability: 2 },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </div>
+                    {/* <button>Button4</button> */}
+                    {/* </div> */}
+                    <div id="virtualChild">
+                        <button>Button5</button>
+                    </div>
+                    <button>Button6</button>
+                </div>
+            )
+        )
+
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                function getParent(child: Node | null): Node | null {
+                    if (!child) {
+                        return null;
+                    }
+
+                    if ((child as Element).id === "virtualChild") {
+                        return (
+                            vars.dom?.getElementById(
+                                document,
+                                "virtualParent"
+                            ) || null
+                        );
+                    }
+
+                    return (
+                        vars.dom?.getParentElement(child as HTMLElement) || null
+                    );
+                }
+
+                const tabster = vars.createTabster?.(window, {
+                    getParent,
+                });
+
+                tabster && vars.getGroupper?.(tabster);
+            })
+
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button2Button3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button6");
+            });
+    });
+});
