@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { getTabsterAttribute, GroupperTabbabilities } from "tabster";
+import { getTabsterAttribute, GroupperTabbabilities, Types } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
 describe("<iframe />", () => {
@@ -135,5 +135,65 @@ describe("<iframe />", () => {
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("IframeButton1");
             });
+    });
+
+    it("should skip invisible iframes while finding focusables", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <iframe style={{ display: "none" }} src="/iframe.html" />
+                    <button>Button2</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                return getTabsterTestVariables()
+                    .core?.focusable.findAll({ container: document.body })
+                    .map((el) => el.textContent);
+            })
+            .check((evalRet: string[]) => {
+                expect(evalRet).toEqual(["Button1", "Button2"]);
+            });
+    });
+
+    it("should skip invisible iframes while computing context", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <iframe
+                        {...getTabsterAttribute({ mover: {} })}
+                        id="iframe"
+                        style={{ display: "none" }}
+                        src="/iframe.html"
+                    />
+                    <button>Button2</button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+                const rootAPI = vars?.core?.root;
+                const iframe = vars.dom?.getElementById(document, "iframe");
+                const tabster = (rootAPI as any)?._tabster;
+                const context = (rootAPI?.constructor as any).getTabsterContext(
+                    tabster,
+                    iframe
+                );
+                return {
+                    contextType: typeof context,
+                    uncontrolled: (context as Types.TabsterContext)
+                        ?.uncontrolled?.tagName,
+                };
+            })
+            .check(
+                (evalRet: { contextType: string; uncontrolled?: string }) => {
+                    expect(evalRet).toEqual({
+                        contextType: "object",
+                        uncontrolled: undefined,
+                    });
+                }
+            );
     });
 });
