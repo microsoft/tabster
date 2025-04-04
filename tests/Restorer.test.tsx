@@ -578,7 +578,7 @@ describe("Restorer focus link", () => {
                             restorer: { type: RestorerTypes.Target },
                         })}
                     >
-                        target 1
+                        target 2
                     </button>
                     <button
                         id="target-3"
@@ -589,7 +589,7 @@ describe("Restorer focus link", () => {
                             },
                         })}
                     >
-                        target 1
+                        target 3
                     </button>
                     <button
                         id="source"
