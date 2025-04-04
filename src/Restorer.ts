@@ -219,10 +219,19 @@ export class RestorerAPI implements RestorerAPIType {
             return;
         }
 
-        const getId = (element: HTMLElement) =>
-            getTabsterOnElement(this._tabster, element)?.restorer?.getProps()
-                .id;
+        const getId = (element: HTMLElement) => {
+            const restorerProps = getTabsterOnElement(
+                this._tabster,
+                element
+            )?.restorer?.getProps();
+            // We return id or undefined if there is actual restorer on the element,
+            // and null otherwise. To filter out elements that had restorers in their lifetime
+            // but don't have them anymore.
+            return restorerProps ? restorerProps.id : null;
+        };
 
+        // sourceId is undefined or string, if there is no Restorer on the target, the element will
+        // be filtered out because getId() will return null.
         this._history.pop((target) => sourceId === getId(target))?.focus();
     };
 

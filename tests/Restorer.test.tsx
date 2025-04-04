@@ -559,4 +559,67 @@ describe("Restorer focus link", () => {
             })
             .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
     });
+
+    it("should not restore focus to target that doesn't have Restorer anymore", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        id="target-1"
+                        {...getTabsterAttribute({
+                            restorer: { type: RestorerTypes.Target },
+                        })}
+                    >
+                        target 1
+                    </button>
+                    <button
+                        id="target-2"
+                        {...getTabsterAttribute({
+                            restorer: { type: RestorerTypes.Target },
+                        })}
+                    >
+                        target 2
+                    </button>
+                    <button
+                        id="target-3"
+                        {...getTabsterAttribute({
+                            restorer: {
+                                type: RestorerTypes.Target,
+                                id: "some-id",
+                            },
+                        })}
+                    >
+                        target 3
+                    </button>
+                    <button
+                        id="source"
+                        {...getTabsterAttribute({
+                            restorer: {
+                                type: RestorerTypes.Source,
+                            },
+                        })}
+                    >
+                        source
+                    </button>
+                </div>
+            )
+        )
+            .focusElement("#target-1")
+            .focusElement("#target-2")
+            .focusElement("#target-3")
+            .focusElement("#source")
+            .activeElement((el) => expect(el?.textContent).toEqual("source"))
+            .eval(() => {
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target-2")
+                    ?.removeAttribute("data-tabster");
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "target-3")
+                    ?.removeAttribute("data-tabster");
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "source")
+                    ?.remove();
+            })
+            .activeElement((el) => expect(el?.textContent).toEqual("target 1"));
+    });
 });
