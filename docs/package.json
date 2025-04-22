@@ -40,6 +40,7 @@
     },
     "overrides": {
         "loader-utils": "^2.0.3",
-        "shell-quote": "^1.7.3"
+        "shell-quote": "^1.7.3",
+        "decompress": "^4.2.1"
     }
 }
