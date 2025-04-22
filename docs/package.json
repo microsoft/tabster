@@ -49,6 +49,9 @@
         "nth-check": "^2.0.1",
         "docusaurus@^1.14.7": {
             "path-to-regexp": "^0.1.10"
+        },
+        "@docusaurus/core@2.0.0-beta.18": {
+            "path-to-regexp": "^3.3.0"
         }
     }
 }
