@@ -110,6 +110,7 @@
     "overrides": {
         "loader-utils": "^2.0.3",
         "braces": "^3.0.3",
-        "axios": "^0.30.0"
+        "axios": "^0.30.0",
+        "cross-spawn": "^7.0.5"
     }
 }
