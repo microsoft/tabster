@@ -114,6 +114,7 @@
         "cross-spawn": "^7.0.5",
         "http-cache-semantics": "^4.1.1",
         "lodash": "^4.17.21",
-        "semver": "^7.5.2"
+        "semver": "^7.5.2",
+        "ws": "^8.17.1"
     }
 }
