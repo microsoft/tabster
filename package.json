@@ -112,6 +112,7 @@
         "braces": "^3.0.3",
         "axios": "^0.30.0",
         "cross-spawn": "^7.0.5",
-        "http-cache-semantics": "^4.1.1"
+        "http-cache-semantics": "^4.1.1",
+        "lodash": "^4.17.21"
     }
 }
