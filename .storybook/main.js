@@ -4,14 +4,23 @@ const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const version = require("../package.json").version;
 
 module.exports = {
-    core: {
-        builder: "webpack5",
+    framework: {
+        name: "@storybook/html-webpack5",
+        options: {}
     },
-    stories: [
-        "../stories/**/*.stories.mdx",
-        "../stories/**/*.stories.@(js|jsx|ts|tsx)",
+
+    core: {
+        builder: "@storybook/builder-webpack5",
+    },
+
+    stories: ["../stories/**/*.mdx", "../stories/**/*.stories.@(js|jsx|ts|tsx)"],
+    addons: [
+        "@storybook/addon-links",
+        "@storybook/addon-essentials",
+        "@storybook/addon-webpack5-compiler-babel",
+        "@storybook/html-webpack5"
     ],
-    addons: ["@storybook/addon-links", "@storybook/addon-essentials"],
+
     webpackFinal: async (config, type) => {
         const isDev = process.env.NODE_ENV !== "production";
         const isTest = process.env.NODE_ENV !== "test";
@@ -33,4 +42,6 @@ module.exports = {
 
         return config;
     },
+
+    docs: {}
 };
