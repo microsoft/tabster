@@ -14,21 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 16
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          cache: 'yarn'
+          node-version: 18.x
 
       - name: Install packages
-        run: npm install
+        run: yarn install
 
       - name: Build
         run: |
-          npm run build
-          npm run build-docs
+          yarn build
+          yarn build-docs
 
       - name: Prepare to deploy
-        run: npm run prepare-pages-deploy
+        run: yarn prepare-pages-deploy
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -3,6 +3,9 @@
 npm-debug.log*
 
 # Dependency directories
+.yarn/*
+!.yarn/patches
+!.yarn/releases
 node_modules
 
 # Storybook

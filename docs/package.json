@@ -38,7 +38,7 @@
             "last 1 safari version"
         ]
     },
-    "overrides": {
+    "resolutions": {
         "loader-utils": "^2.0.3",
         "shell-quote": "^1.7.3"
     }

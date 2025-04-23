@@ -14,13 +14,13 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Setup
 
--   npm install
+-   yarn install
 
 ## Available commands
 
 ### build
 
-`npm run build` - builds codebase.
+`yarn build` - builds codebase.
 
 ### start
 
@@ -30,16 +30,16 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ### test
 
-`npm run test` - to run all tests
+`yarn test` - to run all tests
 
-`npm run test:uncontrolled` - to run all tests in the uncontrolled codepath of tabster.
+`yarn test:uncontrolled` - to run all tests in the uncontrolled codepath of tabster.
 
 Tests need to be run in browser, so make sure storybook is running before running tests.
 
 ### format
 
-`npm run format` - to use prettier to format the codebase.
+`yarn format` - to use prettier to format the codebase.
 
 ### lint
 
-`npm run lint` - runs eslint on the codebase.
+`yarn lint` - runs eslint on the codebase.

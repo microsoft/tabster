@@ -1,4 +1,7 @@
 # Dependencies
+.yarn/*
+!.yarn/patches
+!.yarn/release
 /node_modules
 
 # Production

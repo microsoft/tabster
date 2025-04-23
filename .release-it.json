@@ -3,6 +3,6 @@
         "changelog": "npx auto-changelog --stdout --commit-limit false -u --template ./changelog.template.hbs"
     },
     "hooks": {
-        "after:bump": "npx auto-changelog -p && npm run format"
+        "after:bump": "yarn auto-changelog -p && yarn run format"
     }
 }

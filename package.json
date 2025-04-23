@@ -11,16 +11,17 @@
     "files": [
         "dist"
     ],
+    "packageManager": "yarn@4.9.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/microsoft/tabster"
     },
     "scripts": {
-        "build": "npm run clean && npm run build-bundle && npm run build-storybook",
+        "build": "yarn clean && yarn build-bundle && yarn build-storybook",
         "build-bundle": "rollup -c",
-        "build-docs": "cd docs && npm install && npm run build",
+        "build-docs": "cd docs && npm install && yarn build",
         "build-storybook": "build-storybook",
-        "bundle-size": "npm run build-bundle && bundle-size measure",
+        "bundle-size": "yarn build-bundle && bundle-size measure",
         "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
@@ -32,21 +33,21 @@
         "test:shadowdom": "SHADOWDOM=true npm test",
         "test:shadowdom:uncontrolled": "SHADOWDOM=true STORYBOOK_UNCONTROLLED=true npm test",
         "test:shadowdom:root-dummy-inputs": "SHADOWDOM=true STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm test",
-        "test:all": "npm run test && npm run test:uncontrolled && npm run test:root-dummy-inputs && npm run test:shadowdom && npm run test:shadowdom:uncontrolled && npm run test:shadowdom:root-dummy-inputs",
-        "prepublishOnly": "npm run build",
+        "test:all": "yarn test && yarn test:uncontrolled && yarn test:root-dummy-inputs && yarn test:shadowdom && yarn test:shadowdom:uncontrolled && yarn test:shadowdom:root-dummy-inputs",
+        "prepublishOnly": "yarn build",
         "release": "release-it",
         "serve": "npx http-serve storybook-static",
-        "serve-docs": "cd docs && npm run serve",
-        "start": "npm run storybook",
-        "start-docs": "cd docs && npm run start",
-        "start:uncontrolled": "STORYBOOK_UNCONTROLLED=true npm run storybook",
-        "start:root-dummy-inputs": "STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true npm run storybook",
+        "serve-docs": "cd docs && yarn serve",
+        "start": "yarn storybook",
+        "start-docs": "cd docs && yarn start",
+        "start:uncontrolled": "STORYBOOK_UNCONTROLLED=true yarn storybook",
+        "start:root-dummy-inputs": "STORYBOOK_UNCONTROLLED=true STORYBOOK_ROOT_DUMMY_INPUTS=true yarn storybook",
         "storybook": "start-storybook -p 8080",
-        "type-check": "npm run type-check:lib && npm run type-check:tests && npm run type-check:stories",
+        "type-check": "yarn type-check:lib && yarn type-check:tests && yarn type-check:stories",
         "type-check:lib": "tsc -b  src/tsconfig.lib.json",
         "type-check:tests": "tsc -b tests/tsconfig.spec.json",
         "type-check:stories": "tsc -b stories/tsconfig.stories.json",
-        "prepare-pages-deploy": "rimraf ./.pages-deploy && npm run build-docs && npm run build-storybook && copyfiles -u 2 -a \"./docs/build/**/*\" ./.pages-deploy && copyfiles -u 1 -a \"./storybook-static/**/*\" ./.pages-deploy/storybook"
+        "prepare-pages-deploy": "rimraf ./.pages-deploy && yarn build-docs && yarn build-storybook && copyfiles -u 2 -a \"./docs/build/**/*\" ./.pages-deploy && copyfiles -u 1 -a \"./storybook-static/**/*\" ./.pages-deploy/storybook"
     },
     "dependencies": {
         "keyborg": "2.6.0",
@@ -107,7 +108,7 @@
         "typescript": "^4.9.4",
         "vite": "^2.9.12"
     },
-    "overrides": {
+    "resolutions": {
         "loader-utils": "^2.0.3"
     }
 }

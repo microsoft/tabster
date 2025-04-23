@@ -16,73 +16,74 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 16
-        uses: actions/setup-node@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          cache: 'yarn'
+          node-version: 18.x
 
-      - run: npm install
-      - run: npm run type-check
-      - run: npm run build
-      - run: npm run lint:check
-      - run: npm run format:check
+      - run: yarn install --immutable
+      - run: yarn type-check
+      - run: yarn build
+      - run: yarn lint:check
+      - run: yarn format:check
       - name: "Run tests"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8080'
       - name: "Rebuild test container (uncontrolled)"
         run: |
-          npm run build
+          yarn build
         env:
           STORYBOOK_UNCONTROLLED: 'true'
       - name: "Run tests (uncontrolled)"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8081'
           STORYBOOK_UNCONTROLLED: 'true'
       - name: "Rebuild test container (root-dummy-inputs)"
         run: |
-          npm run build
+          yarn build
         env:
           STORYBOOK_UNCONTROLLED: 'true'
           STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
       - name: "Run tests (root-dummy-inputs)"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8082'
           STORYBOOK_UNCONTROLLED: 'true'
           STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
       - name: "Rebuild test container (ShadowDOM)"
         run: |
-          npm run build
+          yarn build
         env:
           SHADOWDOM: 'true'
       - name: "Run tests (ShadowDOM)"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8083'
           SHADOWDOM: 'true'
       - name: "Rebuild test container (ShadowDOM uncontrolled)"
         run: |
-          npm run build
+          yarn build
         env:
           SHADOWDOM: 'true'
           STORYBOOK_UNCONTROLLED: 'true'
       - name: "Run tests (ShadowDOM uncontrolled)"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8084'
           SHADOWDOM: 'true'
           STORYBOOK_UNCONTROLLED: 'true'
       - name: "Rebuild test container (ShadowDOM root-dummy-inputs)"
         run: |
-          npm run build
+          yarn build
         env:
           SHADOWDOM: 'true'
           STORYBOOK_UNCONTROLLED: 'true'
           STORYBOOK_ROOT_DUMMY_INPUTS: 'true'
       - name: "Run tests (ShadowDOM root-dummy-inputs)"
-        run: npm run test
+        run: yarn test
         env:
           PORT: '8085'
           SHADOWDOM: 'true'
@@ -93,4 +94,4 @@ jobs:
           git status --porcelain
           git diff-index --quiet HEAD -- || exit 1
       - name: "Build docs"
-        run: npm run build-docs
+        run: yarn build-docs
