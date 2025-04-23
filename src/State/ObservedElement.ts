@@ -228,7 +228,10 @@ export class ObservedElementAPI
                 w.resolve = resolve;
                 w.reject = reject;
             }
-        );
+        ).catch(() => {
+            // Ignore the error, it is expected to be rejected when the request is canceled.
+            return null;
+        });
 
         const request: Types.ObservedElementAsyncRequest<HTMLElement | null> = {
             result: promise,
