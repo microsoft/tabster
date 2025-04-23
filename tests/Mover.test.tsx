@@ -40,7 +40,7 @@ describe("Mover", () => {
             string,
             Types.MoverDirection,
             "pressDown" | "pressRight",
-            "pressUp" | "pressLeft"
+            "pressUp" | "pressLeft",
         ]
     >([
         ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
@@ -90,7 +90,7 @@ describe("Mover", () => {
             string,
             Types.MoverDirection,
             "pressDown" | "pressRight",
-            "pressUp" | "pressLeft"
+            "pressUp" | "pressLeft",
         ]
     >([
         ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
@@ -123,7 +123,7 @@ describe("Mover", () => {
             string,
             Types.MoverDirection,
             "pressDown" | "pressRight",
-            "pressUp" | "pressLeft"
+            "pressUp" | "pressLeft",
         ]
     >([
         ["vertical", MoverDirections.Vertical, "pressDown", "pressUp"],
@@ -1296,36 +1296,39 @@ describe("Mover with trackState", () => {
                 </div>
             )
         )
-            .eval((moverAttribute: string) => {
-                document.addEventListener("tabster:mover:state", (e) => {
-                    let className = "item";
+            .eval(
+                (moverAttribute: string) => {
+                    document.addEventListener("tabster:mover:state", (e) => {
+                        let className = "item";
 
-                    switch (e.detail?.visibility) {
-                        case 0:
-                            className += " invisible";
-                            break;
-                        case 1:
-                            className += " partially-visible";
-                            break;
-                        case 2:
-                            className += " visible";
-                            break;
-                    }
+                        switch (e.detail?.visibility) {
+                            case 0:
+                                className += " invisible";
+                                break;
+                            case 1:
+                                className += " partially-visible";
+                                break;
+                            case 2:
+                                className += " visible";
+                                break;
+                        }
 
-                    if (e.detail?.isCurrent) {
-                        className += " active";
-                    }
+                        if (e.detail?.isCurrent) {
+                            className += " active";
+                        }
 
-                    const target = e.composedPath()[0] as HTMLElement;
+                        const target = e.composedPath()[0] as HTMLElement;
 
-                    target.className = className;
-                });
+                        target.className = className;
+                    });
 
-                // Adding mover after the event subscription.
-                getTabsterTestVariables()
-                    .dom?.getElementById(document, "container")
-                    ?.setAttribute("data-tabster", moverAttribute);
-            }, getTabsterAttribute({ mover: { trackState: true } }, true))
+                    // Adding mover after the event subscription.
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "container")
+                        ?.setAttribute("data-tabster", moverAttribute);
+                },
+                getTabsterAttribute({ mover: { trackState: true } }, true)
+            )
             .wait(300)
             .eval(() =>
                 Array.prototype.map.call(

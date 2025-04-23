@@ -14,7 +14,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Setup
 
--   npm install
+- npm install
 
 ## Available commands
 

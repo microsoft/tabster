@@ -207,18 +207,18 @@ abstract class CrossOriginTransaction<I, O> {
                 ? { [_targetIdUp]: { send: this.sendUp } }
                 : null
             : this.targetId
-            ? knownTargets[this.targetId]
-                ? {
-                      [this.targetId]: {
-                          send: knownTargets[this.targetId].send,
-                      },
-                  }
-                : null
-            : Object.keys(knownTargets).length === 0 && this.sendUp
-            ? { [_targetIdUp]: { send: this.sendUp } }
-            : Object.keys(knownTargets).length > 0
-            ? knownTargets
-            : null;
+              ? knownTargets[this.targetId]
+                  ? {
+                        [this.targetId]: {
+                            send: knownTargets[this.targetId].send,
+                        },
+                    }
+                  : null
+              : Object.keys(knownTargets).length === 0 && this.sendUp
+                ? { [_targetIdUp]: { send: this.sendUp } }
+                : Object.keys(knownTargets).length > 0
+                  ? knownTargets
+                  : null;
     }
 
     begin(
@@ -469,7 +469,7 @@ const CrossOriginStates: {
     Outline: 6,
 };
 type CrossOriginState =
-    typeof CrossOriginStates[keyof typeof CrossOriginStates];
+    (typeof CrossOriginStates)[keyof typeof CrossOriginStates];
 
 interface CrossOriginElementDataOut {
     ownerUId: string;
@@ -1145,10 +1145,13 @@ class CrossOriginTransactions {
 
         const wrapper: CrossOriginTransactionWrapper<I, O> = {
             transaction,
-            timer: owner.setTimeout(() => {
-                delete wrapper.timer;
-                transaction.end("Cross origin transaction timed out.");
-            }, _transactionTimeout + (timeout || 0)),
+            timer: owner.setTimeout(
+                () => {
+                    delete wrapper.timer;
+                    transaction.end("Cross origin transaction timed out.");
+                },
+                _transactionTimeout + (timeout || 0)
+            ),
         };
 
         this._transactions[transaction.id] = wrapper;
@@ -1429,7 +1432,7 @@ class CrossOriginTransactions {
                 data: JSON.parse(e.data),
                 send,
             });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             /* Ignore */
         }

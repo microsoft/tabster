@@ -561,8 +561,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                                 a.focusedSince > b.focusedSince
                                     ? -1
                                     : a.focusedSince < b.focusedSince
-                                    ? 1
-                                    : 0
+                                      ? 1
+                                      : 0
                             );
 
                         if (focusedSince.length) {

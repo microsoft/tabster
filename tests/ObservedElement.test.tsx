@@ -54,7 +54,7 @@ describe("Focusable", () => {
                 ([res, status, initialStatus]: [
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(true);
                     expect(status).toBe(
@@ -110,7 +110,7 @@ describe("Focusable", () => {
                 ([res, status, initialStatus]: [
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(true);
                     expect(status).toBe(
@@ -147,7 +147,7 @@ describe("Focusable", () => {
                 ([res, status, initialStatus]: [
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(true);
                     expect(status).toBe(
@@ -199,7 +199,7 @@ describe("Focusable", () => {
                 ([res, status, initialStatus]: [
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(true);
                     expect(status).toBe(
@@ -291,7 +291,7 @@ describe("Focusable", () => {
                     Types.ObservedElementRequestStatus,
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res1).toBe(false);
                     expect(status1).toBe(
@@ -391,7 +391,7 @@ describe("Focusable", () => {
             .check(
                 ([res, status]: [
                     boolean,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(true);
                     expect(status).toBe(
@@ -498,7 +498,7 @@ describe("Focusable", () => {
                 ([res, status, initialStatus]: [
                     boolean,
                     Types.ObservedElementRequestStatus,
-                    Types.ObservedElementRequestStatus
+                    Types.ObservedElementRequestStatus,
                 ]) => {
                     expect(res).toBe(false);
                     expect(status).toBe(
