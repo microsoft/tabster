@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, Story } from "@storybook/html";
+import { Meta, StoryFn } from "@storybook/html";
 import {
     createObservedWrapper,
     ObservedElementProps,
@@ -19,7 +19,7 @@ export default {
     },
 } as Meta;
 
-const Observed: Story<ObservedElementProps> = (args) => {
+const Observed: StoryFn<ObservedElementProps> = (args) => {
     return createObservedWrapper(args);
 };
 
@@ -28,7 +28,7 @@ TargetNotInDOM.args = {
     names: ["observed-0", "observed-1"],
 };
 
-const ObservedInIframe: Story<ObservedElementProps> = (args) => {
+const ObservedInIframe: StoryFn<ObservedElementProps> = (args) => {
     return createObservedWrapperWithIframe(args);
 };
 

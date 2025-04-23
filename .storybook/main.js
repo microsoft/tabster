@@ -1,4 +1,6 @@
 const version = require("../package.json").version;
+const webpack = require("webpack");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 module.exports = {
     framework: {
@@ -24,6 +26,18 @@ module.exports = {
     webpackFinal: async (config, type) => {
         const isDev = process.env.NODE_ENV !== "production";
         const isTest = process.env.NODE_ENV !== "test";
+        config.plugins.push(
+            new webpack.DefinePlugin({
+                __DEV__: JSON.stringify(isDev),
+                __VERSION__: `'${version}'`,
+            })
+        );
+        const tsConfigPathsPlugin = new TsconfigPathsPlugin();
+        if (config.resolve.plugins) {
+            config.resolve.plugins.push(tsConfigPathsPlugin);
+        } else {
+            config.resolve.plugins = [tsConfigPathsPlugin];
+        }
 
         return config;
     },
