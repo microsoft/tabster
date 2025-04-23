@@ -11,15 +11,15 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 22
+      - name: Use Node.js 20
         uses: actions/setup-node@v3
         with:
-          node-version: 22.x
+          node-version: 20.x
 
       - run: npm install
       - run: npm run type-check
