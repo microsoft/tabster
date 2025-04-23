@@ -1420,7 +1420,6 @@ class CrossOriginTransactions {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const send = (data: Types.CrossOriginTransactionData<any, any>) => {
             if (e.source && e.source.postMessage) {
-                // eslint-disable-next-line @typescript-eslint/ban-types
                 (e.source.postMessage as Function)(JSON.stringify(data), "*");
             }
         };
@@ -1430,6 +1429,7 @@ class CrossOriginTransactions {
                 data: JSON.parse(e.data),
                 send,
             });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             /* Ignore */
         }

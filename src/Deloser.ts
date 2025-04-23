@@ -187,7 +187,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
 
 export class DeloserHistory {
     private _tabster: Types.TabsterCore;
-    // eslint-disable-next-line @typescript-eslint/ban-types
     private _history: DeloserHistoryByRootBase<
         unknown,
         DeloserItemBase<unknown>
@@ -653,6 +652,7 @@ export class Deloser
                             element.ownerDocument,
                             selector
                         );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (e) {
                         if (__DEV__) {
                             // This should never happen, unless there is some bug in buildElementSelector().
