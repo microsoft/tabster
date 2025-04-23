@@ -96,6 +96,8 @@
         "jest": "^29.7.0",
         "jest-puppeteer": "^11.0.0",
         "monosize": "^0.6.3",
+        "monosize-bundler-webpack": "0.1.6",
+        "monosize-storage-azure": "0.0.16",
         "prettier": "^3.5.3",
         "puppeteer": "^24.7.1",
         "react": "^18.3.1",
