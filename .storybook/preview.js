@@ -24,7 +24,8 @@ export const parameters = {
 export const decorators = [
     (Story) => {
         const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
-        const rootDummyInputs = process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
+        const rootDummyInputs =
+            process.env.STORYBOOK_ROOT_DUMMY_INPUTS === "true";
         const tabster = createTabster(window, {
             autoRoot: {},
             controlTab,
