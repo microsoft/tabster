@@ -18,15 +18,15 @@ export default {
         visibilityAware: { control: "boolean" },
     },
 } as Meta<{
-    title: "Mover",
+    title: "Mover";
     argTypes: {
-        cyclic: { control: "boolean" },
-        direction: { control: "select", options: Types.MoverDirections },
-        memorizeCurrent: { control: "boolean" },
-        tabbable: { control: "boolean" },
-        trackState: { control: "boolean" },
-        visibilityAware: { control: "boolean" },
-    },
+        cyclic: { control: "boolean" };
+        direction: { control: "select"; options: Types.MoverDirections };
+        memorizeCurrent: { control: "boolean" };
+        tabbable: { control: "boolean" };
+        trackState: { control: "boolean" };
+        visibilityAware: { control: "boolean" };
+    };
 }>;
 
 const SimpleFocusableCollection: StoryFn<MoverProps> = (args) => {

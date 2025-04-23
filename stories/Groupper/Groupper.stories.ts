@@ -16,13 +16,13 @@ export default {
         },
     },
 } as Meta<{
-    title: "Groupper",
+    title: "Groupper";
     argTypes: {
         tabbability: {
-            control: "select",
-            options: Types.GroupperTabbabilities,
-        },
-    },
+            control: "select";
+            options: Types.GroupperTabbabilities;
+        };
+    };
 }>;
 
 const FocusableContainer: StoryFn<FocusableContainerProps> = (args) => {
