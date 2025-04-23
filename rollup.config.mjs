@@ -1,14 +1,16 @@
+import fs from "node:fs";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import sourceMaps from "rollup-plugin-sourcemaps";
+import sourceMaps from "rollup-plugin-sourcemaps2";
 import { babel } from "@rollup/plugin-babel";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
 import typescript from "rollup-plugin-typescript2";
 import dts from "rollup-plugin-dts";
 
-import pkg from "./package.json";
-
+const pkg = JSON.parse(
+    fs.readFileSync(new URL("./package.json", import.meta.url), "utf8")
+);
 const extensions = [".ts"];
 
 /**
