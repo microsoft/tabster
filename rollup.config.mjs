@@ -1,13 +1,12 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import sourceMaps from "rollup-plugin-sourcemaps";
 import { babel } from "@rollup/plugin-babel";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
 import typescript from "rollup-plugin-typescript2";
 import dts from "rollup-plugin-dts";
 
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 
 const extensions = [".ts"];
 
@@ -47,7 +46,6 @@ const config = [
             }),
             commonjs({ extensions }),
             resolve({ extensions, mainFields: ["module", "main"] }),
-            sourceMaps(),
         ],
     },
     {

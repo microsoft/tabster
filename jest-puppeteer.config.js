@@ -5,7 +5,8 @@
 
 module.exports = {
     launch: {
-        headless: true,
-        devtools: true,
+        headless: "shell",
+        devtools: false,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
     },
 };

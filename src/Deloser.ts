@@ -82,7 +82,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
 
 export abstract class DeloserHistoryByRootBase<
     I,
-    D extends DeloserItemBase<I>
+    D extends DeloserItemBase<I>,
 > {
     protected _tabster: Types.TabsterCore;
     protected _history: D[] = [];
@@ -187,7 +187,6 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
 
 export class DeloserHistory {
     private _tabster: Types.TabsterCore;
-    // eslint-disable-next-line @typescript-eslint/ban-types
     private _history: DeloserHistoryByRootBase<
         unknown,
         DeloserItemBase<unknown>
@@ -225,7 +224,7 @@ export class DeloserHistory {
     make<
         I,
         D extends DeloserItemBase<I>,
-        C extends DeloserHistoryByRootBase<I, D>
+        C extends DeloserHistoryByRootBase<I, D>,
     >(rootUId: string, createInstance: () => C): C {
         let historyByRoot: C | undefined;
 
@@ -653,6 +652,7 @@ export class Deloser
                             element.ownerDocument,
                             selector
                         );
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (e) {
                         if (__DEV__) {
                             // This should never happen, unless there is some bug in buildElementSelector().

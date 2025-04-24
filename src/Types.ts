@@ -763,7 +763,6 @@ export type MoverKeys = typeof _MoverKeys;
 
 export type MoverKey = MoverKeys[keyof MoverKeys];
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface MoverAPI extends MoverAPIInternal, Disposable {
     /** @internal (will likely be exposed once the API is fully stable) */
     moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
@@ -825,7 +824,6 @@ export type GroupperMoveFocusActions = typeof _GroupperMoveFocusActions;
 export type GroupperMoveFocusAction =
     GroupperMoveFocusActions[keyof GroupperMoveFocusActions];
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface GroupperAPI extends GroupperAPIInternal, Disposable {
     /** @internal (will likely be exposed once the API is fully stable) */
     moveFocus(

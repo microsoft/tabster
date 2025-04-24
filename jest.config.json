@@ -1,10 +1,18 @@
 {
     "preset": "jest-puppeteer",
-    "testEnvironment": "./utils/BroTestEnvironment.ts",
-    "transform": { "^.+\\.(ts|tsx|js|jsx)?$": "babel-jest" },
+    "globalSetup": "jest-environment-puppeteer/setup",
+    "globalTeardown": "jest-environment-puppeteer/teardown",
+    "testEnvironment": "jest-environment-puppeteer",
+    "transform": {
+        "^.+\\.(ts|tsx|js|jsx)?$": [
+            "babel-jest",
+            { "configFile": "./babel.config.js" }
+        ]
+    },
     "moduleNameMapper": {
         "tabster": "<rootDir>/../src/"
     },
+    "testTimeout": 10000,
     "testPathIgnorePatterns": ["utils"],
     "rootDir": "tests"
 }

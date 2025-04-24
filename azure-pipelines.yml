@@ -49,14 +49,11 @@ extends:
                     git pull
             
               - task: NodeTool@0
-                displayName: Use Node 16.x
+                displayName: Use Node 22.x
                 inputs:
-                  versionSpec: 16.x
-              # PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public is a workaround for puppeteer 
-              # as puppeteer versions <22.0.0 will cause npm install to hang in CI environments.
-              # see issue: https://github.com/puppeteer/puppeteer/issues/12833
+                  versionSpec: 22.x
               - script: | 
-                  PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public npm install
+                  npm install
                 displayName: npm install
             
               - task: CmdLine@2

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, Story } from "@storybook/html";
+import { Meta, StoryFn } from "@storybook/html";
 import { createModalDialog, ModalDialogProps } from "./ModalDialog";
 
 export default {
@@ -16,7 +16,7 @@ export default {
     },
 } as Meta;
 
-const SimpleFocusableCollection: Story<ModalDialogProps> = (args) => {
+const SimpleFocusableCollection: StoryFn<ModalDialogProps> = (args) => {
     return createModalDialog(args);
 };
 

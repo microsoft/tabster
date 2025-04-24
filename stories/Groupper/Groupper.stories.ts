@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, Story } from "@storybook/html";
-import { GroupperTabbabilities } from "tabster";
+import { Meta, StoryFn } from "@storybook/html";
+import { GroupperTabbabilities, Types } from "tabster";
 import { createFocusableContainer, FocusableContainerProps } from "./Groupper";
 
 export default {
@@ -15,9 +15,17 @@ export default {
             options: GroupperTabbabilities,
         },
     },
-} as Meta;
+} as Meta<{
+    title: "Groupper";
+    argTypes: {
+        tabbability: {
+            control: "select";
+            options: Types.GroupperTabbabilities;
+        };
+    };
+}>;
 
-const FocusableContainer: Story<FocusableContainerProps> = (args) => {
+const FocusableContainer: StoryFn<FocusableContainerProps> = (args) => {
     return createFocusableContainer(args);
 };
 

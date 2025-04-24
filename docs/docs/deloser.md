@@ -4,7 +4,7 @@
 
 Ideally when we use keyboard to navigate, the application should always have a focused element.
 In the real world, we have scenarios like modal dialogs — when we close a modal dialog, the focus
-goes nowhere (we call it _«focus goes to the <body\>»_). The lost focus is especially confusing
+goes nowhere (we call it _«focus goes to the \<body\>»_). The lost focus is especially confusing
 for the screen reader users.
 
 Things are getting even worse because we tend to build our applications from the independent

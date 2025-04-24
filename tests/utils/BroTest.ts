@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import { PassThrough } from "stream";
 import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
@@ -25,16 +25,53 @@ import {
     Types,
 } from "tabster";
 
-import type * as Events from "../../src/Events";
-
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 
 // jest.setTimeout(900000000);
 
+import type {
+    PipeableStream,
+    RenderToPipeableStreamOptions,
+} from "react-dom/server";
+
+import type * as Events from "../../src/Events";
+
 // Importing the production version so that React doesn't complain in the test output.
-declare function require(name: string): any;
-const renderToStaticMarkup: (element: React.ReactElement) => string =
-    require("react-dom/cjs/react-dom-server.node.production.min").renderToStaticMarkup;
+const renderToPipeableStream: (
+    element: React.ReactElement,
+    options?: RenderToPipeableStreamOptions
+) => PipeableStream =
+    require("../../node_modules/react-dom/cjs/react-dom-server.node.production.min").renderToPipeableStream;
+
+function renderToStringFromStream(
+    element: React.ReactElement
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const stream = new PassThrough();
+        let html = "";
+
+        const { pipe } = renderToPipeableStream(element, {
+            onShellReady() {
+                pipe(stream);
+            },
+            onError(err) {
+                reject(err);
+            },
+        });
+
+        stream.on("data", (chunk) => {
+            html += chunk.toString();
+        });
+
+        stream.on("end", () => {
+            resolve(html);
+        });
+
+        stream.on("error", (err) => {
+            reject(err);
+        });
+    });
+}
 
 declare const page: Page;
 
@@ -61,7 +98,7 @@ async function goToPageWithRetry(url: string, times: number) {
     } catch (err) {
         console.error("failed to connect to test page", url);
         console.error(err);
-        await new Promise((res, rej) => setTimeout(res, 3000));
+        await new Promise((res) => setTimeout(res, 3000));
         await goToPageWithRetry(url, times - 1);
     }
 }
@@ -283,7 +320,7 @@ class BroTestItemHTML extends BroTestItem {
                     ),
                 domKey
             ),
-            renderToStaticMarkup(this._html)
+            await renderToStringFromStream(this._html)
         );
         await sleep(100);
     }
@@ -622,6 +659,9 @@ export class BroTest implements PromiseLike<undefined> {
             })
         );
 
+        // Sometimes the next action in chain happens too fast.
+        this._chain.push(new BroTestItemWait(this._frameStack, 0));
+
         this._reportConsoleErrors(true);
 
         return this;
@@ -748,6 +788,7 @@ export class BroTest implements PromiseLike<undefined> {
     }
 
     activeElement(callback: (activeElement: BrowserElement | null) => void) {
+        this._chain.push(new BroTestItemWait(this._frameStack, 0));
         this._chain.push(
             new BroTestItemCallback(this._frameStack, async () => {
                 const activeElement = await this._frameStack[0].frame.evaluate(

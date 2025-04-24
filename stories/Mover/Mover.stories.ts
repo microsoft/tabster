@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, Story } from "@storybook/html";
-import { MoverDirections } from "tabster";
+import { Meta, StoryFn } from "@storybook/html";
+import { MoverDirections, Types } from "tabster";
 import { createBasicMover, createTableMover, MoverProps } from "./Mover";
 
 export default {
@@ -17,9 +17,19 @@ export default {
         trackState: { control: "boolean" },
         visibilityAware: { control: "boolean" },
     },
-} as Meta;
+} as Meta<{
+    title: "Mover";
+    argTypes: {
+        cyclic: { control: "boolean" };
+        direction: { control: "select"; options: Types.MoverDirections };
+        memorizeCurrent: { control: "boolean" };
+        tabbable: { control: "boolean" };
+        trackState: { control: "boolean" };
+        visibilityAware: { control: "boolean" };
+    };
+}>;
 
-const SimpleFocusableCollection: Story<MoverProps> = (args) => {
+const SimpleFocusableCollection: StoryFn<MoverProps> = (args) => {
     return createBasicMover(args);
 };
 
@@ -37,7 +47,7 @@ HorizontalOnly.args = { direction: MoverDirections.Horizontal };
 export const Tabbable = SimpleFocusableCollection.bind({});
 Tabbable.args = { tabbable: true };
 
-const TableWithFocusableCells: Story<MoverProps> = (args) =>
+const TableWithFocusableCells: StoryFn<MoverProps> = (args) =>
     createTableMover(args);
 
 export const TableWithMoverGrid = TableWithFocusableCells.bind({});

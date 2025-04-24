@@ -102,6 +102,7 @@ try {
     // optional. And it throws exception when the above arguments aren't there.
     document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
     _isBrokenIE11 = false;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
 } catch (e) {
     _isBrokenIE11 = true;
 }
@@ -265,11 +266,14 @@ export function startFakeWeakRefsCleanup(getWindow: GetWindow): void {
     }
 
     if (!context.fakeWeakRefsTimer) {
-        context.fakeWeakRefsTimer = getWindow().setTimeout(() => {
-            context.fakeWeakRefsTimer = undefined;
-            cleanupFakeWeakRefs(getWindow);
-            startFakeWeakRefsCleanup(getWindow);
-        }, 2 * 60 * 1000); // 2 minutes.
+        context.fakeWeakRefsTimer = getWindow().setTimeout(
+            () => {
+                context.fakeWeakRefsTimer = undefined;
+                cleanupFakeWeakRefs(getWindow);
+                startFakeWeakRefsCleanup(getWindow);
+            },
+            2 * 60 * 1000
+        ); // 2 minutes.
     }
 }
 
@@ -307,7 +311,6 @@ export function createElementTreeWalker(
         root,
         NodeFilter.SHOW_ELEMENT,
         filter,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore: We still don't want to completely break IE11, so, entityReferenceExpansion argument is not optional.
         false /* Last argument is not optional for IE11! */
     );

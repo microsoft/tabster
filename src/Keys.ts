@@ -31,4 +31,4 @@ export const Keys: {
     ArrowDown: "ArrowDown",
 };
 
-export type Key = typeof Keys[keyof typeof Keys];
+export type Key = (typeof Keys)[keyof typeof Keys];

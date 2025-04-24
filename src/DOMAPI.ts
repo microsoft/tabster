@@ -86,6 +86,6 @@ export const dom: DOMAPI = {
 
 export function setDOMAPI(domapi: Partial<DOMAPI>) {
     for (const key of Object.keys(domapi) as (keyof DOMAPI)[]) {
-        (dom[key] as typeof domapi[typeof key]) = domapi[key];
+        (dom[key] as (typeof domapi)[typeof key]) = domapi[key];
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, Story } from "@storybook/html";
+import { Meta, StoryFn } from "@storybook/html";
 import {
     getTabsterAttribute,
     RestorerTypes,
@@ -15,7 +15,7 @@ export default {
     title: "Restorer",
 } as Meta;
 
-export const RestorerBasicExample: Story = () => {
+export const RestorerBasicExample: StoryFn = () => {
     const sourceAttr = getTabsterAttribute(
         {
             restorer: { type: RestorerTypes.Source },
@@ -60,7 +60,7 @@ export const RestorerBasicExample: Story = () => {
     return example;
 };
 
-export const UseTargetHistory: Story = () => {
+export const UseTargetHistory: StoryFn = () => {
     const sourceAttr = getTabsterAttribute(
         {
             restorer: { type: RestorerTypes.Source },
