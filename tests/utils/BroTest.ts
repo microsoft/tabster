@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { PassThrough } from "stream";
 import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
@@ -24,18 +25,18 @@ import {
     Types,
 } from "tabster";
 
-import type * as Events from "../../src/Events";
-
 const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 
 // jest.setTimeout(900000000);
 
-// Importing the production version so that React doesn't complain in the test output.
-import { PassThrough } from "stream";
 import type {
     PipeableStream,
     RenderToPipeableStreamOptions,
 } from "react-dom/server";
+
+import type * as Events from "../../src/Events";
+
+// Importing the production version so that React doesn't complain in the test output.
 const renderToPipeableStream: (
     element: React.ReactElement,
     options?: RenderToPipeableStreamOptions
@@ -97,7 +98,7 @@ async function goToPageWithRetry(url: string, times: number) {
     } catch (err) {
         console.error("failed to connect to test page", url);
         console.error(err);
-        await new Promise((res, rej) => setTimeout(res, 3000));
+        await new Promise((res) => setTimeout(res, 3000));
         await goToPageWithRetry(url, times - 1);
     }
 }
