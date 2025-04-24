@@ -14,7 +14,6 @@
         "@docusaurus/core": "3.7.0",
         "@docusaurus/preset-classic": "3.7.0",
         "@docusaurus/theme-live-codeblock": "3.7.0",
-        "docusaurus": "^1.14.7",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
@@ -33,23 +32,5 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
-    },
-    "overrides": {
-        "bin-version": "^7.0.0",
-        "browserslist": "^4.24.4",
-        "cross-spawn": "^7.0.6",
-        "css-select": "^5.1.0",
-        "highlight.js": "^11.11.1",
-        "imagemin": "^9.0.1",
-        "imagemin-svgo": "^11.0.1",
-        "immer": "^10.1.1",
-        "loader-utils": "^2.0.3",
-        "meow": "^13.2.0",
-        "micromatch": "^4.0.8",
-        "minimatch": "^10.0.1",
-        "postcss": "^8.5.3",
-        "request": "^2.88.2",
-        "shell-quote": "^1.7.3",
-        "tough-cookie": "^5.1.2"
     }
 }

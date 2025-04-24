@@ -112,12 +112,9 @@
         "tsconfig-paths-webpack-plugin": "^4.2.0",
         "typescript": "^5.8.3",
         "typescript-eslint": "^8.31.0",
-        "vite": "^6.3.2"
+        "vite": "^6.3.3"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.40.0"
-    },
-    "overrides": {
-        "loader-utils": "^2.0.3"
     }
 }
