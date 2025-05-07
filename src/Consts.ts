@@ -12,7 +12,7 @@ export const FOCUSABLE_SELECTOR = [
     "input:not([disabled])",
     "select:not([disabled])",
     "textarea:not([disabled])",
-    "*[tabindex]",
+    "*[tabindex]:not(button[disabled]):not(select[disabled]):not(input[disabled]):not(textarea[disabled])",
     "*[contenteditable]",
     "details > summary",
     "audio[controls]",
