@@ -2856,6 +2856,223 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
                 expect(ariaHiddens).toEqual([false, false, true])
             );
     });
+
+    it("should set aria-hidden on elements which are virtual parents of active modalizer but aren't part of modalizer", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button-1">Button1</button>
+                    <div id="virtual-parent-container">
+                        <div>
+                            <span
+                                id="virtual-parent"
+                                style={{ visibility: "hidden" }}
+                            />
+                        </div>
+                    </div>
+                    <div id="modal-container-1">
+                        <div
+                            id="modal-1"
+                            aria-label="modal-1"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "modal-1", isTrapped: true },
+                            })}
+                        >
+                            <button id="modal-button-1">ModalButton1</button>
+                        </div>
+                    </div>
+                    <div id="modal-container-2">
+                        <div
+                            id="modal-2"
+                            aria-label="modal-2"
+                            {...getTabsterAttribute({
+                                modalizer: { id: "modal-2", isTrapped: true },
+                            })}
+                        >
+                            <button id="modal-button-2">ModalButton2</button>
+                        </div>
+                    </div>
+                </div>
+            )
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                function isVirtualElement(
+                    element: Node
+                ): element is NodeWithVirtualParent {
+                    // eslint-disable-next-line no-prototype-builtins
+                    return element && element.hasOwnProperty("_virtual");
+                }
+
+                function getVirtualParent(child: Node): Node | null {
+                    return isVirtualElement(child)
+                        ? child._virtual.parent || null
+                        : null;
+                }
+
+                function setVirtualParent(
+                    child: Node,
+                    parent?: Node | null
+                ): void {
+                    const virtualChild = child;
+
+                    if (
+                        !(virtualChild as unknown as NodeWithVirtualParent)
+                            ._virtual
+                    ) {
+                        (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual = {};
+                    }
+
+                    if (parent) {
+                        (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual.parent = parent;
+                    } else {
+                        delete (
+                            virtualChild as unknown as NodeWithVirtualParent
+                        )._virtual.parent;
+                    }
+                }
+
+                function getParent(child: Node | null): Node | null {
+                    if (!child) {
+                        return null;
+                    }
+
+                    const virtualParent = getVirtualParent(child);
+
+                    if (virtualParent) {
+                        return virtualParent;
+                    }
+
+                    return (
+                        vars.dom?.getParentElement(child as HTMLElement) || null
+                    );
+                }
+
+                const tabster = vars.createTabster?.(window, {
+                    getParent,
+                });
+
+                tabster && vars.getModalizer?.(tabster);
+
+                const virtualParent = vars.dom?.getElementById(
+                    document,
+                    "virtual-parent"
+                );
+                const modalChild1 = vars.dom?.getElementById(
+                    document,
+                    "modal-1"
+                );
+                const modalChild2 = vars.dom?.getElementById(
+                    document,
+                    "modal-2"
+                );
+
+                modalChild1 && setVirtualParent(modalChild1, virtualParent);
+                modalChild2 && setVirtualParent(modalChild2, virtualParent);
+            })
+            .focusElement("#modal-button-1")
+            .activeElement((el) =>
+                expect(el?.textContent).toEqual("ModalButton1")
+            )
+            .wait(500)
+            .eval(() => {
+                const dom = getTabsterTestVariables().dom;
+                return [
+                    dom
+                        ?.getElementById(document, "virtual-parent-container")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-1")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-2")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "button-1")
+                        ?.hasAttribute("aria-hidden"),
+                ];
+            })
+            .check(
+                ([
+                    virtualParentContainer,
+                    modalContainer1,
+                    modalContainer2,
+                    button1,
+                ]: [boolean, boolean, boolean, boolean]) => {
+                    expect(virtualParentContainer).toBe(true);
+                    expect(modalContainer1).toBe(false);
+                    expect(modalContainer2).toBe(true);
+                    expect(button1).toBe(true);
+                }
+            )
+            .focusElement("#modal-button-2")
+            .eval(() => {
+                const dom = getTabsterTestVariables().dom;
+                return [
+                    dom
+                        ?.getElementById(document, "virtual-parent-container")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-1")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-2")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "button-1")
+                        ?.hasAttribute("aria-hidden"),
+                ];
+            })
+            .check(
+                ([
+                    virtualParentContainer,
+                    modalContainer1,
+                    modalContainer2,
+                    button1,
+                ]: [boolean, boolean, boolean, boolean]) => {
+                    expect(virtualParentContainer).toBe(true);
+                    expect(modalContainer1).toBe(false);
+                    expect(modalContainer2).toBe(false);
+                    expect(button1).toBe(true);
+                }
+            )
+            .wait(500)
+            .eval(() => {
+                const dom = getTabsterTestVariables().dom;
+                return [
+                    dom
+                        ?.getElementById(document, "virtual-parent-container")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-1")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "modal-container-2")
+                        ?.hasAttribute("aria-hidden"),
+                    dom
+                        ?.getElementById(document, "button-1")
+                        ?.hasAttribute("aria-hidden"),
+                ];
+            })
+            .check(
+                ([
+                    virtualParentContainer,
+                    modalContainer1,
+                    modalContainer2,
+                    button1,
+                ]: [boolean, boolean, boolean, boolean]) => {
+                    expect(virtualParentContainer).toBe(true);
+                    expect(modalContainer1).toBe(true);
+                    expect(modalContainer2).toBe(false);
+                    expect(button1).toBe(true);
+                }
+            );
+    });
 });
 
 describe("Modalizer activation on creation", () => {

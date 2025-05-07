@@ -923,7 +923,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         for (
             let e: HTMLElement | null = focusedElement;
             e;
-            e = tabster.getParent(e) as HTMLElement | null
+            e = dom.getParentElement(e)
         ) {
             // If the newly focused element is inside some of the hidden containers,
             // remove aria-hidden from those synchronously for the screen readers
