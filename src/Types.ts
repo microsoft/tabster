@@ -254,7 +254,8 @@ export interface ObservedElementAPI
     ): ObservedElementAsyncRequest<HTMLElement | null>;
     requestFocus(
         observedName: string,
-        timeout: number
+        timeout: number,
+        options?: Pick<FocusOptions, "preventScroll">
     ): ObservedElementAsyncRequest<boolean>;
 }
 
