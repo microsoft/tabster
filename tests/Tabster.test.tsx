@@ -609,4 +609,101 @@ describe("Tabster create", () => {
                 expect(el?.textContent).toEqual("Button5");
             });
     });
+
+    it("should skip disabled buttons and form controls with tabindex=0", async () => {
+        await new BroTest.BroTest(
+            (
+                <div
+                    id="items"
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
+                    <button>Button 1</button>
+                    <button disabled={true} tabIndex={0}>
+                        Button 2
+                    </button>
+                    <button>Button 3</button>
+                    <div
+                        {...getTabsterAttribute({
+                            mover: { cyclic: true, direction: 2 },
+                        })}
+                    >
+                        <button>Mover 1</button>
+                        <button disabled={true} tabIndex={0}>
+                            Mover 2
+                        </button>
+                        <button>Mover 3</button>
+                    </div>
+                    <button>Button 4</button>
+                    <select id="select1" disabled={true} tabIndex={0}>
+                        <option>Option 1</option>
+                    </select>
+                    <select id="select2">
+                        <option>option 1</option>
+                    </select>
+                    <input
+                        id="input1"
+                        type="text"
+                        disabled={true}
+                        tabIndex={0}
+                    />
+                    <input id="input2" type="text" />
+                    <textarea id="textarea1" disabled={true} tabIndex={0} />
+                    <textarea id="textarea2" />
+                </div>
+            )
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                const tabster = vars.createTabster?.(window, { autoRoot: {} });
+
+                if (tabster) {
+                    vars.getMover?.(tabster);
+                }
+
+                return !!(window as WindowWithTabsterInstance)
+                    .__tabsterInstance;
+            })
+            .check((hasInstance: boolean) => {
+                expect(hasInstance).toBe(true);
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button 1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button 3");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover 1");
+            })
+            .pressRight()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover 3");
+            })
+            .pressLeft()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Mover 1");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button 4");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.attributes?.id).toEqual("select2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.attributes?.id).toEqual("input2");
+            })
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.attributes?.id).toEqual("textarea2");
+            });
+    });
 });
