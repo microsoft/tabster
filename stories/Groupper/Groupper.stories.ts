@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Meta, StoryFn } from "@storybook/html";
+import { Meta, StoryFn } from "@storybook/html-vite";
 import { GroupperTabbabilities, Types } from "tabster";
 import { createFocusableContainer, FocusableContainerProps } from "./Groupper";
 

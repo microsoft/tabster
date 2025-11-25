@@ -29,3 +29,5 @@ dts/
 .storybook-static
 
 .pages-deploy
+
+logs/

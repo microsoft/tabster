@@ -82,7 +82,16 @@ export const createObservedWrapperWithIframe = (
         if (document) {
             document.body.innerHTML = "";
             const script = document.createElement("script");
-            script.innerText = `setupTabsterInIframe(window)`;
+            script.innerText += `
+                window.__setupInterval = setInterval(
+                    () => { 
+                        if (typeof setupTabsterInIframe === "function") {
+                            clearInterval(window.__setupInterval);
+                            delete window.__setupInterval;
+                            setupTabsterInIframe(window);
+                            document.body.removeAttribute("class");
+                        }
+                    });`;
             document.body.append(script);
             const observedTarget = createObserved(props, document);
             document.body.append(observedTarget);
