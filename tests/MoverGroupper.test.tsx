@@ -179,10 +179,7 @@ describe("MoverGroupper", () => {
         await new BroTest.BroTest(
             (
                 <div {...getTabsterAttribute({ root: {} })}>
-                    <style>
-                        {".groupper .hidden { display: none; }"}
-                        {".groupper:focus-within .hidden { display: inline; }"}
-                    </style>
+                    <style>{`.groupper .hidden { display: none; } .groupper:focus-within .hidden { display: inline; }`}</style>
                     <div {...getTabsterAttribute({ mover: {} })}>
                         <div
                             className="groupper"
@@ -353,6 +350,7 @@ describe("MoverGroupper", () => {
                 </div>
             )
         )
+
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1Button2Button3");

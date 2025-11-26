@@ -4,7 +4,7 @@
         "target": "ESNext",
         "outDir": "../dist/__tests__",
         "jsx": "react",
-        "types": ["jest", "react"]
+        "types": ["jest", "react", "react-dom"]
     },
     "references": [{ "path": "../src/tsconfig.lib.json" }],
     "include": ["**/*.ts", "**/*.tsx"]
