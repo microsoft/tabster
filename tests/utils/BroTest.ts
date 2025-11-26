@@ -29,6 +29,7 @@ const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 
 // jest.setTimeout(900000000);
 
+import type { JSX } from "react";
 import type {
     PipeableStream,
     RenderToPipeableStreamOptions,
@@ -41,7 +42,7 @@ const renderToPipeableStream: (
     element: React.ReactElement,
     options?: RenderToPipeableStreamOptions
 ) => PipeableStream =
-    require("../../node_modules/react-dom/cjs/react-dom-server.node.production.min").renderToPipeableStream;
+    require("../../node_modules/react-dom/cjs/react-dom-server.node.production.js").renderToPipeableStream;
 
 function renderToStringFromStream(
     element: React.ReactElement
