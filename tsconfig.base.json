@@ -5,7 +5,7 @@
         "incremental": true,
         "noResolve": false,
         "module": "ES2015",
-        "moduleResolution": "Node",
+        "moduleResolution": "bundler",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,

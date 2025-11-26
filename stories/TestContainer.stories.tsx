@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Meta } from "@storybook/html";
+import { Meta } from "@storybook/html-vite";
 
 export default {
     title: "TestContainer",
