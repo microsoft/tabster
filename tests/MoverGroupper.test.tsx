@@ -350,7 +350,6 @@ describe("MoverGroupper", () => {
                 </div>
             )
         )
-
             .pressTab()
             .activeElement((el) => {
                 expect(el?.textContent).toEqual("Button1Button2Button3");
