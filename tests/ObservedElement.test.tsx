@@ -510,4 +510,315 @@ describe("Focusable", () => {
                 }
             );
     });
+
+    it("should return all observed elements via getAllObservedElements", async () => {
+        await new BroTest.BroTest(
+            (
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-1", "test-shared"] },
+                        })}
+                    >
+                        Button1
+                    </button>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-2", "test-shared"] },
+                        })}
+                    >
+                        Button2
+                    </button>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-3"] },
+                        })}
+                    >
+                        Button3
+                    </button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const allObserved =
+                    getTabsterTestVariables().observedElement?.getAllObservedElements();
+
+                const result: Record<
+                    string,
+                    { count: number; allNames: string[][] }
+                > = {};
+                allObserved?.forEach((items, name) => {
+                    result[name] = {
+                        count: items.length,
+                        allNames: items.map((item) => item.names),
+                    };
+                });
+
+                return result;
+            })
+            .check(
+                (
+                    result: Record<
+                        string,
+                        { count: number; allNames: string[][] }
+                    >
+                ) => {
+                    // test-1 appears in one element with two names
+                    expect(result["test-1"].count).toBe(1);
+                    expect(result["test-1"].allNames[0]).toEqual([
+                        "test-1",
+                        "test-shared",
+                    ]);
+                    // test-2 appears in one element with two names
+                    expect(result["test-2"].count).toBe(1);
+                    expect(result["test-2"].allNames[0]).toEqual([
+                        "test-2",
+                        "test-shared",
+                    ]);
+                    // test-3 appears in one element with one name
+                    expect(result["test-3"].count).toBe(1);
+                    expect(result["test-3"].allNames[0]).toEqual(["test-3"]);
+                    // test-shared appears in two elements, each with two names
+                    expect(result["test-shared"].count).toBe(2);
+                }
+            );
+    });
+
+    it("should trigger onObservedElementChange callback when elements are added", async () => {
+        await new BroTest.BroTest(<div id="root"></div>)
+            .eval(() => {
+                const changes: Array<{
+                    type: string;
+                    names: string[];
+                    text: string;
+                    addedNames?: string[];
+                    removedNames?: string[];
+                }> = [];
+
+                const observedElement =
+                    getTabsterTestVariables().observedElement;
+                if (observedElement) {
+                    observedElement.onObservedElementChange = (change) => {
+                        changes.push({
+                            type: change.type,
+                            names: change.names,
+                            text: change.element.textContent || "",
+                            addedNames: change.addedNames,
+                            removedNames: change.removedNames,
+                        });
+                    };
+                }
+
+                // Add first button
+                const button1 = document.createElement("button");
+                button1.textContent = "Button1";
+                const observed1: Types.TabsterOnElement = {
+                    observed: { names: ["test-1"] },
+                };
+                button1.setAttribute("data-tabster", JSON.stringify(observed1));
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "root")
+                    ?.appendChild(button1);
+
+                // Add second button with multiple names
+                const button2 = document.createElement("button");
+                button2.textContent = "Button2";
+                const observed2: Types.TabsterOnElement = {
+                    observed: { names: ["test-2", "test-shared"] },
+                };
+                button2.setAttribute("data-tabster", JSON.stringify(observed2));
+                getTabsterTestVariables()
+                    .dom?.getElementById(document, "root")
+                    ?.appendChild(button2);
+
+                return changes;
+            })
+            .check(
+                (
+                    changes: Array<{
+                        type: string;
+                        names: string[];
+                        text: string;
+                        addedNames?: string[];
+                        removedNames?: string[];
+                    }>
+                ) => {
+                    expect(changes.length).toBe(2);
+                    // First button is a new element with one name
+                    expect(changes[0]).toEqual({
+                        type: "added",
+                        names: ["test-1"],
+                        text: "Button1",
+                        addedNames: ["test-1"],
+                        removedNames: undefined,
+                    });
+                    // Second button is a new element with two names
+                    expect(changes[1]).toEqual({
+                        type: "added",
+                        names: ["test-2", "test-shared"],
+                        text: "Button2",
+                        addedNames: ["test-2", "test-shared"],
+                        removedNames: undefined,
+                    });
+                }
+            );
+    });
+
+    it("should trigger onObservedElementChange callback when elements are removed", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root">
+                    <button
+                        id="button1"
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-1"] },
+                        })}
+                    >
+                        Button1
+                    </button>
+                    <button
+                        id="button2"
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-2", "test-shared"] },
+                        })}
+                    >
+                        Button2
+                    </button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const changes: Array<{
+                    type: string;
+                    names: string[];
+                    text: string;
+                    addedNames?: string[];
+                    removedNames?: string[];
+                }> = [];
+
+                const observedElement =
+                    getTabsterTestVariables().observedElement;
+                if (observedElement) {
+                    observedElement.onObservedElementChange = (change) => {
+                        changes.push({
+                            type: change.type,
+                            names: change.names,
+                            text: change.element.textContent || "",
+                            addedNames: change.addedNames,
+                            removedNames: change.removedNames,
+                        });
+                    };
+                }
+
+                // Remove button2
+                const button2 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "button2"
+                );
+                if (button2) {
+                    button2.remove();
+                }
+
+                return changes;
+            })
+            .check(
+                (
+                    changes: Array<{
+                        type: string;
+                        names: string[];
+                        text: string;
+                        addedNames?: string[];
+                        removedNames?: string[];
+                    }>
+                ) => {
+                    expect(changes.length).toBe(1);
+                    // When element is removed completely, names array is empty and removedNames has all previous names
+                    expect(changes[0]).toEqual({
+                        type: "removed",
+                        names: [],
+                        text: "Button2",
+                        addedNames: undefined,
+                        removedNames: ["test-2", "test-shared"],
+                    });
+                }
+            );
+    });
+
+    it("should trigger onObservedElementChange callback when element names are updated", async () => {
+        await new BroTest.BroTest(
+            (
+                <div id="root">
+                    <button
+                        id="button1"
+                        {...getTabsterAttribute({
+                            observed: { names: ["test-1"] },
+                        })}
+                    >
+                        Button1
+                    </button>
+                </div>
+            )
+        )
+            .eval(() => {
+                const changes: Array<{
+                    type: string;
+                    names: string[];
+                    text: string;
+                    addedNames?: string[];
+                    removedNames?: string[];
+                }> = [];
+
+                const observedElement =
+                    getTabsterTestVariables().observedElement;
+                if (observedElement) {
+                    observedElement.onObservedElementChange = (change) => {
+                        changes.push({
+                            type: change.type,
+                            names: change.names,
+                            text: change.element.textContent || "",
+                            addedNames: change.addedNames,
+                            removedNames: change.removedNames,
+                        });
+                    };
+                }
+
+                // Update button1 observed names
+                const button1 = getTabsterTestVariables().dom?.getElementById(
+                    document,
+                    "button1"
+                );
+                if (button1) {
+                    const observed: Types.TabsterOnElement = {
+                        observed: { names: ["test-1", "test-new"] },
+                    };
+                    button1.setAttribute(
+                        "data-tabster",
+                        JSON.stringify(observed)
+                    );
+                }
+
+                return changes;
+            })
+            .check(
+                (
+                    changes: Array<{
+                        type: string;
+                        names: string[];
+                        text: string;
+                        addedNames?: string[];
+                        removedNames?: string[];
+                    }>
+                ) => {
+                    expect(changes.length).toBe(1);
+                    // When names are updated on existing element, addedNames shows the new name
+                    expect(changes[0]).toEqual({
+                        type: "updated",
+                        names: ["test-1", "test-new"],
+                        text: "Button1",
+                        addedNames: ["test-new"],
+                        removedNames: undefined,
+                    });
+                }
+            );
+    });
 });

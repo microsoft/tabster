@@ -214,6 +214,50 @@ export interface ObservedElementDetails extends ObservedElementProps {
     accessibility?: ObservedElementAccessibility;
 }
 
+export type ObservedElementChangeType = "added" | "removed" | "updated";
+
+/**
+ * Changes to observed elements in the DOM.
+ */
+export interface ObservedElementChange {
+    /**
+     * The HTML element that was added, removed, or updated.
+     */
+    element: HTMLElement;
+
+    /**
+     * The type of change that occurred:
+     * - "added": A new element with observed names was added to the DOM
+     * - "removed": An observed element was completely removed from the DOM
+     * - "updated": An existing observed element had its names modified (added or removed)
+     */
+    type: ObservedElementChangeType;
+
+    /**
+     * The current array of observed names associated with this element.
+     * - For "added" events: Contains all names for the new element
+     * - For "removed" events: Empty array (since element is being removed)
+     * - For "updated" events: Contains the complete current list of names after the update
+     */
+    names: string[];
+
+    /**
+     * Optional array of names that were added in this change.
+     * - For "added" events: Contains all names (same as `names`)
+     * - For "removed" events: undefined
+     * - For "updated" events: Contains only the newly added names, or undefined if no names were added
+     */
+    addedNames?: string[];
+
+    /**
+     * Optional array of names that were removed in this change.
+     * - For "added" events: undefined
+     * - For "removed" events: Contains all previous names that the element had
+     * - For "updated" events: Contains only the removed names, or undefined if no names were removed
+     */
+    removedNames?: string[];
+}
+
 import { ObservedElementAccessibilities as _ObservedElementAccessibilities } from "./Consts";
 export type ObservedElementAccessibilities =
     typeof _ObservedElementAccessibilities;
@@ -257,6 +301,28 @@ export interface ObservedElementAPI
         timeout: number,
         options?: Pick<FocusOptions, "preventScroll">
     ): ObservedElementAsyncRequest<boolean>;
+    /**
+     * Returns all currently registered observed elements grouped by their observed names.
+     *
+     * @returns A Map where each key is an observed name, and each value is an array of elements
+     * associated with that name along with their complete names arrays.
+     *
+     * @example
+     * ```typescript
+     * const allObserved = observedElement.getAllObservedElements();
+     * // Map might contain:
+     * // "button-1" -> [{ element: <button>, names: ["button-1", "primary"] }]
+     * // "primary" -> [{ element: <button>, names: ["button-1", "primary"] }]
+     * ```
+     */
+    getAllObservedElements(): Map<
+        string,
+        Array<{ element: HTMLElement; names: string[] }>
+    >;
+    /**
+     * Optional callback that is invoked whenever an observed element is added, removed, or updated in the DOM.
+     */
+    onObservedElementChange?: (change: ObservedElementChange) => void;
 }
 
 export interface CrossOriginElement {

@@ -48,6 +48,7 @@ export class ObservedElementAPI
         | Types.ObservedElementAsyncRequest<HTMLElement | null>
         | undefined;
     private _currentRequestTimestamp = 0;
+    onObservedElementChange?: (change: Types.ObservedElementChange) => void;
 
     constructor(tabster: Types.TabsterCore) {
         super();
@@ -68,6 +69,7 @@ export class ObservedElementAPI
 
         this._observedById = {};
         this._observedByName = {};
+        this.onObservedElementChange = undefined;
     }
 
     private _onFocus = (e: HTMLElement | undefined): void => {
@@ -122,6 +124,85 @@ export class ObservedElementAPI
             }
         }
         return false;
+    }
+
+    private _notifyObservedElementChange(
+        element: HTMLElement,
+        observedNames: string[],
+        prevNames: string[] | undefined,
+        isNewElement: boolean
+    ): void {
+        if (!this.onObservedElementChange) {
+            return;
+        }
+
+        const addedNames = observedNames.filter(
+            (name) => !prevNames || !prevNames.includes(name)
+        );
+        const removedNames = prevNames
+            ? prevNames.filter((name) => !observedNames.includes(name))
+            : [];
+
+        if (isNewElement) {
+            // Brand new element added
+            this.onObservedElementChange({
+                element,
+                type: "added",
+                names: observedNames,
+                addedNames: observedNames,
+            });
+        } else if (addedNames.length > 0 || removedNames.length > 0) {
+            // Existing element with names updated
+            this.onObservedElementChange({
+                element,
+                type: "updated",
+                names: observedNames,
+                addedNames: addedNames.length > 0 ? addedNames : undefined,
+                removedNames:
+                    removedNames.length > 0 ? removedNames : undefined,
+            });
+        }
+    }
+
+    /**
+     * Returns all registered observed names with their respective elements and full names arrays
+     *
+     * @returns Map<string, Array<{ element: HTMLElement; names: string[] }>> A map where keys are observed names
+     * and values are arrays of objects containing the element and its complete names array (in the order they were defined)
+     */
+    getAllObservedElements(): Map<
+        string,
+        Array<{ element: HTMLElement; names: string[] }>
+    > {
+        const result = new Map<
+            string,
+            Array<{ element: HTMLElement; names: string[] }>
+        >();
+
+        for (const name of Object.keys(this._observedByName)) {
+            const elementsWithNames: Array<{
+                element: HTMLElement;
+                names: string[];
+            }> = [];
+            const observed = this._observedByName[name];
+
+            for (const uid of Object.keys(observed)) {
+                const el = observed[uid].element.get();
+                if (el) {
+                    const info = this._observedById[uid];
+                    elementsWithNames.push({
+                        element: el,
+                        names: info?.prevNames || [],
+                    });
+                }
+            }
+
+            if (elementsWithNames.length > 0) {
+                result.set(name, elementsWithNames);
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -312,6 +393,8 @@ export class ObservedElementAPI
         let info: ObservedElementInfo | undefined = this._observedById[uid];
 
         if (observed && documentContains(element.ownerDocument, element)) {
+            const isNewElement = !info;
+
             if (!info) {
                 info = this._observedById[uid] = {
                     element: new WeakHTMLElement(this._win, element),
@@ -338,6 +421,13 @@ export class ObservedElementAPI
                 }
 
                 info.prevNames = observedNames;
+
+                this._notifyObservedElementChange(
+                    element,
+                    observedNames,
+                    prevNames,
+                    isNewElement
+                );
             }
 
             observedNames.forEach((observedName) => {
@@ -366,6 +456,13 @@ export class ObservedElementAPI
                             delete this._observedByName[prevName];
                         }
                     }
+                });
+
+                this.onObservedElementChange?.({
+                    element,
+                    type: "removed",
+                    names: [],
+                    removedNames: prevNames,
                 });
             }
 
