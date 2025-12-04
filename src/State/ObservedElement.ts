@@ -84,6 +84,14 @@ export class ObservedElementAPI
                     // Giving some time for the focus to settle before
                     // automatically cancelling the current request on focus change.
                     delete this._currentRequest;
+
+                    // Provide callback to access focused element using WeakRef to avoid memory leaks
+                    const elementRef = new WeakRef(e);
+                    current.diagnostics.getCancelTriggeringElement = () =>
+                        elementRef.deref() ?? null;
+                    current.diagnostics.reason =
+                        (current.diagnostics.reason ?? "") +
+                        "Canceled due to focus change.";
                     current.cancel();
                 }
             }
@@ -112,6 +120,46 @@ export class ObservedElementAPI
 
             delete this._waiting[key];
         }
+    }
+
+    private _populateTimeoutDiagnostics(
+        request: Types.ObservedElementAsyncRequest<HTMLElement | null>,
+        observedName: string,
+        timeout: number,
+        startTime: number
+    ): void {
+        const elementInDOM = this.getElement(observedName);
+        const inDOM = !!elementInDOM;
+        let isAccessible: boolean | undefined;
+        let isFocusable: boolean | undefined;
+        let reason: string;
+
+        if (!elementInDOM) {
+            reason = `Timeout after ${timeout}ms: Element not found in DOM.`;
+        } else {
+            isAccessible = this._tabster.focusable.isAccessible(elementInDOM);
+            isFocusable = this._tabster.focusable.isFocusable(
+                elementInDOM,
+                true
+            );
+
+            if (!isAccessible) {
+                reason = `Timeout after ${timeout}ms: Element found but not accessible.`;
+            } else if (!isFocusable) {
+                reason = `Timeout after ${timeout}ms: Element found but not focusable.`;
+            } else {
+                reason = `Timeout after ${timeout}ms: Element not ready.`;
+            }
+        }
+
+        request.diagnostics.reason =
+            (request.diagnostics.reason ?? "") + reason;
+        request.diagnostics.waitForElementDuration = Date.now() - startTime;
+        request.diagnostics.targetState = {
+            inDOM,
+            isAccessible,
+            isFocusable,
+        };
     }
 
     private _isObservedNamesUpdated(cur: string[], prev?: string[]) {
@@ -257,6 +305,7 @@ export class ObservedElementAPI
         timeout: number,
         accessibility?: Types.ObservedElementAccessibility
     ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
+        const startTime = Date.now();
         const el = this.getElement(observedName, accessibility);
 
         if (el) {
@@ -266,6 +315,9 @@ export class ObservedElementAPI
                     /**/
                 },
                 status: ObservedElementRequestStatuses.Succeeded,
+                diagnostics: {
+                    waitForElementDuration: Date.now() - startTime,
+                },
             };
         }
 
@@ -296,6 +348,12 @@ export class ObservedElementAPI
 
                 if (w.request) {
                     w.request.status = ObservedElementRequestStatuses.TimedOut;
+                    this._populateTimeoutDiagnostics(
+                        w.request,
+                        observedName,
+                        timeout,
+                        startTime
+                    );
                 }
 
                 if (w.resolve) {
@@ -321,10 +379,13 @@ export class ObservedElementAPI
                     // cancel() function is callable by user, someone might call it after request is finished,
                     // we are making sure that status of a finished request is not overriden.
                     request.status = ObservedElementRequestStatuses.Canceled;
+                    request.diagnostics.waitForElementDuration =
+                        Date.now() - startTime;
                 }
                 this._rejectWaiting(key, true);
             },
             status: ObservedElementRequestStatuses.Waiting,
+            diagnostics: {},
         };
 
         w.request = request;
@@ -347,6 +408,9 @@ export class ObservedElementAPI
         const currentRequestFocus = this._currentRequest;
 
         if (currentRequestFocus) {
+            currentRequestFocus.diagnostics.reason =
+                (currentRequestFocus.diagnostics.reason ?? "") +
+                "Superseded by new requestFocus call.";
             currentRequestFocus.cancel();
         }
 
@@ -360,20 +424,32 @@ export class ObservedElementAPI
         this._currentRequestTimestamp = Date.now();
 
         const ret: Types.ObservedElementAsyncRequest<boolean> = {
-            result: request.result.then((element) =>
-                this._lastRequestFocusId === requestId && element
-                    ? this._tabster.focusedElement.focus(
-                          element,
-                          true,
-                          undefined,
-                          options.preventScroll
-                      )
-                    : false
-            ),
+            result: request.result.then((element) => {
+                if (this._lastRequestFocusId !== requestId || !element) {
+                    return false;
+                }
+
+                const focusResult = this._tabster.focusedElement.focus(
+                    element,
+                    true,
+                    undefined,
+                    options.preventScroll
+                );
+
+                if (!focusResult) {
+                    // Focus call failed
+                    request.diagnostics.reason =
+                        (request.diagnostics.reason ?? "") +
+                        "Element found but focus() call failed.";
+                }
+
+                return focusResult;
+            }),
             cancel: () => {
                 request.cancel();
             },
             status: request.status,
+            diagnostics: request.diagnostics,
         };
 
         request.result.finally(() => {
