@@ -3319,3 +3319,65 @@ describe("Modalizer activation", () => {
             );
     });
 });
+
+describe("Modalizer id change", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ modalizer: true });
+    });
+
+    it("should recreate modalizer if the id is changed", async () => {
+        await new BroTest.BroTest(
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    id="modal-1"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal-1" },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
+                </div>
+            </div>
+        )
+            .eval(() =>
+                (
+                    getTabsterTestVariables().dom?.querySelector(
+                        document,
+                        '[data-tabster*="modalizer"]'
+                    ) as HTMLElement
+                ).style.getPropertyValue("--tabster-modalizer")
+            )
+            .check((val: string) => {
+                expect(val).toBe("i2,modal-1,inactive,,not-focused");
+            })
+            .eval(
+                (attr: string) => {
+                    getTabsterTestVariables()
+                        .dom?.querySelector(
+                            document,
+                            '[data-tabster*="modalizer"]'
+                        )
+                        ?.setAttribute("data-tabster", attr);
+                },
+                getTabsterAttribute(
+                    {
+                        modalizer: { id: "modal-updated" },
+                    },
+                    true
+                )
+            )
+            .wait(300)
+            .eval(() =>
+                (
+                    getTabsterTestVariables().dom?.querySelector(
+                        document,
+                        '[data-tabster*="modalizer"]'
+                    ) as HTMLElement
+                ).style.getPropertyValue("--tabster-modalizer")
+            )
+            .check((val: string) => {
+                expect(val).toBe("i3,modal-updated,inactive,,not-focused");
+            });
+    });
+});

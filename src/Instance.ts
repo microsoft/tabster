@@ -159,24 +159,46 @@ export function updateTabsterByAttribute(
                 break;
 
             case "modalizer":
-                if (tabsterOnElement.modalizer) {
-                    tabsterOnElement.modalizer.setProps(
-                        newTabsterProps.modalizer as Types.ModalizerProps
-                    );
-                } else {
-                    if (tabster.modalizer) {
+                {
+                    let newModalizerProps: Types.ModalizerProps | undefined;
+                    const modalizerAPI = tabster.modalizer;
+
+                    if (tabsterOnElement.modalizer) {
+                        const props =
+                            newTabsterProps.modalizer as Types.ModalizerProps;
+                        const newModalizerId = props.id;
+                        if (
+                            newModalizerId &&
+                            oldTabsterProps?.modalizer?.id !== newModalizerId
+                        ) {
+                            // Modalizer id is changed, given the modalizers have complex logic and could be
+                            // composite, it is easier to recreate the Modalizer instance than to implement
+                            // the id update.
+                            tabsterOnElement.modalizer.dispose();
+                            newModalizerProps = props;
+                        } else {
+                            tabsterOnElement.modalizer.setProps(props);
+                        }
+                    } else {
+                        if (modalizerAPI) {
+                            newModalizerProps = newTabsterProps.modalizer;
+                        } else if (__DEV__) {
+                            console.error(
+                                "Modalizer API used before initialization, please call `getModalizer()`"
+                            );
+                        }
+                    }
+
+                    if (modalizerAPI && newModalizerProps) {
                         tabsterOnElement.modalizer =
-                            tabster.modalizer.createModalizer(
+                            modalizerAPI.createModalizer(
                                 element,
-                                newTabsterProps.modalizer as Types.ModalizerProps,
+                                newModalizerProps,
                                 sys
                             );
-                    } else if (__DEV__) {
-                        console.error(
-                            "Modalizer API used before initialization, please call `getModalizer()`"
-                        );
                     }
                 }
+
                 break;
 
             case "restorer":

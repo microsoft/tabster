@@ -206,6 +206,8 @@ export class Modalizer
         }
 
         this._props = { ...props };
+
+        console.error(1111, JSON.stringify(this._props));
     }
 
     dispose(): void {
