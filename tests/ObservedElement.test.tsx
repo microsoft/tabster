@@ -19,19 +19,17 @@ describe("Focusable", () => {
     it("should request focus for element with tabindex -1", async () => {
         const name = "test";
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
-                        tabIndex={-1}
-                    >
-                        Button2
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: [name] },
+                    })}
+                    tabIndex={-1}
+                >
+                    Button2
+                </button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -74,19 +72,17 @@ describe("Focusable", () => {
     it("should request focus for element with tabindex -1 and multiple names", async () => {
         const names = ["test-1", "test-0"];
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names },
-                        })}
-                        tabIndex={-1}
-                    >
-                        Button2
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names },
+                    })}
+                    tabIndex={-1}
+                >
+                    Button2
+                </button>
+            </div>
         )
             // reuqest focus for names[0]
             .pressTab()
@@ -318,19 +314,17 @@ describe("Focusable", () => {
     it("should wait for the element to become focusable when the element is already in the DOM", async () => {
         const name = "test";
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
-                        id="test-button"
-                        aria-hidden="true"
-                    >
-                        Button1
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: [name] },
+                    })}
+                    id="test-button"
+                    aria-hidden="true"
+                >
+                    Button1
+                </button>
+            </div>
         )
             .eval((name) => {
                 const request =
@@ -407,19 +401,17 @@ describe("Focusable", () => {
     it("should wait for the element to become focusable when the element is already in the DOM, removed then added again", async () => {
         const name = "test3";
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: [name] },
-                        })}
-                        id="test-button"
-                        aria-hidden="true"
-                    >
-                        Button1
-                    </button>
-                </div>
-            )
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: [name] },
+                    })}
+                    id="test-button"
+                    aria-hidden="true"
+                >
+                    Button1
+                </button>
+            </div>
         )
             .eval((name) => {
                 getTabsterTestVariables().observedElement?.requestFocus(
@@ -475,11 +467,9 @@ describe("Focusable", () => {
 
     it("should time out waiting for nonexistent element", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+            </div>
         )
             .eval(async () => {
                 const request =
@@ -513,31 +503,29 @@ describe("Focusable", () => {
 
     it("should return all observed elements via getAllObservedElements", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-1", "test-shared"] },
-                        })}
-                    >
-                        Button1
-                    </button>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-2", "test-shared"] },
-                        })}
-                    >
-                        Button2
-                    </button>
-                    <button
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-3"] },
-                        })}
-                    >
-                        Button3
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-1", "test-shared"] },
+                    })}
+                >
+                    Button1
+                </button>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-2", "test-shared"] },
+                    })}
+                >
+                    Button2
+                </button>
+                <button
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-3"] },
+                    })}
+                >
+                    Button3
+                </button>
+            </div>
         )
             .eval(() => {
                 const allObserved =
@@ -666,26 +654,24 @@ describe("Focusable", () => {
 
     it("should trigger onObservedElementChange callback when elements are removed", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root">
-                    <button
-                        id="button1"
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-1"] },
-                        })}
-                    >
-                        Button1
-                    </button>
-                    <button
-                        id="button2"
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-2", "test-shared"] },
-                        })}
-                    >
-                        Button2
-                    </button>
-                </div>
-            )
+            <div id="root">
+                <button
+                    id="button1"
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-1"] },
+                    })}
+                >
+                    Button1
+                </button>
+                <button
+                    id="button2"
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-2", "test-shared"] },
+                    })}
+                >
+                    Button2
+                </button>
+            </div>
         )
             .eval(() => {
                 const changes: Array<{
@@ -746,18 +732,16 @@ describe("Focusable", () => {
 
     it("should trigger onObservedElementChange callback when element names are updated", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root">
-                    <button
-                        id="button1"
-                        {...getTabsterAttribute({
-                            observed: { names: ["test-1"] },
-                        })}
-                    >
-                        Button1
-                    </button>
-                </div>
-            )
+            <div id="root">
+                <button
+                    id="button1"
+                    {...getTabsterAttribute({
+                        observed: { names: ["test-1"] },
+                    })}
+                >
+                    Button1
+                </button>
+            </div>
         )
             .eval(() => {
                 const changes: Array<{

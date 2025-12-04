@@ -51,18 +51,16 @@ describe("getTabsterAttribute()", () => {
 
     it("should set Tabster attribute", async () => {
         await new BroTest.BroTest(
-            (
-                <div>
-                    <div id="div1"></div>
-                    <div
-                        id="div2"
-                        {...getTabsterAttribute({
-                            mover: {},
-                            modalizer: { id: "test" },
-                        })}
-                    ></div>
-                </div>
-            )
+            <div>
+                <div id="div1"></div>
+                <div
+                    id="div2"
+                    {...getTabsterAttribute({
+                        mover: {},
+                        modalizer: { id: "test" },
+                    })}
+                ></div>
+            </div>
         )
             .eval(() => {
                 const div1 = getTabsterTestVariables().dom?.getElementById(

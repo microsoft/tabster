@@ -27,40 +27,38 @@ describe("MoverGroupper", () => {
         "should properly move the focus when focusable grouppers with %s tabbability are in mover",
         async (_, tabbability) => {
             let broTest = new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <div {...getTabsterAttribute({ mover: {} })}>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button1</button>
-                                <button>Button2</button>
-                            </div>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button3</button>
-                                <button>Button4</button>
-                            </div>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button5</button>
-                                <button>Button6</button>
-                            </div>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button1</button>
+                            <button>Button2</button>
                         </div>
-                        <button>Button7</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button5</button>
+                            <button>Button6</button>
+                        </div>
                     </div>
-                )
+                    <button>Button7</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -113,34 +111,32 @@ describe("MoverGroupper", () => {
         "should properly move the focus when not focusable grouppers with %s tabbability are in mover",
         async (_, tabbability) => {
             let test = new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <div {...getTabsterAttribute({ mover: {} })}>
-                            <div
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button1</button>
-                            </div>
-                            <div
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button2</button>
-                            </div>
-                            <div
-                                {...getTabsterAttribute({
-                                    groupper: { tabbability },
-                                })}
-                            >
-                                <button>Button3</button>
-                            </div>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <div
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button1</button>
                         </div>
-                        <button>Button4</button>
+                        <div
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button2</button>
+                        </div>
+                        <div
+                            {...getTabsterAttribute({
+                                groupper: { tabbability },
+                            })}
+                        >
+                            <button>Button3</button>
+                        </div>
                     </div>
-                )
+                    <button>Button4</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -177,30 +173,28 @@ describe("MoverGroupper", () => {
 
     it("should move between grouppers inside mover with dynamically appearing first focusable", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <style>{`.groupper .hidden { display: none; } .groupper:focus-within .hidden { display: inline; }`}</style>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div
-                            className="groupper"
-                            {...getTabsterAttribute({ groupper: {} })}
-                        >
-                            <button className="hidden">Button1</button>
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </div>
-                        <div
-                            className="groupper"
-                            {...getTabsterAttribute({ groupper: {} })}
-                        >
-                            <button className="hidden">Button4</button>
-                            <button>Button5</button>
-                            <button>Button6</button>
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <style>{`.groupper .hidden { display: none; } .groupper:focus-within .hidden { display: inline; }`}</style>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        className="groupper"
+                        {...getTabsterAttribute({ groupper: {} })}
+                    >
+                        <button className="hidden">Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
                     </div>
-                    <button>Button7</button>
+                    <div
+                        className="groupper"
+                        {...getTabsterAttribute({ groupper: {} })}
+                    >
+                        <button className="hidden">Button4</button>
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -226,35 +220,33 @@ describe("MoverGroupper", () => {
 
     it("should move between grouppers with focusable container inside mover with dynamically appearing first focusable", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <style>
-                        {".groupper .hidden { display: none; }"}
-                        {".groupper:focus-within .hidden { display: inline; }"}
-                    </style>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div
-                            tabIndex={0}
-                            className="groupper"
-                            {...getTabsterAttribute({ groupper: {} })}
-                        >
-                            <button className="hidden">Button1</button>
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </div>
-                        <div
-                            tabIndex={0}
-                            className="groupper"
-                            {...getTabsterAttribute({ groupper: {} })}
-                        >
-                            <button className="hidden">Button4</button>
-                            <button>Button5</button>
-                            <button>Button6</button>
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <style>
+                    {".groupper .hidden { display: none; }"}
+                    {".groupper:focus-within .hidden { display: inline; }"}
+                </style>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        tabIndex={0}
+                        className="groupper"
+                        {...getTabsterAttribute({ groupper: {} })}
+                    >
+                        <button className="hidden">Button1</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
                     </div>
-                    <button>Button7</button>
+                    <div
+                        tabIndex={0}
+                        className="groupper"
+                        {...getTabsterAttribute({ groupper: {} })}
+                    >
+                        <button className="hidden">Button4</button>
+                        <button>Button5</button>
+                        <button>Button6</button>
+                    </div>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -300,55 +292,53 @@ describe("MoverGroupper", () => {
 
     it("should ignore uncontrolled inside groupper", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                            })}
+                        >
                             <div
-                                tabIndex={0}
                                 {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
+                                    uncontrolled: {},
                                 })}
                             >
-                                <div
-                                    {...getTabsterAttribute({
-                                        uncontrolled: {},
-                                    })}
-                                >
-                                    <button>Button1</button>
-                                    <button>Button2</button>
-                                </div>
-                                <button>Button3</button>
+                                <button>Button1</button>
+                                <button>Button2</button>
                             </div>
-                        </div>
-                        <div>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <button
-                                    {...getTabsterAttribute({
-                                        uncontrolled: {},
-                                    })}
-                                >
-                                    Button4
-                                </button>
-                                <button>Button5</button>
-                                <button>Button6</button>
-                            </div>
+                            <button>Button3</button>
                         </div>
                     </div>
-                    <button>Button7</button>
+                    <div>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button
+                                {...getTabsterAttribute({
+                                    uncontrolled: {},
+                                })}
+                            >
+                                Button4
+                            </button>
+                            <button>Button5</button>
+                            <button>Button6</button>
+                        </div>
+                    </div>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -390,61 +380,59 @@ describe("MoverGroupper", () => {
 
     it("should ignore uncontrolled inside groupper with no tabindex on the container", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <style>
-                        {".groupper .hidden { display: none; }"}
-                        {".groupper:focus-within .hidden { display: inline; }"}
-                    </style>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div
-                            className="groupper"
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div tabIndex={0}>
-                                <div
-                                    className="hidden"
-                                    {...getTabsterAttribute({
-                                        uncontrolled: {},
-                                    })}
-                                >
-                                    <button>Button1</button>
-                                    <button>Button2</button>
-                                </div>
-                                <button>Button3</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <style>
+                    {".groupper .hidden { display: none; }"}
+                    {".groupper:focus-within .hidden { display: inline; }"}
+                </style>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        className="groupper"
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div tabIndex={0}>
+                            <div
+                                className="hidden"
+                                {...getTabsterAttribute({
+                                    uncontrolled: {},
+                                })}
+                            >
+                                <button>Button1</button>
+                                <button>Button2</button>
                             </div>
-                        </div>
-                        <div
-                            className="groupper"
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div tabIndex={0}>
-                                <div
-                                    className="hidden"
-                                    {...getTabsterAttribute({
-                                        uncontrolled: {},
-                                    })}
-                                >
-                                    <button>Button4</button>
-                                    <button>Button5</button>
-                                </div>
-                                <button>Button6</button>
-                            </div>
+                            <button>Button3</button>
                         </div>
                     </div>
-                    <button>Button7</button>
+                    <div
+                        className="groupper"
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div tabIndex={0}>
+                            <div
+                                className="hidden"
+                                {...getTabsterAttribute({
+                                    uncontrolled: {},
+                                })}
+                            >
+                                <button>Button4</button>
+                                <button>Button5</button>
+                            </div>
+                            <button>Button6</button>
+                        </div>
+                    </div>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -502,42 +490,40 @@ describe("MoverGroupper", () => {
 
     it("should move properly in the nested mover/groupper/mover scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <button>Button1</button>
-                                <button>Button2</button>
-                                <button>Button3</button>
-                            </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div {...getTabsterAttribute({ mover: {} })}>
+                            <button>Button1</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
                         </div>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <button>Button4</button>
-                                <button>Button5</button>
-                                <button>Button6</button>
-                            </div>
+                    </div>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div {...getTabsterAttribute({ mover: {} })}>
+                            <button>Button4</button>
+                            <button>Button5</button>
+                            <button>Button6</button>
                         </div>
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -575,111 +561,101 @@ describe("MoverGroupper", () => {
 
     it("should move properly in the nested mover/groupper/mover/groupper/mover scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ mover: {} })}>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <div
-                                        {...getTabsterAttribute({ mover: {} })}
-                                    >
-                                        <button>Button1</button>
-                                        <button>Button2</button>
-                                        <button>Button3</button>
-                                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div {...getTabsterAttribute({ mover: {} })}>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div {...getTabsterAttribute({ mover: {} })}>
+                                    <button>Button1</button>
+                                    <button>Button2</button>
+                                    <button>Button3</button>
                                 </div>
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <div
-                                        {...getTabsterAttribute({ mover: {} })}
-                                    >
-                                        <button>Button4</button>
-                                        <button>Button5</button>
-                                        <button>Button6</button>
-                                    </div>
+                            </div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div {...getTabsterAttribute({ mover: {} })}>
+                                    <button>Button4</button>
+                                    <button>Button5</button>
+                                    <button>Button6</button>
                                 </div>
                             </div>
                         </div>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <div
-                                        {...getTabsterAttribute({ mover: {} })}
-                                    >
-                                        <button>Button7</button>
-                                        <button>Button8</button>
-                                        <button>Button9</button>
-                                    </div>
+                    </div>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div {...getTabsterAttribute({ mover: {} })}>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div {...getTabsterAttribute({ mover: {} })}>
+                                    <button>Button7</button>
+                                    <button>Button8</button>
+                                    <button>Button9</button>
+                                </div>
+                            </div>
+                            <div
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div {...getTabsterAttribute({ mover: {} })}>
+                                    <button>Button10</button>
+                                    <button>Button11</button>
+                                    <button>Button12</button>
                                 </div>
                                 <div
-                                    tabIndex={0}
                                     {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
+                                        uncontrolled: {},
                                     })}
                                 >
-                                    <div
-                                        {...getTabsterAttribute({ mover: {} })}
-                                    >
-                                        <button>Button10</button>
-                                        <button>Button11</button>
-                                        <button>Button12</button>
-                                    </div>
-                                    <div
-                                        {...getTabsterAttribute({
-                                            uncontrolled: {},
-                                        })}
-                                    >
-                                        <button>Button13</button>
-                                    </div>
+                                    <button>Button13</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -739,82 +715,80 @@ describe("MoverGroupper", () => {
 
     it("should handle another mover/groupper/mover/groupper scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <ul
+            <div {...getTabsterAttribute({ root: {} })}>
+                <ul
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware: Visibilities.PartiallyVisible,
+                        },
+                    })}
+                >
+                    <li
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            mover: {
-                                visibilityAware: Visibilities.PartiallyVisible,
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <li
-                            tabIndex={0}
+                        <div
                             {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
+                                mover: {
+                                    visibilityAware:
+                                        Visibilities.PartiallyVisible,
                                 },
                             })}
                         >
                             <div
+                                tabIndex={0}
                                 {...getTabsterAttribute({
-                                    mover: {
-                                        visibilityAware:
-                                            Visibilities.PartiallyVisible,
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <button>Button1</button>
-                                    <button>Button2</button>
-                                </div>
-                                <button>Button3</button>
+                                <button>Button1</button>
+                                <button>Button2</button>
                             </div>
-                        </li>
-                        <li
-                            tabIndex={0}
+                            <button>Button3</button>
+                        </div>
+                    </li>
+                    <li
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <div
                             {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
+                                mover: {
+                                    visibilityAware:
+                                        Visibilities.PartiallyVisible,
                                 },
                             })}
                         >
                             <div
+                                tabIndex={0}
                                 {...getTabsterAttribute({
-                                    mover: {
-                                        visibilityAware:
-                                            Visibilities.PartiallyVisible,
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
                                     },
                                 })}
                             >
-                                <div
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <button>Button4</button>
-                                    <button>Button5</button>
-                                </div>
-                                <button>Button6</button>
+                                <button>Button4</button>
+                                <button>Button5</button>
                             </div>
-                        </li>
-                    </ul>
-                </div>
-            )
+                            <button>Button6</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -844,50 +818,46 @@ describe("MoverGroupper", () => {
 
     it("should handle tabbing in groupper/mover/groupper when the inner groupper container is not focusable", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    id="outer-groupper"
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
+                    <button>Button2</button>
                     <div
-                        id="outer-groupper"
-                        tabIndex={0}
                         {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    GroupperTabbabilities.LimitedTrapFocus,
+                            mover: {
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                     >
-                        <button>Button2</button>
+                        <button>Button3</button>
                         <div
+                            id="inner-groupper"
                             {...getTabsterAttribute({
-                                mover: {
-                                    visibilityAware:
-                                        Visibilities.PartiallyVisible,
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                                focusable: {
+                                    ignoreKeydown: { Escape: true },
                                 },
                             })}
                         >
-                            <button>Button3</button>
-                            <div
-                                id="inner-groupper"
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                    focusable: {
-                                        ignoreKeydown: { Escape: true },
-                                    },
-                                })}
-                            >
-                                <button>Button4</button>
-                                <button>Button5</button>
-                            </div>
+                            <button>Button4</button>
+                            <button>Button5</button>
                         </div>
-                        <button>Button6</button>
                     </div>
-                    <button>Button7</button>
+                    <button>Button6</button>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .eval(() => {
                 window.addEventListener("keydown", (e) => {
@@ -975,48 +945,44 @@ describe("MoverGroupper", () => {
 
     it("should handle tabbing in groupper/mover/groupper when the inner groupper container is delegated and not focusable", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    id="outer-groupper"
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
+                    <button>Button2</button>
                     <div
-                        id="outer-groupper"
-                        tabIndex={0}
                         {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    GroupperTabbabilities.LimitedTrapFocus,
+                            mover: {
+                                visibilityAware: Visibilities.PartiallyVisible,
                             },
                         })}
                     >
-                        <button>Button2</button>
+                        <button>Button3</button>
                         <div
+                            id="inner-groupper"
                             {...getTabsterAttribute({
-                                mover: {
-                                    visibilityAware:
-                                        Visibilities.PartiallyVisible,
+                                groupper: {
+                                    delegated: true,
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
                                 },
                             })}
                         >
-                            <button>Button3</button>
-                            <div
-                                id="inner-groupper"
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        delegated: true,
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <button>Button4</button>
-                                <button>Button5</button>
-                            </div>
+                            <button>Button4</button>
+                            <button>Button5</button>
                         </div>
-                        <button>Button6</button>
                     </div>
-                    <button>Button7</button>
+                    <button>Button6</button>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1104,9 +1070,17 @@ describe("MoverGroupper", () => {
 
     it("should move properly in the nested mover/groupper/groupper scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ mover: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
                         <div
                             tabIndex={0}
                             {...getTabsterAttribute({
@@ -1116,35 +1090,25 @@ describe("MoverGroupper", () => {
                                 },
                             })}
                         >
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <button>Button1</button>
-                                <button>Button2</button>
-                            </div>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <button>Button3</button>
-                                <button>Button4</button>
-                            </div>
+                            <button>Button1</button>
+                            <button>Button2</button>
                         </div>
-                        <button>Button5</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button3</button>
+                            <button>Button4</button>
+                        </div>
                     </div>
+                    <button>Button5</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1218,29 +1182,27 @@ describe("MoverGroupper", () => {
 
     it("should move properly in the nested mover/mover/groupper scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ mover: {} })}>
+                    <button>Button1</button>
                     <div {...getTabsterAttribute({ mover: {} })}>
-                        <button>Button1</button>
-                        <div {...getTabsterAttribute({ mover: {} })}>
-                            <div
-                                tabIndex={0}
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <button>Button2</button>
-                                <button>Button3</button>
-                            </div>
-                            <button>Button5</button>
+                        <div
+                            tabIndex={0}
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <button>Button2</button>
+                            <button>Button3</button>
                         </div>
-                        <button>Button6</button>
+                        <button>Button5</button>
                     </div>
+                    <button>Button6</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1302,28 +1264,25 @@ describe("MoverGroupper", () => {
 
     it("should move properly in the nested groupper/mover/mover scenario", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    GroupperTabbabilities.LimitedTrapFocus,
-                            },
-                        })}
-                    >
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button1</button>
                         <div {...getTabsterAttribute({ mover: {} })}>
-                            <button>Button1</button>
-                            <div {...getTabsterAttribute({ mover: {} })}>
-                                <button>Button2</button>
-                                <button>Button3</button>
-                            </div>
-                            <button>Button4</button>
+                            <button>Button2</button>
+                            <button>Button3</button>
                         </div>
+                        <button>Button4</button>
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1369,31 +1328,29 @@ describe("MoverGroupper", () => {
 
     it("should properly handle groupper and mover on the same element", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
                             mover: {},
                         })}
                     >
-                        <button>Button1</button>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                                mover: {},
-                            })}
-                        >
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </div>
-                        <button>Button4</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
                     </div>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1439,69 +1396,67 @@ describe("MoverGroupper", () => {
 
     it("should handle nested movers when the inner mover is on focusable element", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="foo">Foo</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="foo">Foo</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            memorizeCurrent: true,
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             mover: {
-                                memorizeCurrent: true,
-                                direction: MoverDirections.Vertical,
+                                direction: MoverDirections.Horizontal,
+                                cyclic: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                mover: {
-                                    direction: MoverDirections.Horizontal,
-                                    cyclic: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button1</button>
-                            <button>Button2</button>
-                        </div>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                mover: {
-                                    direction: MoverDirections.Horizontal,
-                                    cyclic: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button3</button>
-                            <button>Button4</button>
-                        </div>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                mover: {
-                                    direction: MoverDirections.Horizontal,
-                                    cyclic: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button5</button>
-                            <button id="button6">Button6</button>
-                        </div>
+                        <button>Button1</button>
+                        <button>Button2</button>
                     </div>
-                    <button>Bar</button>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: MoverDirections.Horizontal,
+                                cyclic: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            mover: {
+                                direction: MoverDirections.Horizontal,
+                                cyclic: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>Button5</button>
+                        <button id="button6">Button6</button>
+                    </div>
                 </div>
-            )
+                <button>Bar</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {

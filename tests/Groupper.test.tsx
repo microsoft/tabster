@@ -352,26 +352,24 @@ describe("Groupper - limited focus trap", () => {
         "should ignore Enter and Esc keys with %s",
         async (key) => {
             await new BroTest.BroTest(
-                (
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            root: {},
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
                         })}
                     >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button1</button>
-                            <button>Button2</button>
-                        </div>
+                        <button>Button1</button>
+                        <button>Button2</button>
                     </div>
-                )
+                </div>
             )
                 .pressTab()
                 .press("Enter", { [key]: true })
@@ -455,23 +453,21 @@ describe("Groupper tabbing forward and backwards", () => {
         async (tagName) => {
             const Tag = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <Tag
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability: GroupperTabbabilities.Limited,
-                                },
-                            })}
-                        >
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </Tag>
-                        <button>Button4</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <Tag
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability: GroupperTabbabilities.Limited,
+                            },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </Tag>
+                    <button>Button4</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -501,21 +497,19 @@ describe("Groupper tabbing forward and backwards", () => {
         async (tagName) => {
             const Tag = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <Tag
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability: GroupperTabbabilities.Limited,
-                                },
-                            })}
-                        >
-                            <button>Button1</button>
-                            <button>Button2</button>
-                        </Tag>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <Tag
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability: GroupperTabbabilities.Limited,
+                            },
+                        })}
+                    >
+                        <button>Button1</button>
+                        <button>Button2</button>
+                    </Tag>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -549,24 +543,22 @@ describeIfUncontrolled("Groupper", () => {
             async (tagName) => {
                 const Tag = tagName;
                 await new BroTest.BroTest(
-                    (
-                        <div {...getTabsterAttribute({ root: {} })}>
-                            <button>Button1</button>
-                            <Tag
-                                {...getTabsterAttribute({
-                                    groupper: {
-                                        tabbability:
-                                            GroupperTabbabilities.LimitedTrapFocus,
-                                    },
-                                })}
-                            >
-                                <div tabIndex={0} contentEditable="true">
-                                    ContentEditable
-                                </div>
-                            </Tag>
-                            <button>Button2</button>
-                        </div>
-                    )
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button>Button1</button>
+                        <Tag
+                            {...getTabsterAttribute({
+                                groupper: {
+                                    tabbability:
+                                        GroupperTabbabilities.LimitedTrapFocus,
+                                },
+                            })}
+                        >
+                            <div tabIndex={0} contentEditable="true">
+                                ContentEditable
+                            </div>
+                        </Tag>
+                        <button>Button2</button>
+                    </div>
                 )
                     .pressTab()
                     .activeElement((el) => {
@@ -599,22 +591,20 @@ describe("Groupper - empty", () => {
         async (tagName) => {
             const Tag = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <Tag
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            Hello
-                        </Tag>
-                        <button>Button2</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <Tag
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        Hello
+                    </Tag>
+                    <button>Button2</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -636,23 +626,21 @@ describe("Groupper - empty", () => {
         async (tagName) => {
             const Tag = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <Tag
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            Hello
-                        </Tag>
-                        <button>Button2</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <Tag
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        Hello
+                    </Tag>
+                    <button>Button2</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -688,24 +676,22 @@ describe("Groupper with tabster:groupper:movefocus", () => {
         async (tagName) => {
             const Tag = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button id="button1">Button1</button>
-                        <Tag
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </Tag>
-                        <button id="button4">Button4</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button1">Button1</button>
+                    <Tag
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>Button2</button>
+                        <button>Button3</button>
+                    </Tag>
+                    <button id="button4">Button4</button>
+                </div>
             )
                 .eval(() => {
                     interface WindowWithButton2 extends Window {
@@ -904,28 +890,26 @@ describe("Groupper with virtual parents", () => {
 
     it("should skip virtual children of a groupper which are not in DOM order", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    {/* <div tabIndex={0} {...getTabsterAttribute({ groupper: {tabbability: 2} })}> */}
-                    <button>Button1</button>
-                    <div
-                        id="virtualParent"
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: { tabbability: 2 },
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                    </div>
-                    {/* <button>Button4</button> */}
-                    {/* </div> */}
-                    <div id="virtualChild">
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                {/* <div tabIndex={0} {...getTabsterAttribute({ groupper: {tabbability: 2} })}> */}
+                <button>Button1</button>
+                <div
+                    id="virtualParent"
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: { tabbability: 2 },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
                 </div>
-            )
+                {/* <button>Button4</button> */}
+                {/* </div> */}
+                <div id="virtualChild">
+                    <button>Button5</button>
+                </div>
+                <button>Button6</button>
+            </div>
         )
 
             .eval(() => {

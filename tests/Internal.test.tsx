@@ -14,16 +14,14 @@ describe("Internal", () => {
 
     it("should restore focus", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div id="element1">
-                        <button>Button1</button>
-                    </div>
-                    <div id="element2">
-                        <button>Button2</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div id="element1">
+                    <button>Button1</button>
                 </div>
-            )
+                <div id="element2">
+                    <button>Button2</button>
+                </div>
+            </div>
         )
             .eval(() => {
                 getTabsterTestVariables()
@@ -108,18 +106,16 @@ describe("Internal", () => {
         }
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        id="groupper"
-                        {...getTabsterAttribute({
-                            groupper: { tabbability: 0 },
-                        })}
-                    >
-                        <button>Button</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    id="groupper"
+                    {...getTabsterAttribute({
+                        groupper: { tabbability: 0 },
+                    })}
+                >
+                    <button>Button</button>
                 </div>
-            )
+            </div>
         )
             .eval(() => {
                 return Object.keys(

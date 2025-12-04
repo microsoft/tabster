@@ -29,11 +29,9 @@ describe("Root", () => {
         "should insert dummy inputs as first and last children",
         async () => {
             await new BroTest.BroTest(
-                (
-                    <div id="root" {...getTabsterAttribute({ root: {} })}>
-                        <button>Button</button>
-                    </div>
-                )
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <button>Button</button>
+                </div>
             )
                 .eval((dummyAttribute) => {
                     return getTabsterTestVariables().dom?.querySelectorAll(
@@ -61,13 +59,11 @@ describe("Root", () => {
 
     it("should allow to go outside of the application when tabbing forward", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <button>Button2</button>
+                <button>Button3</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -89,13 +85,11 @@ describe("Root", () => {
 
     it("should allow to go outside of the application when tabbing backwards", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <button>Button2</button>
+                <button>Button3</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -129,12 +123,10 @@ describe("Root", () => {
 
     it("should trigger root focus events", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <button id="button1">Button1</button>
-                    <button>Button2</button>
-                </div>
-            )
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <button id="button1">Button1</button>
+                <button>Button2</button>
+            </div>
         )
             .eval(() => {
                 const win =

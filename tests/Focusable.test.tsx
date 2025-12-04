@@ -19,11 +19,9 @@ describe("Focusable", () => {
     describe("aria-disabled", () => {
         it("should allow aria-disabled elements to be focused", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button aria-disabled="true">Button1</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-disabled="true">Button1</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -35,12 +33,10 @@ describe("Focusable", () => {
     describe("aria-hidden", () => {
         it("should allow aria-hidden elements to be focused", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button aria-hidden="true">Button1</button>
-                        <button>Button2</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-hidden="true">Button1</button>
+                    <button>Button2</button>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -62,48 +58,46 @@ describe("Focusable", () => {
 
         beforeEach(async () => {
             broTest = new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button aria-hidden="true">Button1</button>
-                        <button>Button2</button>
-                        <div {...getTabsterAttribute({ mover: {} })}>
-                            <button>Button3</button>
-                            <div {...getTabsterAttribute({ groupper: {} })}>
-                                <button>Button4</button>
-                                <button>Button5</button>
-                            </div>
-                            <div
-                                id="groupper"
-                                tabIndex={0}
-                                {...getTabsterAttribute({ groupper: {} })}
-                            >
-                                <button>Button6</button>
-                                <div {...getTabsterAttribute({ mover: {} })}>
-                                    <button>Button7</button>
-                                    <div
-                                        {...getTabsterAttribute({
-                                            groupper: {},
-                                        })}
-                                    >
-                                        <button id="button8">Button8</button>
-                                        <button>Button9</button>
-                                    </div>
-                                    <div
-                                        tabIndex={0}
-                                        {...getTabsterAttribute({
-                                            groupper: {},
-                                        })}
-                                    >
-                                        <button>Button10</button>
-                                        <button>Button11</button>
-                                    </div>
-                                </div>
-                                <button>Button12</button>
-                            </div>
-                            <button>Button13</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button aria-hidden="true">Button1</button>
+                    <button>Button2</button>
+                    <div {...getTabsterAttribute({ mover: {} })}>
+                        <button>Button3</button>
+                        <div {...getTabsterAttribute({ groupper: {} })}>
+                            <button>Button4</button>
+                            <button>Button5</button>
                         </div>
+                        <div
+                            id="groupper"
+                            tabIndex={0}
+                            {...getTabsterAttribute({ groupper: {} })}
+                        >
+                            <button>Button6</button>
+                            <div {...getTabsterAttribute({ mover: {} })}>
+                                <button>Button7</button>
+                                <div
+                                    {...getTabsterAttribute({
+                                        groupper: {},
+                                    })}
+                                >
+                                    <button id="button8">Button8</button>
+                                    <button>Button9</button>
+                                </div>
+                                <div
+                                    tabIndex={0}
+                                    {...getTabsterAttribute({
+                                        groupper: {},
+                                    })}
+                                >
+                                    <button>Button10</button>
+                                    <button>Button11</button>
+                                </div>
+                            </div>
+                            <button>Button12</button>
+                        </div>
+                        <button>Button13</button>
                     </div>
-                )
+                </div>
             );
         });
 
@@ -374,36 +368,34 @@ describe("Focusable", () => {
 
         beforeEach(async () => {
             broTest = new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <div>
-                            <button id="button1">Button1</button>
-                            <button>Button2</button>
-                        </div>
-                        <div
-                            id="modalizer"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "ololo" },
-                            })}
-                        >
-                            <button id="modal-button-1">ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <div
-                            id="modalizer2"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "ololo2" },
-                            })}
-                        >
-                            <button id="modal-button-3">ModalButton3</button>
-                            <button>ModalButton4</button>
-                        </div>
-                        <div>
-                            <button>Button3</button>
-                            <button>Button4</button>
-                        </div>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
+                        <button id="button1">Button1</button>
+                        <button>Button2</button>
                     </div>
-                )
+                    <div
+                        id="modalizer"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "ololo" },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                        <button>ModalButton2</button>
+                    </div>
+                    <div
+                        id="modalizer2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "ololo2" },
+                        })}
+                    >
+                        <button id="modal-button-3">ModalButton3</button>
+                        <button>ModalButton4</button>
+                    </div>
+                    <div>
+                        <button>Button3</button>
+                        <button>Button4</button>
+                    </div>
+                </div>
             );
         });
 
@@ -492,20 +484,18 @@ describe("Focusable", () => {
     describe("isVisible", () => {
         it("should correctly detect visibility for position:fixed elements", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button
-                            style={{
-                                position: "fixed",
-                                width: 100,
-                                height: 50,
-                            }}
-                            id="button"
-                        >
-                            Button1
-                        </button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        style={{
+                            position: "fixed",
+                            width: 100,
+                            height: 50,
+                        }}
+                        id="button"
+                    >
+                        Button1
+                    </button>
+                </div>
             )
                 .eval(() => {
                     const vars = getTabsterTestVariables();
@@ -521,21 +511,17 @@ describe("Focusable", () => {
     describe("CSS styles affecting focusability", () => {
         it("should ignore elements with display:none or visibility:hidden", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <div style={{ display: "none" }}>
-                            <button>Button1</button>
-                        </div>
-                        <button style={{ display: "none" }}>Button2</button>
-                        <div style={{ visibility: "hidden" }}>
-                            <button>Button3</button>
-                        </div>
-                        <button style={{ visibility: "hidden" }}>
-                            Button4
-                        </button>
-                        <button>Button5</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div style={{ display: "none" }}>
+                        <button>Button1</button>
                     </div>
-                )
+                    <button style={{ display: "none" }}>Button2</button>
+                    <div style={{ visibility: "hidden" }}>
+                        <button>Button3</button>
+                    </div>
+                    <button style={{ visibility: "hidden" }}>Button4</button>
+                    <button>Button5</button>
+                </div>
             )
                 .eval(() => {
                     return getTabsterTestVariables()
@@ -548,44 +534,34 @@ describe("Focusable", () => {
         });
         it("should handle hidden fixed elements", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button style={{ position: "fixed", display: "none" }}>
-                            Button1
-                        </button>
-                        <div style={{ position: "fixed", display: "none" }}>
-                            <button>Button2</button>
-                        </div>
-                        <div style={{ display: "none" }}>
-                            <button style={{ position: "fixed" }}>
-                                Button3
-                            </button>
-                        </div>
-                        <button
-                            style={{ position: "fixed", visibility: "hidden" }}
-                        >
-                            Button4
-                        </button>
-                        <div
-                            style={{ position: "fixed", visibility: "hidden" }}
-                        >
-                            <button>Button5</button>
-                        </div>
-                        <div style={{ visibility: "hidden" }}>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button style={{ position: "fixed", display: "none" }}>
+                        Button1
+                    </button>
+                    <div style={{ position: "fixed", display: "none" }}>
+                        <button>Button2</button>
+                    </div>
+                    <div style={{ display: "none" }}>
+                        <button style={{ position: "fixed" }}>Button3</button>
+                    </div>
+                    <button style={{ position: "fixed", visibility: "hidden" }}>
+                        Button4
+                    </button>
+                    <div style={{ position: "fixed", visibility: "hidden" }}>
+                        <button>Button5</button>
+                    </div>
+                    <div style={{ visibility: "hidden" }}>
+                        <button style={{ position: "fixed" }}>Button6</button>
+                    </div>
+                    <div style={{ visibility: "hidden" }}>
+                        <div>
                             <button style={{ position: "fixed" }}>
                                 Button6
                             </button>
                         </div>
-                        <div style={{ visibility: "hidden" }}>
-                            <div>
-                                <button style={{ position: "fixed" }}>
-                                    Button6
-                                </button>
-                            </div>
-                        </div>
-                        <button>Button7</button>
                     </div>
-                )
+                    <button>Button7</button>
+                </div>
             )
                 .eval(() => {
                     return getTabsterTestVariables()
