@@ -5,9 +5,10 @@
 
 import * as Types from "../Types";
 
-export abstract class Subscribable<A, B = undefined>
-    implements Types.Subscribable<A, B>
-{
+export abstract class Subscribable<
+    A,
+    B = undefined,
+> implements Types.Subscribable<A, B> {
     protected _val: A | undefined;
     private _callbacks: Types.SubscribableCallback<A, B>[] = [];
 

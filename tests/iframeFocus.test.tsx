@@ -18,13 +18,11 @@ describe("<iframe />", () => {
 
     it("should focus in an out with Tab", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
-                    <button>Button1</button>
-                    <iframe src="/iframe.html" />
-                    <button>Button2</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <button>Button1</button>
+                <iframe src="/iframe.html" />
+                <button>Button2</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -139,13 +137,11 @@ describe("<iframe />", () => {
 
     it("should skip invisible iframes while finding focusables", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <iframe style={{ display: "none" }} src="/iframe.html" />
-                    <button>Button2</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <iframe style={{ display: "none" }} src="/iframe.html" />
+                <button>Button2</button>
+            </div>
         )
             .eval(() => {
                 return getTabsterTestVariables()
@@ -159,18 +155,16 @@ describe("<iframe />", () => {
 
     it("should skip invisible iframes while computing context", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <iframe
-                        {...getTabsterAttribute({ mover: {} })}
-                        id="iframe"
-                        style={{ display: "none" }}
-                        src="/iframe.html"
-                    />
-                    <button>Button2</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <iframe
+                    {...getTabsterAttribute({ mover: {} })}
+                    id="iframe"
+                    style={{ display: "none" }}
+                    src="/iframe.html"
+                />
+                <button>Button2</button>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();

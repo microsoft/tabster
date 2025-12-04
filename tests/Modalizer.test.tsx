@@ -105,46 +105,44 @@ describe("Modalizer", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        id="modal-1"
-                        {...getTabsterAttribute({
-                            modalizer: {
-                                id: "modal",
-                                isAlwaysAccessible: true,
-                            },
-                        })}
-                    >
-                        <button id="modal-button-1">ModalButton1</button>
-                    </div>
-                    <button id="button-2">Button2</button>
-                    <div
-                        id="modal-2"
-                        {...getTabsterAttribute({
-                            modalizer: {
-                                id: "modal2",
-                                isOthersAccessible: true,
-                            },
-                        })}
-                    >
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button id="button-3">Button3</button>
-                    <div>
-                        <div
-                            id="modal-3"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "modal3" },
-                            })}
-                        >
-                            <button id="modal-button-3">ModalButton3</button>
-                        </div>
-                    </div>
-                    <button id="button-4">Button4</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    id="modal-1"
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isAlwaysAccessible: true,
+                        },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
                 </div>
-            )
+                <button id="button-2">Button2</button>
+                <div
+                    id="modal-2"
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal2",
+                            isOthersAccessible: true,
+                        },
+                    })}
+                >
+                    <button id="modal-button-2">ModalButton2</button>
+                </div>
+                <button id="button-3">Button3</button>
+                <div>
+                    <div
+                        id="modal-3"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal3" },
+                        })}
+                    >
+                        <button id="modal-button-3">ModalButton3</button>
+                    </div>
+                </div>
+                <button id="button-4">Button4</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -350,23 +348,21 @@ describe("Modalizer", () => {
 
         it("should not restore focus when inactive modalizer is clicked and focus is already returned to the active one which is undefined", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <button id="button-2">Button2</button>
-                        <div
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                },
-                            })}
-                        >
-                            <button id="modal-button-1">ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <button id="button-3">Button3</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button id="button-2">Button2</button>
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                            },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
-                )
+                    <button id="button-3">Button3</button>
+                </div>
             )
                 .pressTab()
                 .eval(() => {
@@ -388,34 +384,32 @@ describe("Modalizer", () => {
 
         it("should not restore focus when inactive modalizer is clicked and focus is already returned to the active one which is another modalizer", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <button id="button-2">Button2</button>
-                        <div
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal-1",
-                                },
-                            })}
-                        >
-                            <button id="modal-button-1">ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <div
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal-2",
-                                },
-                            })}
-                        >
-                            <button id="modal-button-3">ModalButton3</button>
-                            <button id="modal-button-4">ModalButton4</button>
-                            <button id="modal-button-5">ModalButton5</button>
-                        </div>
-                        <button id="button-3">Button3</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <button id="button-2">Button2</button>
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal-1",
+                            },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
-                )
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal-2",
+                            },
+                        })}
+                    >
+                        <button id="modal-button-3">ModalButton3</button>
+                        <button id="modal-button-4">ModalButton4</button>
+                        <button id="modal-button-5">ModalButton5</button>
+                    </div>
+                    <button id="button-3">Button3</button>
+                </div>
             )
                 .eval(() => {
                     getTabsterTestVariables()
@@ -440,22 +434,20 @@ describe("Modalizer", () => {
 
         it("should not restore focus when inactive modalizer is clicked and there is no focused element", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                        <div
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                },
-                            })}
-                        >
-                            <button id="modal-button-1">ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <button>Button2</button>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                    <div
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                            },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
-                )
+                    <button>Button2</button>
+                </div>
             )
                 .pressTab()
                 .eval(() => {
@@ -562,20 +554,18 @@ describe("Modalizer", () => {
 
         it("if trapped, should not escape modalizer if it has no focusables", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <div
-                            id="modal"
-                            aria-label="modal"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "modal", isTrapped: true },
-                            })}
-                            tabIndex={0}
-                        >
-                            Hello
-                        </div>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div
+                        id="modal"
+                        aria-label="modal"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal", isTrapped: true },
+                        })}
+                        tabIndex={0}
+                    >
+                        Hello
                     </div>
-                )
+                </div>
             )
                 .focusElement("#modal")
                 .activeElement((el) => expect(el?.textContent).toEqual("Hello"))
@@ -659,32 +649,30 @@ describe("Modalizer with multiple containers", () => {
 
     it("should modalize multi-layer modal", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: {
-                                id: "multi-modal",
-                                isAlwaysAccessible: true,
-                            },
-                        })}
-                    >
-                        <button>ModalButton1</button>
-                        <button>ModalButton2</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "multi-modal" },
-                        })}
-                    >
-                        <button>ModalButton3</button>
-                        <button>ModalButton4</button>
-                    </div>
-                    <button>Button3</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "multi-modal",
+                            isAlwaysAccessible: true,
+                        },
+                    })}
+                >
+                    <button>ModalButton1</button>
+                    <button>ModalButton2</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "multi-modal" },
+                    })}
+                >
+                    <button>ModalButton3</button>
+                    <button>ModalButton4</button>
+                </div>
+                <button>Button3</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -714,56 +702,54 @@ describe("Modalizer with multiple containers", () => {
 
     it("should escape the modalizer combined with groupper", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
+                            modalizer: {
+                                id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
+                                isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <button>Button1</button>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton3</button>
-                            <button>ModalButton4</button>
-                        </div>
-                        <button>Button2</button>
+                        <button>ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
+                    <button>Button1</button>
+                    <div
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
+                                isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>ModalButton3</button>
+                        <button>ModalButton4</button>
+                    </div>
+                    <button>Button2</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) =>
@@ -820,51 +806,49 @@ describe("Modalizer with multiple containers", () => {
 
     it("should escape the modalizer when one of its parts is in groupper and another is not and the groupper part was focused recently", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
-                            },
-                        })}
-                    >
-                        <div
-                            id="groupper"
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                    </div>
-
-                    <div
+                        id="groupper"
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
                                 isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <button id="modal-button-3">ModalButton3</button>
-                        <button>ModalButton4</button>
+                        <button>ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
-
-                    <button>Button1</button>
                 </div>
-            )
+
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <button id="modal-button-3">ModalButton3</button>
+                    <button>ModalButton4</button>
+                </div>
+
+                <button>Button1</button>
+            </div>
         )
             .focusElement("#modal-button-3")
             .activeElement((el) =>
@@ -936,67 +920,65 @@ describe("Modalizer with multiple containers", () => {
 
     it("should escape the modalizer to the most recently focused groupper", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
-                            },
-                        })}
-                    >
-                        <div
-                            id="groupper"
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <div
-                            id="groupper-2"
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton3</button>
-                            <button>ModalButton4</button>
-                        </div>
-                    </div>
-
-                    <div
+                        id="groupper"
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
                                 isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <button id="modal-button-5">ModalButton5</button>
+                        <button>ModalButton1</button>
+                        <button>ModalButton2</button>
+                    </div>
+                    <div
+                        id="groupper-2"
+                        tabIndex={0}
+                        {...getTabsterAttribute({
+                            modalizer: {
+                                id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
+                                isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>ModalButton3</button>
+                        <button>ModalButton4</button>
                     </div>
                 </div>
-            )
+
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <button id="modal-button-5">ModalButton5</button>
+                </div>
+            </div>
         )
             .focusElement("#groupper")
             .activeElement((el) =>
@@ -1062,51 +1044,49 @@ describe("Modalizer with multiple containers", () => {
 
     it("should escape the modalizer to the most recently focused groupper even if it has no focusables", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
-                            },
-                        })}
-                    >
-                        <div
-                            id="groupper"
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                                focusable: {
-                                    ignoreKeydown: { Enter: true },
-                                },
-                            })}
-                        >
-                            Hello
-                        </div>
-                    </div>
-
-                    <div
+                        id="groupper"
+                        tabIndex={0}
                         {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
                                 isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                            focusable: {
+                                ignoreKeydown: { Enter: true },
                             },
                         })}
                     >
-                        <button id="modal-button-1">ModalButton1</button>
-                        <button id="modal-button-2">ModalButton2</button>
+                        Hello
                     </div>
                 </div>
-            )
+
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
+                    <button id="modal-button-2">ModalButton2</button>
+                </div>
+            </div>
         )
             .eval(() => {
                 document.addEventListener("keydown", (e) => {
@@ -1144,197 +1124,195 @@ describe("Modalizer with multiple containers", () => {
 
     it("should work in a very monstrous complex case with Movers and Grouppers", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
                     <div
+                        id="groupper1"
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            mover: {},
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
                         })}
                     >
                         <div
-                            id="groupper1"
-                            tabIndex={0}
                             {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
+                                mover: {},
                             })}
                         >
                             <div
+                                id="groupper1-1"
+                                tabIndex={0}
                                 {...getTabsterAttribute({
-                                    mover: {},
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.Unlimited,
+                                    },
+                                    modalizer: {
+                                        id: "modal",
+                                        isOthersAccessible: true,
+                                    },
                                 })}
                             >
+                                <button>ModalButton1.1</button>
                                 <div
-                                    id="groupper1-1"
-                                    tabIndex={0}
                                     {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.Unlimited,
-                                        },
-                                        modalizer: {
-                                            id: "modal",
-                                            isOthersAccessible: true,
-                                        },
+                                        mover: {},
                                     })}
                                 >
-                                    <button>ModalButton1.1</button>
                                     <div
+                                        tabIndex={0}
                                         {...getTabsterAttribute({
-                                            mover: {},
+                                            groupper: {
+                                                tabbability:
+                                                    GroupperTabbabilities.LimitedTrapFocus,
+                                            },
                                         })}
                                     >
-                                        <div
-                                            tabIndex={0}
-                                            {...getTabsterAttribute({
-                                                groupper: {
-                                                    tabbability:
-                                                        GroupperTabbabilities.LimitedTrapFocus,
-                                                },
-                                            })}
-                                        >
-                                            <button>ModalButton1.2</button>
-                                            <button>ModalButton1.3</button>
-                                        </div>
-                                        <div
-                                            tabIndex={0}
-                                            {...getTabsterAttribute({
-                                                groupper: {
-                                                    tabbability:
-                                                        GroupperTabbabilities.LimitedTrapFocus,
-                                                },
-                                            })}
-                                        >
-                                            <button>ModalButton1.4</button>
-                                            <button>ModalButton1.5</button>
-                                        </div>
+                                        <button>ModalButton1.2</button>
+                                        <button>ModalButton1.3</button>
                                     </div>
-                                    <button>ModalButton1.6</button>
+                                    <div
+                                        tabIndex={0}
+                                        {...getTabsterAttribute({
+                                            groupper: {
+                                                tabbability:
+                                                    GroupperTabbabilities.LimitedTrapFocus,
+                                            },
+                                        })}
+                                    >
+                                        <button>ModalButton1.4</button>
+                                        <button>ModalButton1.5</button>
+                                    </div>
                                 </div>
-                                <div
-                                    tabIndex={0}
-                                    id="groupper1-2"
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                        modalizer: {
-                                            id: "modal2",
-                                            isTrapped: true,
-                                        },
-                                    })}
-                                >
-                                    <button>ModalButton2.1</button>
-                                    <button>ModalButton2.2</button>
-                                </div>
+                                <button>ModalButton1.6</button>
                             </div>
-                        </div>
-                        <div
-                            id="groupper2"
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
                             <div
+                                tabIndex={0}
+                                id="groupper1-2"
                                 {...getTabsterAttribute({
-                                    mover: {},
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                    modalizer: {
+                                        id: "modal2",
+                                        isTrapped: true,
+                                    },
                                 })}
                             >
-                                <div
-                                    id="groupper2-1"
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                        modalizer: {
-                                            id: "modal3",
-                                            isAlwaysAccessible: true,
-                                            isOthersAccessible: true,
-                                        },
-                                    })}
-                                >
-                                    <button id="modal-button-3-1">
-                                        ModalButton3.1
-                                    </button>
-                                    <button>ModalButton3.2</button>
-                                </div>
-                                <div
-                                    id="groupper2-2"
-                                    tabIndex={0}
-                                    {...getTabsterAttribute({
-                                        groupper: {
-                                            tabbability:
-                                                GroupperTabbabilities.LimitedTrapFocus,
-                                        },
-                                    })}
-                                >
-                                    <div
-                                        {...getTabsterAttribute({
-                                            mover: {},
-                                        })}
-                                    >
-                                        <div
-                                            id="groupper2-2-1"
-                                            tabIndex={0}
-                                            {...getTabsterAttribute({
-                                                groupper: {
-                                                    tabbability:
-                                                        GroupperTabbabilities.LimitedTrapFocus,
-                                                },
-                                            })}
-                                        >
-                                            <button>NonModalButton1</button>
-                                            <button>NonModalButton2</button>
-                                        </div>
-                                        <div
-                                            id="groupper2-2-2"
-                                            tabIndex={0}
-                                            {...getTabsterAttribute({
-                                                groupper: {
-                                                    tabbability:
-                                                        GroupperTabbabilities.LimitedTrapFocus,
-                                                },
-                                                modalizer: {
-                                                    id: "modal3",
-                                                    isAlwaysAccessible: true,
-                                                },
-                                            })}
-                                        >
-                                            <button>ModalButton3.3</button>
-                                            <button>ModalButton3.4</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <button>ModalButton2.1</button>
+                                <button>ModalButton2.2</button>
                             </div>
                         </div>
                     </div>
                     <div
+                        id="groupper2"
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            modalizer: { id: "modal2", isTrapped: true },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
                         })}
                     >
-                        <button>ModalButton2.3</button>
-                        <button>ModalButton2.4</button>
-                    </div>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal3" },
-                        })}
-                    >
-                        <button>ModalButton3.5</button>
-                        <button>ModalButton3.6</button>
+                        <div
+                            {...getTabsterAttribute({
+                                mover: {},
+                            })}
+                        >
+                            <div
+                                id="groupper2-1"
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                    modalizer: {
+                                        id: "modal3",
+                                        isAlwaysAccessible: true,
+                                        isOthersAccessible: true,
+                                    },
+                                })}
+                            >
+                                <button id="modal-button-3-1">
+                                    ModalButton3.1
+                                </button>
+                                <button>ModalButton3.2</button>
+                            </div>
+                            <div
+                                id="groupper2-2"
+                                tabIndex={0}
+                                {...getTabsterAttribute({
+                                    groupper: {
+                                        tabbability:
+                                            GroupperTabbabilities.LimitedTrapFocus,
+                                    },
+                                })}
+                            >
+                                <div
+                                    {...getTabsterAttribute({
+                                        mover: {},
+                                    })}
+                                >
+                                    <div
+                                        id="groupper2-2-1"
+                                        tabIndex={0}
+                                        {...getTabsterAttribute({
+                                            groupper: {
+                                                tabbability:
+                                                    GroupperTabbabilities.LimitedTrapFocus,
+                                            },
+                                        })}
+                                    >
+                                        <button>NonModalButton1</button>
+                                        <button>NonModalButton2</button>
+                                    </div>
+                                    <div
+                                        id="groupper2-2-2"
+                                        tabIndex={0}
+                                        {...getTabsterAttribute({
+                                            groupper: {
+                                                tabbability:
+                                                    GroupperTabbabilities.LimitedTrapFocus,
+                                            },
+                                            modalizer: {
+                                                id: "modal3",
+                                                isAlwaysAccessible: true,
+                                            },
+                                        })}
+                                    >
+                                        <button>ModalButton3.3</button>
+                                        <button>ModalButton3.4</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal2", isTrapped: true },
+                    })}
+                >
+                    <button>ModalButton2.3</button>
+                    <button>ModalButton2.4</button>
+                </div>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal3" },
+                    })}
+                >
+                    <button>ModalButton3.5</button>
+                    <button>ModalButton3.6</button>
+                </div>
+            </div>
         )
             .pressTab()
             .activeElement((el) =>
@@ -1650,47 +1628,22 @@ describe("Modalizer with multiple containers", () => {
 
     it("should skip the elements between the active modalizer parts", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
-                        })}
-                    >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                                modalizer: {
-                                    id: "modal",
-                                    isOthersAccessible: true,
-                                    isAlwaysAccessible: true,
-                                    isTrapped: true,
-                                },
-                            })}
-                        >
-                            <button>Button2</button>
-                            <div
-                                {...getTabsterAttribute({
-                                    mover: {
-                                        cyclic: true,
-                                        direction: MoverDirections.Vertical,
-                                    },
-                                })}
-                            >
-                                <button>Button3</button>
-                            </div>
-                        </div>
-                    </div>
-                    <button>Button4</button>
-                    <div
-                        {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
                                 isOthersAccessible: true,
@@ -1699,6 +1652,7 @@ describe("Modalizer with multiple containers", () => {
                             },
                         })}
                     >
+                        <button>Button2</button>
                         <div
                             {...getTabsterAttribute({
                                 mover: {
@@ -1707,11 +1661,33 @@ describe("Modalizer with multiple containers", () => {
                                 },
                             })}
                         >
-                            <button>Button5</button>
+                            <button>Button3</button>
                         </div>
                     </div>
                 </div>
-            )
+                <button>Button4</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isOthersAccessible: true,
+                            isAlwaysAccessible: true,
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                cyclic: true,
+                                direction: MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <button>Button5</button>
+                    </div>
+                </div>
+            </div>
         )
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -1741,47 +1717,22 @@ describe("Modalizer with multiple containers", () => {
 
     it("should skip iframes between the active modalizer parts and should properly focus them when the modalizer is not active", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
                     <div
+                        tabIndex={0}
                         {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
-                        })}
-                    >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                                modalizer: {
-                                    id: "modal",
-                                    isOthersAccessible: true,
-                                    isAlwaysAccessible: true,
-                                    isTrapped: true,
-                                },
-                            })}
-                        >
-                            <button>Button2</button>
-                            <div
-                                {...getTabsterAttribute({
-                                    mover: {
-                                        cyclic: true,
-                                        direction: MoverDirections.Vertical,
-                                    },
-                                })}
-                            >
-                                <button>Button3</button>
-                            </div>
-                        </div>
-                    </div>
-                    <iframe id="frame1" src={BroTest.getTestPageURL()}></iframe>
-                    <div
-                        {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
                                 isOthersAccessible: true,
@@ -1790,6 +1741,7 @@ describe("Modalizer with multiple containers", () => {
                             },
                         })}
                     >
+                        <button>Button2</button>
                         <div
                             {...getTabsterAttribute({
                                 mover: {
@@ -1798,11 +1750,33 @@ describe("Modalizer with multiple containers", () => {
                                 },
                             })}
                         >
-                            <button>Button5</button>
+                            <button>Button3</button>
                         </div>
                     </div>
                 </div>
-            )
+                <iframe id="frame1" src={BroTest.getTestPageURL()}></iframe>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isOthersAccessible: true,
+                            isAlwaysAccessible: true,
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <div
+                        {...getTabsterAttribute({
+                            mover: {
+                                cyclic: true,
+                                direction: MoverDirections.Vertical,
+                            },
+                        })}
+                    >
+                        <button>Button5</button>
+                    </div>
+                </div>
+            </div>
         )
             .frame("frame1")
             .html(
@@ -1842,53 +1816,51 @@ describe("Modalizer with multiple containers", () => {
 
     it("should not lose focus when escape is pressed on the modalizer combined with groupper and a part of modalizer goes away", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Vertical,
-                            },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                modalizer: {
-                                    id: "modal",
-                                    isAlwaysAccessible: true,
-                                    isOthersAccessible: true,
-                                    isTrapped: true,
-                                },
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>ModalButton1</button>
-                            <button>ModalButton2</button>
-                        </div>
-                        <button>Button2</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Vertical,
+                        },
+                    })}
+                >
+                    <button>Button1</button>
                     <div
                         tabIndex={0}
-                        id="remove-me-on-esc"
                         {...getTabsterAttribute({
                             modalizer: {
                                 id: "modal",
-                                isAlwaysAccessible: false,
-                                isOthersAccessible: false,
+                                isAlwaysAccessible: true,
+                                isOthersAccessible: true,
                                 isTrapped: true,
+                            },
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
                             },
                         })}
                     >
-                        <button>ModalButton3</button>
-                        <button>ModalButton4</button>
+                        <button>ModalButton1</button>
+                        <button>ModalButton2</button>
                     </div>
+                    <button>Button2</button>
                 </div>
-            )
+                <div
+                    tabIndex={0}
+                    id="remove-me-on-esc"
+                    {...getTabsterAttribute({
+                        modalizer: {
+                            id: "modal",
+                            isAlwaysAccessible: false,
+                            isOthersAccessible: false,
+                            isTrapped: true,
+                        },
+                    })}
+                >
+                    <button>ModalButton3</button>
+                    <button>ModalButton4</button>
+                </div>
+            </div>
         )
             .eval(() => {
                 document
@@ -1945,31 +1917,29 @@ describe("Modalizer events", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        aria-label="modal"
-                        id="modal-part-1"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button id="modal-button">ModalButton1</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        aria-label="modal"
-                        id="modal-part-2"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button id="button-3">Button3</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    aria-label="modal"
+                    id="modal-part-1"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button id="modal-button">ModalButton1</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    aria-label="modal"
+                    id="modal-part-2"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button id="modal-button-2">ModalButton2</button>
+                </div>
+                <button id="button-3">Button3</button>
+            </div>
         )
             .eval(() => {
                 (
@@ -2210,37 +2180,35 @@ describe("Modalizer dispose", () => {
         }
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        aria-label="modal1"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal1" },
-                        })}
-                    >
-                        <button id="foo">Foo</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        aria-label="modal2"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal2" },
-                        })}
-                    >
-                        <button>Baz</button>
-                    </div>
-                    <button>Button3</button>
-                    <div
-                        aria-label="modal1"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal1" },
-                        })}
-                    >
-                        <button>Bar</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    aria-label="modal1"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal1" },
+                    })}
+                >
+                    <button id="foo">Foo</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    aria-label="modal2"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal2" },
+                    })}
+                >
+                    <button>Baz</button>
+                </div>
+                <button>Button3</button>
+                <div
+                    aria-label="modal1"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal1" },
+                    })}
+                >
+                    <button>Bar</button>
+                </div>
+            </div>
         )
             .pressTab()
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))
@@ -2290,22 +2258,20 @@ describe("Modalizer with alwaysAccessibleSelector", () => {
 
     it("should not set aria-hidden on elements that match the alwaysAccessibleSelector", async () => {
         await new BroTest.BroTest(
-            (
-                <div>
-                    <button id="button1">Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button id="button2">Button2</button>
-                    </div>
-                    <button id="button3">Button3</button>
-                    <div id="aria-live" aria-live="polite">
-                        Ololo
-                    </div>
+            <div>
+                <button id="button1">Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button id="button2">Button2</button>
                 </div>
-            )
+                <button id="button3">Button3</button>
+                <div id="aria-live" aria-live="polite">
+                    Ololo
+                </div>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();
@@ -2378,19 +2344,17 @@ describe("Modalizer with checkAccessible callback", () => {
 
     it("should not set aria-hidden on elements that match the alwaysAccessibleSelector", async () => {
         await new BroTest.BroTest(
-            (
-                <div>
-                    <button id="button1">Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button id="button2">Button2</button>
-                    </div>
-                    <button id="button3">Button3</button>
+            <div>
+                <button id="button1">Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button id="button2">Button2</button>
                 </div>
-            )
+                <button id="button3">Button3</button>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();
@@ -2459,30 +2423,28 @@ describe("Modalizer with noDirectAriaHidden flag", () => {
 
     it("should not set aria-hidden on elements with noDirectAriaHidden flag", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div id="div1">
-                        <button>Button1</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div id="div1">
+                    <button>Button1</button>
+                </div>
+                <div
+                    id="div2"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button id="button2">Button2</button>
+                </div>
+                <div id="div3">
+                    <button id="button3">Button3</button>
+                    <div id="div4">
+                        <button id="button4">Button4</button>
                     </div>
-                    <div
-                        id="div2"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button id="button2">Button2</button>
-                    </div>
-                    <div id="div3">
-                        <button id="button3">Button3</button>
-                        <div id="div4">
-                            <button id="button4">Button4</button>
-                        </div>
-                        <div id="div5">
-                            <button id="button5">Button5</button>
-                        </div>
+                    <div id="div5">
+                        <button id="button5">Button5</button>
                     </div>
                 </div>
-            )
+            </div>
         )
             .focusElement("#button2")
             .activeElement((el) => {
@@ -2641,29 +2603,27 @@ describe("Modalizer with tabster:movefocus event handling", () => {
 
     it("should allow to custom handle the focus movement in both not trapped and trapped modalizers", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button id="modal-button">ModalButton1</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        aria-label="modal2"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal2", isTrapped: true },
-                        })}
-                    >
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button id="button-3">Button3</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button id="modal-button">ModalButton1</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    aria-label="modal2"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal2", isTrapped: true },
+                    })}
+                >
+                    <button id="modal-button-2">ModalButton2</button>
+                </div>
+                <button id="button-3">Button3</button>
+            </div>
         )
             .eval(() => {
                 document.addEventListener("tabster:movefocus", (e) => {
@@ -2720,34 +2680,32 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
 
     it("should not set aria-hidden on elements which are virtual children of active modalizer", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        id="modal-container-1"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button id="modal-button">ModalButton1</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        id="modal-container-2"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button>ModalButton2</button>
-                    </div>
-                    <button id="button-3">Button3</button>
-                    <div id="virtual-child-1"></div>
-                    <div id="virtual-child-2"></div>
-                    <div id="not-virtual-child"></div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    id="modal-container-1"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button id="modal-button">ModalButton1</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    id="modal-container-2"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button>ModalButton2</button>
+                </div>
+                <button id="button-3">Button3</button>
+                <div id="virtual-child-1"></div>
+                <div id="virtual-child-2"></div>
+                <div id="not-virtual-child"></div>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();
@@ -2859,41 +2817,39 @@ describe("Modalizer with virtual parents provided by getParent()", () => {
 
     it("should set aria-hidden on elements which are virtual parents of active modalizer but aren't part of modalizer", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div id="virtual-parent-container">
-                        <div>
-                            <span
-                                id="virtual-parent"
-                                style={{ visibility: "hidden" }}
-                            />
-                        </div>
-                    </div>
-                    <div id="modal-container-1">
-                        <div
-                            id="modal-1"
-                            aria-label="modal-1"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "modal-1", isTrapped: true },
-                            })}
-                        >
-                            <button id="modal-button-1">ModalButton1</button>
-                        </div>
-                    </div>
-                    <div id="modal-container-2">
-                        <div
-                            id="modal-2"
-                            aria-label="modal-2"
-                            {...getTabsterAttribute({
-                                modalizer: { id: "modal-2", isTrapped: true },
-                            })}
-                        >
-                            <button id="modal-button-2">ModalButton2</button>
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div id="virtual-parent-container">
+                    <div>
+                        <span
+                            id="virtual-parent"
+                            style={{ visibility: "hidden" }}
+                        />
                     </div>
                 </div>
-            )
+                <div id="modal-container-1">
+                    <div
+                        id="modal-1"
+                        aria-label="modal-1"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-1", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-1">ModalButton1</button>
+                    </div>
+                </div>
+                <div id="modal-container-2">
+                    <div
+                        id="modal-2"
+                        aria-label="modal-2"
+                        {...getTabsterAttribute({
+                            modalizer: { id: "modal-2", isTrapped: true },
+                        })}
+                    >
+                        <button id="modal-button-2">ModalButton2</button>
+                    </div>
+                </div>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();
@@ -3082,16 +3038,14 @@ describe("Modalizer activation on creation", () => {
 
     it("should activate newly created modalizer if focus is inside the modalizer container", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div id="modal" aria-label="modal">
-                        <button id="modal-button">ModalButton1</button>
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button>Button2</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div id="modal" aria-label="modal">
+                    <button id="modal-button">ModalButton1</button>
+                    <button id="modal-button-2">ModalButton2</button>
                 </div>
-            )
+                <button>Button2</button>
+            </div>
         )
             .focusElement("#modal-button-2")
             .activeElement((el) =>
@@ -3131,16 +3085,14 @@ describe("Modalizer activation on creation", () => {
 
     it("should not activate newly created modalizer if focus is outside the modalizer container", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div id="modal" aria-label="modal">
-                        <button id="modal-button">ModalButton1</button>
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button>Button2</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div id="modal" aria-label="modal">
+                    <button id="modal-button">ModalButton1</button>
+                    <button id="modal-button-2">ModalButton2</button>
                 </div>
-            )
+                <button>Button2</button>
+            </div>
         )
             .focusElement("#modal-button-2")
             .activeElement((el) =>
@@ -3170,16 +3122,14 @@ describe("Modalizer activation on creation", () => {
 
     it("should not activate newly created modalizer if focus is on the modalizer container", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div id="modal" aria-label="modal" tabIndex={0}>
-                        <button id="modal-button">ModalButton1</button>
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button>Button2</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div id="modal" aria-label="modal" tabIndex={0}>
+                    <button id="modal-button">ModalButton1</button>
+                    <button id="modal-button-2">ModalButton2</button>
                 </div>
-            )
+                <button>Button2</button>
+            </div>
         )
             .focusElement("#modal")
             .activeElement((el) =>
@@ -3230,41 +3180,39 @@ describe("Modalizer activation", () => {
 
     it("should activate most recently active modalizer when currently active one disappears", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        id="modal-1"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal-1", isTrapped: true },
-                        })}
-                    >
-                        <button id="modal-button-1">ModalButton1</button>
-                    </div>
-                    <button>Button2</button>
-                    <div
-                        id="modal-2"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal-2", isTrapped: true },
-                        })}
-                    >
-                        <button id="modal-button-2">ModalButton2</button>
-                    </div>
-                    <button>Button3</button>
-                    <div
-                        id="modal-3"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal-3", isTrapped: true },
-                        })}
-                    >
-                        <button id="modal-button-3">ModalButton3</button>
-                    </div>
-                    <button>Button4</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    id="modal-1"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal-1", isTrapped: true },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
                 </div>
-            )
+                <button>Button2</button>
+                <div
+                    id="modal-2"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal-2", isTrapped: true },
+                    })}
+                >
+                    <button id="modal-button-2">ModalButton2</button>
+                </div>
+                <button>Button3</button>
+                <div
+                    id="modal-3"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal-3", isTrapped: true },
+                    })}
+                >
+                    <button id="modal-button-3">ModalButton3</button>
+                </div>
+                <button>Button4</button>
+            </div>
         )
             .focusElement("#modal-button-1")
             .activeElement((el) =>
@@ -3296,21 +3244,19 @@ describe("Modalizer activation", () => {
 
     it("should activate modalizer by element from modalizer or modalizer container", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        id="modal-1"
-                        aria-label="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal-1", isTrapped: true },
-                        })}
-                    >
-                        <button id="modal-button-1">ModalButton1</button>
-                    </div>
-                    <button>Button2</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    id="modal-1"
+                    aria-label="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal-1", isTrapped: true },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
                 </div>
-            )
+                <button>Button2</button>
+            </div>
         )
             .focusElement("#button-1")
             .activeElement((el) => expect(el?.textContent).toEqual("Button1"))

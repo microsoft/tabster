@@ -74,19 +74,17 @@ describe("onKeyDown", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button id="modal-button-1">ModalButton1</button>
-                    </div>
-                    <button id="button-2">Button2</button>
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button id="modal-button-1">ModalButton1</button>
                 </div>
-            )
+                <button id="button-2">Button2</button>
+            </div>
         )
             .eval(() => {
                 (window as WindowWithFocusEventsHistory).__tabsterFocusEvents =
@@ -271,15 +269,13 @@ describe("Radio buttons", () => {
 
     it("Should skip unchecked radio buttons", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <div>
-                        <input type="radio" name="ololo" value="111" />
-                        <input type="radio" name="ololo" value="222" checked />
-                        <input type="radio" name="ololo" value="333" />
-                    </div>
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <input type="radio" name="ololo" value="111" />
+                    <input type="radio" name="ololo" value="222" checked />
+                    <input type="radio" name="ololo" value="333" />
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => expect(el?.attributes?.value).toEqual("222"))
@@ -293,19 +289,17 @@ describe("Radio buttons", () => {
 
     it("Should skip unchecked radio buttons mixed with other focusables while not skipping other focusables", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <div>
-                        <input type="radio" name="ololo" value="111" />
-                        <button value="button1">Button1</button>
-                        <input type="radio" name="ololo" value="222" />
-                        <button value="button2">Button2</button>
-                        <input type="radio" name="ololo" value="333" checked />
-                        <button value="button3">Button3</button>
-                        <input type="radio" name="ololo" value="444" />
-                    </div>
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <input type="radio" name="ololo" value="111" />
+                    <button value="button1">Button1</button>
+                    <input type="radio" name="ololo" value="222" />
+                    <button value="button2">Button2</button>
+                    <input type="radio" name="ololo" value="333" checked />
+                    <button value="button3">Button3</button>
+                    <input type="radio" name="ololo" value="444" />
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) =>
@@ -349,23 +343,21 @@ describe("Radio buttons", () => {
 
     it("Should skip unchecked radio buttons when entering Groupper", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: { tabbability: 2 },
-                        })}
-                    >
-                        Radio
-                        <input type="radio" name="ololo" value="111" />
-                        <input type="radio" name="ololo" value="222" checked />
-                        <button value="button1">Button1</button>
-                        <input type="radio" name="ololo" value="333" />
-                        Buttons
-                    </div>
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: { tabbability: 2 },
+                    })}
+                >
+                    Radio
+                    <input type="radio" name="ololo" value="111" />
+                    <input type="radio" name="ololo" value="222" checked />
+                    <button value="button1">Button1</button>
+                    <input type="radio" name="ololo" value="333" />
+                    Buttons
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) =>
@@ -393,16 +385,14 @@ describe("Radio buttons", () => {
 
     it("Should find all radios buttons when findAll() is called", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <div>
-                        <input type="radio" name="ololo" value="111" />
-                        <input type="radio" name="ololo" value="222" checked />
-                        <button value="button1">Button1</button>
-                        <input type="radio" name="ololo" value="333" />
-                    </div>
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <input type="radio" name="ololo" value="111" />
+                    <input type="radio" name="ololo" value="222" checked />
+                    <button value="button1">Button1</button>
+                    <input type="radio" name="ololo" value="333" />
                 </div>
-            )
+            </div>
         )
             .eval(() => {
                 const root = getTabsterTestVariables().dom?.getElementById(

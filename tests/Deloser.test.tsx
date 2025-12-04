@@ -18,14 +18,12 @@ describe("Deloser", () => {
 
     it("should restore focus", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                    <button>Button4</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <button>Button1</button>
+                <button>Button2</button>
+                <button>Button3</button>
+                <button>Button4</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -41,14 +39,12 @@ describe("Deloser", () => {
 
     it("should not restore focus if focus is not inside the deloser", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div {...getTabsterAttribute({ deloser: {} })}>
-                        <button>Button1</button>
-                    </div>
-                    <button>Button2</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ deloser: {} })}>
+                    <button>Button1</button>
                 </div>
-            )
+                <button>Button2</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -64,16 +60,14 @@ describe("Deloser", () => {
 
     it("should not restore focus by deloser history", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button {...getTabsterAttribute({ deloser: {} })}>
-                        Button1
-                    </button>
-                    <button {...getTabsterAttribute({ deloser: {} })}>
-                        Button2
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button {...getTabsterAttribute({ deloser: {} })}>
+                    Button1
+                </button>
+                <button {...getTabsterAttribute({ deloser: {} })}>
+                    Button2
+                </button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -95,14 +89,12 @@ describe("Deloser", () => {
             true
         ) as string;
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button {...getTabsterAttribute({ deloser: {} })}>
-                        Button1
-                    </button>
-                    <button id="newDeloser">Button2</button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button {...getTabsterAttribute({ deloser: {} })}>
+                    Button1
+                </button>
+                <button id="newDeloser">Button2</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -130,36 +122,32 @@ describe("Deloser", () => {
 
     it("should restore focus in the middle of a limited groupper", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    GroupperTabbabilities.LimitedTrapFocus,
-                            },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                    </div>
-                    <div
-                        tabIndex={0}
-                        {...getTabsterAttribute({
-                            groupper: {
-                                tabbability:
-                                    GroupperTabbabilities.LimitedTrapFocus,
-                            },
-                        })}
-                    >
-                        <button className="button-4">Button4</button>
-                        <button className="button-5">Button5</button>
-                        <button className="button-6">Button6</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
                 </div>
-            )
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
+                    <button className="button-4">Button4</button>
+                    <button className="button-5">Button5</button>
+                    <button className="button-6">Button6</button>
+                </div>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -183,13 +171,11 @@ describe("Deloser", () => {
 
     it("should restore focus in <form> with named inputs", async () => {
         await new BroTest.BroTest(
-            (
-                <form {...getTabsterAttribute({ root: {}, deloser: {} })}>
-                    <button>Button1</button>
-                    <input name="id" />
-                    <button>Button2</button>
-                </form>
-            )
+            <form {...getTabsterAttribute({ root: {}, deloser: {} })}>
+                <button>Button1</button>
+                <input name="id" />
+                <button>Button2</button>
+            </form>
         )
             .pressTab()
             .pressTab()
@@ -211,26 +197,24 @@ describe("Deloser created lazily", () => {
 
     it("should add currently focused element to the Deloser history if Deloser is created after the focus", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div>
-                        <button
-                            id="button1"
-                            {...getTabsterAttribute({ deloser: {} })}
-                        >
-                            Button1
-                        </button>
-                    </div>
-                    <div id="second">
-                        <button
-                            id="button2"
-                            {...getTabsterAttribute({ deloser: {} })}
-                        >
-                            Button2
-                        </button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div>
+                    <button
+                        id="button1"
+                        {...getTabsterAttribute({ deloser: {} })}
+                    >
+                        Button1
+                    </button>
                 </div>
-            )
+                <div id="second">
+                    <button
+                        id="button2"
+                        {...getTabsterAttribute({ deloser: {} })}
+                    >
+                        Button2
+                    </button>
+                </div>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -269,20 +253,18 @@ describe("Deloser with manual strategy", () => {
 
     it("should not restore focus automatically", async () => {
         await new BroTest.BroTest(
-            (
-                <div
-                    id="deloser"
-                    {...getTabsterAttribute({
-                        root: {},
-                        deloser: { strategy: 1 },
-                    })}
-                >
-                    <button>Button1</button>
-                    <button>Button2</button>
-                    <button>Button3</button>
-                    <button>Button4</button>
-                </div>
-            )
+            <div
+                id="deloser"
+                {...getTabsterAttribute({
+                    root: {},
+                    deloser: { strategy: 1 },
+                })}
+            >
+                <button>Button1</button>
+                <button>Button2</button>
+                <button>Button3</button>
+                <button>Button4</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -317,26 +299,21 @@ describe("Deloser events", () => {
 
     it("should dispatch tabster:movefocus that is preventable", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div id="deloser" {...getTabsterAttribute({ deloser: {} })}>
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                    </div>
-
-                    <div
-                        id="deloser2"
-                        {...getTabsterAttribute({ deloser: {} })}
-                    >
-                        <button>Button5</button>
-                        <button>Button6</button>
-                        <button>Button7</button>
-                        <button>Button8</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div id="deloser" {...getTabsterAttribute({ deloser: {} })}>
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
                 </div>
-            )
+
+                <div id="deloser2" {...getTabsterAttribute({ deloser: {} })}>
+                    <button>Button5</button>
+                    <button>Button6</button>
+                    <button>Button7</button>
+                    <button>Button8</button>
+                </div>
+            </div>
         )
             .eval(() => {
                 const Events = getTabsterTestVariables().Events;

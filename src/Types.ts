@@ -123,8 +123,7 @@ export interface Subscribable<A, B = undefined> {
 }
 
 export interface KeyboardNavigationState
-    extends Subscribable<boolean>,
-        Disposable {
+    extends Subscribable<boolean>, Disposable {
     isNavigatingWithKeyboard(): boolean;
     setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void;
 }
@@ -141,7 +140,8 @@ export type AsyncFocusSources = typeof _AsyncFocusSources;
 export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
 
 export interface FocusedElementState
-    extends Subscribable<HTMLElement | undefined, FocusedElementDetail>,
+    extends
+        Subscribable<HTMLElement | undefined, FocusedElementDetail>,
         Disposable {
     getFocusedElement(): HTMLElement | undefined;
     getLastFocusedElement(): HTMLElement | undefined;
@@ -284,7 +284,8 @@ interface ObservedElementAPIInternal {
 }
 
 export interface ObservedElementAPI
-    extends Subscribable<HTMLElement, ObservedElementDetails>,
+    extends
+        Subscribable<HTMLElement, ObservedElementDetails>,
         Disposable,
         ObservedElementAPIInternal {
     getElement(
@@ -378,7 +379,8 @@ export interface CrossOriginMessage {
 }
 
 export interface CrossOriginFocusedElementState
-    extends Subscribable<CrossOriginElement | undefined, FocusedElementDetail>,
+    extends
+        Subscribable<CrossOriginElement | undefined, FocusedElementDetail>,
         Disposable {
     focus(
         element: CrossOriginElement,
@@ -401,8 +403,7 @@ export interface CrossOriginFocusedElementState
 }
 
 export interface CrossOriginObservedElementState
-    extends Subscribable<CrossOriginElement, ObservedElementProps>,
-        Disposable {
+    extends Subscribable<CrossOriginElement, ObservedElementProps>, Disposable {
     getElement(
         observedName: string,
         accessibility?: ObservedElementAccessibility
@@ -796,7 +797,8 @@ export interface MoverProps {
 }
 
 export interface Mover
-    extends TabsterPart<MoverProps>,
+    extends
+        TabsterPart<MoverProps>,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -852,7 +854,8 @@ export interface GroupperProps {
 }
 
 export interface Groupper
-    extends TabsterPart<GroupperProps>,
+    extends
+        TabsterPart<GroupperProps>,
         TabsterPartWithFindNextTabbable,
         TabsterPartWithAcceptElement {
     readonly id: string;
@@ -914,8 +917,7 @@ export interface ModalizerProps {
 }
 
 export interface Modalizer
-    extends TabsterPart<ModalizerProps>,
-        TabsterPartWithFindNextTabbable {
+    extends TabsterPart<ModalizerProps>, TabsterPartWithFindNextTabbable {
     readonly userId: string;
     readonly dummyManager: DummyInputManager | undefined;
     /**
@@ -1325,7 +1327,8 @@ export interface Tabster {
 }
 
 export interface TabsterCore
-    extends Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+    extends
+        Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
         Disposable,
         TabsterCoreInternal,
         Omit<Tabster, "core"> {}

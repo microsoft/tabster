@@ -33,20 +33,18 @@ describe("keyboard navigation state", () => {
 
     it("should be true when navigating inside a Mover", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .eval(getKeyboardNavigationState)
             .check((isNavigatingWIthKeyboard: boolean) => {
@@ -69,14 +67,12 @@ describe("keyboard navigation state", () => {
         const groupperAttr = getTabsterAttribute({ groupper: {} });
 
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <div id="groupper" tabIndex={0} {...groupperAttr}>
-                        <button>Foo</button>
-                        <button>Bar</button>
-                    </div>
+            <div {...rootAttr}>
+                <div id="groupper" tabIndex={0} {...groupperAttr}>
+                    <button>Foo</button>
+                    <button>Bar</button>
                 </div>
-            )
+            </div>
         )
             .focusElement("#groupper")
             .eval(getKeyboardNavigationState)
@@ -95,11 +91,9 @@ describe("keyboard navigation state", () => {
         const rootAttr = getTabsterAttribute({ root: {} });
 
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="foo">Foo</button>
-                </div>
-            )
+            <div {...rootAttr}>
+                <button id="foo">Foo</button>
+            </div>
         )
             .focusElement("#foo")
             .eval(getKeyboardNavigationState)

@@ -24,17 +24,15 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target" {...targetAttr}>
+                    target
+                </button>
 
-                    <div id="source" {...sourceAttr}>
-                        <button>source</button>
-                    </div>
+                <div id="source" {...sourceAttr}>
+                    <button>source</button>
                 </div>
-            )
+            </div>
         )
             .focusElement("#target")
             .focusElement("#source button")
@@ -56,17 +54,15 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target" {...targetAttr}>
+                    target
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target")
             .focusElement("#source")
@@ -88,20 +84,18 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target 1
-                    </button>
-                    <button id="target-2" {...targetAttr}>
-                        target 2
-                    </button>
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target 1
+                </button>
+                <button id="target-2" {...targetAttr}>
+                    target 2
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")
@@ -124,20 +118,18 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target 1
-                    </button>
-                    <button id="target-2" {...targetAttr}>
-                        target 2
-                    </button>
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target 1
+                </button>
+                <button id="target-2" {...targetAttr}>
+                    target 2
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")
@@ -163,20 +155,18 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target
-                    </button>
-                    <button id="other" {...targetAttr}>
-                        other
-                    </button>
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target
+                </button>
+                <button id="other" {...targetAttr}>
+                    other
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#source")
@@ -199,15 +189,13 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target
+                </button>
 
-                    <button id="not-source">not source</button>
-                </div>
-            )
+                <button id="not-source">not source</button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#not-source")
@@ -231,17 +219,15 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target" {...targetAttr}>
+                    target
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .click("#target")
             .activeElement((el) => expect(el?.textContent).toEqual("target"))
@@ -260,17 +246,15 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target" {...targetAttr}>
+                    target
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .click("#target")
             .activeElement((el) => expect(el?.textContent).toEqual("target"))
@@ -293,17 +277,15 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target" {...targetAttr}>
-                        target
-                    </button>
+            <div {...rootAttr}>
+                <button id="target" {...targetAttr}>
+                    target
+                </button>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .click("#target")
             .activeElement((el) => expect(el?.textContent).toEqual("target"))
@@ -330,15 +312,13 @@ describe("Restorer", () => {
             restorer: { type: RestorerTypes.Source },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <div id="target-container" {...targetAttr}></div>
+            <div {...rootAttr}>
+                <div id="target-container" {...targetAttr}></div>
 
-                    <button id="source" {...sourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...sourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .eval(
                 (tabsterAttrName, targetAttr) => {
@@ -375,37 +355,35 @@ describe("Restorer focus priority", () => {
     });
     it("should prioritize Restorer before Groupper when both want to move focus", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        tabIndex={0}
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: { tabbability: 2 },
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button
+                        id="target"
                         {...getTabsterAttribute({
-                            groupper: { tabbability: 2 },
-                            modalizer: { id: "modal" },
+                            restorer: { type: RestorerTypes.Target },
                         })}
                     >
-                        <button
-                            id="target"
-                            {...getTabsterAttribute({
-                                restorer: { type: RestorerTypes.Target },
-                            })}
-                        >
-                            target
-                        </button>
-                        <button>button</button>
-                    </div>
-
-                    <div
-                        id="source"
-                        {...getTabsterAttribute({
-                            restorer: { type: RestorerTypes.Source },
-                            modalizer: { id: "modal" },
-                        })}
-                    >
-                        <button>source</button>
-                    </div>
+                        target
+                    </button>
+                    <button>button</button>
                 </div>
-            )
+
+                <div
+                    id="source"
+                    {...getTabsterAttribute({
+                        restorer: { type: RestorerTypes.Source },
+                        modalizer: { id: "modal" },
+                    })}
+                >
+                    <button>source</button>
+                </div>
+            </div>
         )
             .focusElement("#target")
             .pressTab()
@@ -462,20 +440,18 @@ describe("Restorer focus link", () => {
             restorer: { type: RestorerTypes.Target, id: "link" },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...linkedTargetAttr}>
-                        target 1
-                    </button>
-                    <button id="target-2" {...targetAttr}>
-                        target 2
-                    </button>
+            <div {...rootAttr}>
+                <button id="target-1" {...linkedTargetAttr}>
+                    target 1
+                </button>
+                <button id="target-2" {...targetAttr}>
+                    target 2
+                </button>
 
-                    <button id="source" {...linkedSourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+                <button id="source" {...linkedSourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")
@@ -497,19 +473,17 @@ describe("Restorer focus link", () => {
             restorer: { type: RestorerTypes.Target },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target 1
-                    </button>
-                    <button id="target-2" {...targetAttr}>
-                        target 2
-                    </button>
-                    <button id="source" {...linkedSourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target 1
+                </button>
+                <button id="target-2" {...targetAttr}>
+                    target 2
+                </button>
+                <button id="source" {...linkedSourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")
@@ -531,19 +505,17 @@ describe("Restorer focus link", () => {
             restorer: { type: RestorerTypes.Target, id: "link" },
         });
         await new BroTest.BroTest(
-            (
-                <div {...rootAttr}>
-                    <button id="target-1" {...targetAttr}>
-                        target 1
-                    </button>
-                    <button id="target-2" {...targetAttr}>
-                        target 1
-                    </button>
-                    <button id="source" {...linkedSourceAttr}>
-                        source
-                    </button>
-                </div>
-            )
+            <div {...rootAttr}>
+                <button id="target-1" {...targetAttr}>
+                    target 1
+                </button>
+                <button id="target-2" {...targetAttr}>
+                    target 1
+                </button>
+                <button id="source" {...linkedSourceAttr}>
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")
@@ -562,47 +534,45 @@ describe("Restorer focus link", () => {
 
     it("should not restore focus to target that doesn't have Restorer anymore", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button
-                        id="target-1"
-                        {...getTabsterAttribute({
-                            restorer: { type: RestorerTypes.Target },
-                        })}
-                    >
-                        target 1
-                    </button>
-                    <button
-                        id="target-2"
-                        {...getTabsterAttribute({
-                            restorer: { type: RestorerTypes.Target },
-                        })}
-                    >
-                        target 2
-                    </button>
-                    <button
-                        id="target-3"
-                        {...getTabsterAttribute({
-                            restorer: {
-                                type: RestorerTypes.Target,
-                                id: "some-id",
-                            },
-                        })}
-                    >
-                        target 3
-                    </button>
-                    <button
-                        id="source"
-                        {...getTabsterAttribute({
-                            restorer: {
-                                type: RestorerTypes.Source,
-                            },
-                        })}
-                    >
-                        source
-                    </button>
-                </div>
-            )
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button
+                    id="target-1"
+                    {...getTabsterAttribute({
+                        restorer: { type: RestorerTypes.Target },
+                    })}
+                >
+                    target 1
+                </button>
+                <button
+                    id="target-2"
+                    {...getTabsterAttribute({
+                        restorer: { type: RestorerTypes.Target },
+                    })}
+                >
+                    target 2
+                </button>
+                <button
+                    id="target-3"
+                    {...getTabsterAttribute({
+                        restorer: {
+                            type: RestorerTypes.Target,
+                            id: "some-id",
+                        },
+                    })}
+                >
+                    target 3
+                </button>
+                <button
+                    id="source"
+                    {...getTabsterAttribute({
+                        restorer: {
+                            type: RestorerTypes.Source,
+                        },
+                    })}
+                >
+                    source
+                </button>
+            </div>
         )
             .focusElement("#target-1")
             .focusElement("#target-2")

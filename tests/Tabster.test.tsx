@@ -331,19 +331,17 @@ describe("Tabster create", () => {
 
     it("should initialize Modalizer when the DOM is mounted before Tabster is created", async () => {
         await new BroTest.BroTest(
-            (
-                <div>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button>Button2</button>
-                    </div>
-                    <button id="button3">Button3</button>
+            <div>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button>Button2</button>
                 </div>
-            )
+                <button id="button3">Button3</button>
+            </div>
         )
             .eval(() => {
                 return !!(window as WindowWithTabsterInstance)
@@ -409,20 +407,18 @@ describe("Tabster create", () => {
 
     it("should initialize Modalizer when the DOM is mounted and the focus is called synchronously before Tabster is fully initialized", async () => {
         await new BroTest.BroTest(
-            (
-                <div>
-                    <button>Button1</button>
-                    <div
-                        id="modal"
-                        {...getTabsterAttribute({
-                            modalizer: { id: "modal", isTrapped: true },
-                        })}
-                    >
-                        <button>Button2</button>
-                    </div>
-                    <button id="button3">Button3</button>
+            <div>
+                <button>Button1</button>
+                <div
+                    id="modal"
+                    {...getTabsterAttribute({
+                        modalizer: { id: "modal", isTrapped: true },
+                    })}
+                >
+                    <button>Button2</button>
                 </div>
-            )
+                <button id="button3">Button3</button>
+            </div>
         )
             .eval(() => {
                 return !!(window as WindowWithTabsterInstance)
@@ -476,9 +472,16 @@ describe("Tabster create", () => {
 
     it("should initialize Grouppers when the DOM is mounted before Tabster is created", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ mover: {} })}>
-                    <button>Button1</button>
+            <div {...getTabsterAttribute({ mover: {} })}>
+                <button>Button1</button>
+                <div
+                    tabIndex={0}
+                    {...getTabsterAttribute({
+                        groupper: {
+                            tabbability: GroupperTabbabilities.LimitedTrapFocus,
+                        },
+                    })}
+                >
                     <div
                         tabIndex={0}
                         {...getTabsterAttribute({
@@ -488,23 +491,13 @@ describe("Tabster create", () => {
                             },
                         })}
                     >
-                        <div
-                            tabIndex={0}
-                            {...getTabsterAttribute({
-                                groupper: {
-                                    tabbability:
-                                        GroupperTabbabilities.LimitedTrapFocus,
-                                },
-                            })}
-                        >
-                            <button>Button2</button>
-                            <button>Button3</button>
-                        </div>
-                        <button>Button4</button>
+                        <button>Button2</button>
+                        <button>Button3</button>
                     </div>
-                    <button>Button5</button>
+                    <button>Button4</button>
                 </div>
-            )
+                <button>Button5</button>
+            </div>
         )
             .eval(() => {
                 return !!(window as WindowWithTabsterInstance)

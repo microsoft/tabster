@@ -283,22 +283,20 @@ describe("NestedMovers", () => {
         });
 
         await new BroTest.BroTest(
-            (
-                <div
-                    {...getTabsterAttribute({
-                        root: {},
-                    })}
-                >
-                    <button id="target">Target</button>
-                    <button>Skipped</button>
-                    <div {...attr} id="mover">
-                        <button id="start">Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
-                    </div>
+            <div
+                {...getTabsterAttribute({
+                    root: {},
+                })}
+            >
+                <button id="target">Target</button>
+                <button>Skipped</button>
+                <div {...attr} id="mover">
+                    <button id="start">Mover Item</button>
+                    <button>Mover Item</button>
+                    <button>Mover Item</button>
+                    <button>Mover Item</button>
                 </div>
-            )
+            </div>
         )
             .eval(() => {
                 getTabsterTestVariables()
@@ -340,20 +338,18 @@ describe("NestedMovers", () => {
         });
 
         await new BroTest.BroTest(
-            (
-                <div
-                    {...getTabsterAttribute({
-                        root: {},
-                    })}
-                >
-                    <div {...attr} id="mover">
-                        <button id="start">Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
-                        <button>Mover Item</button>
-                    </div>
+            <div
+                {...getTabsterAttribute({
+                    root: {},
+                })}
+            >
+                <div {...attr} id="mover">
+                    <button id="start">Mover Item</button>
+                    <button>Mover Item</button>
+                    <button>Mover Item</button>
+                    <button>Mover Item</button>
                 </div>
-            )
+            </div>
         )
             .focusElement("#start")
             .press(key)
@@ -380,20 +376,18 @@ describe("NestedMovers", () => {
             });
 
             await new BroTest.BroTest(
-                (
-                    <div
-                        {...getTabsterAttribute({
-                            root: {},
-                        })}
-                    >
-                        <div {...attr} id="mover">
-                            <button id="start">Mover Item 1</button>
-                            <button>Mover Item 2</button>
-                            <button>Mover Item 3</button>
-                            <button>Mover Item 4</button>
-                        </div>
+                <div
+                    {...getTabsterAttribute({
+                        root: {},
+                    })}
+                >
+                    <div {...attr} id="mover">
+                        <button id="start">Mover Item 1</button>
+                        <button>Mover Item 2</button>
+                        <button>Mover Item 3</button>
+                        <button>Mover Item 4</button>
                     </div>
-                )
+                </div>
             )
                 .focusElement("#start")
                 .press(key, { ctrl: true })
@@ -423,22 +417,20 @@ describe("Mover memorizing current", () => {
 
     it("should memorize current element and move to it when tabbing from outside of the Mover", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -473,20 +465,18 @@ describe("Mover memorizing current", () => {
 
     it("should memorize current element and move to it when tabbing from outside of the page", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -520,23 +510,21 @@ describe("Mover memorizing current", () => {
 
     it("should forget or modify memorized element when tabster:mover:memorized-element is dispatched", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        id="mover"
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button id="button4">Button4</button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    id="mover"
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button id="button4">Button4</button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -595,20 +583,18 @@ describe("Mover memorizing current", () => {
 
     it("should move to first element when the previously memorized one is removed from DOM", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button id="button2">Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button id="button2">Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -637,30 +623,28 @@ describe("Mover with excluded part", () => {
 
     it("should handle excluded part of Mover", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button0</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button0</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { tabbable: true, cyclic: true },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
                     <div
                         {...getTabsterAttribute({
-                            mover: { tabbable: true, cyclic: true },
+                            focusable: { excludeFromMover: true },
                         })}
                     >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <div
-                            {...getTabsterAttribute({
-                                focusable: { excludeFromMover: true },
-                            })}
-                        >
-                            <button>Button3</button>
-                            <button>Button4</button>
-                        </div>
-                        <button>Button5</button>
-                        <button>Button6</button>
+                        <button>Button3</button>
+                        <button>Button4</button>
                     </div>
-                    <button>Button7</button>
+                    <button>Button5</button>
+                    <button>Button6</button>
                 </div>
-            )
+                <button>Button7</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -746,20 +730,18 @@ describe("Mover with excluded part", () => {
 
     it("should memorize current element and move to it when tabbing from outside of the page", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -799,59 +781,48 @@ describe("Mover with inputs inside", () => {
 
     it("should move or not move focus depending on caret position", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button1</button>
-                        <input type="text" defaultValue="Input" />
-                        <input type="button" value="InputButton" />
-                        <input type="checkbox" value="InputCheckbox" />
-                        <input type="color" value="InputColor" />
-                        <input type="date" value="InputDate" />
-                        <input
-                            type="datetime-local"
-                            value="InputDatetime-local"
-                        />
-                        <input type="email" value="InputEmail" />
-                        <input type="file" value="InputFile" />
-                        <input type="hidden" value="InputHidden" />
-                        <input type="image" value="InputImage" />
-                        <input type="month" value="InputMonth" />
-                        <input type="number" value="123" />
-                        <input type="password" value="InputPassword" />
-                        <input type="radio" value="InputRadio" />
-                        <input
-                            type="range"
-                            value="0"
-                            min="0"
-                            max="2"
-                            step="1"
-                        />
-                        <input type="reset" value="InputReset" />
-                        <input type="search" value="InputSearch" />
-                        <input type="submit" value="InputSubmit" />
-                        <input type="tel" value="InputTel" />
-                        <input type="time" value="InputTime" />
-                        <input type="url" value="InputUrl" />
-                        <input type="week" value="InputWeek" />
-                        <button>Button2</button>
-                        <textarea>Textarea</textarea>
-                        <button>Button3</button>
-                        <div tabIndex={0} contentEditable={true}>
-                            Content{" "}
-                            <strong>
-                                editable <em>element</em>
-                            </strong>{" "}
-                            here
-                        </div>
-                        <button>Button4</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <input type="text" defaultValue="Input" />
+                    <input type="button" value="InputButton" />
+                    <input type="checkbox" value="InputCheckbox" />
+                    <input type="color" value="InputColor" />
+                    <input type="date" value="InputDate" />
+                    <input type="datetime-local" value="InputDatetime-local" />
+                    <input type="email" value="InputEmail" />
+                    <input type="file" value="InputFile" />
+                    <input type="hidden" value="InputHidden" />
+                    <input type="image" value="InputImage" />
+                    <input type="month" value="InputMonth" />
+                    <input type="number" value="123" />
+                    <input type="password" value="InputPassword" />
+                    <input type="radio" value="InputRadio" />
+                    <input type="range" value="0" min="0" max="2" step="1" />
+                    <input type="reset" value="InputReset" />
+                    <input type="search" value="InputSearch" />
+                    <input type="submit" value="InputSubmit" />
+                    <input type="tel" value="InputTel" />
+                    <input type="time" value="InputTime" />
+                    <input type="url" value="InputUrl" />
+                    <input type="week" value="InputWeek" />
+                    <button>Button2</button>
+                    <textarea>Textarea</textarea>
+                    <button>Button3</button>
+                    <div tabIndex={0} contentEditable={true}>
+                        Content{" "}
+                        <strong>
+                            editable <em>element</em>
+                        </strong>{" "}
+                        here
                     </div>
+                    <button>Button4</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1157,24 +1128,22 @@ describe("Mover with inputs inside", () => {
 
     it("should not move focus when aria-expanded is true and aria-activedescendant is present", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button1</button>
-                        <input
-                            type="text"
-                            defaultValue="Input"
-                            aria-expanded="true"
-                            aria-activedescendant="ololo"
-                        />
-                        <button>Button2</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <input
+                        type="text"
+                        defaultValue="Input"
+                        aria-expanded="true"
+                        aria-activedescendant="ololo"
+                    />
+                    <button>Button2</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1212,23 +1181,21 @@ describe("Mover with inputs inside", () => {
 
     it("should move focus when aria-expanded is true, but aria-activedescendant is not set", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button1</button>
-                        <input
-                            type="text"
-                            defaultValue="Input"
-                            aria-expanded="true"
-                        />
-                        <button>Button2</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <input
+                        type="text"
+                        defaultValue="Input"
+                        aria-expanded="true"
+                    />
+                    <button>Button2</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1277,24 +1244,22 @@ describe("Mover with trackState", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div id="container" style={containerStyles}>
-                        <div id="one" tabIndex={0} style={itemStyles}>
-                            Item 1
-                        </div>
-                        <div id="two" tabIndex={0} style={itemStyles}>
-                            Item 2
-                        </div>
-                        <div id="three" tabIndex={0} style={itemStyles}>
-                            Item 3
-                        </div>
-                        <div id="four" tabIndex={0} style={itemStyles}>
-                            Item 4
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div id="container" style={containerStyles}>
+                    <div id="one" tabIndex={0} style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" tabIndex={0} style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" tabIndex={0} style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" tabIndex={0} style={itemStyles}>
+                        Item 4
                     </div>
                 </div>
-            )
+            </div>
         )
             .eval(
                 (moverAttribute: string) => {
@@ -1398,32 +1363,30 @@ describe("Mover with visibilityAware", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        id="container"
-                        {...getTabsterAttribute({
-                            mover: {
-                                visibilityAware: Visibilities.PartiallyVisible,
-                            },
-                        })}
-                        style={containerStyles}
-                    >
-                        <div id="one" tabIndex={0} style={itemStyles}>
-                            Item 1
-                        </div>
-                        <div id="two" tabIndex={0} style={itemStyles}>
-                            Item 2
-                        </div>
-                        <div id="three" tabIndex={0} style={itemStyles}>
-                            Item 3
-                        </div>
-                        <div id="four" tabIndex={0} style={itemStyles}>
-                            Item 4
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware: Visibilities.PartiallyVisible,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" tabIndex={0} style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" tabIndex={0} style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" tabIndex={0} style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" tabIndex={0} style={itemStyles}>
+                        Item 4
                     </div>
                 </div>
-            )
+            </div>
         )
             .focusElement("#two")
             .activeElement((el) => el?.attributes.id === "two")
@@ -1461,32 +1424,30 @@ describe("Mover with visibilityAware", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        id="container"
-                        {...getTabsterAttribute({
-                            mover: {
-                                visibilityAware: Visibilities.PartiallyVisible,
-                            },
-                        })}
-                        style={containerStyles}
-                    >
-                        <div id="one" tabIndex={0} style={itemStyles}>
-                            Item 1
-                        </div>
-                        <div id="two" tabIndex={0} style={itemStyles}>
-                            Item 2
-                        </div>
-                        <div id="three" tabIndex={0} style={itemStyles}>
-                            Item 3
-                        </div>
-                        <div id="four" tabIndex={0} style={itemStyles}>
-                            Item 4
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware: Visibilities.PartiallyVisible,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" tabIndex={0} style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" tabIndex={0} style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" tabIndex={0} style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" tabIndex={0} style={itemStyles}>
+                        Item 4
                     </div>
                 </div>
-            )
+            </div>
         )
             .focusElement("#two")
             .activeElement((el) => el?.attributes.id === "two")
@@ -1522,33 +1483,31 @@ describe("Mover with visibilityAware", () => {
         };
 
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        id="container"
-                        {...getTabsterAttribute({
-                            mover: {
-                                visibilityAware: Visibilities.PartiallyVisible,
-                                visibilityTolerance: 0.1,
-                            },
-                        })}
-                        style={containerStyles}
-                    >
-                        <div id="one" tabIndex={0} style={itemStyles}>
-                            Item 1
-                        </div>
-                        <div id="two" tabIndex={0} style={itemStyles}>
-                            Item 2
-                        </div>
-                        <div id="three" tabIndex={0} style={itemStyles}>
-                            Item 3
-                        </div>
-                        <div id="four" tabIndex={0} style={itemStyles}>
-                            Item 4
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    id="container"
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware: Visibilities.PartiallyVisible,
+                            visibilityTolerance: 0.1,
+                        },
+                    })}
+                    style={containerStyles}
+                >
+                    <div id="one" tabIndex={0} style={itemStyles}>
+                        Item 1
+                    </div>
+                    <div id="two" tabIndex={0} style={itemStyles}>
+                        Item 2
+                    </div>
+                    <div id="three" tabIndex={0} style={itemStyles}>
+                        Item 3
+                    </div>
+                    <div id="four" tabIndex={0} style={itemStyles}>
+                        Item 4
                     </div>
                 </div>
-            )
+            </div>
         )
             .focusElement("#two")
             .activeElement((el) => el?.attributes.id === "two")
@@ -1559,33 +1518,31 @@ describe("Mover with visibilityAware", () => {
 
     it("should tab to first/last visible element when tabbing from outside of the Mover", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                visibilityAware: Visibilities.PartiallyVisible,
-                            },
-                        })}
-                        style={{ height: 200, overflow: "scroll" }}
-                    >
-                        <button style={{ height: 100, display: "block" }}>
-                            Button2
-                        </button>
-                        <button style={{ height: 100, display: "block" }}>
-                            Button3
-                        </button>
-                        <button style={{ height: 100, display: "block" }}>
-                            Button4
-                        </button>
-                        <button style={{ height: 100, display: "block" }}>
-                            Button5
-                        </button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            visibilityAware: Visibilities.PartiallyVisible,
+                        },
+                    })}
+                    style={{ height: 200, overflow: "scroll" }}
+                >
+                    <button style={{ height: 100, display: "block" }}>
+                        Button2
+                    </button>
+                    <button style={{ height: 100, display: "block" }}>
+                        Button3
+                    </button>
+                    <button style={{ height: 100, display: "block" }}>
+                        Button4
+                    </button>
+                    <button style={{ height: 100, display: "block" }}>
+                        Button5
+                    </button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .pressTab()
@@ -1625,58 +1582,56 @@ describe("Mover with grid", () => {
 
     it("should properly move focus with arrow keys in grid as <table>", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Grid,
-                            },
-                        })}
-                    >
-                        <table>
-                            <tr>
-                                <td tabIndex={0}>Row1-Col1</td>
-                                <td>
-                                    <button style={{ fontSize: "50%" }}>
-                                        Row1-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row1-Col3</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td tabIndex={0}>Row2-Col1</td>
-                                <td align="right">
-                                    <button
-                                        style={{
-                                            fontSize: "50%",
-                                            marginLeft: 40,
-                                        }}
-                                    >
-                                        Row2-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row2-Col3</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td tabIndex={0}>Row3-Col1</td>
-                                <td align="center">
-                                    <button style={{ fontSize: "50%" }}>
-                                        Row3-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row3-Col3</button>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Grid,
+                        },
+                    })}
+                >
+                    <table>
+                        <tr>
+                            <td tabIndex={0}>Row1-Col1</td>
+                            <td>
+                                <button style={{ fontSize: "50%" }}>
+                                    Row1-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row1-Col3</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td tabIndex={0}>Row2-Col1</td>
+                            <td align="right">
+                                <button
+                                    style={{
+                                        fontSize: "50%",
+                                        marginLeft: 40,
+                                    }}
+                                >
+                                    Row2-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row2-Col3</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td tabIndex={0}>Row3-Col1</td>
+                            <td align="center">
+                                <button style={{ fontSize: "50%" }}>
+                                    Row3-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row3-Col3</button>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1758,50 +1713,48 @@ describe("Mover with grid", () => {
 
     it("should properly move focus with arrow keys in grid as just a set of focusable elements", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Grid,
-                            },
-                        })}
-                        style={{
-                            width: 250,
-                            display: "flex",
-                            flexWrap: "wrap",
-                        }}
-                    >
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item1
-                        </div>
-                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
-                            Item2
-                        </div>
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item3
-                        </div>
-                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
-                            Item4
-                        </div>
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item5
-                        </div>
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item6
-                        </div>
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item7
-                        </div>
-                        <div tabIndex={0} style={{ width: 50, height: 50 }}>
-                            Item8
-                        </div>
-                        <div tabIndex={0} style={{ width: 150, height: 50 }}>
-                            Item9
-                        </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Grid,
+                        },
+                    })}
+                    style={{
+                        width: 250,
+                        display: "flex",
+                        flexWrap: "wrap",
+                    }}
+                >
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item1
+                    </div>
+                    <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                        Item2
+                    </div>
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item3
+                    </div>
+                    <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                        Item4
+                    </div>
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item5
+                    </div>
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item6
+                    </div>
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item7
+                    </div>
+                    <div tabIndex={0} style={{ width: 50, height: 50 }}>
+                        Item8
+                    </div>
+                    <div tabIndex={0} style={{ width: 150, height: 50 }}>
+                        Item9
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -1887,122 +1840,120 @@ describe("Mover with grid", () => {
 
     it("should properly move focus with arrow keys in grid as just a set of focusable elements with different margins", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Grid,
+                        },
+                    })}
+                    style={{
+                        width: 250,
+                        display: "flex",
+                        flexWrap: "wrap",
+                    }}
+                >
                     <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Grid,
-                            },
-                        })}
+                        tabIndex={0}
                         style={{
-                            width: 250,
-                            display: "flex",
-                            flexWrap: "wrap",
+                            border: "1px solid red",
+                            width: 50,
+                            height: 40,
+                            margin: 10,
                         }}
                     >
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 40,
-                                margin: 10,
-                            }}
-                        >
-                            Item1
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 150,
-                                height: 30,
-                                margin: 5,
-                            }}
-                        >
-                            Item2
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 50,
-                                margin: 15,
-                            }}
-                        >
-                            Item3
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 150,
-                                height: 25,
-                                margin: 8,
-                            }}
-                        >
-                            Item4
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 40,
-                                margin: 3,
-                            }}
-                        >
-                            Item5
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 50,
-                                margin: 9,
-                            }}
-                        >
-                            Item6
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 40,
-                                margin: 1,
-                            }}
-                        >
-                            Item7
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 50,
-                                height: 30,
-                                margin: 0,
-                            }}
-                        >
-                            Item8
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                border: "1px solid red",
-                                width: 150,
-                                height: 50,
-                                margin: 10,
-                            }}
-                        >
-                            Item9
-                        </div>
+                        Item1
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 150,
+                            height: 30,
+                            margin: 5,
+                        }}
+                    >
+                        Item2
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 50,
+                            height: 50,
+                            margin: 15,
+                        }}
+                    >
+                        Item3
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 150,
+                            height: 25,
+                            margin: 8,
+                        }}
+                    >
+                        Item4
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 50,
+                            height: 40,
+                            margin: 3,
+                        }}
+                    >
+                        Item5
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 50,
+                            height: 50,
+                            margin: 9,
+                        }}
+                    >
+                        Item6
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 50,
+                            height: 40,
+                            margin: 1,
+                        }}
+                    >
+                        Item7
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 50,
+                            height: 30,
+                            margin: 0,
+                        }}
+                    >
+                        Item8
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            border: "1px solid red",
+                            width: 150,
+                            height: 50,
+                            margin: 10,
+                        }}
+                    >
+                        Item9
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2076,76 +2027,74 @@ describe("Mover with grid", () => {
 
     it("should pick the closest element in grid when there is nothing directly below", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.Grid,
+                        },
+                    })}
+                    style={{
+                        width: 280,
+                        display: "flex",
+                        flexWrap: "wrap",
+                    }}
+                >
                     <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.Grid,
-                            },
-                        })}
+                        tabIndex={0}
                         style={{
-                            width: 280,
-                            display: "flex",
-                            flexWrap: "wrap",
+                            width: 50,
+                            height: 50,
+                            marginLeft: 60,
+                            border: "1px solid red",
                         }}
                     >
-                        <div
-                            tabIndex={0}
-                            style={{
-                                width: 50,
-                                height: 50,
-                                marginLeft: 60,
-                                border: "1px solid red",
-                            }}
-                        >
-                            Item1
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                width: 50,
-                                height: 50,
-                                marginRight: 100,
-                                border: "1px solid red",
-                            }}
-                        >
-                            Item2
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                width: 50,
-                                height: 50,
-                                border: "1px solid red",
-                            }}
-                        >
-                            Item3
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                width: 50,
-                                height: 50,
-                                marginLeft: 115,
-                                border: "1px solid red",
-                            }}
-                        >
-                            Item4
-                        </div>
-                        <div
-                            tabIndex={0}
-                            style={{
-                                width: 50,
-                                height: 50,
-                                border: "1px solid red",
-                            }}
-                        >
-                            Item5
-                        </div>
+                        Item1
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            width: 50,
+                            height: 50,
+                            marginRight: 100,
+                            border: "1px solid red",
+                        }}
+                    >
+                        Item2
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            width: 50,
+                            height: 50,
+                            border: "1px solid red",
+                        }}
+                    >
+                        Item3
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            width: 50,
+                            height: 50,
+                            marginLeft: 115,
+                            border: "1px solid red",
+                        }}
+                    >
+                        Item4
+                    </div>
+                    <div
+                        tabIndex={0}
+                        style={{
+                            width: 50,
+                            height: 50,
+                            border: "1px solid red",
+                        }}
+                    >
+                        Item5
                     </div>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2197,58 +2146,56 @@ describe("Mover with linear grid", () => {
 
     it("should properly move focus with arrow keys in linear grid as <table>", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {
-                                direction: MoverDirections.GridLinear,
-                            },
-                        })}
-                    >
-                        <table>
-                            <tr>
-                                <td tabIndex={0}>Row1-Col1</td>
-                                <td>
-                                    <button style={{ fontSize: "50%" }}>
-                                        Row1-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row1-Col3</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td tabIndex={0}>Row2-Col1</td>
-                                <td align="right">
-                                    <button
-                                        style={{
-                                            fontSize: "50%",
-                                            marginLeft: 40,
-                                        }}
-                                    >
-                                        Row2-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row2-Col3</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td tabIndex={0}>Row3-Col1</td>
-                                <td align="center">
-                                    <button style={{ fontSize: "50%" }}>
-                                        Row3-Col2
-                                    </button>
-                                </td>
-                                <td style={{ padding: 10 }}>
-                                    <button>Row3-Col3</button>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {
+                            direction: MoverDirections.GridLinear,
+                        },
+                    })}
+                >
+                    <table>
+                        <tr>
+                            <td tabIndex={0}>Row1-Col1</td>
+                            <td>
+                                <button style={{ fontSize: "50%" }}>
+                                    Row1-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row1-Col3</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td tabIndex={0}>Row2-Col1</td>
+                            <td align="right">
+                                <button
+                                    style={{
+                                        fontSize: "50%",
+                                        marginLeft: 40,
+                                    }}
+                                >
+                                    Row2-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row2-Col3</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td tabIndex={0}>Row3-Col1</td>
+                            <td align="center">
+                                <button style={{ fontSize: "50%" }}>
+                                    Row3-Col2
+                                </button>
+                            </td>
+                            <td style={{ padding: 10 }}>
+                                <button>Row3-Col3</button>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2280,28 +2227,26 @@ describe("Adjacent Movers", () => {
 
     it("should handle adjacent Movers correctly", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                    </div>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button4</button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
                 </div>
-            )
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button4</button>
+                    <button>Button5</button>
+                </div>
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2367,28 +2312,26 @@ describe("Adjacent Movers", () => {
 
     it("should handle adjacent Movers with memorizeCurrent correctly", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                    </div>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: { memorizeCurrent: true },
-                        })}
-                    >
-                        <button>Button4</button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
                 </div>
-            )
+                <div
+                    {...getTabsterAttribute({
+                        mover: { memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button4</button>
+                    <button>Button5</button>
+                </div>
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2457,40 +2400,36 @@ describe("Adjacent Movers", () => {
         async (tagName: string) => {
             const TagName = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
                         <div>
-                            <div>
-                                <TagName
-                                    {...getTabsterAttribute({
-                                        mover: {
-                                            direction:
-                                                MoverDirections.Horizontal,
-                                        },
-                                    })}
-                                >
-                                    <button>Button1</button>
-                                    <button>Button2</button>
-                                </TagName>
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                <TagName
-                                    {...getTabsterAttribute({
-                                        mover: {
-                                            direction:
-                                                MoverDirections.Horizontal,
-                                        },
-                                    })}
-                                >
-                                    <button>Button3</button>
-                                    <button>Button4</button>
-                                </TagName>
-                            </div>
+                            <TagName
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                    },
+                                })}
+                            >
+                                <button>Button1</button>
+                                <button>Button2</button>
+                            </TagName>
                         </div>
                     </div>
-                )
+                    <div>
+                        <div>
+                            <TagName
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                    },
+                                })}
+                            >
+                                <button>Button3</button>
+                                <button>Button4</button>
+                            </TagName>
+                        </div>
+                    </div>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -2544,42 +2483,38 @@ describe("Adjacent Movers", () => {
         async (tagName: string) => {
             const TagName = tagName;
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <div>
                         <div>
-                            <div>
-                                <TagName
-                                    {...getTabsterAttribute({
-                                        mover: {
-                                            direction:
-                                                MoverDirections.Horizontal,
-                                            memorizeCurrent: true,
-                                        },
-                                    })}
-                                >
-                                    <button>Button1</button>
-                                    <button>Button2</button>
-                                </TagName>
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                <TagName
-                                    {...getTabsterAttribute({
-                                        mover: {
-                                            direction:
-                                                MoverDirections.Horizontal,
-                                            memorizeCurrent: true,
-                                        },
-                                    })}
-                                >
-                                    <button>Button3</button>
-                                    <button>Button4</button>
-                                </TagName>
-                            </div>
+                            <TagName
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        memorizeCurrent: true,
+                                    },
+                                })}
+                            >
+                                <button>Button1</button>
+                                <button>Button2</button>
+                            </TagName>
                         </div>
                     </div>
-                )
+                    <div>
+                        <div>
+                            <TagName
+                                {...getTabsterAttribute({
+                                    mover: {
+                                        direction: MoverDirections.Horizontal,
+                                        memorizeCurrent: true,
+                                    },
+                                })}
+                            >
+                                <button>Button3</button>
+                                <button>Button4</button>
+                            </TagName>
+                        </div>
+                    </div>
+                </div>
             )
                 .pressTab()
                 .activeElement((el) => {
@@ -2636,28 +2571,26 @@ describe("Mover with default element", () => {
 
     it("should focus default focusable when tabbing from outside", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { hasDefault: true },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button
                         {...getTabsterAttribute({
-                            mover: { hasDefault: true },
+                            focusable: { isDefault: true },
                         })}
                     >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button
-                            {...getTabsterAttribute({
-                                focusable: { isDefault: true },
-                            })}
-                        >
-                            Button4
-                        </button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+                        Button4
+                    </button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2683,28 +2616,26 @@ describe("Mover with default element", () => {
 
     it("should focus memorized element or default focusable when tabbing from outside", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { hasDefault: true, memorizeCurrent: true },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button
                         {...getTabsterAttribute({
-                            mover: { hasDefault: true, memorizeCurrent: true },
+                            focusable: { isDefault: true },
                         })}
                     >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button
-                            {...getTabsterAttribute({
-                                focusable: { isDefault: true },
-                            })}
-                        >
-                            Button4
-                        </button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+                        Button4
+                    </button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2730,28 +2661,26 @@ describe("Mover with default element", () => {
 
     it("should treat hasDefault as true when it is not specified", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button
                         {...getTabsterAttribute({
-                            mover: {},
+                            focusable: { isDefault: true },
                         })}
                     >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button
-                            {...getTabsterAttribute({
-                                focusable: { isDefault: true },
-                            })}
-                        >
-                            Button4
-                        </button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+                        Button4
+                    </button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2773,28 +2702,26 @@ describe("Mover with default element", () => {
 
     it("should not look for default when hasDefault is false", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                    <div
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: { hasDefault: false },
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button
                         {...getTabsterAttribute({
-                            mover: { hasDefault: false },
+                            focusable: { isDefault: true },
                         })}
                     >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button
-                            {...getTabsterAttribute({
-                                focusable: { isDefault: true },
-                            })}
-                        >
-                            Button4
-                        </button>
-                        <button>Button5</button>
-                    </div>
-                    <button>Button6</button>
+                        Button4
+                    </button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button>Button6</button>
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -2822,22 +2749,20 @@ describe("Mover with tabster:movefocus event handling", () => {
 
     it("should allow to custom handle the focus movement", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <button id="button-1">Button1</button>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                        <button>Button5</button>
-                    </div>
-                    <button id="button-6">Button6</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="button-1">Button1</button>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
+                    <button>Button5</button>
                 </div>
-            )
+                <button id="button-6">Button6</button>
+            </div>
         )
             .eval(() => {
                 document.addEventListener("tabster:movefocus", (e) => {
@@ -2887,21 +2812,19 @@ describe("Mover moves focus by tabster:mover:movefocus", () => {
 
     it("should move focus with tabster:mover:movefocus", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button>Button2</button>
-                        <button>Button3</button>
-                        <button>Button4</button>
-                        <button>Button5</button>
-                    </div>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <button>Button2</button>
+                    <button>Button3</button>
+                    <button>Button4</button>
+                    <button>Button5</button>
                 </div>
-            )
+            </div>
         )
             .pressTab()
             .activeElement((el) => {
@@ -3037,23 +2960,21 @@ describe("Mover with virtual children provided by getParent()", () => {
 
     it("should not consider virtual children parts of the mover", async () => {
         await new BroTest.BroTest(
-            (
-                <div {...getTabsterAttribute({ root: {} })}>
-                    <div
-                        {...getTabsterAttribute({
-                            mover: {},
-                        })}
-                    >
-                        <button>Button1</button>
-                        <button id="virtual-parent">Button2</button>
-                    </div>
-                    <div id="virtual-child">
-                        <button>VButton1</button>
-                        <button>VButton2</button>
-                    </div>
-                    <button>Button3</button>
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <button id="virtual-parent">Button2</button>
                 </div>
-            )
+                <div id="virtual-child">
+                    <button>VButton1</button>
+                    <button>VButton2</button>
+                </div>
+                <button>Button3</button>
+            </div>
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();

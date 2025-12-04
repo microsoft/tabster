@@ -176,9 +176,9 @@ interface TabsterWeakRef<T> {
     deref(): T | undefined;
 }
 
-class FakeWeakRef<T extends HTMLElement = HTMLElement>
-    implements TabsterWeakRef<T>
-{
+class FakeWeakRef<
+    T extends HTMLElement = HTMLElement,
+> implements TabsterWeakRef<T> {
     private _target: T | undefined;
 
     constructor(target: T) {
@@ -206,9 +206,10 @@ class FakeWeakRef<T extends HTMLElement = HTMLElement>
     }
 }
 
-export class WeakHTMLElement<T extends HTMLElement = HTMLElement, D = undefined>
-    implements WeakHTMLElementInterface<D>
-{
+export class WeakHTMLElement<
+    T extends HTMLElement = HTMLElement,
+    D = undefined,
+> implements WeakHTMLElementInterface<D> {
     private _ref: TabsterWeakRef<T> | undefined;
     private _data: D | undefined;
 
@@ -658,9 +659,10 @@ export function setBasics(win: Window, basics: InternalBasics): void {
 
 let _lastTabsterPartId = 0;
 
-export abstract class TabsterPart<P, D = undefined>
-    implements TabsterPartInterface<P>
-{
+export abstract class TabsterPart<
+    P,
+    D = undefined,
+> implements TabsterPartInterface<P> {
     protected _tabster: TabsterCore;
     protected _element: WeakHTMLElement<HTMLElement, D>;
     protected _props: P;

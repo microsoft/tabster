@@ -665,11 +665,9 @@ describeIfUncontrolled("DummyInputManager", () => {
 
     it("should force dummy inputs position update when the move out functions are called before the async update on DOM change", async () => {
         await new BroTest.BroTest(
-            (
-                <div id="root" {...getTabsterAttribute({ root: {} })}>
-                    <button>Button1</button>
-                </div>
-            )
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <button>Button1</button>
+            </div>
         )
             .eval((dummyAttribute: string) => {
                 const rootElement =
@@ -730,34 +728,32 @@ describeIfUncontrolled("getDummyInputContainer utility function", () => {
 
     it("should return dummy input container for dummy inputs", async () => {
         await new BroTest.BroTest(
-            (
+            <div
+                id="root"
+                {...getTabsterAttribute({
+                    root: {},
+                    sys: { dummyInputsPosition: 2 },
+                })}
+            >
                 <div
-                    id="root"
+                    id="groupper"
                     {...getTabsterAttribute({
-                        root: {},
+                        groupper: {},
+                        sys: { dummyInputsPosition: 1 },
+                    })}
+                >
+                    <div id="inside-groupper"></div>
+                </div>
+                <div
+                    id="mover"
+                    {...getTabsterAttribute({
+                        mover: {},
                         sys: { dummyInputsPosition: 2 },
                     })}
                 >
-                    <div
-                        id="groupper"
-                        {...getTabsterAttribute({
-                            groupper: {},
-                            sys: { dummyInputsPosition: 1 },
-                        })}
-                    >
-                        <div id="inside-groupper"></div>
-                    </div>
-                    <div
-                        id="mover"
-                        {...getTabsterAttribute({
-                            mover: {},
-                            sys: { dummyInputsPosition: 2 },
-                        })}
-                    >
-                        <div id="inside-mover"></div>
-                    </div>
+                    <div id="inside-mover"></div>
                 </div>
-            )
+            </div>
         )
             .eval(() => {
                 const elements: string[] = [];
