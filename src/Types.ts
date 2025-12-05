@@ -272,10 +272,40 @@ export type ObservedElementRequestStatuses =
 export type ObservedElementRequestStatus =
     ObservedElementRequestStatuses[keyof ObservedElementRequestStatuses];
 
+export interface ObservedElementAsyncRequestDiagnostics {
+    /**
+     * Reason for failure when status is Canceled or TimedOut.
+     */
+    reason?: string;
+    /**
+     * Time spent waiting for element to appear in DOM (ms).
+     */
+    waitForElementDuration?: number;
+    /**
+     * State of the target element at the time of failure.
+     * Only present for timeout or failure cases.
+     */
+    targetState?: {
+        inDOM: boolean;
+        isAccessible?: boolean;
+        isFocusable?: boolean;
+    };
+    /**
+     * Callback to access the element that received focus, causing cancellation.
+     * Only present when canceled due to focus change.
+     * Returns null if the element is no longer available.
+     */
+    getCancelTriggeringElement?: () => HTMLElement | null;
+}
+
 export interface ObservedElementAsyncRequest<T> {
     result: Promise<T>;
     cancel(): void;
     status?: ObservedElementRequestStatus; // Making status optional for the interface backwards compatibility.
+    /**
+     * Detailed diagnostic information about the request.
+     */
+    diagnostics: ObservedElementAsyncRequestDiagnostics;
 }
 
 interface ObservedElementAPIInternal {
