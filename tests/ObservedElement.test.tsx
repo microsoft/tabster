@@ -810,17 +810,15 @@ describe("Focusable", () => {
         it("should provide diagnostics with waitForElementDuration when element is found immediately", async () => {
             const name = "test";
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button
-                            {...getTabsterAttribute({
-                                observed: { names: [name] },
-                            })}
-                        >
-                            Button1
-                        </button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                    >
+                        Button1
+                    </button>
+                </div>
             )
                 .eval(async (name) => {
                     const request =
@@ -865,11 +863,9 @@ describe("Focusable", () => {
 
         it("should provide diagnostics with timeout reason when element is not found", async () => {
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button>Button1</button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                </div>
             )
                 .eval(async () => {
                     const request =
@@ -916,18 +912,16 @@ describe("Focusable", () => {
         it("should provide diagnostics with targetState when element is not accessible", async () => {
             const name = "test";
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button
-                            {...getTabsterAttribute({
-                                observed: { names: [name] },
-                            })}
-                            aria-hidden="true"
-                        >
-                            Button1
-                        </button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                        aria-hidden="true"
+                    >
+                        Button1
+                    </button>
+                </div>
             )
                 .eval(async (name) => {
                     const request =
@@ -970,19 +964,17 @@ describe("Focusable", () => {
         it("should provide diagnostics with cancel reason and trigger element when focus changes", async () => {
             const name = "test";
             await new BroTest.BroTest(
-                (
-                    <div {...getTabsterAttribute({ root: {} })}>
-                        <button id="button1">Button1</button>
-                        <button
-                            {...getTabsterAttribute({
-                                observed: { names: [name] },
-                            })}
-                            aria-hidden="true"
-                        >
-                            Button2
-                        </button>
-                    </div>
-                )
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button1">Button1</button>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                        aria-hidden="true"
+                    >
+                        Button2
+                    </button>
+                </div>
             )
                 .eval(async (name) => {
                     const request =
