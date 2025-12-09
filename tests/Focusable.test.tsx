@@ -647,5 +647,51 @@ describe("Focusable", () => {
                     expect(el?.textContent).toEqual("Button1");
                 });
         });
+
+        it("should properly handle the disabled state inherited from the parent <fieldset>", async () => {
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button tabIndex={0}>Button1</button>
+                    <fieldset disabled>
+                        <button tabIndex={0}>Button2</button>
+                        <div tabIndex={0}>Button3</div>
+                        <button tabIndex={0}>Button4</button>
+                    </fieldset>
+                    <button tabIndex={0}>Button5</button>
+                </div>
+            )
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button5");
+                })
+                .pressTab()
+                .activeElement((el) => expect(el).toBeNull())
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab(true)
+                .activeElement((el) => expect(el).toBeNull())
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button5");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button3");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        });
     });
 });
