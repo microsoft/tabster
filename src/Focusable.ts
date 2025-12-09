@@ -43,8 +43,6 @@ export class FocusableAPI implements Types.FocusableAPI {
     ): boolean {
         if (
             matchesSelector(el, FOCUSABLE_SELECTOR) &&
-            !(el as HTMLInputElement).disabled && // This will only be true for the elements with
-            // the disabled attribute that natively support it.
             (includeProgrammaticallyFocusable || el.tabIndex !== -1)
         ) {
             return (
