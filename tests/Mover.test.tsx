@@ -1179,6 +1179,59 @@ describe("Mover with inputs inside", () => {
             });
     });
 
+    it("should not move focus when aria-expanded is true and role=combobox", async () => {
+        await new BroTest.BroTest(
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div
+                    {...getTabsterAttribute({
+                        mover: {},
+                    })}
+                >
+                    <button>Button1</button>
+                    <input
+                        type="text"
+                        defaultValue="Input"
+                        aria-expanded="true"
+                        role="combobox"
+                    />
+                    <button>Button2</button>
+                </div>
+            </div>
+        )
+            .pressTab()
+            .activeElement((el) => {
+                expect(el?.textContent).toEqual("Button1");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressDown()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            })
+            .pressUp()
+            .activeElement((el) => {
+                expect(el?.attributes.value).toEqual("Input");
+            });
+    });
+
     it("should move focus when aria-expanded is true, but aria-activedescendant is not set", async () => {
         await new BroTest.BroTest(
             <div {...getTabsterAttribute({ root: {} })}>

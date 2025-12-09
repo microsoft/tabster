@@ -1309,7 +1309,8 @@ export class MoverAPI implements Types.MoverAPI {
     ): Promise<boolean> {
         if (
             element.getAttribute("aria-expanded") === "true" &&
-            element.hasAttribute("aria-activedescendant")
+            (element.hasAttribute("aria-activedescendant") ||
+                element.getAttribute("role") === "combobox")
         ) {
             // It is likely a combobox with expanded options and arrow keys are
             // controlled by it.
