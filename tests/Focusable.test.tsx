@@ -573,4 +573,79 @@ describe("Focusable", () => {
                 });
         });
     });
+
+    describe("Tabbing through disabled elements", () => {
+        it("should properly tab past the disabled element", async () => {
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button tabIndex={0}>Button1</button>
+                    <button tabIndex={0}>Button2</button>
+                    <button disabled tabIndex={0}>
+                        Button3
+                    </button>
+                    <div tabIndex={0}>Button4</div>
+                    <div id="div-with-disabled" tabIndex={0}>
+                        Button5
+                    </div>
+                    <button tabIndex={0}>Button6</button>
+                </div>
+            )
+                .eval(() => {
+                    // Setting disabled attribute on an element that doesn't support it natively,
+                    // to make sure it is not affecting the behaviour.
+                    getTabsterTestVariables()
+                        .dom?.getElementById(document, "div-with-disabled")
+                        ?.setAttribute("disabled", "disabled");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button5");
+                    expect(el?.attributes.disabled).toEqual("disabled");
+                })
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button6");
+                })
+                .pressTab()
+                .activeElement((el) => expect(el).toBeNull())
+                .pressTab()
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                })
+                .pressTab(true)
+                .activeElement((el) => expect(el).toBeNull())
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button6");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button5");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button4");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button2");
+                })
+                .pressTab(true)
+                .activeElement((el) => {
+                    expect(el?.textContent).toEqual("Button1");
+                });
+        });
+    });
 });
