@@ -8,6 +8,7 @@ import * as Types from "../Types";
 import {
     ObservedElementAccessibilities,
     ObservedElementRequestStatuses,
+    ObservedElementFailureReasons,
 } from "../Consts";
 import {
     documentContains,
@@ -90,8 +91,7 @@ export class ObservedElementAPI
                     current.diagnostics.getCancelTriggeringElement = () =>
                         elementRef.deref() ?? null;
                     current.diagnostics.reason =
-                        (current.diagnostics.reason ?? "") +
-                        "Canceled due to focus change.";
+                        ObservedElementFailureReasons.CanceledFocusChange;
                     current.cancel();
                 }
             }
@@ -132,10 +132,10 @@ export class ObservedElementAPI
         const inDOM = !!elementInDOM;
         let isAccessible: boolean | undefined;
         let isFocusable: boolean | undefined;
-        let reason: string;
+        let reason: Types.ObservedElementFailureReason;
 
         if (!elementInDOM) {
-            reason = `Timeout after ${timeout}ms: Element not found in DOM.`;
+            reason = ObservedElementFailureReasons.TimeoutElementNotInDOM;
         } else {
             isAccessible = this._tabster.focusable.isAccessible(elementInDOM);
             isFocusable = this._tabster.focusable.isFocusable(
@@ -144,16 +144,17 @@ export class ObservedElementAPI
             );
 
             if (!isAccessible) {
-                reason = `Timeout after ${timeout}ms: Element found but not accessible.`;
+                reason =
+                    ObservedElementFailureReasons.TimeoutElementNotAccessible;
             } else if (!isFocusable) {
-                reason = `Timeout after ${timeout}ms: Element found but not focusable.`;
+                reason =
+                    ObservedElementFailureReasons.TimeoutElementNotFocusable;
             } else {
-                reason = `Timeout after ${timeout}ms: Element not ready.`;
+                reason = ObservedElementFailureReasons.TimeoutElementNotReady;
             }
         }
 
-        request.diagnostics.reason =
-            (request.diagnostics.reason ?? "") + reason;
+        request.diagnostics.reason = reason;
         request.diagnostics.waitForElementDuration = Date.now() - startTime;
         request.diagnostics.targetState = {
             inDOM,
@@ -409,8 +410,7 @@ export class ObservedElementAPI
 
         if (currentRequestFocus) {
             currentRequestFocus.diagnostics.reason =
-                (currentRequestFocus.diagnostics.reason ?? "") +
-                "Superseded by new requestFocus call.";
+                ObservedElementFailureReasons.SupersededByNewRequest;
             currentRequestFocus.cancel();
         }
 
@@ -439,8 +439,7 @@ export class ObservedElementAPI
                 if (!focusResult) {
                     // Focus call failed
                     request.diagnostics.reason =
-                        (request.diagnostics.reason ?? "") +
-                        "Element found but focus() call failed.";
+                        ObservedElementFailureReasons.FocusCallFailed;
                 }
 
                 return focusResult;

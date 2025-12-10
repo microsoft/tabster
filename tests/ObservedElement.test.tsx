@@ -8,6 +8,7 @@ import {
     getTabsterAttribute,
     Types,
     ObservedElementRequestStatuses,
+    ObservedElementFailureReasons,
 } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -894,7 +895,7 @@ describe("Focusable", () => {
                         );
                         expect(diagnostics).toBeDefined();
                         expect(diagnostics.reason).toEqual(
-                            "Timeout after 500ms: Element not found in DOM."
+                            ObservedElementFailureReasons.TimeoutElementNotInDOM
                         );
                         expect(
                             diagnostics.waitForElementDuration
@@ -950,7 +951,7 @@ describe("Focusable", () => {
                         );
                         expect(diagnostics).toBeDefined();
                         expect(diagnostics.reason).toEqual(
-                            "Timeout after 500ms: Element found but not accessible."
+                            ObservedElementFailureReasons.TimeoutElementNotAccessible
                         );
                         expect(diagnostics.targetState).toEqual({
                             inDOM: true,
@@ -1024,7 +1025,7 @@ describe("Focusable", () => {
                         );
                         expect(diagnostics).toBeDefined();
                         expect(diagnostics.reason).toEqual(
-                            "Canceled due to focus change."
+                            ObservedElementFailureReasons.CanceledFocusChange
                         );
                         expect(
                             diagnostics.getCancelTriggeringElement
@@ -1073,7 +1074,7 @@ describe("Focusable", () => {
                         );
                         expect(diagnostics).toBeDefined();
                         expect(diagnostics.reason).toEqual(
-                            "Superseded by new requestFocus call."
+                            ObservedElementFailureReasons.SupersededByNewRequest
                         );
                         expect(
                             diagnostics.waitForElementDuration

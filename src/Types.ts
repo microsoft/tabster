@@ -272,11 +272,18 @@ export type ObservedElementRequestStatuses =
 export type ObservedElementRequestStatus =
     ObservedElementRequestStatuses[keyof ObservedElementRequestStatuses];
 
+import { ObservedElementFailureReasons as _ObservedElementFailureReasons } from "./Consts";
+export type ObservedElementFailureReasons =
+    typeof _ObservedElementFailureReasons;
+
+export type ObservedElementFailureReason =
+    ObservedElementFailureReasons[keyof ObservedElementFailureReasons];
+
 export interface ObservedElementAsyncRequestDiagnostics {
     /**
      * Reason for failure when status is Canceled or TimedOut.
      */
-    reason?: string;
+    reason?: ObservedElementFailureReason;
     /**
      * Time spent waiting for element to appear in DOM (ms).
      */
