@@ -8,6 +8,7 @@ import * as Types from "../Types";
 import {
     ObservedElementAccessibilities,
     ObservedElementRequestStatuses,
+    ObservedElementFailureReasons,
 } from "../Consts";
 import {
     documentContains,
@@ -84,6 +85,13 @@ export class ObservedElementAPI
                     // Giving some time for the focus to settle before
                     // automatically cancelling the current request on focus change.
                     delete this._currentRequest;
+
+                    // Provide callback to access focused element using WeakRef to avoid memory leaks
+                    const elementRef = new WeakRef(e);
+                    current.diagnostics.getCancelTriggeringElement = () =>
+                        elementRef.deref() ?? null;
+                    current.diagnostics.reason =
+                        ObservedElementFailureReasons.CanceledFocusChange;
                     current.cancel();
                 }
             }
@@ -112,6 +120,47 @@ export class ObservedElementAPI
 
             delete this._waiting[key];
         }
+    }
+
+    private _populateTimeoutDiagnostics(
+        request: Types.ObservedElementAsyncRequest<HTMLElement | null>,
+        observedName: string,
+        timeout: number,
+        startTime: number
+    ): void {
+        const elementInDOM = this.getElement(observedName);
+        const inDOM = !!elementInDOM;
+        let isAccessible: boolean | undefined;
+        let isFocusable: boolean | undefined;
+        let reason: Types.ObservedElementFailureReason;
+
+        if (!elementInDOM) {
+            reason = ObservedElementFailureReasons.TimeoutElementNotInDOM;
+        } else {
+            isAccessible = this._tabster.focusable.isAccessible(elementInDOM);
+            isFocusable = this._tabster.focusable.isFocusable(
+                elementInDOM,
+                true
+            );
+
+            if (!isAccessible) {
+                reason =
+                    ObservedElementFailureReasons.TimeoutElementNotAccessible;
+            } else if (!isFocusable) {
+                reason =
+                    ObservedElementFailureReasons.TimeoutElementNotFocusable;
+            } else {
+                reason = ObservedElementFailureReasons.TimeoutElementNotReady;
+            }
+        }
+
+        request.diagnostics.reason = reason;
+        request.diagnostics.waitForElementDuration = Date.now() - startTime;
+        request.diagnostics.targetState = {
+            inDOM,
+            isAccessible,
+            isFocusable,
+        };
     }
 
     private _isObservedNamesUpdated(cur: string[], prev?: string[]) {
@@ -257,6 +306,7 @@ export class ObservedElementAPI
         timeout: number,
         accessibility?: Types.ObservedElementAccessibility
     ): Types.ObservedElementAsyncRequest<HTMLElement | null> {
+        const startTime = Date.now();
         const el = this.getElement(observedName, accessibility);
 
         if (el) {
@@ -266,6 +316,9 @@ export class ObservedElementAPI
                     /**/
                 },
                 status: ObservedElementRequestStatuses.Succeeded,
+                diagnostics: {
+                    waitForElementDuration: Date.now() - startTime,
+                },
             };
         }
 
@@ -296,6 +349,12 @@ export class ObservedElementAPI
 
                 if (w.request) {
                     w.request.status = ObservedElementRequestStatuses.TimedOut;
+                    this._populateTimeoutDiagnostics(
+                        w.request,
+                        observedName,
+                        timeout,
+                        startTime
+                    );
                 }
 
                 if (w.resolve) {
@@ -321,10 +380,13 @@ export class ObservedElementAPI
                     // cancel() function is callable by user, someone might call it after request is finished,
                     // we are making sure that status of a finished request is not overriden.
                     request.status = ObservedElementRequestStatuses.Canceled;
+                    request.diagnostics.waitForElementDuration =
+                        Date.now() - startTime;
                 }
                 this._rejectWaiting(key, true);
             },
             status: ObservedElementRequestStatuses.Waiting,
+            diagnostics: {},
         };
 
         w.request = request;
@@ -347,6 +409,8 @@ export class ObservedElementAPI
         const currentRequestFocus = this._currentRequest;
 
         if (currentRequestFocus) {
+            currentRequestFocus.diagnostics.reason =
+                ObservedElementFailureReasons.SupersededByNewRequest;
             currentRequestFocus.cancel();
         }
 
@@ -360,20 +424,43 @@ export class ObservedElementAPI
         this._currentRequestTimestamp = Date.now();
 
         const ret: Types.ObservedElementAsyncRequest<boolean> = {
-            result: request.result.then((element) =>
-                this._lastRequestFocusId === requestId && element
-                    ? this._tabster.focusedElement.focus(
-                          element,
-                          true,
-                          undefined,
-                          options.preventScroll
-                      )
-                    : false
-            ),
+            result: request.result.then((element) => {
+                if (this._lastRequestFocusId !== requestId) {
+                    request.diagnostics.reason =
+                        ObservedElementFailureReasons.SupersededByNewRequest;
+                    return false;
+                }
+
+                if (!element) {
+                    // Element was not found - reason should already be set by timeout or cancellation
+                    // If not set, default to timeout reason
+                    if (request.diagnostics.reason === undefined) {
+                        request.diagnostics.reason =
+                            ObservedElementFailureReasons.TimeoutElementNotInDOM;
+                    }
+                    return false;
+                }
+
+                const focusResult = this._tabster.focusedElement.focus(
+                    element,
+                    true,
+                    undefined,
+                    options.preventScroll
+                );
+
+                if (!focusResult) {
+                    // Focus call failed
+                    request.diagnostics.reason =
+                        ObservedElementFailureReasons.FocusCallFailed;
+                }
+
+                return focusResult;
+            }),
             cancel: () => {
                 request.cancel();
             },
             status: request.status,
+            diagnostics: request.diagnostics,
         };
 
         request.result.finally(() => {

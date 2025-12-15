@@ -38,6 +38,16 @@ export const ObservedElementRequestStatuses = {
     TimedOut: 3,
 } as const;
 
+export const ObservedElementFailureReasons = {
+    CanceledFocusChange: 1,
+    TimeoutElementNotInDOM: 2,
+    TimeoutElementNotAccessible: 3,
+    TimeoutElementNotFocusable: 4,
+    TimeoutElementNotReady: 5,
+    SupersededByNewRequest: 6,
+    FocusCallFailed: 7,
+} as const;
+
 export const RestoreFocusOrders = {
     History: 0,
     DeloserDefault: 1,

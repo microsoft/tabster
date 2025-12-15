@@ -8,6 +8,7 @@ import {
     getTabsterAttribute,
     Types,
     ObservedElementRequestStatuses,
+    ObservedElementFailureReasons,
 } from "tabster";
 import * as BroTest from "./utils/BroTest";
 
@@ -804,5 +805,325 @@ describe("Focusable", () => {
                     });
                 }
             );
+    });
+
+    describe("Diagnostics", () => {
+        it("should provide diagnostics with waitForElementDuration when element is found immediately", async () => {
+            const name = "test";
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                    >
+                        Button1
+                    </button>
+                </div>
+            )
+                .eval(async (name) => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            name,
+                            1000
+                        );
+
+                    return request
+                        ? [
+                              await request.result,
+                              request.status,
+                              request.diagnostics,
+                          ]
+                        : [];
+                }, name)
+                .check(
+                    ([res, status, diagnostics]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                    ]) => {
+                        expect(res).toBe(true);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.Succeeded
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeDefined();
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeGreaterThanOrEqual(0);
+                        expect(diagnostics.reason).toBeUndefined();
+                        expect(diagnostics.targetState).toBeUndefined();
+                        expect(
+                            diagnostics.getCancelTriggeringElement
+                        ).toBeUndefined();
+                    }
+                );
+        });
+
+        it("should provide diagnostics with timeout reason when element is not found", async () => {
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button>Button1</button>
+                </div>
+            )
+                .eval(async () => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            "NonExistent",
+                            500
+                        );
+
+                    return request
+                        ? [
+                              await request.result,
+                              request.status,
+                              request.diagnostics,
+                          ]
+                        : [];
+                })
+                .check(
+                    ([res, status, diagnostics]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                    ]) => {
+                        expect(res).toBe(false);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.TimedOut
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(diagnostics.reason).toEqual(
+                            ObservedElementFailureReasons.TimeoutElementNotInDOM
+                        );
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeDefined();
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeGreaterThanOrEqual(500);
+                        expect(diagnostics.targetState).toEqual({
+                            inDOM: false,
+                        });
+                    }
+                );
+        });
+
+        it("should provide diagnostics with targetState when element is not accessible", async () => {
+            const name = "test";
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                        aria-hidden="true"
+                    >
+                        Button1
+                    </button>
+                </div>
+            )
+                .eval(async (name) => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            name,
+                            500
+                        );
+
+                    return request
+                        ? [
+                              await request.result,
+                              request.status,
+                              request.diagnostics,
+                          ]
+                        : [];
+                }, name)
+                .check(
+                    ([res, status, diagnostics]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                    ]) => {
+                        expect(res).toBe(false);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.TimedOut
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(diagnostics.reason).toEqual(
+                            ObservedElementFailureReasons.TimeoutElementNotAccessible
+                        );
+                        expect(diagnostics.targetState).toEqual({
+                            inDOM: true,
+                            isAccessible: false,
+                            isFocusable: false,
+                        });
+                    }
+                );
+        });
+
+        it("should provide diagnostics with cancel reason and trigger element when focus changes", async () => {
+            const name = "test";
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="button1">Button1</button>
+                    <button
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                        aria-hidden="true"
+                    >
+                        Button2
+                    </button>
+                </div>
+            )
+                .eval(async (name) => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            name,
+                            5000
+                        );
+
+                    // Wait for request to settle
+                    await new Promise((resolve) => setTimeout(resolve, 400));
+
+                    // Move focus to trigger cancellation
+                    const button1 =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "button1"
+                        );
+                    button1?.focus();
+
+                    // Wait for cancellation to be processed
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+
+                    await request?.result;
+
+                    const triggeringElement =
+                        request?.diagnostics.getCancelTriggeringElement?.();
+
+                    return request
+                        ? [
+                              await request.result,
+                              request.status,
+                              request.diagnostics,
+                              triggeringElement?.tagName,
+                          ]
+                        : [];
+                }, name)
+                .check(
+                    ([res, status, diagnostics, tagName]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                        string,
+                    ]) => {
+                        expect(res).toBe(false);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.Canceled
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(diagnostics.reason).toEqual(
+                            ObservedElementFailureReasons.CanceledFocusChange
+                        );
+                        expect(
+                            diagnostics.getCancelTriggeringElement
+                        ).toBeDefined();
+                        expect(tagName).toBe("BUTTON");
+                    }
+                );
+        });
+
+        it("should provide diagnostics when request is superseded by new requestFocus", async () => {
+            await new BroTest.BroTest(<div id="root"></div>)
+                .eval(async () => {
+                    const request1 =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            "button1",
+                            5000
+                        );
+
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+
+                    // Trigger superseding by requesting focus on a different element
+                    getTabsterTestVariables().observedElement?.requestFocus(
+                        "button2",
+                        5000
+                    );
+
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+
+                    return request1
+                        ? [
+                              await request1.result,
+                              request1.status,
+                              request1.diagnostics,
+                          ]
+                        : [];
+                })
+                .check(
+                    ([res, status, diagnostics]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                    ]) => {
+                        expect(res).toBe(false);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.Canceled
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(diagnostics.reason).toEqual(
+                            ObservedElementFailureReasons.SupersededByNewRequest
+                        );
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeDefined();
+                    }
+                );
+        });
+
+        it("should handle manual cancel and provide diagnostics", async () => {
+            const name = "test";
+            await new BroTest.BroTest(<div id="root"></div>)
+                .eval(async (name) => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            name,
+                            5000
+                        );
+
+                    // Wait a bit then manually cancel
+                    await new Promise((resolve) => setTimeout(resolve, 200));
+                    request?.cancel();
+
+                    return request
+                        ? [
+                              await request.result,
+                              request.status,
+                              request.diagnostics,
+                          ]
+                        : [];
+                }, name)
+                .check(
+                    ([res, status, diagnostics]: [
+                        boolean,
+                        Types.ObservedElementRequestStatus,
+                        Types.ObservedElementAsyncRequestDiagnostics,
+                    ]) => {
+                        expect(res).toBe(false);
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.Canceled
+                        );
+                        expect(diagnostics).toBeDefined();
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeDefined();
+                        expect(
+                            diagnostics.waitForElementDuration
+                        ).toBeGreaterThanOrEqual(200);
+                    }
+                );
+        });
     });
 });
