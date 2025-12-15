@@ -434,7 +434,7 @@ export class ObservedElementAPI
                 if (!element) {
                     // Element was not found - reason should already be set by timeout or cancellation
                     // If not set, default to timeout reason
-                    if (!request.diagnostics.reason) {
+                    if (request.diagnostics.reason === undefined) {
                         request.diagnostics.reason =
                             ObservedElementFailureReasons.TimeoutElementNotInDOM;
                     }
