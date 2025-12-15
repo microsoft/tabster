@@ -425,7 +425,19 @@ export class ObservedElementAPI
 
         const ret: Types.ObservedElementAsyncRequest<boolean> = {
             result: request.result.then((element) => {
-                if (this._lastRequestFocusId !== requestId || !element) {
+                if (this._lastRequestFocusId !== requestId) {
+                    request.diagnostics.reason =
+                        ObservedElementFailureReasons.SupersededByNewRequest;
+                    return false;
+                }
+
+                if (!element) {
+                    // Element was not found - reason should already be set by timeout or cancellation
+                    // If not set, default to timeout reason
+                    if (!request.diagnostics.reason) {
+                        request.diagnostics.reason =
+                            ObservedElementFailureReasons.TimeoutElementNotInDOM;
+                    }
                     return false;
                 }
 
