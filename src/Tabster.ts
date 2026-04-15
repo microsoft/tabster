@@ -516,7 +516,9 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
     if (core._noop !== noop) {
         core._noop = noop;
 
-        const processNode = (element: HTMLElement): number => {
+        const processNode = (node: Node): number => {
+            const element = node as HTMLElement;
+
             if (!element.getAttribute) {
                 return NodeFilter.FILTER_SKIP;
             }

@@ -30,7 +30,7 @@ export class ShadowMutationObserver implements MutationObserver {
 
         Element.prototype.attachShadow = function (
             this: Element,
-            options?: ShadowRootInit
+            options: ShadowRootInit
         ): ShadowRoot {
             const shadowRoot = origAttachShadow.call(this, options);
 
