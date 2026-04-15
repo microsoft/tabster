@@ -33,9 +33,7 @@ const controlTab = params.get("controlTab") !== "false";
 const rootDummyInputs = params.get("rootDummyInputs") !== "false";
 const partsValue = params.get("parts");
 const parts =
-    typeof partsValue === "string"
-        ? partsValue.split(",")
-        : undefined;
+    typeof partsValue === "string" ? partsValue.split(",") : undefined;
 const partsToEnable = {};
 
 tabsterTest.createTabster = (win, props) => {

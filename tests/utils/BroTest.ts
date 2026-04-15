@@ -25,7 +25,7 @@ import {
     Types,
 } from "tabster";
 
-const domKey = process.env.SHADOWDOM ? "shadowDOM" : "dom";
+const domKey: "dom" | "shadowDOM" = process.env.SHADOWDOM ? "shadowDOM" : "dom";
 
 // jest.setTimeout(900000000);
 
@@ -179,7 +179,7 @@ export function getTestPageURL(parts?: TabsterParts): string {
     return `http://localhost:${port}/?shadowdom=${enableShadowDOM}&controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}${
         parts
             ? `&parts=${Object.keys(parts)
-                  .filter((part: keyof TabsterParts) => parts[part])
+                  .filter((part) => parts[part as keyof TabsterParts])
                   .join(",")}`
             : ""
     }&rnd=${++_lastRnd}`;
@@ -293,7 +293,7 @@ class BroTestItemHTML extends BroTestItem {
         const frame = this._frameStack[0].frame;
 
         await frame.evaluate(
-            (enabeShadowDOM, el, html) => {
+            (enabeShadowDOM, el: Element | null | undefined, html) => {
                 const shadowHost = document.createElement("div");
 
                 if (enabeShadowDOM) {
@@ -823,7 +823,7 @@ export class BroTest implements PromiseLike<undefined> {
                     domKey
                 );
 
-                callback(activeElement);
+                callback(activeElement as BrowserElement | null);
             })
         );
 
