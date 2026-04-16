@@ -16,9 +16,8 @@
         "forceConsistentCasingInFileNames": true,
         "lib": ["DOM", "ESNext"],
         "esModuleInterop": true,
-        "baseUrl": ".",
         "paths": {
-            "tabster": ["src/"]
+            "tabster": ["./src/"]
         }
     },
     "exclude": ["dist", "node_modules"]

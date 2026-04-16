@@ -218,7 +218,7 @@ export class Root
         }
     };
 
-    private _onFocusIn = (event: FocusEvent) => {
+    private _onFocusIn = (event: Event) => {
         const getParent = this._tabster.getParent;
         const rootElement = this._element.get();
         let curElement = event.composedPath()[0] as HTMLElement | null;

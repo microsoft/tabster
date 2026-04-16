@@ -165,7 +165,7 @@ abstract class CrossOriginTransaction<I, O> {
     protected ownerId: string;
     protected sendUp: Types.CrossOriginTransactionSend | undefined;
     private _promise: Promise<O>;
-    protected _resolve: ((endData?: O | PromiseLike<O>) => void) | undefined;
+    protected _resolve: ((endData: O | PromiseLike<O>) => void) | undefined;
     private _reject: ((reason: string) => void) | undefined;
     private _knownTargets: KnownTargets;
     private _sentTo: Types.CrossOriginSentTo;
@@ -307,7 +307,7 @@ abstract class CrossOriginTransaction<I, O> {
                 this._reject(error);
             }
         } else if (this._resolve) {
-            this._resolve(this.endData);
+            this._resolve(this.endData as O);
         }
     }
 
@@ -360,7 +360,7 @@ interface CrossOriginTransactionClass<I, O> {
         transactions: CrossOriginTransactions,
         forwardResult: Promise<O | undefined>,
         isSelfResponse?: boolean
-    ): Promise<O>;
+    ): Promise<O | undefined>;
     shouldSelfRespond?(
         tabster: Types.TabsterCore,
         data: I,
@@ -918,7 +918,7 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<
         ownerId: string,
         transactions: CrossOriginTransactions,
         forwardResult: Promise<boolean | undefined>
-    ): Promise<boolean | null> {
+    ): Promise<boolean> {
         const forwardRet = await forwardResult;
         const begin = !forwardRet && data.beginData;
         const uid = begin && begin.deloserUId;
@@ -927,9 +927,10 @@ class RestoreFocusInDeloserTransaction extends CrossOriginTransaction<
 
         if (begin && deloser && deloserAPI) {
             const history = DeloserAPI.getHistory(deloserAPI);
-            return begin.reset
-                ? history.resetFocus(deloser)
-                : history.focusAvailable(deloser);
+            const result = begin.reset
+                ? await history.resetFocus(deloser)
+                : await history.focusAvailable(deloser);
+            return result ?? false;
         }
 
         return !!forwardRet;

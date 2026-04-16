@@ -276,7 +276,7 @@ export class OutlineAPI implements Types.OutlineAPI {
         return false;
     }
 
-    private _onScroll = (e: UIEvent): void => {
+    private _onScroll = (e: Event): void => {
         if (
             !this._outlinedElement ||
             !OutlineAPI._isParentChild(

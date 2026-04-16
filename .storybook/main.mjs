@@ -1,6 +1,5 @@
 // .storybook/main.js
 import { mergeConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -25,7 +24,9 @@ const config = {
                 __DEV__: JSON.stringify(isDev),
                 __VERSION__: JSON.stringify(version),
             },
-            plugins: [tsconfigPaths()],
+            resolve: {
+                tsconfigPaths: true,
+            },
         });
     },
 
