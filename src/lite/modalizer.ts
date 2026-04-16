@@ -21,6 +21,12 @@ export interface ModalizerOptions {
      */
     isTrapped?: boolean;
     /**
+     * When true, this modalizer container is always accessible even when other
+     * modals are active. Lite honours this by virtue of skipping all elements
+     * that have data-tabster-lite-modalizer, so no extra runtime logic is needed.
+     */
+    isAlwaysAccessible?: boolean;
+    /**
      * Called for each sibling that would otherwise be made inert.
      * Return true to keep the element accessible (e.g. elements with a "never-hidden" attribute).
      */
