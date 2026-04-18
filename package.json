@@ -4,10 +4,40 @@
     "description": "Focus Management Tools for Web",
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
-    "sideEffects": false,
+    "sideEffects": [
+        "./dist/lite/observer.js",
+        "./dist/lite/observer.esm.js"
+    ],
     "main": "./dist/index.js",
     "module": "./dist/tabster.esm.js",
     "typings": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/tabster.esm.js",
+            "require": "./dist/index.js"
+        },
+        "./lite": {
+            "types": "./dist/lite/index.d.ts",
+            "import": "./dist/lite/index.esm.js",
+            "require": "./dist/lite/index.js"
+        },
+        "./lite/*": {
+            "types": "./dist/lite/*.d.ts",
+            "import": "./dist/lite/*.esm.js",
+            "require": "./dist/lite/*.js"
+        }
+    },
+    "typesVersions": {
+        "*": {
+            "lite": [
+                "./dist/lite/index.d.ts"
+            ],
+            "lite/*": [
+                "./dist/lite/*.d.ts"
+            ]
+        }
+    },
     "files": [
         "dist"
     ],
@@ -20,7 +50,7 @@
         "build-bundle": "rollup -c",
         "build-docs": "cd docs && npm install && npm run build",
         "build-storybook": "storybook build",
-        "bundle-size": "npm run build-bundle && bundle-size measure",
+        "bundle-size": "npm run build-bundle && monosize measure",
         "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",

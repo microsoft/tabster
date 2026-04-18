@@ -13,6 +13,67 @@ const extensions = [".ts"];
 /**
  * @type {import('rollup').RollupOptions}
  */
+// lite entry points: each src/lite/*.ts file → its own ESM chunk under dist/lite/
+const liteEntries = [
+    "focusable",
+    "focused",
+    "groupper",
+    "mover",
+    "deloser",
+    "modalizer",
+    "restorer",
+    "observed",
+    "observer",
+    "index",
+];
+
+const litePlugins = () => [
+    typescript({
+        useTsconfigDeclarationDir: true,
+        tsconfig: "src/lite/tsconfig.json",
+        tsconfigOverride: {
+            compilerOptions: {
+                emitDeclarationOnly: false,
+                stripInternal: true,
+            },
+        },
+    }),
+    babel({
+        babelHelpers: "bundled",
+        extensions,
+        exclude: "node_modules/**",
+    }),
+    json(),
+    commonjs({ extensions }),
+    resolve({ extensions, mainFields: ["module", "main"] }),
+];
+
+const liteBuilds = liteEntries.map((name) => ({
+    input: `./src/lite/${name}.ts`,
+    output: [
+        {
+            file: `dist/lite/${name}.esm.js`,
+            format: "es",
+            sourcemap: true,
+        },
+        {
+            file: `dist/lite/${name}.js`,
+            format: "cjs",
+            sourcemap: true,
+            exports: "named",
+        },
+    ],
+    // keyborg must never end up in any lite chunk
+    external: ["keyborg"],
+    plugins: litePlugins(),
+}));
+
+const liteDtsBuilds = liteEntries.map((name) => ({
+    input: `./dist/dts/lite/${name}.d.ts`,
+    output: [{ file: `dist/lite/${name}.d.ts`, format: "es" }],
+    plugins: [dts()],
+}));
+
 const config = [
     {
         input: "./src/index.ts",
@@ -55,6 +116,8 @@ const config = [
         // so that internal types don't leak
         plugins: [dts()],
     },
+    ...liteBuilds,
+    ...liteDtsBuilds,
 ];
 
 export default config;

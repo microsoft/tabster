@@ -6,6 +6,26 @@
 import type { DOMAPI } from "../Types";
 import { findAll, findDefault, findFirst } from "./focusable";
 
+const TABSTER_ATTR = "data-tabster";
+
+/**
+ * Returns a CSS selector that matches elements whose data-tabster JSON
+ * envelope contains the given key (e.g. `_tabsterAttrSelector("modalizer")`
+ * → `[data-tabster*='"modalizer":']`).
+ */
+function _tabsterAttrSelector(key: string): string {
+    return `[${TABSTER_ATTR}*='"${key}":']`;
+}
+
+/** Cheap check: does the element's data-tabster JSON envelope contain this key? */
+function _hasTabsterKey(el: Element, key: string): boolean {
+    const value = el.getAttribute(TABSTER_ATTR);
+    if (!value) {
+        return false;
+    }
+    return value.indexOf(`"${key}":`) !== -1;
+}
+
 export interface ModalizerOptions {
     id?: string;
     useDialog?: boolean;
@@ -103,6 +123,73 @@ export function createModalizer(
     // Tab-trap listener (for isTrapped mode)
     let _tabTrapListener: ((e: KeyboardEvent) => void) | null = null;
 
+    // Tab-out sentinel (for non-trap modalizers, isOthersAccessible=true).
+    // A focusable sibling placed immediately AFTER the modalizer element so that
+    // pressing Tab from the last inner focusable lands on a real DOM element
+    // (instead of going to <body>). This guarantees the original element's
+    // focusout fires with a non-null relatedTarget, allowing consumers
+    // (e.g. PopoverSurface) to detect Tab-out via blur handlers and close.
+    // The sentinel itself, on focus, redirects to the next document focusable
+    // outside the modalizer (or blurs to body if none exists).
+    let _tabOutSentinel: HTMLElement | null = null;
+    function _onTabOutSentinelFocus(): void {
+        const sentinel = _tabOutSentinel;
+        if (!sentinel) {
+            return;
+        }
+        const all = findAll({
+            container: element.ownerDocument.body as HTMLElement,
+            includeProgrammaticallyFocusable: false,
+        });
+        const next = all.find((el) => {
+            if (el === sentinel) {
+                return false;
+            }
+            if (element.contains(el)) {
+                return false;
+            }
+            return !!(
+                sentinel.compareDocumentPosition(el) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+            );
+        });
+        if (next) {
+            next.focus();
+        } else {
+            sentinel.blur();
+        }
+    }
+    function _ensureTabOutSentinel(): void {
+        if (_tabOutSentinel) {
+            return;
+        }
+        if (!isOthersAccessible || isNonModalDialogLike) {
+            return;
+        }
+        const parent = element.parentElement;
+        if (!parent) {
+            return;
+        }
+        const sentinel = element.ownerDocument.createElement("div");
+        sentinel.tabIndex = 0;
+        sentinel.setAttribute("data-tabster-lite-sentinel", "after");
+        sentinel.setAttribute("aria-hidden", "true");
+        sentinel.style.cssText =
+            "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+        sentinel.addEventListener("focus", _onTabOutSentinelFocus);
+        parent.insertBefore(sentinel, element.nextSibling);
+        _tabOutSentinel = sentinel;
+    }
+    function _removeTabOutSentinel(): void {
+        const sentinel = _tabOutSentinel;
+        if (!sentinel) {
+            return;
+        }
+        _tabOutSentinel = null;
+        sentinel.removeEventListener("focus", _onTabOutSentinelFocus);
+        sentinel.remove();
+    }
+
     function _resolveInitialFocus(): HTMLElement | null {
         const ini = options?.initialFocus;
         if (typeof ini === "function") {
@@ -127,15 +214,19 @@ export function createModalizer(
         // For each node in path (including element), set inert on siblings NOT in path
         for (const ancestor of path) {
             const parent = ancestor.parentElement;
-            if (!parent) continue;
+            if (!parent) {
+                continue;
+            }
 
             for (let i = 0; i < parent.children.length; i++) {
                 const sibling = parent.children[i] as HTMLElement;
-                if (path.has(sibling)) continue;
+                if (path.has(sibling)) {
+                    continue;
+                }
                 // Keep other modalizer containers accessible for nested/sibling stacks.
                 if (
-                    sibling.hasAttribute("data-tabster-lite-modalizer") ||
-                    !!sibling.querySelector("[data-tabster-lite-modalizer]")
+                    _hasTabsterKey(sibling, "modalizer") ||
+                    !!sibling.querySelector(_tabsterAttrSelector("modalizer"))
                 ) {
                     continue;
                 }
@@ -147,7 +238,9 @@ export function createModalizer(
                     continue;
                 }
                 // Skip elements the caller wants to keep accessible (e.g. DangerousNeverHidden).
-                if (accessibleCheck?.(sibling)) continue;
+                if (accessibleCheck?.(sibling)) {
+                    continue;
+                }
 
                 const wasAlreadyInert =
                     (sibling as HTMLElement & { inert?: boolean }).inert ===
@@ -211,9 +304,7 @@ export function createModalizer(
             if (
                 _lastFocusRelatedTarget &&
                 _lastFocusRelatedTarget.isConnected &&
-                _lastFocusRelatedTarget.hasAttribute(
-                    "data-tabster-lite-restorer"
-                )
+                _hasTabsterKey(_lastFocusRelatedTarget, "restorer")
             ) {
                 return _lastFocusRelatedTarget;
             }
@@ -246,7 +337,9 @@ export function createModalizer(
     }
 
     function activate(restoreTarget?: HTMLElement | null): void {
-        if (_active) return;
+        if (_active) {
+            return;
+        }
 
         // When auto-activated by focusin, _restoreTarget was pre-set to e.relatedTarget
         // (the element that had focus before entering the container — e.g. the trigger button).
@@ -280,11 +373,15 @@ export function createModalizer(
             // Keyboard Tab-trap: intercept Tab so focus cannot leave even to browser chrome.
             if (isTrapped && !isOthersAccessible) {
                 _tabTrapListener = (e: KeyboardEvent) => {
-                    if (e.key !== "Tab") return;
+                    if (e.key !== "Tab") {
+                        return;
+                    }
                     const focusables = findAll({ container: element });
-                    if (focusables.length === 0) return;
-                    const first = focusables[0]!;
-                    const last = focusables[focusables.length - 1]!;
+                    if (focusables.length === 0) {
+                        return;
+                    }
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
                     const active = document.activeElement as HTMLElement | null;
                     if (e.shiftKey) {
                         if (active === first || !element.contains(active)) {
@@ -300,6 +397,8 @@ export function createModalizer(
                 };
                 document.addEventListener("keydown", _tabTrapListener, true);
             }
+
+            _ensureTabOutSentinel();
         }
 
         element.addEventListener("keydown", _onKeyDown);
@@ -331,7 +430,9 @@ export function createModalizer(
     }
 
     function deactivate(): void {
-        if (!_active) return;
+        if (!_active) {
+            return;
+        }
 
         _active = false;
 
@@ -348,6 +449,8 @@ export function createModalizer(
                 document.removeEventListener("keydown", _tabTrapListener, true);
                 _tabTrapListener = null;
             }
+
+            _removeTabOutSentinel();
         }
 
         element.dispatchEvent(
@@ -357,7 +460,21 @@ export function createModalizer(
             })
         );
 
-        // Restore focus
+        // Restore focus.
+        // Only restore if the user hasn't already explicitly moved focus
+        // to another element outside the modalizer. We detect "user-moved
+        // focus out" by checking document.activeElement at deactivate time:
+        //   - null / body            → focus was implicitly lost (e.g. the
+        //                              focused descendant was removed from
+        //                              the DOM when the modal closed) →
+        //                              safe to restore.
+        //   - inside element         → focus is still within the
+        //                              (now-detaching) modal → restore so
+        //                              the user returns to the trigger
+        //                              (common Escape/click-item flows).
+        //   - other element outside  → user deliberately tabbed/clicked
+        //                              away → respect that and skip
+        //                              restoration.
         const rf = options?.restoreFocusTo;
         const restoreTo = rf
             ? typeof rf === "function"
@@ -365,7 +482,14 @@ export function createModalizer(
                 : rf
             : _restoreTarget;
 
-        if (restoreTo && restoreTo.isConnected) {
+        const active = document.activeElement as HTMLElement | null;
+        const userMovedFocusOutside =
+            active !== null &&
+            active !== document.body &&
+            active !== document.documentElement &&
+            !element.contains(active);
+
+        if (!userMovedFocusOutside && restoreTo && restoreTo.isConnected) {
             restoreTo.focus();
         }
 
@@ -387,12 +511,18 @@ export function createModalizer(
     // fires reliably in all environments (including Cypress / CDP-driven tests where element-level
     // capture listeners can be missed).
     function _onFocusInAutoActivate(e: FocusEvent): void {
-        if (_active) return;
+        if (_active) {
+            return;
+        }
         const target = e.target as HTMLElement;
         // Only react when focus arrives INSIDE the container from OUTSIDE.
-        if (!element.contains(target)) return;
+        if (!element.contains(target)) {
+            return;
+        }
         const relatedTarget = e.relatedTarget as HTMLElement | null;
-        if (relatedTarget && element.contains(relatedTarget)) return;
+        if (relatedTarget && element.contains(relatedTarget)) {
+            return;
+        }
 
         _restoreTarget = _resolveRestoreTarget(relatedTarget, target);
         _activatingFromFocusIn = true;
@@ -405,13 +535,11 @@ export function createModalizer(
     _doc.addEventListener("focusin", _onFocusInAutoActivate);
 
     // If focus has already entered this modalizer before the instance was mounted
-    // (possible due to async observer wiring), activate immediately.
+    // (possible due to async observer wiring), activate immediately. This ensures
+    // non-modal modalizers (e.g. Popover with isOthersAccessible=true) still set
+    // up _restoreTarget so focus is returned to the trigger on close.
     const currentlyFocused = _doc.activeElement as HTMLElement | null;
-    if (
-        (!isOthersAccessible || isNonModalDialogLike) &&
-        currentlyFocused &&
-        element.contains(currentlyFocused)
-    ) {
+    if (currentlyFocused && element.contains(currentlyFocused)) {
         _restoreTarget = _resolveRestoreTarget(null, currentlyFocused);
         _activatingFromFocusIn = true;
         activate();

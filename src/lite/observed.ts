@@ -41,7 +41,7 @@ function _tryResolve(req: PendingRequest): boolean {
     return false;
 }
 
-function _onMutation(mutations: MutationRecord[]): void {
+function _onMutation(): void {
     if (_pending.size === 0) {
         return;
     }
@@ -58,7 +58,9 @@ function _onMutation(mutations: MutationRecord[]): void {
 }
 
 function _ensureMO(): void {
-    if (_mo) return;
+    if (_mo) {
+        return;
+    }
     _mo = new MutationObserver(_onMutation);
     _mo.observe(document.body, {
         childList: true,
@@ -128,7 +130,9 @@ export function waitForObservedElement(
     if (existing) {
         resolve(existing);
         return {
-            cancel: () => {},
+            cancel: () => {
+                /* empty */
+            },
             result,
         };
     }
