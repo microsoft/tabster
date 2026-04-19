@@ -19,16 +19,15 @@
             "ESNext"
         ],
         "esModuleInterop": true,
-        "baseUrl": ".",
         "paths": {
             "tabster": [
-                "src/"
+                "./src/"
             ],
             "tabster/lite": [
-                "src/lite/index.ts"
+                "./src/lite/index.ts"
             ],
             "tabster/lite/*": [
-                "src/lite/*"
+                "./src/lite/*"
             ]
         }
     },
