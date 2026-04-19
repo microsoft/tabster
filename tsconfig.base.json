@@ -19,6 +19,7 @@
             "ESNext"
         ],
         "esModuleInterop": true,
+        "baseUrl": ".",
         "paths": {
             "tabster": [
                 "src/"
