@@ -17,8 +17,6 @@
         "^tabster/lite/(.*)$": "<rootDir>/../src/lite/$1"
     },
     "testTimeout": 10000,
-    "testPathIgnorePatterns": [
-        "utils"
-    ],
+    "testPathIgnorePatterns": ["utils"],
     "rootDir": "tests"
 }
