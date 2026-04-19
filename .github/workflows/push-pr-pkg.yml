@@ -1,7 +1,8 @@
 name: Publish Any Commit
 on: [push, pull_request]
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -22,4 +23,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - run: npx pkg-pr-new publish
+      - name: Publish preview package
+        run: npx --yes pkg-pr-new publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
