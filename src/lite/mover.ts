@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { DOMAPI } from "../Types";
+import type { DOMAPI, MoverDirection } from "../Types";
+import { MoverDirections } from "../Consts";
+export { MoverDirections } from "../Consts";
+export type { MoverDirection } from "../Types";
+import { MoverMemorizedElementEventName } from "../Events";
 import { findAll, findDefault } from "./focusable";
-
-export const MoverDirection = {
-    Both: 0,
-    Vertical: 1,
-    Horizontal: 2,
-    Grid: 3,
-    /** All four arrow keys navigate linearly (same as Both but labeled for grid-like layouts). */
-    GridLinear: 4,
-} as const;
-export type MoverDirection =
-    (typeof MoverDirection)[keyof typeof MoverDirection];
 
 export interface MoverOptions {
     direction?: MoverDirection;
@@ -64,16 +57,16 @@ function _focusgroupValue(
     direction: MoverDirection,
     cyclic: boolean
 ): string | null {
-    if (direction === MoverDirection.Grid) {
+    if (direction === MoverDirections.Grid) {
         return null; // Grid always uses custom JS
     }
     const wrap = cyclic ? " wrap" : "";
     switch (direction) {
-        case MoverDirection.Vertical:
+        case MoverDirections.Vertical:
             return `vertical${wrap}`;
-        case MoverDirection.Horizontal:
+        case MoverDirections.Horizontal:
             return `horizontal${wrap}`;
-        case MoverDirection.Both:
+        case MoverDirections.Both:
             return cyclic ? "wrap" : null;
         default:
             return null;
@@ -367,13 +360,13 @@ function _linearNavigate(
     const isPageDown = key === "PageDown";
 
     if (
-        direction === MoverDirection.Vertical &&
+        direction === MoverDirections.Vertical &&
         (key === "ArrowLeft" || key === "ArrowRight")
     ) {
         return currentIdx;
     }
     if (
-        direction === MoverDirection.Horizontal &&
+        direction === MoverDirections.Horizontal &&
         (key === "ArrowUp" || key === "ArrowDown")
     ) {
         return currentIdx;
@@ -451,7 +444,7 @@ export function createMover(
     element: HTMLElement,
     options?: MoverOptions
 ): MoverInstance {
-    const direction = options?.direction ?? MoverDirection.Both;
+    const direction = options?.direction ?? MoverDirections.Both;
     const cyclic = options?.cyclic ?? false;
     const memorizeCurrent = options?.memorizeCurrent ?? false;
     const hasDefault = options?.hasDefault ?? false;
@@ -461,9 +454,9 @@ export function createMover(
     const visibilityTolerance = options?.visibilityTolerance ?? 0.8;
     const gridColumnsOpt = options?.gridColumns ?? 0;
     const homeAndEnd =
-        options?.homeAndEnd ?? direction !== MoverDirection.Horizontal;
+        options?.homeAndEnd ?? direction !== MoverDirections.Horizontal;
     const pageUpDown =
-        options?.pageUpDown ?? direction !== MoverDirection.Horizontal;
+        options?.pageUpDown ?? direction !== MoverDirections.Horizontal;
     const pageSize = options?.pageSize ?? 5;
     const useFocusgroup = options?.useFocusgroup ?? true;
 
@@ -480,8 +473,8 @@ export function createMover(
     // ResizeObserver for grid cache invalidation
     let _ro: ResizeObserver | null = null;
 
-    const _isGrid = direction === MoverDirection.Grid;
-    const _isGridLinear = direction === MoverDirection.GridLinear;
+    const _isGrid = direction === MoverDirections.Grid;
+    const _isGridLinear = direction === MoverDirections.GridLinear;
 
     // ---- focusgroup progressive enhancement ----
 
@@ -762,7 +755,7 @@ export function createMover(
                 }
 
                 element.dispatchEvent(
-                    new CustomEvent("tabster:lite:mover:memorized-element", {
+                    new CustomEvent(MoverMemorizedElementEventName, {
                         bubbles: true,
                         composed: true,
                         detail: { memorizedElement: _current ?? undefined },

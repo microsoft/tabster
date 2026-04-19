@@ -3,21 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { DOMAPI } from "../Types";
+import type { DOMAPI, GroupperTabbability } from "../Types";
+import { GroupperTabbabilities, GroupperMoveFocusActions } from "../Consts";
+export { GroupperTabbabilities };
+export type { GroupperTabbability } from "../Types";
 import {
     FOCUSABLE_SELECTOR,
     findFirst,
     findDefault,
     findAll,
 } from "./focusable";
-
-export const GroupperTabbability = {
-    Unlimited: 0,
-    Limited: 1,
-    LimitedTrapFocus: 2,
-} as const;
-export type GroupperTabbability =
-    (typeof GroupperTabbability)[keyof typeof GroupperTabbability];
 
 export interface GroupperOptions {
     tabbability?: GroupperTabbability;
@@ -45,10 +40,6 @@ export interface GroupperInstance {
 }
 
 const GroupperMoveFocusEventName = "tabster:groupper:movefocus";
-const GroupperMoveFocusActions = {
-    Enter: 1,
-    Escape: 2,
-} as const;
 
 function _findDelegate(
     container: HTMLElement,
@@ -68,7 +59,7 @@ export function createGroupper(
     element: HTMLElement,
     options?: GroupperOptions
 ): GroupperInstance {
-    const tabbability = options?.tabbability ?? GroupperTabbability.Unlimited;
+    const tabbability = options?.tabbability ?? GroupperTabbabilities.Unlimited;
     const delegated = options?.delegated ?? false;
     const _savedTabIndexes = new Map<HTMLElement, string | null>();
 
@@ -81,13 +72,13 @@ export function createGroupper(
 
     function _isLimited(): boolean {
         return (
-            tabbability === GroupperTabbability.Limited ||
-            tabbability === GroupperTabbability.LimitedTrapFocus
+            tabbability === GroupperTabbabilities.Limited ||
+            tabbability === GroupperTabbabilities.LimitedTrapFocus
         );
     }
 
     function _isTrapFocus(): boolean {
-        return tabbability === GroupperTabbability.LimitedTrapFocus;
+        return tabbability === GroupperTabbabilities.LimitedTrapFocus;
     }
 
     function _setInnerTabbable(enabled: boolean): void {
@@ -263,9 +254,57 @@ export function createGroupper(
                     }
                 }
 
-                // In limited modes, Tab on the container exits the group without entering.
-                // Child tabbability stays disabled until explicit Enter or direct inner focus.
+                // In limited modes, Tab on the container exits the group
+                // without entering. Because we don't proactively set inner
+                // descendants to tabindex=-1, browser default Tab would
+                // otherwise focus the first inner descendant. Intercept
+                // and move focus to the next/prev focusable OUTSIDE the
+                // groupper in document order, matching full Tabster's
+                // dummy-input boundary behavior.
                 if (target === element || !isInsideContainer) {
+                    const doc = element.ownerDocument;
+                    const all = findAll({
+                        container: doc.body,
+                        includeProgrammaticallyFocusable: false,
+                    });
+                    // Treat the groupper container itself as the boundary:
+                    // forward Tab → first focusable AFTER the container's
+                    // last descendant; backward Tab → last focusable BEFORE
+                    // the container.
+                    let toFocus: HTMLElement | null = null;
+                    if (isShift) {
+                        for (let i = all.length - 1; i >= 0; i--) {
+                            const el = all[i];
+                            if (
+                                el !== element &&
+                                !element.contains(el) &&
+                                element.compareDocumentPosition(el) &
+                                    Node.DOCUMENT_POSITION_PRECEDING
+                            ) {
+                                toFocus = el;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (const el of all) {
+                            if (
+                                el !== element &&
+                                !element.contains(el) &&
+                                element.compareDocumentPosition(el) &
+                                    Node.DOCUMENT_POSITION_FOLLOWING
+                            ) {
+                                toFocus = el;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (toFocus) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toFocus.focus();
+                    }
+
                     _insideGroup = false;
                     _active = false;
                     return;
@@ -367,7 +406,10 @@ export function createGroupper(
                 }
             }
         } else if (key === "Escape" && _insideGroup) {
-            if (_isLimited() || tabbability === GroupperTabbability.Unlimited) {
+            if (
+                _isLimited() ||
+                tabbability === GroupperTabbabilities.Unlimited
+            ) {
                 e.preventDefault();
                 e.stopPropagation();
                 _insideGroup = false;
@@ -544,7 +586,7 @@ export function createGroupper(
     }
 
     function isActive(): boolean | undefined {
-        if (tabbability === GroupperTabbability.Unlimited) {
+        if (tabbability === GroupperTabbabilities.Unlimited) {
             return false;
         }
 

@@ -3,8 +3,8 @@ import {
     createMover,
     createDeloser,
     createModalizer,
-    GroupperTabbability,
-    MoverDirection,
+    GroupperTabbabilities,
+    MoverDirections,
 } from "tabster/lite";
 
 console.log(
@@ -12,8 +12,8 @@ console.log(
     createMover,
     createDeloser,
     createModalizer,
-    GroupperTabbability,
-    MoverDirection
+    GroupperTabbabilities,
+    MoverDirections
 );
 
 export default {

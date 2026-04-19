@@ -4,6 +4,10 @@
  */
 
 import type { DOMAPI } from "../Types";
+import {
+    ModalizerActiveEventName,
+    ModalizerInactiveEventName,
+} from "../Events";
 import { findAll, findDefault, findFirst } from "./focusable";
 
 const TABSTER_ATTR = "data-tabster";
@@ -404,9 +408,10 @@ export function createModalizer(
         element.addEventListener("keydown", _onKeyDown);
 
         element.dispatchEvent(
-            new CustomEvent("tabster:lite:modalizer:activate", {
+            new CustomEvent(ModalizerActiveEventName, {
                 bubbles: true,
                 composed: true,
+                detail: { id: id ?? "", element },
             })
         );
 
@@ -454,9 +459,10 @@ export function createModalizer(
         }
 
         element.dispatchEvent(
-            new CustomEvent("tabster:lite:modalizer:deactivate", {
+            new CustomEvent(ModalizerInactiveEventName, {
                 bubbles: true,
                 composed: true,
+                detail: { id: id ?? "", element },
             })
         );
 

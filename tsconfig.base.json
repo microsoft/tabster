@@ -14,11 +14,25 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "forceConsistentCasingInFileNames": true,
-        "lib": ["DOM", "ESNext"],
+        "lib": [
+            "DOM",
+            "ESNext"
+        ],
         "esModuleInterop": true,
         "paths": {
-            "tabster": ["./src/"]
+            "tabster": [
+                "src/"
+            ],
+            "tabster/lite": [
+                "src/lite/index.ts"
+            ],
+            "tabster/lite/*": [
+                "src/lite/*"
+            ]
         }
     },
-    "exclude": ["dist", "node_modules"]
+    "exclude": [
+        "dist",
+        "node_modules"
+    ]
 }

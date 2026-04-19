@@ -6,13 +6,19 @@
     "transform": {
         "^.+\\.(ts|tsx|js|jsx)?$": [
             "babel-jest",
-            { "configFile": "./babel.config.js" }
+            {
+                "configFile": "./babel.config.js"
+            }
         ]
     },
     "moduleNameMapper": {
-        "tabster": "<rootDir>/../src/"
+        "^tabster$": "<rootDir>/../src/",
+        "^tabster/lite$": "<rootDir>/../src/lite/index.ts",
+        "^tabster/lite/(.*)$": "<rootDir>/../src/lite/$1"
     },
     "testTimeout": 10000,
-    "testPathIgnorePatterns": ["utils"],
+    "testPathIgnorePatterns": [
+        "utils"
+    ],
     "rootDir": "tests"
 }

@@ -19,6 +19,23 @@ export interface FindOptions {
     includeInert?: boolean;
     includeProgrammaticallyFocusable?: boolean;
     acceptShadowRoots?: boolean;
+    /**
+     * Walk in document-reverse order. Mirrors full Tabster's `isBackward`
+     * option on findAll/findFirst/findNext/findPrev so the same test suite
+     * can drive both implementations.
+     */
+    isBackward?: boolean;
+    /**
+     * Start the walk after this element (in the requested direction).
+     * The element itself is excluded from the result.
+     */
+    currentElement?: HTMLElement;
+    /**
+     * Called for each focusable element discovered in walk order. Returning
+     * `false` stops the walk (the element on which `false` is returned is
+     * still included in the result).
+     */
+    onElement?: (el: HTMLElement) => boolean;
     domAPI?: DOMAPI;
 }
 
@@ -112,6 +129,9 @@ export function findAll(options?: FindOptions): HTMLElement[] {
     const filter = options?.filter;
     const includeProgrammaticallyFocusable =
         options?.includeProgrammaticallyFocusable ?? false;
+    const isBackward = options?.isBackward ?? false;
+    const currentElement = options?.currentElement;
+    const onElement = options?.onElement;
     const doc = _getDoc(container);
     const result: HTMLElement[] = [];
 
@@ -129,16 +149,47 @@ export function findAll(options?: FindOptions): HTMLElement[] {
         return result;
     }
 
+    // Collect all matches in document order first; reverse + slice afterwards
+    // to keep the tree-walk simple. The post-processing cost is negligible
+    // compared to the walk itself.
+    const all: HTMLElement[] = [];
     let node = walker.nextNode();
     while (node) {
-        result.push(node as HTMLElement);
+        all.push(node as HTMLElement);
         node = walker.nextNode();
+    }
+
+    let ordered = isBackward ? all.slice().reverse() : all;
+
+    if (currentElement) {
+        const idx = ordered.indexOf(currentElement);
+        if (idx !== -1) {
+            ordered = ordered.slice(idx + 1);
+        }
+    }
+
+    if (!onElement) {
+        return ordered;
+    }
+
+    for (const el of ordered) {
+        result.push(el);
+        if (onElement(el) === false) {
+            break;
+        }
     }
 
     return result;
 }
 
 export function findFirst(options?: FindOptions): HTMLElement | null {
+    // Honour isBackward / currentElement by routing through findAll. The cost
+    // of materialising the whole list is small for typical containers and
+    // keeps a single source of truth for ordering semantics.
+    if (options?.isBackward || options?.currentElement) {
+        return findAll(options)[0] ?? null;
+    }
+
     const container = _getContainer(options);
     const includeInert = options?.includeInert ?? false;
     const filter = options?.filter;

@@ -24,6 +24,11 @@ export const TabsterMoveFocusEventName = "tabster:movefocus";
 
 export const DeloserFocusLostEventName = "tabster:deloser:focus-lost";
 
+// Dispatched by Deloser after it has successfully restored focus following a
+// focus-loss event. Currently emitted only by the lite Deloser implementation;
+// the full implementation may emit it in the future for parity.
+export const DeloserFocusRestoredEventName = "tabster:deloser:focus-restored";
+
 /**
  * Events to be sent to Deloser by the application.
  */
@@ -166,6 +171,12 @@ export class DeloserFocusLostEvent extends TabsterCustomEvent<Types.DeloserEleme
     }
 }
 
+export class DeloserFocusRestoredEvent extends TabsterCustomEvent<undefined> {
+    constructor() {
+        super(DeloserFocusRestoredEventName);
+    }
+}
+
 export class DeloserRestoreFocusEvent extends TabsterCustomEvent<undefined> {
     constructor() {
         super(DeloserRestoreFocusEventName);
@@ -207,6 +218,7 @@ declare global {
         [ModalizerInactiveEventName]: ModalizerInactiveEvent;
 
         [DeloserFocusLostEventName]: DeloserFocusLostEvent;
+        [DeloserFocusRestoredEventName]: DeloserFocusRestoredEvent;
         [DeloserRestoreFocusEventName]: DeloserRestoreFocusEvent;
 
         [RestorerRestoreFocusEventName]: RestorerRestoreFocusEvent;

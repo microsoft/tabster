@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { DOMAPI } from "../Types";
-
-export const RestorerType = { Source: 0, Target: 1 } as const;
+import type { DOMAPI, RestorerType } from "../Types";
+import { RestorerTypes } from "../Consts";
+export { RestorerTypes } from "../Consts";
+export type { RestorerType } from "../Types";
 
 export interface RestorerOptions {
-    type: (typeof RestorerType)[keyof typeof RestorerType];
+    type: RestorerType;
     id?: string;
     domAPI?: DOMAPI;
 }
 
 export interface RestorerInstance {
     readonly element: HTMLElement;
-    readonly type: (typeof RestorerType)[keyof typeof RestorerType];
+    readonly type: RestorerType;
     dispose(): void;
 }
 
@@ -82,7 +83,7 @@ export function createRestorer(
 
     let _disposed = false;
 
-    if (type === RestorerType.Target) {
+    if (type === RestorerTypes.Target) {
         // Target: push to history when it receives focus
         function _onFocusIn(): void {
             if (!_disposed) {

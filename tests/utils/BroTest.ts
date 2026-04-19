@@ -171,22 +171,33 @@ export interface BroTestTabsterTestVariables {
     Events?: typeof Events;
 }
 
-export function getTestPageURL(parts?: TabsterParts): string {
+export interface TestPageOptions {
+    lite?: boolean;
+}
+
+export function getTestPageURL(
+    parts?: TabsterParts,
+    options?: TestPageOptions
+): string {
     const port = parseInt(process.env.PORT || "0", 10) || 8080;
     const enableShadowDOM = !!process.env.SHADOWDOM;
     const controlTab = !process.env.STORYBOOK_UNCONTROLLED;
     const rootDummyInputs = !!process.env.STORYBOOK_ROOT_DUMMY_INPUTS;
+    const lite = options?.lite || !!process.env.LITE;
     return `http://localhost:${port}/?shadowdom=${enableShadowDOM}&controlTab=${controlTab}&rootDummyInputs=${rootDummyInputs}${
         parts
             ? `&parts=${Object.keys(parts)
                   .filter((part) => parts[part as keyof TabsterParts])
                   .join(",")}`
             : ""
-    }&rnd=${++_lastRnd}`;
+    }&lite=${lite}&rnd=${++_lastRnd}`;
 }
 
-export async function bootstrapTabsterPage(parts?: TabsterParts) {
-    await goToPageWithRetry(getTestPageURL(parts), 4);
+export async function bootstrapTabsterPage(
+    parts?: TabsterParts,
+    options?: TestPageOptions
+) {
+    await goToPageWithRetry(getTestPageURL(parts, options), 4);
     await expect(page.title()).resolves.toMatch("Tabster Test");
     await waitPageReadyAndDecorateConsoleError(page);
 }

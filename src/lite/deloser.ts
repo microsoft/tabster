@@ -4,6 +4,7 @@
  */
 
 import type { DOMAPI } from "../Types";
+import { DeloserFocusRestoredEventName } from "../Events";
 import { findFirst } from "./focusable";
 
 export interface DeloserOptions {
@@ -70,7 +71,7 @@ export function createDeloser(
         if (candidate) {
             candidate.focus();
             element.dispatchEvent(
-                new CustomEvent("tabster:lite:deloser:restore", {
+                new CustomEvent(DeloserFocusRestoredEventName, {
                     bubbles: true,
                     composed: true,
                 })

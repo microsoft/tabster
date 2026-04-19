@@ -11,6 +11,7 @@
     "include": [
         "**/*.ts",
         "../global.d.ts",
+        "../AttributeHelpers.ts",
         "../DOMAPI.ts",
         "../Consts.ts",
         "../Utils.ts",
