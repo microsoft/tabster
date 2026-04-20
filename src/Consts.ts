@@ -90,6 +90,12 @@ export const MoverDirections = {
     GridLinear: 4, // Two-dimentional movement depending on the visual placement. Allows linear movement.
 } as const;
 
+export const MoverConnections = {
+    All: 1, // Sets connectivity with both parent and child Movers.
+    Parent: 2, // Sets connectivity with parent Movers.
+    Child: 3, // Sets connectivity with child Movers.
+} as const;
+
 export const MoverKeys = {
     ArrowUp: 1,
     ArrowDown: 2,
