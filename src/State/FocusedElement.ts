@@ -6,14 +6,14 @@
 import {
     KEYBORG_FOCUSIN,
     KEYBORG_FOCUSOUT,
-    KeyborgFocusInEvent,
-    KeyborgFocusOutEvent,
+    type KeyborgFocusInEvent,
+    type KeyborgFocusOutEvent,
     nativeFocus,
 } from "keyborg";
 
 import { Keys } from "../Keys.js";
 import { RootAPI } from "../Root.js";
-import * as Types from "../Types.js";
+import type * as Types from "../Types.js";
 import { AsyncFocusSources } from "../Consts.js";
 import {
     TabsterFocusInEvent,

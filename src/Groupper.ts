@@ -8,20 +8,20 @@ import { nativeFocus } from "keyborg";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
 import { RootAPI } from "./Root.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import {
     AsyncFocusSources,
     GroupperMoveFocusActions,
     GroupperTabbabilities,
 } from "./Consts.js";
 import {
-    GroupperMoveFocusEvent,
+    type GroupperMoveFocusEvent,
     GroupperMoveFocusEventName,
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
 import {
-    DummyInput,
+    type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getAdjacentElement,

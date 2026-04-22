@@ -100,6 +100,13 @@ export default [
                 "error",
                 { allowTernary: true, allowShortCircuit: true },
             ],
+            "@typescript-eslint/consistent-type-imports": [
+                "error",
+                {
+                    prefer: "type-imports",
+                    fixStyle: "inline-type-imports",
+                },
+            ],
         },
     },
 ];

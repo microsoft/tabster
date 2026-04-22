@@ -8,8 +8,8 @@ import { FocusedElementState } from "./State/FocusedElement.js";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import { KeyboardNavigationState } from "./State/KeyboardNavigation.js";
 import { observeMutations } from "./MutationEvent.js";
-import { RootAPI, WindowWithTabsterInstance } from "./Root.js";
-import * as Types from "./Types.js";
+import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
+import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { UncontrolledAPI } from "./Uncontrolled.js";
 import {
