@@ -6,7 +6,7 @@
 import { getTabsterOnElement } from "./Instance";
 import { RootAPI } from "./Root";
 import * as Types from "./Types";
-import { FOCUSABLE_SELECTOR } from "./Consts";
+import { INERT_SELECTOR, FOCUSABLE_SELECTOR } from "./Consts";
 import {
     createElementTreeWalker,
     getDummyInputContainer,
@@ -81,6 +81,10 @@ export class FocusableAPI implements Types.FocusableAPI {
                 return false;
             }
 
+            if (this._isInert(e)) {
+                return false;
+            }
+
             const ignoreDisabled =
                 tabsterOnElement?.focusable?.ignoreAriaDisabled;
 
@@ -94,6 +98,14 @@ export class FocusableAPI implements Types.FocusableAPI {
 
     private _isDisabled(el: HTMLElement): boolean {
         return el.hasAttribute("disabled");
+    }
+
+    private _isInert(el: HTMLElement): boolean {
+        if (matchesSelector(el, INERT_SELECTOR)) {
+            return true;
+        }
+
+        return false;
     }
 
     private _isHidden(el: HTMLElement): boolean {

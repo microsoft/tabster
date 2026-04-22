@@ -6,6 +6,8 @@
 export const TABSTER_ATTRIBUTE_NAME = "data-tabster" as const;
 export const TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME = "data-tabster-dummy" as const;
 
+export const INERT_SELECTOR = `[inert], [inert] *`;
+
 export const FOCUSABLE_SELECTOR = `:is(${[
     "a[href]",
     "button",
@@ -17,7 +19,7 @@ export const FOCUSABLE_SELECTOR = `:is(${[
     "details > summary",
     "audio[controls]",
     "video[controls]",
-].join(", ")}):not(:disabled)`;
+].join(", ")}):not(:disabled, ${INERT_SELECTOR})`;
 
 export const AsyncFocusSources = {
     EscapeGroupper: 1,
