@@ -19,17 +19,19 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
-    createElementTreeWalker,
     type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
+    getDummyInputContainer,
+} from "./DummyInput.js";
+import {
+    createElementTreeWalker,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
-    getDummyInputContainer,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 

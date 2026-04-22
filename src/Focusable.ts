@@ -7,9 +7,9 @@ import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import type * as Types from "./Types.js";
 import { FOCUSABLE_SELECTOR } from "./Consts.js";
+import { getDummyInputContainer } from "./DummyInput.js";
 import {
     createElementTreeWalker,
-    getDummyInputContainer,
     getLastChild,
     getRadioButtonGroup,
     isDisplayNone,

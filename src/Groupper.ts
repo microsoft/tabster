@@ -24,8 +24,10 @@ import {
     type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    getAdjacentElement,
     getDummyInputContainer,
+} from "./DummyInput.js";
+import {
+    getAdjacentElement,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";

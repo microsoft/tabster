@@ -20,9 +20,9 @@ import {
     TabsterFocusOutEvent,
     TabsterMoveFocusEvent,
 } from "../Events.js";
+import { DummyInputManager } from "../DummyInput.js";
 import {
     documentContains,
-    DummyInputManager,
     getLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement,

@@ -7,13 +7,14 @@ export {
     createTabster,
     disposeTabster,
     forceCleanup,
-    getDummyInputContainer,
     getInternal,
     getTabster,
     getShadowDOMAPI,
     isNoOp,
     makeNoOp,
 } from "./Tabster.js";
+
+export { getDummyInputContainer } from "./DummyInput.js";
 
 export { getCrossOrigin } from "./get/getCrossOrigin.js";
 export { getDeloser } from "./get/getDeloser.js";
