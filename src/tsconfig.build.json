@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.lib.json",
+    "compilerOptions": {
+        "outDir": "../dist/esm",
+        "stripInternal": true,
+        "composite": false,
+        "tsBuildInfoFile": null
+    }
+}

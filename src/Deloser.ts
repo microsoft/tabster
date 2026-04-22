@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
-import { DeloserStrategies, RestoreFocusOrders } from "./Consts";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
+import { DeloserStrategies, RestoreFocusOrders } from "./Consts.js";
 import {
     DeloserFocusLostEvent,
     DeloserRestoreFocusEvent,
     DeloserRestoreFocusEventName,
     TabsterMoveFocusEvent,
-} from "./Events";
+} from "./Events.js";
 import {
     documentContains,
     getElementUId,
-    getPromise,
     isDisplayNone,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 const _containerHistoryLength = 10;
 
@@ -75,8 +74,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        const getWindow = this._tabster.getWindow;
-        return getPromise(getWindow).resolve(this._deloser.resetFocus());
+        return Promise.resolve(this._deloser.resetFocus());
     }
 }
 
@@ -505,13 +503,7 @@ export class Deloser
             return e && e !== element;
         });
 
-        cur.unshift(
-            new WeakHTMLElement(
-                this._tabster.getWindow,
-                element,
-                buildSelector(element)
-            )
-        );
+        cur.unshift(new WeakHTMLElement(element, buildSelector(element)));
 
         while (cur.length > _containerHistoryLength) {
             cur.pop();

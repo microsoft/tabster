@@ -18,7 +18,7 @@ const config = {
         config.resolve = config.resolve ?? {};
         config.resolve.alias = {
             ...(config.resolve.alias ?? {}),
-            tabster: path.resolve(__dirname, "./dist/tabster.esm.js"),
+            tabster: path.resolve(__dirname, "./dist/esm/index.js"),
         };
         return config;
     }),

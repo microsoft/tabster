@@ -4,23 +4,21 @@
  */
 
 import { nativeFocus } from "keyborg";
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import { FocusedElementState } from "./State/FocusedElement";
-import { Keys } from "./Keys";
-import * as Types from "./Types";
-import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events";
-import { ModalizerEventDetail } from "./EventsTypes";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
+import { Keys } from "./Keys.js";
+import * as Types from "./Types.js";
+import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
+import { ModalizerEventDetail } from "./EventsTypes.js";
 import {
-    augmentAttribute,
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
-    TabsterPart,
-    WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./DummyInput.js";
+import { augmentAttribute, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 let _wasFocusedCounter = 0;
 
@@ -163,12 +161,7 @@ export class Modalizer
 
                 if (isActive) {
                     if (index < 0) {
-                        activeElements.push(
-                            new WeakHTMLElement(
-                                this._tabster.getWindow,
-                                element
-                            )
-                        );
+                        activeElements.push(new WeakHTMLElement(element));
                     }
                 } else {
                     if (index >= 0) {
@@ -821,9 +814,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
 
             if (isAugmented) {
-                newAugmented.push(
-                    new WeakHTMLElement(tabster.getWindow, element)
-                );
+                newAugmented.push(new WeakHTMLElement(element));
                 newAugmentedMap.set(element, true);
             }
         };

@@ -7,30 +7,32 @@ export {
     createTabster,
     disposeTabster,
     forceCleanup,
-    getCrossOrigin,
-    getDeloser,
-    getDummyInputContainer,
-    getGroupper,
     getInternal,
-    getModalizer,
-    getMover,
-    getObservedElement,
-    getOutline,
-    getRestorer,
-    getShadowDOMAPI,
     getTabster,
+    getShadowDOMAPI,
     isNoOp,
     makeNoOp,
-} from "./Tabster";
+} from "./Tabster.js";
 
-export * from "./AttributeHelpers";
+export { getDummyInputContainer } from "./DummyInput.js";
 
-export * as Types from "./Types";
+export { getCrossOrigin } from "./get/getCrossOrigin.js";
+export { getDeloser } from "./get/getDeloser.js";
+export { getGroupper } from "./get/getGroupper.js";
+export { getModalizer } from "./get/getModalizer.js";
+export { getMover } from "./get/getMover.js";
+export { getObservedElement } from "./get/getObservedElement.js";
+export { getOutline } from "./get/getOutline.js";
+export { getRestorer } from "./get/getRestorer.js";
 
-export * from "./Events";
+export * from "./AttributeHelpers.js";
 
-export * as EventsTypes from "./EventsTypes";
+export * as Types from "./Types.js";
 
-export * from "./Consts";
+export * from "./Events.js";
 
-export * from "./Deprecated";
+export * as EventsTypes from "./EventsTypes.js";
+
+export * from "./Consts.js";
+
+export * from "./Deprecated.js";

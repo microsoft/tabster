@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "./Types";
+import * as Types from "./Types.js";
 
 export interface TabsterMoveFocusEventDetail {
     by: "mover" | "groupper" | "modalizer" | "root" | "deloser";
