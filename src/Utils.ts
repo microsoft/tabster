@@ -55,8 +55,6 @@ export interface TabsterDOMRect {
 
 export interface InstanceContext {
     elementByUId: { [uid: string]: WeakHTMLElement<HTMLElementWithUID> };
-    basics: InternalBasics;
-    WeakRef?: WeakRefConstructor;
     containerBoundingRectCache: {
         [id: string]: {
             rect: TabsterDOMRect;
@@ -65,54 +63,14 @@ export interface InstanceContext {
     };
     lastContainerBoundingRectCacheId: number;
     containerBoundingRectCacheTimer?: number;
-    fakeWeakRefs: TabsterWeakRef<unknown>[];
-    fakeWeakRefsTimer?: number;
-    fakeWeakRefsStarted: boolean;
 }
-
-let _isBrokenIE11: boolean;
-
-const _DOMRect =
-    typeof DOMRect !== "undefined"
-        ? DOMRect
-        : class {
-              readonly bottom: number;
-              readonly left: number;
-              readonly right: number;
-              readonly top: number;
-
-              constructor(
-                  x?: number,
-                  y?: number,
-                  width?: number,
-                  height?: number
-              ) {
-                  this.left = x || 0;
-                  this.top = y || 0;
-                  this.right = (x || 0) + (width || 0);
-                  this.bottom = (y || 0) + (height || 0);
-              }
-          };
 
 let _uidCounter = 0;
-
-try {
-    // IE11 only accepts `filter` argument as a function (not object with the `acceptNode`
-    // property as the docs define). Also `entityReferenceExpansion` argument is not
-    // optional. And it throws exception when the above arguments aren't there.
-    document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
-    _isBrokenIE11 = false;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-} catch (e) {
-    _isBrokenIE11 = true;
-}
 
 const _updateDummyInputsTimeout = 100;
 
 interface WindowWithUtilsConext extends Window {
     __tabsterInstanceContext?: InstanceContext;
-    Promise: PromiseConstructor;
-    WeakRef: WeakRefConstructor;
 }
 
 export function getInstanceContext(getWindow: GetWindow): InstanceContext {
@@ -123,14 +81,8 @@ export function getInstanceContext(getWindow: GetWindow): InstanceContext {
     if (!ctx) {
         ctx = {
             elementByUId: {},
-            basics: {
-                Promise: win.Promise || undefined,
-                WeakRef: win.WeakRef || undefined,
-            },
             containerBoundingRectCache: {},
             lastContainerBoundingRectCacheId: 0,
-            fakeWeakRefs: [],
-            fakeWeakRefsStarted: false,
         };
 
         win.__tabsterInstanceContext = ctx;
@@ -145,86 +97,29 @@ export function disposeInstanceContext(win: Window): void {
     if (ctx) {
         ctx.elementByUId = {};
 
-        delete ctx.WeakRef;
-
         ctx.containerBoundingRectCache = {};
 
         if (ctx.containerBoundingRectCacheTimer) {
             win.clearTimeout(ctx.containerBoundingRectCacheTimer);
         }
 
-        if (ctx.fakeWeakRefsTimer) {
-            win.clearTimeout(ctx.fakeWeakRefsTimer);
-        }
-
-        ctx.fakeWeakRefs = [];
-
         delete (win as WindowWithUtilsConext).__tabsterInstanceContext;
     }
-}
-
-export function createWeakMap<K extends object, V>(win: Window): WeakMap<K, V> {
-    const ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
-    return new (ctx?.basics.WeakMap || WeakMap)();
 }
 
 export function hasSubFocusable(element: HTMLElement): boolean {
     return !!element.querySelector(FOCUSABLE_SELECTOR);
 }
 
-interface TabsterWeakRef<T> {
-    deref(): T | undefined;
-}
-
-class FakeWeakRef<
-    T extends HTMLElement = HTMLElement,
-> implements TabsterWeakRef<T> {
-    private _target: T | undefined;
-
-    constructor(target: T) {
-        this._target = target;
-    }
-
-    deref(): T | undefined {
-        return this._target;
-    }
-
-    static cleanup(fwr: FakeWeakRef, forceRemove?: boolean): boolean {
-        if (!fwr._target) {
-            return true;
-        }
-
-        if (
-            forceRemove ||
-            !documentContains(fwr._target.ownerDocument, fwr._target)
-        ) {
-            delete fwr._target;
-            return true;
-        }
-
-        return false;
-    }
-}
-
 export class WeakHTMLElement<
     T extends HTMLElement = HTMLElement,
     D = undefined,
 > implements WeakHTMLElementInterface<D> {
-    private _ref: TabsterWeakRef<T> | undefined;
+    private _ref: WeakRef<T> | undefined;
     private _data: D | undefined;
 
-    constructor(getWindow: GetWindow, element: T, data?: D) {
-        const context = getInstanceContext(getWindow);
-
-        let ref: TabsterWeakRef<T>;
-        if (context.WeakRef) {
-            ref = new context.WeakRef(element);
-        } else {
-            ref = new FakeWeakRef(element);
-            context.fakeWeakRefs.push(ref);
-        }
-
-        this._ref = ref;
+    constructor(element: T, data?: D) {
+        this._ref = new WeakRef(element);
         this._data = data;
     }
 
@@ -248,73 +143,18 @@ export class WeakHTMLElement<
     }
 }
 
-export function cleanupFakeWeakRefs(
-    getWindow: GetWindow,
-    forceRemove?: boolean
-): void {
-    const context = getInstanceContext(getWindow);
-    context.fakeWeakRefs = context.fakeWeakRefs.filter(
-        (e) => !FakeWeakRef.cleanup(e as FakeWeakRef, forceRemove)
-    );
-}
-
-export function startFakeWeakRefsCleanup(getWindow: GetWindow): void {
-    const context = getInstanceContext(getWindow);
-
-    if (!context.fakeWeakRefsStarted) {
-        context.fakeWeakRefsStarted = true;
-        context.WeakRef = getWeakRef(context);
-    }
-
-    if (!context.fakeWeakRefsTimer) {
-        context.fakeWeakRefsTimer = getWindow().setTimeout(
-            () => {
-                context.fakeWeakRefsTimer = undefined;
-                cleanupFakeWeakRefs(getWindow);
-                startFakeWeakRefsCleanup(getWindow);
-            },
-            2 * 60 * 1000
-        ); // 2 minutes.
-    }
-}
-
-export function stopFakeWeakRefsCleanupAndClearStorage(
-    getWindow: GetWindow
-): void {
-    const context = getInstanceContext(getWindow);
-
-    context.fakeWeakRefsStarted = false;
-
-    if (context.fakeWeakRefsTimer) {
-        getWindow().clearTimeout(context.fakeWeakRefsTimer);
-        context.fakeWeakRefsTimer = undefined;
-        context.fakeWeakRefs = [];
-    }
-}
-
 export function createElementTreeWalker(
     doc: Document,
     root: Node,
     acceptNode: (node: Node) => number
 ): TreeWalker | undefined {
-    // IE11 will throw an exception when the TreeWalker root is not an Element.
     if (root.nodeType !== Node.ELEMENT_NODE) {
         return undefined;
     }
 
-    // TypeScript isn't aware of IE11 behaving badly.
-    const filter = (_isBrokenIE11
-        ? acceptNode
-        : ({ acceptNode } as NodeFilter)) as unknown as NodeFilter;
-
-    return dom.createTreeWalker(
-        doc,
-        root,
-        NodeFilter.SHOW_ELEMENT,
-        filter,
-        // @ts-ignore: We still don't want to completely break IE11, so, entityReferenceExpansion argument is not optional.
-        false /* Last argument is not optional for IE11! */
-    );
+    return dom.createTreeWalker(doc, root, NodeFilter.SHOW_ELEMENT, {
+        acceptNode,
+    });
 }
 
 export function getBoundingRect(
@@ -335,7 +175,7 @@ export function getBoundingRect(
         element.ownerDocument && element.ownerDocument.documentElement;
 
     if (!scrollingElement) {
-        return new _DOMRect();
+        return new DOMRect();
     }
 
     // A bounding rect of the top-level element contains the whole page regardless of the
@@ -353,7 +193,7 @@ export function getBoundingRect(
         bottom = Math.min(bottom, r.bottom);
     }
 
-    const rect = new _DOMRect(
+    const rect = new DOMRect(
         left < right ? left : -1,
         top < bottom ? top : -1,
         left < right ? right - left : 0,
@@ -504,18 +344,10 @@ export function shouldIgnoreFocus(element: HTMLElement): boolean {
     return !!(element as FocusedElementWithIgnoreFlag).__shouldIgnoreFocus;
 }
 
-export function getUId(wnd: Window & { msCrypto?: Crypto }): string {
+export function getUId(wnd: Window): string {
     const rnd = new Uint32Array(4);
 
-    if (wnd.crypto && wnd.crypto.getRandomValues) {
-        wnd.crypto.getRandomValues(rnd);
-    } else if (wnd.msCrypto && wnd.msCrypto.getRandomValues) {
-        wnd.msCrypto.getRandomValues(rnd);
-    } else {
-        for (let i = 0; i < rnd.length; i++) {
-            rnd[i] = 0xffffffff * Math.random();
-        }
-    }
+    wnd.crypto.getRandomValues(rnd);
 
     const srnd: string[] = [];
 
@@ -546,7 +378,7 @@ export function getElementUId(
         !context.elementByUId[uid] &&
         documentContains(element.ownerDocument, element)
     ) {
-        context.elementByUId[uid] = new WeakHTMLElement(getWindow, element);
+        context.elementByUId[uid] = new WeakHTMLElement(element);
     }
 
     return uid;
@@ -589,9 +421,9 @@ export function clearElementCache(
     }
 }
 
-// IE11 doesn't have document.contains()...
+// Uses `dom.nodeContains` so the shadow-DOM / iframe abstraction can override it.
 export function documentContains(
-    doc: HTMLDocument | null | undefined,
+    doc: Document | null | undefined,
     element: HTMLElement
 ): boolean {
     return dom.nodeContains(doc?.body, element);
@@ -601,60 +433,7 @@ export function matchesSelector(
     element: HTMLElement,
     selector: string
 ): boolean {
-    interface HTMLElementWithMatches extends HTMLElement {
-        matchesSelector?: typeof HTMLElement.prototype.matches;
-        msMatchesSelector?: typeof HTMLElement.prototype.matches;
-    }
-
-    const matches =
-        element.matches ||
-        (element as HTMLElementWithMatches).matchesSelector ||
-        (element as HTMLElementWithMatches).msMatchesSelector ||
-        element.webkitMatchesSelector;
-
-    return matches && matches.call(element, selector);
-}
-
-export function getPromise(getWindow: GetWindow): PromiseConstructor {
-    const context = getInstanceContext(getWindow);
-    if (context.basics.Promise) {
-        return context.basics.Promise;
-    }
-
-    throw new Error("No Promise defined.");
-}
-
-export function getWeakRef(
-    context: InstanceContext
-): WeakRefConstructor | undefined {
-    return context.basics.WeakRef;
-}
-
-interface InternalBasics {
-    Promise?: PromiseConstructor;
-    WeakRef?: WeakRefConstructor;
-    WeakMap?: WeakMapConstructor;
-}
-
-export function setBasics(win: Window, basics: InternalBasics): void {
-    const context = getInstanceContext(() => win);
-
-    let key: keyof InternalBasics;
-
-    key = "Promise";
-    if (key in basics) {
-        context.basics[key] = basics[key];
-    }
-
-    key = "WeakRef";
-    if (key in basics) {
-        context.basics[key] = basics[key];
-    }
-
-    key = "WeakMap";
-    if (key in basics) {
-        context.basics[key] = basics[key];
-    }
+    return element.matches(selector);
 }
 
 let _lastTabsterPartId = 0;
@@ -670,9 +449,8 @@ export abstract class TabsterPart<
     readonly id: string;
 
     constructor(tabster: TabsterCore, element: HTMLElement, props: P) {
-        const getWindow = tabster.getWindow;
         this._tabster = tabster;
-        this._element = new WeakHTMLElement(getWindow, element);
+        this._element = new WeakHTMLElement(element);
         this._props = { ...props };
         this.id = "i" + ++_lastTabsterPartId;
     }
@@ -1098,7 +876,7 @@ export class DummyInputManager {
                 isFirst: true,
             },
             undefined,
-            new WeakHTMLElement(tabster.getWindow, targetElement)
+            new WeakHTMLElement(targetElement)
         );
 
         const input = dummy.input;
@@ -1181,7 +959,7 @@ export class DummyInputObserver implements DummyInputObserverInterface {
 
     add(dummy: HTMLElement, callback: () => void): void {
         if (!this._dummyCallbacks.has(dummy) && this._win) {
-            this._dummyElements.push(new WeakHTMLElement(this._win, dummy));
+            this._dummyElements.push(new WeakHTMLElement(dummy));
             this._dummyCallbacks.set(dummy, callback);
             this.domChanged = this._domChanged;
         }

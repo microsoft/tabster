@@ -13,15 +13,11 @@ import * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { UncontrolledAPI } from "./Uncontrolled.js";
 import {
-    cleanupFakeWeakRefs,
     clearElementCache,
     createElementTreeWalker,
-    createWeakMap,
     disposeInstanceContext,
     DummyInputObserver,
     getDummyInputContainer,
-    startFakeWeakRefsCleanup,
-    stopFakeWeakRefsCleanupAndClearStorage,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
@@ -85,7 +81,7 @@ class TabsterCore implements Types.TabsterCore {
     getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
-        this._storage = createWeakMap(win);
+        this._storage = new WeakMap();
         this._win = win;
 
         const getWindow = this.getWindow;
@@ -130,8 +126,6 @@ class TabsterCore implements Types.TabsterCore {
                 }
             },
         };
-
-        startFakeWeakRefsCleanup(getWindow);
 
         // Gives a tick to the host app to initialize other tabster
         // APIs before tabster starts observing attributes.
@@ -212,7 +206,6 @@ class TabsterCore implements Types.TabsterCore {
 
         this._dummyObserver.dispose();
 
-        stopFakeWeakRefsCleanupAndClearStorage(this.getWindow);
         clearElementCache(this.getWindow);
 
         this._storage = new WeakMap();
@@ -276,8 +269,6 @@ class TabsterCore implements Types.TabsterCore {
                 FocusedElementState.forgetMemorized(this.focusedElement, el);
             }
         }, 0);
-
-        cleanupFakeWeakRefs(this.getWindow, true);
     }
 
     queueInit(callback: () => void): void {

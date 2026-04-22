@@ -96,9 +96,7 @@ class History {
         if (this._stack.length > History.DEPTH) {
             this._stack.shift();
         }
-        this._stack.push(
-            new WeakHTMLElement<HTMLElement>(this._getWindow, element)
-        );
+        this._stack.push(new WeakHTMLElement<HTMLElement>(element));
     }
     /**
      * Pop the first element from the history that satisfies the callback.

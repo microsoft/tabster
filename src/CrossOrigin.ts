@@ -16,7 +16,6 @@ import { ObservedElementAccessibilities } from "./Consts.js";
 import {
     getElementUId,
     getInstanceContext,
-    getPromise,
     getUId,
     getWindowUId,
     HTMLElementWithUID,
@@ -195,7 +194,7 @@ abstract class CrossOriginTransaction<I, O> {
         this.targetId = targetId;
         this.sendUp = sendUp;
         this.timeout = timeout;
-        this._promise = new (getPromise(getOwner))<O>((resolve, reject) => {
+        this._promise = new Promise<O>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
         });
@@ -841,7 +840,7 @@ class GetElementTransaction extends CrossOriginTransaction<
                 const e: {
                     element?: HTMLElement | null;
                     crossOrigin?: CrossOriginElementDataOut;
-                } = await new (getPromise(getOwner))((resolve) => {
+                } = await new Promise((resolve) => {
                     let isWaitElementResolved = false;
                     let isForwardResolved = false;
                     let isResolved = false;
@@ -1081,7 +1080,7 @@ class CrossOriginTransactions {
         withReject?: boolean
     ): Promise<O | undefined> {
         if (!this._owner) {
-            return getPromise(this._owner).reject();
+            return Promise.reject();
         }
 
         const transaction = new Transaction(
@@ -1116,7 +1115,7 @@ class CrossOriginTransactions {
                     this._owner,
                     this._ownerUId,
                     this,
-                    getPromise(this._owner).resolve(undefined),
+                    Promise.resolve(undefined),
                     true
                 );
             };
@@ -1183,7 +1182,7 @@ class CrossOriginTransactions {
         let targetId = data.target;
 
         if (targetId === this._ownerUId) {
-            return getPromise(owner).resolve();
+            return Promise.resolve();
         }
 
         const Transaction = this._getTransactionClass(data.type);
@@ -1221,13 +1220,11 @@ class CrossOriginTransactions {
                     data.timeout
                 );
             } else {
-                return getPromise(owner).resolve();
+                return Promise.resolve();
             }
         }
 
-        return getPromise(owner).reject(
-            `Unknown transaction type ${data.type}`
-        );
+        return Promise.reject(`Unknown transaction type ${data.type}`);
     }
 
     private _getTransactionClass(
@@ -1359,7 +1356,7 @@ class CrossOriginTransactions {
         }
 
         if (targets.length) {
-            await getPromise(this._owner).all(
+            await Promise.all(
                 targets.map((uid) =>
                     this.beginTransaction(
                         PingTransaction,
