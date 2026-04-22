@@ -7,21 +7,22 @@ export {
     createTabster,
     disposeTabster,
     forceCleanup,
-    getCrossOrigin,
-    getDeloser,
     getDummyInputContainer,
-    getGroupper,
     getInternal,
-    getModalizer,
-    getMover,
-    getObservedElement,
-    getOutline,
-    getRestorer,
-    getShadowDOMAPI,
     getTabster,
+    getShadowDOMAPI,
     isNoOp,
     makeNoOp,
 } from "./Tabster";
+
+export { getCrossOrigin } from "./get/getCrossOrigin";
+export { getDeloser } from "./get/getDeloser";
+export { getGroupper } from "./get/getGroupper";
+export { getModalizer } from "./get/getModalizer";
+export { getMover } from "./get/getMover";
+export { getObservedElement } from "./get/getObservedElement";
+export { getOutline } from "./get/getOutline";
+export { getRestorer } from "./get/getRestorer";
 
 export * from "./AttributeHelpers";
 

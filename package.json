@@ -6,8 +6,39 @@
     "license": "MIT",
     "sideEffects": false,
     "main": "./dist/index.js",
-    "module": "./dist/tabster.esm.js",
+    "module": "./dist/esm/index.js",
     "typings": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/index.js"
+        },
+        "./groupper": {
+            "import": "./dist/esm/get/getGroupper.js"
+        },
+        "./mover": {
+            "import": "./dist/esm/get/getMover.js"
+        },
+        "./modalizer": {
+            "import": "./dist/esm/get/getModalizer.js"
+        },
+        "./deloser": {
+            "import": "./dist/esm/get/getDeloser.js"
+        },
+        "./outline": {
+            "import": "./dist/esm/get/getOutline.js"
+        },
+        "./observed-element": {
+            "import": "./dist/esm/get/getObservedElement.js"
+        },
+        "./cross-origin": {
+            "import": "./dist/esm/get/getCrossOrigin.js"
+        },
+        "./restorer": {
+            "import": "./dist/esm/get/getRestorer.js"
+        }
+    },
     "files": [
         "dist"
     ],

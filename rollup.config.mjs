@@ -18,7 +18,14 @@ const config = [
         input: "./src/index.ts",
         output: [
             { file: pkg.main, format: "cjs", sourcemap: true },
-            { file: pkg.module, format: "es", sourcemap: true },
+            {
+                dir: "dist/esm",
+                format: "es",
+                sourcemap: true,
+                preserveModules: true,
+                preserveModulesRoot: "src",
+                entryFileNames: "[name].js",
+            },
         ],
         external: ["tslib", "keyborg"],
         plugins: [
