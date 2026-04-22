@@ -415,3 +415,12 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
 export function isNoOp(tabster: Types.TabsterCore): boolean {
     return (tabster as TabsterCore)._noop;
 }
+
+export { getCrossOrigin } from "./get/getCrossOrigin";
+export { getDeloser } from "./get/getDeloser";
+export { getGroupper } from "./get/getGroupper";
+export { getModalizer } from "./get/getModalizer";
+export { getMover } from "./get/getMover";
+export { getObservedElement } from "./get/getObservedElement";
+export { getOutline } from "./get/getOutline";
+export { getRestorer } from "./get/getRestorer";

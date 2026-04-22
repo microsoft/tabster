@@ -5,38 +5,54 @@
     "author": "Marat Abdullin <marata@microsoft.com>",
     "license": "MIT",
     "sideEffects": false,
-    "main": "./dist/index.js",
+    "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "typings": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/esm/index.js",
-            "require": "./dist/index.js"
+            "require": "./dist/cjs/index.js"
         },
         "./groupper": {
-            "import": "./dist/esm/get/getGroupper.js"
+            "types": "./dist/get/getGroupper.d.ts",
+            "import": "./dist/esm/get/getGroupper.js",
+            "require": "./dist/cjs/get/getGroupper.js"
         },
         "./mover": {
-            "import": "./dist/esm/get/getMover.js"
+            "types": "./dist/get/getMover.d.ts",
+            "import": "./dist/esm/get/getMover.js",
+            "require": "./dist/cjs/get/getMover.js"
         },
         "./modalizer": {
-            "import": "./dist/esm/get/getModalizer.js"
+            "types": "./dist/get/getModalizer.d.ts",
+            "import": "./dist/esm/get/getModalizer.js",
+            "require": "./dist/cjs/get/getModalizer.js"
         },
         "./deloser": {
-            "import": "./dist/esm/get/getDeloser.js"
+            "types": "./dist/get/getDeloser.d.ts",
+            "import": "./dist/esm/get/getDeloser.js",
+            "require": "./dist/cjs/get/getDeloser.js"
         },
         "./outline": {
-            "import": "./dist/esm/get/getOutline.js"
+            "types": "./dist/get/getOutline.d.ts",
+            "import": "./dist/esm/get/getOutline.js",
+            "require": "./dist/cjs/get/getOutline.js"
         },
         "./observed-element": {
-            "import": "./dist/esm/get/getObservedElement.js"
+            "types": "./dist/get/getObservedElement.d.ts",
+            "import": "./dist/esm/get/getObservedElement.js",
+            "require": "./dist/cjs/get/getObservedElement.js"
         },
         "./cross-origin": {
-            "import": "./dist/esm/get/getCrossOrigin.js"
+            "types": "./dist/get/getCrossOrigin.d.ts",
+            "import": "./dist/esm/get/getCrossOrigin.js",
+            "require": "./dist/cjs/get/getCrossOrigin.js"
         },
         "./restorer": {
-            "import": "./dist/esm/get/getRestorer.js"
+            "types": "./dist/get/getRestorer.d.ts",
+            "import": "./dist/esm/get/getRestorer.js",
+            "require": "./dist/cjs/get/getRestorer.js"
         }
     },
     "files": [
