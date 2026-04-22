@@ -20,7 +20,7 @@
         "build-bundle": "rollup -c",
         "build-docs": "cd docs && npm install && npm run build",
         "build-storybook": "storybook build",
-        "bundle-size": "npm run build-bundle && bundle-size measure",
+        "bundle-size": "npm run build-bundle && monosize measure",
         "clean": "rimraf dist",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
