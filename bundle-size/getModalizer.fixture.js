@@ -3,7 +3,7 @@ import {
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getGroupper,
+    getModalizer,
     Types,
 } from "tabster";
 
@@ -12,10 +12,10 @@ console.log(
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getGroupper,
+    getModalizer,
     Types
 );
 
 export default {
-    name: "Groupper only",
+    name: "getModalizer",
 };

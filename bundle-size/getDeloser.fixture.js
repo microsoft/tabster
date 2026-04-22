@@ -3,7 +3,7 @@ import {
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getRestorer,
+    getDeloser,
     Types,
 } from "tabster";
 
@@ -12,10 +12,10 @@ console.log(
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getRestorer,
+    getDeloser,
     Types
 );
 
 export default {
-    name: "Restorer only",
+    name: "getDeloser",
 };

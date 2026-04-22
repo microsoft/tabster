@@ -3,7 +3,7 @@ import {
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getMover,
+    getOutline,
     Types,
 } from "tabster";
 
@@ -12,10 +12,10 @@ console.log(
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getMover,
+    getOutline,
     Types
 );
 
 export default {
-    name: "Mover only",
+    name: "getOutline",
 };
