@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
+import { getTabsterOnElement } from "./Instance.js";
 import type {
     FocusedElementState,
     GetWindow,
@@ -12,14 +12,15 @@ import type {
     RestorerAPI as RestorerAPIType,
     RestorerProps,
     TabsterCore,
-} from "./Types";
-import { RestorerTypes, AsyncFocusSources } from "./Consts";
+    TabsterOnElement,
+} from "./Types.js";
+import { RestorerTypes, AsyncFocusSources } from "./Consts.js";
 import {
     RestorerRestoreFocusEvent,
     RestorerRestoreFocusEventName,
-} from "./Events";
-import { TabsterPart, WeakHTMLElement } from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Events.js";
+import { TabsterPart, WeakHTMLElement } from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _hasFocus = false;
@@ -96,9 +97,7 @@ class History {
         if (this._stack.length > History.DEPTH) {
             this._stack.shift();
         }
-        this._stack.push(
-            new WeakHTMLElement<HTMLElement>(this._getWindow, element)
-        );
+        this._stack.push(new WeakHTMLElement<HTMLElement>(element));
     }
     /**
      * Pop the first element from the history that satisfies the callback.
@@ -246,5 +245,17 @@ export class RestorerAPI implements RestorerAPIType {
         }
 
         return restorer;
+    }
+
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: RestorerProps
+    ): void {
+        if (storage.restorer) {
+            storage.restorer.setProps(newProps);
+        } else {
+            storage.restorer = this.createRestorer(element, newProps);
+        }
     }
 }

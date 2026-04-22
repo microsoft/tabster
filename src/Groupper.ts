@@ -5,31 +5,33 @@
 
 import { nativeFocus } from "keyborg";
 
-import { getTabsterOnElement } from "./Instance";
-import { Keys } from "./Keys";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
+import { getTabsterOnElement } from "./Instance.js";
+import { Keys } from "./Keys.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
 import {
     AsyncFocusSources,
     GroupperMoveFocusActions,
     GroupperTabbabilities,
-} from "./Consts";
+} from "./Consts.js";
 import {
     GroupperMoveFocusEvent,
     GroupperMoveFocusEventName,
     TabsterMoveFocusEvent,
-} from "./Events";
-import { FocusedElementState } from "./State/FocusedElement";
+} from "./Events.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
 import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    getAdjacentElement,
     getDummyInputContainer,
+} from "./DummyInput.js";
+import {
+    getAdjacentElement,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 class GroupperDummyManager extends DummyInputManager {
     constructor(
@@ -307,7 +309,7 @@ export class Groupper
 
     setFirst(element: HTMLElement | undefined): void {
         if (element) {
-            this._first = new WeakHTMLElement(this._tabster.getWindow, element);
+            this._first = new WeakHTMLElement(element);
         } else {
             delete this._first;
         }
@@ -528,6 +530,19 @@ export class GroupperAPI implements Types.GroupperAPI {
         }
 
         return newGroupper;
+    }
+
+    applyAttribute(
+        element: HTMLElement,
+        storage: Types.TabsterOnElement,
+        newProps: Types.GroupperProps,
+        sys: Types.SysProps | undefined
+    ): void {
+        if (storage.groupper) {
+            storage.groupper.setProps(newProps);
+        } else {
+            storage.groupper = this.createGroupper(element, newProps, sys);
+        }
     }
 
     forgetCurrentGrouppers(): void {

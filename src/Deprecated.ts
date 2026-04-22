@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { GroupperMoveFocusAction, MoverKey } from "./Types";
+import { GroupperMoveFocusAction, MoverKey } from "./Types.js";
 import {
     GroupperMoveFocusEvent,
     MoverMoveFocusEvent,
     MoverMemorizedElementEvent,
-} from "./Events";
+} from "./Events.js";
 
 /** @deprecated This function is obsolete, use native element.dispatchEvent(new GroupperMoveFocusEvent(...)). */
 export function dispatchGroupperMoveFocusEvent(

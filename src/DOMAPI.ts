@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DOMAPI } from "./Types";
+import { DOMAPI } from "./Types.js";
 
 const _createMutationObserver = (callback: MutationCallback) =>
     new MutationObserver(callback);

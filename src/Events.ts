@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "./Types";
-import * as EventsTypes from "./EventsTypes";
+import * as Types from "./Types.js";
+import * as EventsTypes from "./EventsTypes.js";
 
 /**
  * Events sent by Tabster.

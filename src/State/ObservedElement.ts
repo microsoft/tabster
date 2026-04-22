@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "../Instance";
-import * as Types from "../Types";
+import { getTabsterOnElement } from "../Instance.js";
+import * as Types from "../Types.js";
 import {
     ObservedElementAccessibilities,
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
-} from "../Consts";
+} from "../Consts.js";
 import {
     documentContains,
     getElementUId,
-    getPromise,
     WeakHTMLElement,
-} from "../Utils";
-import { Subscribable } from "./Subscribable";
+} from "../Utils.js";
+import { Subscribable } from "./Subscribable.js";
 
 const _conditionCheckTimeout = 100;
 
@@ -311,7 +310,7 @@ export class ObservedElementAPI
 
         if (el) {
             return {
-                result: getPromise(this._win).resolve(el),
+                result: Promise.resolve(el),
                 cancel: () => {
                     /**/
                 },
@@ -363,12 +362,10 @@ export class ObservedElementAPI
             }, timeout),
         };
 
-        const promise = new (getPromise(this._win))<HTMLElement | null>(
-            (resolve, reject) => {
-                w.resolve = resolve;
-                w.reject = reject;
-            }
-        ).catch(() => {
+        const promise = new Promise<HTMLElement | null>((resolve, reject) => {
+            w.resolve = resolve;
+            w.reject = reject;
+        }).catch(() => {
             // Ignore the error, it is expected to be rejected when the request is canceled.
             return null;
         });
@@ -484,7 +481,7 @@ export class ObservedElementAPI
 
             if (!info) {
                 info = this._observedById[uid] = {
-                    element: new WeakHTMLElement(this._win, element),
+                    element: new WeakHTMLElement(element),
                 };
             }
 
