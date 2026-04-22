@@ -296,7 +296,6 @@ export class FocusedElementState
             container.setAttribute("aria-hidden", "true");
 
             FocusedElementState._lastResetElement = new WeakHTMLElement(
-                this._win,
                 container
             );
 
@@ -399,9 +398,7 @@ export class FocusedElementState
         }
 
         const nextVal = (this._nextVal = {
-            element: element
-                ? new WeakHTMLElement(this._win, element)
-                : undefined,
+            element: element ? new WeakHTMLElement(element) : undefined,
             detail,
         });
 
@@ -425,7 +422,7 @@ export class FocusedElementState
         super.setVal(val, detail);
 
         if (val) {
-            this._lastVal = new WeakHTMLElement(this._win, val);
+            this._lastVal = new WeakHTMLElement(val);
         }
     }
 
