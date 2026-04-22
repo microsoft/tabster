@@ -11,6 +11,7 @@ import {
     getModalizer,
     getObservedElement,
     getOutline,
+    getRestorer,
     getInternal,
     overrideBasics,
     makeNoOp,
@@ -31,6 +32,7 @@ console.log(
     getModalizer,
     getObservedElement,
     getOutline,
+    getRestorer,
     getInternal,
     overrideBasics,
     makeNoOp,
@@ -39,5 +41,5 @@ console.log(
 );
 
 export default {
-    name: "All Tabster",
+    name: "all exports",
 };

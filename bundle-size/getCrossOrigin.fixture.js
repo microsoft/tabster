@@ -3,7 +3,7 @@ import {
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getModalizer,
+    getCrossOrigin,
     Types,
 } from "tabster";
 
@@ -12,10 +12,10 @@ console.log(
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    getModalizer,
+    getCrossOrigin,
     Types
 );
 
 export default {
-    name: "Modalizer only",
+    name: "getCrossOrigin",
 };
