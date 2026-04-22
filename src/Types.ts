@@ -530,6 +530,12 @@ export type DeloserConstructor = (
 interface DeloserInterfaceInternal {
     /** @internal */
     createDeloser(element: HTMLElement, props: DeloserProps): Deloser;
+    /** @internal */
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: DeloserProps
+    ): void;
 }
 
 export interface DeloserAPI extends DeloserInterfaceInternal, Disposable {
@@ -862,6 +868,13 @@ interface MoverAPIInternal {
         props: MoverProps,
         sys: SysProps | undefined
     ): Mover;
+    /** @internal */
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: MoverProps,
+        sys: SysProps | undefined
+    ): void;
 }
 
 import { type MoverKeys as _MoverKeys } from "./Consts.js";
@@ -922,6 +935,13 @@ export interface GroupperAPIInternal {
         element: HTMLElement,
         event: KeyboardEvent,
         fromModalizer?: boolean
+    ): void;
+    /** @internal */
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: GroupperProps,
+        sys: SysProps | undefined
     ): void;
 }
 
@@ -1090,6 +1110,14 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
         props: ModalizerProps,
         sys: SysProps | undefined
     ): Modalizer;
+    /** @internal */
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: ModalizerProps,
+        oldProps: ModalizerProps | undefined,
+        sys: SysProps | undefined
+    ): void;
     /**
      * Sets active modalizers.
      * When active, everything outside of the modalizers with the specific user
@@ -1134,6 +1162,12 @@ export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
 interface RestorerAPIInternal {
     /** @internal */
     createRestorer(element: HTMLElement, props: RestorerProps): Restorer;
+    /** @internal */
+    applyAttribute(
+        element: HTMLElement,
+        storage: TabsterOnElement,
+        newProps: RestorerProps
+    ): void;
 }
 
 export interface RestorerAPI extends RestorerAPIInternal, Disposable {}

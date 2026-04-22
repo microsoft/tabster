@@ -124,22 +124,16 @@ export function updateTabsterByAttribute(
 
         switch (key) {
             case "deloser":
-                if (tabsterOnElement.deloser) {
-                    tabsterOnElement.deloser.setProps(
+                if (tabster.deloser) {
+                    tabster.deloser.applyAttribute(
+                        element,
+                        tabsterOnElement,
                         newTabsterProps.deloser as Types.DeloserProps
                     );
-                } else {
-                    if (tabster.deloser) {
-                        tabsterOnElement.deloser =
-                            tabster.deloser.createDeloser(
-                                element,
-                                newTabsterProps.deloser as Types.DeloserProps
-                            );
-                    } else if (__DEV__) {
-                        console.error(
-                            "Deloser API used before initialization, please call `getDeloser()`"
-                        );
-                    }
+                } else if (__DEV__) {
+                    console.error(
+                        "Deloser API used before initialization, please call `getDeloser()`"
+                    );
                 }
                 break;
 
@@ -159,69 +153,35 @@ export function updateTabsterByAttribute(
                 break;
 
             case "modalizer":
-                {
-                    let newModalizerProps: Types.ModalizerProps | undefined;
-                    const modalizerAPI = tabster.modalizer;
-
-                    if (tabsterOnElement.modalizer) {
-                        const props =
-                            newTabsterProps.modalizer as Types.ModalizerProps;
-                        const newModalizerId = props.id;
-                        if (
-                            newModalizerId &&
-                            oldTabsterProps?.modalizer?.id !== newModalizerId
-                        ) {
-                            // Modalizer id is changed, given the modalizers have complex logic and could be
-                            // composite, it is easier to recreate the Modalizer instance than to implement
-                            // the id update.
-                            tabsterOnElement.modalizer.dispose();
-                            newModalizerProps = props;
-                        } else {
-                            tabsterOnElement.modalizer.setProps(props);
-                        }
-                    } else {
-                        if (modalizerAPI) {
-                            newModalizerProps = newTabsterProps.modalizer;
-                        } else if (__DEV__) {
-                            console.error(
-                                "Modalizer API used before initialization, please call `getModalizer()`"
-                            );
-                        }
-                    }
-
-                    if (modalizerAPI && newModalizerProps) {
-                        tabsterOnElement.modalizer =
-                            modalizerAPI.createModalizer(
-                                element,
-                                newModalizerProps,
-                                sys
-                            );
-                    }
+                if (tabster.modalizer) {
+                    tabster.modalizer.applyAttribute(
+                        element,
+                        tabsterOnElement,
+                        newTabsterProps.modalizer as Types.ModalizerProps,
+                        oldTabsterProps?.modalizer,
+                        sys
+                    );
+                } else if (__DEV__) {
+                    console.error(
+                        "Modalizer API used before initialization, please call `getModalizer()`"
+                    );
                 }
-
                 break;
 
             case "restorer":
-                if (tabsterOnElement.restorer) {
-                    tabsterOnElement.restorer.setProps(
-                        newTabsterProps.restorer as Types.RestorerProps
-                    );
-                } else {
-                    if (tabster.restorer) {
-                        if (newTabsterProps.restorer) {
-                            tabsterOnElement.restorer =
-                                tabster.restorer.createRestorer(
-                                    element,
-                                    newTabsterProps.restorer
-                                );
-                        }
-                    } else if (__DEV__) {
-                        console.error(
-                            "Restorer API used before initialization, please call `getRestorer()`"
+                if (tabster.restorer) {
+                    if (newTabsterProps.restorer) {
+                        tabster.restorer.applyAttribute(
+                            element,
+                            tabsterOnElement,
+                            newTabsterProps.restorer
                         );
                     }
+                } else if (__DEV__) {
+                    console.error(
+                        "Restorer API used before initialization, please call `getRestorer()`"
+                    );
                 }
-
                 break;
 
             case "focusable":
@@ -229,43 +189,32 @@ export function updateTabsterByAttribute(
                 break;
 
             case "groupper":
-                if (tabsterOnElement.groupper) {
-                    tabsterOnElement.groupper.setProps(
-                        newTabsterProps.groupper as Types.GroupperProps
+                if (tabster.groupper) {
+                    tabster.groupper.applyAttribute(
+                        element,
+                        tabsterOnElement,
+                        newTabsterProps.groupper as Types.GroupperProps,
+                        sys
                     );
-                } else {
-                    if (tabster.groupper) {
-                        tabsterOnElement.groupper =
-                            tabster.groupper.createGroupper(
-                                element,
-                                newTabsterProps.groupper as Types.GroupperProps,
-                                sys
-                            );
-                    } else if (__DEV__) {
-                        console.error(
-                            "Groupper API used before initialization, please call `getGroupper()`"
-                        );
-                    }
+                } else if (__DEV__) {
+                    console.error(
+                        "Groupper API used before initialization, please call `getGroupper()`"
+                    );
                 }
                 break;
 
             case "mover":
-                if (tabsterOnElement.mover) {
-                    tabsterOnElement.mover.setProps(
-                        newTabsterProps.mover as Types.MoverProps
+                if (tabster.mover) {
+                    tabster.mover.applyAttribute(
+                        element,
+                        tabsterOnElement,
+                        newTabsterProps.mover as Types.MoverProps,
+                        sys
                     );
-                } else {
-                    if (tabster.mover) {
-                        tabsterOnElement.mover = tabster.mover.createMover(
-                            element,
-                            newTabsterProps.mover as Types.MoverProps,
-                            sys
-                        );
-                    } else if (__DEV__) {
-                        console.error(
-                            "Mover API used before initialization, please call `getMover()`"
-                        );
-                    }
+                } else if (__DEV__) {
+                    console.error(
+                        "Mover API used before initialization, please call `getMover()`"
+                    );
                 }
                 break;
 
