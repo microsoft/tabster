@@ -4,12 +4,12 @@
  */
 
 import { nativeFocus } from "keyborg";
-import { FocusedElementState } from "./State/FocusedElement";
-import { getTabsterOnElement } from "./Instance";
-import { Keys } from "./Keys";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
-import { Visibilities, MoverDirections, MoverKeys } from "./Consts";
+import { FocusedElementState } from "./State/FocusedElement.js";
+import { getTabsterOnElement } from "./Instance.js";
+import { Keys } from "./Keys.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
+import { Visibilities, MoverDirections, MoverKeys } from "./Consts.js";
 import {
     MoverMemorizedElementEvent,
     MoverMemorizedElementEventName,
@@ -17,7 +17,7 @@ import {
     MoverMoveFocusEventName,
     MoverStateEvent,
     TabsterMoveFocusEvent,
-} from "./Events";
+} from "./Events.js";
 import {
     createElementTreeWalker,
     DummyInput,
@@ -31,8 +31,8 @@ import {
     TabsterPart,
     WeakHTMLElement,
     getDummyInputContainer,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 

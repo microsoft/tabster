@@ -6,8 +6,8 @@
 // TODO: The functions below do not consider Shadow DOM slots yet. We will be adding
 // support for slots as the need arises.
 
-export { createShadowTreeWalker as createTreeWalker } from "./ShadowTreeWalker";
-export { createShadowMutationObserver as createMutationObserver } from "./ShadowMutationObserver";
+export { createShadowTreeWalker as createTreeWalker } from "./ShadowTreeWalker.js";
+export { createShadowMutationObserver as createMutationObserver } from "./ShadowMutationObserver.js";
 export {
     appendChild,
     getActiveElement,
@@ -25,9 +25,9 @@ export {
     getElementsByName,
     insertBefore,
     nodeContains,
-} from "./DOMFunctions";
+} from "./DOMFunctions.js";
 export {
     getElementById,
     querySelector,
     querySelectorAll,
-} from "./querySelector";
+} from "./querySelector.js";

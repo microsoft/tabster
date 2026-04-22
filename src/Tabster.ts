@@ -3,22 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginAPI } from "./CrossOrigin";
-import { DeloserAPI } from "./Deloser";
-import { FocusableAPI } from "./Focusable";
-import { FocusedElementState } from "./State/FocusedElement";
-import { GroupperAPI } from "./Groupper";
-import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
-import { ModalizerAPI } from "./Modalizer";
-import { MoverAPI } from "./Mover";
-import { observeMutations } from "./MutationEvent";
-import { ObservedElementAPI } from "./State/ObservedElement";
-import { OutlineAPI } from "./Outline";
-import { RootAPI, WindowWithTabsterInstance } from "./Root";
-import * as Types from "./Types";
-import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
-import { UncontrolledAPI } from "./Uncontrolled";
+import { FocusableAPI } from "./Focusable.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
+import { KeyboardNavigationState } from "./State/KeyboardNavigation.js";
+import { observeMutations } from "./MutationEvent.js";
+import { RootAPI, WindowWithTabsterInstance } from "./Root.js";
+import * as Types from "./Types.js";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
+import { UncontrolledAPI } from "./Uncontrolled.js";
 import {
     cleanupFakeWeakRefs,
     clearElementCache,
@@ -29,10 +22,9 @@ import {
     getDummyInputContainer,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
-} from "./Utils";
-import { RestorerAPI } from "./Restorer";
-import { dom, setDOMAPI } from "./DOMAPI";
-import * as shadowDOMAPI from "./Shadowdomize";
+} from "./Utils.js";
+import { dom, setDOMAPI } from "./DOMAPI.js";
+import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
 export { getDummyInputContainer };
 
@@ -355,137 +347,9 @@ export function getShadowDOMAPI(): Types.DOMAPI {
     return shadowDOMAPI;
 }
 
-/**
- * Creates a new groupper instance or returns an existing one
- * @param tabster Tabster instance
- */
-export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.groupper) {
-        tabsterCore.groupper = new GroupperAPI(
-            tabsterCore,
-            tabsterCore.getWindow
-        );
-    }
-
-    return tabsterCore.groupper;
-}
-
-/**
- * Creates a new mover instance or returns an existing one
- * @param tabster Tabster instance
- */
-export function getMover(tabster: Types.Tabster): Types.MoverAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.mover) {
-        tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
-    }
-
-    return tabsterCore.mover;
-}
-
-export function getOutline(tabster: Types.Tabster): Types.OutlineAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.outline) {
-        tabsterCore.outline = new OutlineAPI(tabsterCore);
-    }
-
-    return tabsterCore.outline;
-}
-
-/**
- * Creates a new new deloser instance or returns an existing one
- * @param tabster Tabster instance
- * @param props Deloser props
- */
-export function getDeloser(
-    tabster: Types.Tabster,
-    props?: { autoDeloser: Types.DeloserProps }
-): Types.DeloserAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.deloser) {
-        tabsterCore.deloser = new DeloserAPI(tabsterCore, props);
-    }
-
-    return tabsterCore.deloser;
-}
-
-/**
- * Creates a new modalizer instance or returns an existing one
- * @param tabster Tabster instance
- * @param alwaysAccessibleSelector When Modalizer is active, we put
- * aria-hidden to everything else to hide it from screen readers. This CSS
- * selector allows to exclude some elements from this behaviour. For example,
- * this could be used to exclude aria-live region with the application-wide
- * status announcements.
- * @param accessibleCheck An optional callback that will be called when
- * active Modalizer wants to hide an element that doesn't belong to it from
- * the screen readers by setting aria-hidden. Similar to alwaysAccessibleSelector
- * but allows to address the elements programmatically rather than with a selector.
- * If the callback returns true, the element will not receive aria-hidden.
- */
-export function getModalizer(
-    tabster: Types.Tabster,
-    // @deprecated use accessibleCheck.
-    alwaysAccessibleSelector?: string,
-    accessibleCheck?: Types.ModalizerElementAccessibleCheck
-): Types.ModalizerAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.modalizer) {
-        tabsterCore.modalizer = new ModalizerAPI(
-            tabsterCore,
-            alwaysAccessibleSelector,
-            accessibleCheck
-        );
-    }
-
-    return tabsterCore.modalizer;
-}
-
-export function getObservedElement(
-    tabster: Types.Tabster
-): Types.ObservedElementAPI {
-    const tabsterCore = tabster.core;
-
-    if (!tabsterCore.observedElement) {
-        tabsterCore.observedElement = new ObservedElementAPI(tabsterCore);
-    }
-
-    return tabsterCore.observedElement;
-}
-
-export function getCrossOrigin(tabster: Types.Tabster): Types.CrossOriginAPI {
-    const tabsterCore = tabster.core;
-    if (!tabsterCore.crossOrigin) {
-        getDeloser(tabster);
-        getModalizer(tabster);
-        getMover(tabster);
-        getGroupper(tabster);
-        getOutline(tabster);
-        getObservedElement(tabster);
-        tabsterCore.crossOrigin = new CrossOriginAPI(tabsterCore);
-    }
-
-    return tabsterCore.crossOrigin;
-}
-
 export function getInternal(tabster: Types.Tabster): Types.InternalAPI {
     const tabsterCore = tabster.core;
     return tabsterCore.internal;
-}
-
-export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
-    const tabsterCore = tabster.core;
-    if (!tabsterCore.restorer) {
-        tabsterCore.restorer = new RestorerAPI(tabsterCore);
-    }
-
-    return tabsterCore.restorer;
 }
 
 export function disposeTabster(
@@ -551,3 +415,12 @@ export function makeNoOp(tabster: Types.Tabster, noop: boolean): void {
 export function isNoOp(tabster: Types.TabsterCore): boolean {
     return (tabster as TabsterCore)._noop;
 }
+
+export { getCrossOrigin } from "./get/getCrossOrigin.js";
+export { getDeloser } from "./get/getDeloser.js";
+export { getGroupper } from "./get/getGroupper.js";
+export { getModalizer } from "./get/getModalizer.js";
+export { getMover } from "./get/getMover.js";
+export { getObservedElement } from "./get/getObservedElement.js";
+export { getOutline } from "./get/getOutline.js";
+export { getRestorer } from "./get/getRestorer.js";

@@ -4,13 +4,13 @@
  */
 
 import { nativeFocus } from "keyborg";
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import { FocusedElementState } from "./State/FocusedElement";
-import { Keys } from "./Keys";
-import * as Types from "./Types";
-import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events";
-import { ModalizerEventDetail } from "./EventsTypes";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
+import { Keys } from "./Keys.js";
+import * as Types from "./Types.js";
+import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
+import { ModalizerEventDetail } from "./EventsTypes.js";
 import {
     augmentAttribute,
     DummyInput,
@@ -19,8 +19,8 @@ import {
     getDummyInputContainer,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 let _wasFocusedCounter = 0;
 

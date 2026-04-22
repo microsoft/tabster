@@ -5,21 +5,21 @@
 
 import { nativeFocus } from "keyborg";
 
-import { getTabsterOnElement } from "./Instance";
-import { Keys } from "./Keys";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
+import { getTabsterOnElement } from "./Instance.js";
+import { Keys } from "./Keys.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
 import {
     AsyncFocusSources,
     GroupperMoveFocusActions,
     GroupperTabbabilities,
-} from "./Consts";
+} from "./Consts.js";
 import {
     GroupperMoveFocusEvent,
     GroupperMoveFocusEventName,
     TabsterMoveFocusEvent,
-} from "./Events";
-import { FocusedElementState } from "./State/FocusedElement";
+} from "./Events.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
 import {
     DummyInput,
     DummyInputManager,
@@ -28,8 +28,8 @@ import {
     getDummyInputContainer,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 class GroupperDummyManager extends DummyInputManager {
     constructor(

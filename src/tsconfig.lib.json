@@ -2,8 +2,11 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "target": "ES2019",
-        "outDir": "../dist",
-        "declarationDir": "../dist/dts",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "outDir": "../dist/type-check",
+        "declaration": true,
+        "declarationMap": true,
         "sourceMap": true
     },
     "include": ["**/*.ts"]

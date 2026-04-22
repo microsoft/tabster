@@ -6,10 +6,11 @@
     "transform": {
         "^.+\\.(ts|tsx|js|jsx)?$": [
             "babel-jest",
-            { "configFile": "./babel.config.js" }
+            { "configFile": "./babel.config.cjs" }
         ]
     },
     "moduleNameMapper": {
+        "^(\\.{1,2}/.*)\\.js$": "$1",
         "tabster": "<rootDir>/../src/"
     },
     "testTimeout": 10000,

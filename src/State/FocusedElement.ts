@@ -11,25 +11,25 @@ import {
     nativeFocus,
 } from "keyborg";
 
-import { Keys } from "../Keys";
-import { RootAPI } from "../Root";
-import * as Types from "../Types";
-import { AsyncFocusSources } from "../Consts";
+import { Keys } from "../Keys.js";
+import { RootAPI } from "../Root.js";
+import * as Types from "../Types.js";
+import { AsyncFocusSources } from "../Consts.js";
 import {
     TabsterFocusInEvent,
     TabsterFocusOutEvent,
     TabsterMoveFocusEvent,
-} from "../Events";
+} from "../Events.js";
 import {
     documentContains,
     DummyInputManager,
     getLastChild,
     shouldIgnoreFocus,
     WeakHTMLElement,
-} from "../Utils";
-import { getTabsterOnElement } from "../Instance";
-import { dom } from "../DOMAPI";
-import { Subscribable } from "./Subscribable";
+} from "../Utils.js";
+import { getTabsterOnElement } from "../Instance.js";
+import { dom } from "../DOMAPI.js";
+import { Subscribable } from "./Subscribable.js";
 
 function getUncontrolledCompletelyContainer(
     tabster: Types.TabsterCore,

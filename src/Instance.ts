@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "./Types";
-import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
+import * as Types from "./Types.js";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 
 export function getTabsterOnElement(
     tabster: Types.TabsterCore,
