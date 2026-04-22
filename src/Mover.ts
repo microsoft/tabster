@@ -758,6 +758,19 @@ export class MoverAPI implements Types.MoverAPI {
         return newMover;
     }
 
+    applyAttribute(
+        element: HTMLElement,
+        storage: Types.TabsterOnElement,
+        newProps: Types.MoverProps,
+        sys: Types.SysProps | undefined
+    ): void {
+        if (storage.mover) {
+            storage.mover.setProps(newProps);
+        } else {
+            storage.mover = this.createMover(element, newProps, sys);
+        }
+    }
+
     private _onMoverDispose = (mover: Mover) => {
         delete this._movers[mover.id];
     };
