@@ -11,10 +11,8 @@ import {
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
-    getElementUId,
-    TabsterPart,
-    WeakHTMLElement,
-} from "./Utils.js";
+} from "./DummyInput.js";
+import { getElementUId, TabsterPart, WeakHTMLElement } from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
 
 export interface WindowWithTabsterInstance extends Window {

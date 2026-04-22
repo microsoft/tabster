@@ -12,14 +12,12 @@ import * as Types from "./Types.js";
 import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
 import { ModalizerEventDetail } from "./EventsTypes.js";
 import {
-    augmentAttribute,
     DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
-    TabsterPart,
-    WeakHTMLElement,
-} from "./Utils.js";
+} from "./DummyInput.js";
+import { augmentAttribute, TabsterPart, WeakHTMLElement } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 let _wasFocusedCounter = 0;
