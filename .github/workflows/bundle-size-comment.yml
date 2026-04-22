@@ -1,0 +1,35 @@
+name: Bundle size | Comment on PR
+on:
+  workflow_run:
+    workflows: ['Bundle size']
+    types:
+      - completed
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      pull-requests: write
+      actions: read
+      contents: read
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
+        with:
+          name: monosize-report
+          path: ./results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load PR number
+        id: pr_number
+        run: echo "id=$(cat pr.txt)" >> $GITHUB_OUTPUT
+        working-directory: ./results
+
+      - name: 'Comment on PR'
+        uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2
+        with:
+          header: bundle-size-report
+          number: ${{ steps.pr_number.outputs.id }}
+          path: ./results/monosize-report.md
