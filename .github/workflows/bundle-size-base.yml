@@ -1,0 +1,39 @@
+name: Bundle size Base
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  # see https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bundle-size-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          cache: npm
+          node-version: 22
+
+      - run: npm install
+
+      - name: Build packages & create reports
+        run: npm run bundle-size
+
+      - name: Prepare report
+        run: npx monosize upload-report --branch=master --commit-sha ${{ github.sha }} --report-files-glob="dist/bundle-size/monosize.json"
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: monosize-report
+          retention-days: 30
+          if-no-files-found: error
+          path: monosize-report.json
