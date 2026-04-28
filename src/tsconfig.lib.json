@@ -2,6 +2,8 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "target": "ES2019",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "outDir": "../dist",
         "declarationDir": "../dist/dts",
         "sourceMap": true

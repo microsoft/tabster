@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
-import * as Types from "./Types";
-import { getBoundingRect } from "./Utils";
+import { getTabsterOnElement } from "./Instance.js";
+import * as Types from "./Types.js";
+import { getBoundingRect } from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
-import { FOCUSABLE_SELECTOR } from "./Consts";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
+import { FOCUSABLE_SELECTOR } from "./Consts.js";
 import {
     createElementTreeWalker,
     getDummyInputContainer,
@@ -16,8 +16,8 @@ import {
     isRadio,
     matchesSelector,
     shouldIgnoreFocus,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 export class FocusableAPI implements Types.FocusableAPI {
     private _tabster: Types.TabsterCore;

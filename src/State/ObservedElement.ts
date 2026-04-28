@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "../Instance";
-import * as Types from "../Types";
+import { getTabsterOnElement } from "../Instance.js";
+import * as Types from "../Types.js";
 import {
     ObservedElementAccessibilities,
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
-} from "../Consts";
+} from "../Consts.js";
 import {
     documentContains,
     getElementUId,
     getPromise,
     WeakHTMLElement,
-} from "../Utils";
-import { Subscribable } from "./Subscribable";
+} from "../Utils.js";
+import { Subscribable } from "./Subscribable.js";
 
 const _conditionCheckTimeout = 100;
 

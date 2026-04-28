@@ -5,8 +5,8 @@
 
 import { createKeyborg, disposeKeyborg, Keyborg } from "keyborg";
 
-import * as Types from "../Types";
-import { Subscribable } from "./Subscribable";
+import * as Types from "../Types.js";
+import { Subscribable } from "./Subscribable.js";
 
 export class KeyboardNavigationState
     extends Subscribable<boolean>

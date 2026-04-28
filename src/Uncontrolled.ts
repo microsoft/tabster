@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Types from "./Types";
+import * as Types from "./Types.js";
 
 /**
  * Allows default or user focus behaviour on the DOM subtree

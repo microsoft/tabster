@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { nodeContains } from "./DOMFunctions";
+import { nodeContains } from "./DOMFunctions.js";
 
 interface OverridenAttachShadow {
     __origAttachShadow?: typeof Element.prototype.attachShadow;

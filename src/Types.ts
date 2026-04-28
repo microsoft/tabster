@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TABSTER_ATTRIBUTE_NAME } from "./Consts";
+import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
     __tabsterElementFlags?: {
@@ -134,7 +134,7 @@ export interface FocusedElementDetail {
     modalizerId?: string;
 }
 
-import { AsyncFocusSources as _AsyncFocusSources } from "./Consts";
+import { AsyncFocusSources as _AsyncFocusSources } from "./Consts.js";
 export type AsyncFocusSources = typeof _AsyncFocusSources;
 
 export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
@@ -258,21 +258,21 @@ export interface ObservedElementChange {
     removedNames?: string[];
 }
 
-import { ObservedElementAccessibilities as _ObservedElementAccessibilities } from "./Consts";
+import { ObservedElementAccessibilities as _ObservedElementAccessibilities } from "./Consts.js";
 export type ObservedElementAccessibilities =
     typeof _ObservedElementAccessibilities;
 
 export type ObservedElementAccessibility =
     ObservedElementAccessibilities[keyof ObservedElementAccessibilities];
 
-import { ObservedElementRequestStatuses as _ObservedElementRequestStatuses } from "./Consts";
+import { ObservedElementRequestStatuses as _ObservedElementRequestStatuses } from "./Consts.js";
 export type ObservedElementRequestStatuses =
     typeof _ObservedElementRequestStatuses;
 
 export type ObservedElementRequestStatus =
     ObservedElementRequestStatuses[keyof ObservedElementRequestStatuses];
 
-import { ObservedElementFailureReasons as _ObservedElementFailureReasons } from "./Consts";
+import { ObservedElementFailureReasons as _ObservedElementFailureReasons } from "./Consts.js";
 export type ObservedElementFailureReasons =
     typeof _ObservedElementFailureReasons;
 
@@ -489,12 +489,12 @@ export interface DeloserElementActions {
     isActive: () => boolean;
 }
 
-import { RestoreFocusOrders as _RestoreFocusOrders } from "./Consts";
+import { RestoreFocusOrders as _RestoreFocusOrders } from "./Consts.js";
 export type RestoreFocusOrders = typeof _RestoreFocusOrders;
 
 export type RestoreFocusOrder = RestoreFocusOrders[keyof RestoreFocusOrders];
 
-import { DeloserStrategies as _DeloserStrategies } from "./Consts";
+import { DeloserStrategies as _DeloserStrategies } from "./Consts.js";
 export type DeloserStrategies = typeof _DeloserStrategies;
 
 export type DeloserStrategy = DeloserStrategies[keyof DeloserStrategies];
@@ -764,7 +764,7 @@ export interface DummyInputManager {
     ) => void;
 }
 
-import { Visibilities as _Visibilities } from "./Consts";
+import { Visibilities as _Visibilities } from "./Consts.js";
 export type Visibilities = typeof _Visibilities;
 
 export type Visibility = Visibilities[keyof Visibilities];
@@ -774,12 +774,12 @@ export interface MoverElementState {
     visibility: Visibility;
 }
 
-import { RestorerTypes as _RestorerTypes } from "./Consts";
+import { RestorerTypes as _RestorerTypes } from "./Consts.js";
 export type RestorerTypes = typeof _RestorerTypes;
 
 export type RestorerType = RestorerTypes[keyof RestorerTypes];
 
-import { MoverDirections as _MoverDirections } from "./Consts";
+import { MoverDirections as _MoverDirections } from "./Consts.js";
 export type MoverDirections = typeof _MoverDirections;
 
 export type MoverDirection = MoverDirections[keyof MoverDirections];
@@ -864,7 +864,7 @@ interface MoverAPIInternal {
     ): Mover;
 }
 
-import { MoverKeys as _MoverKeys } from "./Consts";
+import { MoverKeys as _MoverKeys } from "./Consts.js";
 export type MoverKeys = typeof _MoverKeys;
 
 export type MoverKey = MoverKeys[keyof MoverKeys];
@@ -874,7 +874,7 @@ export interface MoverAPI extends MoverAPIInternal, Disposable {
     moveFocus(fromElement: HTMLElement, key: MoverKey): HTMLElement | null;
 }
 
-import { GroupperTabbabilities as _GroupperTabbabilities } from "./Consts";
+import { GroupperTabbabilities as _GroupperTabbabilities } from "./Consts.js";
 export type GroupperTabbabilities = typeof _GroupperTabbabilities;
 
 export type GroupperTabbability =
@@ -925,7 +925,7 @@ export interface GroupperAPIInternal {
     ): void;
 }
 
-import { GroupperMoveFocusActions as _GroupperMoveFocusActions } from "./Consts";
+import { GroupperMoveFocusActions as _GroupperMoveFocusActions } from "./Consts.js";
 export type GroupperMoveFocusActions = typeof _GroupperMoveFocusActions;
 
 export type GroupperMoveFocusAction =
@@ -995,7 +995,7 @@ export type RootConstructor = (
     props: RootProps
 ) => Root;
 
-import { SysDummyInputsPositions as _SysDummyInputsPositions } from "./Consts";
+import { SysDummyInputsPositions as _SysDummyInputsPositions } from "./Consts.js";
 export type SysDummyInputsPositions = typeof _SysDummyInputsPositions;
 
 export type SysDummyInputsPosition =
