@@ -13,7 +13,6 @@ import {
     getOutline,
     getRestorer,
     getInternal,
-    overrideBasics,
     makeNoOp,
     isNoOp,
     Types,
@@ -34,7 +33,6 @@ console.log(
     getOutline,
     getRestorer,
     getInternal,
-    overrideBasics,
     makeNoOp,
     isNoOp,
     Types

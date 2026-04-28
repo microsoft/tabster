@@ -4,8 +4,9 @@
         "target": "ES2019",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
-        "outDir": "../dist",
-        "declarationDir": "../dist/dts",
+        "outDir": "../dist/type-check",
+        "declaration": true,
+        "declarationMap": true,
         "sourceMap": true
     },
     "include": ["**/*.ts"]
