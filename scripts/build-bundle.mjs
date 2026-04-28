@@ -65,7 +65,7 @@ async function buildCjs() {
             module: { type: "commonjs", strict: true },
             jsc: {
                 parser: { syntax: "ecmascript" },
-                target: "es2019",
+                target: "es2022",
             },
             sourceMaps: true,
         });
