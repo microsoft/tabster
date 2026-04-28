@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getLastElementChild, nodeContains } from "./DOMFunctions";
+import { getLastElementChild, nodeContains } from "./DOMFunctions.js";
 
 function getLastChild(container: HTMLElement): HTMLElement | undefined {
     let lastChild: HTMLElement | null = null;

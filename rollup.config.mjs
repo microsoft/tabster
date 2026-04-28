@@ -30,6 +30,10 @@ const config = [
                         // https://github.com/ezolenko/rollup-plugin-typescript2/issues/268
                         emitDeclarationOnly: false,
                         stripInternal: true,
+                        // rollup-plugin-typescript2 doesn't support NodeNext;
+                        // override to ESNext+Bundler for the bundling pass.
+                        module: "ESNext",
+                        moduleResolution: "Bundler",
                     },
                 },
             }),

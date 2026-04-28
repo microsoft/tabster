@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import * as Types from "./Types";
-import { DeloserStrategies, RestoreFocusOrders } from "./Consts";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import * as Types from "./Types.js";
+import { DeloserStrategies, RestoreFocusOrders } from "./Consts.js";
 import {
     DeloserFocusLostEvent,
     DeloserRestoreFocusEvent,
     DeloserRestoreFocusEventName,
     TabsterMoveFocusEvent,
-} from "./Events";
+} from "./Events.js";
 import {
     documentContains,
     getElementUId,
@@ -20,8 +20,8 @@ import {
     isDisplayNone,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 const _containerHistoryLength = 10;
 

@@ -7,12 +7,12 @@ import {
     DeloserAPI,
     DeloserHistoryByRootBase,
     DeloserItemBase,
-} from "./Deloser";
-import { getTabsterOnElement } from "./Instance";
-import { RootAPI } from "./Root";
-import { Subscribable } from "./State/Subscribable";
-import * as Types from "./Types";
-import { ObservedElementAccessibilities } from "./Consts";
+} from "./Deloser.js";
+import { getTabsterOnElement } from "./Instance.js";
+import { RootAPI } from "./Root.js";
+import { Subscribable } from "./State/Subscribable.js";
+import * as Types from "./Types.js";
+import { ObservedElementAccessibilities } from "./Consts.js";
 import {
     getElementUId,
     getInstanceContext,
@@ -20,8 +20,8 @@ import {
     getUId,
     getWindowUId,
     HTMLElementWithUID,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 const _transactionTimeout = 1500;
 const _pingTimeout = 3000;

@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginAPI } from "./CrossOrigin";
-import { DeloserAPI } from "./Deloser";
-import { FocusableAPI } from "./Focusable";
-import { FocusedElementState } from "./State/FocusedElement";
-import { GroupperAPI } from "./Groupper";
-import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation";
-import { ModalizerAPI } from "./Modalizer";
-import { MoverAPI } from "./Mover";
-import { observeMutations } from "./MutationEvent";
-import { ObservedElementAPI } from "./State/ObservedElement";
-import { OutlineAPI } from "./Outline";
-import { RootAPI, WindowWithTabsterInstance } from "./Root";
-import * as Types from "./Types";
-import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
-import { UncontrolledAPI } from "./Uncontrolled";
+import { CrossOriginAPI } from "./CrossOrigin.js";
+import { DeloserAPI } from "./Deloser.js";
+import { FocusableAPI } from "./Focusable.js";
+import { FocusedElementState } from "./State/FocusedElement.js";
+import { GroupperAPI } from "./Groupper.js";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
+import { KeyboardNavigationState } from "./State/KeyboardNavigation.js";
+import { ModalizerAPI } from "./Modalizer.js";
+import { MoverAPI } from "./Mover.js";
+import { observeMutations } from "./MutationEvent.js";
+import { ObservedElementAPI } from "./State/ObservedElement.js";
+import { OutlineAPI } from "./Outline.js";
+import { RootAPI, WindowWithTabsterInstance } from "./Root.js";
+import * as Types from "./Types.js";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
+import { UncontrolledAPI } from "./Uncontrolled.js";
 import {
     cleanupFakeWeakRefs,
     clearElementCache,
@@ -29,10 +29,10 @@ import {
     getDummyInputContainer,
     startFakeWeakRefsCleanup,
     stopFakeWeakRefsCleanupAndClearStorage,
-} from "./Utils";
-import { RestorerAPI } from "./Restorer";
-import { dom, setDOMAPI } from "./DOMAPI";
-import * as shadowDOMAPI from "./Shadowdomize";
+} from "./Utils.js";
+import { RestorerAPI } from "./Restorer.js";
+import { dom, setDOMAPI } from "./DOMAPI.js";
+import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
 export { getDummyInputContainer };
 

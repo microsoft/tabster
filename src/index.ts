@@ -21,16 +21,16 @@ export {
     getTabster,
     isNoOp,
     makeNoOp,
-} from "./Tabster";
+} from "./Tabster.js";
 
-export * from "./AttributeHelpers";
+export * from "./AttributeHelpers.js";
 
-export * as Types from "./Types";
+export * as Types from "./Types.js";
 
-export * from "./Events";
+export * from "./Events.js";
 
-export * as EventsTypes from "./EventsTypes";
+export * as EventsTypes from "./EventsTypes.js";
 
-export * from "./Consts";
+export * from "./Consts.js";
 
-export * from "./Deprecated";
+export * from "./Deprecated.js";

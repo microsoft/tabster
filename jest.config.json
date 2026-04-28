@@ -10,6 +10,7 @@
         ]
     },
     "moduleNameMapper": {
+        "^(\\.{1,2}/.*)\\.js$": "$1",
         "tabster": "<rootDir>/../src/"
     },
     "testTimeout": 10000,

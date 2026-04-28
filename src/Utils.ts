@@ -15,16 +15,16 @@ import {
     TabsterPart as TabsterPartInterface,
     Visibility,
     WeakHTMLElement as WeakHTMLElementInterface,
-} from "./Types";
+} from "./Types.js";
 import {
     FOCUSABLE_SELECTOR,
     SysDummyInputsPositions,
     TABSTER_ATTRIBUTE_NAME,
     TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
     Visibilities,
-} from "./Consts";
-import { TabsterMoveFocusEvent } from "./Events";
-import { dom } from "./DOMAPI";
+} from "./Consts.js";
+import { TabsterMoveFocusEvent } from "./Events.js";
+import { dom } from "./DOMAPI.js";
 
 interface HTMLElementWithBoundingRectCacheId extends HTMLElement {
     __tabsterCacheId?: string;

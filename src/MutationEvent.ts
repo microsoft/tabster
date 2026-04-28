@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { getTabsterOnElement } from "./Instance";
-import * as Types from "./Types";
-import { TABSTER_ATTRIBUTE_NAME } from "./Consts";
+import { getTabsterOnElement } from "./Instance.js";
+import * as Types from "./Types.js";
+import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import {
     createElementTreeWalker,
     getInstanceContext,
     HTMLElementWithUID,
     InstanceContext,
     WeakHTMLElement,
-} from "./Utils";
-import { dom } from "./DOMAPI";
+} from "./Utils.js";
+import { dom } from "./DOMAPI.js";
 
 export function observeMutations(
     doc: Document,

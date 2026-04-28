@@ -4,9 +4,9 @@
  */
 
 import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
-import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance";
-import * as Types from "./Types";
-import { RootFocusEvent, RootBlurEvent } from "./Events";
+import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
+import * as Types from "./Types.js";
+import { RootFocusEvent, RootBlurEvent } from "./Events.js";
 import {
     DummyInput,
     DummyInputManager,
@@ -14,8 +14,8 @@ import {
     getElementUId,
     TabsterPart,
     WeakHTMLElement,
-} from "./Utils";
-import { setTabsterAttribute } from "./AttributeHelpers";
+} from "./Utils.js";
+import { setTabsterAttribute } from "./AttributeHelpers.js";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
