@@ -13,9 +13,6 @@ module.exports = (api) => {
 
     return {
         presets: ["@babel/preset-typescript", "@babel/preset-react", presetEnv],
-        plugins: [
-            ["@babel/plugin-transform-react-jsx"],
-            "babel-plugin-annotate-pure-calls",
-        ],
+        plugins: [["@babel/plugin-transform-react-jsx"]],
     };
 };
