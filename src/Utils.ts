@@ -433,7 +433,7 @@ export function matchesSelector(
     element: HTMLElement,
     selector: string
 ): boolean {
-    return element.matches(selector);
+    return typeof element.matches === "function" && element.matches(selector);
 }
 
 let _lastTabsterPartId = 0;
