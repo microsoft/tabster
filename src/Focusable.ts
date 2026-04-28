@@ -5,7 +5,7 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { FOCUSABLE_SELECTOR } from "./Consts.js";
 import {
     createElementTreeWalker,

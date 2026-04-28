@@ -8,19 +8,19 @@ import { FocusedElementState } from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
 import { RootAPI } from "./Root.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { Visibilities, MoverDirections, MoverKeys } from "./Consts.js";
 import {
-    MoverMemorizedElementEvent,
+    type MoverMemorizedElementEvent,
     MoverMemorizedElementEventName,
-    MoverMoveFocusEvent,
+    type MoverMoveFocusEvent,
     MoverMoveFocusEventName,
     MoverStateEvent,
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
     createElementTreeWalker,
-    DummyInput,
+    type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,

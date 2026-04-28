@@ -5,15 +5,15 @@
 
 import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
 import {
-    DummyInput,
+    type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
     TabsterPart,
-    WeakHTMLElement,
+    type WeakHTMLElement,
 } from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
 

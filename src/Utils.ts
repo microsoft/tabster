@@ -6,15 +6,15 @@
 import { nativeFocus } from "keyborg";
 
 import {
-    DummyInputObserver as DummyInputObserverInterface,
-    GetWindow,
-    RadioButtonGroup,
-    SysProps,
-    TabsterAttributeProps,
-    TabsterCore,
-    TabsterPart as TabsterPartInterface,
-    Visibility,
-    WeakHTMLElement as WeakHTMLElementInterface,
+    type DummyInputObserver as DummyInputObserverInterface,
+    type GetWindow,
+    type RadioButtonGroup,
+    type SysProps,
+    type TabsterAttributeProps,
+    type TabsterCore,
+    type TabsterPart as TabsterPartInterface,
+    type Visibility,
+    type WeakHTMLElement as WeakHTMLElementInterface,
 } from "./Types.js";
 import {
     FOCUSABLE_SELECTOR,

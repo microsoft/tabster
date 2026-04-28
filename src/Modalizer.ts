@@ -8,12 +8,12 @@ import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
 import { Keys } from "./Keys.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
-import { ModalizerEventDetail } from "./EventsTypes.js";
+import { type ModalizerEventDetail } from "./EventsTypes.js";
 import {
     augmentAttribute,
-    DummyInput,
+    type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { createKeyborg, disposeKeyborg, Keyborg } from "keyborg";
+import { createKeyborg, disposeKeyborg, type Keyborg } from "keyborg";
 
-import * as Types from "../Types.js";
+import type * as Types from "../Types.js";
 import { Subscribable } from "./Subscribable.js";
 
 export class KeyboardNavigationState

@@ -4,13 +4,13 @@
  */
 
 import { getTabsterOnElement } from "./Instance.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import {
     createElementTreeWalker,
     getInstanceContext,
-    HTMLElementWithUID,
-    InstanceContext,
+    type HTMLElementWithUID,
+    type InstanceContext,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";

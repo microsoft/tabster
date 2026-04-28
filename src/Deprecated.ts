@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GroupperMoveFocusAction, MoverKey } from "./Types.js";
+import { type GroupperMoveFocusAction, type MoverKey } from "./Types.js";
 import {
     GroupperMoveFocusEvent,
     MoverMoveFocusEvent,

@@ -5,11 +5,11 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { DeloserStrategies, RestoreFocusOrders } from "./Consts.js";
 import {
     DeloserFocusLostEvent,
-    DeloserRestoreFocusEvent,
+    type DeloserRestoreFocusEvent,
     DeloserRestoreFocusEventName,
     TabsterMoveFocusEvent,
 } from "./Events.js";

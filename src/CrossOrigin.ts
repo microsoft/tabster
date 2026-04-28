@@ -11,7 +11,7 @@ import {
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import { Subscribable } from "./State/Subscribable.js";
-import * as Types from "./Types.js";
+import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
     getElementUId,
@@ -19,7 +19,7 @@ import {
     getPromise,
     getUId,
     getWindowUId,
-    HTMLElementWithUID,
+    type HTMLElementWithUID,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
