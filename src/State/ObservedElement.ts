@@ -10,11 +10,7 @@ import {
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
 } from "../Consts.js";
-import {
-    documentContains,
-    getElementUId,
-    WeakHTMLElement,
-} from "../Utils.js";
+import { documentContains, getElementUId, WeakHTMLElement } from "../Utils.js";
 import { Subscribable } from "./Subscribable.js";
 
 const _conditionCheckTimeout = 100;
