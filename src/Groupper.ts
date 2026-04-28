@@ -307,7 +307,7 @@ export class Groupper
 
     setFirst(element: HTMLElement | undefined): void {
         if (element) {
-            this._first = new WeakHTMLElement(this._tabster.getWindow, element);
+            this._first = new WeakHTMLElement(element);
         } else {
             delete this._first;
         }

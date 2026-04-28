@@ -163,12 +163,7 @@ export class Modalizer
 
                 if (isActive) {
                     if (index < 0) {
-                        activeElements.push(
-                            new WeakHTMLElement(
-                                this._tabster.getWindow,
-                                element
-                            )
-                        );
+                        activeElements.push(new WeakHTMLElement(element));
                     }
                 } else {
                     if (index >= 0) {
@@ -821,9 +816,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
 
             if (isAugmented) {
-                newAugmented.push(
-                    new WeakHTMLElement(tabster.getWindow, element)
-                );
+                newAugmented.push(new WeakHTMLElement(element));
                 newAugmentedMap.set(element, true);
             }
         };

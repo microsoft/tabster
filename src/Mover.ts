@@ -24,7 +24,6 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
     getElementUId,
-    getPromise,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
     scrollIntoView,
@@ -192,7 +191,7 @@ export class Mover
 
     setCurrent(element: HTMLElement | undefined): void {
         if (element) {
-            this._current = new WeakHTMLElement(this._win, element);
+            this._current = new WeakHTMLElement(element);
         } else {
             this._current = undefined;
         }
@@ -1377,7 +1376,7 @@ export class MoverAPI implements Types.MoverAPI {
                         (element as HTMLInputElement).selectionEnd || 0;
                 }
             } else if (element.contentEditable === "true") {
-                asyncRet = new (getPromise(this._win))((resolve) => {
+                asyncRet = new Promise<boolean>((resolve) => {
                     this._ignoredInputResolve = (value: boolean) => {
                         delete this._ignoredInputResolve;
                         resolve(value);

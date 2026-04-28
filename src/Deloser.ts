@@ -16,7 +16,6 @@ import {
 import {
     documentContains,
     getElementUId,
-    getPromise,
     isDisplayNone,
     TabsterPart,
     WeakHTMLElement,
@@ -75,8 +74,7 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
     }
 
     async resetFocus(): Promise<boolean> {
-        const getWindow = this._tabster.getWindow;
-        return getPromise(getWindow).resolve(this._deloser.resetFocus());
+        return Promise.resolve(this._deloser.resetFocus());
     }
 }
 
@@ -505,13 +503,7 @@ export class Deloser
             return e && e !== element;
         });
 
-        cur.unshift(
-            new WeakHTMLElement(
-                this._tabster.getWindow,
-                element,
-                buildSelector(element)
-            )
-        );
+        cur.unshift(new WeakHTMLElement(element, buildSelector(element)));
 
         while (cur.length > _containerHistoryLength) {
             cur.pop();
