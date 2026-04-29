@@ -26,11 +26,7 @@ import {
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import {
-    getAdjacentElement,
-    TabsterPart,
-    WeakHTMLElement,
-} from "./Utils.js";
+import { getAdjacentElement, TabsterPart, WeakHTMLElement } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 class GroupperDummyManager extends DummyInputManager {

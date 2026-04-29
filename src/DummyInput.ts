@@ -6,10 +6,10 @@
 import { nativeFocus } from "keyborg";
 
 import {
-    DummyInputObserver as DummyInputObserverInterface,
-    GetWindow,
-    SysProps,
-    TabsterCore,
+    type DummyInputObserver as DummyInputObserverInterface,
+    type GetWindow,
+    type SysProps,
+    type TabsterCore,
 } from "./Types.js";
 import {
     SysDummyInputsPositions,
@@ -17,11 +17,7 @@ import {
 } from "./Consts.js";
 import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
-import {
-    hasSubFocusable,
-    makeFocusIgnored,
-    WeakHTMLElement,
-} from "./Utils.js";
+import { hasSubFocusable, makeFocusIgnored, WeakHTMLElement } from "./Utils.js";
 
 const _updateDummyInputsTimeout = 100;
 
