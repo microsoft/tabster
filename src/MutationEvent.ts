@@ -113,7 +113,7 @@ export function observeMutations(
             if (removed) {
                 delete elementByUId[uid];
             } else {
-                elementByUId[uid] ??= new WeakHTMLElement(getWindow, element);
+                elementByUId[uid] ??= new WeakHTMLElement(element);
             }
         }
 
