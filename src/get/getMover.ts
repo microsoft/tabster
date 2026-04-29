@@ -18,10 +18,10 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
         tabsterCore.mover = api;
         tabsterCore.attrHandlers.set(
             "mover",
-            (element, existing, newProps, _oldProps, sys) => {
-                if (existing) {
-                    existing.setProps(newProps);
-                    return existing;
+            (element, existingMover, newProps, _oldProps, sys) => {
+                if (existingMover) {
+                    existingMover.setProps(newProps);
+                    return existingMover;
                 }
                 return api.createMover(element, newProps, sys);
             }

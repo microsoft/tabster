@@ -32,18 +32,18 @@ export function getModalizer(
         tabsterCore.modalizer = api;
         tabsterCore.attrHandlers.set(
             "modalizer",
-            (element, existing, newProps, oldProps, sys) => {
-                if (existing) {
+            (element, existingModalizer, newProps, oldProps, sys) => {
+                if (existingModalizer) {
                     if (newProps.id && oldProps?.id !== newProps.id) {
                         // Modalizer id is changed, given the modalizers have
                         // complex logic and could be composite, it is easier
                         // to recreate the Modalizer instance than to implement
                         // the id update.
-                        existing.dispose();
+                        existingModalizer.dispose();
                         return api.createModalizer(element, newProps, sys);
                     }
-                    existing.setProps(newProps);
-                    return existing;
+                    existingModalizer.setProps(newProps);
+                    return existingModalizer;
                 }
                 return api.createModalizer(element, newProps, sys);
             }

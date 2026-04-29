@@ -22,10 +22,10 @@ export function getDeloser(
         tabsterCore.deloser = api;
         tabsterCore.attrHandlers.set(
             "deloser",
-            (element, existing, newProps) => {
-                if (existing) {
-                    existing.setProps(newProps);
-                    return existing;
+            (element, existingDeloser, newProps) => {
+                if (existingDeloser) {
+                    existingDeloser.setProps(newProps);
+                    return existingDeloser;
                 }
                 return api.createDeloser(element, newProps);
             }

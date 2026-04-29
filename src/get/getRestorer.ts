@@ -13,10 +13,10 @@ export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
         tabsterCore.restorer = api;
         tabsterCore.attrHandlers.set(
             "restorer",
-            (element, existing, newProps) => {
-                if (existing) {
-                    existing.setProps(newProps);
-                    return existing;
+            (element, existingRestorer, newProps) => {
+                if (existingRestorer) {
+                    existingRestorer.setProps(newProps);
+                    return existingRestorer;
                 }
                 return api.createRestorer(element, newProps);
             }

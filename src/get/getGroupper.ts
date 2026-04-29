@@ -18,10 +18,10 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
         tabsterCore.groupper = api;
         tabsterCore.attrHandlers.set(
             "groupper",
-            (element, existing, newProps, _oldProps, sys) => {
-                if (existing) {
-                    existing.setProps(newProps);
-                    return existing;
+            (element, existingGroupper, newProps, _oldProps, sys) => {
+                if (existingGroupper) {
+                    existingGroupper.setProps(newProps);
+                    return existingGroupper;
                 }
                 return api.createGroupper(element, newProps, sys);
             }
