@@ -47,6 +47,9 @@ function createAttrHandlerRegistry(): Types.TabsterAttrHandlerRegistry {
         ): Types.AnyTabsterAttrHandler | undefined {
             return handlers.get(key);
         },
+        clear(): void {
+            handlers.clear();
+        },
     };
 }
 
@@ -233,6 +236,11 @@ class TabsterCore implements Types.TabsterCore {
         this.root.dispose();
 
         this._dummyObserver.dispose();
+
+        // Drop handler closures — they capture the API instances we just
+        // disposed, and any post-dispose updateTabsterByAttribute call would
+        // otherwise dispatch to those zombies.
+        this.attrHandlers.clear();
 
         clearElementCache(this.getWindow);
 

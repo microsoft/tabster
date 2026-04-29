@@ -1345,6 +1345,7 @@ export interface TabsterAttrHandlerRegistry {
         handler: TabsterAttrHandler<K>
     ): void;
     get(key: keyof TabsterAttributeProps): AnyTabsterAttrHandler | undefined;
+    clear(): void;
 }
 
 interface TabsterCoreInternal {
