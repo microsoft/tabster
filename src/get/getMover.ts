@@ -18,13 +18,13 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
         tabsterCore.mover = api;
         tabsterCore.attrHandlers.set(
             "mover",
-            (element, storage, newProps, _oldProps, sys) => {
+            (element, existing, newProps, _oldProps, sys) => {
                 const next = newProps as Types.MoverProps;
-                if (storage.mover) {
-                    storage.mover.setProps(next);
-                } else {
-                    storage.mover = api.createMover(element, next, sys);
+                if (existing) {
+                    (existing as Types.Mover).setProps(next);
+                    return undefined;
                 }
+                return api.createMover(element, next, sys);
             }
         );
     }

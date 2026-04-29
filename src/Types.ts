@@ -1304,14 +1304,17 @@ export interface DummyInputObserver {
  * Subsystems register a handler from their `get*` file when they're first
  * instantiated, so the heavy create-or-setProps logic only enters the bundle
  * when the subsystem itself does.
+ *
+ * Returns the new instance to assign into `TabsterOnElement[key]`, or
+ * `undefined` if the existing instance was kept (e.g. setProps on existing).
  */
 export type TabsterAttrHandler = (
     element: HTMLElement,
-    storage: TabsterOnElement,
+    existing: unknown,
     newProps: unknown,
     oldProps: unknown,
     sys: SysProps | undefined
-) => void;
+) => unknown;
 
 interface TabsterCoreInternal {
     /** @internal */

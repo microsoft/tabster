@@ -174,13 +174,17 @@ export function updateTabsterByAttribute(
             default: {
                 const handler = tabster.attrHandlers.get(key);
                 if (handler) {
-                    handler(
+                    const created = handler(
                         element,
-                        tabsterOnElement,
+                        tabsterOnElement[key],
                         newTabsterProps[key],
                         oldTabsterProps?.[key],
                         sys
                     );
+                    if (created !== undefined) {
+                        (tabsterOnElement as Record<string, unknown>)[key] =
+                            created;
+                    }
                 } else if (__DEV__) {
                     console.error(
                         `${key} API used before initialization, please call \`get${

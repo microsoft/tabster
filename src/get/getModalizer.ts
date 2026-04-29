@@ -32,11 +32,10 @@ export function getModalizer(
         tabsterCore.modalizer = api;
         tabsterCore.attrHandlers.set(
             "modalizer",
-            (element, storage, newProps, oldProps, sys) => {
+            (element, existing, newProps, oldProps, sys) => {
                 const next = newProps as Types.ModalizerProps;
-                let propsToCreate: Types.ModalizerProps | undefined;
-
-                if (storage.modalizer) {
+                if (existing) {
+                    const cur = existing as Types.Modalizer;
                     const oldId = (oldProps as Types.ModalizerProps | undefined)
                         ?.id;
                     if (next.id && oldId !== next.id) {
@@ -44,22 +43,13 @@ export function getModalizer(
                         // complex logic and could be composite, it is easier
                         // to recreate the Modalizer instance than to implement
                         // the id update.
-                        storage.modalizer.dispose();
-                        propsToCreate = next;
-                    } else {
-                        storage.modalizer.setProps(next);
+                        cur.dispose();
+                        return api.createModalizer(element, next, sys);
                     }
-                } else {
-                    propsToCreate = next;
+                    cur.setProps(next);
+                    return undefined;
                 }
-
-                if (propsToCreate) {
-                    storage.modalizer = api.createModalizer(
-                        element,
-                        propsToCreate,
-                        sys
-                    );
-                }
+                return api.createModalizer(element, next, sys);
             }
         );
     }
