@@ -12,17 +12,14 @@ import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { UncontrolledAPI } from "./Uncontrolled.js";
+import { DummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
     createElementTreeWalker,
     disposeInstanceContext,
-    DummyInputObserver,
-    getDummyInputContainer,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
-
-export { getDummyInputContainer };
 
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
