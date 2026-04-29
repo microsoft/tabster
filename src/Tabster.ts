@@ -56,6 +56,10 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
+    attrHandlers: Map<
+        keyof Types.TabsterAttributeProps,
+        Types.TabsterAttrHandler
+    > = new Map();
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;

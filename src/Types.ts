@@ -1298,7 +1298,24 @@ export interface DummyInputObserver {
     ): void;
 }
 
+/**
+ * @internal
+ * Handler invoked by `updateTabsterByAttribute` for a given attribute key.
+ * Subsystems register a handler from their `get*` file when they're first
+ * instantiated, so the heavy create-or-setProps logic only enters the bundle
+ * when the subsystem itself does.
+ */
+export type TabsterAttrHandler = (
+    element: HTMLElement,
+    storage: TabsterOnElement,
+    newProps: unknown,
+    oldProps: unknown,
+    sys: SysProps | undefined
+) => void;
+
 interface TabsterCoreInternal {
+    /** @internal */
+    attrHandlers: Map<keyof TabsterAttributeProps, TabsterAttrHandler>;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

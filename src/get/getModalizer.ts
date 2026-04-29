@@ -24,10 +24,43 @@ export function getModalizer(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.modalizer) {
-        tabsterCore.modalizer = new ModalizerAPI(
+        const api = new ModalizerAPI(
             tabsterCore,
             alwaysAccessibleSelector,
             accessibleCheck
+        );
+        tabsterCore.modalizer = api;
+        tabsterCore.attrHandlers.set(
+            "modalizer",
+            (element, storage, newProps, oldProps, sys) => {
+                const next = newProps as Types.ModalizerProps;
+                let propsToCreate: Types.ModalizerProps | undefined;
+
+                if (storage.modalizer) {
+                    const oldId = (oldProps as Types.ModalizerProps | undefined)
+                        ?.id;
+                    if (next.id && oldId !== next.id) {
+                        // Modalizer id is changed, given the modalizers have
+                        // complex logic and could be composite, it is easier
+                        // to recreate the Modalizer instance than to implement
+                        // the id update.
+                        storage.modalizer.dispose();
+                        propsToCreate = next;
+                    } else {
+                        storage.modalizer.setProps(next);
+                    }
+                } else {
+                    propsToCreate = next;
+                }
+
+                if (propsToCreate) {
+                    storage.modalizer = api.createModalizer(
+                        element,
+                        propsToCreate,
+                        sys
+                    );
+                }
+            }
         );
     }
 

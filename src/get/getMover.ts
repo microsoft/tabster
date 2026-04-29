@@ -14,7 +14,19 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.mover) {
-        tabsterCore.mover = new MoverAPI(tabsterCore, tabsterCore.getWindow);
+        const api = new MoverAPI(tabsterCore, tabsterCore.getWindow);
+        tabsterCore.mover = api;
+        tabsterCore.attrHandlers.set(
+            "mover",
+            (element, storage, newProps, _oldProps, sys) => {
+                const next = newProps as Types.MoverProps;
+                if (storage.mover) {
+                    storage.mover.setProps(next);
+                } else {
+                    storage.mover = api.createMover(element, next, sys);
+                }
+            }
+        );
     }
 
     return tabsterCore.mover;
