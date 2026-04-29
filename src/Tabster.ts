@@ -21,38 +21,6 @@ import {
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
-function createAttrHandlerRegistry(): Types.TabsterAttrHandlerRegistry {
-    const handlers = new Map<
-        keyof Types.TabsterAttributeProps,
-        Types.AnyTabsterAttrHandler
-    >();
-
-    return {
-        set<K extends keyof Types.TabsterAttributeProps>(
-            key: K,
-            handler: Types.TabsterAttrHandler<K>
-        ): void {
-            // Variance gap: a handler typed for a specific key is not
-            // structurally assignable to AnyTabsterAttrHandler (parameters
-            // are contravariant). The double cast is the standard escape
-            // hatch — safe because lookup is keyed and dispatch passes the
-            // matching slot's value back in.
-            handlers.set(
-                key,
-                handler as unknown as Types.AnyTabsterAttrHandler
-            );
-        },
-        get(
-            key: keyof Types.TabsterAttributeProps
-        ): Types.AnyTabsterAttrHandler | undefined {
-            return handlers.get(key);
-        },
-        clear(): void {
-            handlers.clear();
-        },
-    };
-}
-
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -88,8 +56,12 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
-    attrHandlers: Types.TabsterAttrHandlerRegistry =
-        createAttrHandlerRegistry();
+    // Variance gap: per-key handler types are contravariant in their
+    // parameters, so a fully-typed Map<K, TabsterAttrHandler<K>> can't unify
+    // them. Cast a plain Map to the typed view; the override on `set` keeps
+    // registration type-safe per key, while `get` falls back to the Map's
+    // value type (the type-erased shape).
+    attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;

@@ -1334,18 +1334,19 @@ export type AnyTabsterAttrHandler = (
 
 /**
  * @internal
- * Typed registry for attribute handlers. `set` is generic per key so the
+ * Typed view over `Map<keyof TabsterAttributeProps, AnyTabsterAttrHandler>`.
+ * Only `set` is overridden so that registration is generic per key — the
  * handler's `existing`/`newProps`/`oldProps`/return types are inferred from
- * the key. `get` returns the type-erased shape since the call site (Instance.ts)
- * iterates over `keyof TabsterAttributeProps` and can't statically narrow.
+ * the key. `get`/`clear` come from `Map`. The call site (Instance.ts)
+ * iterates over `keyof TabsterAttributeProps` and gets back the type-erased
+ * `AnyTabsterAttrHandler` shape.
  */
-export interface TabsterAttrHandlerRegistry {
+export interface TabsterAttrHandlerRegistry
+    extends Map<keyof TabsterAttributeProps, AnyTabsterAttrHandler> {
     set<K extends keyof TabsterAttributeProps>(
         key: K,
         handler: TabsterAttrHandler<K>
-    ): void;
-    get(key: keyof TabsterAttributeProps): AnyTabsterAttrHandler | undefined;
-    clear(): void;
+    ): this;
 }
 
 interface TabsterCoreInternal {
