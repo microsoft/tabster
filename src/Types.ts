@@ -1298,7 +1298,62 @@ export interface DummyInputObserver {
     ): void;
 }
 
+/**
+ * @internal
+ * Per-attribute-key handler invoked by `updateTabsterByAttribute`. Subsystems
+ * register a handler from their `get*` file when they're first instantiated,
+ * so the create-or-setProps logic only enters the bundle when the subsystem
+ * itself does.
+ *
+ * `existing` is the current `TabsterOnElement[K]` (the live instance, if any).
+ * `newProps`/`oldProps` are typed against the same key on `TabsterAttributeProps`.
+ * Returns the instance that should occupy `TabsterOnElement[K]` after this
+ * call — either the (possibly-mutated) `existing` or a freshly created one.
+ */
+export type TabsterAttrHandler<K extends keyof TabsterAttributeProps> = (
+    element: HTMLElement,
+    existing: TabsterOnElement[K],
+    newProps: NonNullable<TabsterAttributeProps[K]>,
+    oldProps: TabsterAttributeProps[K],
+    sys: SysProps | undefined
+) => NonNullable<TabsterOnElement[K]>;
+
+/**
+ * @internal
+ * Type-erased handler shape used internally for storage and dispatch.
+ * Callers should use the generic `TabsterAttrHandler<K>` for type-safe
+ * registration.
+ */
+export type AnyTabsterAttrHandler = (
+    element: HTMLElement,
+    existing: unknown,
+    newProps: unknown,
+    oldProps: unknown,
+    sys: SysProps | undefined
+) => NonNullable<unknown>;
+
+/**
+ * @internal
+ * Typed view over `Map<keyof TabsterAttributeProps, AnyTabsterAttrHandler>`.
+ * Only `set` is overridden so that registration is generic per key — the
+ * handler's `existing`/`newProps`/`oldProps`/return types are inferred from
+ * the key. `get`/`clear` come from `Map`. The call site (Instance.ts)
+ * iterates over `keyof TabsterAttributeProps` and gets back the type-erased
+ * `AnyTabsterAttrHandler` shape.
+ */
+export interface TabsterAttrHandlerRegistry extends Map<
+    keyof TabsterAttributeProps,
+    AnyTabsterAttrHandler
+> {
+    set<K extends keyof TabsterAttributeProps>(
+        key: K,
+        handler: TabsterAttrHandler<K>
+    ): this;
+}
+
 interface TabsterCoreInternal {
+    /** @internal */
+    attrHandlers: TabsterAttrHandlerRegistry;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

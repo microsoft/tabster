@@ -24,10 +24,29 @@ export function getModalizer(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.modalizer) {
-        tabsterCore.modalizer = new ModalizerAPI(
+        const api = new ModalizerAPI(
             tabsterCore,
             alwaysAccessibleSelector,
             accessibleCheck
+        );
+        tabsterCore.modalizer = api;
+        tabsterCore.attrHandlers.set(
+            "modalizer",
+            (element, existingModalizer, newProps, oldProps, sys) => {
+                if (existingModalizer) {
+                    if (newProps.id && oldProps?.id !== newProps.id) {
+                        // Modalizer id is changed, given the modalizers have
+                        // complex logic and could be composite, it is easier
+                        // to recreate the Modalizer instance than to implement
+                        // the id update.
+                        existingModalizer.dispose();
+                        return api.createModalizer(element, newProps, sys);
+                    }
+                    existingModalizer.setProps(newProps);
+                    return existingModalizer;
+                }
+                return api.createModalizer(element, newProps, sys);
+            }
         );
     }
 

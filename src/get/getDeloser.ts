@@ -18,7 +18,18 @@ export function getDeloser(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.deloser) {
-        tabsterCore.deloser = new DeloserAPI(tabsterCore, props);
+        const api = new DeloserAPI(tabsterCore, props);
+        tabsterCore.deloser = api;
+        tabsterCore.attrHandlers.set(
+            "deloser",
+            (element, existingDeloser, newProps) => {
+                if (existingDeloser) {
+                    existingDeloser.setProps(newProps);
+                    return existingDeloser;
+                }
+                return api.createDeloser(element, newProps);
+            }
+        );
     }
 
     return tabsterCore.deloser;

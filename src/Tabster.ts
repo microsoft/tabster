@@ -56,6 +56,12 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
+    // Variance gap: per-key handler types are contravariant in their
+    // parameters, so a fully-typed Map<K, TabsterAttrHandler<K>> can't unify
+    // them. Cast a plain Map to the typed view; the override on `set` keeps
+    // registration type-safe per key, while `get` falls back to the Map's
+    // value type (the type-erased shape).
+    attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
@@ -202,6 +208,11 @@ class TabsterCore implements Types.TabsterCore {
         this.root.dispose();
 
         this._dummyObserver.dispose();
+
+        // Drop handler closures — they capture the API instances we just
+        // disposed, and any post-dispose updateTabsterByAttribute call would
+        // otherwise dispatch to those zombies.
+        this.attrHandlers.clear();
 
         clearElementCache(this.getWindow);
 
