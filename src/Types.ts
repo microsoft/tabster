@@ -1341,8 +1341,10 @@ export type AnyTabsterAttrHandler = (
  * iterates over `keyof TabsterAttributeProps` and gets back the type-erased
  * `AnyTabsterAttrHandler` shape.
  */
-export interface TabsterAttrHandlerRegistry
-    extends Map<keyof TabsterAttributeProps, AnyTabsterAttrHandler> {
+export interface TabsterAttrHandlerRegistry extends Map<
+    keyof TabsterAttributeProps,
+    AnyTabsterAttrHandler
+> {
     set<K extends keyof TabsterAttributeProps>(
         key: K,
         handler: TabsterAttrHandler<K>
