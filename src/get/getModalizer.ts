@@ -43,7 +43,7 @@ export function getModalizer(
                         return api.createModalizer(element, newProps, sys);
                     }
                     existing.setProps(newProps);
-                    return undefined;
+                    return existing;
                 }
                 return api.createModalizer(element, newProps, sys);
             }

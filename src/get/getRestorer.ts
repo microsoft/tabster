@@ -16,7 +16,7 @@ export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
             (element, existing, newProps) => {
                 if (existing) {
                     existing.setProps(newProps);
-                    return undefined;
+                    return existing;
                 }
                 return api.createRestorer(element, newProps);
             }

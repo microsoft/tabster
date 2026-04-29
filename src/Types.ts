@@ -1307,8 +1307,8 @@ export interface DummyInputObserver {
  *
  * `existing` is the current `TabsterOnElement[K]` (the live instance, if any).
  * `newProps`/`oldProps` are typed against the same key on `TabsterAttributeProps`.
- * Return the new instance to assign into `TabsterOnElement[K]`, or `undefined`
- * if the existing instance was kept (e.g. `setProps` on existing).
+ * Returns the instance that should occupy `TabsterOnElement[K]` after this
+ * call — either the (possibly-mutated) `existing` or a freshly created one.
  */
 export type TabsterAttrHandler<K extends keyof TabsterAttributeProps> = (
     element: HTMLElement,
@@ -1316,7 +1316,7 @@ export type TabsterAttrHandler<K extends keyof TabsterAttributeProps> = (
     newProps: NonNullable<TabsterAttributeProps[K]>,
     oldProps: TabsterAttributeProps[K],
     sys: SysProps | undefined
-) => TabsterOnElement[K];
+) => NonNullable<TabsterOnElement[K]>;
 
 /**
  * @internal
@@ -1330,7 +1330,7 @@ export type AnyTabsterAttrHandler = (
     newProps: unknown,
     oldProps: unknown,
     sys: SysProps | undefined
-) => unknown;
+) => NonNullable<unknown>;
 
 /**
  * @internal

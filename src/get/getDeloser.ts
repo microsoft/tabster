@@ -25,7 +25,7 @@ export function getDeloser(
             (element, existing, newProps) => {
                 if (existing) {
                     existing.setProps(newProps);
-                    return undefined;
+                    return existing;
                 }
                 return api.createDeloser(element, newProps);
             }

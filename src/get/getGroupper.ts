@@ -21,7 +21,7 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
             (element, existing, newProps, _oldProps, sys) => {
                 if (existing) {
                     existing.setProps(newProps);
-                    return undefined;
+                    return existing;
                 }
                 return api.createGroupper(element, newProps, sys);
             }

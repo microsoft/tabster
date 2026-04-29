@@ -21,7 +21,7 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
             (element, existing, newProps, _oldProps, sys) => {
                 if (existing) {
                     existing.setProps(newProps);
-                    return undefined;
+                    return existing;
                 }
                 return api.createMover(element, newProps, sys);
             }
