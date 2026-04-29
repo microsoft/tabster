@@ -14,17 +14,11 @@ export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
         tabsterCore.attrHandlers.set(
             "restorer",
             (element, existing, newProps) => {
-                const next = newProps as Types.RestorerProps | undefined;
                 if (existing) {
-                    if (next) {
-                        (existing as Types.Restorer).setProps(next);
-                    }
+                    existing.setProps(newProps);
                     return undefined;
                 }
-                if (next) {
-                    return api.createRestorer(element, next);
-                }
-                return undefined;
+                return api.createRestorer(element, newProps);
             }
         );
     }

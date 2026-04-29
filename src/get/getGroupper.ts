@@ -19,12 +19,11 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
         tabsterCore.attrHandlers.set(
             "groupper",
             (element, existing, newProps, _oldProps, sys) => {
-                const next = newProps as Types.GroupperProps;
                 if (existing) {
-                    (existing as Types.Groupper).setProps(next);
+                    existing.setProps(newProps);
                     return undefined;
                 }
-                return api.createGroupper(element, next, sys);
+                return api.createGroupper(element, newProps, sys);
             }
         );
     }

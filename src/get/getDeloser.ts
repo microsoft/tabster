@@ -23,12 +23,11 @@ export function getDeloser(
         tabsterCore.attrHandlers.set(
             "deloser",
             (element, existing, newProps) => {
-                const next = newProps as Types.DeloserProps;
                 if (existing) {
-                    (existing as Types.Deloser).setProps(next);
+                    existing.setProps(newProps);
                     return undefined;
                 }
-                return api.createDeloser(element, next);
+                return api.createDeloser(element, newProps);
             }
         );
     }

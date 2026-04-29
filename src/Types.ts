@@ -1300,15 +1300,31 @@ export interface DummyInputObserver {
 
 /**
  * @internal
- * Handler invoked by `updateTabsterByAttribute` for a given attribute key.
- * Subsystems register a handler from their `get*` file when they're first
- * instantiated, so the heavy create-or-setProps logic only enters the bundle
- * when the subsystem itself does.
+ * Per-attribute-key handler invoked by `updateTabsterByAttribute`. Subsystems
+ * register a handler from their `get*` file when they're first instantiated,
+ * so the create-or-setProps logic only enters the bundle when the subsystem
+ * itself does.
  *
- * Returns the new instance to assign into `TabsterOnElement[key]`, or
- * `undefined` if the existing instance was kept (e.g. setProps on existing).
+ * `existing` is the current `TabsterOnElement[K]` (the live instance, if any).
+ * `newProps`/`oldProps` are typed against the same key on `TabsterAttributeProps`.
+ * Return the new instance to assign into `TabsterOnElement[K]`, or `undefined`
+ * if the existing instance was kept (e.g. `setProps` on existing).
  */
-export type TabsterAttrHandler = (
+export type TabsterAttrHandler<K extends keyof TabsterAttributeProps> = (
+    element: HTMLElement,
+    existing: TabsterOnElement[K],
+    newProps: NonNullable<TabsterAttributeProps[K]>,
+    oldProps: TabsterAttributeProps[K],
+    sys: SysProps | undefined
+) => TabsterOnElement[K];
+
+/**
+ * @internal
+ * Type-erased handler shape used internally for storage and dispatch.
+ * Callers should use the generic `TabsterAttrHandler<K>` for type-safe
+ * registration.
+ */
+export type AnyTabsterAttrHandler = (
     element: HTMLElement,
     existing: unknown,
     newProps: unknown,
@@ -1316,9 +1332,24 @@ export type TabsterAttrHandler = (
     sys: SysProps | undefined
 ) => unknown;
 
+/**
+ * @internal
+ * Typed registry for attribute handlers. `set` is generic per key so the
+ * handler's `existing`/`newProps`/`oldProps`/return types are inferred from
+ * the key. `get` returns the type-erased shape since the call site (Instance.ts)
+ * iterates over `keyof TabsterAttributeProps` and can't statically narrow.
+ */
+export interface TabsterAttrHandlerRegistry {
+    set<K extends keyof TabsterAttributeProps>(
+        key: K,
+        handler: TabsterAttrHandler<K>
+    ): void;
+    get(key: keyof TabsterAttributeProps): AnyTabsterAttrHandler | undefined;
+}
+
 interface TabsterCoreInternal {
     /** @internal */
-    attrHandlers: Map<keyof TabsterAttributeProps, TabsterAttrHandler>;
+    attrHandlers: TabsterAttrHandlerRegistry;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

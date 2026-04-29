@@ -21,6 +21,35 @@ import {
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
+function createAttrHandlerRegistry(): Types.TabsterAttrHandlerRegistry {
+    const handlers = new Map<
+        keyof Types.TabsterAttributeProps,
+        Types.AnyTabsterAttrHandler
+    >();
+
+    return {
+        set<K extends keyof Types.TabsterAttributeProps>(
+            key: K,
+            handler: Types.TabsterAttrHandler<K>
+        ): void {
+            // Variance gap: a handler typed for a specific key is not
+            // structurally assignable to AnyTabsterAttrHandler (parameters
+            // are contravariant). The double cast is the standard escape
+            // hatch — safe because lookup is keyed and dispatch passes the
+            // matching slot's value back in.
+            handlers.set(
+                key,
+                handler as unknown as Types.AnyTabsterAttrHandler
+            );
+        },
+        get(
+            key: keyof Types.TabsterAttributeProps
+        ): Types.AnyTabsterAttrHandler | undefined {
+            return handlers.get(key);
+        },
+    };
+}
+
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -56,10 +85,8 @@ class TabsterCore implements Types.TabsterCore {
     _noop = false;
     controlTab: boolean;
     rootDummyInputs: boolean;
-    attrHandlers: Map<
-        keyof Types.TabsterAttributeProps,
-        Types.TabsterAttrHandler
-    > = new Map();
+    attrHandlers: Types.TabsterAttrHandlerRegistry =
+        createAttrHandlerRegistry();
 
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
