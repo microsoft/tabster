@@ -125,9 +125,9 @@ export function updateTabsterByAttribute(
         switch (key) {
             case "deloser":
                 if (tabster.deloser) {
-                    tabster.deloser.applyAttribute(
+                    tabsterOnElement.deloser = tabster.deloser.applyAttribute(
                         element,
-                        tabsterOnElement,
+                        tabsterOnElement.deloser,
                         newTabsterProps.deloser as Types.DeloserProps
                     );
                 } else if (__DEV__) {
@@ -154,13 +154,14 @@ export function updateTabsterByAttribute(
 
             case "modalizer":
                 if (tabster.modalizer) {
-                    tabster.modalizer.applyAttribute(
-                        element,
-                        tabsterOnElement,
-                        newTabsterProps.modalizer as Types.ModalizerProps,
-                        oldTabsterProps?.modalizer,
-                        sys
-                    );
+                    tabsterOnElement.modalizer =
+                        tabster.modalizer.applyAttribute(
+                            element,
+                            tabsterOnElement.modalizer,
+                            newTabsterProps.modalizer as Types.ModalizerProps,
+                            oldTabsterProps?.modalizer,
+                            sys
+                        );
                 } else if (__DEV__) {
                     console.error(
                         "Modalizer API used before initialization, please call `getModalizer()`"
@@ -171,11 +172,12 @@ export function updateTabsterByAttribute(
             case "restorer":
                 if (tabster.restorer) {
                     if (newTabsterProps.restorer) {
-                        tabster.restorer.applyAttribute(
-                            element,
-                            tabsterOnElement,
-                            newTabsterProps.restorer
-                        );
+                        tabsterOnElement.restorer =
+                            tabster.restorer.applyAttribute(
+                                element,
+                                tabsterOnElement.restorer,
+                                newTabsterProps.restorer
+                            );
                     }
                 } else if (__DEV__) {
                     console.error(
@@ -190,9 +192,9 @@ export function updateTabsterByAttribute(
 
             case "groupper":
                 if (tabster.groupper) {
-                    tabster.groupper.applyAttribute(
+                    tabsterOnElement.groupper = tabster.groupper.applyAttribute(
                         element,
-                        tabsterOnElement,
+                        tabsterOnElement.groupper,
                         newTabsterProps.groupper as Types.GroupperProps,
                         sys
                     );
@@ -205,9 +207,9 @@ export function updateTabsterByAttribute(
 
             case "mover":
                 if (tabster.mover) {
-                    tabster.mover.applyAttribute(
+                    tabsterOnElement.mover = tabster.mover.applyAttribute(
                         element,
-                        tabsterOnElement,
+                        tabsterOnElement.mover,
                         newTabsterProps.mover as Types.MoverProps,
                         sys
                     );

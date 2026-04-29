@@ -12,7 +12,6 @@ import type {
     RestorerAPI as RestorerAPIType,
     RestorerProps,
     TabsterCore,
-    TabsterOnElement,
 } from "./Types.js";
 import { RestorerTypes, AsyncFocusSources } from "./Consts.js";
 import {
@@ -249,13 +248,13 @@ export class RestorerAPI implements RestorerAPIType {
 
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existingRestorer: RestorerInterface | undefined,
         newProps: RestorerProps
-    ): void {
-        if (storage.restorer) {
-            storage.restorer.setProps(newProps);
-        } else {
-            storage.restorer = this.createRestorer(element, newProps);
+    ): RestorerInterface {
+        if (existingRestorer) {
+            existingRestorer.setProps(newProps);
+            return existingRestorer;
         }
+        return this.createRestorer(element, newProps);
     }
 }

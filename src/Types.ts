@@ -533,9 +533,9 @@ interface DeloserInterfaceInternal {
     /** @internal */
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existing: Deloser | undefined,
         newProps: DeloserProps
-    ): void;
+    ): Deloser;
 }
 
 export interface DeloserAPI extends DeloserInterfaceInternal, Disposable {
@@ -871,10 +871,10 @@ interface MoverAPIInternal {
     /** @internal */
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existing: Mover | undefined,
         newProps: MoverProps,
         sys: SysProps | undefined
-    ): void;
+    ): Mover;
 }
 
 import { type MoverKeys as _MoverKeys } from "./Consts.js";
@@ -939,10 +939,10 @@ export interface GroupperAPIInternal {
     /** @internal */
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existing: Groupper | undefined,
         newProps: GroupperProps,
         sys: SysProps | undefined
-    ): void;
+    ): Groupper;
 }
 
 import { type GroupperMoveFocusActions as _GroupperMoveFocusActions } from "./Consts.js";
@@ -1113,11 +1113,11 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existing: Modalizer | undefined,
         newProps: ModalizerProps,
         oldProps: ModalizerProps | undefined,
         sys: SysProps | undefined
-    ): void;
+    ): Modalizer;
     /**
      * Sets active modalizers.
      * When active, everything outside of the modalizers with the specific user
@@ -1165,9 +1165,9 @@ interface RestorerAPIInternal {
     /** @internal */
     applyAttribute(
         element: HTMLElement,
-        storage: TabsterOnElement,
+        existing: Restorer | undefined,
         newProps: RestorerProps
-    ): void;
+    ): Restorer;
 }
 
 export interface RestorerAPI extends RestorerAPIInternal, Disposable {}

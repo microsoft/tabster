@@ -797,14 +797,14 @@ export class DeloserAPI implements Types.DeloserAPI {
 
     applyAttribute(
         element: HTMLElement,
-        storage: Types.TabsterOnElement,
+        existingDeloser: Types.Deloser | undefined,
         newProps: Types.DeloserProps
-    ): void {
-        if (storage.deloser) {
-            storage.deloser.setProps(newProps);
-        } else {
-            storage.deloser = this.createDeloser(element, newProps);
+    ): Types.Deloser {
+        if (existingDeloser) {
+            existingDeloser.setProps(newProps);
+            return existingDeloser;
         }
+        return this.createDeloser(element, newProps);
     }
 
     getActions(element: HTMLElement): Types.DeloserElementActions | undefined {

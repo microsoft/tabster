@@ -530,15 +530,15 @@ export class GroupperAPI implements Types.GroupperAPI {
 
     applyAttribute(
         element: HTMLElement,
-        storage: Types.TabsterOnElement,
+        existingGroupper: Types.Groupper | undefined,
         newProps: Types.GroupperProps,
         sys: Types.SysProps | undefined
-    ): void {
-        if (storage.groupper) {
-            storage.groupper.setProps(newProps);
-        } else {
-            storage.groupper = this.createGroupper(element, newProps, sys);
+    ): Types.Groupper {
+        if (existingGroupper) {
+            existingGroupper.setProps(newProps);
+            return existingGroupper;
         }
+        return this.createGroupper(element, newProps, sys);
     }
 
     forgetCurrentGrouppers(): void {

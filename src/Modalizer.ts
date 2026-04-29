@@ -449,35 +449,24 @@ export class ModalizerAPI implements Types.ModalizerAPI {
 
     applyAttribute(
         element: HTMLElement,
-        storage: Types.TabsterOnElement,
+        existingModalizer: Types.Modalizer | undefined,
         newProps: Types.ModalizerProps,
         oldProps: Types.ModalizerProps | undefined,
         sys: Types.SysProps | undefined
-    ): void {
-        let propsToCreate: Types.ModalizerProps | undefined;
-
-        if (storage.modalizer) {
+    ): Types.Modalizer {
+        if (existingModalizer) {
             const newId = newProps.id;
             if (newId && oldProps?.id !== newId) {
                 // Modalizer id is changed, given the modalizers have complex logic and could be
                 // composite, it is easier to recreate the Modalizer instance than to implement
                 // the id update.
-                storage.modalizer.dispose();
-                propsToCreate = newProps;
-            } else {
-                storage.modalizer.setProps(newProps);
+                existingModalizer.dispose();
+                return this.createModalizer(element, newProps, sys);
             }
-        } else {
-            propsToCreate = newProps;
+            existingModalizer.setProps(newProps);
+            return existingModalizer;
         }
-
-        if (propsToCreate) {
-            storage.modalizer = this.createModalizer(
-                element,
-                propsToCreate,
-                sys
-            );
-        }
+        return this.createModalizer(element, newProps, sys);
     }
 
     private _onModalizerDispose = (modalizer: Modalizer) => {

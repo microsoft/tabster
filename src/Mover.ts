@@ -760,15 +760,15 @@ export class MoverAPI implements Types.MoverAPI {
 
     applyAttribute(
         element: HTMLElement,
-        storage: Types.TabsterOnElement,
+        existingMover: Types.Mover | undefined,
         newProps: Types.MoverProps,
         sys: Types.SysProps | undefined
-    ): void {
-        if (storage.mover) {
-            storage.mover.setProps(newProps);
-        } else {
-            storage.mover = this.createMover(element, newProps, sys);
+    ): Types.Mover {
+        if (existingMover) {
+            existingMover.setProps(newProps);
+            return existingMover;
         }
+        return this.createMover(element, newProps, sys);
     }
 
     private _onMoverDispose = (mover: Mover) => {
