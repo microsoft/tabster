@@ -15,7 +15,7 @@ import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { createUncontrolledAPI } from "./Uncontrolled.js";
-import { DummyInputObserver } from "./DummyInput.js";
+import { createDummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
     createElementTreeWalker,
@@ -108,7 +108,7 @@ class TabsterCore implements Types.TabsterCore {
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
 
-        this._dummyObserver = new DummyInputObserver(getWindow);
+        this._dummyObserver = createDummyInputObserver(getWindow);
 
         this.getParent = props?.getParent ?? dom.getParentNode;
 

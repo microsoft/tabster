@@ -19,8 +19,9 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
+    createDummyInputManager,
     type DummyInput,
-    DummyInputManager,
+    type DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
@@ -37,36 +38,31 @@ import { dom } from "./DOMAPI.js";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
-class MoverDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-    private _getMemorized: () => WeakHTMLElement | undefined;
+function createMoverDummyManager(
+    element: WeakHTMLElement,
+    tabster: Types.TabsterCore,
+    getMemorized: () => WeakHTMLElement | undefined,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Mover,
+        sys
+    );
 
-    constructor(
-        element: WeakHTMLElement,
-        tabster: Types.TabsterCore,
-        getMemorized: () => WeakHTMLElement | undefined,
-        sys: Types.SysProps | undefined
-    ) {
-        super(tabster, element, DummyInputManagerPriorities.Mover, sys);
-
-        this._tabster = tabster;
-        this._getMemorized = getMemorized;
-
-        this._setHandlers(this._onFocusDummyInput);
-    }
-
-    private _onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = this._element.get();
+    const onFocusDummyInput = (dummyInput: DummyInput) => {
+        const container = element.get();
         const input = dummyInput.input;
 
         if (container && input) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, container);
+            const ctx = RootAPI.getTabsterContext(tabster, container);
 
             let toFocus: HTMLElement | null | undefined;
 
             if (ctx) {
                 toFocus = FocusedElementState.findNextTabbable(
-                    this._tabster,
+                    tabster,
                     ctx,
                     undefined,
                     input,
@@ -76,9 +72,9 @@ class MoverDummyManager extends DummyInputManager {
                 )?.element;
             }
 
-            const memorized = this._getMemorized()?.get();
+            const memorized = getMemorized()?.get();
 
-            if (memorized && this._tabster.focusable.isFocusable(memorized)) {
+            if (memorized && tabster.focusable.isFocusable(memorized)) {
                 toFocus = memorized;
             }
 
@@ -87,6 +83,10 @@ class MoverDummyManager extends DummyInputManager {
             }
         }
     };
+
+    manager.setHandlers(onFocusDummyInput);
+
+    return manager;
 }
 
 // TypeScript enums produce depressing JavaScript code, so, we're just using
@@ -121,7 +121,7 @@ export class Mover
     private _updateTimer: number | undefined;
 
     visibilityTolerance: number;
-    dummyManager: MoverDummyManager | undefined;
+    dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -148,7 +148,7 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this.dummyManager = new MoverDummyManager(
+            this.dummyManager = createMoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized,

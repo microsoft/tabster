@@ -74,7 +74,9 @@ function normalizeSource(src) {
     if (!src) return "<unknown>";
     if (src.startsWith("webpack://")) {
         // webpack:///./relative/path or webpack:///external "..."
-        const stripped = src.replace(/^webpack:\/+/, "").replace(/^[^/]+\//, "");
+        const stripped = src
+            .replace(/^webpack:\/+/, "")
+            .replace(/^[^/]+\//, "");
         return stripped.replace(/^\.\//, "");
     }
     return src;

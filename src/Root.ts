@@ -8,6 +8,7 @@ import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
 import {
+    createDummyInputManager,
     type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
@@ -37,52 +38,41 @@ function _setInformativeStyle(
     }
 }
 
-class RootDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-    private _setFocused: (focused: boolean) => void;
+function createRootDummyManager(
+    tabster: Types.TabsterCore,
+    element: WeakHTMLElement,
+    setFocused: (focused: boolean) => void,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Root,
+        sys,
+        undefined,
+        true
+    );
 
-    constructor(
-        tabster: Types.TabsterCore,
-        element: WeakHTMLElement,
-        setFocused: (focused: boolean) => void,
-        sys: Types.SysProps | undefined
-    ) {
-        super(
-            tabster,
-            element,
-            DummyInputManagerPriorities.Root,
-            sys,
-            undefined,
-            true
-        );
-
-        this._setHandlers(this._onDummyInputFocus);
-
-        this._tabster = tabster;
-        this._setFocused = setFocused;
-    }
-
-    private _onDummyInputFocus = (dummyInput: DummyInput): void => {
+    const onDummyInputFocus = (dummyInput: DummyInput): void => {
         if (dummyInput.useDefaultAction) {
             // When we've reached the last focusable element, we want to let the browser
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing
             // the default action to move the focus out.
-            this._setFocused(false);
+            setFocused(false);
         } else {
             // The only way a dummy input gets focused is during the keyboard navigation.
-            this._tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
+            tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
 
-            const element = this._element.get();
+            const el = element.get();
 
-            if (element) {
-                this._setFocused(true);
+            if (el) {
+                setFocused(true);
 
-                const toFocus =
-                    this._tabster.focusedElement.getFirstOrLastTabbable(
-                        dummyInput.isFirst,
-                        { container: element, ignoreAccessibility: true }
-                    );
+                const toFocus = tabster.focusedElement.getFirstOrLastTabbable(
+                    dummyInput.isFirst,
+                    { container: el, ignoreAccessibility: true }
+                );
 
                 if (toFocus) {
                     nativeFocus(toFocus);
@@ -93,6 +83,10 @@ class RootDummyManager extends DummyInputManager {
             dummyInput.input?.blur();
         }
     };
+
+    manager.setHandlers(onDummyInputFocus);
+
+    return manager;
 }
 
 export class Root
@@ -101,7 +95,7 @@ export class Root
 {
     readonly uid: string;
 
-    private _dummyManager?: RootDummyManager;
+    private _dummyManager?: DummyInputManager;
     private _sys?: Types.SysProps;
     private _isFocused = false;
     private _setFocusedTimer: number | undefined;
@@ -138,7 +132,7 @@ export class Root
 
     addDummyInputs(): void {
         if (!this._dummyManager) {
-            this._dummyManager = new RootDummyManager(
+            this._dummyManager = createRootDummyManager(
                 this._tabster,
                 this._element,
                 this._setFocused,
@@ -174,7 +168,7 @@ export class Root
             const el = this.getElement();
 
             if (el) {
-                RootDummyManager.moveWithPhantomDummy(
+                DummyInputManager.moveWithPhantomDummy(
                     this._tabster,
                     el,
                     true,
