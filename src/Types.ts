@@ -340,24 +340,6 @@ export interface ObservedElementAPI
         options?: Pick<FocusOptions, "preventScroll">
     ): ObservedElementAsyncRequest<boolean>;
     /**
-     * Returns all currently registered observed elements grouped by their observed names.
-     *
-     * @returns A Map where each key is an observed name, and each value is an array of elements
-     * associated with that name along with their complete names arrays.
-     *
-     * @example
-     * ```typescript
-     * const allObserved = observedElement.getAllObservedElements();
-     * // Map might contain:
-     * // "button-1" -> [{ element: <button>, names: ["button-1", "primary"] }]
-     * // "primary" -> [{ element: <button>, names: ["button-1", "primary"] }]
-     * ```
-     */
-    getAllObservedElements(): Map<
-        string,
-        Array<{ element: HTMLElement; names: string[] }>
-    >;
-    /**
      * Optional callback that is invoked whenever an observed element is added, removed, or updated in the DOM.
      */
     onObservedElementChange?: (change: ObservedElementChange) => void;
