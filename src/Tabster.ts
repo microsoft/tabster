@@ -14,7 +14,7 @@ import { observeMutations } from "./MutationEvent.js";
 import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
-import { UncontrolledAPI } from "./Uncontrolled.js";
+import { createUncontrolledAPI } from "./Uncontrolled.js";
 import { createDummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
@@ -112,7 +112,7 @@ class TabsterCore implements Types.TabsterCore {
         this.focusedElement = createFocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
-        this.uncontrolled = new UncontrolledAPI(
+        this.uncontrolled = createUncontrolledAPI(
             // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
             props?.checkUncontrolledCompletely ||
                 props?.checkUncontrolledTrappingFocus
