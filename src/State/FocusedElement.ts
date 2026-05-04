@@ -22,8 +22,10 @@ import {
 } from "../Events.js";
 import { DummyInputManager } from "../DummyInput.js";
 import {
+    addListener,
     documentContains,
     getLastChild,
+    removeListener,
     shouldIgnoreFocus,
     WeakHTMLElement,
 } from "../Utils.js";
@@ -371,13 +373,9 @@ export function createFocusedElementState(
         const doc = win.document;
 
         // Add these event listeners as capture - we want Tabster to run before user event handlers
-        doc.addEventListener(KEYBORG_FOCUSIN, onFocusIn as EventListener, true);
-        doc.addEventListener(
-            KEYBORG_FOCUSOUT,
-            onFocusOut as EventListener,
-            true
-        );
-        win.addEventListener("keydown", onKeyDown, true);
+        addListener(doc, KEYBORG_FOCUSIN, onFocusIn as EventListener, true);
+        addListener(doc, KEYBORG_FOCUSOUT, onFocusOut as EventListener, true);
+        addListener(win, "keydown", onKeyDown, true);
 
         const activeElement = dom.getActiveElement(doc);
 
@@ -412,17 +410,19 @@ export function createFocusedElementState(
             const win = getWindow();
             const doc = win.document;
 
-            doc.removeEventListener(
+            removeListener(
+                doc,
                 KEYBORG_FOCUSIN,
                 onFocusIn as EventListener,
                 true
             );
-            doc.removeEventListener(
+            removeListener(
+                doc,
                 KEYBORG_FOCUSOUT,
                 onFocusOut as EventListener,
                 true
             );
-            win.removeEventListener("keydown", onKeyDown, true);
+            removeListener(win, "keydown", onKeyDown, true);
 
             sub.unsubscribe(onChanged);
 

@@ -17,7 +17,13 @@ import {
 } from "./Consts.js";
 import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
-import { hasSubFocusable, makeFocusIgnored, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    hasSubFocusable,
+    makeFocusIgnored,
+    removeListener,
+    WeakHTMLElement,
+} from "./Utils.js";
 
 const _updateDummyInputsTimeout = 100;
 
@@ -146,8 +152,8 @@ export function createDummyInput(
         }
     };
 
-    input.addEventListener("focusin", focusIn);
-    input.addEventListener("focusout", focusOut);
+    addListener(input, "focusin", focusIn);
+    addListener(input, "focusout", focusOut);
 
     const api: DummyInput = {
         input,
@@ -178,8 +184,8 @@ export function createDummyInput(
             api.onFocusOut = undefined;
             api.input = undefined;
 
-            currentInput.removeEventListener("focusin", focusIn);
-            currentInput.removeEventListener("focusout", focusOut);
+            removeListener(currentInput, "focusin", focusIn);
+            removeListener(currentInput, "focusout", focusOut);
 
             delete (currentInput as HTMLElementWithDummyContainer)
                 .__tabsterDummyContainer;
@@ -888,7 +894,7 @@ function createDummyInputManagerCore(
                 newTransformElements.add(e);
 
                 if (!transformElements.has(e)) {
-                    e.addEventListener("scroll", addTransformOffsets);
+                    addListener(e, "scroll", addTransformOffsets);
                 }
 
                 scrollTop += scrollTopLeft.scrollTop;
@@ -898,7 +904,7 @@ function createDummyInputManagerCore(
 
         for (const e of transformElements) {
             if (!newTransformElements.has(e)) {
-                e.removeEventListener("scroll", addTransformOffsets);
+                removeListener(e, "scroll", addTransformOffsets);
             }
         }
 
@@ -1094,7 +1100,7 @@ function createDummyInputManagerCore(
                 }
 
                 for (const e of transformElements) {
-                    e.removeEventListener("scroll", addTransformOffsets);
+                    removeListener(e, "scroll", addTransformOffsets);
                 }
                 transformElements.clear();
 

@@ -14,9 +14,11 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
+    addListener,
     documentContains,
     getElementUId,
     isDisplayNone,
+    removeListener,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -863,7 +865,7 @@ export function createDeloserAPI(
         tabster.focusedElement.subscribe(onFocus);
         const doc = win().document;
 
-        doc.addEventListener(DeloserRestoreFocusEventName, onRestoreFocus);
+        addListener(doc, DeloserRestoreFocusEventName, onRestoreFocus);
 
         const activeElement = dom.getActiveElement(doc);
 
@@ -903,7 +905,8 @@ export function createDeloserAPI(
 
             tabster.focusedElement.unsubscribe(onFocus);
 
-            w.document.removeEventListener(
+            removeListener(
+                w.document,
                 DeloserRestoreFocusEventName,
                 onRestoreFocus
             );

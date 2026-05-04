@@ -26,10 +26,12 @@ import {
     getDummyInputContainer,
 } from "./DummyInput.js";
 import {
+    addListener,
     createElementTreeWalker,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
+    removeListener,
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
@@ -1435,12 +1437,9 @@ export function createMoverAPI(
     tabster.queueInit(() => {
         const win = getWindow();
 
-        win.addEventListener("keydown", onKeyDown, true);
-        win.addEventListener(MoverMoveFocusEventName, onMoveFocus);
-        win.addEventListener(
-            MoverMemorizedElementEventName,
-            onMemorizedElement
-        );
+        addListener(win, "keydown", onKeyDown, true);
+        addListener(win, MoverMoveFocusEventName, onMoveFocus);
+        addListener(win, MoverMemorizedElementEventName, onMemorizedElement);
 
         tabster.focusedElement.subscribe(onFocus);
     });
@@ -1458,9 +1457,10 @@ export function createMoverAPI(
                 ignoredInputTimer = undefined;
             }
 
-            win.removeEventListener("keydown", onKeyDown, true);
-            win.removeEventListener(MoverMoveFocusEventName, onMoveFocus);
-            win.removeEventListener(
+            removeListener(win, "keydown", onKeyDown, true);
+            removeListener(win, MoverMoveFocusEventName, onMoveFocus);
+            removeListener(
+                win,
                 MoverMemorizedElementEventName,
                 onMemorizedElement
             );

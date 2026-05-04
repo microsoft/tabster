@@ -644,6 +644,72 @@ export function getRadioButtonGroup(
 }
 
 /**
+ * Manages a single setTimeout id with idempotent set/clear semantics.
+ * Replaces the `if (this._timer) win.clearTimeout(this._timer); this._timer = undefined`
+ * boilerplate scattered across the codebase. Each `set()` cancels any pending
+ * timer, and the callback auto-clears the id when it fires.
+ */
+export interface Timer {
+    /** Cancels any pending timer and schedules a new one. */
+    set(callback: () => void, delay: number): void;
+    /** Cancels the pending timer; no-op if there isn't one. */
+    clear(): void;
+    /** Whether a timer is currently pending. */
+    isActive(): boolean;
+}
+
+export function createTimer(getWindow: GetWindow): Timer {
+    let id: number | undefined;
+    return {
+        set(callback: () => void, delay: number): void {
+            if (id !== undefined) {
+                getWindow().clearTimeout(id);
+            }
+            id = getWindow().setTimeout(() => {
+                id = undefined;
+                callback();
+            }, delay);
+        },
+        clear(): void {
+            if (id !== undefined) {
+                getWindow().clearTimeout(id);
+                id = undefined;
+            }
+        },
+        isActive(): boolean {
+            return id !== undefined;
+        },
+    };
+}
+
+/**
+ * Thin wrappers around `addEventListener` / `removeEventListener`. Their
+ * names get mangled to single chars by the minifier, while the inlined
+ * property accesses on `target` would not — so each call site shrinks by
+ * the difference between the helper's mangled name and the property name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyEventHandler = (event: any) => void;
+
+export function addListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | AddEventListenerOptions
+): void {
+    target?.addEventListener(type, handler, options);
+}
+
+export function removeListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | EventListenerOptions
+): void {
+    target?.removeEventListener(type, handler, options);
+}
+
+/**
  * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
  * @param element Element to check for being dummy input.
  * @returns Dummy input container element (if the passed element is a dummy input) or null.

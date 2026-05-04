@@ -14,11 +14,13 @@ import { createSubscribable } from "./State/Subscribable.js";
 import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
+    addListener,
     getElementUId,
     getInstanceContext,
     getUId,
     getWindowUId,
     type HTMLElementWithUID,
+    removeListener,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
@@ -992,7 +994,7 @@ class CrossOriginTransactions {
 
             this.setSendUp(sendUp);
 
-            this._owner().addEventListener("pagehide", this._onPageHide);
+            addListener(this._owner(), "pagehide", this._onPageHide);
 
             this._ping();
         }
@@ -1029,11 +1031,11 @@ class CrossOriginTransactions {
                         };
                     }
 
-                    owner.addEventListener("message", this._onBrowserMessage);
+                    addListener(owner, "message", this._onBrowserMessage);
                 }
             }
         } else if (this._isDefaultSendUp) {
-            owner.removeEventListener("message", this._onBrowserMessage);
+            removeListener(owner, "message", this._onBrowserMessage);
             this._isDefaultSendUp = false;
         }
 
@@ -1048,8 +1050,8 @@ class CrossOriginTransactions {
             this._pingTimer = undefined;
         }
 
-        owner.removeEventListener("message", this._onBrowserMessage);
-        owner.removeEventListener("pagehide", this._onPageHide);
+        removeListener(owner, "message", this._onBrowserMessage);
+        removeListener(owner, "pagehide", this._onPageHide);
 
         await this._dead();
 

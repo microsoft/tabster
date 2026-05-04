@@ -16,7 +16,12 @@ import {
     RestorerRestoreFocusEvent,
     RestorerRestoreFocusEventName,
 } from "./Events.js";
-import { TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
@@ -31,8 +36,8 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
-            element?.addEventListener("focusout", this._onFocusOut);
-            element?.addEventListener("focusin", this._onFocusIn);
+            addListener(element, "focusout", this._onFocusOut);
+            addListener(element, "focusin", this._onFocusIn);
 
             // set hasFocus when the instance is created, in case focus has already moved within it
             this._hasFocus = dom.nodeContains(
@@ -45,8 +50,8 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     dispose(): void {
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
-            element?.removeEventListener("focusout", this._onFocusOut);
-            element?.removeEventListener("focusin", this._onFocusIn);
+            removeListener(element, "focusout", this._onFocusOut);
+            removeListener(element, "focusin", this._onFocusIn);
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
@@ -203,7 +208,7 @@ export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
         history.push(element);
     };
 
-    getWindow().addEventListener(RestorerRestoreFocusEventName, onRestoreFocus);
+    addListener(getWindow(), RestorerRestoreFocusEventName, onRestoreFocus);
     focusedElementState.subscribe(onFocusIn);
 
     return {
@@ -223,7 +228,8 @@ export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
         dispose() {
             focusedElementState.unsubscribe(onFocusIn);
             focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
-            getWindow().removeEventListener(
+            removeListener(
+                getWindow(),
                 RestorerRestoreFocusEventName,
                 onRestoreFocus
             );

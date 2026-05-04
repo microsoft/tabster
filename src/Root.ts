@@ -13,7 +13,13 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
 } from "./DummyInput.js";
-import { getElementUId, TabsterPart, type WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    getElementUId,
+    removeListener,
+    TabsterPart,
+    type WeakHTMLElement,
+} from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
 
 export interface WindowWithTabsterInstance extends Window {
@@ -124,8 +130,8 @@ export class Root
         const w = win();
         const doc = w.document;
 
-        doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
-        doc.addEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
+        addListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
+        addListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
         this._add();
     }
@@ -147,8 +153,8 @@ export class Root
         const win = this._tabster.getWindow();
         const doc = win.document;
 
-        doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
-        doc.removeEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
+        removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
+        removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
         if (this._setFocusedTimer) {
             win.clearTimeout(this._setFocusedTimer);
@@ -285,14 +291,14 @@ export class RootAPI implements Types.RootAPI {
             }
         } else if (!this._autoRootWaiting) {
             this._autoRootWaiting = true;
-            doc.addEventListener("readystatechange", this._autoRootCreate);
+            addListener(doc, "readystatechange", this._autoRootCreate);
         }
 
         return undefined;
     };
 
     private _autoRootUnwait(doc: Document): void {
-        doc.removeEventListener("readystatechange", this._autoRootCreate);
+        removeListener(doc, "readystatechange", this._autoRootCreate);
         this._autoRootWaiting = false;
     }
 

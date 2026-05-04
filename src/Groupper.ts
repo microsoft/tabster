@@ -27,7 +27,13 @@ import {
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import { getAdjacentElement, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    getAdjacentElement,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 function createGroupperDummyManager(
@@ -696,9 +702,9 @@ export function createGroupperAPI(
             onFocus(activeElement as HTMLElement);
         }
 
-        doc.addEventListener("mousedown", onMouseDown, true);
-        win.addEventListener("keydown", onKeyDown, true);
-        win.addEventListener(GroupperMoveFocusEventName, onMoveFocus);
+        addListener(doc, "mousedown", onMouseDown, true);
+        addListener(win, "keydown", onKeyDown, true);
+        addListener(win, GroupperMoveFocusEventName, onMoveFocus);
     });
 
     return {
@@ -718,9 +724,9 @@ export function createGroupperAPI(
 
             tabster.focusedElement.unsubscribe(onFocus);
 
-            win.document.removeEventListener("mousedown", onMouseDown, true);
-            win.removeEventListener("keydown", onKeyDown, true);
-            win.removeEventListener(GroupperMoveFocusEventName, onMoveFocus);
+            removeListener(win.document, "mousedown", onMouseDown, true);
+            removeListener(win, "keydown", onKeyDown, true);
+            removeListener(win, GroupperMoveFocusEventName, onMoveFocus);
 
             Object.keys(grouppers).forEach((groupperId) => {
                 if (grouppers[groupperId]) {
