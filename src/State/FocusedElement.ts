@@ -11,6 +11,12 @@ import {
     nativeFocus,
 } from "keyborg";
 
+import {
+    _findDefaultFocusable,
+    _findFocusable,
+    _isElementVisible,
+    _isFocusable,
+} from "../Focusable.js";
 import { Keys } from "../Keys.js";
 import { RootAPI } from "../Root.js";
 import type * as Types from "../Types.js";
@@ -23,10 +29,14 @@ import {
 import { DummyInputManager } from "../DummyInput.js";
 import {
     addListener,
+    clearTimer,
+    createTimer,
     documentContains,
     getLastChild,
     removeListener,
+    setTimer,
     shouldIgnoreFocus,
+    type Timer,
     WeakHTMLElement,
 } from "../Utils.js";
 import { getTabsterOnElement } from "../Instance.js";
@@ -71,7 +81,7 @@ const AsyncFocusIntentPriorityBySource = {
 interface AsyncFocus {
     source: Types.AsyncFocusSource;
     callback: () => void;
-    timeout: number;
+    timer: Timer;
 }
 
 interface FocusedElementStateInternal extends Types.FocusedElementState {
@@ -267,10 +277,9 @@ export function createFocusedElementState(
             }
 
             if (
-                (nextUncontrolled &&
-                    tabster.focusable.isVisible(nextUncontrolled)) ||
+                (nextUncontrolled && _isElementVisible(nextUncontrolled)) ||
                 (nextElement.tagName === "IFRAME" &&
-                    tabster.focusable.isVisible(nextElement))
+                    _isElementVisible(nextElement))
             ) {
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
@@ -427,7 +436,7 @@ export function createFocusedElementState(
             sub.unsubscribe(onChanged);
 
             if (asyncFocus) {
-                win.clearTimeout(asyncFocus.timeout);
+                clearTimer(asyncFocus.timer, win);
                 asyncFocus = undefined;
             }
 
@@ -458,7 +467,8 @@ export function createFocusedElementState(
             preventScroll?: boolean
         ): boolean {
             if (
-                !tabster.focusable.isFocusable(
+                !_isFocusable(
+                    tabster,
                     element,
                     noFocusedProgrammaticallyFlag,
                     false,
@@ -474,7 +484,7 @@ export function createFocusedElementState(
         },
 
         focusDefault(container: HTMLElement): boolean {
-            const el = tabster.focusable.findDefault({ container });
+            const el = _findDefaultFocusable(tabster, { container });
 
             if (el) {
                 tabster.focusedElement.focus(el);
@@ -543,11 +553,11 @@ export function createFocusedElementState(
         },
 
         resetFocus(container: HTMLElement): boolean {
-            if (!tabster.focusable.isVisible(container)) {
+            if (!_isElementVisible(container)) {
                 return false;
             }
 
-            if (!tabster.focusable.isFocusable(container, true, true, true)) {
+            if (!_isFocusable(tabster, container, true, true, true)) {
                 const prevTabIndex = container.getAttribute("tabindex");
                 const prevAriaHidden = container.getAttribute("aria-hidden");
 
@@ -585,22 +595,29 @@ export function createFocusedElementState(
                 }
 
                 // New intent has higher priority.
-                win.clearTimeout(currentAsyncFocus.timeout);
+                clearTimer(currentAsyncFocus.timer, win);
             }
 
+            const timer = createTimer();
             asyncFocus = {
                 source,
                 callback,
-                timeout: win.setTimeout(() => {
+                timer,
+            };
+            setTimer(
+                timer,
+                win,
+                () => {
                     asyncFocus = undefined;
                     callback();
-                }, delay),
-            };
+                },
+                delay
+            );
         },
 
         cancelAsyncFocus(source: Types.AsyncFocusSource): void {
             if (asyncFocus?.source === source) {
-                tabster.getWindow().clearTimeout(asyncFocus.timeout);
+                clearTimer(asyncFocus.timer, tabster.getWindow());
                 asyncFocus = undefined;
             }
         },
@@ -609,7 +626,7 @@ export function createFocusedElementState(
     return api;
 }
 
-let _isTabbingTimer: number | undefined;
+const _isTabbingTimer: Timer = createTimer();
 
 export const FocusedElementState = {
     isTabbing: false,
@@ -657,15 +674,15 @@ export const FocusedElementState = {
 
         const win = tabster.getWindow();
 
-        if (_isTabbingTimer) {
-            win.clearTimeout(_isTabbingTimer);
-        }
-
         FocusedElementState.isTabbing = true;
-        _isTabbingTimer = win.setTimeout(() => {
-            _isTabbingTimer = undefined;
-            FocusedElementState.isTabbing = false;
-        }, 0);
+        setTimer(
+            _isTabbingTimer,
+            win,
+            () => {
+                FocusedElementState.isTabbing = false;
+            },
+            0
+        );
 
         const modalizer = ctx.modalizer;
         const groupper = ctx.groupper;
@@ -740,9 +757,11 @@ export const FocusedElementState = {
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            const nextElement = tabster.focusable[
-                isBackward ? "findPrev" : "findNext"
-            ](findProps, findPropsOut);
+            const nextElement = _findFocusable(
+                tabster,
+                { ...findProps, isBackward },
+                findPropsOut
+            );
 
             next = {
                 element: nextElement,

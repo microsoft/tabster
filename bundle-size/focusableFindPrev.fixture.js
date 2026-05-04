@@ -1,23 +1,21 @@
 import {
     createTabster,
     disposeTabster,
+    findPrevFocusable,
     getTabsterAttribute,
     setTabsterAttribute,
     Types,
 } from "tabster";
-
-/** @param {ReturnType<typeof createTabster>} tabster */
-const useFocusable = (tabster) => tabster.focusable.findPrev;
 
 console.log(
     createTabster,
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    useFocusable,
+    findPrevFocusable,
     Types
 );
 
 export default {
-    name: "focusable.findPrev",
+    name: "findPrevFocusable",
 };

@@ -161,7 +161,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateElement = (e: HTMLElement | undefined): boolean => {
         outlinedElement = undefined;
 
-        clearTimer(updateTimer);
+        clearTimer(updateTimer, win());
 
         curPos = undefined;
 
@@ -228,13 +228,13 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateOutline = (): void => {
         setOutlinePosition();
 
-        clearTimer(updateTimer);
+        clearTimer(updateTimer, win());
 
         if (!outlinedElement) {
             return;
         }
 
-        setTimer(updateTimer, updateOutline, 30);
+        setTimer(updateTimer, win(), updateOutline, 30);
     };
 
     const setVisibility = (visible: boolean): void => {
@@ -528,7 +528,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
 
         dispose(): void {
             const w = win();
-            clearTimer(updateTimer);
+            clearTimer(updateTimer, w);
 
             tabster.keyboardNavigation.unsubscribe(
                 onKeyboardNavigationStateChanged

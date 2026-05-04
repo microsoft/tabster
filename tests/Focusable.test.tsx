@@ -104,9 +104,10 @@ describe("Focusable", () => {
         it("should return proper elements when findAll() is called", async () => {
             await broTest
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({ container: document.body })
-                        .map((el) => el.textContent);
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        { container: document.body }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual([
@@ -125,9 +126,10 @@ describe("Focusable", () => {
                         );
 
                     return container
-                        ? getTabsterTestVariables()
-                              .core?.focusable.findAll({ container })
-                              .map((el) => el.textContent)
+                        ? getTabsterTestVariables().findAllFocusable!(
+                              getTabsterTestVariables().core!,
+                              { container }
+                          ).map((el) => el.textContent)
                         : [];
                 })
                 .check((evalRet: string[]) => {
@@ -145,15 +147,16 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container: document.body,
                             onElement: (el) => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -173,16 +176,17 @@ describe("Focusable", () => {
             await broTest
                 .eval(() => {
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container: document.body,
                             isBackward: true,
                             onElement: (el) => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -208,15 +212,16 @@ describe("Focusable", () => {
                             "groupper"
                         )!;
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container,
                             onElement: (el) => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -242,16 +247,17 @@ describe("Focusable", () => {
                             "groupper"
                         )!;
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container,
                             isBackward: true,
                             onElement: (el) => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -281,16 +287,17 @@ describe("Focusable", () => {
                         "button8"
                     );
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container,
                             currentElement: from || undefined,
                             onElement: (el) => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -314,8 +321,9 @@ describe("Focusable", () => {
                         "button8"
                     );
                     const ret: (string | null)[] = [];
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container,
                             currentElement: from || undefined,
                             isBackward: true,
@@ -323,8 +331,8 @@ describe("Focusable", () => {
                                 ret.push(el.textContent);
                                 return true;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -339,8 +347,9 @@ describe("Focusable", () => {
                 .eval(() => {
                     const ret: (string | null)[] = [];
                     let counter = 0;
-                    const found = getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    const found = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container: document.body,
                             isBackward: true,
                             onElement: (el) => {
@@ -348,8 +357,8 @@ describe("Focusable", () => {
                                 ret.push(el.textContent);
                                 return counter < 2;
                             },
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
 
                     return [found, ret];
                 })
@@ -402,9 +411,10 @@ describe("Focusable", () => {
         it("should return proper elements when findAll() is called", async () => {
             await broTest
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({ container: document.body })
-                        .map((el) => el.textContent);
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        { container: document.body }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual([
@@ -422,11 +432,12 @@ describe("Focusable", () => {
                         );
                     return (
                         container &&
-                        getTabsterTestVariables()
-                            .core?.focusable.findAll({
+                        getTabsterTestVariables().findAllFocusable!(
+                            getTabsterTestVariables().core!,
+                            {
                                 container,
-                            })
-                            .map((el) => el.textContent)
+                            }
+                        ).map((el) => el.textContent)
                     );
                 })
                 .check((evalRet: string[]) => {
@@ -440,11 +451,12 @@ describe("Focusable", () => {
                         );
                     return (
                         container &&
-                        getTabsterTestVariables()
-                            .core?.focusable.findAll({
+                        getTabsterTestVariables().findAllFocusable!(
+                            getTabsterTestVariables().core!,
+                            {
                                 container,
-                            })
-                            .map((el) => el.textContent)
+                            }
+                        ).map((el) => el.textContent)
                     );
                 })
                 .check((evalRet: string[]) => {
@@ -455,9 +467,10 @@ describe("Focusable", () => {
                     expect(el?.textContent).toEqual("ModalButton1")
                 )
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({ container: document.body })
-                        .map((el) => el.textContent);
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        { container: document.body }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual([
@@ -468,12 +481,13 @@ describe("Focusable", () => {
                     ]);
                 })
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container: document.body,
                             useActiveModalizer: true,
-                        })
-                        .map((el) => el.textContent);
+                        }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual(["ModalButton1", "ModalButton2"]);
@@ -500,7 +514,7 @@ describe("Focusable", () => {
                 .eval(() => {
                     const vars = getTabsterTestVariables();
                     const button = vars.dom?.getElementById(document, "button");
-                    return button && vars.core?.focusable.isVisible(button);
+                    return button && vars.isElementVisible!(vars.core!, button);
                 })
                 .check((isVisible: boolean) => {
                     expect(isVisible).toEqual(true);
@@ -524,9 +538,10 @@ describe("Focusable", () => {
                 </div>
             )
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({ container: document.body })
-                        .map((el) => el.textContent);
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        { container: document.body }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual(["Button5"]);
@@ -564,9 +579,10 @@ describe("Focusable", () => {
                 </div>
             )
                 .eval(() => {
-                    return getTabsterTestVariables()
-                        .core?.focusable.findAll({ container: document.body })
-                        .map((el) => el.textContent);
+                    return getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        { container: document.body }
+                    ).map((el) => el.textContent);
                 })
                 .check((evalRet: string[]) => {
                     expect(evalRet).toEqual(["Button7"]);

@@ -714,48 +714,6 @@ export type FindAllProps = Pick<
  */
 export type FindElementCallback = (element: HTMLElement) => boolean;
 
-export interface FocusableAPI extends Disposable {
-    getProps(element: HTMLElement): FocusableProps;
-
-    isFocusable(
-        element: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        noVisibleCheck?: boolean,
-        noAccessibleCheck?: boolean
-    ): boolean;
-    isVisible(element: HTMLElement): boolean;
-    isAccessible(element: HTMLElement): boolean;
-    // find* return null when there is no element and undefined when there is an uncontrolled area.
-    findFirst(
-        options: FindFirstProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findLast(
-        options: FindFirstProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findNext(
-        options: FindNextProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findPrev(
-        options: FindNextProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findDefault(
-        options: FindDefaultProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null;
-    /**
-     * @returns All focusables in a given context that satisfy an given condition
-     */
-    findAll(options: FindAllProps): HTMLElement[];
-    findElement(
-        options: FindFocusableProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-}
-
 export interface DummyInputManager {
     moveOut: (backwards: boolean) => void;
     moveOutWithDefaultAction: (
@@ -1410,7 +1368,6 @@ interface TabsterCoreInternal {
 export interface Tabster {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
     root: RootAPI;
     uncontrolled: UncontrolledAPI;
 

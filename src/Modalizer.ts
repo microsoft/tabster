@@ -4,6 +4,7 @@
  */
 
 import { nativeFocus } from "keyborg";
+import { _findFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
@@ -266,17 +267,20 @@ export class Modalizer
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
-                findProps,
+            next = _findFocusable(
+                tabster,
+                { ...findProps, isBackward },
                 findPropsOut
             );
 
             if (!next && this._props.isTrapped && tabster.modalizer?.activeId) {
-                next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
+                next = _findFocusable(
+                    tabster,
                     {
                         container,
                         ignoreAccessibility,
                         useActiveModalizer: true,
+                        isBackward,
                     },
                     findPropsOut
                 );
@@ -548,7 +552,7 @@ export function createModalizerAPI(
         const container = ctx?.root.getElement();
 
         if (container) {
-            let toFocus = tabster.focusable.findFirst({
+            let toFocus = _findFocusable(tabster, {
                 container,
                 useActiveModalizer: true,
             });
@@ -558,8 +562,9 @@ export function createModalizerAPI(
                     outsideElement.compareDocumentPosition(toFocus) &
                     document.DOCUMENT_POSITION_PRECEDING
                 ) {
-                    toFocus = tabster.focusable.findLast({
+                    toFocus = _findFocusable(tabster, {
                         container,
+                        isBackward: true,
                         useActiveModalizer: true,
                     });
 
@@ -668,6 +673,7 @@ export function createModalizerAPI(
             // Figure out a better way of doing this rather than a 100ms timeout.
             setTimer(
                 restoreModalizerFocusTimer,
+                win(),
                 () => restoreModalizerFocus(focusedElement),
                 100
             );
@@ -828,8 +834,8 @@ export function createModalizerAPI(
                 }
             });
 
-            clearTimer(restoreModalizerFocusTimer);
-            clearTimer(hiddenUpdateTimer);
+            clearTimer(restoreModalizerFocusTimer, w);
+            clearTimer(hiddenUpdateTimer, w);
 
             parts = {};
             api.activeId = undefined;
@@ -897,7 +903,7 @@ export function createModalizerAPI(
                 return;
             }
 
-            setTimer(hiddenUpdateTimer, hiddenUpdateInternal, 250);
+            setTimer(hiddenUpdateTimer, win(), hiddenUpdateInternal, 250);
         },
 
         setActive(modalizer: Types.Modalizer | undefined): void {

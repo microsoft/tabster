@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FocusableAPI } from "./Focusable.js";
 import {
     FocusedElementState,
     createFocusedElementState,
@@ -32,7 +31,6 @@ import * as shadowDOMAPI from "./Shadowdomize/index.js";
 class Tabster implements Types.Tabster {
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     core: Types.TabsterCore;
@@ -40,7 +38,6 @@ class Tabster implements Types.Tabster {
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
         this.focusedElement = tabster.focusedElement;
-        this.focusable = tabster.focusable;
         this.root = tabster.root;
         this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
@@ -74,7 +71,6 @@ class TabsterCore implements Types.TabsterCore {
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     internal: Types.InternalAPI;
@@ -106,7 +102,6 @@ class TabsterCore implements Types.TabsterCore {
 
         this.keyboardNavigation = createKeyboardNavigationState(getWindow);
         this.focusedElement = createFocusedElementState(this, getWindow);
-        this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = createUncontrolledAPI(
             // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
@@ -191,11 +186,15 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        clearTimer(this._initTimer);
-        this._initQueue = [];
+        const win = this._win;
 
+        if (win) {
+            clearTimer(this._initTimer, win);
+            clearTimer(this._forgetMemorizedTimer, win);
+        }
+
+        this._initQueue = [];
         this._forgetMemorizedElements = [];
-        clearTimer(this._forgetMemorizedTimer);
 
         this.outline?.dispose();
         this.crossOrigin?.dispose();
@@ -207,7 +206,6 @@ class TabsterCore implements Types.TabsterCore {
         this.restorer?.dispose();
 
         this.keyboardNavigation.dispose();
-        this.focusable.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
 
@@ -223,7 +221,6 @@ class TabsterCore implements Types.TabsterCore {
         this._storage = new WeakMap();
         this._wrappers.clear();
 
-        const win = this._win;
         if (win) {
             disposeInstanceContext(win);
             delete win.__tabsterInstance;
@@ -271,6 +268,7 @@ class TabsterCore implements Types.TabsterCore {
 
         setTimer(
             this._forgetMemorizedTimer,
+            this._win,
             () => {
                 for (
                     let el: HTMLElement | undefined =
@@ -299,6 +297,7 @@ class TabsterCore implements Types.TabsterCore {
         if (!isTimerActive(this._initTimer)) {
             setTimer(
                 this._initTimer,
+                this._win,
                 () => {
                     this.drainInitQueue();
                 },

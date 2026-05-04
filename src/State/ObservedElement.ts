@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { _isElementAccessible, _isFocusable } from "../Focusable.js";
 import { getTabsterOnElement } from "../Instance.js";
 import type * as Types from "../Types.js";
 import {
@@ -10,7 +11,16 @@ import {
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
 } from "../Consts.js";
-import { documentContains, getElementUId, WeakHTMLElement } from "../Utils.js";
+import {
+    clearTimer,
+    createTimer,
+    documentContains,
+    getElementUId,
+    isTimerActive,
+    setTimer,
+    type Timer,
+    WeakHTMLElement,
+} from "../Utils.js";
 import { createSubscribable } from "./Subscribable.js";
 
 const _conditionCheckTimeout = 100;
@@ -21,8 +31,8 @@ interface ObservedElementInfo {
 }
 
 interface ObservedWaiting {
-    timer?: number;
-    conditionTimer?: number;
+    timer: Timer;
+    conditionTimer: Timer;
     request?: Types.ObservedElementAsyncRequest<HTMLElement | null>;
     resolve?: (value: HTMLElement | null) => void;
     reject?: () => void;
@@ -74,13 +84,8 @@ export function createObservedElementAPI(
         if (w) {
             const w2 = win();
 
-            if (w.timer) {
-                w2.clearTimeout(w.timer);
-            }
-
-            if (w.conditionTimer) {
-                w2.clearTimeout(w.conditionTimer);
-            }
+            clearTimer(w.timer, w2);
+            clearTimer(w.conditionTimer, w2);
 
             if (!shouldResolve && w.reject) {
                 w.reject();
@@ -107,8 +112,8 @@ export function createObservedElementAPI(
         if (!elementInDOM) {
             reason = ObservedElementFailureReasons.TimeoutElementNotInDOM;
         } else {
-            isAccessible = tabster.focusable.isAccessible(elementInDOM);
-            isFocusable = tabster.focusable.isFocusable(elementInDOM, true);
+            isAccessible = _isElementAccessible(tabster, elementInDOM);
+            isFocusable = _isFocusable(tabster, elementInDOM, true);
 
             if (!isAccessible) {
                 reason =
@@ -201,9 +206,7 @@ export function createObservedElementAPI(
                 return;
             }
 
-            if (wait.timer) {
-                w.clearTimeout(wait.timer);
-            }
+            clearTimer(wait.timer, w);
 
             delete waiting[key];
 
@@ -237,7 +240,7 @@ export function createObservedElementAPI(
 
         if (
             waitingAccessibleElement &&
-            !waitingAccessibleElement.conditionTimer
+            !isTimerActive(waitingAccessibleElement.conditionTimer)
         ) {
             const resolveAccessible = () => {
                 const element = api.getElement(observedName);
@@ -245,7 +248,7 @@ export function createObservedElementAPI(
                 if (
                     element &&
                     documentContains(element.ownerDocument, element) &&
-                    tabster.focusable.isAccessible(element)
+                    _isElementAccessible(tabster, element)
                 ) {
                     resolve(
                         element,
@@ -254,7 +257,9 @@ export function createObservedElementAPI(
                         ObservedElementAccessibilities.Accessible
                     );
                 } else {
-                    waitingAccessibleElement.conditionTimer = w.setTimeout(
+                    setTimer(
+                        waitingAccessibleElement.conditionTimer,
+                        w,
                         resolveAccessible,
                         _conditionCheckTimeout
                     );
@@ -266,7 +271,7 @@ export function createObservedElementAPI(
 
         if (
             waitingFocusableElement &&
-            !waitingFocusableElement.conditionTimer
+            !isTimerActive(waitingFocusableElement.conditionTimer)
         ) {
             const resolveFocusable = () => {
                 const element = api.getElement(observedName);
@@ -274,7 +279,7 @@ export function createObservedElementAPI(
                 if (
                     element &&
                     documentContains(element.ownerDocument, element) &&
-                    tabster.focusable.isFocusable(element, true)
+                    _isFocusable(tabster, element, true)
                 ) {
                     resolve(
                         element,
@@ -283,7 +288,9 @@ export function createObservedElementAPI(
                         ObservedElementAccessibilities.Focusable
                     );
                 } else {
-                    waitingFocusableElement.conditionTimer = w.setTimeout(
+                    setTimer(
+                        waitingFocusableElement.conditionTimer,
+                        w,
                         resolveFocusable,
                         _conditionCheckTimeout
                     );
@@ -372,10 +379,10 @@ export function createObservedElementAPI(
                         if (
                             (accessibility ===
                                 ObservedElementAccessibilities.Accessible &&
-                                !tabster.focusable.isAccessible(el)) ||
+                                !_isElementAccessible(tabster, el)) ||
                             (accessibility ===
                                 ObservedElementAccessibilities.Focusable &&
-                                !tabster.focusable.isFocusable(el, true))
+                                !_isFocusable(tabster, el, true))
                         ) {
                             el = null;
                         }
@@ -435,10 +442,15 @@ export function createObservedElementAPI(
             }
 
             w = waiting[key] = {
-                timer: win().setTimeout(() => {
-                    if (w.conditionTimer) {
-                        win().clearTimeout(w.conditionTimer);
-                    }
+                timer: createTimer(),
+                conditionTimer: createTimer(),
+            };
+
+            setTimer(
+                w.timer,
+                win(),
+                () => {
+                    clearTimer(w.conditionTimer, win());
 
                     delete waiting[key];
 
@@ -456,8 +468,9 @@ export function createObservedElementAPI(
                     if (w.resolve) {
                         w.resolve(null);
                     }
-                }, timeout),
-            };
+                },
+                timeout
+            );
 
             const promise = new Promise<HTMLElement | null>(
                 (resolve, reject) => {

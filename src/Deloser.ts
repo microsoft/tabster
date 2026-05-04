@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import {
+    _findDefaultFocusable,
+    _findFocusable,
+    _isElementVisible,
+    _isFocusable,
+} from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import type * as Types from "./Types.js";
@@ -528,7 +534,7 @@ export class Deloser
     findAvailable(): HTMLElement | null {
         const element = this._element.get();
 
-        if (!element || !this._tabster.focusable.isVisible(element)) {
+        if (!element || !_isElementVisible(element)) {
             return null;
         }
 
@@ -553,7 +559,7 @@ export class Deloser
         }
 
         if (restoreFocusOrder === RestoreFocusOrders.RootDefault) {
-            available = this._tabster.focusable.findDefault({
+            available = _findDefaultFocusable(this._tabster, {
                 container: rootElement,
             });
         }
@@ -575,7 +581,7 @@ export class Deloser
             return availableInHistory;
         }
 
-        const availableDefault = this._tabster.focusable.findDefault({
+        const availableDefault = _findDefaultFocusable(this._tabster, {
             container: element,
         });
 
@@ -632,7 +638,7 @@ export class Deloser
             const element = this._element.get();
 
             if (e && element && dom.nodeContains(element, e)) {
-                if (this._tabster.focusable.isFocusable(e)) {
+                if (_isFocusable(this._tabster, e)) {
                     return e;
                 }
             } else if (!this._props.noSelectorCheck) {
@@ -663,7 +669,7 @@ export class Deloser
                     for (let i = 0; i < els.length; i++) {
                         const el = els[i] as HTMLElement;
 
-                        if (el && this._tabster.focusable.isFocusable(el)) {
+                        if (el && _isFocusable(this._tabster, el)) {
                             return el;
                         }
                     }
@@ -676,7 +682,7 @@ export class Deloser
 
     private _findFirst(element: HTMLElement): HTMLElement | null {
         if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
-            const first = this._tabster.focusable.findFirst({
+            const first = _findFocusable(this._tabster, {
                 container: element,
                 useActiveModalizer: true,
             });
@@ -811,7 +817,7 @@ export function createDeloserAPI(
         if (force) {
             restoreFocus();
         } else {
-            setTimer(restoreFocusTimer, restoreFocus, 100);
+            setTimer(restoreFocusTimer, win(), restoreFocus, 100);
         }
     };
 
@@ -836,7 +842,7 @@ export function createDeloserAPI(
     };
 
     const onFocus = (e: HTMLElement | undefined): void => {
-        clearTimer(restoreFocusTimer);
+        clearTimer(restoreFocusTimer, win());
 
         if (!e) {
             scheduleRestoreFocus();
@@ -891,7 +897,7 @@ export function createDeloserAPI(
         dispose(): void {
             const w = win();
 
-            clearTimer(restoreFocusTimer);
+            clearTimer(restoreFocusTimer, w);
 
             if (autoDeloserInstance) {
                 autoDeloserInstance.dispose();
@@ -959,7 +965,7 @@ export function createDeloserAPI(
 
         pause(): void {
             isPaused = true;
-            clearTimer(restoreFocusTimer);
+            clearTimer(restoreFocusTimer, win());
         },
 
         resume(restore?: boolean): void {

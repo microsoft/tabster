@@ -51,7 +51,7 @@ export interface InstanceContext {
         };
     };
     lastContainerBoundingRectCacheId: number;
-    containerBoundingRectCacheTimer?: number;
+    containerBoundingRectCacheTimer: Timer;
 }
 
 let _uidCounter = 0;
@@ -70,6 +70,7 @@ export function getInstanceContext(getWindow: GetWindow): InstanceContext {
             elementByUId: {},
             containerBoundingRectCache: {},
             lastContainerBoundingRectCacheId: 0,
+            containerBoundingRectCacheTimer: createTimer(),
         };
 
         win.__tabsterInstanceContext = ctx;
@@ -86,9 +87,7 @@ export function disposeInstanceContext(win: Window): void {
 
         ctx.containerBoundingRectCache = {};
 
-        if (ctx.containerBoundingRectCacheTimer) {
-            win.clearTimeout(ctx.containerBoundingRectCacheTimer);
-        }
+        clearTimer(ctx.containerBoundingRectCacheTimer, win);
 
         delete (win as WindowWithUtilsConext).__tabsterInstanceContext;
     }
@@ -197,17 +196,22 @@ export function getBoundingRect(
         element,
     };
 
-    if (!context.containerBoundingRectCacheTimer) {
-        context.containerBoundingRectCacheTimer = window.setTimeout(() => {
-            context.containerBoundingRectCacheTimer = undefined;
+    if (!isTimerActive(context.containerBoundingRectCacheTimer)) {
+        setTimer(
+            context.containerBoundingRectCacheTimer,
+            window,
+            () => {
+                for (const cId of Object.keys(
+                    context.containerBoundingRectCache
+                )) {
+                    delete context.containerBoundingRectCache[cId].element
+                        .__tabsterCacheId;
+                }
 
-            for (const cId of Object.keys(context.containerBoundingRectCache)) {
-                delete context.containerBoundingRectCache[cId].element
-                    .__tabsterCacheId;
-            }
-
-            context.containerBoundingRectCache = {};
-        }, 50);
+                context.containerBoundingRectCache = {};
+            },
+            50
+        );
     }
 
     return rect;
@@ -660,20 +664,25 @@ export function createTimer(): Timer {
 }
 
 /** Cancels any pending timer on `t` and schedules `callback` after `delay` ms. */
-export function setTimer(t: Timer, callback: () => void, delay: number): void {
+export function setTimer(
+    t: Timer,
+    window: Window,
+    callback: () => void,
+    delay: number
+): void {
     if (t.id !== null) {
-        clearTimeout(t.id);
+        window.clearTimeout(t.id);
     }
-    t.id = setTimeout(() => {
+    t.id = window.setTimeout(() => {
         t.id = null;
         callback();
     }, delay) as unknown as number;
 }
 
 /** Cancels the pending timer on `t`; no-op if there isn't one. */
-export function clearTimer(t: Timer): void {
+export function clearTimer(t: Timer, window: Window): void {
     if (t.id !== null) {
-        clearTimeout(t.id);
+        window.clearTimeout(t.id);
         t.id = null;
     }
 }

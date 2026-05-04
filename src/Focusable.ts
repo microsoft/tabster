@@ -19,534 +19,582 @@ import {
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
-export class FocusableAPI implements Types.FocusableAPI {
-    private _tabster: Types.TabsterCore;
+// Internal helpers — take TabsterCore. Used by other modules in src/ that
+// hold a TabsterCore but no Tabster wrapper. Not re-exported from index.ts.
 
-    constructor(tabster: Types.TabsterCore) {
-        this._tabster = tabster;
-    }
+export function _getFocusableProps(
+    core: Types.TabsterCore,
+    element: HTMLElement
+): Types.FocusableProps {
+    const tabsterOnElement = getTabsterOnElement(core, element);
+    return (tabsterOnElement && tabsterOnElement.focusable) || {};
+}
 
-    dispose(): void {
-        /**/
-    }
-
-    getProps(element: HTMLElement): Types.FocusableProps {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
-        return (tabsterOnElement && tabsterOnElement.focusable) || {};
-    }
-
-    isFocusable(
-        el: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        noVisibleCheck?: boolean,
-        noAccessibleCheck?: boolean
-    ): boolean {
-        if (
-            matchesSelector(el, FOCUSABLE_SELECTOR) &&
-            (includeProgrammaticallyFocusable || el.tabIndex !== -1)
-        ) {
-            return (
-                (noVisibleCheck || this.isVisible(el)) &&
-                (noAccessibleCheck || this.isAccessible(el))
-            );
-        }
-
-        return false;
-    }
-
-    isVisible(el: HTMLElement): boolean {
-        if (!el.ownerDocument || el.nodeType !== Node.ELEMENT_NODE) {
-            return false;
-        }
-
-        if (isDisplayNone(el)) {
-            return false;
-        }
-
-        const rect = el.ownerDocument.body.getBoundingClientRect();
-
-        if (rect.width === 0 && rect.height === 0) {
-            // This might happen, for example, if our <body> is in hidden <iframe>.
-            return false;
-        }
-
-        return true;
-    }
-
-    isAccessible(el: HTMLElement): boolean {
-        for (let e: HTMLElement | null = el; e; e = dom.getParentElement(e)) {
-            const tabsterOnElement = getTabsterOnElement(this._tabster, e);
-
-            if (this._isHidden(e)) {
-                return false;
-            }
-
-            const ignoreDisabled =
-                tabsterOnElement?.focusable?.ignoreAriaDisabled;
-
-            if (!ignoreDisabled && this._isDisabled(e)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private _isDisabled(el: HTMLElement): boolean {
-        return el.hasAttribute("disabled");
-    }
-
-    private _isHidden(el: HTMLElement): boolean {
-        const attrVal = el.getAttribute("aria-hidden");
-
-        if (attrVal && attrVal.toLowerCase() === "true") {
-            if (!this._tabster.modalizer?.isAugmented(el)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    findFirst(
-        options: Types.FindFirstProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null | undefined {
-        return this.findElement(
-            {
-                ...options,
-            },
-            out
-        );
-    }
-
-    findLast(
-        options: Types.FindFirstProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null | undefined {
-        return this.findElement(
-            {
-                isBackward: true,
-                ...options,
-            },
-            out
-        );
-    }
-
-    findNext(
-        options: Types.FindNextProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null | undefined {
-        return this.findElement({ ...options }, out);
-    }
-
-    findPrev(
-        options: Types.FindNextProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null | undefined {
-        return this.findElement({ ...options, isBackward: true }, out);
-    }
-
-    findDefault(
-        options: Types.FindDefaultProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null {
+export function _isFocusable(
+    core: Types.TabsterCore,
+    el: HTMLElement,
+    includeProgrammaticallyFocusable?: boolean,
+    noVisibleCheck?: boolean,
+    noAccessibleCheck?: boolean
+): boolean {
+    if (
+        matchesSelector(el, FOCUSABLE_SELECTOR) &&
+        (includeProgrammaticallyFocusable || el.tabIndex !== -1)
+    ) {
         return (
-            this.findElement(
-                {
-                    ...options,
-                    acceptCondition: (el) =>
-                        this.isFocusable(
-                            el,
-                            options.includeProgrammaticallyFocusable
-                        ) && !!this.getProps(el).isDefault,
-                },
-                out
-            ) || null
+            (noVisibleCheck || _isElementVisible(el)) &&
+            (noAccessibleCheck || _isElementAccessible(core, el))
         );
     }
 
-    findAll(options: Types.FindAllProps): HTMLElement[] {
-        return this._findElements(true, options) || [];
+    return false;
+}
+
+export function _isElementVisible(el: HTMLElement): boolean {
+    if (!el.ownerDocument || el.nodeType !== Node.ELEMENT_NODE) {
+        return false;
     }
 
-    findElement(
-        options: Types.FindFocusableProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement | null | undefined {
-        const found = this._findElements(false, options, out);
-        return found ? found[0] : found;
+    if (isDisplayNone(el)) {
+        return false;
     }
 
-    private _findElements(
-        isFindAll: boolean,
-        options: Types.FindFocusableProps,
-        out?: Types.FindFocusableOutputProps
-    ): HTMLElement[] | null | undefined {
-        const {
-            container,
-            currentElement = null,
-            includeProgrammaticallyFocusable,
-            useActiveModalizer,
-            ignoreAccessibility,
-            modalizerId,
-            isBackward,
-            onElement,
-        } = options;
+    const rect = el.ownerDocument.body.getBoundingClientRect();
 
-        if (!out) {
-            out = {};
+    if (rect.width === 0 && rect.height === 0) {
+        // This might happen, for example, if our <body> is in hidden <iframe>.
+        return false;
+    }
+
+    return true;
+}
+
+export function _isElementAccessible(
+    core: Types.TabsterCore,
+    el: HTMLElement
+): boolean {
+    for (let e: HTMLElement | null = el; e; e = dom.getParentElement(e)) {
+        const tabsterOnElement = getTabsterOnElement(core, e);
+
+        if (_isHidden(core, e)) {
+            return false;
         }
 
-        const elements: HTMLElement[] = [];
+        const ignoreDisabled = tabsterOnElement?.focusable?.ignoreAriaDisabled;
 
-        let { acceptCondition } = options;
-        const hasCustomCondition = !!acceptCondition;
+        if (!ignoreDisabled && e.hasAttribute("disabled")) {
+            return false;
+        }
+    }
 
-        if (!container) {
-            return null;
+    return true;
+}
+
+function _isHidden(core: Types.TabsterCore, el: HTMLElement): boolean {
+    const attrVal = el.getAttribute("aria-hidden");
+
+    if (attrVal && attrVal.toLowerCase() === "true") {
+        if (!core.modalizer?.isAugmented(el)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function _findFocusable(
+    core: Types.TabsterCore,
+    options: Types.FindFocusableProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    const found = _findElements(core, false, options, out);
+    return found ? found[0] : found;
+}
+
+export function _findAllFocusable(
+    core: Types.TabsterCore,
+    options: Types.FindAllProps
+): HTMLElement[] {
+    return _findElements(core, true, options) || [];
+}
+
+export function _findDefaultFocusable(
+    core: Types.TabsterCore,
+    options: Types.FindDefaultProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null {
+    return (
+        _findFocusable(
+            core,
+            {
+                ...options,
+                acceptCondition: (el) =>
+                    _isFocusable(
+                        core,
+                        el,
+                        options.includeProgrammaticallyFocusable
+                    ) && !!_getFocusableProps(core, el).isDefault,
+            },
+            out
+        ) || null
+    );
+}
+
+function _findElements(
+    core: Types.TabsterCore,
+    isFindAll: boolean,
+    options: Types.FindFocusableProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement[] | null | undefined {
+    const {
+        container,
+        currentElement = null,
+        includeProgrammaticallyFocusable,
+        useActiveModalizer,
+        ignoreAccessibility,
+        modalizerId,
+        isBackward,
+        onElement,
+    } = options;
+
+    if (!out) {
+        out = {};
+    }
+
+    const elements: HTMLElement[] = [];
+
+    let { acceptCondition } = options;
+    const hasCustomCondition = !!acceptCondition;
+
+    if (!container) {
+        return null;
+    }
+
+    if (!acceptCondition) {
+        acceptCondition = (el) =>
+            _isFocusable(
+                core,
+                el,
+                includeProgrammaticallyFocusable,
+                false,
+                ignoreAccessibility
+            );
+    }
+
+    const acceptElementState: Types.FocusableAcceptElementState = {
+        container,
+        modalizerUserId:
+            modalizerId === undefined && useActiveModalizer
+                ? core.modalizer?.activeId
+                : modalizerId ||
+                  RootAPI.getTabsterContext(core, container)?.modalizer?.userId,
+        from: currentElement || container,
+        isBackward,
+        isFindAll,
+        acceptCondition,
+        hasCustomCondition,
+        includeProgrammaticallyFocusable,
+        ignoreAccessibility,
+        cachedGrouppers: {},
+        cachedRadioGroups: {},
+    };
+
+    const walker = createElementTreeWalker(
+        container.ownerDocument,
+        container,
+        (node) => _acceptElement(core, node as HTMLElement, acceptElementState)
+    );
+
+    if (!walker) {
+        return null;
+    }
+
+    const prepareForNextElement = (
+        shouldContinueIfNotFound?: boolean
+    ): boolean => {
+        const foundElement =
+            acceptElementState.foundElement ?? acceptElementState.foundBackward;
+
+        if (foundElement) {
+            elements.push(foundElement);
         }
 
-        if (!acceptCondition) {
-            acceptCondition = (el) =>
-                this.isFocusable(
-                    el,
-                    includeProgrammaticallyFocusable,
-                    false,
-                    ignoreAccessibility
-                );
-        }
-
-        const acceptElementState: Types.FocusableAcceptElementState = {
-            container,
-            modalizerUserId:
-                modalizerId === undefined && useActiveModalizer
-                    ? this._tabster.modalizer?.activeId
-                    : modalizerId ||
-                      RootAPI.getTabsterContext(this._tabster, container)
-                          ?.modalizer?.userId,
-            from: currentElement || container,
-            isBackward,
-            isFindAll,
-            acceptCondition,
-            hasCustomCondition,
-            includeProgrammaticallyFocusable,
-            ignoreAccessibility,
-            cachedGrouppers: {},
-            cachedRadioGroups: {},
-        };
-
-        const walker = createElementTreeWalker(
-            container.ownerDocument,
-            container,
-            (node) =>
-                this._acceptElement(node as HTMLElement, acceptElementState)
-        );
-
-        if (!walker) {
-            return null;
-        }
-
-        const prepareForNextElement = (
-            shouldContinueIfNotFound?: boolean
-        ): boolean => {
-            const foundElement =
-                acceptElementState.foundElement ??
-                acceptElementState.foundBackward;
-
+        if (isFindAll) {
             if (foundElement) {
-                elements.push(foundElement);
-            }
+                acceptElementState.found = false;
+                delete acceptElementState.foundElement;
+                delete acceptElementState.foundBackward;
+                delete acceptElementState.fromCtx;
+                acceptElementState.from = foundElement;
 
-            if (isFindAll) {
-                if (foundElement) {
-                    acceptElementState.found = false;
-                    delete acceptElementState.foundElement;
-                    delete acceptElementState.foundBackward;
-                    delete acceptElementState.fromCtx;
-                    acceptElementState.from = foundElement;
-
-                    if (onElement && !onElement(foundElement)) {
-                        return false;
-                    }
+                if (onElement && !onElement(foundElement)) {
+                    return false;
                 }
-
-                return !!(foundElement || shouldContinueIfNotFound);
-            } else {
-                if (foundElement && out) {
-                    out.uncontrolled = RootAPI.getTabsterContext(
-                        this._tabster,
-                        foundElement
-                    )?.uncontrolled;
-                }
-
-                return !!(shouldContinueIfNotFound && !foundElement);
             }
-        };
 
-        if (!currentElement) {
-            out.outOfDOMOrder = true;
+            return !!(foundElement || shouldContinueIfNotFound);
+        } else {
+            if (foundElement && out) {
+                out.uncontrolled = RootAPI.getTabsterContext(
+                    core,
+                    foundElement
+                )?.uncontrolled;
+            }
+
+            return !!(shouldContinueIfNotFound && !foundElement);
         }
+    };
 
-        if (currentElement && dom.nodeContains(container, currentElement)) {
-            walker.currentNode = currentElement;
-        } else if (isBackward) {
-            const lastChild = getLastChild(container);
-
-            if (!lastChild) {
-                return null;
-            }
-
-            if (
-                this._acceptElement(lastChild, acceptElementState) ===
-                    NodeFilter.FILTER_ACCEPT &&
-                !prepareForNextElement(true)
-            ) {
-                if (acceptElementState.skippedFocusable) {
-                    out.outOfDOMOrder = true;
-                }
-
-                return elements;
-            }
-
-            walker.currentNode = lastChild;
-        }
-
-        do {
-            if (isBackward) {
-                walker.previousNode();
-            } else {
-                walker.nextNode();
-            }
-        } while (prepareForNextElement());
-
-        if (acceptElementState.skippedFocusable) {
-            out.outOfDOMOrder = true;
-        }
-
-        return elements.length ? elements : null;
+    if (!currentElement) {
+        out.outOfDOMOrder = true;
     }
 
-    private _acceptElement(
-        element: HTMLElement,
-        state: Types.FocusableAcceptElementState
-    ): number {
-        if (state.found) {
-            return NodeFilter.FILTER_ACCEPT;
-        }
+    if (currentElement && dom.nodeContains(container, currentElement)) {
+        walker.currentNode = currentElement;
+    } else if (isBackward) {
+        const lastChild = getLastChild(container);
 
-        const foundBackward = state.foundBackward;
+        if (!lastChild) {
+            return null;
+        }
 
         if (
-            foundBackward &&
-            (element === foundBackward ||
-                !dom.nodeContains(foundBackward, element))
+            _acceptElement(core, lastChild, acceptElementState) ===
+                NodeFilter.FILTER_ACCEPT &&
+            !prepareForNextElement(true)
+        ) {
+            if (acceptElementState.skippedFocusable) {
+                out.outOfDOMOrder = true;
+            }
+
+            return elements;
+        }
+
+        walker.currentNode = lastChild;
+    }
+
+    do {
+        if (isBackward) {
+            walker.previousNode();
+        } else {
+            walker.nextNode();
+        }
+    } while (prepareForNextElement());
+
+    if (acceptElementState.skippedFocusable) {
+        out.outOfDOMOrder = true;
+    }
+
+    return elements.length ? elements : null;
+}
+
+function _acceptElement(
+    core: Types.TabsterCore,
+    element: HTMLElement,
+    state: Types.FocusableAcceptElementState
+): number {
+    if (state.found) {
+        return NodeFilter.FILTER_ACCEPT;
+    }
+
+    const foundBackward = state.foundBackward;
+
+    if (
+        foundBackward &&
+        (element === foundBackward || !dom.nodeContains(foundBackward, element))
+    ) {
+        state.found = true;
+        state.foundElement = foundBackward;
+        return NodeFilter.FILTER_ACCEPT;
+    }
+
+    const container = state.container;
+
+    if (element === container) {
+        return NodeFilter.FILTER_SKIP;
+    }
+
+    if (!dom.nodeContains(container, element)) {
+        return NodeFilter.FILTER_REJECT;
+    }
+
+    if (getDummyInputContainer(element)) {
+        return NodeFilter.FILTER_REJECT;
+    }
+
+    if (dom.nodeContains(state.rejectElementsFrom, element)) {
+        return NodeFilter.FILTER_REJECT;
+    }
+
+    const ctx = (state.currentCtx = RootAPI.getTabsterContext(core, element));
+
+    // Tabster is opt in, if it is not managed, don't try and get do anything special
+    if (!ctx) {
+        return NodeFilter.FILTER_SKIP;
+    }
+
+    if (shouldIgnoreFocus(element)) {
+        if (_isFocusable(core, element, undefined, true, true)) {
+            state.skippedFocusable = true;
+        }
+
+        return NodeFilter.FILTER_SKIP;
+    }
+
+    // We assume iframes are focusable because native tab behaviour would tab inside.
+    // But we do it only during the standard search when there is no custom accept
+    // element condition.
+    if (
+        !state.hasCustomCondition &&
+        (element.tagName === "IFRAME" || element.tagName === "WEBVIEW")
+    ) {
+        if (
+            _isElementVisible(element) &&
+            ctx.modalizer?.userId === core.modalizer?.activeId
         ) {
             state.found = true;
-            state.foundElement = foundBackward;
+            state.rejectElementsFrom = state.foundElement = element;
+
             return NodeFilter.FILTER_ACCEPT;
-        }
-
-        const container = state.container;
-
-        if (element === container) {
-            return NodeFilter.FILTER_SKIP;
-        }
-
-        if (!dom.nodeContains(container, element)) {
+        } else {
             return NodeFilter.FILTER_REJECT;
         }
+    }
 
-        if (getDummyInputContainer(element)) {
-            return NodeFilter.FILTER_REJECT;
+    if (!state.ignoreAccessibility && !_isElementAccessible(core, element)) {
+        if (_isFocusable(core, element, false, true, true)) {
+            state.skippedFocusable = true;
         }
 
-        if (dom.nodeContains(state.rejectElementsFrom, element)) {
-            return NodeFilter.FILTER_REJECT;
-        }
+        return NodeFilter.FILTER_REJECT;
+    }
 
-        const ctx = (state.currentCtx = RootAPI.getTabsterContext(
-            this._tabster,
-            element
-        ));
+    let result: number | undefined;
 
-        // Tabster is opt in, if it is not managed, don't try and get do anything special
-        if (!ctx) {
-            return NodeFilter.FILTER_SKIP;
-        }
+    let fromCtx = state.fromCtx;
 
-        if (shouldIgnoreFocus(element)) {
-            if (this.isFocusable(element, undefined, true, true)) {
-                state.skippedFocusable = true;
-            }
+    if (!fromCtx) {
+        fromCtx = state.fromCtx = RootAPI.getTabsterContext(core, state.from);
+    }
 
-            return NodeFilter.FILTER_SKIP;
-        }
+    const fromMover = fromCtx?.mover;
+    let groupper = ctx.groupper;
+    let mover = ctx.mover;
 
-        // We assume iframes are focusable because native tab behaviour would tab inside.
-        // But we do it only during the standard search when there is no custom accept
-        // element condition.
+    result = core.modalizer?.acceptElement(element, state);
+
+    if (result !== undefined) {
+        state.skippedFocusable = true;
+    }
+
+    if (result === undefined && (groupper || mover || fromMover)) {
+        const groupperElement = groupper?.getElement();
+        const fromMoverElement = fromMover?.getElement();
+        let moverElement = mover?.getElement();
+
         if (
-            !state.hasCustomCondition &&
-            (element.tagName === "IFRAME" || element.tagName === "WEBVIEW")
+            moverElement &&
+            dom.nodeContains(fromMoverElement, moverElement) &&
+            dom.nodeContains(container, fromMoverElement) &&
+            (!groupperElement ||
+                !mover ||
+                dom.nodeContains(fromMoverElement, groupperElement))
         ) {
-            if (
-                this.isVisible(element) &&
-                ctx.modalizer?.userId === this._tabster.modalizer?.activeId
-            ) {
-                state.found = true;
-                state.rejectElementsFrom = state.foundElement = element;
+            mover = fromMover;
+            moverElement = fromMoverElement;
+        }
 
-                return NodeFilter.FILTER_ACCEPT;
-            } else {
+        if (groupperElement) {
+            if (
+                groupperElement === container ||
+                !dom.nodeContains(container, groupperElement)
+            ) {
+                groupper = undefined;
+            } else if (!dom.nodeContains(groupperElement, element)) {
+                // _acceptElement() callback is called during the tree walking.
+                // Given the potentiality of virtual parents (driven by the custom getParent() function),
+                // we need to make sure that the groupper from the current element's context is not,
+                // portaling us out of the DOM order.
                 return NodeFilter.FILTER_REJECT;
             }
         }
 
-        if (!state.ignoreAccessibility && !this.isAccessible(element)) {
-            if (this.isFocusable(element, false, true, true)) {
-                state.skippedFocusable = true;
+        if (moverElement) {
+            if (!dom.nodeContains(container, moverElement)) {
+                mover = undefined;
+            } else if (!dom.nodeContains(moverElement, element)) {
+                // _acceptElement() callback is called during the tree walking.
+                // Given the potentiality of virtual parents (driven by the custom getParent() function),
+                // we need to make sure that the mover from the current element's context is not,
+                // portaling us out of the DOM order.
+                return NodeFilter.FILTER_REJECT;
             }
-
-            return NodeFilter.FILTER_REJECT;
         }
 
-        let result: number | undefined;
-
-        let fromCtx = state.fromCtx;
-
-        if (!fromCtx) {
-            fromCtx = state.fromCtx = RootAPI.getTabsterContext(
-                this._tabster,
-                state.from
-            );
-        }
-
-        const fromMover = fromCtx?.mover;
-        let groupper = ctx.groupper;
-        let mover = ctx.mover;
-
-        result = this._tabster.modalizer?.acceptElement(element, state);
-
-        if (result !== undefined) {
-            state.skippedFocusable = true;
-        }
-
-        if (result === undefined && (groupper || mover || fromMover)) {
-            const groupperElement = groupper?.getElement();
-            const fromMoverElement = fromMover?.getElement();
-            let moverElement = mover?.getElement();
-
+        if (groupper && mover) {
             if (
                 moverElement &&
-                dom.nodeContains(fromMoverElement, moverElement) &&
-                dom.nodeContains(container, fromMoverElement) &&
-                (!groupperElement ||
-                    !mover ||
-                    dom.nodeContains(fromMoverElement, groupperElement))
+                groupperElement &&
+                !dom.nodeContains(groupperElement, moverElement)
             ) {
-                mover = fromMover;
-                moverElement = fromMoverElement;
-            }
-
-            if (groupperElement) {
-                if (
-                    groupperElement === container ||
-                    !dom.nodeContains(container, groupperElement)
-                ) {
-                    groupper = undefined;
-                } else if (!dom.nodeContains(groupperElement, element)) {
-                    // _acceptElement() callback is called during the tree walking.
-                    // Given the potentiality of virtual parents (driven by the custom getParent() function),
-                    // we need to make sure that the groupper from the current element's context is not,
-                    // portaling us out of the DOM order.
-                    return NodeFilter.FILTER_REJECT;
-                }
-            }
-
-            if (moverElement) {
-                if (!dom.nodeContains(container, moverElement)) {
-                    mover = undefined;
-                } else if (!dom.nodeContains(moverElement, element)) {
-                    // _acceptElement() callback is called during the tree walking.
-                    // Given the potentiality of virtual parents (driven by the custom getParent() function),
-                    // we need to make sure that the mover from the current element's context is not,
-                    // portaling us out of the DOM order.
-                    return NodeFilter.FILTER_REJECT;
-                }
-            }
-
-            if (groupper && mover) {
-                if (
-                    moverElement &&
-                    groupperElement &&
-                    !dom.nodeContains(groupperElement, moverElement)
-                ) {
-                    mover = undefined;
-                } else {
-                    groupper = undefined;
-                }
-            }
-
-            if (groupper) {
-                result = groupper.acceptElement(element, state);
-            }
-
-            if (mover) {
-                result = mover.acceptElement(element, state);
-            }
-        }
-
-        if (result === undefined) {
-            result = state.acceptCondition(element)
-                ? NodeFilter.FILTER_ACCEPT
-                : NodeFilter.FILTER_SKIP;
-
-            if (
-                result === NodeFilter.FILTER_SKIP &&
-                this.isFocusable(element, false, true, true)
-            ) {
-                state.skippedFocusable = true;
-            }
-        }
-
-        if (result === NodeFilter.FILTER_ACCEPT && !state.found) {
-            if (
-                !state.isFindAll &&
-                isRadio(element) &&
-                !(element as HTMLInputElement).checked
-            ) {
-                // We need to mimic the browser's behaviour to skip unchecked radio buttons.
-                const radioGroupName = (element as HTMLInputElement).name;
-                let radioGroup: Types.RadioButtonGroup | undefined =
-                    state.cachedRadioGroups[radioGroupName];
-
-                if (!radioGroup) {
-                    radioGroup = getRadioButtonGroup(element);
-
-                    if (radioGroup) {
-                        state.cachedRadioGroups[radioGroupName] = radioGroup;
-                    }
-                }
-
-                if (radioGroup?.checked && radioGroup.checked !== element) {
-                    // Currently found element is a radio button in a group that has another radio button checked.
-                    return NodeFilter.FILTER_SKIP;
-                }
-            }
-
-            if (state.isBackward) {
-                // When TreeWalker goes backwards, it visits the container first,
-                // then it goes inside. So, if the container is accepted, we remember it,
-                // but allowing the TreeWalker to check inside.
-                state.foundBackward = element;
-                result = NodeFilter.FILTER_SKIP;
+                mover = undefined;
             } else {
-                state.found = true;
-                state.foundElement = element;
+                groupper = undefined;
             }
         }
 
-        return result;
+        if (groupper) {
+            result = groupper.acceptElement(element, state);
+        }
+
+        if (mover) {
+            result = mover.acceptElement(element, state);
+        }
     }
+
+    if (result === undefined) {
+        result = state.acceptCondition(element)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP;
+
+        if (
+            result === NodeFilter.FILTER_SKIP &&
+            _isFocusable(core, element, false, true, true)
+        ) {
+            state.skippedFocusable = true;
+        }
+    }
+
+    if (result === NodeFilter.FILTER_ACCEPT && !state.found) {
+        if (
+            !state.isFindAll &&
+            isRadio(element) &&
+            !(element as HTMLInputElement).checked
+        ) {
+            // We need to mimic the browser's behaviour to skip unchecked radio buttons.
+            const radioGroupName = (element as HTMLInputElement).name;
+            let radioGroup: Types.RadioButtonGroup | undefined =
+                state.cachedRadioGroups[radioGroupName];
+
+            if (!radioGroup) {
+                radioGroup = getRadioButtonGroup(element);
+
+                if (radioGroup) {
+                    state.cachedRadioGroups[radioGroupName] = radioGroup;
+                }
+            }
+
+            if (radioGroup?.checked && radioGroup.checked !== element) {
+                // Currently found element is a radio button in a group that has another radio button checked.
+                return NodeFilter.FILTER_SKIP;
+            }
+        }
+
+        if (state.isBackward) {
+            // When TreeWalker goes backwards, it visits the container first,
+            // then it goes inside. So, if the container is accepted, we remember it,
+            // but allowing the TreeWalker to check inside.
+            state.foundBackward = element;
+            result = NodeFilter.FILTER_SKIP;
+        } else {
+            state.found = true;
+            state.foundElement = element;
+        }
+    }
+
+    return result;
+}
+
+// Public API — takes Tabster wrapper. Re-exported from index.ts.
+
+export function getFocusableProps(
+    tabster: Types.Tabster,
+    element: HTMLElement
+): Types.FocusableProps {
+    return _getFocusableProps(tabster.core, element);
+}
+
+export function isFocusable(
+    tabster: Types.Tabster,
+    el: HTMLElement,
+    includeProgrammaticallyFocusable?: boolean,
+    noVisibleCheck?: boolean,
+    noAccessibleCheck?: boolean
+): boolean {
+    return _isFocusable(
+        tabster.core,
+        el,
+        includeProgrammaticallyFocusable,
+        noVisibleCheck,
+        noAccessibleCheck
+    );
+}
+
+export function isElementVisible(
+    _tabster: Types.Tabster,
+    el: HTMLElement
+): boolean {
+    return _isElementVisible(el);
+}
+
+export function isElementAccessible(
+    tabster: Types.Tabster,
+    el: HTMLElement
+): boolean {
+    return _isElementAccessible(tabster.core, el);
+}
+
+export function findFirstFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindFirstProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    return _findFocusable(tabster.core, { ...options }, out);
+}
+
+export function findLastFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindFirstProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    return _findFocusable(tabster.core, { isBackward: true, ...options }, out);
+}
+
+export function findNextFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindNextProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    return _findFocusable(tabster.core, { ...options }, out);
+}
+
+export function findPrevFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindNextProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    return _findFocusable(tabster.core, { ...options, isBackward: true }, out);
+}
+
+export function findDefaultFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindDefaultProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null {
+    return _findDefaultFocusable(tabster.core, options, out);
+}
+
+export function findAllFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindAllProps
+): HTMLElement[] {
+    return _findAllFocusable(tabster.core, options);
+}
+
+export function findFocusable(
+    tabster: Types.Tabster,
+    options: Types.FindFocusableProps,
+    out?: Types.FindFocusableOutputProps
+): HTMLElement | null | undefined {
+    return _findFocusable(tabster.core, options, out);
 }

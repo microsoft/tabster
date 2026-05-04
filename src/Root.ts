@@ -4,6 +4,7 @@
  */
 
 import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
+import { _isElementVisible } from "./Focusable.js";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
@@ -161,7 +162,7 @@ export class Root
         removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
         removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
-        clearTimer(this._setFocusedTimer);
+        clearTimer(this._setFocusedTimer, win);
 
         this._dummyManager?.dispose();
         this._remove();
@@ -188,7 +189,8 @@ export class Root
     }
 
     private _setFocused = (hasFocused: boolean): void => {
-        clearTimer(this._setFocusedTimer);
+        const win = this._tabster.getWindow();
+        clearTimer(this._setFocusedTimer, win);
 
         if (this._isFocused === hasFocused) {
             return;
@@ -204,6 +206,7 @@ export class Root
             } else {
                 setTimer(
                     this._setFocusedTimer,
+                    win,
                     () => {
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
@@ -425,7 +428,7 @@ export class RootAPI implements Types.RootAPI {
                 (tabsterOnElement.uncontrolled ||
                     tagName === "IFRAME" ||
                     tagName === "WEBVIEW") &&
-                tabster.focusable.isVisible(curElement as HTMLElement)
+                _isElementVisible(curElement as HTMLElement)
             ) {
                 uncontrolled = curElement as HTMLElement;
             }

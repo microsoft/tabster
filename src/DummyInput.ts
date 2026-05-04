@@ -16,6 +16,7 @@ import {
     TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
 } from "./Consts.js";
 import { TabsterMoveFocusEvent } from "./Events.js";
+import { _isFocusable } from "./Focusable.js";
 import { dom } from "./DOMAPI.js";
 import {
     addListener,
@@ -172,7 +173,7 @@ export function createDummyInput(
         },
 
         dispose(): void {
-            clearTimer(disposeTimer);
+            clearTimer(disposeTimer, win);
 
             const currentInput = api.input;
 
@@ -196,7 +197,7 @@ export function createDummyInput(
     };
 
     if (isPhantom) {
-        setTimer(disposeTimer, api.dispose, 0);
+        setTimer(disposeTimer, win, api.dispose, 0);
     }
 
     return api;
@@ -375,12 +376,7 @@ export const DummyInputManager = {
                     moveOutOfElement &&
                     (!isBackward ||
                         (isBackward &&
-                            !tabster.focusable.isFocusable(
-                                element,
-                                false,
-                                true,
-                                true
-                            )))
+                            !_isFocusable(tabster, element, false, true, true)))
                 ) {
                     parent = element;
                     insertBefore = isBackward
@@ -527,10 +523,10 @@ export function createDummyInputObserver(
 ): DummyInputObserverInterface {
     let win: GetWindow | undefined = getWindow;
     const updateQueue = new Set<(c: ScrollTopLeftCache) => () => void>();
-    let updateTimer: number | undefined;
+    const updateTimer = createTimer();
     let lastUpdateQueueTime = 0;
     let changedParents: WeakSet<Node> = new WeakSet();
-    let updateDummyInputsTimer: number | undefined;
+    const updateDummyInputsTimer = createTimer();
     let dummyElements: WeakHTMLElement<HTMLElement>[] = [];
     let dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
 
@@ -541,71 +537,85 @@ export function createDummyInputObserver(
 
         changedParents.add(parent);
 
-        if (updateDummyInputsTimer) {
+        const w = win?.();
+        if (!w || isTimerActive(updateDummyInputsTimer)) {
             return;
         }
 
-        updateDummyInputsTimer = win?.().setTimeout(() => {
-            updateDummyInputsTimer = undefined;
+        setTimer(
+            updateDummyInputsTimer,
+            w,
+            () => {
+                for (const ref of dummyElements) {
+                    const dummyElement = ref.get();
 
-            for (const ref of dummyElements) {
-                const dummyElement = ref.get();
+                    if (dummyElement) {
+                        const callback = dummyCallbacks.get(dummyElement);
 
-                if (dummyElement) {
-                    const callback = dummyCallbacks.get(dummyElement);
+                        if (callback) {
+                            const dummyParent = dom.getParentNode(dummyElement);
 
-                    if (callback) {
-                        const dummyParent = dom.getParentNode(dummyElement);
-
-                        if (!dummyParent || changedParents.has(dummyParent)) {
-                            callback();
+                            if (
+                                !dummyParent ||
+                                changedParents.has(dummyParent)
+                            ) {
+                                callback();
+                            }
                         }
                     }
                 }
-            }
 
-            changedParents = new WeakSet();
-        }, _updateDummyInputsTimeout);
+                changedParents = new WeakSet();
+            },
+            _updateDummyInputsTimeout
+        );
     };
 
     const scheduledUpdatePositions = (): void => {
-        if (updateTimer) {
+        const w = win?.();
+        if (!w || isTimerActive(updateTimer)) {
             return;
         }
 
-        updateTimer = win?.().setTimeout(() => {
-            updateTimer = undefined;
+        setTimer(
+            updateTimer,
+            w,
+            () => {
+                // updatePositions() might be called quite a lot during the scrolling.
+                // So, instead of clearing the timeout and scheduling a new one, we
+                // check if enough time has passed since the last updatePositions() call
+                // and only schedule a new one if not.
+                // At maximum, we will update dummy inputs positions
+                // _updateDummyInputsTimeout * 2 after the last updatePositions() call.
+                if (
+                    lastUpdateQueueTime + _updateDummyInputsTimeout <=
+                    Date.now()
+                ) {
+                    // A cache for current bulk of updates to reduce getComputedStyle() calls.
+                    const scrollTopLeftCache: ScrollTopLeftCache = new Map();
 
-            // updatePositions() might be called quite a lot during the scrolling.
-            // So, instead of clearing the timeout and scheduling a new one, we
-            // check if enough time has passed since the last updatePositions() call
-            // and only schedule a new one if not.
-            // At maximum, we will update dummy inputs positions
-            // _updateDummyInputsTimeout * 2 after the last updatePositions() call.
-            if (lastUpdateQueueTime + _updateDummyInputsTimeout <= Date.now()) {
-                // A cache for current bulk of updates to reduce getComputedStyle() calls.
-                const scrollTopLeftCache: ScrollTopLeftCache = new Map();
+                    const setTopLeftCallbacks: (() => void)[] = [];
 
-                const setTopLeftCallbacks: (() => void)[] = [];
+                    for (const compute of updateQueue) {
+                        setTopLeftCallbacks.push(compute(scrollTopLeftCache));
+                    }
 
-                for (const compute of updateQueue) {
-                    setTopLeftCallbacks.push(compute(scrollTopLeftCache));
+                    updateQueue.clear();
+
+                    // We're splitting the computation of offsets and setting them to avoid extra
+                    // reflows.
+                    for (const setTopLeft of setTopLeftCallbacks) {
+                        setTopLeft();
+                    }
+
+                    // Explicitly clear to not hold references till the next garbage collection.
+                    scrollTopLeftCache.clear();
+                } else {
+                    scheduledUpdatePositions();
                 }
-
-                updateQueue.clear();
-
-                // We're splitting the computation of offsets and setting them to avoid extra
-                // reflows.
-                for (const setTopLeft of setTopLeftCallbacks) {
-                    setTopLeft();
-                }
-
-                // Explicitly clear to not hold references till the next garbage collection.
-                scrollTopLeftCache.clear();
-            } else {
-                scheduledUpdatePositions();
-            }
-        }, _updateDummyInputsTimeout);
+            },
+            _updateDummyInputsTimeout
+        );
     };
 
     const api: DummyInputObserverInterface = {
@@ -633,14 +643,9 @@ export function createDummyInputObserver(
         dispose(): void {
             const w = win?.();
 
-            if (updateTimer) {
-                w?.clearTimeout(updateTimer);
-                updateTimer = undefined;
-            }
-
-            if (updateDummyInputsTimer) {
-                w?.clearTimeout(updateDummyInputsTimer);
-                updateDummyInputsTimer = undefined;
+            if (w) {
+                clearTimer(updateTimer, w);
+                clearTimer(updateDummyInputsTimer, w);
             }
 
             changedParents = new WeakSet();
@@ -921,6 +926,7 @@ function createDummyInputManagerCore(
 
         setTimer(
             addTimer,
+            getWindow(),
             () => {
                 ensurePosition();
 
@@ -1008,12 +1014,7 @@ function createDummyInputManagerCore(
                 if (backwards) {
                     if (
                         !firstDummy.isOutside &&
-                        tabster.focusable.isFocusable(
-                            currentElement,
-                            true,
-                            true,
-                            true
-                        )
+                        _isFocusable(tabster, currentElement, true, true, true)
                     ) {
                         toFocus = currentElement;
                     } else {
@@ -1096,7 +1097,7 @@ function createDummyInputManagerCore(
                 }
                 transformElements.clear();
 
-                clearTimer(addTimer);
+                clearTimer(addTimer, getWindow());
 
                 const input = firstDummy.input;
                 input && tabster._dummyObserver.remove(input);

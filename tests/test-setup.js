@@ -6,6 +6,14 @@
 import {
     disposeTabster,
     createTabster,
+    findAllFocusable,
+    findDefaultFocusable,
+    findFirstFocusable,
+    findFocusable,
+    findLastFocusable,
+    findNextFocusable,
+    findPrevFocusable,
+    getFocusableProps,
     getTabster,
     getCrossOrigin,
     getDeloser,
@@ -15,6 +23,9 @@ import {
     getRestorer,
     getObservedElement,
     getOutline,
+    isElementAccessible,
+    isElementVisible,
+    isFocusable,
     makeNoOp,
     mergeTabsterProps,
     getTabsterAttribute,
@@ -55,6 +66,17 @@ tabsterTest.getTabsterAttribute = getTabsterAttribute;
 tabsterTest.setTabsterAttribute = setTabsterAttribute;
 tabsterTest.mergeTabsterProps = mergeTabsterProps;
 tabsterTest.getDummyInputContainer = getDummyInputContainer;
+tabsterTest.findAllFocusable = findAllFocusable;
+tabsterTest.findDefaultFocusable = findDefaultFocusable;
+tabsterTest.findFirstFocusable = findFirstFocusable;
+tabsterTest.findFocusable = findFocusable;
+tabsterTest.findLastFocusable = findLastFocusable;
+tabsterTest.findNextFocusable = findNextFocusable;
+tabsterTest.findPrevFocusable = findPrevFocusable;
+tabsterTest.getFocusableProps = getFocusableProps;
+tabsterTest.isElementAccessible = isElementAccessible;
+tabsterTest.isElementVisible = isElementVisible;
+tabsterTest.isFocusable = isFocusable;
 tabsterTest.dom = dom;
 tabsterTest.shadowDOM = shadowDOM;
 tabsterTest.Events = Events;

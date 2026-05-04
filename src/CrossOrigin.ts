@@ -8,6 +8,7 @@ import {
     DeloserHistoryByRootBase,
     DeloserItemBase,
 } from "./Deloser.js";
+import { _isFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
 import { createSubscribable } from "./State/Subscribable.js";
@@ -436,7 +437,7 @@ class FocusElementTransaction extends CrossOriginTransaction<
             getOwner,
             data.beginData
         );
-        return !el || !tabster.focusable.isFocusable(el);
+        return !el || !_isFocusable(tabster, el);
     }
 
     static async makeResponse(
@@ -957,7 +958,7 @@ class PingTransaction extends CrossOriginTransaction<undefined, true> {
 
 interface CrossOriginTransactionWrapper<I, O> {
     transaction: CrossOriginTransaction<I, O>;
-    timer?: number;
+    timer: Timer;
 }
 
 class CrossOriginTransactions {
@@ -1051,7 +1052,7 @@ class CrossOriginTransactions {
     async dispose(): Promise<void> {
         const owner = this._owner();
 
-        clearTimer(this._pingTimer);
+        clearTimer(this._pingTimer, owner);
 
         removeListener(owner, "message", this._onBrowserMessage);
         removeListener(owner, "pagehide", this._onPageHide);
@@ -1063,11 +1064,7 @@ class CrossOriginTransactions {
         for (const id of Object.keys(this._transactions)) {
             const t = this._transactions[id];
 
-            if (t.timer) {
-                owner.clearTimeout(t.timer);
-                delete t.timer;
-            }
-
+            clearTimer(t.timer, owner);
             t.transaction.end();
         }
 
@@ -1150,14 +1147,17 @@ class CrossOriginTransactions {
 
         const wrapper: CrossOriginTransactionWrapper<I, O> = {
             transaction,
-            timer: owner.setTimeout(
-                () => {
-                    delete wrapper.timer;
-                    transaction.end("Cross origin transaction timed out.");
-                },
-                _transactionTimeout + (timeout || 0)
-            ),
+            timer: createTimer(),
         };
+
+        setTimer(
+            wrapper.timer,
+            owner,
+            () => {
+                transaction.end("Cross origin transaction timed out.");
+            },
+            _transactionTimeout + (timeout || 0)
+        );
 
         this._transactions[transaction.id] = wrapper;
 
@@ -1166,9 +1166,7 @@ class CrossOriginTransactions {
         ret.catch(() => {
             /**/
         }).finally(() => {
-            if (wrapper.timer) {
-                owner.clearTimeout(wrapper.timer);
-            }
+            clearTimer(wrapper.timer, owner);
             delete this._transactions[transaction.id];
         });
 
@@ -1414,6 +1412,7 @@ class CrossOriginTransactions {
 
         setTimer(
             this._pingTimer,
+            this._owner(),
             () => {
                 this._ping();
             },
@@ -1712,7 +1711,7 @@ export function createCrossOriginAPI(
     const onFocus = (element: HTMLElementWithUID | undefined): void => {
         const ownerUId = getWindowUId(win());
 
-        clearTimer(blurTimer);
+        clearTimer(blurTimer, win());
 
         if (element) {
             transactions.beginTransaction(StateTransaction, {
@@ -1728,6 +1727,7 @@ export function createCrossOriginAPI(
         } else {
             setTimer(
                 blurTimer,
+                win(),
                 () => {
                     if (ctx.focusOwner && ctx.focusOwner === ownerUId) {
                         transactions
