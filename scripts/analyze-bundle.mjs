@@ -1,17 +1,27 @@
 #!/usr/bin/env node
 /**
- * Custom bundle analyzer.
+ * Custom bundle analyzer with two modes:
  *
- * For each fixture in bundle-size/:
- *   1. Builds it with webpack in production mode + source-map devtool
- *      using the same `tabster` alias as monosize.config.mjs.
- *   2. Walks every byte of the minified output, asks the source map which
- *      original source each byte belongs to, and aggregates per-source totals.
- *   3. Prints a sorted breakdown (source file → bytes → % of fixture).
+ *   bytes (default)       Per-source attribution. Builds each fixture with
+ *                         webpack (production + source-map), then walks
+ *                         every byte of the minified output and asks the
+ *                         source map which original module each byte came
+ *                         from. Aggregates per-source totals.
+ *
+ *   identifiers           Per-identifier frequency. Tokenizes the minified
+ *                         output and reports the most-common identifiers by
+ *                         occurrence × length. Surfaces names that survived
+ *                         minification (typically property keys, since
+ *                         Terser preserves those by default) so you can spot
+ *                         long, frequently-touched names worth shortening.
+ *
+ *   both                  Run both reports for the same build.
  *
  * Usage:
- *   node scripts/analyze-bundle.mjs                  # all fixtures
- *   node scripts/analyze-bundle.mjs createTabster    # one fixture (basename match)
+ *   node scripts/analyze-bundle.mjs                          # all fixtures, bytes
+ *   node scripts/analyze-bundle.mjs createTabster            # one fixture, bytes
+ *   node scripts/analyze-bundle.mjs createTabster --mode=identifiers
+ *   node scripts/analyze-bundle.mjs --mode=both              # all, both reports
  */
 
 import path from "node:path";
@@ -161,16 +171,157 @@ async function attribute(bundlePath) {
     return { totals, totalSize: code.length };
 }
 
-async function analyzeFixture(fixturePath) {
+// JS reserved words + ubiquitous globals that we don't want cluttering the
+// identifier-frequency report. They're not actionable: you can't rename
+// them and they don't represent your code's surface.
+const SKIP_IDENTIFIERS = new Set([
+    "function",
+    "return",
+    "const",
+    "let",
+    "var",
+    "void",
+    "this",
+    "true",
+    "false",
+    "null",
+    "undefined",
+    "typeof",
+    "instanceof",
+    "for",
+    "while",
+    "switch",
+    "case",
+    "default",
+    "break",
+    "continue",
+    "new",
+    "delete",
+    "throw",
+    "catch",
+    "finally",
+    "try",
+    "class",
+    "extends",
+    "super",
+    "static",
+    "yield",
+    "await",
+    "async",
+    "import",
+    "export",
+    "from",
+    "as",
+    "in",
+    "of",
+    "Object",
+    "Array",
+    "String",
+    "Number",
+    "Boolean",
+    "Function",
+    "Symbol",
+    "Map",
+    "Set",
+    "WeakMap",
+    "WeakSet",
+    "WeakRef",
+    "Promise",
+    "Date",
+    "Math",
+    "JSON",
+    "Error",
+    "RegExp",
+    "globalThis",
+    "window",
+    "document",
+    "console",
+    "Node",
+    "Element",
+    "HTMLElement",
+    "Event",
+    "MouseEvent",
+    "KeyboardEvent",
+    "FocusEvent",
+    "NodeFilter",
+    "module",
+    "exports",
+    "require",
+]);
+
+/**
+ * Tokenizes the minified bundle to count identifiers by occurrence × length.
+ * Marks each name as a property access (`.foo` / `["foo"]`) when every
+ * occurrence appears in that position — those are the ones the minifier
+ * leaves alone, so they're the actionable rename targets.
+ */
+function analyzeIdentifiers(code, minLen = 3) {
+    /** @type {Map<string, { count: number; propCount: number }>} */
+    const stats = new Map();
+
+    const re = /[A-Za-z_$][\w$]*/g;
+    let m;
+    while ((m = re.exec(code)) !== null) {
+        const name = m[0];
+        if (name.length < minLen) continue;
+        if (SKIP_IDENTIFIERS.has(name)) continue;
+        // Skip numeric-looking suffixes from minified vars (they slip in rarely).
+        if (/^\d/.test(name)) continue;
+
+        const idx = m.index;
+        const prev = idx > 0 ? code[idx - 1] : "";
+        // Look back past a single quote to also catch `["foo"]` and `'foo':`.
+        const isQuoted = prev === '"' || prev === "'";
+        const isDot = prev === ".";
+
+        const entry = stats.get(name) ?? { count: 0, propCount: 0 };
+        entry.count++;
+        if (isDot || isQuoted) entry.propCount++;
+        stats.set(name, entry);
+    }
+
+    let totalIdentBytes = 0;
+    const rows = [...stats.entries()]
+        .map(([name, { count, propCount }]) => {
+            const total = count * name.length;
+            totalIdentBytes += total;
+            return {
+                name,
+                count,
+                len: name.length,
+                total,
+                kind:
+                    propCount === count
+                        ? "property"
+                        : propCount === 0
+                          ? "free"
+                          : "mixed",
+            };
+        })
+        .sort((a, b) => b.total - a.total);
+
+    return { rows, totalIdentBytes };
+}
+
+async function analyzeFixture(fixturePath, mode) {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "tabster-analyze-"));
     try {
         await build(fixturePath, tmp);
-        const { totals, totalSize } = await attribute(
-            path.join(tmp, "bundle.js")
-        );
+        const bundlePath = path.join(tmp, "bundle.js");
+        const code = await fs.readFile(bundlePath, "utf8");
 
-        const rows = [...totals.entries()].sort((a, b) => b[1] - a[1]);
-        return { rows, totalSize };
+        const result = { totalSize: code.length };
+
+        if (mode === "bytes" || mode === "both") {
+            const { totals } = await attribute(bundlePath);
+            result.bytes = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+        }
+
+        if (mode === "identifiers" || mode === "both") {
+            result.identifiers = analyzeIdentifiers(code);
+        }
+
+        return result;
     } finally {
         await fs.rm(tmp, { recursive: true, force: true });
     }
@@ -181,12 +332,10 @@ function fmtBytes(b) {
     return b + " B";
 }
 
-function printReport(name, { rows, totalSize }, top = 25) {
-    console.log(`\n=== ${name}  (${fmtBytes(totalSize)} total)`);
-    let cumulative = 0;
+function printBytesReport(name, rows, totalSize, top = 25) {
+    console.log(`\n=== ${name}  bytes  (${fmtBytes(totalSize)} total)`);
     for (let i = 0; i < Math.min(rows.length, top); i++) {
         const [src, bytes] = rows[i];
-        cumulative += bytes;
         const pct = ((bytes / totalSize) * 100).toFixed(1);
         console.log(
             `  ${pct.padStart(5)}%  ${fmtBytes(bytes).padStart(10)}  ${src}`
@@ -202,8 +351,53 @@ function printReport(name, { rows, totalSize }, top = 25) {
     }
 }
 
+function printIdentifiersReport(
+    name,
+    { rows, totalIdentBytes },
+    totalSize,
+    top = 30
+) {
+    console.log(
+        `\n=== ${name}  identifiers  (${fmtBytes(totalIdentBytes)} of ${fmtBytes(totalSize)} = ${(
+            (totalIdentBytes / totalSize) *
+            100
+        ).toFixed(1)}%)`
+    );
+    console.log(
+        `  ${"count".padStart(6)} ${"len".padStart(4)} ${"total".padStart(8)}  kind      name`
+    );
+    for (let i = 0; i < Math.min(rows.length, top); i++) {
+        const r = rows[i];
+        console.log(
+            `  ${String(r.count).padStart(6)} ${String(r.len).padStart(4)} ${fmtBytes(
+                r.total
+            ).padStart(8)}  ${r.kind.padEnd(8)}  ${r.name}`
+        );
+    }
+}
+
 async function main() {
-    const filter = process.argv[2];
+    const args = process.argv.slice(2);
+    let mode = "bytes";
+    const positional = [];
+    for (const a of args) {
+        if (a.startsWith("--mode=")) {
+            mode = a.slice("--mode=".length);
+        } else if (a === "--help" || a === "-h") {
+            console.log(
+                "usage: analyze-bundle [<fixture>] [--mode=bytes|identifiers|both]"
+            );
+            return;
+        } else {
+            positional.push(a);
+        }
+    }
+    if (!["bytes", "identifiers", "both"].includes(mode)) {
+        console.error(`unknown mode: ${mode}`);
+        process.exit(1);
+    }
+
+    const filter = positional[0];
     const allFixtures = (await fs.readdir(fixtureDir))
         .filter((f) => f.endsWith(".fixture.js"))
         .map((f) => ({
@@ -224,8 +418,17 @@ async function main() {
     }
 
     for (const fx of fixtures) {
-        const report = await analyzeFixture(fx.path);
-        printReport(fx.name, report);
+        const report = await analyzeFixture(fx.path, mode);
+        if (report.bytes) {
+            printBytesReport(fx.name, report.bytes, report.totalSize);
+        }
+        if (report.identifiers) {
+            printIdentifiersReport(
+                fx.name,
+                report.identifiers,
+                report.totalSize
+            );
+        }
     }
 }
 
