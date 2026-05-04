@@ -503,7 +503,10 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
         w.addEventListener("scroll", onScroll, true); // Capture!
 
         if (fullScreenEventName) {
-            w.document.addEventListener(fullScreenEventName, onFullScreenChanged);
+            w.document.addEventListener(
+                fullScreenEventName,
+                onFullScreenChanged
+            );
         }
     });
 

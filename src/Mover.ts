@@ -721,10 +721,7 @@ export function createMoverAPI(
                 currentFocusableElement = undefined;
             }
 
-            if (
-                !currentFocusableElement &&
-                tabster.focusable.isFocusable(el)
-            ) {
+            if (!currentFocusableElement && tabster.focusable.isFocusable(el)) {
                 currentFocusableElement = deepestFocusableElement = el;
             }
         }
@@ -1440,7 +1437,10 @@ export function createMoverAPI(
 
         win.addEventListener("keydown", onKeyDown, true);
         win.addEventListener(MoverMoveFocusEventName, onMoveFocus);
-        win.addEventListener(MoverMemorizedElementEventName, onMemorizedElement);
+        win.addEventListener(
+            MoverMemorizedElementEventName,
+            onMemorizedElement
+        );
 
         tabster.focusedElement.subscribe(onFocus);
     });

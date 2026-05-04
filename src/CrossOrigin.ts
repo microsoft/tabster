@@ -10,7 +10,7 @@ import {
 } from "./Deloser.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
-import { Subscribable } from "./State/Subscribable.js";
+import { createSubscribable } from "./State/Subscribable.js";
 import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
@@ -1477,73 +1477,29 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 }
 
-export class CrossOriginFocusedElementState
-    extends Subscribable<
+interface CrossOriginFocusedElementStateInternal
+    extends Types.CrossOriginFocusedElementState {
+    _setVal: (
+        val: CrossOriginElement | undefined,
+        detail: Types.FocusedElementDetail
+    ) => void;
+}
+
+function createCrossOriginFocusedElementState(
+    transactions: CrossOriginTransactions
+): Types.CrossOriginFocusedElementState {
+    const sub = createSubscribable<
         CrossOriginElement | undefined,
         Types.FocusedElementDetail
-    >
-    implements Types.CrossOriginFocusedElementState
-{
-    private _transactions: CrossOriginTransactions;
+    >();
 
-    constructor(transactions: CrossOriginTransactions) {
-        super();
-        this._transactions = transactions;
-    }
-
-    async focus(
-        element: Types.CrossOriginElement,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            {
-                uid: element.uid,
-                id: element.id,
-                rootId: element.rootId,
-                ownerId: element.ownerId,
-                observedName: element.observedName,
-            },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck
-        );
-    }
-
-    async focusById(
-        elementId: string,
-        rootId?: string,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            { id: elementId, rootId },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck
-        );
-    }
-
-    async focusByObservedName(
-        observedName: string,
-        timeout?: number,
-        rootId?: string,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            { observedName, rootId },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck,
-            timeout
-        );
-    }
-
-    private async _focus(
+    const focusInternal = async (
         elementData: CrossOriginElementDataIn,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean,
         timeout?: number
-    ): Promise<boolean> {
-        return this._transactions
+    ): Promise<boolean> => {
+        return transactions
             .beginTransaction(
                 FocusElementTransaction,
                 {
@@ -1554,87 +1510,169 @@ export class CrossOriginFocusedElementState
                 timeout
             )
             .then((value) => !!value);
-    }
+    };
 
-    static setVal(
+    const api: CrossOriginFocusedElementStateInternal = {
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+        dispose: sub.dispose,
+        _setVal: sub.setVal,
+
+        async focus(
+            element: Types.CrossOriginElement,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                {
+                    uid: element.uid,
+                    id: element.id,
+                    rootId: element.rootId,
+                    ownerId: element.ownerId,
+                    observedName: element.observedName,
+                },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck
+            );
+        },
+
+        async focusById(
+            elementId: string,
+            rootId?: string,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                { id: elementId, rootId },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck
+            );
+        },
+
+        async focusByObservedName(
+            observedName: string,
+            timeout?: number,
+            rootId?: string,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                { observedName, rootId },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck,
+                timeout
+            );
+        },
+    };
+
+    return api;
+}
+
+export const CrossOriginFocusedElementState = {
+    setVal(
         instance: Types.CrossOriginFocusedElementState,
         val: CrossOriginElement | undefined,
         detail: Types.FocusedElementDetail
     ): void {
-        (instance as CrossOriginFocusedElementState).setVal(val, detail);
-    }
+        (instance as CrossOriginFocusedElementStateInternal)._setVal(
+            val,
+            detail
+        );
+    },
+};
+
+interface CrossOriginObservedElementStateInternal
+    extends Types.CrossOriginObservedElementState {
+    _trigger: (
+        element: CrossOriginElement,
+        details: Types.ObservedElementProps
+    ) => void;
 }
 
-export class CrossOriginObservedElementState
-    extends Subscribable<CrossOriginElement, Types.ObservedElementProps>
-    implements Types.CrossOriginObservedElementState
-{
-    private _tabster: Types.TabsterCore;
-    private _transactions: CrossOriginTransactions;
-    private _lastRequestFocusId = 0;
+function createCrossOriginObservedElementState(
+    tabster: Types.TabsterCore,
+    transactions: CrossOriginTransactions
+): Types.CrossOriginObservedElementState {
+    const sub = createSubscribable<
+        CrossOriginElement,
+        Types.ObservedElementProps
+    >();
+    let lastRequestFocusId = 0;
 
-    constructor(
-        tabster: Types.TabsterCore,
-        transactions: CrossOriginTransactions
-    ) {
-        super();
-        this._tabster = tabster;
-        this._transactions = transactions;
-    }
+    const api: CrossOriginObservedElementStateInternal = {
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+        dispose: sub.dispose,
+        _trigger: sub.trigger,
 
-    async getElement(
-        observedName: string,
-        accessibility?: Types.ObservedElementAccessibility
-    ): Promise<CrossOriginElement | null> {
-        return this.waitElement(observedName, 0, accessibility);
-    }
+        async getElement(
+            observedName: string,
+            accessibility?: Types.ObservedElementAccessibility
+        ): Promise<Types.CrossOriginElement | null> {
+            return api.waitElement(observedName, 0, accessibility);
+        },
 
-    async waitElement(
-        observedName: string,
-        timeout: number,
-        accessibility?: Types.ObservedElementAccessibility
-    ): Promise<CrossOriginElement | null> {
-        return this._transactions
-            .beginTransaction(
-                GetElementTransaction,
-                {
+        async waitElement(
+            observedName: string,
+            timeout: number,
+            accessibility?: Types.ObservedElementAccessibility
+        ): Promise<Types.CrossOriginElement | null> {
+            return transactions
+                .beginTransaction(
+                    GetElementTransaction,
+                    {
+                        observedName,
+                        accessibility,
+                    },
+                    timeout
+                )
+                .then((value) =>
+                    value
+                        ? StateTransaction.createElement(tabster, value)
+                        : null
+                );
+        },
+
+        async requestFocus(
+            observedName: string,
+            timeout: number
+        ): Promise<boolean> {
+            const requestId = ++lastRequestFocusId;
+            return api
+                .waitElement(
                     observedName,
-                    accessibility,
-                },
-                timeout
-            )
-            .then((value) =>
-                value
-                    ? StateTransaction.createElement(this._tabster, value)
-                    : null
-            );
-    }
+                    timeout,
+                    ObservedElementAccessibilities.Focusable
+                )
+                .then((element) =>
+                    lastRequestFocusId === requestId && element
+                        ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                          tabster.crossOrigin!.focusedElement.focus(
+                              element,
+                              true
+                          )
+                        : false
+                );
+        },
+    };
 
-    async requestFocus(
-        observedName: string,
-        timeout: number
-    ): Promise<boolean> {
-        const requestId = ++this._lastRequestFocusId;
-        return this.waitElement(
-            observedName,
-            timeout,
-            ObservedElementAccessibilities.Focusable
-        ).then((element) =>
-            this._lastRequestFocusId === requestId && element
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  this._tabster.crossOrigin!.focusedElement.focus(element, true)
-                : false
-        );
-    }
+    return api;
+}
 
-    static trigger(
+export const CrossOriginObservedElementState = {
+    trigger(
         instance: Types.CrossOriginObservedElementState,
         element: CrossOriginElement,
         details: Types.ObservedElementProps
     ): void {
-        (instance as CrossOriginObservedElementState).trigger(element, details);
-    }
-}
+        (instance as CrossOriginObservedElementStateInternal)._trigger(
+            element,
+            details
+        );
+    },
+};
 
 export function createCrossOriginAPI(
     tabster: Types.TabsterCore
@@ -1647,8 +1685,8 @@ export function createCrossOriginAPI(
     };
 
     const transactions = new CrossOriginTransactions(tabster, win, ctx);
-    const focusedElement = new CrossOriginFocusedElementState(transactions);
-    const observedElement = new CrossOriginObservedElementState(
+    const focusedElement = createCrossOriginFocusedElementState(transactions);
+    const observedElement = createCrossOriginObservedElementState(
         tabster,
         transactions
     );

@@ -511,8 +511,7 @@ export function createModalizerAPI(
 
         if (
             !focusedElement ||
-            (focusedElement &&
-                focusedElementModalizer?.userId === api.activeId)
+            (focusedElement && focusedElementModalizer?.userId === api.activeId)
         ) {
             // If there is no currently focused element, or the currently focused element
             // is in the active modalizer, we don't need to do anything.
@@ -937,7 +936,10 @@ export function createModalizerAPI(
             noFocusFirst?: boolean,
             noFocusDefault?: boolean
         ): boolean {
-            const ctx = RootAPI.getTabsterContext(tabster, elementFromModalizer);
+            const ctx = RootAPI.getTabsterContext(
+                tabster,
+                elementFromModalizer
+            );
 
             const modalizer = ctx?.modalizer;
 
@@ -985,7 +987,9 @@ export function createModalizerAPI(
             return false;
         },
 
-        activate(modalizerElementOrContainer: HTMLElement | undefined): boolean {
+        activate(
+            modalizerElementOrContainer: HTMLElement | undefined
+        ): boolean {
             const modalizerToActivate: Types.Modalizer | undefined =
                 modalizerElementOrContainer
                     ? RootAPI.getTabsterContext(

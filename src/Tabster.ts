@@ -4,9 +4,12 @@
  */
 
 import { FocusableAPI } from "./Focusable.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import {
+    FocusedElementState,
+    createFocusedElementState,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation.js";
+import { createKeyboardNavigationState } from "./State/KeyboardNavigation.js";
 import { observeMutations } from "./MutationEvent.js";
 import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
@@ -93,8 +96,8 @@ class TabsterCore implements Types.TabsterCore {
             setDOMAPI({ ...props.DOMAPI });
         }
 
-        this.keyboardNavigation = new KeyboardNavigationState(getWindow);
-        this.focusedElement = new FocusedElementState(this, getWindow);
+        this.keyboardNavigation = createKeyboardNavigationState(getWindow);
+        this.focusedElement = createFocusedElementState(this, getWindow);
         this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = createUncontrolledAPI(

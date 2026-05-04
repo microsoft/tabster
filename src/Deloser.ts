@@ -746,8 +746,7 @@ export function createDeloserAPI(
 
         const restoreFocus = async () => {
             restoreFocusTimer = undefined;
-            const lastFocused =
-                tabster.focusedElement.getLastFocusedElement();
+            const lastFocused = tabster.focusedElement.getLastFocusedElement();
 
             if (
                 !force &&
