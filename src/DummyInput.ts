@@ -19,6 +19,7 @@ import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
 import {
     addListener,
+    createTimer,
     hasSubFocusable,
     makeFocusIgnored,
     removeListener,
@@ -91,8 +92,7 @@ export function createDummyInput(
     (input as HTMLElementWithDummyContainer).__tabsterDummyContainer = element;
 
     const isPhantom = props.isPhantom ?? false;
-    let disposeTimer: number | undefined;
-    let clearDisposeTimeout: (() => void) | undefined;
+    const disposeTimer = createTimer(getWindow);
 
     const isBackward = (
         isIn: boolean,
@@ -169,9 +169,7 @@ export function createDummyInput(
         },
 
         dispose(): void {
-            if (clearDisposeTimeout) {
-                clearDisposeTimeout();
-            }
+            disposeTimer.clear();
 
             const currentInput = api.input;
 
@@ -195,18 +193,7 @@ export function createDummyInput(
     };
 
     if (isPhantom) {
-        disposeTimer = win.setTimeout(() => {
-            disposeTimer = undefined;
-            api.dispose();
-        }, 0);
-
-        clearDisposeTimeout = () => {
-            if (disposeTimer) {
-                win.clearTimeout(disposeTimer);
-                disposeTimer = undefined;
-            }
-            clearDisposeTimeout = undefined;
-        };
+        disposeTimer.set(api.dispose, 0);
     }
 
     return api;
@@ -737,7 +724,7 @@ function createDummyInputManagerCore(
     }
 
     const getWindow = tabster.getWindow;
-    let addTimer: number | undefined;
+    const addTimer = createTimer(getWindow);
     let transformElements: Set<HTMLElement> = new Set();
     const wrappers: DummyInputWrapper[] = [
         { manager, priority, tabbable: true },
@@ -925,13 +912,11 @@ function createDummyInputManagerCore(
      * Called each time the children under the element is mutated
      */
     const addDummyInputs = () => {
-        if (addTimer) {
+        if (addTimer.isActive()) {
             return;
         }
 
-        addTimer = getWindow().setTimeout(() => {
-            addTimer = undefined;
-
+        addTimer.set(() => {
             ensurePosition();
 
             if (__DEV__) {
@@ -1104,12 +1089,7 @@ function createDummyInputManagerCore(
                 }
                 transformElements.clear();
 
-                const win = getWindow();
-
-                if (addTimer) {
-                    win.clearTimeout(addTimer);
-                    addTimer = undefined;
-                }
+                addTimer.clear();
 
                 const input = firstDummy.input;
                 input && tabster._dummyObserver.remove(input);

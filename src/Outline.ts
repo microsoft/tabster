@@ -5,7 +5,12 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import type * as Types from "./Types.js";
-import { addListener, getBoundingRect, removeListener } from "./Utils.js";
+import {
+    addListener,
+    createTimer,
+    getBoundingRect,
+    removeListener,
+} from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {
@@ -69,7 +74,7 @@ function isParentChild(parent: HTMLElement, child: HTMLElement): boolean {
 
 export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const win = tabster.getWindow;
-    let updateTimer: number | undefined;
+    const updateTimer = createTimer(win);
     let outlinedElement: HTMLElement | undefined;
     let curPos: OutlinePosition | undefined;
     let isVisible = false;
@@ -154,10 +159,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateElement = (e: HTMLElement | undefined): boolean => {
         outlinedElement = undefined;
 
-        if (updateTimer) {
-            win().clearTimeout(updateTimer);
-            updateTimer = undefined;
-        }
+        updateTimer.clear();
 
         curPos = undefined;
 
@@ -224,19 +226,13 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateOutline = (): void => {
         setOutlinePosition();
 
-        if (updateTimer) {
-            win().clearTimeout(updateTimer);
-            updateTimer = undefined;
-        }
+        updateTimer.clear();
 
         if (!outlinedElement) {
             return;
         }
 
-        updateTimer = win().setTimeout(() => {
-            updateTimer = undefined;
-            updateOutline();
-        }, 30);
+        updateTimer.set(updateOutline, 30);
     };
 
     const setVisibility = (visible: boolean): void => {
@@ -531,10 +527,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
         dispose(): void {
             const w = win();
 
-            if (updateTimer) {
-                w.clearTimeout(updateTimer);
-                updateTimer = undefined;
-            }
+            updateTimer.clear();
 
             tabster.keyboardNavigation.unsubscribe(
                 onKeyboardNavigationStateChanged

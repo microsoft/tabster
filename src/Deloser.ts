@@ -15,6 +15,7 @@ import {
 } from "./Events.js";
 import {
     addListener,
+    createTimer,
     documentContains,
     getElementUId,
     isDisplayNone,
@@ -714,7 +715,7 @@ export function createDeloserAPI(
     const history = new DeloserHistory(tabster);
     let inDeloser = false;
     let curDeloser: Types.Deloser | undefined;
-    let restoreFocusTimer: number | undefined;
+    const restoreFocusTimer = createTimer(win);
     let isRestoringFocus = false;
     let isPaused = false;
     let autoDeloser: Types.DeloserProps | undefined = props?.autoDeloser;
@@ -747,7 +748,6 @@ export function createDeloserAPI(
         }
 
         const restoreFocus = async () => {
-            restoreFocusTimer = undefined;
             const lastFocused = tabster.focusedElement.getLastFocusedElement();
 
             if (
@@ -809,7 +809,7 @@ export function createDeloserAPI(
         if (force) {
             restoreFocus();
         } else {
-            restoreFocusTimer = win().setTimeout(restoreFocus, 100);
+            restoreFocusTimer.set(restoreFocus, 100);
         }
     };
 
@@ -834,10 +834,7 @@ export function createDeloserAPI(
     };
 
     const onFocus = (e: HTMLElement | undefined): void => {
-        if (restoreFocusTimer) {
-            win().clearTimeout(restoreFocusTimer);
-            restoreFocusTimer = undefined;
-        }
+        restoreFocusTimer.clear();
 
         if (!e) {
             scheduleRestoreFocus();
@@ -892,10 +889,7 @@ export function createDeloserAPI(
         dispose(): void {
             const w = win();
 
-            if (restoreFocusTimer) {
-                w.clearTimeout(restoreFocusTimer);
-                restoreFocusTimer = undefined;
-            }
+            restoreFocusTimer.clear();
 
             if (autoDeloserInstance) {
                 autoDeloserInstance.dispose();
@@ -963,11 +957,7 @@ export function createDeloserAPI(
 
         pause(): void {
             isPaused = true;
-
-            if (restoreFocusTimer) {
-                win().clearTimeout(restoreFocusTimer);
-                restoreFocusTimer = undefined;
-            }
+            restoreFocusTimer.clear();
         },
 
         resume(restore?: boolean): void {

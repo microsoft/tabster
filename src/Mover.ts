@@ -28,6 +28,7 @@ import {
 import {
     addListener,
     createElementTreeWalker,
+    createTimer,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
@@ -690,7 +691,7 @@ export function createMoverAPI(
     getWindow: Types.GetWindow
 ): Types.MoverAPI {
     const movers: Record<string, Mover> = {};
-    let ignoredInputTimer: number | undefined;
+    const ignoredInputTimer = createTimer(getWindow);
     let ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     const onMoverDispose = (mover: Mover) => {
@@ -1148,10 +1149,7 @@ export function createMoverAPI(
     };
 
     const onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (ignoredInputTimer) {
-            getWindow().clearTimeout(ignoredInputTimer);
-            ignoredInputTimer = undefined;
-        }
+        ignoredInputTimer.clear();
 
         ignoredInputResolve?.(false);
 
@@ -1308,12 +1306,6 @@ export function createMoverAPI(
                         resolve(value);
                     };
 
-                    const win = getWindow();
-
-                    if (ignoredInputTimer) {
-                        win.clearTimeout(ignoredInputTimer);
-                    }
-
                     const {
                         anchorNode: prevAnchorNode,
                         focusNode: prevFocusNode,
@@ -1322,9 +1314,7 @@ export function createMoverAPI(
                     } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    ignoredInputTimer = win.setTimeout(() => {
-                        ignoredInputTimer = undefined;
-
+                    ignoredInputTimer.set(() => {
                         const {
                             anchorNode,
                             focusNode,
@@ -1452,10 +1442,7 @@ export function createMoverAPI(
 
             ignoredInputResolve?.(false);
 
-            if (ignoredInputTimer) {
-                win.clearTimeout(ignoredInputTimer);
-                ignoredInputTimer = undefined;
-            }
+            ignoredInputTimer.clear();
 
             removeListener(win, "keydown", onKeyDown, true);
             removeListener(win, MoverMoveFocusEventName, onMoveFocus);

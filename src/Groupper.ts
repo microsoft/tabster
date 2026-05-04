@@ -29,6 +29,7 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    createTimer,
     getAdjacentElement,
     removeListener,
     TabsterPart,
@@ -432,15 +433,12 @@ export function createGroupperAPI(
     tabster: Types.TabsterCore,
     getWindow: Types.GetWindow
 ): Types.GroupperAPI {
-    let updateTimer: number | undefined;
+    const updateTimer = createTimer(getWindow);
     let current: Record<string, Types.Groupper> = {};
     const grouppers: Record<string, Types.Groupper> = {};
 
     const updateCurrent = (element: HTMLElement): void => {
-        if (updateTimer) {
-            getWindow().clearTimeout(updateTimer);
-            updateTimer = undefined;
-        }
+        updateTimer.clear();
 
         const newIds: Record<string, true> = {};
 
@@ -717,10 +715,7 @@ export function createGroupperAPI(
 
             current = {};
 
-            if (updateTimer) {
-                win.clearTimeout(updateTimer);
-                updateTimer = undefined;
-            }
+            updateTimer.clear();
 
             tabster.focusedElement.unsubscribe(onFocus);
 
@@ -762,10 +757,9 @@ export function createGroupperAPI(
             if (
                 focusedElement &&
                 dom.nodeContains(element, focusedElement) &&
-                !updateTimer
+                !updateTimer.isActive()
             ) {
-                updateTimer = getWindow().setTimeout(() => {
-                    updateTimer = undefined;
+                updateTimer.set(() => {
                     // Making sure the focused element hasn't changed.
                     if (
                         focusedElement ===

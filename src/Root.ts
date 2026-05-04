@@ -15,9 +15,11 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    createTimer,
     getElementUId,
     removeListener,
     TabsterPart,
+    type Timer,
     type WeakHTMLElement,
 } from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
@@ -104,7 +106,7 @@ export class Root
     private _dummyManager?: DummyInputManager;
     private _sys?: Types.SysProps;
     private _isFocused = false;
-    private _setFocusedTimer: number | undefined;
+    private _setFocusedTimer: Timer;
     private _onDispose: (root: Root) => void;
 
     constructor(
@@ -119,6 +121,7 @@ export class Root
         this._onDispose = onDispose;
 
         const win = tabster.getWindow;
+        this._setFocusedTimer = createTimer(win);
         this.uid = getElementUId(win, element);
 
         this._sys = sys;
@@ -156,10 +159,7 @@ export class Root
         removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
         removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
-        if (this._setFocusedTimer) {
-            win.clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        this._setFocusedTimer.clear();
 
         this._dummyManager?.dispose();
         this._remove();
@@ -186,10 +186,7 @@ export class Root
     }
 
     private _setFocused = (hasFocused: boolean): void => {
-        if (this._setFocusedTimer) {
-            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        this._setFocusedTimer.clear();
 
         if (this._isFocused === hasFocused) {
             return;
@@ -203,15 +200,11 @@ export class Root
                 this._dummyManager?.setTabbable(false);
                 element.dispatchEvent(new RootFocusEvent({ element }));
             } else {
-                this._setFocusedTimer = this._tabster
-                    .getWindow()
-                    .setTimeout(() => {
-                        delete this._setFocusedTimer;
-
-                        this._isFocused = false;
-                        this._dummyManager?.setTabbable(true);
-                        element.dispatchEvent(new RootBlurEvent({ element }));
-                    }, 0);
+                this._setFocusedTimer.set(() => {
+                    this._isFocused = false;
+                    this._dummyManager?.setTabbable(true);
+                    element.dispatchEvent(new RootBlurEvent({ element }));
+                }, 0);
             }
         }
     };

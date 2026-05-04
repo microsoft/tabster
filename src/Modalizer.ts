@@ -21,6 +21,7 @@ import {
 import {
     addListener,
     augmentAttribute,
+    createTimer,
     removeListener,
     TabsterPart,
     WeakHTMLElement,
@@ -347,12 +348,12 @@ export function createModalizerAPI(
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const win = tabster.getWindow;
-    let restoreModalizerFocusTimer: number | undefined;
+    const restoreModalizerFocusTimer = createTimer(win);
     const modalizers: Record<string, Types.Modalizer> = {};
     let parts: Record<string, Record<string, Types.Modalizer>> = {};
     let augMap: WeakMap<HTMLElement, true> = new WeakMap();
     let aug: WeakHTMLElement<HTMLElement>[] = [];
-    let hiddenUpdateTimer: number | undefined;
+    const hiddenUpdateTimer = createTimer(win);
     let activationHistory: (string | undefined)[] = [];
 
     const activeElements: WeakHTMLElement<HTMLElement>[] = [];
@@ -659,12 +660,10 @@ export function createModalizerAPI(
         ) {
             api.setActive(modalizer);
         } else {
-            // Focused outside of the active modalizer, try pull focus back to current modalizer
-            const w = win();
-            w.clearTimeout(restoreModalizerFocusTimer);
+            // Focused outside of the active modalizer, try pull focus back to current modalizer.
             // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
-            // Figure out a better way of doing this rather than a 100ms timeout
-            restoreModalizerFocusTimer = w.setTimeout(
+            // Figure out a better way of doing this rather than a 100ms timeout.
+            restoreModalizerFocusTimer.set(
                 () => restoreModalizerFocus(focusedElement),
                 100
             );
@@ -825,8 +824,8 @@ export function createModalizerAPI(
                 }
             });
 
-            w.clearTimeout(restoreModalizerFocusTimer);
-            w.clearTimeout(hiddenUpdateTimer);
+            restoreModalizerFocusTimer.clear();
+            hiddenUpdateTimer.clear();
 
             parts = {};
             api.activeId = undefined;
@@ -890,14 +889,11 @@ export function createModalizerAPI(
         },
 
         hiddenUpdate(): void {
-            if (hiddenUpdateTimer) {
+            if (hiddenUpdateTimer.isActive()) {
                 return;
             }
 
-            hiddenUpdateTimer = win().setTimeout(() => {
-                hiddenUpdateTimer = undefined;
-                hiddenUpdateInternal();
-            }, 250);
+            hiddenUpdateTimer.set(hiddenUpdateInternal, 250);
         },
 
         setActive(modalizer: Types.Modalizer | undefined): void {

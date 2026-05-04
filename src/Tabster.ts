@@ -19,7 +19,9 @@ import { createDummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
     createElementTreeWalker,
+    createTimer,
     disposeInstanceContext,
+    type Timer,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
@@ -49,10 +51,10 @@ class TabsterCore implements Types.TabsterCore {
     private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     private _unobserve: (() => void) | undefined;
     private _win: WindowWithTabsterInstance | undefined;
-    private _forgetMemorizedTimer: number | undefined;
+    private _forgetMemorizedTimer: Timer;
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
-    private _initTimer: number | undefined;
+    private _initTimer: Timer;
     private _initQueue: (() => void)[] = [];
 
     _version: string = __VERSION__;
@@ -91,6 +93,9 @@ class TabsterCore implements Types.TabsterCore {
         this._win = win;
 
         const getWindow = this.getWindow;
+
+        this._forgetMemorizedTimer = createTimer(getWindow);
+        this._initTimer = createTimer(getWindow);
 
         if (props?.DOMAPI) {
             setDOMAPI({ ...props.DOMAPI });
@@ -183,18 +188,11 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        const win = this._win;
-
-        win?.clearTimeout(this._initTimer);
-        delete this._initTimer;
+        this._initTimer.clear();
         this._initQueue = [];
 
         this._forgetMemorizedElements = [];
-
-        if (win && this._forgetMemorizedTimer) {
-            win.clearTimeout(this._forgetMemorizedTimer);
-            delete this._forgetMemorizedTimer;
-        }
+        this._forgetMemorizedTimer.clear();
 
         this.outline?.dispose();
         this.crossOrigin?.dispose();
@@ -222,6 +220,7 @@ class TabsterCore implements Types.TabsterCore {
         this._storage = new WeakMap();
         this._wrappers.clear();
 
+        const win = this._win;
         if (win) {
             disposeInstanceContext(win);
             delete win.__tabsterInstance;
@@ -263,13 +262,11 @@ class TabsterCore implements Types.TabsterCore {
 
         this._forgetMemorizedElements.push(this._win.document.body);
 
-        if (this._forgetMemorizedTimer) {
+        if (this._forgetMemorizedTimer.isActive()) {
             return;
         }
 
-        this._forgetMemorizedTimer = this._win.setTimeout(() => {
-            delete this._forgetMemorizedTimer;
-
+        this._forgetMemorizedTimer.set(() => {
             for (
                 let el: HTMLElement | undefined =
                     this._forgetMemorizedElements.shift();
@@ -289,9 +286,8 @@ class TabsterCore implements Types.TabsterCore {
 
         this._initQueue.push(callback);
 
-        if (!this._initTimer) {
-            this._initTimer = this._win?.setTimeout(() => {
-                delete this._initTimer;
+        if (!this._initTimer.isActive()) {
+            this._initTimer.set(() => {
                 this.drainInitQueue();
             }, 0);
         }

@@ -15,12 +15,14 @@ import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
     addListener,
+    createTimer,
     getElementUId,
     getInstanceContext,
     getUId,
     getWindowUId,
     type HTMLElementWithUID,
     removeListener,
+    type Timer,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
@@ -964,7 +966,7 @@ class CrossOriginTransactions {
         [id: string]: CrossOriginTransactionWrapper<any, any>;
     } = {};
     private _tabster: Types.TabsterCore;
-    private _pingTimer: number | undefined;
+    private _pingTimer: Timer;
     private _isDefaultSendUp = false;
     private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
@@ -980,6 +982,7 @@ class CrossOriginTransactions {
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
         this.ctx = context;
+        this._pingTimer = createTimer(getOwner);
     }
 
     setup(
@@ -1045,10 +1048,7 @@ class CrossOriginTransactions {
     async dispose(): Promise<void> {
         const owner = this._owner();
 
-        if (this._pingTimer) {
-            owner.clearTimeout(this._pingTimer);
-            this._pingTimer = undefined;
-        }
+        this._pingTimer.clear();
 
         removeListener(owner, "message", this._onBrowserMessage);
         removeListener(owner, "pagehide", this._onPageHide);
@@ -1343,7 +1343,7 @@ class CrossOriginTransactions {
     }
 
     private async _ping(): Promise<void> {
-        if (this._pingTimer) {
+        if (this._pingTimer.isActive()) {
             return;
         }
 
@@ -1409,8 +1409,7 @@ class CrossOriginTransactions {
             }
         }
 
-        this._pingTimer = this._owner().setTimeout(() => {
-            this._pingTimer = undefined;
+        this._pingTimer.set(() => {
             this._ping();
         }, _pingTimeout);
     }
@@ -1680,7 +1679,7 @@ export function createCrossOriginAPI(
     tabster: Types.TabsterCore
 ): Types.CrossOriginAPI {
     const win = tabster.getWindow;
-    let blurTimer: number | undefined;
+    const blurTimer = createTimer(win);
     const ctx: CrossOriginInstanceContext = {
         ignoreKeyboardNavigationStateUpdate: false,
         deloserByUId: {},
@@ -1704,14 +1703,9 @@ export function createCrossOriginAPI(
     };
 
     const onFocus = (element: HTMLElementWithUID | undefined): void => {
-        const w = win();
+        const ownerUId = getWindowUId(win());
 
-        const ownerUId = getWindowUId(w);
-
-        if (blurTimer) {
-            w.clearTimeout(blurTimer);
-            blurTimer = undefined;
-        }
+        blurTimer.clear();
 
         if (element) {
             transactions.beginTransaction(StateTransaction, {
@@ -1725,9 +1719,7 @@ export function createCrossOriginAPI(
                 state: CrossOriginStates.Focused,
             });
         } else {
-            blurTimer = w.setTimeout(() => {
-                blurTimer = undefined;
-
+            blurTimer.set(() => {
                 if (ctx.focusOwner && ctx.focusOwner === ownerUId) {
                     transactions
                         .beginTransaction(GetElementTransaction, undefined)
