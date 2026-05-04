@@ -21,8 +21,11 @@ import {
 import {
     addListener,
     augmentAttribute,
+    clearTimer,
     createTimer,
+    isTimerActive,
     removeListener,
+    setTimer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -348,12 +351,12 @@ export function createModalizerAPI(
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const win = tabster.getWindow;
-    const restoreModalizerFocusTimer = createTimer(win);
+    const restoreModalizerFocusTimer = createTimer();
     const modalizers: Record<string, Types.Modalizer> = {};
     let parts: Record<string, Record<string, Types.Modalizer>> = {};
     let augMap: WeakMap<HTMLElement, true> = new WeakMap();
     let aug: WeakHTMLElement<HTMLElement>[] = [];
-    const hiddenUpdateTimer = createTimer(win);
+    const hiddenUpdateTimer = createTimer();
     let activationHistory: (string | undefined)[] = [];
 
     const activeElements: WeakHTMLElement<HTMLElement>[] = [];
@@ -663,7 +666,8 @@ export function createModalizerAPI(
             // Focused outside of the active modalizer, try pull focus back to current modalizer.
             // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
             // Figure out a better way of doing this rather than a 100ms timeout.
-            restoreModalizerFocusTimer.set(
+            setTimer(
+                restoreModalizerFocusTimer,
                 () => restoreModalizerFocus(focusedElement),
                 100
             );
@@ -824,8 +828,8 @@ export function createModalizerAPI(
                 }
             });
 
-            restoreModalizerFocusTimer.clear();
-            hiddenUpdateTimer.clear();
+            clearTimer(restoreModalizerFocusTimer);
+            clearTimer(hiddenUpdateTimer);
 
             parts = {};
             api.activeId = undefined;
@@ -889,11 +893,11 @@ export function createModalizerAPI(
         },
 
         hiddenUpdate(): void {
-            if (hiddenUpdateTimer.isActive()) {
+            if (isTimerActive(hiddenUpdateTimer)) {
                 return;
             }
 
-            hiddenUpdateTimer.set(hiddenUpdateInternal, 250);
+            setTimer(hiddenUpdateTimer, hiddenUpdateInternal, 250);
         },
 
         setActive(modalizer: Types.Modalizer | undefined): void {

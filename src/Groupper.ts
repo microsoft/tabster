@@ -29,9 +29,12 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     getAdjacentElement,
+    isTimerActive,
     removeListener,
+    setTimer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -433,12 +436,12 @@ export function createGroupperAPI(
     tabster: Types.TabsterCore,
     getWindow: Types.GetWindow
 ): Types.GroupperAPI {
-    const updateTimer = createTimer(getWindow);
+    const updateTimer = createTimer();
     let current: Record<string, Types.Groupper> = {};
     const grouppers: Record<string, Types.Groupper> = {};
 
     const updateCurrent = (element: HTMLElement): void => {
-        updateTimer.clear();
+        clearTimer(updateTimer);
 
         const newIds: Record<string, true> = {};
 
@@ -715,7 +718,7 @@ export function createGroupperAPI(
 
             current = {};
 
-            updateTimer.clear();
+            clearTimer(updateTimer);
 
             tabster.focusedElement.unsubscribe(onFocus);
 
@@ -757,17 +760,21 @@ export function createGroupperAPI(
             if (
                 focusedElement &&
                 dom.nodeContains(element, focusedElement) &&
-                !updateTimer.isActive()
+                !isTimerActive(updateTimer)
             ) {
-                updateTimer.set(() => {
-                    // Making sure the focused element hasn't changed.
-                    if (
-                        focusedElement ===
-                        tabster.focusedElement.getFocusedElement()
-                    ) {
-                        updateCurrent(focusedElement);
-                    }
-                }, 0);
+                setTimer(
+                    updateTimer,
+                    () => {
+                        // Making sure the focused element hasn't changed.
+                        if (
+                            focusedElement ===
+                            tabster.focusedElement.getFocusedElement()
+                        ) {
+                            updateCurrent(focusedElement);
+                        }
+                    },
+                    0
+                );
             }
 
             return newGroupper;

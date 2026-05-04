@@ -644,42 +644,43 @@ export function getRadioButtonGroup(
 }
 
 /**
- * Manages a single setTimeout id with idempotent set/clear semantics.
- * Replaces the `if (this._timer) win.clearTimeout(this._timer); this._timer = undefined`
- * boilerplate scattered across the codebase. Each `set()` cancels any pending
- * timer, and the callback auto-clears the id when it fires.
+ * Opaque handle for a single setTimeout id. Use {@link setTimer},
+ * {@link clearTimer}, and {@link isTimerActive} to operate on it.
+ *
+ * Built as a free-function API rather than methods because the function names
+ * mangle to single characters (1 char per call site) while property names like
+ * `.clear` would be preserved by the minifier (~5 chars per call site).
  */
 export interface Timer {
-    /** Cancels any pending timer and schedules a new one. */
-    set(callback: () => void, delay: number): void;
-    /** Cancels the pending timer; no-op if there isn't one. */
-    clear(): void;
-    /** Whether a timer is currently pending. */
-    isActive(): boolean;
+    id: number | null;
 }
 
-export function createTimer(getWindow: GetWindow): Timer {
-    let id: number | undefined;
-    return {
-        set(callback: () => void, delay: number): void {
-            if (id !== undefined) {
-                getWindow().clearTimeout(id);
-            }
-            id = getWindow().setTimeout(() => {
-                id = undefined;
-                callback();
-            }, delay);
-        },
-        clear(): void {
-            if (id !== undefined) {
-                getWindow().clearTimeout(id);
-                id = undefined;
-            }
-        },
-        isActive(): boolean {
-            return id !== undefined;
-        },
-    };
+export function createTimer(): Timer {
+    return { id: null };
+}
+
+/** Cancels any pending timer on `t` and schedules `callback` after `delay` ms. */
+export function setTimer(t: Timer, callback: () => void, delay: number): void {
+    if (t.id !== null) {
+        clearTimeout(t.id);
+    }
+    t.id = setTimeout(() => {
+        t.id = null;
+        callback();
+    }, delay) as unknown as number;
+}
+
+/** Cancels the pending timer on `t`; no-op if there isn't one. */
+export function clearTimer(t: Timer): void {
+    if (t.id !== null) {
+        clearTimeout(t.id);
+        t.id = null;
+    }
+}
+
+/** Whether `t` has a pending timer. */
+export function isTimerActive(t: Timer): boolean {
+    return t.id !== null;
 }
 
 /**

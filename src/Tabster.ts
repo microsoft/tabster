@@ -18,9 +18,12 @@ import { createUncontrolledAPI } from "./Uncontrolled.js";
 import { createDummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
+    clearTimer,
     createElementTreeWalker,
     createTimer,
     disposeInstanceContext,
+    isTimerActive,
+    setTimer,
     type Timer,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
@@ -94,8 +97,8 @@ class TabsterCore implements Types.TabsterCore {
 
         const getWindow = this.getWindow;
 
-        this._forgetMemorizedTimer = createTimer(getWindow);
-        this._initTimer = createTimer(getWindow);
+        this._forgetMemorizedTimer = createTimer();
+        this._initTimer = createTimer();
 
         if (props?.DOMAPI) {
             setDOMAPI({ ...props.DOMAPI });
@@ -188,11 +191,11 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        this._initTimer.clear();
+        clearTimer(this._initTimer);
         this._initQueue = [];
 
         this._forgetMemorizedElements = [];
-        this._forgetMemorizedTimer.clear();
+        clearTimer(this._forgetMemorizedTimer);
 
         this.outline?.dispose();
         this.crossOrigin?.dispose();
@@ -262,21 +265,28 @@ class TabsterCore implements Types.TabsterCore {
 
         this._forgetMemorizedElements.push(this._win.document.body);
 
-        if (this._forgetMemorizedTimer.isActive()) {
+        if (isTimerActive(this._forgetMemorizedTimer)) {
             return;
         }
 
-        this._forgetMemorizedTimer.set(() => {
-            for (
-                let el: HTMLElement | undefined =
-                    this._forgetMemorizedElements.shift();
-                el;
-                el = this._forgetMemorizedElements.shift()
-            ) {
-                clearElementCache(this.getWindow, el);
-                FocusedElementState.forgetMemorized(this.focusedElement, el);
-            }
-        }, 0);
+        setTimer(
+            this._forgetMemorizedTimer,
+            () => {
+                for (
+                    let el: HTMLElement | undefined =
+                        this._forgetMemorizedElements.shift();
+                    el;
+                    el = this._forgetMemorizedElements.shift()
+                ) {
+                    clearElementCache(this.getWindow, el);
+                    FocusedElementState.forgetMemorized(
+                        this.focusedElement,
+                        el
+                    );
+                }
+            },
+            0
+        );
     }
 
     queueInit(callback: () => void): void {
@@ -286,10 +296,14 @@ class TabsterCore implements Types.TabsterCore {
 
         this._initQueue.push(callback);
 
-        if (!this._initTimer.isActive()) {
-            this._initTimer.set(() => {
-                this.drainInitQueue();
-            }, 0);
+        if (!isTimerActive(this._initTimer)) {
+            setTimer(
+                this._initTimer,
+                () => {
+                    this.drainInitQueue();
+                },
+                0
+            );
         }
     }
 

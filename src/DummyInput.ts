@@ -19,10 +19,13 @@ import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     hasSubFocusable,
+    isTimerActive,
     makeFocusIgnored,
     removeListener,
+    setTimer,
     WeakHTMLElement,
 } from "./Utils.js";
 
@@ -92,7 +95,7 @@ export function createDummyInput(
     (input as HTMLElementWithDummyContainer).__tabsterDummyContainer = element;
 
     const isPhantom = props.isPhantom ?? false;
-    const disposeTimer = createTimer(getWindow);
+    const disposeTimer = createTimer();
 
     const isBackward = (
         isIn: boolean,
@@ -169,7 +172,7 @@ export function createDummyInput(
         },
 
         dispose(): void {
-            disposeTimer.clear();
+            clearTimer(disposeTimer);
 
             const currentInput = api.input;
 
@@ -193,7 +196,7 @@ export function createDummyInput(
     };
 
     if (isPhantom) {
-        disposeTimer.set(api.dispose, 0);
+        setTimer(disposeTimer, api.dispose, 0);
     }
 
     return api;
@@ -724,7 +727,7 @@ function createDummyInputManagerCore(
     }
 
     const getWindow = tabster.getWindow;
-    const addTimer = createTimer(getWindow);
+    const addTimer = createTimer();
     let transformElements: Set<HTMLElement> = new Set();
     const wrappers: DummyInputWrapper[] = [
         { manager, priority, tabbable: true },
@@ -912,20 +915,24 @@ function createDummyInputManagerCore(
      * Called each time the children under the element is mutated
      */
     const addDummyInputs = () => {
-        if (addTimer.isActive()) {
+        if (isTimerActive(addTimer)) {
             return;
         }
 
-        addTimer.set(() => {
-            ensurePosition();
+        setTimer(
+            addTimer,
+            () => {
+                ensurePosition();
 
-            if (__DEV__) {
-                firstDummy && setDummyInputDebugValue(firstDummy, wrappers);
-                lastDummy && setDummyInputDebugValue(lastDummy, wrappers);
-            }
+                if (__DEV__) {
+                    firstDummy && setDummyInputDebugValue(firstDummy, wrappers);
+                    lastDummy && setDummyInputDebugValue(lastDummy, wrappers);
+                }
 
-            addTransformOffsets();
-        }, 0);
+                addTransformOffsets();
+            },
+            0
+        );
     };
 
     const firstDummy: DummyInput = createDummyInput(
@@ -1089,7 +1096,7 @@ function createDummyInputManagerCore(
                 }
                 transformElements.clear();
 
-                addTimer.clear();
+                clearTimer(addTimer);
 
                 const input = firstDummy.input;
                 input && tabster._dummyObserver.remove(input);

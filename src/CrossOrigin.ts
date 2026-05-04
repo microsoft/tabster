@@ -15,13 +15,16 @@ import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     getElementUId,
     getInstanceContext,
     getUId,
     getWindowUId,
     type HTMLElementWithUID,
+    isTimerActive,
     removeListener,
+    setTimer,
     type Timer,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
@@ -982,7 +985,7 @@ class CrossOriginTransactions {
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
         this.ctx = context;
-        this._pingTimer = createTimer(getOwner);
+        this._pingTimer = createTimer();
     }
 
     setup(
@@ -1048,7 +1051,7 @@ class CrossOriginTransactions {
     async dispose(): Promise<void> {
         const owner = this._owner();
 
-        this._pingTimer.clear();
+        clearTimer(this._pingTimer);
 
         removeListener(owner, "message", this._onBrowserMessage);
         removeListener(owner, "pagehide", this._onPageHide);
@@ -1343,7 +1346,7 @@ class CrossOriginTransactions {
     }
 
     private async _ping(): Promise<void> {
-        if (this._pingTimer.isActive()) {
+        if (isTimerActive(this._pingTimer)) {
             return;
         }
 
@@ -1409,9 +1412,13 @@ class CrossOriginTransactions {
             }
         }
 
-        this._pingTimer.set(() => {
-            this._ping();
-        }, _pingTimeout);
+        setTimer(
+            this._pingTimer,
+            () => {
+                this._ping();
+            },
+            _pingTimeout
+        );
     }
 
     private _onBrowserMessage = (e: MessageEvent) => {
@@ -1679,7 +1686,7 @@ export function createCrossOriginAPI(
     tabster: Types.TabsterCore
 ): Types.CrossOriginAPI {
     const win = tabster.getWindow;
-    const blurTimer = createTimer(win);
+    const blurTimer = createTimer();
     const ctx: CrossOriginInstanceContext = {
         ignoreKeyboardNavigationStateUpdate: false,
         deloserByUId: {},
@@ -1705,7 +1712,7 @@ export function createCrossOriginAPI(
     const onFocus = (element: HTMLElementWithUID | undefined): void => {
         const ownerUId = getWindowUId(win());
 
-        blurTimer.clear();
+        clearTimer(blurTimer);
 
         if (element) {
             transactions.beginTransaction(StateTransaction, {
@@ -1719,24 +1726,28 @@ export function createCrossOriginAPI(
                 state: CrossOriginStates.Focused,
             });
         } else {
-            blurTimer.set(() => {
-                if (ctx.focusOwner && ctx.focusOwner === ownerUId) {
-                    transactions
-                        .beginTransaction(GetElementTransaction, undefined)
-                        .then((value) => {
-                            if (!value && ctx.focusOwner === ownerUId) {
-                                transactions.beginTransaction(
-                                    StateTransaction,
-                                    {
-                                        ownerUId,
-                                        state: CrossOriginStates.Blurred,
-                                        force: false,
-                                    }
-                                );
-                            }
-                        });
-                }
-            }, 0);
+            setTimer(
+                blurTimer,
+                () => {
+                    if (ctx.focusOwner && ctx.focusOwner === ownerUId) {
+                        transactions
+                            .beginTransaction(GetElementTransaction, undefined)
+                            .then((value) => {
+                                if (!value && ctx.focusOwner === ownerUId) {
+                                    transactions.beginTransaction(
+                                        StateTransaction,
+                                        {
+                                            ownerUId,
+                                            state: CrossOriginStates.Blurred,
+                                            force: false,
+                                        }
+                                    );
+                                }
+                            });
+                    }
+                },
+                0
+            );
         }
     };
 

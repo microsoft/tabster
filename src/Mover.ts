@@ -27,6 +27,7 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     createElementTreeWalker,
     createTimer,
     getElementUId,
@@ -34,6 +35,7 @@ import {
     matchesSelector,
     removeListener,
     scrollIntoView,
+    setTimer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -691,7 +693,7 @@ export function createMoverAPI(
     getWindow: Types.GetWindow
 ): Types.MoverAPI {
     const movers: Record<string, Mover> = {};
-    const ignoredInputTimer = createTimer(getWindow);
+    const ignoredInputTimer = createTimer();
     let ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     const onMoverDispose = (mover: Mover) => {
@@ -1149,7 +1151,7 @@ export function createMoverAPI(
     };
 
     const onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        ignoredInputTimer.clear();
+        clearTimer(ignoredInputTimer);
 
         ignoredInputResolve?.(false);
 
@@ -1314,83 +1316,89 @@ export function createMoverAPI(
                     } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    ignoredInputTimer.set(() => {
-                        const {
-                            anchorNode,
-                            focusNode,
-                            anchorOffset,
-                            focusOffset,
-                        } = dom.getSelection(element) || {};
+                    setTimer(
+                        ignoredInputTimer,
+                        () => {
+                            const {
+                                anchorNode,
+                                focusNode,
+                                anchorOffset,
+                                focusOffset,
+                            } = dom.getSelection(element) || {};
 
-                        if (
-                            anchorNode !== prevAnchorNode ||
-                            focusNode !== prevFocusNode ||
-                            anchorOffset !== prevAnchorOffset ||
-                            focusOffset !== prevFocusOffset
-                        ) {
-                            ignoredInputResolve?.(false);
-                            return;
-                        }
-
-                        selectionStart = anchorOffset || 0;
-                        selectionEnd = focusOffset || 0;
-                        textLength = element.textContent?.length || 0;
-
-                        if (anchorNode && focusNode) {
                             if (
-                                dom.nodeContains(element, anchorNode) &&
-                                dom.nodeContains(element, focusNode)
+                                anchorNode !== prevAnchorNode ||
+                                focusNode !== prevFocusNode ||
+                                anchorOffset !== prevAnchorOffset ||
+                                focusOffset !== prevFocusOffset
                             ) {
-                                if (anchorNode !== element) {
-                                    let anchorFound = false;
+                                ignoredInputResolve?.(false);
+                                return;
+                            }
 
-                                    const addOffsets = (
-                                        node: ChildNode
-                                    ): boolean => {
-                                        if (node === anchorNode) {
-                                            anchorFound = true;
-                                        } else if (node === focusNode) {
-                                            return true;
-                                        }
+                            selectionStart = anchorOffset || 0;
+                            selectionEnd = focusOffset || 0;
+                            textLength = element.textContent?.length || 0;
 
-                                        const nodeText = node.textContent;
+                            if (anchorNode && focusNode) {
+                                if (
+                                    dom.nodeContains(element, anchorNode) &&
+                                    dom.nodeContains(element, focusNode)
+                                ) {
+                                    if (anchorNode !== element) {
+                                        let anchorFound = false;
 
-                                        if (
-                                            nodeText &&
-                                            !dom.getFirstChild(node)
-                                        ) {
-                                            const len = nodeText.length;
+                                        const addOffsets = (
+                                            node: ChildNode
+                                        ): boolean => {
+                                            if (node === anchorNode) {
+                                                anchorFound = true;
+                                            } else if (node === focusNode) {
+                                                return true;
+                                            }
 
-                                            if (anchorFound) {
-                                                if (focusNode !== anchorNode) {
+                                            const nodeText = node.textContent;
+
+                                            if (
+                                                nodeText &&
+                                                !dom.getFirstChild(node)
+                                            ) {
+                                                const len = nodeText.length;
+
+                                                if (anchorFound) {
+                                                    if (
+                                                        focusNode !== anchorNode
+                                                    ) {
+                                                        selectionEnd += len;
+                                                    }
+                                                } else {
+                                                    selectionStart += len;
                                                     selectionEnd += len;
                                                 }
-                                            } else {
-                                                selectionStart += len;
-                                                selectionEnd += len;
                                             }
-                                        }
 
-                                        let stop = false;
+                                            let stop = false;
 
-                                        for (
-                                            let e = dom.getFirstChild(node);
-                                            e && !stop;
-                                            e = e.nextSibling
-                                        ) {
-                                            stop = addOffsets(e);
-                                        }
+                                            for (
+                                                let e = dom.getFirstChild(node);
+                                                e && !stop;
+                                                e = e.nextSibling
+                                            ) {
+                                                stop = addOffsets(e);
+                                            }
 
-                                        return stop;
-                                    };
+                                            return stop;
+                                        };
 
-                                    addOffsets(element);
+                                        addOffsets(element);
+                                    }
                                 }
                             }
-                        }
 
-                        ignoredInputResolve?.(true);
-                    }, 0);
+                            ignoredInputResolve?.(true);
+                        },
+                        0
+                    );
                 });
             }
 
@@ -1442,7 +1450,7 @@ export function createMoverAPI(
 
             ignoredInputResolve?.(false);
 
-            ignoredInputTimer.clear();
+            clearTimer(ignoredInputTimer);
 
             removeListener(win, "keydown", onKeyDown, true);
             removeListener(win, MoverMoveFocusEventName, onMoveFocus);

@@ -15,9 +15,11 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     getElementUId,
     removeListener,
+    setTimer,
     TabsterPart,
     type Timer,
     type WeakHTMLElement,
@@ -121,7 +123,7 @@ export class Root
         this._onDispose = onDispose;
 
         const win = tabster.getWindow;
-        this._setFocusedTimer = createTimer(win);
+        this._setFocusedTimer = createTimer();
         this.uid = getElementUId(win, element);
 
         this._sys = sys;
@@ -159,7 +161,7 @@ export class Root
         removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
         removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
-        this._setFocusedTimer.clear();
+        clearTimer(this._setFocusedTimer);
 
         this._dummyManager?.dispose();
         this._remove();
@@ -186,7 +188,7 @@ export class Root
     }
 
     private _setFocused = (hasFocused: boolean): void => {
-        this._setFocusedTimer.clear();
+        clearTimer(this._setFocusedTimer);
 
         if (this._isFocused === hasFocused) {
             return;
@@ -200,11 +202,15 @@ export class Root
                 this._dummyManager?.setTabbable(false);
                 element.dispatchEvent(new RootFocusEvent({ element }));
             } else {
-                this._setFocusedTimer.set(() => {
-                    this._isFocused = false;
-                    this._dummyManager?.setTabbable(true);
-                    element.dispatchEvent(new RootBlurEvent({ element }));
-                }, 0);
+                setTimer(
+                    this._setFocusedTimer,
+                    () => {
+                        this._isFocused = false;
+                        this._dummyManager?.setTabbable(true);
+                        element.dispatchEvent(new RootBlurEvent({ element }));
+                    },
+                    0
+                );
             }
         }
     };

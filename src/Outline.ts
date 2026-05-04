@@ -7,9 +7,11 @@ import { getTabsterOnElement } from "./Instance.js";
 import type * as Types from "./Types.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     getBoundingRect,
     removeListener,
+    setTimer,
 } from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
@@ -74,7 +76,7 @@ function isParentChild(parent: HTMLElement, child: HTMLElement): boolean {
 
 export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const win = tabster.getWindow;
-    const updateTimer = createTimer(win);
+    const updateTimer = createTimer();
     let outlinedElement: HTMLElement | undefined;
     let curPos: OutlinePosition | undefined;
     let isVisible = false;
@@ -159,7 +161,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateElement = (e: HTMLElement | undefined): boolean => {
         outlinedElement = undefined;
 
-        updateTimer.clear();
+        clearTimer(updateTimer);
 
         curPos = undefined;
 
@@ -226,13 +228,13 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     const updateOutline = (): void => {
         setOutlinePosition();
 
-        updateTimer.clear();
+        clearTimer(updateTimer);
 
         if (!outlinedElement) {
             return;
         }
 
-        updateTimer.set(updateOutline, 30);
+        setTimer(updateTimer, updateOutline, 30);
     };
 
     const setVisibility = (visible: boolean): void => {
@@ -526,8 +528,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
 
         dispose(): void {
             const w = win();
-
-            updateTimer.clear();
+            clearTimer(updateTimer);
 
             tabster.keyboardNavigation.unsubscribe(
                 onKeyboardNavigationStateChanged

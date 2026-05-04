@@ -15,11 +15,13 @@ import {
 } from "./Events.js";
 import {
     addListener,
+    clearTimer,
     createTimer,
     documentContains,
     getElementUId,
     isDisplayNone,
     removeListener,
+    setTimer,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -715,7 +717,7 @@ export function createDeloserAPI(
     const history = new DeloserHistory(tabster);
     let inDeloser = false;
     let curDeloser: Types.Deloser | undefined;
-    const restoreFocusTimer = createTimer(win);
+    const restoreFocusTimer = createTimer();
     let isRestoringFocus = false;
     let isPaused = false;
     let autoDeloser: Types.DeloserProps | undefined = props?.autoDeloser;
@@ -809,7 +811,7 @@ export function createDeloserAPI(
         if (force) {
             restoreFocus();
         } else {
-            restoreFocusTimer.set(restoreFocus, 100);
+            setTimer(restoreFocusTimer, restoreFocus, 100);
         }
     };
 
@@ -834,7 +836,7 @@ export function createDeloserAPI(
     };
 
     const onFocus = (e: HTMLElement | undefined): void => {
-        restoreFocusTimer.clear();
+        clearTimer(restoreFocusTimer);
 
         if (!e) {
             scheduleRestoreFocus();
@@ -889,7 +891,7 @@ export function createDeloserAPI(
         dispose(): void {
             const w = win();
 
-            restoreFocusTimer.clear();
+            clearTimer(restoreFocusTimer);
 
             if (autoDeloserInstance) {
                 autoDeloserInstance.dispose();
@@ -957,7 +959,7 @@ export function createDeloserAPI(
 
         pause(): void {
             isPaused = true;
-            restoreFocusTimer.clear();
+            clearTimer(restoreFocusTimer);
         },
 
         resume(restore?: boolean): void {
