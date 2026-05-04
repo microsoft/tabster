@@ -5,9 +5,7 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import type {
-    FocusedElementState,
     GetWindow,
-    KeyboardNavigationState,
     Restorer as RestorerInterface,
     RestorerAPI as RestorerAPIType,
     RestorerProps,
@@ -130,87 +128,21 @@ class History {
     }
 }
 
-export class RestorerAPI implements RestorerAPIType {
-    private _tabster: TabsterCore;
-    private _history: History;
-    private _keyboardNavState: KeyboardNavigationState;
-    private _focusedElementState: FocusedElementState;
-    private _getWindow: GetWindow;
+export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
+    const getWindow = tabster.getWindow;
+    const history = new History(getWindow);
+    const keyboardNavState = tabster.keyboardNavigation;
+    const focusedElementState = tabster.focusedElement;
 
-    constructor(tabster: TabsterCore) {
-        this._tabster = tabster;
-        this._getWindow = tabster.getWindow;
-        this._getWindow().addEventListener(
-            RestorerRestoreFocusEventName,
-            this._onRestoreFocus
-        );
-        this._history = new History(this._getWindow);
-
-        this._keyboardNavState = tabster.keyboardNavigation;
-        this._focusedElementState = tabster.focusedElement;
-
-        this._focusedElementState.subscribe(this._onFocusIn);
-    }
-
-    dispose(): void {
-        const win = this._getWindow();
-        this._focusedElementState.unsubscribe(this._onFocusIn);
-
-        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
-
-        win.removeEventListener(
-            RestorerRestoreFocusEventName,
-            this._onRestoreFocus
-        );
-    }
-
-    private _onRestoreFocus = (e: Event) => {
-        this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
-
-        // ShadowDOM will have shadowRoot as e.target.
-        const source = e.composedPath()[0] as HTMLElement | undefined;
-
-        if (source) {
-            // source id must be recovered before source is removed from DOM
-            // otherwise it'll be unreachable
-            // (as tabster on element will not be available through getTabsterOnElement)
-            const sourceId = getTabsterOnElement(
-                this._tabster,
-                source
-            )?.restorer?.getProps().id;
-
-            this._focusedElementState.requestAsyncFocus(
-                AsyncFocusSources.Restorer,
-                () => this._restoreFocus(source, sourceId),
-                0
-            );
-        }
-    };
-
-    private _onFocusIn = (element: HTMLElement | undefined) => {
-        if (!element) {
-            return;
-        }
-
-        const tabsterAttribute = getTabsterOnElement(this._tabster, element);
-        if (
-            tabsterAttribute?.restorer?.getProps().type !== RestorerTypes.Target
-        ) {
-            return;
-        }
-
-        this._history.push(element);
-    };
-
-    private _restoreFocus = (source: HTMLElement, sourceId?: string) => {
+    const restoreFocus = (source: HTMLElement, sourceId?: string) => {
         // don't restore focus if focus isn't lost to body
-        const doc = this._getWindow().document;
+        const doc = getWindow().document;
         if (dom.getActiveElement(doc) !== doc.body) {
             return;
         }
         if (
             // clicking on any empty space focuses body - this is can be a false positive
-            !this._keyboardNavState.isNavigatingWithKeyboard() &&
+            !keyboardNavState.isNavigatingWithKeyboard() &&
             // Source no longer exists on DOM - always restore focus
             dom.nodeContains(doc.body, source)
         ) {
@@ -219,7 +151,7 @@ export class RestorerAPI implements RestorerAPIType {
 
         const getId = (element: HTMLElement) => {
             const restorerProps = getTabsterOnElement(
-                this._tabster,
+                tabster,
                 element
             )?.restorer?.getProps();
             // We return id or undefined if there is actual restorer on the element,
@@ -230,19 +162,71 @@ export class RestorerAPI implements RestorerAPIType {
 
         // sourceId is undefined or string, if there is no Restorer on the target, the element will
         // be filtered out because getId() will return null.
-        this._history.pop((target) => sourceId === getId(target))?.focus();
+        history.pop((target) => sourceId === getId(target))?.focus();
     };
 
-    public createRestorer(element: HTMLElement, props: RestorerProps) {
-        const restorer = new Restorer(this._tabster, element, props);
-        // Focus might already be on a restorer target when it gets created so the focusin will not do anything
-        if (
-            props.type === RestorerTypes.Target &&
-            dom.getActiveElement(element.ownerDocument) === element
-        ) {
-            this._history.push(element);
+    const onRestoreFocus = (e: Event) => {
+        focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
+
+        // ShadowDOM will have shadowRoot as e.target.
+        const source = e.composedPath()[0] as HTMLElement | undefined;
+
+        if (source) {
+            // source id must be recovered before source is removed from DOM
+            // otherwise it'll be unreachable
+            // (as tabster on element will not be available through getTabsterOnElement)
+            const sourceId = getTabsterOnElement(
+                tabster,
+                source
+            )?.restorer?.getProps().id;
+
+            focusedElementState.requestAsyncFocus(
+                AsyncFocusSources.Restorer,
+                () => restoreFocus(source, sourceId),
+                0
+            );
+        }
+    };
+
+    const onFocusIn = (element: HTMLElement | undefined) => {
+        if (!element) {
+            return;
         }
 
-        return restorer;
-    }
+        const tabsterAttribute = getTabsterOnElement(tabster, element);
+        if (
+            tabsterAttribute?.restorer?.getProps().type !== RestorerTypes.Target
+        ) {
+            return;
+        }
+
+        history.push(element);
+    };
+
+    getWindow().addEventListener(RestorerRestoreFocusEventName, onRestoreFocus);
+    focusedElementState.subscribe(onFocusIn);
+
+    return {
+        createRestorer(element: HTMLElement, props: RestorerProps) {
+            const restorer = new Restorer(tabster, element, props);
+            // Focus might already be on a restorer target when it gets created so the focusin will not do anything
+            if (
+                props.type === RestorerTypes.Target &&
+                dom.getActiveElement(element.ownerDocument) === element
+            ) {
+                history.push(element);
+            }
+
+            return restorer;
+        },
+
+        dispose() {
+            focusedElementState.unsubscribe(onFocusIn);
+            focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
+            getWindow().removeEventListener(
+                RestorerRestoreFocusEventName,
+                onRestoreFocus
+            );
+        },
+    };
 }
