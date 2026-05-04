@@ -720,6 +720,18 @@ export function removeListener(
 }
 
 /**
+ * Thin wrapper around `target.dispatchEvent`. Returns `false` if the dispatch
+ * was canceled (preventDefault) OR if `target` is nullish — both shapes the
+ * existing call sites already handle the same way.
+ */
+export function dispatchEvent(
+    target: EventTarget | null | undefined,
+    event: Event
+): boolean {
+    return !!target && target.dispatchEvent(event);
+}
+
+/**
  * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
  * @param element Element to check for being dummy input.
  * @returns Dummy input container element (if the passed element is a dummy input) or null.

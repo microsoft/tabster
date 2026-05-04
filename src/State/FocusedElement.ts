@@ -31,6 +31,7 @@ import {
     addListener,
     clearTimer,
     createTimer,
+    dispatchEvent,
     documentContains,
     getLastChild,
     removeListener,
@@ -284,7 +285,8 @@ export function createFocusedElementState(
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 if (
-                    rootElement.dispatchEvent(
+                    dispatchEvent(
+                        rootElement,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
@@ -307,7 +309,8 @@ export function createFocusedElementState(
 
             if (controlTab || next?.outOfDOMOrder) {
                 if (
-                    rootElement.dispatchEvent(
+                    dispatchEvent(
+                        rootElement,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
@@ -328,7 +331,8 @@ export function createFocusedElementState(
         } else {
             if (
                 !uncontrolledCompletelyContainer &&
-                rootElement.dispatchEvent(
+                dispatchEvent(
+                    rootElement,
                     new TabsterMoveFocusEvent({
                         by: "root",
                         owner: rootElement,
@@ -347,7 +351,7 @@ export function createFocusedElementState(
         detail: Types.FocusedElementDetail
     ): void => {
         if (element) {
-            element.dispatchEvent(new TabsterFocusInEvent(detail));
+            dispatchEvent(element, new TabsterFocusInEvent(detail));
         } else {
             const last = lastVal?.get();
 
@@ -360,7 +364,7 @@ export function createFocusedElementState(
                     d.modalizerId = modalizerId;
                 }
 
-                last.dispatchEvent(new TabsterFocusOutEvent(d));
+                dispatchEvent(last, new TabsterFocusOutEvent(d));
             }
         }
     };

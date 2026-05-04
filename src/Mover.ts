@@ -36,6 +36,7 @@ import {
     clearTimer,
     createElementTreeWalker,
     createTimer,
+    dispatchEvent,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     isTimerActive,
@@ -234,7 +235,8 @@ export class Mover
                                 const state = this.getState(el);
 
                                 if (state) {
-                                    el.dispatchEvent(
+                                    dispatchEvent(
+                                        el,
                                         new MoverStateEvent(state)
                                     );
                                 }
@@ -412,7 +414,7 @@ export class Mover
                 const state = this.getState(el);
 
                 if (state) {
-                    el.dispatchEvent(new MoverStateEvent(state));
+                    dispatchEvent(el, new MoverStateEvent(state));
                 }
             }
         }
@@ -1137,7 +1139,8 @@ export function createMoverAPI(
             next &&
             (!relatedEvent ||
                 (relatedEvent &&
-                    container.dispatchEvent(
+                    dispatchEvent(
+                        container,
                         new TabsterMoveFocusEvent({
                             by: "mover",
                             owner: container,

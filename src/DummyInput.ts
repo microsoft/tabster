@@ -22,6 +22,7 @@ import {
     addListener,
     clearTimer,
     createTimer,
+    dispatchEvent,
     hasSubFocusable,
     isTimerActive,
     makeFocusIgnored,
@@ -425,7 +426,9 @@ export const DummyInputManager = {
             }
 
             if (
-                parent?.dispatchEvent(
+                parent &&
+                dispatchEvent(
+                    parent,
                     new TabsterMoveFocusEvent({
                         by: "root",
                         owner: parent,
@@ -1030,7 +1033,8 @@ function createDummyInputManagerCore(
 
                 if (
                     toFocus &&
-                    currentElement.dispatchEvent(
+                    dispatchEvent(
+                        currentElement,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: currentElement,

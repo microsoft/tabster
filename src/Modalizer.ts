@@ -24,6 +24,7 @@ import {
     augmentAttribute,
     clearTimer,
     createTimer,
+    dispatchEvent,
     isTimerActive,
     removeListener,
     setTimer,
@@ -324,7 +325,7 @@ export class Modalizer
                         ? new ModalizerActiveEvent(eventDetail)
                         : new ModalizerInactiveEvent(eventDetail);
 
-                    el.dispatchEvent(event);
+                    dispatchEvent(el, event);
 
                     if (event.defaultPrevented) {
                         defaultPrevented = true;

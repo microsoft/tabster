@@ -18,6 +18,7 @@ import {
 } from "./Events.js";
 import {
     addListener,
+    dispatchEvent,
     removeListener,
     TabsterPart,
     WeakHTMLElement,
@@ -55,7 +56,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
-                doc.body.dispatchEvent(new RestorerRestoreFocusEvent());
+                dispatchEvent(doc.body, new RestorerRestoreFocusEvent());
             }
         }
     }
@@ -63,7 +64,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _onFocusOut = (e: FocusEvent) => {
         const element = this._element?.get();
         if (element && e.relatedTarget === null) {
-            element.dispatchEvent(new RestorerRestoreFocusEvent());
+            dispatchEvent(element, new RestorerRestoreFocusEvent());
         }
         if (
             element &&

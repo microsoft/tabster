@@ -23,6 +23,7 @@ import {
     addListener,
     clearTimer,
     createTimer,
+    dispatchEvent,
     documentContains,
     getElementUId,
     isDisplayNone,
@@ -66,7 +67,8 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
 
         if (available && deloserElement) {
             if (
-                !deloserElement.dispatchEvent(
+                !dispatchEvent(
+                    deloserElement,
                     new TabsterMoveFocusEvent({
                         by: "deloser",
                         owner: deloserElement,
@@ -622,7 +624,8 @@ export class Deloser
     };
 
     customFocusLostHandler(element: HTMLElement): boolean {
-        return element.dispatchEvent(
+        return dispatchEvent(
+            element,
             new DeloserFocusLostEvent(this.getActions())
         );
     }
@@ -783,13 +786,15 @@ export function createDeloserAPI(
 
                     if (
                         el &&
-                        (!curDeloserElement?.dispatchEvent(
-                            new TabsterMoveFocusEvent({
-                                by: "deloser",
-                                owner: curDeloserElement,
-                                next: el,
-                            })
-                        ) ||
+                        (!curDeloserElement ||
+                            !dispatchEvent(
+                                curDeloserElement,
+                                new TabsterMoveFocusEvent({
+                                    by: "deloser",
+                                    owner: curDeloserElement,
+                                    next: el,
+                                })
+                            ) ||
                             tabster.focusedElement.focus(el))
                     ) {
                         return;

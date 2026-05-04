@@ -32,6 +32,7 @@ import {
     addListener,
     clearTimer,
     createTimer,
+    dispatchEvent,
     getAdjacentElement,
     isTimerActive,
     removeListener,
@@ -528,7 +529,8 @@ export function createGroupperAPI(
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,
@@ -587,7 +589,8 @@ export function createGroupperAPI(
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,

@@ -18,6 +18,7 @@ import {
     addListener,
     clearTimer,
     createTimer,
+    dispatchEvent,
     getElementUId,
     removeListener,
     setTimer,
@@ -202,7 +203,7 @@ export class Root
             if (hasFocused) {
                 this._isFocused = true;
                 this._dummyManager?.setTabbable(false);
-                element.dispatchEvent(new RootFocusEvent({ element }));
+                dispatchEvent(element, new RootFocusEvent({ element }));
             } else {
                 setTimer(
                     this._setFocusedTimer,
@@ -210,7 +211,7 @@ export class Root
                     () => {
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
-                        element.dispatchEvent(new RootBlurEvent({ element }));
+                        dispatchEvent(element, new RootBlurEvent({ element }));
                     },
                     0
                 );
