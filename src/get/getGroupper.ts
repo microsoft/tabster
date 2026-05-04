@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GroupperAPI } from "../Groupper.js";
+import { createGroupperAPI } from "../Groupper.js";
 import type * as Types from "../Types.js";
 
 /**
@@ -14,7 +14,7 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.groupper) {
-        const api = new GroupperAPI(tabsterCore, tabsterCore.getWindow);
+        const api = createGroupperAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.groupper = api;
         tabsterCore.attrHandlers.set(
             "groupper",
