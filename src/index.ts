@@ -49,5 +49,3 @@ export * from "./Events.js";
 export * as EventsTypes from "./EventsTypes.js";
 
 export * from "./Consts.js";
-
-export * from "./Deprecated.js";

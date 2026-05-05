@@ -293,8 +293,6 @@ function validateModalizerProps(props: Types.ModalizerProps): void {
 
 export function createModalizerAPI(
     tabster: Types.TabsterCore,
-    // @deprecated use accessibleCheck.
-    alwaysAccessibleSelector?: string,
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const win = tabster.getWindow;
@@ -314,14 +312,7 @@ export function createModalizerAPI(
 
         const visibleElements: HTMLElement[] = [];
         const hiddenElements: HTMLElement[] = [];
-        const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
-            ? Array.from(
-                  dom.querySelectorAll(
-                      body,
-                      alwaysAccessibleSelector
-                  ) as HTMLElement[]
-              )
-            : [];
+        const alwaysAccessibleElements: HTMLElement[] = [];
         const activeModalizerElements: HTMLElement[] = [];
 
         for (const userId of Object.keys(parts)) {
@@ -393,11 +384,9 @@ export function createModalizerAPI(
             for (
                 let el = dom.getFirstElementChild(
                     element
-                ) as Types.HTMLElementWithTabsterFlags | null;
+                ) as HTMLElement | null;
                 el;
-                el = dom.getNextElementSibling(
-                    el
-                ) as Types.HTMLElementWithTabsterFlags | null
+                el = dom.getNextElementSibling(el) as HTMLElement | null
             ) {
                 let skip = false;
                 let containsModalizer = false;
@@ -424,16 +413,13 @@ export function createModalizerAPI(
                         }
                     }
 
-                    if (
-                        containsModalizer ||
-                        el.__tabsterElementFlags?.noDirectAriaHidden
-                    ) {
-                        walk(el as HTMLElement);
+                    if (containsModalizer) {
+                        walk(el);
                     } else if (!skip && !containedByModalizer) {
-                        toggle(el as HTMLElement, true);
+                        toggle(el, true);
                     }
                 } else {
-                    toggle(el as HTMLElement, false);
+                    toggle(el, false);
                 }
             }
         };

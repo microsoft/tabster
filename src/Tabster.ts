@@ -112,9 +112,7 @@ class TabsterCore implements Types.TabsterCore {
         this.focusedElement = createFocusedElementState(this, getWindow);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = createUncontrolledAPI(
-            // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
-            props?.checkUncontrolledCompletely ||
-                props?.checkUncontrolledTrappingFocus
+            props?.checkUncontrolledCompletely
         );
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;

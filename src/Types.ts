@@ -6,19 +6,6 @@
 import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 
-export interface HTMLElementWithTabsterFlags extends HTMLElement {
-    __tabsterElementFlags?: {
-        /**
-         * @deprecated This option is added to support interop between Fluent UI V9 and Fluent UI V8.
-         * Once Fluent UI V8 is not supported anymore, this option should be removed.
-         */
-        noDirectAriaHidden?: boolean; // When Modalizer sets aria-hidden on everything outside of the modal,
-        // do not set aria-hidden directly on this element, go inside and check its children,
-        // and set aria-hidden on the children. This is to be set on a container that hosts
-        // elements which have the active modal dialog as virtual parent.
-    };
-}
-
 export interface TabsterDOMAttribute {
     [TABSTER_ATTRIBUTE_NAME]: string | undefined;
 }
@@ -48,10 +35,6 @@ export interface TabsterCoreProps {
         element: HTMLElement,
         completely: boolean // A uncontrolled.completely value from the element.
     ) => boolean | undefined;
-    /**
-     * @deprecated use checkUncontrolledCompletely.
-     */
-    checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
     /**
      * Custom getter for parent elements. Defaults to the default .parentElement call
      * Currently only used to detect tabster contexts
