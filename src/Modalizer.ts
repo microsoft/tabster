@@ -384,9 +384,11 @@ export function createModalizerAPI(
             for (
                 let el = dom.getFirstElementChild(
                     element
-                ) as HTMLElement | null;
+                ) as Types.HTMLElementWithTabsterFlags | null;
                 el;
-                el = dom.getNextElementSibling(el) as HTMLElement | null
+                el = dom.getNextElementSibling(
+                    el
+                ) as Types.HTMLElementWithTabsterFlags | null
             ) {
                 let skip = false;
                 let containsModalizer = false;
@@ -413,13 +415,16 @@ export function createModalizerAPI(
                         }
                     }
 
-                    if (containsModalizer) {
-                        walk(el);
+                    if (
+                        containsModalizer ||
+                        el.__tabsterElementFlags?.noDirectAriaHidden
+                    ) {
+                        walk(el as HTMLElement);
                     } else if (!skip && !containedByModalizer) {
-                        toggle(el, true);
+                        toggle(el as HTMLElement, true);
                     }
                 } else {
-                    toggle(el, false);
+                    toggle(el as HTMLElement, false);
                 }
             }
         };

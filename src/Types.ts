@@ -6,6 +6,19 @@
 import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 
+export interface HTMLElementWithTabsterFlags extends HTMLElement {
+    __tabsterElementFlags?: {
+        /**
+         * When Modalizer sets aria-hidden on everything outside of the modal,
+         * do not set aria-hidden directly on this element — descend into its
+         * children and set aria-hidden on those instead. Used on container
+         * elements that host children whose virtual parent is the active
+         * modal (e.g. portaled content).
+         */
+        noDirectAriaHidden?: boolean;
+    };
+}
+
 export interface TabsterDOMAttribute {
     [TABSTER_ATTRIBUTE_NAME]: string | undefined;
 }
