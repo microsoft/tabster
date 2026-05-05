@@ -11,6 +11,7 @@ import {
     type DummyInputManager,
     DummyInputManagerPriorities,
 } from "./DummyInput.js";
+import { _getFirstOrLastTabbable } from "./State/FocusedElement.js";
 import type * as Types from "./Types.js";
 import { type WeakHTMLElement } from "./Utils.js";
 
@@ -64,7 +65,8 @@ export const createRootDummyManager: RootDummyManagerFactory = (
             if (el) {
                 setFocused(true);
 
-                const toFocus = tabster.focusedElement.getFirstOrLastTabbable(
+                const toFocus = _getFirstOrLastTabbable(
+                    tabster,
                     dummyInput.isFirst,
                     { container: el, ignoreAccessibility: true }
                 );

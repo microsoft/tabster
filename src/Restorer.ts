@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+    _cancelAsyncFocus,
+    _requestAsyncFocus,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import type {
     GetWindow,
@@ -172,7 +176,7 @@ export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
     };
 
     const onRestoreFocus = (e: Event) => {
-        focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
+        _cancelAsyncFocus(tabster, AsyncFocusSources.Restorer);
 
         // ShadowDOM will have shadowRoot as e.target.
         const source = e.composedPath()[0] as HTMLElement | undefined;
@@ -186,7 +190,8 @@ export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
                 source
             )?.restorer?.getProps().id;
 
-            focusedElementState.requestAsyncFocus(
+            _requestAsyncFocus(
+                tabster,
                 AsyncFocusSources.Restorer,
                 () => restoreFocus(source, sourceId),
                 0
@@ -228,7 +233,7 @@ export function createRestorerAPI(tabster: TabsterCore): RestorerAPIType {
 
         dispose() {
             focusedElementState.unsubscribe(onFocusIn);
-            focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
+            _cancelAsyncFocus(tabster, AsyncFocusSources.Restorer);
             removeListener(
                 getWindow(),
                 RestorerRestoreFocusEventName,

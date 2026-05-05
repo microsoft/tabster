@@ -9,6 +9,12 @@ import {
     _isElementVisible,
     _isFocusable,
 } from "./Focusable.js";
+import {
+    _focusDefault,
+    _focusFirst,
+    _getLastFocusedElement,
+    _resetFocus,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
@@ -505,7 +511,7 @@ export class Deloser
 
     focusFirst = (): boolean => {
         const e = this._element.get();
-        return !!e && this._tabster.focusedElement.focusFirst({ container: e });
+        return !!e && _focusFirst(this._tabster, { container: e });
     };
 
     unshift(element: HTMLElement): void {
@@ -525,12 +531,12 @@ export class Deloser
 
     focusDefault = (): boolean => {
         const e = this._element.get();
-        return !!e && this._tabster.focusedElement.focusDefault(e);
+        return !!e && _focusDefault(this._tabster, e);
     };
 
     resetFocus = (): boolean => {
         const e = this._element.get();
-        return !!e && this._tabster.focusedElement.resetFocus(e);
+        return !!e && _resetFocus(this._tabster, e);
     };
 
     findAvailable(): HTMLElement | null {
@@ -759,7 +765,7 @@ export function createDeloserAPI(
         }
 
         const restoreFocus = async () => {
-            const lastFocused = tabster.focusedElement.getLastFocusedElement();
+            const lastFocused = _getLastFocusedElement(tabster);
 
             if (
                 !force &&

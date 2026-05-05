@@ -136,41 +136,30 @@ export type AsyncFocusSources = typeof _AsyncFocusSources;
 
 export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
 
+/**
+ * Public surface of the focused-element state.
+ *
+ * Historically this exposed `focusFirst`/`focusLast`/`focusDefault`/
+ * `resetFocus`/`getLastFocusedElement`/`requestAsyncFocus`/
+ * `cancelAsyncFocus`/`getFirstOrLastTabbable` as object methods. Those
+ * methods aren't tree-shakeable on a created object, so they shipped to
+ * every consumer of `tabster.focusedElement`. They've been promoted to
+ * top-level functions exported from the package
+ * (`focusFirst(tabster, props)`, `getLastFocusedElement(tabster)`, ...) so
+ * they only enter the bundle when something imports them. Internal
+ * callers use the `_`-prefixed variants in `State/FocusedElement.ts`.
+ */
 export interface FocusedElementState
     extends
         Subscribable<HTMLElement | undefined, FocusedElementDetail>,
         Disposable {
     getFocusedElement(): HTMLElement | undefined;
-    getLastFocusedElement(): HTMLElement | undefined;
     focus(
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean,
         preventScroll?: boolean
     ): boolean;
-    focusDefault(container: HTMLElement): boolean;
-    /** @internal */
-    getFirstOrLastTabbable(
-        isFirst: boolean,
-        props: Pick<FindFocusableProps, "container" | "ignoreAccessibility">
-    ): HTMLElement | undefined;
-    focusFirst(props: FindFirstProps): boolean;
-    focusLast(props: FindFirstProps): boolean;
-    resetFocus(container: HTMLElement): boolean;
-    /**
-     * When Tabster wants to move focus asynchronously, it it should call this method to register its intent.
-     * This is a way to avoid conflicts between different parts that might want to move focus asynchronously
-     * at the same moment (for example when both Deloser and Restorer want to move focus when the focused element
-     * is removed from DOM).
-     */
-    /** @internal */
-    requestAsyncFocus(
-        source: AsyncFocusSource,
-        callback: () => void,
-        delay: number
-    ): void;
-    /** @internal */
-    cancelAsyncFocus(source: AsyncFocusSource): void;
 }
 
 export interface WeakHTMLElement<D = undefined> {
