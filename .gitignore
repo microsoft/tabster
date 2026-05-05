@@ -31,3 +31,5 @@ dts/
 .pages-deploy
 
 logs/
+
+bundle-size/.readable/

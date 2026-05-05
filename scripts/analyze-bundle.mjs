@@ -33,6 +33,18 @@
  *                       Cross-check with `bytes` mode to see what actually
  *                       survives.
  *
+ *   readable            Builds the fixture with Terser compression + DCE
+ *                       enabled but `mangle: false` and `beautify: true`,
+ *                       so identifier names survive. Writes the output to
+ *                       `bundle-size/.readable/<fixture>.js` (gitignored)
+ *                       and prints a summary with size delta vs. the
+ *                       fully-minified production build. Use this to read
+ *                       what actually leaks: which functions Terser kept,
+ *                       which property accesses survived, etc. Note: the
+ *                       readable bundle is *larger* than production
+ *                       because beautification adds whitespace — only the
+ *                       content is comparable, not the byte count.
+ *
  *   both                `bytes` + `identifiers` for the same build.
  *
  * Diff:
@@ -91,6 +103,37 @@ async function build(fixturePath, outDir) {
                     terserOptions: {
                         sourceMap: true,
                         format: { comments: false },
+                    },
+                }),
+            ],
+        };
+        webpack(config, (err, stats) => {
+            if (err) return reject(err);
+            if (stats.hasErrors()) {
+                return reject(stats.compilation.errors.join("\n"));
+            }
+            resolve();
+        });
+    });
+}
+
+async function buildReadable(fixturePath, outDir) {
+    return new Promise((resolve, reject) => {
+        const config = baseWebpackConfig(fixturePath, outDir);
+        config.devtool = false;
+        config.optimization = {
+            minimizer: [
+                new TerserWebpackPlugin({
+                    extractComments: false,
+                    terserOptions: {
+                        // Keep DCE / inlining / property folding so the
+                        // output reflects what actually survives Terser's
+                        // tree-shaking — only identifier mangling and the
+                        // single-line layout are turned off.
+                        mangle: false,
+                        keep_classnames: true,
+                        keep_fnames: true,
+                        format: { beautify: true, comments: false },
                     },
                 }),
             ],
@@ -550,12 +593,37 @@ function analyzeIdentifiers(code, minLen = 3) {
     return { rows, totalIdentBytes };
 }
 
-async function analyzeFixture(fixturePath, mode) {
+const readableOutDir = path.join(repoRoot, "bundle-size", ".readable");
+
+async function analyzeFixture(fixturePath, mode, fixtureName) {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "tabster-analyze-"));
     try {
         if (mode === "exports") {
             const stats = await buildForExports(fixturePath, tmp);
             return { exports: stats };
+        }
+
+        if (mode === "readable") {
+            await Promise.all([
+                build(fixturePath, tmp),
+                buildReadable(fixturePath, path.join(tmp, "readable")),
+            ]);
+            const minPath = path.join(tmp, "bundle.js");
+            const readablePath = path.join(tmp, "readable", "bundle.js");
+            const [minStat, readableCode] = await Promise.all([
+                fs.stat(minPath),
+                fs.readFile(readablePath, "utf8"),
+            ]);
+            await fs.mkdir(readableOutDir, { recursive: true });
+            const savedPath = path.join(readableOutDir, fixtureName + ".js");
+            await fs.writeFile(savedPath, readableCode);
+            return {
+                readable: {
+                    minSize: minStat.size,
+                    readableSize: readableCode.length,
+                    savedPath,
+                },
+            };
         }
 
         await build(fixturePath, tmp);
@@ -681,6 +749,17 @@ function printIdentifiersReport(
             ).padStart(8)}  ${r.kind.padEnd(8)}  ${r.name}`
         );
     }
+}
+
+function printReadableReport(name, { minSize, readableSize, savedPath }) {
+    const rel = path.relative(repoRoot, savedPath);
+    console.log(
+        `\n=== ${name}  readable build  (production ${fmtBytes(minSize)}, beautified ${fmtBytes(readableSize)})`
+    );
+    console.log(`  saved to: ${rel}`);
+    console.log(
+        `  open this file to read what survived Terser with names intact.`
+    );
 }
 
 function printDiffReport(
@@ -892,7 +971,7 @@ async function main() {
             diffPair = { baseline, target };
         } else if (a === "--help" || a === "-h") {
             console.log(
-                "usage: analyze-bundle [<fixture>] [--mode=bytes|identifiers|functions|exports|both]\n" +
+                "usage: analyze-bundle [<fixture>] [--mode=bytes|identifiers|functions|exports|readable|both]\n" +
                     "       analyze-bundle --diff <baseline> <target> [--mode=bytes|functions|exports]"
             );
             return;
@@ -901,7 +980,14 @@ async function main() {
         }
     }
     if (
-        !["bytes", "identifiers", "functions", "exports", "both"].includes(mode)
+        ![
+            "bytes",
+            "identifiers",
+            "functions",
+            "exports",
+            "readable",
+            "both",
+        ].includes(mode)
     ) {
         console.error(`unknown mode: ${mode}`);
         process.exit(1);
@@ -915,6 +1001,10 @@ async function main() {
         }));
 
     if (diffPair) {
+        if (mode === "readable") {
+            console.error("--diff is not supported with --mode=readable");
+            process.exit(1);
+        }
         const baseline = allFixtures.find((f) => f.name === diffPair.baseline);
         const target = allFixtures.find((f) => f.name === diffPair.target);
         if (!baseline || !target) {
@@ -925,8 +1015,8 @@ async function main() {
         }
         if (mode === "exports") {
             const [b, t] = await Promise.all([
-                analyzeFixture(baseline.path, "exports"),
-                analyzeFixture(target.path, "exports"),
+                analyzeFixture(baseline.path, "exports", baseline.name),
+                analyzeFixture(target.path, "exports", target.name),
             ]);
             printDiffExportsReport(
                 baseline.name,
@@ -938,8 +1028,8 @@ async function main() {
         }
         const fixtureMode = mode === "functions" ? "functions" : "bytes";
         const [b, t] = await Promise.all([
-            analyzeFixture(baseline.path, fixtureMode),
-            analyzeFixture(target.path, fixtureMode),
+            analyzeFixture(baseline.path, fixtureMode, baseline.name),
+            analyzeFixture(target.path, fixtureMode, target.name),
         ]);
         printDiffReport(baseline.name, target.name, b, t);
         if (fixtureMode === "functions") {
@@ -962,7 +1052,7 @@ async function main() {
     }
 
     for (const fx of fixtures) {
-        const report = await analyzeFixture(fx.path, mode);
+        const report = await analyzeFixture(fx.path, mode, fx.name);
         if (mode === "functions") {
             printFunctionsReport(
                 fx.name,
@@ -982,6 +1072,9 @@ async function main() {
         }
         if (report.exports) {
             printExportsReport(fx.name, report.exports);
+        }
+        if (report.readable) {
+            printReadableReport(fx.name, report.readable);
         }
     }
 }
