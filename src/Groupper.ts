@@ -22,6 +22,7 @@ import {
     type DummyInputManager,
     getDummyInputContainer,
 } from "./DummyInput.js";
+import { createGroupperDummyManager } from "./GroupperDummyManager.js";
 import {
     addListener,
     clearTimer,
@@ -57,8 +58,8 @@ export class Groupper
 
         this._onDispose = onDispose;
 
-        if (!tabster.controlTab) {
-            this.dummyManager = tabster.groupperDummyManagerFactory?.(
+        if (!tabster.controlTab && tabster._dummyObserver) {
+            this.dummyManager = createGroupperDummyManager(
                 this._element,
                 this,
                 tabster,

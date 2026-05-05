@@ -3,36 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DummyInputManager,
-    createDummyInputObserver,
-} from "../DummyInput.js";
-import { createGroupperDummyManager } from "../GroupperDummyManager.js";
-import { createModalizerDummyManager } from "../ModalizerDummyManager.js";
-import { createMoverDummyManager } from "../MoverDummyManager.js";
+import { DummyInputManager, createDummyInputObserver } from "../DummyInput.js";
 import { createRootDummyManager } from "../RootDummyManager.js";
 import type * as Types from "../Types.js";
 
 /**
- * Opt the Tabster instance into dummy-input behaviour. Registers the four
- * dummy-manager factories (root, mover, groupper, modalizer) and triggers
- * root dummy creation if `controlTab` or `rootDummyInputs` is set.
+ * Opt the Tabster instance into root-level dummy-input behaviour.
+ * Registers the root dummy-manager factory plus the dummy-input observer
+ * and the `moveOutOfRoot` routing, then triggers root dummy creation when
+ * `controlTab` or `rootDummyInputs` is set. Per-part dummy factories
+ * (Mover, Groupper, Modalizer) are registered by their respective `getX`
+ * factories, so consumers only pay for the dummy code of features they
+ * actually use.
  *
- * Without calling this, every part's dummy code is absent from the bundle:
- * Root.addDummyInputs() finds no factory and skips; Mover/Groupper/Modalizer
- * instances created in the uncontrolled (`controlTab: false`) mode also
- * skip dummy creation. Apps that don't need browser-Tab navigation can
- * avoid the DummyInput / FocusedElement / KeyboardNavigation cost
- * entirely.
+ * `createTabster` calls this automatically when `controlTab` (default
+ * `true`) or `rootDummyInputs` is on, so the default
+ * `createTabster(window)` "just works." Apps that opt out
+ * (`createTabster(win, { controlTab: false })` without calling this) keep
+ * the slim, dummy-free baseline.
  */
 export function getRootDummyInputs(tabster: Types.Tabster): void {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.rootDummyManagerFactory) {
         tabsterCore.rootDummyManagerFactory = createRootDummyManager;
-        tabsterCore.moverDummyManagerFactory = createMoverDummyManager;
-        tabsterCore.groupperDummyManagerFactory = createGroupperDummyManager;
-        tabsterCore.modalizerDummyManagerFactory = createModalizerDummyManager;
 
         // The DOM observer that tracks dummy-input positions through layout
         // changes only matters once dummy inputs exist. Without this opt-in

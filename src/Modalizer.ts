@@ -11,6 +11,7 @@ import type * as Types from "./Types.js";
 import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
 import { type ModalizerEventDetail } from "./EventsTypes.js";
 import { type DummyInputManager } from "./DummyInput.js";
+import { createModalizerDummyManager } from "./ModalizerDummyManager.js";
 import {
     addListener,
     augmentAttribute,
@@ -87,8 +88,8 @@ export class Modalizer
         this._onDispose = onDispose;
         this._activeElements = activeElements;
 
-        if (!tabster.controlTab) {
-            this.dummyManager = tabster.modalizerDummyManagerFactory?.(
+        if (!tabster.controlTab && tabster._dummyObserver) {
+            this.dummyManager = createModalizerDummyManager(
                 this._element,
                 tabster,
                 sys

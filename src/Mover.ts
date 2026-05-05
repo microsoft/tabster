@@ -28,6 +28,7 @@ import {
     type DummyInputManager,
     getDummyInputContainer,
 } from "./DummyInput.js";
+import { createMoverDummyManager } from "./MoverDummyManager.js";
 import {
     addListener,
     clearTimer,
@@ -107,8 +108,8 @@ export class Mover
         const getMemorized = () =>
             props.memorizeCurrent ? this._current : undefined;
 
-        if (!tabster.controlTab) {
-            this.dummyManager = tabster.moverDummyManagerFactory?.(
+        if (!tabster.controlTab && tabster._dummyObserver) {
+            this.dummyManager = createMoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized,
