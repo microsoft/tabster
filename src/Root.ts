@@ -73,9 +73,8 @@ export class Root
 
         this._sys = sys;
 
-        if (tabster.controlTab || tabster.rootDummyInputs) {
-            this.addDummyInputs();
-        }
+        // No-ops without a registered rootDummyManagerFactory.
+        this.addDummyInputs();
 
         const w = win();
         const doc = w.document;
@@ -201,7 +200,6 @@ export class RootAPI implements Types.RootAPI {
     _autoRoot: Types.RootProps | undefined;
     private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
-    private _forceDummy = false;
     rootById: { [id: string]: Types.Root } = {};
 
     constructor(tabster: Types.TabsterCore, autoRoot?: Types.RootProps) {
@@ -291,20 +289,15 @@ export class RootAPI implements Types.RootAPI {
         this._roots[newRoot.id] = newRoot;
         this.rootById[newRoot.uid] = newRoot;
 
-        if (this._forceDummy) {
-            newRoot.addDummyInputs();
-        }
-
         return newRoot;
     }
 
     addDummyInputs(): void {
-        this._forceDummy = true;
-
-        const roots = this._roots;
-
-        for (const id of Object.keys(roots)) {
-            roots[id].addDummyInputs();
+        // Root.addDummyInputs() is idempotent and runs in every Root
+        // constructor, so future roots pick up dummies automatically once
+        // the factory is registered. This call covers existing roots.
+        for (const id of Object.keys(this._roots)) {
+            this._roots[id].addDummyInputs();
         }
     }
 

@@ -192,13 +192,6 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        const win = this._win;
-
-        if (win) {
-            clearTimer(this._initTimer, win);
-            clearTimer(this._forgetMemorizedTimer, win);
-        }
-
         this._initQueue = [];
         this._forgetMemorizedElements = [];
 
@@ -224,7 +217,10 @@ class TabsterCore implements Types.TabsterCore {
         this._storage = new WeakMap();
         this._wrappers.clear();
 
+        const win = this._win;
         if (win) {
+            clearTimer(this._initTimer, win);
+            clearTimer(this._forgetMemorizedTimer, win);
             disposeInstanceContext(win);
             delete win.__tabsterInstance;
             delete this._win;
