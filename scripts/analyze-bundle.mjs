@@ -45,6 +45,24 @@
  *                       because beautification adds whitespace — only the
  *                       content is comparable, not the byte count.
  *
+ *   profile             Cross-fixture analysis. Builds every fixture in
+ *                       parallel, attributes per-source bytes for each,
+ *                       and reports:
+ *                         (1) core    — sources present in every fixture,
+ *                                       sorted by avg bytes (the floor;
+ *                                       can only shrink via architectural
+ *                                       changes).
+ *                         (2) variable — sources in some fixtures only,
+ *                                       sorted by max bytes (sources here
+ *                                       that should logically be in fewer
+ *                                       fixtures are leaks; sources in
+ *                                       N-1/N fixtures are usually
+ *                                       tree-shakable and worth chasing).
+ *                         (3) per-fixture sizes with `above-core` delta
+ *                                       (the marginal cost of that
+ *                                       feature on top of the floor).
+ *                       Ignores the fixture filter — always all fixtures.
+ *
  *   both                `bytes` + `identifiers` for the same build.
  *
  * Diff:
@@ -63,6 +81,7 @@
  *   node scripts/analyze-bundle.mjs --diff createTabster getModalizer
  *   node scripts/analyze-bundle.mjs --diff createTabster getModalizer --mode=functions
  *   node scripts/analyze-bundle.mjs --diff createTabster getModalizer --mode=exports
+ *   node scripts/analyze-bundle.mjs --mode=profile
  */
 
 import path from "node:path";
@@ -595,6 +614,163 @@ function analyzeIdentifiers(code, minLen = 3) {
 
 const readableOutDir = path.join(repoRoot, "bundle-size", ".readable");
 
+/**
+ * Builds + attributes one fixture into a per-source byte map. Used by
+ * profile mode (and any future cross-fixture analysis) so we can collect
+ * the same shape from many fixtures concurrently without the rest of the
+ * mode-dispatch overhead.
+ */
+async function profileOneFixture(fixturePath, fixtureName) {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "tabster-profile-"));
+    try {
+        await build(fixturePath, tmp);
+        const bundlePath = path.join(tmp, "bundle.js");
+        const { totals, totalSize } = await attribute(bundlePath, {
+            withFunctions: false,
+        });
+        return { name: fixtureName, totalSize, totals };
+    } finally {
+        await fs.rm(tmp, { recursive: true, force: true });
+    }
+}
+
+function printProfileReport(results, { topVariable = 30 } = {}) {
+    // source -> Map<fixtureName, bytes>
+    const matrix = new Map();
+    for (const r of results) {
+        for (const [src, bytes] of r.totals) {
+            let row = matrix.get(src);
+            if (!row) {
+                row = new Map();
+                matrix.set(src, row);
+            }
+            row.set(r.name, bytes);
+        }
+    }
+
+    const total = results.length;
+    const entries = [...matrix.entries()];
+    const core = entries.filter(([, row]) => row.size === total);
+    const variable = entries.filter(
+        ([, row]) => row.size < total && row.size > 0
+    );
+
+    const avgOf = (row) => {
+        let sum = 0;
+        for (const v of row.values()) sum += v;
+        return sum / row.size;
+    };
+    const maxOf = (row) => {
+        let m = 0;
+        for (const v of row.values()) if (v > m) m = v;
+        return m;
+    };
+    const minOf = (row) => {
+        let m = Infinity;
+        for (const v of row.values()) if (v < m) m = v;
+        return m === Infinity ? 0 : m;
+    };
+
+    core.sort((a, b) => avgOf(b[1]) - avgOf(a[1]));
+    variable.sort((a, b) => maxOf(b[1]) - maxOf(a[1]));
+
+    const coreBytesFor = (fxName) => {
+        let s = 0;
+        for (const [, row] of core) s += row.get(fxName) ?? 0;
+        return s;
+    };
+
+    console.log(`\n=== profile across ${total} fixtures`);
+
+    // (1) Core sources — present in every fixture.
+    const coreAvgTotal = core.reduce((s, [, row]) => s + avgOf(row), 0);
+    console.log(
+        `\ncore sources (in every fixture, ${core.length} sources, avg total ${fmtBytes(
+            Math.round(coreAvgTotal)
+        )}):`
+    );
+    console.log(
+        `  ${"avg".padStart(8)}  ${"min".padStart(8)}  ${"max".padStart(8)}  source`
+    );
+    for (const [src, row] of core) {
+        const avg = Math.round(avgOf(row));
+        const min = minOf(row);
+        const max = maxOf(row);
+        console.log(
+            `  ${fmtBytes(avg).padStart(8)}  ${fmtBytes(min).padStart(8)}  ${fmtBytes(
+                max
+            ).padStart(8)}  ${src}`
+        );
+    }
+
+    // (2) Variable sources — partial fixture coverage.
+    console.log(
+        `\nvariable sources (in some fixtures, ${variable.length} sources; top ${Math.min(
+            topVariable,
+            variable.length
+        )} by max bytes):`
+    );
+    console.log(
+        `  ${"in".padStart(7)}  ${"max".padStart(8)}  ${"min".padStart(8)}  source / fixtures`
+    );
+    for (const [src, row] of variable.slice(0, topVariable)) {
+        const max = maxOf(row);
+        const min = minOf(row);
+        const inFixtures = [...row.keys()].sort();
+        const list =
+            inFixtures.length <= 4
+                ? inFixtures.join(", ")
+                : `${inFixtures.slice(0, 4).join(", ")} +${inFixtures.length - 4}`;
+        console.log(
+            `  ${`${row.size}/${total}`.padStart(7)}  ${fmtBytes(max).padStart(
+                8
+            )}  ${fmtBytes(min).padStart(8)}  ${src}`
+        );
+        console.log(`           ${list}`);
+    }
+    if (variable.length > topVariable) {
+        console.log(`  ...  (${variable.length - topVariable} more)`);
+    }
+
+    // (3) Per-fixture summary, sorted by total size.
+    console.log(`\nper-fixture sizes (sorted by total size):`);
+    console.log(
+        `  ${"total".padStart(10)}  ${"core".padStart(10)}  ${"+above".padStart(
+            10
+        )}  fixture`
+    );
+    const sorted = [...results].sort((a, b) => b.totalSize - a.totalSize);
+    for (const r of sorted) {
+        const cb = coreBytesFor(r.name);
+        const above = r.totalSize - cb;
+        console.log(
+            `  ${fmtBytes(r.totalSize).padStart(10)}  ${fmtBytes(cb).padStart(
+                10
+            )}  ${fmtSigned(above).padStart(10)}  ${r.name}`
+        );
+    }
+
+    // (4) Near-core hint: sources in (N-1) fixtures are usually tree-shake
+    // candidates — present almost everywhere except the one place that
+    // proves they *can* drop. Worth chasing.
+    const nearCore = variable.filter(([, row]) => row.size === total - 1);
+    if (nearCore.length > 0) {
+        console.log(
+            `\nnear-core sources (in ${total - 1}/${total} fixtures — proven tree-shakable elsewhere; chase parity):`
+        );
+        for (const [src, row] of nearCore.sort(
+            (a, b) => maxOf(b[1]) - maxOf(a[1])
+        )) {
+            const missing = results
+                .map((r) => r.name)
+                .filter((n) => !row.has(n));
+            console.log(
+                `  ${fmtBytes(maxOf(row)).padStart(8)}  ${src}   (absent in: ${missing.join(", ")})`
+            );
+        }
+    }
+}
+
 async function analyzeFixture(fixturePath, mode, fixtureName) {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "tabster-analyze-"));
     try {
@@ -692,7 +868,7 @@ function printFunctionsReport(
     rows,
     funcTotals,
     totalSize,
-    { topSources = 8, topFunctions = 8, minBytes = 80 } = {}
+    { topSources = 8, topFunctions = 30, minBytes = 80 } = {}
 ) {
     console.log(
         `\n=== ${name}  bytes by source / function  (${fmtBytes(totalSize)} total)`
@@ -971,8 +1147,9 @@ async function main() {
             diffPair = { baseline, target };
         } else if (a === "--help" || a === "-h") {
             console.log(
-                "usage: analyze-bundle [<fixture>] [--mode=bytes|identifiers|functions|exports|readable|both]\n" +
-                    "       analyze-bundle --diff <baseline> <target> [--mode=bytes|functions|exports]"
+                "usage: analyze-bundle [<fixture>] [--mode=bytes|identifiers|functions|exports|readable|profile|both]\n" +
+                    "       analyze-bundle --diff <baseline> <target> [--mode=bytes|functions|exports]\n" +
+                    "       analyze-bundle --mode=profile  (cross-fixture analysis; ignores fixture filter)"
             );
             return;
         } else {
@@ -986,6 +1163,7 @@ async function main() {
             "functions",
             "exports",
             "readable",
+            "profile",
             "both",
         ].includes(mode)
     ) {
@@ -999,6 +1177,18 @@ async function main() {
             name: f.replace(/\.fixture\.js$/, ""),
             path: path.join(fixtureDir, f),
         }));
+
+    if (mode === "profile") {
+        if (diffPair) {
+            console.error("--diff is not supported with --mode=profile");
+            process.exit(1);
+        }
+        const results = await Promise.all(
+            allFixtures.map((fx) => profileOneFixture(fx.path, fx.name))
+        );
+        printProfileReport(results);
+        return;
+    }
 
     if (diffPair) {
         if (mode === "readable") {
