@@ -6,7 +6,7 @@
 import { nativeFocus } from "keyborg";
 
 import { getTabsterContext } from "./Context.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import { findNextTabbable } from "./Tab.js";
 import {
     createDummyInputManager,
     type DummyInput,
@@ -66,7 +66,7 @@ export const createGroupperDummyManager: GroupperDummyManagerFactory = (
                     )?.element;
 
                     if (!next) {
-                        next = FocusedElementState.findNextTabbable(
+                        next = findNextTabbable(
                             tabster,
                             ctx,
                             undefined,

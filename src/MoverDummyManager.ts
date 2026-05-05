@@ -7,7 +7,7 @@ import { nativeFocus } from "keyborg";
 
 import { _isFocusable } from "./Focusable.js";
 import { getTabsterContext } from "./Context.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import { findNextTabbable } from "./Tab.js";
 import {
     createDummyInputManager,
     type DummyInput,
@@ -54,7 +54,7 @@ export const createMoverDummyManager: MoverDummyManagerFactory = (
             let toFocus: HTMLElement | null | undefined;
 
             if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
+                toFocus = findNextTabbable(
                     tabster,
                     ctx,
                     undefined,
