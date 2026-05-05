@@ -1358,8 +1358,9 @@ interface TabsterCoreInternal {
     /** @internal */
     restorer?: RestorerAPI;
 
-    /** @internal */
-    _dummyObserver: DummyInputObserver;
+    /** @internal — created by `getRootDummyInputs`; absent when dummy
+     * inputs aren't opted in. Callers must use optional chaining. */
+    _dummyObserver?: DummyInputObserver;
 
     // The version of the tabster package this instance is on
     /** @internal */

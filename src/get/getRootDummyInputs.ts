@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DummyInputManager } from "../DummyInput.js";
+import {
+    DummyInputManager,
+    createDummyInputObserver,
+} from "../DummyInput.js";
 import { createGroupperDummyManager } from "../GroupperDummyManager.js";
 import { createModalizerDummyManager } from "../ModalizerDummyManager.js";
 import { createMoverDummyManager } from "../MoverDummyManager.js";
@@ -30,6 +33,14 @@ export function getRootDummyInputs(tabster: Types.Tabster): void {
         tabsterCore.moverDummyManagerFactory = createMoverDummyManager;
         tabsterCore.groupperDummyManagerFactory = createGroupperDummyManager;
         tabsterCore.modalizerDummyManagerFactory = createModalizerDummyManager;
+
+        // The DOM observer that tracks dummy-input positions through layout
+        // changes only matters once dummy inputs exist. Without this opt-in
+        // it's never created, keeping createDummyInputObserver and its
+        // closure (~900 B) out of the always-on bundle.
+        const dummyObserver = createDummyInputObserver(tabsterCore.getWindow);
+        tabsterCore._dummyObserver = dummyObserver;
+        tabsterCore.disposers.add(dummyObserver);
 
         // Routes Root.moveOutWithDefaultAction either through the root's
         // dummy manager (controlTab=true / rootDummyInputs=true) or the

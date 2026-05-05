@@ -64,12 +64,12 @@ export function observeMutations(
                     const removedNode = removed[i];
                     removedNodes.add(removedNode);
                     updateTabsterElements(removedNode, true);
-                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
+                    tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
 
                 for (let i = 0; i < added.length; i++) {
                     updateTabsterElements(added[i]);
-                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
+                    tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
             }
         }

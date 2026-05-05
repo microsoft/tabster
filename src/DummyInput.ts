@@ -915,7 +915,7 @@ function createDummyInputManagerCore(
     };
 
     const addTransformOffsets = (): void => {
-        tabster._dummyObserver.updatePositions(computeTransformOffsets);
+        tabster._dummyObserver?.updatePositions(computeTransformOffsets);
     };
 
     /**
@@ -962,7 +962,7 @@ function createDummyInputManagerCore(
     // So, it is enough to have just one of the inputs observed, because
     // both dummy inputs always have the same parent.
     const dummyElement = firstDummy.input;
-    dummyElement && tabster._dummyObserver.add(dummyElement, addDummyInputs);
+    dummyElement && tabster._dummyObserver?.add(dummyElement, addDummyInputs);
 
     firstDummy.onFocusIn = onFocusIn;
     firstDummy.onFocusOut = onFocusOut;
@@ -1104,7 +1104,7 @@ function createDummyInputManagerCore(
                 clearTimer(addTimer, getWindow());
 
                 const input = firstDummy.input;
-                input && tabster._dummyObserver.remove(input);
+                input && tabster._dummyObserver?.remove(input);
 
                 firstDummy.dispose();
                 lastDummy.dispose();

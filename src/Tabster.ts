@@ -14,7 +14,6 @@ import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { createUncontrolledAPI } from "./Uncontrolled.js";
-import { createDummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
     clearTimer,
@@ -81,7 +80,8 @@ class TabsterCore implements Types.TabsterCore {
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     internal: Types.InternalAPI;
-    _dummyObserver: Types.DummyInputObserver;
+    /** Created by getRootDummyInputs; only present when dummy inputs are opted in. */
+    _dummyObserver?: Types.DummyInputObserver;
 
     // Extended APIs
     groupper?: Types.GroupperAPI;
@@ -117,8 +117,6 @@ class TabsterCore implements Types.TabsterCore {
         );
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
-
-        this._dummyObserver = createDummyInputObserver(getWindow);
 
         this.getParent = props?.getParent ?? dom.getParentNode;
 
@@ -214,8 +212,6 @@ class TabsterCore implements Types.TabsterCore {
         this.keyboardNavigation.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
-
-        this._dummyObserver.dispose();
 
         // Drop handler closures — they capture the API instances we just
         // disposed, and any post-dispose updateTabsterByAttribute call would
