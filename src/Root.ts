@@ -7,7 +7,7 @@ import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT } from "keyborg";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
-import { DummyInputManager } from "./DummyInput.js";
+import { type DummyInputManager } from "./DummyInput.js";
 import {
     addListener,
     clearTimer,
@@ -113,23 +113,10 @@ export class Root
     }
 
     moveOutWithDefaultAction(isBackward: boolean, relatedEvent: KeyboardEvent) {
-        const dummyManager = this._dummyManager;
-
-        if (dummyManager) {
-            dummyManager.moveOutWithDefaultAction(isBackward, relatedEvent);
-        } else {
-            const el = this.getElement();
-
-            if (el) {
-                DummyInputManager.moveWithPhantomDummy(
-                    this._tabster,
-                    el,
-                    true,
-                    isBackward,
-                    relatedEvent
-                );
-            }
-        }
+        // The phantom-dummy fallback used to live here. With dummy inputs
+        // opt-in (via getRootDummyInputs), there's no manager to dispatch
+        // through when the consumer hasn't opted in — the call is a no-op.
+        this._dummyManager?.moveOutWithDefaultAction(isBackward, relatedEvent);
     }
 
     private _setFocused = (hasFocused: boolean): void => {
