@@ -38,6 +38,7 @@ export { getMover } from "./get/getMover.js";
 export { getObservedElement } from "./get/getObservedElement.js";
 export { getOutline } from "./get/getOutline.js";
 export { getRestorer } from "./get/getRestorer.js";
+export { getRootDummyInputs } from "./get/getRootDummyInputs.js";
 
 export * from "./AttributeHelpers.js";
 

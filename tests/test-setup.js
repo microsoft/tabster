@@ -21,6 +21,7 @@ import {
     getModalizer,
     getMover,
     getRestorer,
+    getRootDummyInputs,
     getObservedElement,
     getOutline,
     isElementAccessible,
@@ -92,6 +93,10 @@ if (parts !== undefined) {
     });
 
     tabsterTest.core = tabster;
+
+    if (controlTab || rootDummyInputs) {
+        getRootDummyInputs(tabster);
+    }
 
     console.log(
         "created tabster",

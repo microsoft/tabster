@@ -4,6 +4,7 @@
  */
 
 import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
+import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
     __tabsterElementFlags?: {
@@ -1315,6 +1316,8 @@ interface TabsterCoreInternal {
     disposers: Set<Disposable>;
     /** @internal — set by getMover/getGroupper, see `FocusableContextResolver`. */
     focusableContextResolver?: FocusableContextResolver;
+    /** @internal — set by getRootDummyInputs, see `RootDummyManagerFactory`. */
+    rootDummyManagerFactory?: RootDummyManagerFactory;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

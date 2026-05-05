@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT, nativeFocus } from "keyborg";
+import { KEYBORG_FOCUSIN, KEYBORG_FOCUSOUT } from "keyborg";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
-import {
-    createDummyInputManager,
-    type DummyInput,
-    DummyInputManager,
-    DummyInputManagerPriorities,
-} from "./DummyInput.js";
+import { DummyInputManager } from "./DummyInput.js";
 import {
     addListener,
     clearTimer,
@@ -47,57 +42,6 @@ function _setInformativeStyle(
             }
         }
     }
-}
-
-function createRootDummyManager(
-    tabster: Types.TabsterCore,
-    element: WeakHTMLElement,
-    setFocused: (focused: boolean) => void,
-    sys: Types.SysProps | undefined
-): DummyInputManager {
-    const manager = createDummyInputManager(
-        tabster,
-        element,
-        DummyInputManagerPriorities.Root,
-        sys,
-        undefined,
-        true
-    );
-
-    const onDummyInputFocus = (dummyInput: DummyInput): void => {
-        if (dummyInput.useDefaultAction) {
-            // When we've reached the last focusable element, we want to let the browser
-            // to move the focus outside of the page. In order to do that we're synchronously
-            // calling focus() of the dummy input from the Tab key handler and allowing
-            // the default action to move the focus out.
-            setFocused(false);
-        } else {
-            // The only way a dummy input gets focused is during the keyboard navigation.
-            tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
-
-            const el = element.get();
-
-            if (el) {
-                setFocused(true);
-
-                const toFocus = tabster.focusedElement.getFirstOrLastTabbable(
-                    dummyInput.isFirst,
-                    { container: el, ignoreAccessibility: true }
-                );
-
-                if (toFocus) {
-                    nativeFocus(toFocus);
-                    return;
-                }
-            }
-
-            dummyInput.input?.blur();
-        }
-    };
-
-    manager.setHandlers(onDummyInputFocus);
-
-    return manager;
 }
 
 export class Root
@@ -144,7 +88,7 @@ export class Root
 
     addDummyInputs(): void {
         if (!this._dummyManager) {
-            this._dummyManager = createRootDummyManager(
+            this._dummyManager = this._tabster.rootDummyManagerFactory?.(
                 this._tabster,
                 this._element,
                 this._setFocused,
