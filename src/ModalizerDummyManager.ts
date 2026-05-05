@@ -6,7 +6,7 @@
 import { nativeFocus } from "keyborg";
 
 import { getRoot, getTabsterContext } from "./Context.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import { findNextTabbable } from "./Tab.js";
 import {
     createDummyInputManager,
     type DummyInput,
@@ -53,7 +53,7 @@ export const createModalizerDummyManager: ModalizerDummyManagerFactory = (
             const ctx = getTabsterContext(tabster, dummyContainer || input);
 
             if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
+                toFocus = findNextTabbable(
                     tabster,
                     ctx,
                     container,
