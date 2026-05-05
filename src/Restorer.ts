@@ -82,7 +82,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 class History {
     private static readonly DEPTH = 10;
     private _stack: WeakHTMLElement<HTMLElement>[] = [];
-    private _getWindow: GetWindow;
+    declare private _getWindow: GetWindow;
     constructor(getWindow: GetWindow) {
         this._getWindow = getWindow;
     }

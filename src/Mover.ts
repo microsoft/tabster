@@ -68,21 +68,21 @@ export class Mover
     extends TabsterPart<Types.MoverProps>
     implements Types.Mover
 {
-    private _unobserve: (() => void) | undefined;
-    private _intersectionObserver: IntersectionObserver | undefined;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _intersectionObserver: IntersectionObserver | undefined;
     private _setCurrentTimer: Timer = createTimer();
-    private _current: WeakHTMLElement | undefined;
-    private _prevCurrent: WeakHTMLElement | undefined;
+    declare private _current: WeakHTMLElement | undefined;
+    declare private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
-    private _fullyVisible: string | undefined;
-    private _win: Types.GetWindow;
-    private _onDispose: (mover: Mover) => void;
-    private _allElements: WeakMap<HTMLElement, Mover> | undefined;
-    private _updateQueue: MoverUpdateQueueItem[] | undefined;
+    declare private _fullyVisible: string | undefined;
+    declare private _win: Types.GetWindow;
+    declare private _onDispose: (mover: Mover) => void;
+    declare private _allElements: WeakMap<HTMLElement, Mover> | undefined;
+    declare private _updateQueue: MoverUpdateQueueItem[] | undefined;
     private _updateTimer: Timer = createTimer();
 
-    visibilityTolerance: number;
-    dummyManager: DummyInputManager | undefined;
+    declare visibilityTolerance: number;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,

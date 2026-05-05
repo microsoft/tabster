@@ -65,14 +65,14 @@ export class Modalizer
     extends TabsterPart<Types.ModalizerProps>
     implements Types.Modalizer
 {
-    userId: string;
+    declare userId: string;
 
-    private _isActive: boolean | undefined;
+    declare private _isActive: boolean | undefined;
     private _wasFocused = 0;
-    private _onDispose: (modalizer: Modalizer) => void;
-    private _activeElements: WeakHTMLElement<HTMLElement>[];
+    declare private _onDispose: (modalizer: Modalizer) => void;
+    declare private _activeElements: WeakHTMLElement<HTMLElement>[];
 
-    dummyManager: DummyInputManager | undefined;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
