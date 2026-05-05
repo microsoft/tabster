@@ -20,7 +20,7 @@ import { getTabsterContext } from "./Context.js";
  * mover/groupper applies and the caller should fall through to its default
  * acceptance check.
  */
-export const resolveMoverGroupperContext: Types.FocusableContextResolver = (
+const resolveMoverGroupperContext: Types.FocusableContextResolver = (
     core,
     element,
     container,
@@ -99,3 +99,16 @@ export const resolveMoverGroupperContext: Types.FocusableContextResolver = (
 
     return result;
 };
+
+/**
+ * Idempotent registration of `resolveMoverGroupperContext` on the shared
+ * focusable resolver chain. Both `getMover` and `getGroupper` call this so
+ * the resolver lands in the chain on first opt-in regardless of which
+ * feature was registered first.
+ */
+export function registerMoverGroupperResolver(core: Types.TabsterCore): void {
+    const chain = (core.focusableContextResolvers ??= []);
+    if (!chain.includes(resolveMoverGroupperContext)) {
+        chain.push(resolveMoverGroupperContext);
+    }
+}

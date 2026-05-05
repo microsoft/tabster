@@ -91,15 +91,18 @@ export function _isElementAccessible(
 }
 
 function _isHidden(core: Types.TabsterCore, el: HTMLElement): boolean {
-    const attrVal = el.getAttribute("aria-hidden");
-
-    if (attrVal && attrVal.toLowerCase() === "true") {
-        if (!core.modalizer?.isAugmented(el)) {
-            return true;
-        }
+    if (el.getAttribute("aria-hidden")?.toLowerCase() !== "true") {
+        return false;
     }
-
-    return false;
+    // If `aria-hidden=true` was set by Tabster's `augmentAttribute` (Modalizer
+    // is the only feature that does this today, when it hides everything
+    // outside the active modal), the storage entry remembers the augmentation
+    // by key — the stored value is the *original* attribute value (often
+    // `null`), so we have to probe via `in`, not falsiness. Augmented
+    // elements stay traversable so focus can land on Modalizer-trapped
+    // siblings of the active modal.
+    const aug = core.storageEntry(el)?.aug;
+    return !aug || !("aria-hidden" in aug);
 }
 
 export function _findFocusable(
@@ -369,20 +372,21 @@ function _acceptElement(
         return NodeFilter.FILTER_REJECT;
     }
 
-    let result = core.modalizer?.acceptElement(element, state);
+    let result: number | undefined;
+    const resolvers = core.focusableContextResolvers;
 
-    if (result !== undefined) {
-        state.skippedFocusable = true;
-    }
-
-    if (result === undefined) {
-        result = core.focusableContextResolver?.(
-            core,
-            element,
-            container,
-            state,
-            ctx
-        );
+    // Modalizer / Mover / Groupper register their per-element accept hooks
+    // here from their `getX` factories — Focusable doesn't need to know
+    // which feature owns each entry. First non-`undefined` result wins; an
+    // empty / absent chain falls straight through to the default
+    // `acceptCondition` path below.
+    if (resolvers) {
+        for (const resolve of resolvers) {
+            result = resolve(core, element, container, state, ctx);
+            if (result !== undefined) {
+                break;
+            }
+        }
     }
 
     if (result === undefined) {

@@ -1337,8 +1337,15 @@ interface TabsterCoreInternal {
     attrHandlers: TabsterAttrHandlerRegistry;
     /** @internal — extended APIs add themselves on creation; iterated by core.dispose() */
     disposers: Set<Disposable>;
-    /** @internal — set by getMover/getGroupper, see `FocusableContextResolver`. */
-    focusableContextResolver?: FocusableContextResolver;
+    /**
+     * @internal — Modalizer / Mover-Groupper push their resolver into this
+     * chain from their `getX` factories. `Focusable._acceptElement` iterates
+     * the chain so it doesn't reference Modalizer/Mover/Groupper APIs
+     * directly. First non-`undefined` result wins; resolvers earlier in the
+     * array take precedence (Modalizer registers first so its trap-out behaviour
+     * runs before Mover/Groupper containment checks).
+     */
+    focusableContextResolvers?: FocusableContextResolver[];
     /**
      * @internal — Mover/Groupper/Modalizer push their findNextTabbable
      * dispatch entry here from their `getX` factories. Empty/absent when no

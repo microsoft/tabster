@@ -4,7 +4,7 @@
  */
 
 import { createMoverAPI } from "../Mover.js";
-import { resolveMoverGroupperContext } from "../MoverGroupperResolver.js";
+import { registerMoverGroupperResolver } from "../MoverGroupperResolver.js";
 import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
 
@@ -55,7 +55,7 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
                 return api.createMover(element, newProps, sys);
             }
         );
-        tabsterCore.focusableContextResolver ??= resolveMoverGroupperContext;
+        registerMoverGroupperResolver(tabsterCore);
         (tabsterCore.findNextTabbableStrategies ??= []).push(
             moverFindNextStrategy
         );
