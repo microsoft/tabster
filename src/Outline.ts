@@ -83,27 +83,9 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
     let curOutlineElements: Types.OutlineElements | undefined;
     let allOutlineElements: Types.OutlineElements[] = [];
     let fullScreenElement: HTMLElement | undefined;
-    let fullScreenEventName: string | undefined;
-    let fullScreenElementName: string | undefined;
-
-    if (typeof document !== "undefined") {
-        if ("onfullscreenchange" in document) {
-            fullScreenEventName = "fullscreenchange";
-            fullScreenElementName = "fullscreenElement";
-        } else if ("onwebkitfullscreenchange" in document) {
-            fullScreenEventName = "webkitfullscreenchange";
-            fullScreenElementName = "webkitFullscreenElement";
-        } else if ("onmozfullscreenchange" in document) {
-            fullScreenEventName = "mozfullscreenchange";
-            fullScreenElementName = "mozFullScreenElement";
-        } else if ("onmsfullscreenchange" in document) {
-            fullScreenEventName = "msfullscreenchange";
-            fullScreenElementName = "msFullscreenElement";
-        }
-    }
 
     const onFullScreenChanged = (e: Event): void => {
-        if (!fullScreenElementName || !e.target) {
+        if (!e.target) {
             return;
         }
 
@@ -111,10 +93,8 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
         const outlineElements = getDOM(target);
 
         if (target.ownerDocument && outlineElements) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const fsElement: HTMLElement | null = (target.ownerDocument as any)[
-                fullScreenElementName
-            ];
+            const fsElement = target.ownerDocument
+                .fullscreenElement as HTMLElement | null;
 
             if (fsElement) {
                 fsElement.appendChild(outlineElements.container);
@@ -499,10 +479,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
         const w = win();
 
         addListener(w, "scroll", onScroll, true); // Capture!
-
-        if (fullScreenEventName) {
-            addListener(w.document, fullScreenEventName, onFullScreenChanged);
-        }
+        addListener(w.document, "fullscreenchange", onFullScreenChanged);
     });
 
     return {
@@ -536,14 +513,7 @@ export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
             tabster.focusedElement.unsubscribe(onFocus);
 
             removeListener(w, "scroll", onScroll, true);
-
-            if (fullScreenEventName) {
-                removeListener(
-                    w.document,
-                    fullScreenEventName,
-                    onFullScreenChanged
-                );
-            }
+            removeListener(w.document, "fullscreenchange", onFullScreenChanged);
 
             allOutlineElements.forEach((outlineElements) =>
                 removeDOM(outlineElements.container)
