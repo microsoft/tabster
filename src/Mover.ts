@@ -108,7 +108,12 @@ export class Mover
         const getMemorized = () =>
             props.memorizeCurrent ? this._current : undefined;
 
-        if (!tabster.controlTab && tabster._dummyObserver) {
+        if (!tabster.controlTab) {
+            // `getMover` ensures `_dummyObserver` exists before any Mover
+            // is constructed, so we don't have to gate on it. Controlled
+            // mode (`controlTab: true`) skips the per-feature dummy
+            // because the keyhandler intercepts Tab and never lets focus
+            // reach the dummy input anyway.
             this.dummyManager = createMoverDummyManager(
                 this._element,
                 tabster,

@@ -62,7 +62,12 @@ export class Groupper
 
         this._onDispose = onDispose;
 
-        if (!tabster.controlTab && tabster._dummyObserver) {
+        if (!tabster.controlTab) {
+            // `getGroupper` ensures `_dummyObserver` exists before any
+            // Groupper is constructed, so we don't have to gate on it.
+            // Controlled mode (`controlTab: true`) skips the per-feature
+            // dummy because the keyhandler intercepts Tab and never lets
+            // focus reach the dummy input anyway.
             this.dummyManager = createGroupperDummyManager(
                 this._element,
                 this,

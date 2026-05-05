@@ -521,6 +521,22 @@ type ScrollTopLeftCache = Map<
     { scrollTop: number; scrollLeft: number } | null
 >;
 
+/**
+ * Lazy-initialises `tabster._dummyObserver`. Called from the per-feature
+ * `getMover`/`getGroupper`/`getModalizer` factories so that opting into
+ * any feature is enough to make its dummy-input redirection work — the
+ * consumer doesn't have to call `getRootDummyInputs` first. Idempotent;
+ * safe to call repeatedly. Default `createTabster(win)` is unchanged
+ * (no feature factory called → no observer created).
+ */
+export function ensureDummyInputObserver(tabster: TabsterCore): void {
+    if (!tabster._dummyObserver) {
+        const observer = createDummyInputObserver(tabster.getWindow);
+        tabster._dummyObserver = observer;
+        tabster.disposers.add(observer);
+    }
+}
+
 export function createDummyInputObserver(
     getWindow: GetWindow
 ): DummyInputObserverInterface {

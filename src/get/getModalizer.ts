@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ensureDummyInputObserver } from "../DummyInput.js";
 import { createModalizerAPI } from "../Modalizer.js";
 import type * as Types from "../Types.js";
 
@@ -56,6 +57,11 @@ export function getModalizer(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.modalizer) {
+        // Per-feature dummy-input redirection should "just work" when the
+        // consumer opts into a feature, regardless of whether they also
+        // called `getRootDummyInputs`. The observer is idempotent.
+        ensureDummyInputObserver(tabsterCore);
+
         const api = createModalizerAPI(tabsterCore, accessibleCheck);
         tabsterCore.modalizer = api;
         tabsterCore.disposers.add(api);

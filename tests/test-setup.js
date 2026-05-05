@@ -60,12 +60,14 @@ tabsterTest.createTabster = (win, props) => {
         newProps.controlTab = true;
     }
     const tabster = createTabster(win, newProps);
-    // Register dummy-input infrastructure unconditionally — per-part
-    // Mover/Groupper/Modalizer dummies need the factories regardless of
-    // whether root dummies are installed. The Tab keyhandler / root
-    // dummy installation inside `getRootDummyInputs` is gated by the
-    // controlTab/rootDummyInputs flags above.
-    getRootDummyInputs(tabster);
+    // Calling `getRootDummyInputs` is the explicit opt-in for Tab key
+    // control + root-level dummies. We only call it when the caller
+    // wants either of those — uncontrolled, no-root-dummies tests skip
+    // it and rely on the per-feature dummies that `get{Mover,Groupper,
+    // Modalizer}` install on their own.
+    if (newProps.controlTab || newProps.rootDummyInputs) {
+        getRootDummyInputs(tabster);
+    }
     return tabster;
 };
 tabsterTest.disposeTabster = disposeTabster;

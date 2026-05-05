@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ensureDummyInputObserver } from "../DummyInput.js";
 import { createMoverAPI } from "../Mover.js";
 import { registerMoverGroupperResolver } from "../MoverGroupperResolver.js";
 import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
@@ -42,6 +43,11 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.mover) {
+        // Per-feature dummy-input redirection should "just work" when the
+        // consumer opts into a feature, regardless of whether they also
+        // called `getRootDummyInputs`. The observer is idempotent.
+        ensureDummyInputObserver(tabsterCore);
+
         const api = createMoverAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.mover = api;
         tabsterCore.disposers.add(api);

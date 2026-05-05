@@ -93,7 +93,12 @@ export class Modalizer
         this._onDispose = onDispose;
         this._activeElements = activeElements;
 
-        if (!tabster.controlTab && tabster._dummyObserver) {
+        if (!tabster.controlTab) {
+            // `getModalizer` ensures `_dummyObserver` exists before any
+            // Modalizer is constructed, so we don't have to gate on it.
+            // Controlled mode (`controlTab: true`) skips the per-feature
+            // dummy because the keyhandler intercepts Tab and never lets
+            // focus reach the dummy input anyway.
             this.dummyManager = createModalizerDummyManager(
                 this._element,
                 tabster,
