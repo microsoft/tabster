@@ -674,7 +674,7 @@ export const FocusedElementState = {
             return null;
         }
 
-        let next: Types.NextTabbable | null = null;
+        let next: Types.NextTabbable | null | undefined;
 
         const win = tabster.getWindow();
 
@@ -688,82 +688,41 @@ export const FocusedElementState = {
             0
         );
 
-        const modalizer = ctx.modalizer;
-        const groupper = ctx.groupper;
-        const mover = ctx.mover;
-
-        const callFindNext = (
-            what: Types.Groupper | Types.Mover | Types.Modalizer
-        ) => {
-            next = what.findNextTabbable(
-                currentElement,
-                referenceElement,
-                isBackward,
-                ignoreAccessibility
-            );
-
-            if (currentElement && !next?.element) {
-                const parentElement =
-                    what !== modalizer &&
-                    dom.getParentElement(what.getElement());
-
-                if (parentElement) {
-                    const parentCtx = getTabsterContext(
-                        tabster,
-                        currentElement,
-                        { referenceElement: parentElement }
-                    );
-
-                    if (parentCtx) {
-                        const currentScopeElement = what.getElement();
-                        const newCurrent = isBackward
-                            ? currentScopeElement
-                            : (currentScopeElement &&
-                                  getLastChild(currentScopeElement)) ||
-                              currentScopeElement;
-
-                        if (newCurrent) {
-                            next = FocusedElementState.findNextTabbable(
-                                tabster,
-                                parentCtx,
-                                container,
-                                newCurrent,
-                                parentElement,
-                                isBackward,
-                                ignoreAccessibility
-                            );
-
-                            if (next) {
-                                next.outOfDOMOrder = true;
-                            }
-                        }
-                    }
+        // Mover/Groupper/Modalizer register their dispatch via
+        // `tabsterCore.findNextTabbableStrategies` from their `getX`
+        // factories. Without any of those features in use the array is
+        // absent and we fall straight through to the default focusable walk.
+        const strategies = tabster.findNextTabbableStrategies;
+        if (strategies) {
+            for (const strat of strategies) {
+                next = strat(
+                    tabster,
+                    ctx,
+                    container,
+                    currentElement,
+                    referenceElement,
+                    isBackward,
+                    ignoreAccessibility
+                );
+                if (next !== undefined) {
+                    break;
                 }
             }
-        };
+        }
 
-        if (groupper && mover) {
-            callFindNext(ctx.groupperBeforeMover ? groupper : mover);
-        } else if (groupper) {
-            callFindNext(groupper);
-        } else if (mover) {
-            callFindNext(mover);
-        } else if (modalizer) {
-            callFindNext(modalizer);
-        } else {
-            const findProps: Types.FindNextProps = {
-                container: actualContainer,
-                currentElement,
-                referenceElement,
-                ignoreAccessibility,
-                useActiveModalizer: true,
-            };
-
+        if (next === undefined) {
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
             const nextElement = _findFocusable(
                 tabster,
-                { ...findProps, isBackward },
+                {
+                    container: actualContainer,
+                    currentElement,
+                    referenceElement,
+                    ignoreAccessibility,
+                    useActiveModalizer: true,
+                    isBackward,
+                },
                 findPropsOut
             );
 
@@ -777,3 +736,65 @@ export const FocusedElementState = {
         return next;
     },
 };
+
+/**
+ * Parent-context fallback used by Mover/Groupper findNext strategies — when
+ * the part itself yields nothing, walk up to the parent context and recurse.
+ * Exported so the bytes only join the bundle when getMover or getGroupper is
+ * imported. Modalizer is a hard trap and never calls this.
+ */
+export function findNextTabbableWithParentFallback(
+    tabster: Types.TabsterCore,
+    part: Types.TabsterPartWithFindNextTabbable & {
+        getElement(): HTMLElement | undefined;
+    },
+    container: HTMLElement | undefined,
+    currentElement: HTMLElement | undefined,
+    referenceElement: HTMLElement | undefined,
+    isBackward: boolean | undefined,
+    ignoreAccessibility: boolean | undefined
+): Types.NextTabbable | null {
+    let next = part.findNextTabbable(
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+
+    if (currentElement && !next?.element) {
+        const parentElement = dom.getParentElement(part.getElement());
+
+        if (parentElement) {
+            const parentCtx = getTabsterContext(tabster, currentElement, {
+                referenceElement: parentElement,
+            });
+
+            if (parentCtx) {
+                const currentScopeElement = part.getElement();
+                const newCurrent = isBackward
+                    ? currentScopeElement
+                    : (currentScopeElement &&
+                          getLastChild(currentScopeElement)) ||
+                      currentScopeElement;
+
+                if (newCurrent) {
+                    next = FocusedElementState.findNextTabbable(
+                        tabster,
+                        parentCtx,
+                        container,
+                        newCurrent,
+                        parentElement,
+                        isBackward,
+                        ignoreAccessibility
+                    );
+
+                    if (next) {
+                        next.outOfDOMOrder = true;
+                    }
+                }
+            }
+        }
+    }
+
+    return next;
+}

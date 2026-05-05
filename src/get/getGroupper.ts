@@ -5,7 +5,34 @@
 
 import { createGroupperAPI } from "../Groupper.js";
 import { resolveMoverGroupperContext } from "../MoverGroupperResolver.js";
+import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
+
+const groupperFindNextStrategy: Types.FindNextTabbableStrategy = (
+    tabster,
+    ctx,
+    container,
+    currentElement,
+    referenceElement,
+    isBackward,
+    ignoreAccessibility
+) => {
+    const groupper = ctx.groupper;
+    // Groupper claims the dispatch when there's no Mover, or when the
+    // precedence flag (`groupperBeforeMover`) puts it ahead of the Mover.
+    if (!groupper || (ctx.mover && !ctx.groupperBeforeMover)) {
+        return undefined;
+    }
+    return findNextTabbableWithParentFallback(
+        tabster,
+        groupper,
+        container,
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+};
 
 /**
  * Creates a new groupper instance or returns an existing one
@@ -29,6 +56,9 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
             }
         );
         tabsterCore.focusableContextResolver ??= resolveMoverGroupperContext;
+        (tabsterCore.findNextTabbableStrategies ??= []).push(
+            groupperFindNextStrategy
+        );
     }
 
     return tabsterCore.groupper;

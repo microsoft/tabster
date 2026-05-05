@@ -81,18 +81,15 @@ class TabsterCore implements Types.TabsterCore {
     root: Types.RootAPI;
     uncontrolled: Types.UncontrolledAPI;
     internal: Types.InternalAPI;
-    /** Created by getRootDummyInputs; only present when dummy inputs are opted in. */
-    _dummyObserver?: Types.DummyInputObserver;
 
-    // Extended APIs
-    groupper?: Types.GroupperAPI;
-    mover?: Types.MoverAPI;
-    outline?: Types.OutlineAPI;
-    deloser?: Types.DeloserAPI;
-    modalizer?: Types.ModalizerAPI;
-    observedElement?: Types.ObservedElementAPI;
-    crossOrigin?: Types.CrossOriginAPI;
-    restorer?: Types.RestorerAPI;
+    // Extended APIs slots (groupper / mover / modalizer / outline / deloser /
+    // observedElement / crossOrigin / restorer / _dummyObserver) are declared
+    // as optional fields on Types.TabsterCore but intentionally NOT redeclared
+    // here. Each emitted class-field declaration would compile to a
+    // `this.x = void 0` write in the constructor (~15 B per field after
+    // minification). We rely on `undefined`-on-read instead — the optional
+    // property still type-checks because Types.TabsterCore declares them.
+
     getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {

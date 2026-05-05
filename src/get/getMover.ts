@@ -5,7 +5,34 @@
 
 import { createMoverAPI } from "../Mover.js";
 import { resolveMoverGroupperContext } from "../MoverGroupperResolver.js";
+import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
+
+const moverFindNextStrategy: Types.FindNextTabbableStrategy = (
+    tabster,
+    ctx,
+    container,
+    currentElement,
+    referenceElement,
+    isBackward,
+    ignoreAccessibility
+) => {
+    const mover = ctx.mover;
+    // Mover yields to a Groupper that wins the precedence flag
+    // (`groupperBeforeMover`); otherwise it owns the dispatch.
+    if (!mover || (ctx.groupper && ctx.groupperBeforeMover)) {
+        return undefined;
+    }
+    return findNextTabbableWithParentFallback(
+        tabster,
+        mover,
+        container,
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+};
 
 /**
  * Creates a new mover instance or returns an existing one
@@ -29,6 +56,9 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
             }
         );
         tabsterCore.focusableContextResolver ??= resolveMoverGroupperContext;
+        (tabsterCore.findNextTabbableStrategies ??= []).push(
+            moverFindNextStrategy
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
