@@ -25,8 +25,8 @@ export function createSubscribable<A, B = undefined>(): SubscribableCore<A, B> {
     let val: A | undefined;
     let callbacks: Types.SubscribableCallback<A, B>[] = [];
 
-    const callCallbacks = (v: A, detail: B): void => {
-        callbacks.forEach((callback) => callback(v, detail));
+    const trigger = (v: A, detail: B): void => {
+        callbacks.forEach((cb) => cb(v, detail));
     };
 
     return {
@@ -34,37 +34,33 @@ export function createSubscribable<A, B = undefined>(): SubscribableCore<A, B> {
             callbacks = [];
             val = undefined;
         },
-        subscribe(callback: Types.SubscribableCallback<A, B>): void {
-            const index = callbacks.indexOf(callback);
-            if (index < 0) {
-                callbacks.push(callback);
+        subscribe(cb): void {
+            if (callbacks.indexOf(cb) < 0) {
+                callbacks.push(cb);
             }
         },
-        subscribeFirst(callback: Types.SubscribableCallback<A, B>): void {
-            const index = callbacks.indexOf(callback);
-            if (index >= 0) {
-                callbacks.splice(index, 1);
+        subscribeFirst(cb): void {
+            const i = callbacks.indexOf(cb);
+            if (i >= 0) {
+                callbacks.splice(i, 1);
             }
-            callbacks.unshift(callback);
+            callbacks.unshift(cb);
         },
-        unsubscribe(callback: Types.SubscribableCallback<A, B>): void {
-            const index = callbacks.indexOf(callback);
-            if (index >= 0) {
-                callbacks.splice(index, 1);
+        unsubscribe(cb): void {
+            const i = callbacks.indexOf(cb);
+            if (i >= 0) {
+                callbacks.splice(i, 1);
             }
         },
-        setVal(v: A, detail: B): void {
-            if (val === v) {
-                return;
+        setVal(v, detail): void {
+            if (val !== v) {
+                val = v;
+                trigger(v, detail);
             }
-            val = v;
-            callCallbacks(v, detail);
         },
         getVal(): A | undefined {
             return val;
         },
-        trigger(v: A, detail: B): void {
-            callCallbacks(v, detail);
-        },
+        trigger,
     };
 }
