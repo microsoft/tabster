@@ -101,8 +101,8 @@ export class WeakHTMLElement<
     T extends HTMLElement = HTMLElement,
     D = undefined,
 > implements WeakHTMLElementInterface<D> {
-    private _ref: WeakRef<T> | undefined;
-    private _data: D | undefined;
+    declare private _ref: WeakRef<T> | undefined;
+    declare private _data: D | undefined;
 
     constructor(element: T, data?: D) {
         this._ref = new WeakRef(element);
@@ -433,11 +433,11 @@ export abstract class TabsterPart<
     P,
     D = undefined,
 > implements TabsterPartInterface<P> {
-    protected _tabster: TabsterCore;
-    protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _props: P;
+    declare protected _tabster: TabsterCore;
+    declare protected _element: WeakHTMLElement<HTMLElement, D>;
+    declare protected _props: P;
 
-    readonly id: string;
+    declare readonly id: string;
 
     constructor(tabster: TabsterCore, element: HTMLElement, props: P) {
         this._tabster = tabster;

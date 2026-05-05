@@ -32,10 +32,10 @@ const defaultProps: Types.OutlineProps = {
 let _props: Types.OutlineProps = defaultProps;
 
 class OutlinePosition {
-    public left: number;
-    public top: number;
-    public right: number;
-    public bottom: number;
+    declare public left: number;
+    declare public top: number;
+    declare public right: number;
+    declare public bottom: number;
 
     constructor(left: number, top: number, right: number, bottom: number) {
         this.left = left;

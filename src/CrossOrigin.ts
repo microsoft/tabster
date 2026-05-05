@@ -61,8 +61,8 @@ interface KnownTargets {
 }
 
 class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
-    private _deloser: CrossOriginDeloser;
-    private _transactions: CrossOriginTransactions;
+    declare private _deloser: CrossOriginDeloser;
+    declare private _transactions: CrossOriginTransactions;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -105,7 +105,7 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<
     CrossOriginDeloser,
     CrossOriginDeloserItem
 > {
-    private _transactions: CrossOriginTransactions;
+    declare private _transactions: CrossOriginTransactions;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -163,20 +163,22 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<
 
 abstract class CrossOriginTransaction<I, O> {
     abstract type: Types.CrossOriginTransactionType;
-    readonly id: string;
-    readonly beginData: I;
-    readonly timeout?: number;
-    protected tabster: Types.TabsterCore;
-    protected endData: O | undefined;
-    protected owner: Types.GetWindow;
-    protected ownerId: string;
-    protected sendUp: Types.CrossOriginTransactionSend | undefined;
-    private _promise: Promise<O>;
-    protected _resolve: ((endData: O | PromiseLike<O>) => void) | undefined;
-    private _reject: ((reason: string) => void) | undefined;
-    private _knownTargets: KnownTargets;
-    private _sentTo: Types.CrossOriginSentTo;
-    protected targetId: string | undefined;
+    declare readonly id: string;
+    declare readonly beginData: I;
+    declare readonly timeout?: number;
+    declare protected tabster: Types.TabsterCore;
+    declare protected endData: O | undefined;
+    declare protected owner: Types.GetWindow;
+    declare protected ownerId: string;
+    declare protected sendUp: Types.CrossOriginTransactionSend | undefined;
+    declare private _promise: Promise<O>;
+    declare protected _resolve:
+        | ((endData: O | PromiseLike<O>) => void)
+        | undefined;
+    declare private _reject: ((reason: string) => void) | undefined;
+    declare private _knownTargets: KnownTargets;
+    declare private _sentTo: Types.CrossOriginSentTo;
+    declare protected targetId: string | undefined;
     private _inProgress: { [id: string]: boolean } = {};
     private _isDone = false;
     private _isSelfResponding = false;
@@ -962,20 +964,20 @@ interface CrossOriginTransactionWrapper<I, O> {
 }
 
 class CrossOriginTransactions {
-    private _owner: Types.GetWindow;
-    private _ownerUId: string;
+    declare private _owner: Types.GetWindow;
+    declare private _ownerUId: string;
     private _knownTargets: KnownTargets = {};
     private _transactions: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [id: string]: CrossOriginTransactionWrapper<any, any>;
     } = {};
-    private _tabster: Types.TabsterCore;
-    private _pingTimer: Timer;
+    declare private _tabster: Types.TabsterCore;
+    declare private _pingTimer: Timer;
     private _isDefaultSendUp = false;
-    private _deadPromise: Promise<true | undefined> | undefined;
+    declare private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
-    sendUp: Types.CrossOriginTransactionSend | undefined;
-    ctx: CrossOriginInstanceContext;
+    declare sendUp: Types.CrossOriginTransactionSend | undefined;
+    declare ctx: CrossOriginInstanceContext;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -1445,13 +1447,13 @@ class CrossOriginTransactions {
 }
 
 export class CrossOriginElement implements Types.CrossOriginElement {
-    private _tabster: Types.TabsterCore;
-    readonly uid: string;
-    readonly ownerId: string;
-    readonly id?: string;
-    readonly rootId?: string;
-    readonly observedName?: string;
-    readonly observedDetails?: string;
+    declare private _tabster: Types.TabsterCore;
+    declare readonly uid: string;
+    declare readonly ownerId: string;
+    declare readonly id?: string;
+    declare readonly rootId?: string;
+    declare readonly observedName?: string;
+    declare readonly observedDetails?: string;
 
     constructor(
         tabster: Types.TabsterCore,
