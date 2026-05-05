@@ -10,7 +10,7 @@ import {
     _findFocusable,
     _isFocusable,
 } from "./Focusable.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import { isTabbing } from "./Tab.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
 import { getTabsterContext } from "./Context.js";
@@ -254,7 +254,7 @@ export class Mover
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number | undefined {
-        if (!FocusedElementState.isTabbing) {
+        if (!isTabbing()) {
             return state.currentCtx?.excludedFromMover
                 ? NodeFilter.FILTER_REJECT
                 : undefined;

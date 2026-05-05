@@ -4,7 +4,7 @@
  */
 
 import {
-    FocusedElementState,
+    _forgetMemorized,
     createFocusedElementState,
 } from "./State/FocusedElement.js";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
@@ -14,7 +14,6 @@ import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { createUncontrolledAPI } from "./Uncontrolled.js";
-import { getRootDummyInputs } from "./get/getRootDummyInputs.js";
 import {
     clearElementCache,
     clearTimer,
@@ -114,7 +113,7 @@ class TabsterCore implements Types.TabsterCore {
         this.uncontrolled = createUncontrolledAPI(
             props?.checkUncontrolledCompletely
         );
-        this.controlTab = props?.controlTab ?? true;
+        this.controlTab = !!props?.controlTab;
         this.rootDummyInputs = !!props?.rootDummyInputs;
 
         this.getParent = props?.getParent ?? dom.getParentNode;
@@ -274,10 +273,7 @@ class TabsterCore implements Types.TabsterCore {
                     el = this._forgetMemorizedElements.shift()
                 ) {
                     clearElementCache(this.getWindow, el);
-                    FocusedElementState.forgetMemorized(
-                        this.focusedElement,
-                        el
-                    );
+                    _forgetMemorized(this.focusedElement, el);
                 }
             },
             0
@@ -325,13 +321,12 @@ export function forceCleanup(tabster: Types.Tabster): void {
 /**
  * Creates an instance of Tabster, returns the current window instance if it already exists.
  *
- * `controlTab` defaults to `true`, which means root-level dummy inputs are
- * required to drive Tab navigation. To avoid forcing every consumer through
- * a separate `getRootDummyInputs` call when they want the default, we
- * install dummy inputs automatically here whenever `controlTab` or
- * `rootDummyInputs` is on. Apps that explicitly opt out
- * (`createTabster(win, { controlTab: false })` and skip
- * `getRootDummyInputs`) keep the slim, dummy-free bundle.
+ * `controlTab` and `rootDummyInputs` both default to `false` — the slim
+ * core. Tab interception, root-level dummy inputs, and the
+ * `DummyInputManager` phantom helpers only enter the bundle when the
+ * consumer explicitly calls `getRootDummyInputs(tabster)`. Apps that
+ * want the previous "Tab just works" behaviour should pair
+ * `createTabster(win)` with `getRootDummyInputs(tabster)`.
  */
 export function createTabster(
     win: Window,
@@ -346,10 +341,6 @@ export function createTabster(
         tabster = new TabsterCore(win, props);
         (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
         wrapper = tabster.createTabster();
-    }
-
-    if (tabster.controlTab || tabster.rootDummyInputs) {
-        getRootDummyInputs(wrapper);
     }
 
     return wrapper;

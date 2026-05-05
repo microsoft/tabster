@@ -49,9 +49,24 @@ const parts =
 const partsToEnable = {};
 
 tabsterTest.createTabster = (win, props) => {
-    const newProps = props || {};
+    const newProps = { ...(props || {}) };
     newProps.DOMAPI = enableShadowDOM ? shadowDOM : undefined;
-    return createTabster(win, newProps);
+    // The public `controlTab` default is now `false` (slim baseline).
+    // Tests historically relied on `createTabster(win)` giving controlled
+    // Tab behaviour, so the test-time wrapper defaults to `true` unless
+    // the caller explicitly sets it. Tests that want uncontrolled mode
+    // still pass `controlTab: false` via the parts-bootstrap URL params.
+    if (newProps.controlTab === undefined) {
+        newProps.controlTab = true;
+    }
+    const tabster = createTabster(win, newProps);
+    // Register dummy-input infrastructure unconditionally — per-part
+    // Mover/Groupper/Modalizer dummies need the factories regardless of
+    // whether root dummies are installed. The Tab keyhandler / root
+    // dummy installation inside `getRootDummyInputs` is gated by the
+    // controlTab/rootDummyInputs flags above.
+    getRootDummyInputs(tabster);
+    return tabster;
 };
 tabsterTest.disposeTabster = disposeTabster;
 tabsterTest.getTabster = getTabster;
@@ -93,12 +108,6 @@ if (parts !== undefined) {
     });
 
     tabsterTest.core = tabster;
-
-    // Register dummy-input factories unconditionally so per-part Mover/
-    // Groupper/Modalizer dummies are available in controlTab=false runs.
-    // getRootDummyInputs only forces root dummies when the corresponding
-    // controlTab/rootDummyInputs flags are set.
-    getRootDummyInputs(tabster);
 
     console.log(
         "created tabster",
