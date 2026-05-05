@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from "keyborg";
-
 import { _findFocusable, _isFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
@@ -20,12 +18,8 @@ import {
     GroupperMoveFocusEventName,
     TabsterMoveFocusEvent,
 } from "./Events.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
 import {
-    createDummyInputManager,
-    type DummyInput,
     type DummyInputManager,
-    DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
 import {
@@ -33,7 +27,6 @@ import {
     clearTimer,
     createTimer,
     dispatchEvent,
-    getAdjacentElement,
     isTimerActive,
     removeListener,
     setTimer,
@@ -41,67 +34,6 @@ import {
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
-
-function createGroupperDummyManager(
-    element: WeakHTMLElement,
-    groupper: Groupper,
-    tabster: Types.TabsterCore,
-    sys: Types.SysProps | undefined
-): DummyInputManager {
-    const manager = createDummyInputManager(
-        tabster,
-        element,
-        DummyInputManagerPriorities.Groupper,
-        sys,
-        true
-    );
-
-    manager.setHandlers(
-        (
-            dummyInput: DummyInput,
-            isBackward: boolean,
-            relatedTarget: HTMLElement | null
-        ) => {
-            const container = element.get();
-            const input = dummyInput.input;
-
-            if (container && input) {
-                const ctx = getTabsterContext(tabster, input);
-
-                if (ctx) {
-                    let next: HTMLElement | null | undefined;
-
-                    next = groupper.findNextTabbable(
-                        relatedTarget || undefined,
-                        undefined,
-                        isBackward,
-                        true
-                    )?.element;
-
-                    if (!next) {
-                        next = FocusedElementState.findNextTabbable(
-                            tabster,
-                            ctx,
-                            undefined,
-                            dummyInput.isOutside
-                                ? input
-                                : getAdjacentElement(container, !isBackward),
-                            undefined,
-                            isBackward,
-                            true
-                        )?.element;
-                    }
-
-                    if (next) {
-                        nativeFocus(next);
-                    }
-                }
-            }
-        }
-    );
-
-    return manager;
-}
 
 export class Groupper
     extends TabsterPart<Types.GroupperProps>
@@ -126,7 +58,7 @@ export class Groupper
         this._onDispose = onDispose;
 
         if (!tabster.controlTab) {
-            this.dummyManager = createGroupperDummyManager(
+            this.dummyManager = tabster.groupperDummyManagerFactory?.(
                 this._element,
                 this,
                 tabster,

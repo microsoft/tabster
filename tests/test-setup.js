@@ -94,9 +94,11 @@ if (parts !== undefined) {
 
     tabsterTest.core = tabster;
 
-    if (controlTab || rootDummyInputs) {
-        getRootDummyInputs(tabster);
-    }
+    // Register dummy-input factories unconditionally so per-part Mover/
+    // Groupper/Modalizer dummies are available in controlTab=false runs.
+    // getRootDummyInputs only forces root dummies when the corresponding
+    // controlTab/rootDummyInputs flags are set.
+    getRootDummyInputs(tabster);
 
     console.log(
         "created tabster",

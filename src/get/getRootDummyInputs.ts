@@ -3,27 +3,65 @@
  * Licensed under the MIT License.
  */
 
+import { DummyInputManager } from "../DummyInput.js";
+import { createGroupperDummyManager } from "../GroupperDummyManager.js";
+import { createModalizerDummyManager } from "../ModalizerDummyManager.js";
+import { createMoverDummyManager } from "../MoverDummyManager.js";
 import { createRootDummyManager } from "../RootDummyManager.js";
 import type * as Types from "../Types.js";
 
 /**
- * Opt the Tabster instance into root dummy-input behaviour. Registers the
- * factory used by `Root.addDummyInputs()` and runs it on every existing
- * root, then makes future roots auto-add dummy inputs as well.
+ * Opt the Tabster instance into dummy-input behaviour. Registers the four
+ * dummy-manager factories (root, mover, groupper, modalizer) and triggers
+ * root dummy creation if `controlTab` or `rootDummyInputs` is set.
  *
- * Without calling this, `controlTab: true` and `rootDummyInputs: true`
- * become no-ops — Root.addDummyInputs() finds no factory and skips. Pulled
- * out of the always-on Tabster path so apps that don't need browser Tab
- * navigation can avoid the DummyInput / FocusedElement / KeyboardNavigation
- * cost.
+ * Without calling this, every part's dummy code is absent from the bundle:
+ * Root.addDummyInputs() finds no factory and skips; Mover/Groupper/Modalizer
+ * instances created in the uncontrolled (`controlTab: false`) mode also
+ * skip dummy creation. Apps that don't need browser-Tab navigation can
+ * avoid the DummyInput / FocusedElement / KeyboardNavigation cost
+ * entirely.
  */
 export function getRootDummyInputs(tabster: Types.Tabster): void {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.rootDummyManagerFactory) {
         tabsterCore.rootDummyManagerFactory = createRootDummyManager;
-        // Apply to existing roots; also flips the RootAPI flag so future
-        // roots auto-add dummy inputs even without controlTab/rootDummyInputs.
-        tabsterCore.root.addDummyInputs();
+        tabsterCore.moverDummyManagerFactory = createMoverDummyManager;
+        tabsterCore.groupperDummyManagerFactory = createGroupperDummyManager;
+        tabsterCore.modalizerDummyManagerFactory = createModalizerDummyManager;
+
+        // Routes Root.moveOutWithDefaultAction either through the root's
+        // dummy manager (controlTab=true / rootDummyInputs=true) or the
+        // phantom-dummy fallback (uncontrolled mode where Root has no
+        // persistent dummies). Both paths only enter the bundle when the
+        // consumer opts in here.
+        tabsterCore.moveOutOfRoot = (
+            tabster,
+            rootElement,
+            dummyManager,
+            isBackward,
+            relatedEvent
+        ) => {
+            if (dummyManager) {
+                dummyManager.moveOutWithDefaultAction(isBackward, relatedEvent);
+            } else if (rootElement) {
+                DummyInputManager.moveWithPhantomDummy(
+                    tabster,
+                    rootElement,
+                    true,
+                    isBackward,
+                    relatedEvent
+                );
+            }
+        };
+
+        // Apply to existing roots when the controlTab/rootDummyInputs flags
+        // say root should host dummies; per-part Mover/Groupper/Modalizer
+        // dummies are picked up lazily via the registered factories when
+        // each part instance is constructed.
+        if (tabsterCore.controlTab || tabsterCore.rootDummyInputs) {
+            tabsterCore.root.addDummyInputs();
+        }
     }
 }

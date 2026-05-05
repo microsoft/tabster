@@ -4,6 +4,9 @@
  */
 
 import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
+import type { GroupperDummyManagerFactory } from "./GroupperDummyManager.js";
+import type { ModalizerDummyManagerFactory } from "./ModalizerDummyManager.js";
+import type { MoverDummyManagerFactory } from "./MoverDummyManager.js";
 import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
@@ -1318,6 +1321,24 @@ interface TabsterCoreInternal {
     focusableContextResolver?: FocusableContextResolver;
     /** @internal — set by getRootDummyInputs, see `RootDummyManagerFactory`. */
     rootDummyManagerFactory?: RootDummyManagerFactory;
+    /** @internal — set by getRootDummyInputs alongside the root factory. */
+    moverDummyManagerFactory?: MoverDummyManagerFactory;
+    /** @internal — set by getRootDummyInputs alongside the root factory. */
+    groupperDummyManagerFactory?: GroupperDummyManagerFactory;
+    /** @internal — set by getRootDummyInputs alongside the root factory. */
+    modalizerDummyManagerFactory?: ModalizerDummyManagerFactory;
+    /**
+     * @internal — set by getRootDummyInputs; routes
+     * `Root.moveOutWithDefaultAction` either through an existing dummy
+     * manager or the phantom-dummy fallback. Without it the call no-ops.
+     */
+    moveOutOfRoot?: (
+        tabster: TabsterCore,
+        rootElement: HTMLElement | undefined,
+        dummyManager: DummyInputManager | undefined,
+        isBackward: boolean,
+        relatedEvent: KeyboardEvent
+    ) => void;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

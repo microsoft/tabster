@@ -25,10 +25,7 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
-    createDummyInputManager,
-    type DummyInput,
     type DummyInputManager,
-    DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
 import {
@@ -51,57 +48,6 @@ import {
 import { dom } from "./DOMAPI.js";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
-
-function createMoverDummyManager(
-    element: WeakHTMLElement,
-    tabster: Types.TabsterCore,
-    getMemorized: () => WeakHTMLElement | undefined,
-    sys: Types.SysProps | undefined
-): DummyInputManager {
-    const manager = createDummyInputManager(
-        tabster,
-        element,
-        DummyInputManagerPriorities.Mover,
-        sys
-    );
-
-    const onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = element.get();
-        const input = dummyInput.input;
-
-        if (container && input) {
-            const ctx = getTabsterContext(tabster, container);
-
-            let toFocus: HTMLElement | null | undefined;
-
-            if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
-                    tabster,
-                    ctx,
-                    undefined,
-                    input,
-                    undefined,
-                    !dummyInput.isFirst,
-                    true
-                )?.element;
-            }
-
-            const memorized = getMemorized()?.get();
-
-            if (memorized && _isFocusable(tabster, memorized)) {
-                toFocus = memorized;
-            }
-
-            if (toFocus) {
-                nativeFocus(toFocus);
-            }
-        }
-    };
-
-    manager.setHandlers(onFocusDummyInput);
-
-    return manager;
-}
 
 // TypeScript enums produce depressing JavaScript code, so, we're just using
 // a few old style constants here.
@@ -162,7 +108,7 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this.dummyManager = createMoverDummyManager(
+            this.dummyManager = tabster.moverDummyManagerFactory?.(
                 this._element,
                 tabster,
                 getMemorized,

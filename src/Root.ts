@@ -113,10 +113,17 @@ export class Root
     }
 
     moveOutWithDefaultAction(isBackward: boolean, relatedEvent: KeyboardEvent) {
-        // The phantom-dummy fallback used to live here. With dummy inputs
-        // opt-in (via getRootDummyInputs), there's no manager to dispatch
-        // through when the consumer hasn't opted in — the call is a no-op.
-        this._dummyManager?.moveOutWithDefaultAction(isBackward, relatedEvent);
+        // Both the manager-dispatch and the phantom-dummy fallback live in
+        // the registered handler set by `getRootDummyInputs`. Without that
+        // opt-in, this is a no-op — the consumer has chosen no dummy-input
+        // behaviour at any level.
+        this._tabster.moveOutOfRoot?.(
+            this._tabster,
+            this.getElement(),
+            this._dummyManager,
+            isBackward,
+            relatedEvent
+        );
     }
 
     private _setFocused = (hasFocused: boolean): void => {
