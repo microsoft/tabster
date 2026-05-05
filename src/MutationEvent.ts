@@ -60,15 +60,14 @@ export function observeMutations(
                     }
                 }
             } else {
-                for (let i = 0; i < removed.length; i++) {
-                    const removedNode = removed[i];
+                for (const removedNode of removed) {
                     removedNodes.add(removedNode);
                     updateTabsterElements(removedNode, true);
                     tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
 
-                for (let i = 0; i < added.length; i++) {
-                    updateTabsterElements(added[i]);
+                for (const addedNode of added) {
+                    updateTabsterElements(addedNode);
                     tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
             }
