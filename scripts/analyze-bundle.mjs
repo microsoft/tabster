@@ -23,10 +23,15 @@
  *                       preserves those by default).
  *
  *   exports             Used-exports report. Rebuilds the fixture with
- *                       optimization.usedExports = true and
- *                       concatenateModules = false, then dumps each tabster
- *                       module's provided exports plus which ones the
- *                       fixture actually used.
+ *                       optimization.usedExports = true,
+ *                       concatenateModules = false, and minify off; dumps
+ *                       each tabster module's provided exports plus which
+ *                       ones webpack flagged as reachable. Note: this is
+ *                       webpack's pre-Terser view — exports listed as
+ *                       "used" here are imported, but Terser may still DCE
+ *                       side-effect-free ones in the production build.
+ *                       Cross-check with `bytes` mode to see what actually
+ *                       survives.
  *
  *   both                `bytes` + `identifiers` for the same build.
  *
@@ -815,7 +820,9 @@ function exportsFromStats(statsJson) {
 }
 
 function printExportsReport(name, statsJson) {
-    console.log(`\n=== ${name}  used exports`);
+    console.log(
+        `\n=== ${name}  used exports  (webpack's pre-Terser view; cross-check 'bytes' to confirm what survives)`
+    );
     const byModule = exportsFromStats(statsJson);
     const ids = [...byModule.keys()].sort();
     for (const id of ids) {
