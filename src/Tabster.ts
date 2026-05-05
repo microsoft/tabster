@@ -13,7 +13,6 @@ import { observeMutations } from "./MutationEvent.js";
 import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
-import { createUncontrolledAPI } from "./Uncontrolled.js";
 import {
     clearElementCache,
     clearTimer,
@@ -31,14 +30,12 @@ class Tabster implements Types.Tabster {
     declare keyboardNavigation: Types.KeyboardNavigationState;
     declare focusedElement: Types.FocusedElementState;
     declare root: Types.RootAPI;
-    declare uncontrolled: Types.UncontrolledAPI;
     declare core: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
         this.focusedElement = tabster.focusedElement;
         this.root = tabster.root;
-        this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
     }
 }
@@ -83,8 +80,8 @@ class TabsterCore implements Types.TabsterCore {
     declare keyboardNavigation: Types.KeyboardNavigationState;
     declare focusedElement: Types.FocusedElementState;
     declare root: Types.RootAPI;
-    declare uncontrolled: Types.UncontrolledAPI;
     declare internal: Types.InternalAPI;
+    declare checkUncontrolledCompletely: Types.TabsterCoreProps["checkUncontrolledCompletely"];
     /** Created by getRootDummyInputs; only present when dummy inputs are opted in. */
     declare _dummyObserver?: Types.DummyInputObserver;
 
@@ -111,11 +108,7 @@ class TabsterCore implements Types.TabsterCore {
         this.keyboardNavigation = createKeyboardNavigationState(getWindow);
         this.focusedElement = createFocusedElementState(this, getWindow);
         this.root = new RootAPI(this, props?.autoRoot);
-        this.uncontrolled = createUncontrolledAPI(
-            // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
-            props?.checkUncontrolledCompletely ||
-                props?.checkUncontrolledTrappingFocus
-        );
+        this.checkUncontrolledCompletely = props?.checkUncontrolledCompletely;
         this.controlTab = !!props?.controlTab;
         this.rootDummyInputs = !!props?.rootDummyInputs;
 
