@@ -1294,6 +1294,8 @@ export interface TabsterAttrHandlerRegistry extends Map<
 interface TabsterCoreInternal {
     /** @internal */
     attrHandlers: TabsterAttrHandlerRegistry;
+    /** @internal — extended APIs add themselves on creation; iterated by core.dispose() */
+    disposers: Set<Disposable>;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */

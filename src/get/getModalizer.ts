@@ -30,6 +30,7 @@ export function getModalizer(
             accessibleCheck
         );
         tabsterCore.modalizer = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "modalizer",
             (element, existingModalizer, newProps, oldProps, sys) => {

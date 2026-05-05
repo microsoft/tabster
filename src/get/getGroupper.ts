@@ -16,6 +16,7 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     if (!tabsterCore.groupper) {
         const api = createGroupperAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.groupper = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "groupper",
             (element, existingGroupper, newProps, _oldProps, sys) => {

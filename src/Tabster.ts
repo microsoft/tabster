@@ -68,6 +68,13 @@ class TabsterCore implements Types.TabsterCore {
     // value type (the type-erased shape).
     attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
+    /**
+     * Disposable extended APIs register themselves here in their `getX`
+     * factories; `dispose()` iterates this set instead of hard-coding each
+     * `deloser?.dispose()` call.
+     */
+    disposers = new Set<Types.Disposable>();
+
     // Core APIs
     keyboardNavigation: Types.KeyboardNavigationState;
     focusedElement: Types.FocusedElementState;
@@ -196,14 +203,13 @@ class TabsterCore implements Types.TabsterCore {
         this._initQueue = [];
         this._forgetMemorizedElements = [];
 
-        this.outline?.dispose();
-        this.crossOrigin?.dispose();
-        this.deloser?.dispose();
-        this.groupper?.dispose();
-        this.mover?.dispose();
-        this.modalizer?.dispose();
-        this.observedElement?.dispose();
-        this.restorer?.dispose();
+        // Extended APIs register themselves in `disposers` from their `getX`
+        // factories; iterate and clear so adding a new extended API doesn't
+        // require touching this method.
+        for (const d of this.disposers) {
+            d.dispose();
+        }
+        this.disposers.clear();
 
         this.keyboardNavigation.dispose();
         this.focusedElement.dispose();
