@@ -550,8 +550,10 @@ export function createObservedElementAPI(
             return ret;
         },
 
-        onObservedElementUpdate(element: HTMLElement): void {
-            const observed = getTabsterOnElement(tabster, element)?.observed;
+        onObservedElementUpdate(
+            element: HTMLElement,
+            observed: Types.ObservedElementProps | undefined
+        ): void {
             const uid = getElementUId(win, element);
             let info: ObservedElementInfo | undefined = observedById[uid];
 

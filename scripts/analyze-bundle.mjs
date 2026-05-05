@@ -710,11 +710,7 @@ function printDiffReport(
         nonZero++;
         if (shown >= topSources) continue;
         const tag =
-            r.baseline === 0
-                ? "  (new)"
-                : r.target === 0
-                  ? "  (gone)"
-                  : "";
+            r.baseline === 0 ? "  (new)" : r.target === 0 ? "  (gone)" : "";
         console.log(
             `  ${fmtSigned(r.delta).padStart(10)}  ${fmtBytes(r.baseline).padStart(10)}  ${fmtBytes(r.target).padStart(10)}  ${r.source}${tag}`
         );
@@ -773,8 +769,7 @@ function printDiffFunctionsReport(
             .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
             .slice(0, topFunctions);
         for (const r of fnRows) {
-            const tag =
-                r.a === 0 ? "  (new)" : r.b === 0 ? "  (gone)" : "";
+            const tag = r.a === 0 ? "  (new)" : r.b === 0 ? "  (gone)" : "";
             console.log(
                 `         ${fmtSigned(r.delta).padStart(10)}    ${r.fn}${tag}`
             );
@@ -899,9 +894,7 @@ async function main() {
         }
     }
     if (
-        !["bytes", "identifiers", "functions", "exports", "both"].includes(
-            mode
-        )
+        !["bytes", "identifiers", "functions", "exports", "both"].includes(mode)
     ) {
         console.error(`unknown mode: ${mode}`);
         process.exit(1);

@@ -317,7 +317,10 @@ export interface ObservedElementAsyncRequest<T> {
 
 interface ObservedElementAPIInternal {
     /** @internal */
-    onObservedElementUpdate(element: HTMLElement): void;
+    onObservedElementUpdate(
+        element: HTMLElement,
+        observed: ObservedElementProps | undefined
+    ): void;
 }
 
 export interface ObservedElementAPI
@@ -1002,8 +1005,6 @@ interface RootAPIInternal {
         props: RootProps,
         sys: SysProps | undefined
     ): Root;
-    /**@internal*/
-    onRoot(root: Root, removed?: boolean): void;
     /**@internal*/
     addDummyInputs(): void;
 }

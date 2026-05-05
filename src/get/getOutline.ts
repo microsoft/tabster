@@ -13,6 +13,7 @@ export function getOutline(tabster: Types.Tabster): Types.OutlineAPI {
         const api = createOutlineAPI(tabsterCore);
         tabsterCore.outline = api;
         tabsterCore.disposers.add(api);
+        tabsterCore.attrHandlers.set("outline", (_, __, newProps) => newProps);
     }
 
     return tabsterCore.outline;

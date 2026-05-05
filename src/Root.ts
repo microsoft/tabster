@@ -271,6 +271,17 @@ export class RootAPI implements Types.RootAPI {
         this._win = tabster.getWindow;
         this._autoRoot = autoRoot;
 
+        tabster.attrHandlers.set(
+            "root",
+            (element, existing, newProps, _, sys) => {
+                if (existing) {
+                    (existing as Types.Root).setProps(newProps);
+                    return existing as Types.Root;
+                }
+                return this.createRoot(element, newProps, sys);
+            }
+        );
+
         tabster.queueInit(() => {
             if (this._autoRoot) {
                 this._autoRootCreate();
@@ -340,6 +351,7 @@ export class RootAPI implements Types.RootAPI {
         ) as Types.Root;
 
         this._roots[newRoot.id] = newRoot;
+        this.rootById[newRoot.uid] = newRoot;
 
         if (this._forceDummy) {
             newRoot.addDummyInputs();
@@ -358,15 +370,8 @@ export class RootAPI implements Types.RootAPI {
         }
     }
 
-    onRoot(root: Types.Root, removed?: boolean): void {
-        if (removed) {
-            delete this.rootById[root.uid];
-        } else {
-            this.rootById[root.uid] = root;
-        }
-    }
-
     private _onRootDispose = (root: Root) => {
         delete this._roots[root.id];
+        delete this.rootById[root.uid];
     };
 }
