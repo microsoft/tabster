@@ -144,9 +144,10 @@ describe("<iframe />", () => {
             </div>
         )
             .eval(() => {
-                return getTabsterTestVariables()
-                    .core?.focusable.findAll({ container: document.body })
-                    .map((el) => el.textContent);
+                return getTabsterTestVariables().findAllFocusable!(
+                    getTabsterTestVariables().core!,
+                    { container: document.body }
+                ).map((el) => el.textContent);
             })
             .check((evalRet: string[]) => {
                 expect(evalRet).toEqual(["Button1", "Button2"]);

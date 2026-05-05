@@ -3,38 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { FocusableAPI } from "./Focusable.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import {
+    _forgetMemorized,
+    createFocusedElementState,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
-import { KeyboardNavigationState } from "./State/KeyboardNavigation.js";
+import { createKeyboardNavigationState } from "./State/KeyboardNavigation.js";
 import { observeMutations } from "./MutationEvent.js";
 import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
-import { UncontrolledAPI } from "./Uncontrolled.js";
-import { DummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
+    clearTimer,
     createElementTreeWalker,
+    createTimer,
     disposeInstanceContext,
+    isTimerActive,
+    setTimer,
+    type Timer,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
 class Tabster implements Types.Tabster {
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    core: Types.TabsterCore;
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare root: Types.RootAPI;
+    declare core: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
         this.focusedElement = tabster.focusedElement;
-        this.focusable = tabster.focusable;
         this.root = tabster.root;
-        this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
     }
 }
@@ -43,19 +44,24 @@ class Tabster implements Types.Tabster {
  * Extends Window to include an internal Tabster instance.
  */
 class TabsterCore implements Types.TabsterCore {
-    private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
-    private _unobserve: (() => void) | undefined;
-    private _win: WindowWithTabsterInstance | undefined;
-    private _forgetMemorizedTimer: number | undefined;
+    // `declare` on typed fields suppresses the runtime field-initializer
+    // emit (target ES2022 compiles plain `field: T;` to `this.x = void 0`,
+    // which the constructor immediately overwrites). Initializer-bearing
+    // fields below stay as plain class-field syntax — that's where the
+    // initial value actually comes from.
+    declare private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _win: WindowWithTabsterInstance | undefined;
+    declare private _forgetMemorizedTimer: Timer;
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
-    private _initTimer: number | undefined;
+    declare private _initTimer: Timer;
     private _initQueue: (() => void)[] = [];
 
     _version: string = __VERSION__;
     _noop = false;
-    controlTab: boolean;
-    rootDummyInputs: boolean;
+    declare controlTab: boolean;
+    declare rootDummyInputs: boolean;
     // Variance gap: per-key handler types are contravariant in their
     // parameters, so a fully-typed Map<K, TabsterAttrHandler<K>> can't unify
     // them. Cast a plain Map to the typed view; the override on `set` keeps
@@ -63,25 +69,27 @@ class TabsterCore implements Types.TabsterCore {
     // value type (the type-erased shape).
     attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
-    // Core APIs
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    internal: Types.InternalAPI;
-    _dummyObserver: Types.DummyInputObserver;
+    /**
+     * Disposable extended APIs register themselves here in their `getX`
+     * factories; `dispose()` iterates this set instead of hard-coding each
+     * `deloser?.dispose()` call.
+     */
+    disposers = new Set<Types.Disposable>();
 
-    // Extended APIs
-    groupper?: Types.GroupperAPI;
-    mover?: Types.MoverAPI;
-    outline?: Types.OutlineAPI;
-    deloser?: Types.DeloserAPI;
-    modalizer?: Types.ModalizerAPI;
-    observedElement?: Types.ObservedElementAPI;
-    crossOrigin?: Types.CrossOriginAPI;
-    restorer?: Types.RestorerAPI;
-    getParent: (el: Node) => Node | null;
+    // Core APIs
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare root: Types.RootAPI;
+    declare internal: Types.InternalAPI;
+    declare checkUncontrolledCompletely: Types.TabsterCoreProps["checkUncontrolledCompletely"];
+
+    // Extended APIs slots (groupper / mover / modalizer / outline / deloser /
+    // observedElement / crossOrigin / restorer / _dummyObserver) are declared
+    // on Types.TabsterCore as optional fields but intentionally NOT redeclared
+    // here. We rely on `undefined`-on-read; the optional property still
+    // type-checks because Types.TabsterCore declares them.
+
+    declare getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = new WeakMap();
@@ -89,23 +97,19 @@ class TabsterCore implements Types.TabsterCore {
 
         const getWindow = this.getWindow;
 
+        this._forgetMemorizedTimer = createTimer();
+        this._initTimer = createTimer();
+
         if (props?.DOMAPI) {
             setDOMAPI({ ...props.DOMAPI });
         }
 
-        this.keyboardNavigation = new KeyboardNavigationState(getWindow);
-        this.focusedElement = new FocusedElementState(this, getWindow);
-        this.focusable = new FocusableAPI(this);
+        this.keyboardNavigation = createKeyboardNavigationState(getWindow);
+        this.focusedElement = createFocusedElementState(this, getWindow);
         this.root = new RootAPI(this, props?.autoRoot);
-        this.uncontrolled = new UncontrolledAPI(
-            // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
-            props?.checkUncontrolledCompletely ||
-                props?.checkUncontrolledTrappingFocus
-        );
-        this.controlTab = props?.controlTab ?? true;
+        this.checkUncontrolledCompletely = props?.checkUncontrolledCompletely;
+        this.controlTab = !!props?.controlTab;
         this.rootDummyInputs = !!props?.rootDummyInputs;
-
-        this._dummyObserver = new DummyInputObserver(getWindow);
 
         this.getParent = props?.getParent ?? dom.getParentNode;
 
@@ -180,34 +184,20 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        const win = this._win;
-
-        win?.clearTimeout(this._initTimer);
-        delete this._initTimer;
         this._initQueue = [];
-
         this._forgetMemorizedElements = [];
 
-        if (win && this._forgetMemorizedTimer) {
-            win.clearTimeout(this._forgetMemorizedTimer);
-            delete this._forgetMemorizedTimer;
+        // Extended APIs register themselves in `disposers` from their `getX`
+        // factories; iterate and clear so adding a new extended API doesn't
+        // require touching this method.
+        for (const d of this.disposers) {
+            d.dispose();
         }
-
-        this.outline?.dispose();
-        this.crossOrigin?.dispose();
-        this.deloser?.dispose();
-        this.groupper?.dispose();
-        this.mover?.dispose();
-        this.modalizer?.dispose();
-        this.observedElement?.dispose();
-        this.restorer?.dispose();
+        this.disposers.clear();
 
         this.keyboardNavigation.dispose();
-        this.focusable.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
-
-        this._dummyObserver.dispose();
 
         // Drop handler closures — they capture the API instances we just
         // disposed, and any post-dispose updateTabsterByAttribute call would
@@ -219,7 +209,10 @@ class TabsterCore implements Types.TabsterCore {
         this._storage = new WeakMap();
         this._wrappers.clear();
 
+        const win = this._win;
         if (win) {
+            clearTimer(this._initTimer, win);
+            clearTimer(this._forgetMemorizedTimer, win);
             disposeInstanceContext(win);
             delete win.__tabsterInstance;
             delete this._win;
@@ -260,23 +253,26 @@ class TabsterCore implements Types.TabsterCore {
 
         this._forgetMemorizedElements.push(this._win.document.body);
 
-        if (this._forgetMemorizedTimer) {
+        if (isTimerActive(this._forgetMemorizedTimer)) {
             return;
         }
 
-        this._forgetMemorizedTimer = this._win.setTimeout(() => {
-            delete this._forgetMemorizedTimer;
-
-            for (
-                let el: HTMLElement | undefined =
-                    this._forgetMemorizedElements.shift();
-                el;
-                el = this._forgetMemorizedElements.shift()
-            ) {
-                clearElementCache(this.getWindow, el);
-                FocusedElementState.forgetMemorized(this.focusedElement, el);
-            }
-        }, 0);
+        setTimer(
+            this._forgetMemorizedTimer,
+            this._win,
+            () => {
+                for (
+                    let el: HTMLElement | undefined =
+                        this._forgetMemorizedElements.shift();
+                    el;
+                    el = this._forgetMemorizedElements.shift()
+                ) {
+                    clearElementCache(this.getWindow, el);
+                    _forgetMemorized(this.focusedElement, el);
+                }
+            },
+            0
+        );
     }
 
     queueInit(callback: () => void): void {
@@ -286,11 +282,15 @@ class TabsterCore implements Types.TabsterCore {
 
         this._initQueue.push(callback);
 
-        if (!this._initTimer) {
-            this._initTimer = this._win?.setTimeout(() => {
-                delete this._initTimer;
-                this.drainInitQueue();
-            }, 0);
+        if (!isTimerActive(this._initTimer)) {
+            setTimer(
+                this._initTimer,
+                this._win,
+                () => {
+                    this.drainInitQueue();
+                },
+                0
+            );
         }
     }
 
@@ -315,6 +315,13 @@ export function forceCleanup(tabster: Types.Tabster): void {
 
 /**
  * Creates an instance of Tabster, returns the current window instance if it already exists.
+ *
+ * `controlTab` and `rootDummyInputs` both default to `false` — the slim
+ * core. Tab interception, root-level dummy inputs, and the
+ * `DummyInputManager` phantom helpers only enter the bundle when the
+ * consumer explicitly calls `getRootDummyInputs(tabster)`. Apps that
+ * want the previous "Tab just works" behaviour should pair
+ * `createTabster(win)` with `getRootDummyInputs(tabster)`.
  */
 export function createTabster(
     win: Window,
@@ -322,15 +329,16 @@ export function createTabster(
 ): Types.Tabster {
     let tabster = getCurrentTabster(win as WindowWithTabsterInstance);
 
+    let wrapper: Types.Tabster;
     if (tabster) {
-        return tabster.createTabster(false, props);
+        wrapper = tabster.createTabster(false, props);
+    } else {
+        tabster = new TabsterCore(win, props);
+        (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
+        wrapper = tabster.createTabster();
     }
 
-    tabster = new TabsterCore(win, props);
-
-    (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
-
-    return tabster.createTabster();
+    return wrapper;
 }
 
 /**
@@ -423,3 +431,4 @@ export { getMover } from "./get/getMover.js";
 export { getObservedElement } from "./get/getObservedElement.js";
 export { getOutline } from "./get/getOutline.js";
 export { getRestorer } from "./get/getRestorer.js";
+export { getRootDummyInputs } from "./get/getRootDummyInputs.js";

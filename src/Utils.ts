@@ -51,7 +51,7 @@ export interface InstanceContext {
         };
     };
     lastContainerBoundingRectCacheId: number;
-    containerBoundingRectCacheTimer?: number;
+    containerBoundingRectCacheTimer: Timer;
 }
 
 let _uidCounter = 0;
@@ -62,35 +62,23 @@ interface WindowWithUtilsConext extends Window {
 
 export function getInstanceContext(getWindow: GetWindow): InstanceContext {
     const win = getWindow() as WindowWithUtilsConext;
-
-    let ctx = win.__tabsterInstanceContext;
-
-    if (!ctx) {
-        ctx = {
-            elementByUId: {},
-            containerBoundingRectCache: {},
-            lastContainerBoundingRectCacheId: 0,
-        };
-
-        win.__tabsterInstanceContext = ctx;
-    }
-
-    return ctx;
+    return (win.__tabsterInstanceContext ??= {
+        elementByUId: {},
+        containerBoundingRectCache: {},
+        lastContainerBoundingRectCacheId: 0,
+        containerBoundingRectCacheTimer: createTimer(),
+    });
 }
 
 export function disposeInstanceContext(win: Window): void {
-    const ctx = (win as WindowWithUtilsConext).__tabsterInstanceContext;
-
+    const w = win as WindowWithUtilsConext;
+    const ctx = w.__tabsterInstanceContext;
     if (ctx) {
-        ctx.elementByUId = {};
-
-        ctx.containerBoundingRectCache = {};
-
-        if (ctx.containerBoundingRectCacheTimer) {
-            win.clearTimeout(ctx.containerBoundingRectCacheTimer);
-        }
-
-        delete (win as WindowWithUtilsConext).__tabsterInstanceContext;
+        // The maps held only WeakHTMLElement wrappers (WeakRef-backed) and
+        // bounding-rect snapshots — both are dropped when the context object
+        // is unreached. Just cancel the timer and unhook from the window.
+        clearTimer(ctx.containerBoundingRectCacheTimer, win);
+        delete w.__tabsterInstanceContext;
     }
 }
 
@@ -102,8 +90,8 @@ export class WeakHTMLElement<
     T extends HTMLElement = HTMLElement,
     D = undefined,
 > implements WeakHTMLElementInterface<D> {
-    private _ref: WeakRef<T> | undefined;
-    private _data: D | undefined;
+    declare private _ref: WeakRef<T> | undefined;
+    declare private _data: D | undefined;
 
     constructor(element: T, data?: D) {
         this._ref = new WeakRef(element);
@@ -197,17 +185,22 @@ export function getBoundingRect(
         element,
     };
 
-    if (!context.containerBoundingRectCacheTimer) {
-        context.containerBoundingRectCacheTimer = window.setTimeout(() => {
-            context.containerBoundingRectCacheTimer = undefined;
+    if (!isTimerActive(context.containerBoundingRectCacheTimer)) {
+        setTimer(
+            context.containerBoundingRectCacheTimer,
+            window,
+            () => {
+                for (const cId of Object.keys(
+                    context.containerBoundingRectCache
+                )) {
+                    delete context.containerBoundingRectCache[cId].element
+                        .__tabsterCacheId;
+                }
 
-            for (const cId of Object.keys(context.containerBoundingRectCache)) {
-                delete context.containerBoundingRectCache[cId].element
-                    .__tabsterCacheId;
-            }
-
-            context.containerBoundingRectCache = {};
-        }, 50);
+                context.containerBoundingRectCache = {};
+            },
+            50
+        );
     }
 
     return rect;
@@ -333,21 +326,14 @@ export function shouldIgnoreFocus(element: HTMLElement): boolean {
 
 export function getUId(wnd: Window): string {
     const rnd = new Uint32Array(4);
-
     wnd.crypto.getRandomValues(rnd);
-
-    const srnd: string[] = [];
-
-    for (let i = 0; i < rnd.length; i++) {
-        srnd.push(rnd[i].toString(36));
-    }
-
-    srnd.push("|");
-    srnd.push((++_uidCounter).toString(36));
-    srnd.push("|");
-    srnd.push(Date.now().toString(36));
-
-    return srnd.join("");
+    return (
+        Array.from(rnd, (n) => n.toString(36)).join("") +
+        "|" +
+        (++_uidCounter).toString(36) +
+        "|" +
+        Date.now().toString(36)
+    );
 }
 
 export function getElementUId(
@@ -355,19 +341,13 @@ export function getElementUId(
     element: HTMLElementWithUID
 ): string {
     const context = getInstanceContext(getWindow);
-    let uid = element.__tabsterElementUID;
-
-    if (!uid) {
-        uid = element.__tabsterElementUID = getUId(getWindow());
-    }
-
+    const uid = (element.__tabsterElementUID ??= getUId(getWindow()));
     if (
         !context.elementByUId[uid] &&
         documentContains(element.ownerDocument, element)
     ) {
         context.elementByUId[uid] = new WeakHTMLElement(element);
     }
-
     return uid;
 }
 
@@ -379,32 +359,22 @@ export function getElementByUId(
 }
 
 export function getWindowUId(win: WindowWithUID): string {
-    let uid = win.__tabsterCrossOriginWindowUID;
-
-    if (!uid) {
-        uid = win.__tabsterCrossOriginWindowUID = getUId(win);
-    }
-
-    return uid;
+    return (win.__tabsterCrossOriginWindowUID ??= getUId(win));
 }
 
 export function clearElementCache(
     getWindow: GetWindow,
     parent?: HTMLElement
 ): void {
-    const context = getInstanceContext(getWindow);
-
-    for (const key of Object.keys(context.elementByUId)) {
-        const wel = context.elementByUId[key];
-        const el = wel && wel.get();
-
-        if (el && parent) {
-            if (!dom.nodeContains(parent, el)) {
-                continue;
-            }
+    const cache = getInstanceContext(getWindow).elementByUId;
+    for (const key of Object.keys(cache)) {
+        const el = cache[key]?.get();
+        // When `parent` is given, only entries inside it are pruned; otherwise
+        // the entire cache is cleared.
+        if (parent && el && !dom.nodeContains(parent, el)) {
+            continue;
         }
-
-        delete context.elementByUId[key];
+        delete cache[key];
     }
 }
 
@@ -429,11 +399,11 @@ export abstract class TabsterPart<
     P,
     D = undefined,
 > implements TabsterPartInterface<P> {
-    protected _tabster: TabsterCore;
-    protected _element: WeakHTMLElement<HTMLElement, D>;
-    protected _props: P;
+    declare protected _tabster: TabsterCore;
+    declare protected _element: WeakHTMLElement<HTMLElement, D>;
+    declare protected _props: P;
 
-    readonly id: string;
+    declare readonly id: string;
 
     constructor(tabster: TabsterCore, element: HTMLElement, props: P) {
         this._tabster = tabster;
@@ -551,22 +521,18 @@ export function augmentAttribute(
 export function getTabsterAttributeOnElement(
     element: HTMLElement
 ): TabsterAttributeProps | null {
-    if (!element.hasAttribute(TABSTER_ATTRIBUTE_NAME)) {
+    // `getAttribute` already returns null when the attribute is absent —
+    // no need for a separate `hasAttribute` probe.
+    const rawAttribute = element.getAttribute(TABSTER_ATTRIBUTE_NAME);
+    if (rawAttribute === null) {
         return null;
     }
-
-    // We already checked the presence with `hasAttribute`
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rawAttribute = element.getAttribute(TABSTER_ATTRIBUTE_NAME)!;
-    let tabsterAttribute: TabsterAttributeProps;
     try {
-        tabsterAttribute = JSON.parse(rawAttribute);
+        return JSON.parse(rawAttribute);
     } catch {
         console.error("Tabster: failed to parse attribute", rawAttribute);
-        tabsterAttribute = {};
+        return {};
     }
-
-    return tabsterAttribute;
 }
 
 export function isDisplayNone(element: HTMLElement): boolean {
@@ -621,26 +587,99 @@ export function getRadioButtonGroup(
     if (!isRadio(element)) {
         return;
     }
-
     const name = (element as HTMLInputElement).name;
-    let radioButtons = Array.from(dom.getElementsByName(element, name));
-    let checked: HTMLInputElement | undefined;
-
-    radioButtons = radioButtons.filter((el) => {
-        if (isRadio(el)) {
-            if ((el as HTMLInputElement).checked) {
-                checked = el as HTMLInputElement;
-            }
-            return true;
-        }
-        return false;
-    });
-
+    const radioButtons = Array.from(
+        dom.getElementsByName(element, name)
+    ).filter(isRadio) as HTMLInputElement[];
     return {
         name,
-        buttons: new Set(radioButtons as HTMLInputElement[]),
-        checked,
+        buttons: new Set(radioButtons),
+        checked: radioButtons.find((el) => el.checked),
     };
+}
+
+/**
+ * Opaque handle for a single setTimeout id. Use {@link setTimer},
+ * {@link clearTimer}, and {@link isTimerActive} to operate on it.
+ *
+ * Built as a free-function API rather than methods because the function names
+ * mangle to single characters (1 char per call site) while property names like
+ * `.clear` would be preserved by the minifier (~5 chars per call site).
+ */
+export interface Timer {
+    id: number | null;
+}
+
+export function createTimer(): Timer {
+    return { id: null };
+}
+
+/** Cancels any pending timer on `t` and schedules `callback` after `delay` ms. */
+export function setTimer(
+    t: Timer,
+    window: Window,
+    callback: () => void,
+    delay: number
+): void {
+    if (t.id !== null) {
+        window.clearTimeout(t.id);
+    }
+    t.id = window.setTimeout(() => {
+        t.id = null;
+        callback();
+    }, delay) as unknown as number;
+}
+
+/** Cancels the pending timer on `t`; no-op if there isn't one. */
+export function clearTimer(t: Timer, window: Window): void {
+    if (t.id !== null) {
+        window.clearTimeout(t.id);
+        t.id = null;
+    }
+}
+
+/** Whether `t` has a pending timer. */
+export function isTimerActive(t: Timer): boolean {
+    return t.id !== null;
+}
+
+/**
+ * Thin wrappers around `addEventListener` / `removeEventListener`. Their
+ * names get mangled to single chars by the minifier, while the inlined
+ * property accesses on `target` would not — so each call site shrinks by
+ * the difference between the helper's mangled name and the property name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyEventHandler = (event: any) => void;
+
+export function addListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | AddEventListenerOptions
+): void {
+    target?.addEventListener(type, handler, options);
+}
+
+export function removeListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | EventListenerOptions
+): void {
+    target?.removeEventListener(type, handler, options);
+}
+
+/**
+ * Thin wrapper around `target.dispatchEvent`. Returns `false` if the dispatch
+ * was canceled (preventDefault) OR if `target` is nullish — both shapes the
+ * existing call sites already handle the same way.
+ */
+export function dispatchEvent(
+    target: EventTarget | null | undefined,
+    event: Event
+): boolean {
+    return !!target && target.dispatchEvent(event);
 }
 
 /**

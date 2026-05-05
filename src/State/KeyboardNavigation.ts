@@ -6,41 +6,41 @@
 import { createKeyborg, disposeKeyborg, type Keyborg } from "keyborg";
 
 import type * as Types from "../Types.js";
-import { Subscribable } from "./Subscribable.js";
+import { createSubscribable } from "./Subscribable.js";
 
-export class KeyboardNavigationState
-    extends Subscribable<boolean>
-    implements Types.KeyboardNavigationState
-{
-    private _keyborg?: Keyborg;
+export function createKeyboardNavigationState(
+    getWindow: Types.GetWindow
+): Types.KeyboardNavigationState {
+    const sub = createSubscribable<boolean>();
+    let keyborg: Keyborg | undefined = createKeyborg(getWindow());
 
-    constructor(getWindow: Types.GetWindow) {
-        super();
-        this._keyborg = createKeyborg(getWindow());
-        this._keyborg.subscribe(this._onChange);
-    }
-
-    dispose(): void {
-        super.dispose();
-
-        if (this._keyborg) {
-            this._keyborg.unsubscribe(this._onChange);
-
-            disposeKeyborg(this._keyborg);
-
-            delete this._keyborg;
-        }
-    }
-
-    private _onChange = (isNavigatingWithKeyboard: boolean) => {
-        this.setVal(isNavigatingWithKeyboard, undefined);
+    const onChange = (isNavigatingWithKeyboard: boolean) => {
+        sub.setVal(isNavigatingWithKeyboard, undefined);
     };
 
-    setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void {
-        this._keyborg?.setVal(isNavigatingWithKeyboard);
-    }
+    keyborg.subscribe(onChange);
 
-    isNavigatingWithKeyboard(): boolean {
-        return !!this._keyborg?.isNavigatingWithKeyboard();
-    }
+    return {
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+
+        dispose(): void {
+            sub.dispose();
+
+            if (keyborg) {
+                keyborg.unsubscribe(onChange);
+                disposeKeyborg(keyborg);
+                keyborg = undefined;
+            }
+        },
+
+        setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void {
+            keyborg?.setVal(isNavigatingWithKeyboard);
+        },
+
+        isNavigatingWithKeyboard(): boolean {
+            return !!keyborg?.isNavigatingWithKeyboard();
+        },
+    };
 }

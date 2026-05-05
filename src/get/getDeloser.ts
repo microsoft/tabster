@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DeloserAPI } from "../Deloser.js";
+import { createDeloserAPI } from "../Deloser.js";
 import type * as Types from "../Types.js";
 
 /**
@@ -18,8 +18,9 @@ export function getDeloser(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.deloser) {
-        const api = new DeloserAPI(tabsterCore, props);
+        const api = createDeloserAPI(tabsterCore, props);
         tabsterCore.deloser = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "deloser",
             (element, existingDeloser, newProps) => {

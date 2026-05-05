@@ -8,9 +8,17 @@ import { EvaluateFunc, Page, Frame, KeyInput, ElementHandle } from "puppeteer";
 import {
     createTabster,
     disposeTabster,
+    findAllFocusable,
+    findDefaultFocusable,
+    findFirstFocusable,
+    findFocusable,
+    findLastFocusable,
+    findNextFocusable,
+    findPrevFocusable,
     getCrossOrigin,
     getDeloser,
     getDummyInputContainer,
+    getFocusableProps,
     getGroupper,
     getModalizer,
     getMover,
@@ -19,6 +27,9 @@ import {
     getRestorer,
     getTabster,
     getTabsterAttribute,
+    isElementAccessible,
+    isElementVisible,
+    isFocusable,
     makeNoOp,
     mergeTabsterProps,
     setTabsterAttribute,
@@ -144,6 +155,14 @@ async function waitPageReadyAndDecorateConsoleError(
 export interface BroTestTabsterTestVariables {
     disposeTabster?: typeof disposeTabster;
     createTabster?: typeof createTabster;
+    findAllFocusable?: typeof findAllFocusable;
+    findDefaultFocusable?: typeof findDefaultFocusable;
+    findFirstFocusable?: typeof findFirstFocusable;
+    findFocusable?: typeof findFocusable;
+    findLastFocusable?: typeof findLastFocusable;
+    findNextFocusable?: typeof findNextFocusable;
+    findPrevFocusable?: typeof findPrevFocusable;
+    getFocusableProps?: typeof getFocusableProps;
     getTabster?: typeof getTabster;
     getCrossOrigin?: typeof getCrossOrigin;
     getDeloser?: typeof getDeloser;
@@ -153,6 +172,9 @@ export interface BroTestTabsterTestVariables {
     getRestorer?: typeof getRestorer;
     getObservedElement?: typeof getObservedElement;
     getOutline?: typeof getOutline;
+    isElementAccessible?: typeof isElementAccessible;
+    isElementVisible?: typeof isElementVisible;
+    isFocusable?: typeof isFocusable;
     makeNoOp?: typeof makeNoOp;
     getTabsterAttribute?: typeof getTabsterAttribute;
     setTabsterAttribute?: typeof setTabsterAttribute;
