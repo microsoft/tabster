@@ -1020,13 +1020,6 @@ interface RootAPIInternal {
 
 export interface RootAPI extends Disposable, RootAPIInternal {}
 
-export interface UncontrolledAPI {
-    isUncontrolledCompletely(
-        element: HTMLElement,
-        completely: boolean
-    ): boolean;
-}
-
 interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     /** @internal */
     activeId: string | undefined; // currently active Modalizer user id.
@@ -1435,7 +1428,6 @@ export interface Tabster {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
     root: RootAPI;
-    uncontrolled: UncontrolledAPI;
 
     /** @internal */
     core: TabsterCore;
@@ -1443,7 +1435,10 @@ export interface Tabster {
 
 export interface TabsterCore
     extends
-        Pick<TabsterCoreProps, "controlTab" | "rootDummyInputs">,
+        Pick<
+            TabsterCoreProps,
+            "controlTab" | "rootDummyInputs" | "checkUncontrolledCompletely"
+        >,
         Disposable,
         TabsterCoreInternal,
         Omit<Tabster, "core"> {}
