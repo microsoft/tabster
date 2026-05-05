@@ -4,6 +4,7 @@
  */
 
 import { createMoverAPI } from "../Mover.js";
+import { resolveMoverGroupperContext } from "../MoverGroupperResolver.js";
 import type * as Types from "../Types.js";
 
 /**
@@ -27,6 +28,7 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
                 return api.createMover(element, newProps, sys);
             }
         );
+        tabsterCore.focusableContextResolver ??= resolveMoverGroupperContext;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

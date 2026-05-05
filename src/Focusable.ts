@@ -369,87 +369,20 @@ function _acceptElement(
         return NodeFilter.FILTER_REJECT;
     }
 
-    let result: number | undefined;
-
-    let fromCtx = state.fromCtx;
-
-    if (!fromCtx) {
-        fromCtx = state.fromCtx = getTabsterContext(core, state.from);
-    }
-
-    const fromMover = fromCtx?.mover;
-    let groupper = ctx.groupper;
-    let mover = ctx.mover;
-
-    result = core.modalizer?.acceptElement(element, state);
+    let result = core.modalizer?.acceptElement(element, state);
 
     if (result !== undefined) {
         state.skippedFocusable = true;
     }
 
-    if (result === undefined && (groupper || mover || fromMover)) {
-        const groupperElement = groupper?.getElement();
-        const fromMoverElement = fromMover?.getElement();
-        let moverElement = mover?.getElement();
-
-        if (
-            moverElement &&
-            dom.nodeContains(fromMoverElement, moverElement) &&
-            dom.nodeContains(container, fromMoverElement) &&
-            (!groupperElement ||
-                !mover ||
-                dom.nodeContains(fromMoverElement, groupperElement))
-        ) {
-            mover = fromMover;
-            moverElement = fromMoverElement;
-        }
-
-        if (groupperElement) {
-            if (
-                groupperElement === container ||
-                !dom.nodeContains(container, groupperElement)
-            ) {
-                groupper = undefined;
-            } else if (!dom.nodeContains(groupperElement, element)) {
-                // _acceptElement() callback is called during the tree walking.
-                // Given the potentiality of virtual parents (driven by the custom getParent() function),
-                // we need to make sure that the groupper from the current element's context is not,
-                // portaling us out of the DOM order.
-                return NodeFilter.FILTER_REJECT;
-            }
-        }
-
-        if (moverElement) {
-            if (!dom.nodeContains(container, moverElement)) {
-                mover = undefined;
-            } else if (!dom.nodeContains(moverElement, element)) {
-                // _acceptElement() callback is called during the tree walking.
-                // Given the potentiality of virtual parents (driven by the custom getParent() function),
-                // we need to make sure that the mover from the current element's context is not,
-                // portaling us out of the DOM order.
-                return NodeFilter.FILTER_REJECT;
-            }
-        }
-
-        if (groupper && mover) {
-            if (
-                moverElement &&
-                groupperElement &&
-                !dom.nodeContains(groupperElement, moverElement)
-            ) {
-                mover = undefined;
-            } else {
-                groupper = undefined;
-            }
-        }
-
-        if (groupper) {
-            result = groupper.acceptElement(element, state);
-        }
-
-        if (mover) {
-            result = mover.acceptElement(element, state);
-        }
+    if (result === undefined) {
+        result = core.focusableContextResolver?.(
+            core,
+            element,
+            container,
+            state,
+            ctx
+        );
     }
 
     if (result === undefined) {

@@ -1292,11 +1292,29 @@ export interface TabsterAttrHandlerRegistry extends Map<
     ): this;
 }
 
+/**
+ * @internal
+ * Resolver for mover/groupper containment conflicts inside Focusable's
+ * `_acceptElement` walker. Set by `getMover` / `getGroupper` so the resolver
+ * code only enters the bundle when one of those features is in use; the
+ * always-on Focusable path stays slim. Returns `FILTER_REJECT` to skip an
+ * element, or `undefined` to fall through to the default acceptance check.
+ */
+export type FocusableContextResolver = (
+    core: TabsterCore,
+    element: HTMLElement,
+    container: HTMLElement,
+    state: FocusableAcceptElementState,
+    ctx: TabsterContext
+) => number | undefined;
+
 interface TabsterCoreInternal {
     /** @internal */
     attrHandlers: TabsterAttrHandlerRegistry;
     /** @internal — extended APIs add themselves on creation; iterated by core.dispose() */
     disposers: Set<Disposable>;
+    /** @internal — set by getMover/getGroupper, see `FocusableContextResolver`. */
+    focusableContextResolver?: FocusableContextResolver;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */
