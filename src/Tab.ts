@@ -53,14 +53,17 @@ function getUncontrolledCompletelyContainer(
             el
         )?.uncontrolled;
 
-        if (
-            uncontrolledOnElement &&
-            tabster.uncontrolled.isUncontrolledCompletely(
-                el,
-                !!uncontrolledOnElement.completely
-            )
-        ) {
-            return el;
+        if (uncontrolledOnElement) {
+            // The user-supplied `checkUncontrolledCompletely` callback
+            // overrides the element's `completely` flag when it returns a
+            // boolean; `undefined` means "fall back to the element flag".
+            const completely = !!uncontrolledOnElement.completely;
+            if (
+                (tabster.checkUncontrolledCompletely?.(el, completely) ??
+                    completely)
+            ) {
+                return el;
+            }
         }
 
         el = getParent(el) as HTMLElement | null;
