@@ -8,7 +8,7 @@ import { nativeFocus } from "keyborg";
 import { _findFocusable, _isFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import {
     AsyncFocusSources,
@@ -66,7 +66,7 @@ function createGroupperDummyManager(
             const input = dummyInput.input;
 
             if (container && input) {
-                const ctx = RootAPI.getTabsterContext(tabster, input);
+                const ctx = getTabsterContext(tabster, input);
 
                 if (ctx) {
                     let next: HTMLElement | null | undefined;
@@ -329,8 +329,7 @@ export class Groupper
 
         const parentElement = dom.getParentElement(this.getElement());
         const parentCtx =
-            parentElement &&
-            RootAPI.getTabsterContext(this._tabster, parentElement);
+            parentElement && getTabsterContext(this._tabster, parentElement);
         const parentCtxGroupper = parentCtx?.groupper;
         const parentGroupper = parentCtx?.groupperBeforeMover
             ? parentCtxGroupper
@@ -508,7 +507,7 @@ export function createGroupperAPI(
         element: HTMLElement,
         relatedEvent?: KeyboardEvent
     ): HTMLElement | null => {
-        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const ctx = getTabsterContext(tabster, element);
         const groupper = ctx?.groupper || ctx?.modalizerInGroupper;
         const groupperElement = groupper?.getElement();
 
@@ -562,7 +561,7 @@ export function createGroupperAPI(
         relatedEvent?: KeyboardEvent,
         fromModalizer?: boolean
     ): HTMLElement | null => {
-        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const ctx = getTabsterContext(tabster, element);
         let groupper = ctx?.groupper || ctx?.modalizerInGroupper;
         const groupperElement = groupper?.getElement();
 
@@ -578,7 +577,7 @@ export function createGroupperAPI(
             } else {
                 const parentElement = dom.getParentElement(groupperElement);
                 const parentCtx = parentElement
-                    ? RootAPI.getTabsterContext(tabster, parentElement)
+                    ? getTabsterContext(tabster, parentElement)
                     : undefined;
 
                 groupper = parentCtx?.groupper;
@@ -619,7 +618,7 @@ export function createGroupperAPI(
         event: KeyboardEvent,
         fromModalizer?: boolean
     ): void => {
-        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const ctx = getTabsterContext(tabster, element);
 
         if (ctx && (ctx?.groupper || ctx?.modalizerInGroupper)) {
             tabster.focusedElement.cancelAsyncFocus(

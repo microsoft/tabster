@@ -4,7 +4,7 @@
  */
 
 import { getTabsterOnElement } from "./Instance.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import { FOCUSABLE_SELECTOR } from "./Consts.js";
 import { getDummyInputContainer } from "./DummyInput.js";
@@ -187,7 +187,7 @@ function _findElements(
             modalizerId === undefined && useActiveModalizer
                 ? core.modalizer?.activeId
                 : modalizerId ||
-                  RootAPI.getTabsterContext(core, container)?.modalizer?.userId,
+                  getTabsterContext(core, container)?.modalizer?.userId,
         from: currentElement || container,
         isBackward,
         isFindAll,
@@ -235,7 +235,7 @@ function _findElements(
             return !!(foundElement || shouldContinueIfNotFound);
         } else {
             if (foundElement && out) {
-                out.uncontrolled = RootAPI.getTabsterContext(
+                out.uncontrolled = getTabsterContext(
                     core,
                     foundElement
                 )?.uncontrolled;
@@ -326,7 +326,7 @@ function _acceptElement(
         return NodeFilter.FILTER_REJECT;
     }
 
-    const ctx = (state.currentCtx = RootAPI.getTabsterContext(core, element));
+    const ctx = (state.currentCtx = getTabsterContext(core, element));
 
     // Tabster is opt in, if it is not managed, don't try and get do anything special
     if (!ctx) {
@@ -374,7 +374,7 @@ function _acceptElement(
     let fromCtx = state.fromCtx;
 
     if (!fromCtx) {
-        fromCtx = state.fromCtx = RootAPI.getTabsterContext(core, state.from);
+        fromCtx = state.fromCtx = getTabsterContext(core, state.from);
     }
 
     const fromMover = fromCtx?.mover;

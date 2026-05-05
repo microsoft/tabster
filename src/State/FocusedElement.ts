@@ -18,7 +18,7 @@ import {
     _isFocusable,
 } from "../Focusable.js";
 import { Keys } from "../Keys.js";
-import { RootAPI } from "../Root.js";
+import { getTabsterContext } from "../Context.js";
 import type * as Types from "../Types.js";
 import { AsyncFocusSources } from "../Consts.js";
 import {
@@ -151,7 +151,7 @@ export function createFocusedElementState(
 
             detail.isFocusedProgrammatically = isFocusedProgrammatically;
 
-            const ctx = RootAPI.getTabsterContext(tabster, element);
+            const ctx = getTabsterContext(tabster, element);
 
             const modalizerId = ctx?.modalizer?.userId;
 
@@ -213,7 +213,7 @@ export function createFocusedElementState(
         }
 
         const controlTab = tabster.controlTab;
-        const ctx = RootAPI.getTabsterContext(tabster, currentElement);
+        const ctx = getTabsterContext(tabster, currentElement);
 
         if (!ctx || ctx.ignoreKeydown(event)) {
             return;
@@ -357,7 +357,7 @@ export function createFocusedElementState(
 
             if (last) {
                 const d = { ...detail };
-                const lastCtx = RootAPI.getTabsterContext(tabster, last);
+                const lastCtx = getTabsterContext(tabster, last);
                 const modalizerId = lastCtx?.modalizer?.userId;
 
                 if (modalizerId) {
@@ -510,7 +510,7 @@ export function createFocusedElementState(
             let toFocus: HTMLElement | null | undefined;
 
             if (container) {
-                const ctx = RootAPI.getTabsterContext(tabster, container);
+                const ctx = getTabsterContext(tabster, container);
 
                 if (ctx) {
                     toFocus = FocusedElementState.findNextTabbable(
@@ -708,7 +708,7 @@ export const FocusedElementState = {
                     dom.getParentElement(what.getElement());
 
                 if (parentElement) {
-                    const parentCtx = RootAPI.getTabsterContext(
+                    const parentCtx = getTabsterContext(
                         tabster,
                         currentElement,
                         { referenceElement: parentElement }

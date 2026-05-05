@@ -13,7 +13,7 @@ import {
 import { FocusedElementState } from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import { Visibilities, MoverDirections, MoverKeys } from "./Consts.js";
 import {
@@ -70,7 +70,7 @@ function createMoverDummyManager(
         const input = dummyInput.input;
 
         if (container && input) {
-            const ctx = RootAPI.getTabsterContext(tabster, container);
+            const ctx = getTabsterContext(tabster, container);
 
             let toFocus: HTMLElement | null | undefined;
 
@@ -750,7 +750,7 @@ export function createMoverAPI(
         key: Types.MoverKey,
         relatedEvent?: KeyboardEvent
     ): HTMLElement | null => {
-        const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
+        const ctx = getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
 
@@ -1226,7 +1226,7 @@ export function createMoverAPI(
         let memorizedElement = e.detail?.memorizedElement;
 
         if (target) {
-            const ctx = RootAPI.getTabsterContext(tabster, target);
+            const ctx = getTabsterContext(tabster, target);
             const mover = ctx?.mover;
 
             if (mover) {

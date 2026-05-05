@@ -10,7 +10,7 @@ import {
     _isFocusable,
 } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import { DeloserStrategies, RestoreFocusOrders } from "./Consts.js";
 import {
@@ -212,7 +212,7 @@ export class DeloserHistory {
     }
 
     process(element: HTMLElement): Types.Deloser | undefined {
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
+        const ctx = getTabsterContext(this._tabster, element);
         const rootUId = ctx && ctx.root.uid;
         const deloser = DeloserAPI.getDeloser(this._tabster, element);
 
@@ -543,7 +543,7 @@ export class Deloser
         let restoreFocusOrder = this._props.restoreFocusOrder;
         let available: HTMLElement | null = null;
 
-        const ctx = RootAPI.getTabsterContext(this._tabster, element);
+        const ctx = getTabsterContext(this._tabster, element);
 
         if (!ctx) {
             return null;
