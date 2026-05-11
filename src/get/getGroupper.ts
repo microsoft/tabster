@@ -4,6 +4,7 @@
  */
 
 import { createGroupperAPI } from "../Groupper.js";
+import { registerMoverGroupperResolver } from "../MoverGroupperResolver.js";
 import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
 
@@ -54,6 +55,7 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
                 return api.createGroupper(element, newProps, sys);
             }
         );
+        registerMoverGroupperResolver(tabsterCore);
         (tabsterCore.findNextTabbableStrategies ??= []).push(
             groupperFindNextStrategy
         );
