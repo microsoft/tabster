@@ -25,6 +25,7 @@ import {
     type WeakHTMLElement,
 } from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
+import { _getFirstOrLastTabbable } from "./State/FocusedElement.js";
 
 export interface WindowWithTabsterInstance extends Window {
     __tabsterInstance?: Types.TabsterCore;
@@ -79,7 +80,8 @@ function createRootDummyManager(
             if (el) {
                 setFocused(true);
 
-                const toFocus = tabster.focusedElement.getFirstOrLastTabbable(
+                const toFocus = _getFirstOrLastTabbable(
+                    tabster,
                     dummyInput.isFirst,
                     { container: el, ignoreAccessibility: true }
                 );

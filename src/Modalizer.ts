@@ -5,6 +5,11 @@
 
 import { nativeFocus } from "keyborg";
 import { _findFocusable } from "./Focusable.js";
+import {
+    _focusDefault,
+    _focusFirst,
+    _resetFocus,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { getRoot, getTabsterContext } from "./Context.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
@@ -972,7 +977,7 @@ export function createModalizerAPI(
                     if (
                         !noFocusFirst &&
                         tabster.keyboardNavigation.isNavigatingWithKeyboard() &&
-                        tabster.focusedElement.focusFirst({
+                        _focusFirst(tabster, {
                             container: modalizerRoot,
                         })
                     ) {
@@ -985,12 +990,12 @@ export function createModalizerAPI(
 
                     if (
                         !noFocusDefault &&
-                        tabster.focusedElement.focusDefault(modalizerRoot)
+                        _focusDefault(tabster, modalizerRoot)
                     ) {
                         return true;
                     }
 
-                    tabster.focusedElement.resetFocus(modalizerRoot);
+                    _resetFocus(tabster, modalizerRoot);
                 }
             } else if (__DEV__) {
                 console.error(

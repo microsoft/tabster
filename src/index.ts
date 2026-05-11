@@ -30,6 +30,14 @@ export {
     isFocusable,
 } from "./Focusable.js";
 
+export {
+    focusDefault,
+    focusFirst,
+    focusLast,
+    getLastFocusedElement,
+    resetFocus,
+} from "./State/FocusedElement.js";
+
 export { getCrossOrigin } from "./get/getCrossOrigin.js";
 export { getDeloser } from "./get/getDeloser.js";
 export { getGroupper } from "./get/getGroupper.js";
