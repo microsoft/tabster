@@ -941,6 +941,8 @@ export interface GroupperAPI extends GroupperAPIInternal, Disposable {
 
 export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
+    /** @internal - exposed for tests only */
+    readonly _grouppers: Record<string, Groupper>;
 }
 
 export interface ModalizerProps {
@@ -1103,6 +1105,8 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     hiddenUpdate(): void;
     /** @internal */
     isAugmented(element: HTMLElement): boolean;
+    /** @internal - exposed for tests only */
+    readonly _modalizers: Record<string, Modalizer>;
 }
 
 export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {

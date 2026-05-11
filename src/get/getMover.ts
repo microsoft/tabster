@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MoverAPI } from "../Mover.js";
+import { createMoverAPI } from "../Mover.js";
 import type * as Types from "../Types.js";
 
 /**
@@ -14,7 +14,7 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.mover) {
-        const api = new MoverAPI(tabsterCore, tabsterCore.getWindow);
+        const api = createMoverAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.mover = api;
         tabsterCore.attrHandlers.set(
             "mover",
@@ -28,5 +28,6 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
         );
     }
 
-    return tabsterCore.mover;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return tabsterCore.mover!;
 }

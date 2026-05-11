@@ -5,7 +5,14 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import type * as Types from "./Types.js";
-import { getBoundingRect } from "./Utils.js";
+import {
+    addListener,
+    clearTimer,
+    createTimer,
+    getBoundingRect,
+    removeListener,
+    setTimer,
+} from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {
@@ -25,10 +32,10 @@ const defaultProps: Types.OutlineProps = {
 let _props: Types.OutlineProps = defaultProps;
 
 class OutlinePosition {
-    public left: number;
-    public top: number;
-    public right: number;
-    public bottom: number;
+    declare public left: number;
+    declare public top: number;
+    declare public right: number;
+    declare public bottom: number;
 
     constructor(left: number, top: number, right: number, bottom: number) {
         this.left = left;
@@ -56,145 +63,57 @@ class OutlinePosition {
     }
 }
 
-export class OutlineAPI implements Types.OutlineAPI {
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _updateTimer: number | undefined;
-    private _outlinedElement: HTMLElement | undefined;
-    private _curPos: OutlinePosition | undefined;
-    private _isVisible = false;
-    private _curOutlineElements: Types.OutlineElements | undefined;
-    private _allOutlineElements: Types.OutlineElements[] = [];
-    private _fullScreenElement: HTMLElement | undefined;
-    private _fullScreenEventName: string | undefined;
-    private _fullScreenElementName: string | undefined;
+function isParentChild(parent: HTMLElement, child: HTMLElement): boolean {
+    return (
+        child === parent ||
+        // tslint:disable-next-line:no-bitwise
+        !!(
+            parent.compareDocumentPosition(child) &
+            document.DOCUMENT_POSITION_CONTAINED_BY
+        )
+    );
+}
 
-    constructor(tabster: Types.TabsterCore) {
-        this._tabster = tabster;
-        this._win = tabster.getWindow;
+export function createOutlineAPI(tabster: Types.TabsterCore): Types.OutlineAPI {
+    const win = tabster.getWindow;
+    const updateTimer = createTimer();
+    let outlinedElement: HTMLElement | undefined;
+    let curPos: OutlinePosition | undefined;
+    let isVisible = false;
+    let curOutlineElements: Types.OutlineElements | undefined;
+    let allOutlineElements: Types.OutlineElements[] = [];
+    let fullScreenElement: HTMLElement | undefined;
 
-        tabster.queueInit(this._init);
-
-        if (typeof document !== "undefined") {
-            if ("onfullscreenchange" in document) {
-                this._fullScreenEventName = "fullscreenchange";
-                this._fullScreenElementName = "fullscreenElement";
-            } else if ("onwebkitfullscreenchange" in document) {
-                this._fullScreenEventName = "webkitfullscreenchange";
-                this._fullScreenElementName = "webkitFullscreenElement";
-            } else if ("onmozfullscreenchange" in document) {
-                this._fullScreenEventName = "mozfullscreenchange";
-                this._fullScreenElementName = "mozFullScreenElement";
-            } else if ("onmsfullscreenchange" in document) {
-                this._fullScreenEventName = "msfullscreenchange";
-                this._fullScreenElementName = "msFullscreenElement";
-            }
-        }
-    }
-
-    private _init = (): void => {
-        this._tabster.keyboardNavigation.subscribe(
-            this._onKeyboardNavigationStateChanged
-        );
-        this._tabster.focusedElement.subscribe(this._onFocus);
-
-        const win = this._win();
-
-        win.addEventListener("scroll", this._onScroll, true); // Capture!
-
-        if (this._fullScreenEventName) {
-            win.document.addEventListener(
-                this._fullScreenEventName,
-                this._onFullScreenChanged
-            );
-        }
-    };
-
-    setup(props?: Partial<Types.OutlineProps>): void {
-        _props = { ..._props, ...props };
-
-        const win = this._win() as WindowWithOutlineStyle;
-
-        if (!win.__tabsterOutline) {
-            win.__tabsterOutline = {};
-        }
-
-        if (!win.__tabsterOutline.style) {
-            win.__tabsterOutline.style = appendStyles(win.document, _props);
-        }
-
-        if (!props || !props.areaClass) {
-            win.document.body.classList.add(defaultProps.areaClass);
-        } else {
-            win.document.body.classList.remove(defaultProps.areaClass);
-        }
-    }
-
-    dispose(): void {
-        const win = this._win();
-
-        if (this._updateTimer) {
-            win.clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
-
-        this._tabster.keyboardNavigation.unsubscribe(
-            this._onKeyboardNavigationStateChanged
-        );
-        this._tabster.focusedElement.unsubscribe(this._onFocus);
-
-        win.removeEventListener("scroll", this._onScroll, true);
-
-        if (this._fullScreenEventName) {
-            win.document.removeEventListener(
-                this._fullScreenEventName,
-                this._onFullScreenChanged
-            );
-        }
-
-        this._allOutlineElements.forEach((outlineElements) =>
-            this._removeDOM(outlineElements.container)
-        );
-        this._allOutlineElements = [];
-
-        delete this._outlinedElement;
-        delete this._curPos;
-        delete this._curOutlineElements;
-        delete this._fullScreenElement;
-    }
-
-    private _onFullScreenChanged = (e: Event): void => {
-        if (!this._fullScreenElementName || !e.target) {
+    const onFullScreenChanged = (e: Event): void => {
+        if (!e.target) {
             return;
         }
 
         const target = (e.target as Document).body || (e.target as HTMLElement);
-        const outlineElements = this._getDOM(target);
+        const outlineElements = getDOM(target);
 
         if (target.ownerDocument && outlineElements) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const fsElement: HTMLElement | null = (target.ownerDocument as any)[
-                this._fullScreenElementName
-            ];
+            const fsElement = target.ownerDocument
+                .fullscreenElement as HTMLElement | null;
 
             if (fsElement) {
                 fsElement.appendChild(outlineElements.container);
-                this._fullScreenElement = fsElement;
+                fullScreenElement = fsElement;
             } else {
                 target.ownerDocument.body.appendChild(
                     outlineElements.container
                 );
-                this._fullScreenElement = undefined;
+                fullScreenElement = undefined;
             }
         }
     };
 
-    private _onKeyboardNavigationStateChanged = (): void => {
-        this._onFocus(this._tabster.focusedElement.getFocusedElement());
+    const onKeyboardNavigationStateChanged = (): void => {
+        onFocus(tabster.focusedElement.getFocusedElement());
     };
 
-    private _shouldShowCustomOutline(element: HTMLElement): boolean {
-        const tabsterOnElement = getTabsterOnElement(this._tabster, element);
+    const shouldShowCustomOutline = (element: HTMLElement): boolean => {
+        const tabsterOnElement = getTabsterOnElement(tabster, element);
 
         if (
             tabsterOnElement &&
@@ -211,25 +130,22 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         return false;
-    }
+    };
 
-    private _onFocus = (e: HTMLElement | undefined): void => {
-        if (!this._updateElement(e) && this._isVisible) {
-            this._setVisibility(false);
+    const onFocus = (e: HTMLElement | undefined): void => {
+        if (!updateElement(e) && isVisible) {
+            setVisibility(false);
         }
     };
 
-    private _updateElement(e: HTMLElement | undefined): boolean {
-        this._outlinedElement = undefined;
+    const updateElement = (e: HTMLElement | undefined): boolean => {
+        outlinedElement = undefined;
 
-        if (this._updateTimer) {
-            this._win().clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
+        clearTimer(updateTimer, win());
 
-        this._curPos = undefined;
+        curPos = undefined;
 
-        if (!this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
+        if (!tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
             return false;
         }
 
@@ -261,78 +177,69 @@ export class OutlineAPI implements Types.OutlineAPI {
                 return false;
             }
 
-            if (!this._shouldShowCustomOutline(e)) {
+            if (!shouldShowCustomOutline(e)) {
                 return false;
             }
 
-            if (this._tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
-                this._outlinedElement = e;
-                this._updateOutline();
+            if (tabster.keyboardNavigation.isNavigatingWithKeyboard()) {
+                outlinedElement = e;
+                updateOutline();
             }
 
             return true;
         }
 
         return false;
-    }
+    };
 
-    private _onScroll = (e: Event): void => {
+    const onScroll = (e: Event): void => {
         if (
-            !this._outlinedElement ||
-            !OutlineAPI._isParentChild(
-                e.target as HTMLElement,
-                this._outlinedElement
-            )
+            !outlinedElement ||
+            !isParentChild(e.target as HTMLElement, outlinedElement)
         ) {
             return;
         }
 
-        this._curPos = undefined;
+        curPos = undefined;
 
-        this._setOutlinePosition();
+        setOutlinePosition();
     };
 
-    private _updateOutline(): void {
-        this._setOutlinePosition();
+    const updateOutline = (): void => {
+        setOutlinePosition();
 
-        if (this._updateTimer) {
-            this._win().clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
+        clearTimer(updateTimer, win());
 
-        if (!this._outlinedElement) {
+        if (!outlinedElement) {
             return;
         }
 
-        this._updateTimer = this._win().setTimeout(() => {
-            this._updateTimer = undefined;
-            this._updateOutline();
-        }, 30);
-    }
+        setTimer(updateTimer, win(), updateOutline, 30);
+    };
 
-    private _setVisibility(visible: boolean): void {
-        this._isVisible = visible;
+    const setVisibility = (visible: boolean): void => {
+        isVisible = visible;
 
-        if (this._curOutlineElements) {
+        if (curOutlineElements) {
             if (visible) {
-                this._curOutlineElements.container.classList.add(
+                curOutlineElements.container.classList.add(
                     `${_props.outlineClass}_visible`
                 );
             } else {
-                this._curOutlineElements.container.classList.remove(
+                curOutlineElements.container.classList.remove(
                     `${_props.outlineClass}_visible`
                 );
-                this._curPos = undefined;
+                curPos = undefined;
             }
         }
-    }
+    };
 
-    private _setOutlinePosition(): void {
-        if (!this._outlinedElement) {
+    const setOutlinePosition = (): void => {
+        if (!outlinedElement) {
             return;
         }
 
-        let boundingRect = getBoundingRect(this._win, this._outlinedElement);
+        let boundingRect = getBoundingRect(win, outlinedElement);
 
         const position = new OutlinePosition(
             boundingRect.left,
@@ -341,25 +248,25 @@ export class OutlineAPI implements Types.OutlineAPI {
             boundingRect.bottom
         );
 
-        if (this._curPos && position.equalsTo(this._curPos)) {
+        if (curPos && position.equalsTo(curPos)) {
             return;
         }
 
-        const outlineElements = this._getDOM(this._outlinedElement);
-        const win =
-            this._outlinedElement.ownerDocument &&
-            this._outlinedElement.ownerDocument.defaultView;
+        const outlineElements = getDOM(outlinedElement);
+        const elWin =
+            outlinedElement.ownerDocument &&
+            outlinedElement.ownerDocument.defaultView;
 
-        if (!outlineElements || !win) {
+        if (!outlineElements || !elWin) {
             return;
         }
 
-        if (this._curOutlineElements !== outlineElements) {
-            this._setVisibility(false);
-            this._curOutlineElements = outlineElements;
+        if (curOutlineElements !== outlineElements) {
+            setVisibility(false);
+            curOutlineElements = outlineElements;
         }
 
-        this._curPos = position;
+        curPos = position;
 
         const p = position.clone();
         let hasAbsolutePositionedParent = false;
@@ -376,27 +283,27 @@ export class OutlineAPI implements Types.OutlineAPI {
         }
 
         for (
-            let parent = this._outlinedElement.parentElement;
+            let parent = outlinedElement.parentElement;
             parent && parent.nodeType === Node.ELEMENT_NODE;
             parent = parent.parentElement
         ) {
             // The element might be partially visible within its scrollable parent,
             // reduce the bounding rect if this is the case.
 
-            if (parent === this._fullScreenElement) {
+            if (parent === fullScreenElement) {
                 break;
             }
 
-            boundingRect = getBoundingRect(this._win, parent);
+            boundingRect = getBoundingRect(win, parent);
 
-            const win =
+            const parentWin =
                 parent.ownerDocument && parent.ownerDocument.defaultView;
 
-            if (!win) {
+            if (!parentWin) {
                 return;
             }
 
-            const computedStyle = win.getComputedStyle(parent);
+            const computedStyle = parentWin.getComputedStyle(parent);
             const position = computedStyle.position;
 
             if (position === "absolute") {
@@ -428,7 +335,7 @@ export class OutlineAPI implements Types.OutlineAPI {
             }
         }
 
-        const allRect = getBoundingRect(this._win, scrollingElement);
+        const allRect = getBoundingRect(win, scrollingElement);
         const allWidth = allRect.left + allRect.right;
         const allHeight = allRect.top + allRect.bottom;
         const ow = _props.outlineWidth;
@@ -447,13 +354,13 @@ export class OutlineAPI implements Types.OutlineAPI {
             const rightBorderNode = outlineElements.right;
             const bottomBorderNode = outlineElements.bottom;
             const sx =
-                this._fullScreenElement || hasFixedPositionedParent
+                fullScreenElement || hasFixedPositionedParent
                     ? 0
-                    : win.pageXOffset;
+                    : elWin.pageXOffset;
             const sy =
-                this._fullScreenElement || hasFixedPositionedParent
+                fullScreenElement || hasFixedPositionedParent
                     ? 0
-                    : win.pageYOffset;
+                    : elWin.pageYOffset;
 
             container.style.position = hasFixedPositionedParent
                 ? "fixed"
@@ -485,27 +392,27 @@ export class OutlineAPI implements Types.OutlineAPI {
             topBorderNode.style.width = bottomBorderNode.style.width =
                 width + "px";
 
-            this._setVisibility(true);
+            setVisibility(true);
         } else {
-            this._setVisibility(false);
+            setVisibility(false);
         }
-    }
+    };
 
-    private _getDOM(
+    const getDOM = (
         contextElement: HTMLElement
-    ): Types.OutlineElements | undefined {
+    ): Types.OutlineElements | undefined => {
         const doc = contextElement.ownerDocument;
-        const win = (doc && doc.defaultView) as WindowWithOutlineStyle;
+        const elWin = (doc && doc.defaultView) as WindowWithOutlineStyle;
 
-        if (!doc || !win || !win.__tabsterOutline) {
+        if (!doc || !elWin || !elWin.__tabsterOutline) {
             return undefined;
         }
 
-        if (!win.__tabsterOutline.style) {
-            win.__tabsterOutline.style = appendStyles(doc, _props);
+        if (!elWin.__tabsterOutline.style) {
+            elWin.__tabsterOutline.style = appendStyles(doc, _props);
         }
 
-        if (!win.__tabsterOutline.elements) {
+        if (!elWin.__tabsterOutline.elements) {
             const outlineElements: Types.OutlineElements = {
                 container: doc.createElement("div"),
                 left: doc.createElement("div"),
@@ -527,20 +434,20 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             doc.body.appendChild(outlineElements.container);
 
-            win.__tabsterOutline.elements = outlineElements;
+            elWin.__tabsterOutline.elements = outlineElements;
 
             // TODO: Make a garbage collector to remove the references
             // to the outlines which are nowhere in the DOM anymore.
-            this._allOutlineElements.push(outlineElements);
+            allOutlineElements.push(outlineElements);
         }
 
-        return win.__tabsterOutline.elements;
-    }
+        return elWin.__tabsterOutline.elements;
+    };
 
-    private _removeDOM(contextElement: HTMLElement): void {
-        const win = (contextElement.ownerDocument &&
+    const removeDOM = (contextElement: HTMLElement): void => {
+        const elWin = (contextElement.ownerDocument &&
             contextElement.ownerDocument.defaultView) as WindowWithOutlineStyle;
-        const outline = win && win.__tabsterOutline;
+        const outline = elWin && elWin.__tabsterOutline;
 
         if (!outline) {
             return;
@@ -563,21 +470,62 @@ export class OutlineAPI implements Types.OutlineAPI {
 
             delete outline.elements;
         }
-    }
+    };
 
-    private static _isParentChild(
-        parent: HTMLElement,
-        child: HTMLElement
-    ): boolean {
-        return (
-            child === parent ||
-            // tslint:disable-next-line:no-bitwise
-            !!(
-                parent.compareDocumentPosition(child) &
-                document.DOCUMENT_POSITION_CONTAINED_BY
-            )
-        );
-    }
+    tabster.queueInit(() => {
+        tabster.keyboardNavigation.subscribe(onKeyboardNavigationStateChanged);
+        tabster.focusedElement.subscribe(onFocus);
+
+        const w = win();
+
+        addListener(w, "scroll", onScroll, true); // Capture!
+        addListener(w.document, "fullscreenchange", onFullScreenChanged);
+    });
+
+    return {
+        setup(props?: Partial<Types.OutlineProps>): void {
+            _props = { ..._props, ...props };
+
+            const w = win() as WindowWithOutlineStyle;
+
+            if (!w.__tabsterOutline) {
+                w.__tabsterOutline = {};
+            }
+
+            if (!w.__tabsterOutline.style) {
+                w.__tabsterOutline.style = appendStyles(w.document, _props);
+            }
+
+            if (!props || !props.areaClass) {
+                w.document.body.classList.add(defaultProps.areaClass);
+            } else {
+                w.document.body.classList.remove(defaultProps.areaClass);
+            }
+        },
+
+        dispose(): void {
+            const w = win();
+            clearTimer(updateTimer, w);
+
+            tabster.keyboardNavigation.unsubscribe(
+                onKeyboardNavigationStateChanged
+            );
+            tabster.focusedElement.unsubscribe(onFocus);
+
+            removeListener(w, "scroll", onScroll, true);
+            removeListener(w.document, "fullscreenchange", onFullScreenChanged);
+
+            allOutlineElements.forEach((outlineElements) =>
+                removeDOM(outlineElements.container)
+            );
+            allOutlineElements = [];
+
+            outlinedElement = undefined;
+            curPos = undefined;
+            curOutlineElements = undefined;
+            fullScreenElement = undefined;
+        },
+    };
 }
 
 function appendStyles(

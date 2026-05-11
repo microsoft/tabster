@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ObservedElementAPI } from "../State/ObservedElement.js";
+import { createObservedElementAPI } from "../State/ObservedElement.js";
 import type * as Types from "../Types.js";
 
 export function getObservedElement(
@@ -12,8 +12,9 @@ export function getObservedElement(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.observedElement) {
-        tabsterCore.observedElement = new ObservedElementAPI(tabsterCore);
+        tabsterCore.observedElement = createObservedElementAPI(tabsterCore);
     }
 
-    return tabsterCore.observedElement;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return tabsterCore.observedElement!;
 }

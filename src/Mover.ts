@@ -19,16 +19,20 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
+    createDummyInputManager,
     type DummyInput,
-    DummyInputManager,
+    type DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
 import {
+    addListener,
     createElementTreeWalker,
+    dispatchEvent,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
+    removeListener,
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
@@ -37,36 +41,31 @@ import { dom } from "./DOMAPI.js";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
 
-class MoverDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-    private _getMemorized: () => WeakHTMLElement | undefined;
+function createMoverDummyManager(
+    element: WeakHTMLElement,
+    tabster: Types.TabsterCore,
+    getMemorized: () => WeakHTMLElement | undefined,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Mover,
+        sys
+    );
 
-    constructor(
-        element: WeakHTMLElement,
-        tabster: Types.TabsterCore,
-        getMemorized: () => WeakHTMLElement | undefined,
-        sys: Types.SysProps | undefined
-    ) {
-        super(tabster, element, DummyInputManagerPriorities.Mover, sys);
-
-        this._tabster = tabster;
-        this._getMemorized = getMemorized;
-
-        this._setHandlers(this._onFocusDummyInput);
-    }
-
-    private _onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = this._element.get();
+    const onFocusDummyInput = (dummyInput: DummyInput) => {
+        const container = element.get();
         const input = dummyInput.input;
 
         if (container && input) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, container);
+            const ctx = RootAPI.getTabsterContext(tabster, container);
 
             let toFocus: HTMLElement | null | undefined;
 
             if (ctx) {
                 toFocus = FocusedElementState.findNextTabbable(
-                    this._tabster,
+                    tabster,
                     ctx,
                     undefined,
                     input,
@@ -76,9 +75,9 @@ class MoverDummyManager extends DummyInputManager {
                 )?.element;
             }
 
-            const memorized = this._getMemorized()?.get();
+            const memorized = getMemorized()?.get();
 
-            if (memorized && this._tabster.focusable.isFocusable(memorized)) {
+            if (memorized && tabster.focusable.isFocusable(memorized)) {
                 toFocus = memorized;
             }
 
@@ -87,6 +86,10 @@ class MoverDummyManager extends DummyInputManager {
             }
         }
     };
+
+    manager.setHandlers(onFocusDummyInput);
+
+    return manager;
 }
 
 // TypeScript enums produce depressing JavaScript code, so, we're just using
@@ -107,21 +110,21 @@ export class Mover
     extends TabsterPart<Types.MoverProps>
     implements Types.Mover
 {
-    private _unobserve: (() => void) | undefined;
-    private _intersectionObserver: IntersectionObserver | undefined;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _intersectionObserver: IntersectionObserver | undefined;
     private _setCurrentTimer: number | undefined;
-    private _current: WeakHTMLElement | undefined;
-    private _prevCurrent: WeakHTMLElement | undefined;
+    declare private _current: WeakHTMLElement | undefined;
+    declare private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
-    private _fullyVisible: string | undefined;
-    private _win: Types.GetWindow;
-    private _onDispose: (mover: Mover) => void;
-    private _allElements: WeakMap<HTMLElement, Mover> | undefined;
-    private _updateQueue: MoverUpdateQueueItem[] | undefined;
+    declare private _fullyVisible: string | undefined;
+    declare private _win: Types.GetWindow;
+    declare private _onDispose: (mover: Mover) => void;
+    declare private _allElements: WeakMap<HTMLElement, Mover> | undefined;
+    declare private _updateQueue: MoverUpdateQueueItem[] | undefined;
     private _updateTimer: number | undefined;
 
-    visibilityTolerance: number;
-    dummyManager: MoverDummyManager | undefined;
+    declare visibilityTolerance: number;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -148,7 +151,7 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this.dummyManager = new MoverDummyManager(
+            this.dummyManager = createMoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized,
@@ -227,7 +230,7 @@ export class Mover
                             const state = this.getState(el);
 
                             if (state) {
-                                el.dispatchEvent(new MoverStateEvent(state));
+                                dispatchEvent(el, new MoverStateEvent(state));
                             }
                         }
                     }
@@ -399,7 +402,7 @@ export class Mover
                 const state = this.getState(el);
 
                 if (state) {
-                    el.dispatchEvent(new MoverStateEvent(state));
+                    dispatchEvent(el, new MoverStateEvent(state));
                 }
             }
         }
@@ -683,86 +686,19 @@ function getDistance(
           : Math.sqrt(xDistance * xDistance + yDistance * yDistance);
 }
 
-export class MoverAPI implements Types.MoverAPI {
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _movers: Record<string, Mover>;
-    private _ignoredInputTimer: number | undefined;
-    private _ignoredInputResolve: ((value: boolean) => void) | undefined;
+export function createMoverAPI(
+    tabster: Types.TabsterCore,
+    getWindow: Types.GetWindow
+): Types.MoverAPI {
+    const movers: Record<string, Mover> = {};
+    let ignoredInputTimer: number | undefined;
+    let ignoredInputResolve: ((value: boolean) => void) | undefined;
 
-    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
-        this._tabster = tabster;
-        this._win = getWindow;
-        this._movers = {};
-
-        tabster.queueInit(this._init);
-    }
-
-    private _init = (): void => {
-        const win = this._win();
-
-        win.addEventListener("keydown", this._onKeyDown, true);
-        win.addEventListener(MoverMoveFocusEventName, this._onMoveFocus);
-        win.addEventListener(
-            MoverMemorizedElementEventName,
-            this._onMemorizedElement
-        );
-
-        this._tabster.focusedElement.subscribe(this._onFocus);
+    const onMoverDispose = (mover: Mover) => {
+        delete movers[mover.id];
     };
 
-    dispose(): void {
-        const win = this._win();
-
-        this._tabster.focusedElement.unsubscribe(this._onFocus);
-
-        this._ignoredInputResolve?.(false);
-
-        if (this._ignoredInputTimer) {
-            win.clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
-
-        win.removeEventListener("keydown", this._onKeyDown, true);
-        win.removeEventListener(MoverMoveFocusEventName, this._onMoveFocus);
-        win.removeEventListener(
-            MoverMemorizedElementEventName,
-            this._onMemorizedElement
-        );
-
-        Object.keys(this._movers).forEach((moverId) => {
-            if (this._movers[moverId]) {
-                this._movers[moverId].dispose();
-                delete this._movers[moverId];
-            }
-        });
-    }
-
-    createMover(
-        element: HTMLElement,
-        props: Types.MoverProps,
-        sys: Types.SysProps | undefined
-    ): Types.Mover {
-        if (__DEV__) {
-            validateMoverProps(props);
-        }
-
-        const newMover = new Mover(
-            this._tabster,
-            element,
-            this._onMoverDispose,
-            props,
-            sys
-        );
-        this._movers[newMover.id] = newMover;
-        return newMover;
-    }
-
-    private _onMoverDispose = (mover: Mover) => {
-        delete this._movers[mover.id];
-    };
-
-    private _onFocus = (element: HTMLElement | undefined): void => {
+    const onFocus = (element: HTMLElement | undefined): void => {
         // When something in the app gets focused, we are making sure that
         // the relevant context Mover is aware of it.
         // Looking for the relevant context Mover from the currently
@@ -781,35 +717,24 @@ export class MoverAPI implements Types.MoverAPI {
             // We go through all Movers up from the focused element and
             // set their current element to the deepest focusable of that
             // Mover.
-            const mover = getTabsterOnElement(this._tabster, el)?.mover;
+            const mover = getTabsterOnElement(tabster, el)?.mover;
 
             if (mover) {
                 mover.setCurrent(deepestFocusableElement);
                 currentFocusableElement = undefined;
             }
 
-            if (
-                !currentFocusableElement &&
-                this._tabster.focusable.isFocusable(el)
-            ) {
+            if (!currentFocusableElement && tabster.focusable.isFocusable(el)) {
                 currentFocusableElement = deepestFocusableElement = el;
             }
         }
     };
 
-    moveFocus(
-        fromElement: HTMLElement,
-        key: Types.MoverKey
-    ): HTMLElement | null {
-        return this._moveFocus(fromElement, key);
-    }
-
-    private _moveFocus(
+    const moveFocusInternal = (
         fromElement: HTMLElement,
         key: Types.MoverKey,
         relatedEvent?: KeyboardEvent
-    ): HTMLElement | null {
-        const tabster = this._tabster;
+    ): HTMLElement | null => {
         const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
@@ -1012,7 +937,7 @@ export class MoverAPI implements Types.MoverAPI {
 
                     if (
                         isElementVerticallyVisibleInContainer(
-                            this._win,
+                            getWindow,
                             el,
                             mover.visibilityTolerance
                         )
@@ -1067,7 +992,7 @@ export class MoverAPI implements Types.MoverAPI {
 
                     if (
                         isElementVerticallyVisibleInContainer(
-                            this._win,
+                            getWindow,
                             el,
                             mover.visibilityTolerance
                         )
@@ -1197,7 +1122,8 @@ export class MoverAPI implements Types.MoverAPI {
             next &&
             (!relatedEvent ||
                 (relatedEvent &&
-                    container.dispatchEvent(
+                    dispatchEvent(
+                        container,
                         new TabsterMoveFocusEvent({
                             by: "mover",
                             owner: container,
@@ -1207,7 +1133,7 @@ export class MoverAPI implements Types.MoverAPI {
                     )))
         ) {
             if (scrollIntoViewArg !== undefined) {
-                scrollIntoView(this._win, next, scrollIntoViewArg);
+                scrollIntoView(getWindow, next, scrollIntoViewArg);
             }
 
             if (relatedEvent) {
@@ -1221,15 +1147,15 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         return null;
-    }
+    };
 
-    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
+    const onKeyDown = async (event: KeyboardEvent): Promise<void> => {
+        if (ignoredInputTimer) {
+            getWindow().clearTimeout(ignoredInputTimer);
+            ignoredInputTimer = undefined;
         }
 
-        this._ignoredInputResolve?.(false);
+        ignoredInputResolve?.(false);
 
         // Give a chance to other listeners to handle the event (for example,
         // to scroll instead of moving focus).
@@ -1262,31 +1188,31 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        const focused = this._tabster.focusedElement.getFocusedElement();
+        const focused = tabster.focusedElement.getFocusedElement();
 
-        if (!focused || (await this._isIgnoredInput(focused, key))) {
+        if (!focused || (await isIgnoredInput(focused, key))) {
             return;
         }
 
-        this._moveFocus(focused, moverKey, event);
+        moveFocusInternal(focused, moverKey, event);
     };
 
-    private _onMoveFocus = (e: MoverMoveFocusEvent): void => {
+    const onMoveFocus = (e: MoverMoveFocusEvent): void => {
         const element = e.composedPath()[0] as HTMLElement | null | undefined;
         const key = e.detail?.key;
 
         if (element && key !== undefined && !e.defaultPrevented) {
-            this._moveFocus(element, key);
+            moveFocusInternal(element, key);
             e.stopImmediatePropagation();
         }
     };
 
-    private _onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
+    const onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
         const target = e.composedPath()[0] as HTMLElement | null | undefined;
         let memorizedElement = e.detail?.memorizedElement;
 
         if (target) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, target);
+            const ctx = RootAPI.getTabsterContext(tabster, target);
             const mover = ctx?.mover;
 
             if (mover) {
@@ -1304,10 +1230,10 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private async _isIgnoredInput(
+    const isIgnoredInput = async (
         element: HTMLElement,
         key: string
-    ): Promise<boolean> {
+    ): Promise<boolean> => {
         if (
             element.getAttribute("aria-expanded") === "true" &&
             (element.hasAttribute("aria-activedescendant") ||
@@ -1379,15 +1305,15 @@ export class MoverAPI implements Types.MoverAPI {
                 }
             } else if (element.contentEditable === "true") {
                 asyncRet = new Promise<boolean>((resolve) => {
-                    this._ignoredInputResolve = (value: boolean) => {
-                        delete this._ignoredInputResolve;
+                    ignoredInputResolve = (value: boolean) => {
+                        ignoredInputResolve = undefined;
                         resolve(value);
                     };
 
-                    const win = this._win();
+                    const win = getWindow();
 
-                    if (this._ignoredInputTimer) {
-                        win.clearTimeout(this._ignoredInputTimer);
+                    if (ignoredInputTimer) {
+                        win.clearTimeout(ignoredInputTimer);
                     }
 
                     const {
@@ -1398,8 +1324,8 @@ export class MoverAPI implements Types.MoverAPI {
                     } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    this._ignoredInputTimer = win.setTimeout(() => {
-                        delete this._ignoredInputTimer;
+                    ignoredInputTimer = win.setTimeout(() => {
+                        ignoredInputTimer = undefined;
 
                         const {
                             anchorNode,
@@ -1414,7 +1340,7 @@ export class MoverAPI implements Types.MoverAPI {
                             anchorOffset !== prevAnchorOffset ||
                             focusOffset !== prevFocusOffset
                         ) {
-                            this._ignoredInputResolve?.(false);
+                            ignoredInputResolve?.(false);
                             return;
                         }
 
@@ -1475,7 +1401,7 @@ export class MoverAPI implements Types.MoverAPI {
                             }
                         }
 
-                        this._ignoredInputResolve?.(true);
+                        ignoredInputResolve?.(true);
                     }, 0);
                 });
             }
@@ -1508,5 +1434,72 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         return false;
-    }
+    };
+
+    tabster.queueInit(() => {
+        const win = getWindow();
+
+        addListener(win, "keydown", onKeyDown, true);
+        addListener(win, MoverMoveFocusEventName, onMoveFocus);
+        addListener(win, MoverMemorizedElementEventName, onMemorizedElement);
+
+        tabster.focusedElement.subscribe(onFocus);
+    });
+
+    return {
+        dispose(): void {
+            const win = getWindow();
+
+            tabster.focusedElement.unsubscribe(onFocus);
+
+            ignoredInputResolve?.(false);
+
+            if (ignoredInputTimer) {
+                win.clearTimeout(ignoredInputTimer);
+                ignoredInputTimer = undefined;
+            }
+
+            removeListener(win, "keydown", onKeyDown, true);
+            removeListener(win, MoverMoveFocusEventName, onMoveFocus);
+            removeListener(
+                win,
+                MoverMemorizedElementEventName,
+                onMemorizedElement
+            );
+
+            Object.keys(movers).forEach((moverId) => {
+                if (movers[moverId]) {
+                    movers[moverId].dispose();
+                    delete movers[moverId];
+                }
+            });
+        },
+
+        createMover(
+            element: HTMLElement,
+            props: Types.MoverProps,
+            sys: Types.SysProps | undefined
+        ): Types.Mover {
+            if (__DEV__) {
+                validateMoverProps(props);
+            }
+
+            const newMover = new Mover(
+                tabster,
+                element,
+                onMoverDispose,
+                props,
+                sys
+            );
+            movers[newMover.id] = newMover;
+            return newMover;
+        },
+
+        moveFocus(
+            fromElement: HTMLElement,
+            key: Types.MoverKey
+        ): HTMLElement | null {
+            return moveFocusInternal(fromElement, key);
+        },
+    };
 }

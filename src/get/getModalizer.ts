@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ModalizerAPI } from "../Modalizer.js";
+import { createModalizerAPI } from "../Modalizer.js";
 import type * as Types from "../Types.js";
 
 /**
@@ -24,7 +24,7 @@ export function getModalizer(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.modalizer) {
-        const api = new ModalizerAPI(
+        const api = createModalizerAPI(
             tabsterCore,
             alwaysAccessibleSelector,
             accessibleCheck
