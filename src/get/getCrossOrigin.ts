@@ -21,7 +21,9 @@ export function getCrossOrigin(tabster: Types.Tabster): Types.CrossOriginAPI {
         getGroupper(tabster);
         getOutline(tabster);
         getObservedElement(tabster);
-        tabsterCore.crossOrigin = createCrossOriginAPI(tabsterCore);
+        const api = createCrossOriginAPI(tabsterCore);
+        tabsterCore.crossOrigin = api;
+        tabsterCore.disposers.add(api);
     }
 
     return tabsterCore.crossOrigin;

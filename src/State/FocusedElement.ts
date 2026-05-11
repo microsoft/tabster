@@ -11,8 +11,14 @@ import {
     nativeFocus,
 } from "keyborg";
 
+import {
+    _findDefaultFocusable,
+    _findFocusable,
+    _isElementVisible,
+    _isFocusable,
+} from "../Focusable.js";
 import { Keys } from "../Keys.js";
-import { RootAPI } from "../Root.js";
+import { getTabsterContext } from "../Context.js";
 import type * as Types from "../Types.js";
 import { AsyncFocusSources } from "../Consts.js";
 import {
@@ -23,11 +29,15 @@ import {
 import { DummyInputManager } from "../DummyInput.js";
 import {
     addListener,
+    clearTimer,
+    createTimer,
     dispatchEvent,
     documentContains,
     getLastChild,
     removeListener,
+    setTimer,
     shouldIgnoreFocus,
+    type Timer,
     WeakHTMLElement,
 } from "../Utils.js";
 import { getTabsterOnElement } from "../Instance.js";
@@ -72,7 +82,7 @@ const AsyncFocusIntentPriorityBySource = {
 interface AsyncFocus {
     source: Types.AsyncFocusSource;
     callback: () => void;
-    timeout: number;
+    timer: Timer;
 }
 
 interface FocusedElementStateInternal extends Types.FocusedElementState {
@@ -141,7 +151,7 @@ export function createFocusedElementState(
 
             detail.isFocusedProgrammatically = isFocusedProgrammatically;
 
-            const ctx = RootAPI.getTabsterContext(tabster, element);
+            const ctx = getTabsterContext(tabster, element);
 
             const modalizerId = ctx?.modalizer?.userId;
 
@@ -203,7 +213,7 @@ export function createFocusedElementState(
         }
 
         const controlTab = tabster.controlTab;
-        const ctx = RootAPI.getTabsterContext(tabster, currentElement);
+        const ctx = getTabsterContext(tabster, currentElement);
 
         if (!ctx || ctx.ignoreKeydown(event)) {
             return;
@@ -268,10 +278,9 @@ export function createFocusedElementState(
             }
 
             if (
-                (nextUncontrolled &&
-                    tabster.focusable.isVisible(nextUncontrolled)) ||
+                (nextUncontrolled && _isElementVisible(nextUncontrolled)) ||
                 (nextElement.tagName === "IFRAME" &&
-                    tabster.focusable.isVisible(nextElement))
+                    _isElementVisible(nextElement))
             ) {
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
@@ -348,7 +357,7 @@ export function createFocusedElementState(
 
             if (last) {
                 const d = { ...detail };
-                const lastCtx = RootAPI.getTabsterContext(tabster, last);
+                const lastCtx = getTabsterContext(tabster, last);
                 const modalizerId = lastCtx?.modalizer?.userId;
 
                 if (modalizerId) {
@@ -431,7 +440,7 @@ export function createFocusedElementState(
             sub.unsubscribe(onChanged);
 
             if (asyncFocus) {
-                win.clearTimeout(asyncFocus.timeout);
+                clearTimer(asyncFocus.timer, win);
                 asyncFocus = undefined;
             }
 
@@ -462,7 +471,8 @@ export function createFocusedElementState(
             preventScroll?: boolean
         ): boolean {
             if (
-                !tabster.focusable.isFocusable(
+                !_isFocusable(
+                    tabster,
                     element,
                     noFocusedProgrammaticallyFlag,
                     false,
@@ -478,7 +488,7 @@ export function createFocusedElementState(
         },
 
         focusDefault(container: HTMLElement): boolean {
-            const el = tabster.focusable.findDefault({ container });
+            const el = _findDefaultFocusable(tabster, { container });
 
             if (el) {
                 tabster.focusedElement.focus(el);
@@ -500,7 +510,7 @@ export function createFocusedElementState(
             let toFocus: HTMLElement | null | undefined;
 
             if (container) {
-                const ctx = RootAPI.getTabsterContext(tabster, container);
+                const ctx = getTabsterContext(tabster, container);
 
                 if (ctx) {
                     toFocus = FocusedElementState.findNextTabbable(
@@ -547,11 +557,11 @@ export function createFocusedElementState(
         },
 
         resetFocus(container: HTMLElement): boolean {
-            if (!tabster.focusable.isVisible(container)) {
+            if (!_isElementVisible(container)) {
                 return false;
             }
 
-            if (!tabster.focusable.isFocusable(container, true, true, true)) {
+            if (!_isFocusable(tabster, container, true, true, true)) {
                 const prevTabIndex = container.getAttribute("tabindex");
                 const prevAriaHidden = container.getAttribute("aria-hidden");
 
@@ -589,22 +599,29 @@ export function createFocusedElementState(
                 }
 
                 // New intent has higher priority.
-                win.clearTimeout(currentAsyncFocus.timeout);
+                clearTimer(currentAsyncFocus.timer, win);
             }
 
+            const timer = createTimer();
             asyncFocus = {
                 source,
                 callback,
-                timeout: win.setTimeout(() => {
+                timer,
+            };
+            setTimer(
+                timer,
+                win,
+                () => {
                     asyncFocus = undefined;
                     callback();
-                }, delay),
-            };
+                },
+                delay
+            );
         },
 
         cancelAsyncFocus(source: Types.AsyncFocusSource): void {
             if (asyncFocus?.source === source) {
-                tabster.getWindow().clearTimeout(asyncFocus.timeout);
+                clearTimer(asyncFocus.timer, tabster.getWindow());
                 asyncFocus = undefined;
             }
         },
@@ -613,7 +630,7 @@ export function createFocusedElementState(
     return api;
 }
 
-let _isTabbingTimer: number | undefined;
+const _isTabbingTimer: Timer = createTimer();
 
 export const FocusedElementState = {
     isTabbing: false,
@@ -657,96 +674,57 @@ export const FocusedElementState = {
             return null;
         }
 
-        let next: Types.NextTabbable | null = null;
+        let next: Types.NextTabbable | null | undefined;
 
         const win = tabster.getWindow();
 
-        if (_isTabbingTimer) {
-            win.clearTimeout(_isTabbingTimer);
-        }
-
         FocusedElementState.isTabbing = true;
-        _isTabbingTimer = win.setTimeout(() => {
-            _isTabbingTimer = undefined;
-            FocusedElementState.isTabbing = false;
-        }, 0);
+        setTimer(
+            _isTabbingTimer,
+            win,
+            () => {
+                FocusedElementState.isTabbing = false;
+            },
+            0
+        );
 
-        const modalizer = ctx.modalizer;
-        const groupper = ctx.groupper;
-        const mover = ctx.mover;
-
-        const callFindNext = (
-            what: Types.Groupper | Types.Mover | Types.Modalizer
-        ) => {
-            next = what.findNextTabbable(
-                currentElement,
-                referenceElement,
-                isBackward,
-                ignoreAccessibility
-            );
-
-            if (currentElement && !next?.element) {
-                const parentElement =
-                    what !== modalizer &&
-                    dom.getParentElement(what.getElement());
-
-                if (parentElement) {
-                    const parentCtx = RootAPI.getTabsterContext(
-                        tabster,
-                        currentElement,
-                        { referenceElement: parentElement }
-                    );
-
-                    if (parentCtx) {
-                        const currentScopeElement = what.getElement();
-                        const newCurrent = isBackward
-                            ? currentScopeElement
-                            : (currentScopeElement &&
-                                  getLastChild(currentScopeElement)) ||
-                              currentScopeElement;
-
-                        if (newCurrent) {
-                            next = FocusedElementState.findNextTabbable(
-                                tabster,
-                                parentCtx,
-                                container,
-                                newCurrent,
-                                parentElement,
-                                isBackward,
-                                ignoreAccessibility
-                            );
-
-                            if (next) {
-                                next.outOfDOMOrder = true;
-                            }
-                        }
-                    }
+        // Mover/Groupper/Modalizer register their dispatch via
+        // `tabsterCore.findNextTabbableStrategies` from their `getX`
+        // factories. Without any of those features in use the array is
+        // absent and we fall straight through to the default focusable walk.
+        const strategies = tabster.findNextTabbableStrategies;
+        if (strategies) {
+            for (const strat of strategies) {
+                next = strat(
+                    tabster,
+                    ctx,
+                    container,
+                    currentElement,
+                    referenceElement,
+                    isBackward,
+                    ignoreAccessibility
+                );
+                if (next !== undefined) {
+                    break;
                 }
             }
-        };
+        }
 
-        if (groupper && mover) {
-            callFindNext(ctx.groupperBeforeMover ? groupper : mover);
-        } else if (groupper) {
-            callFindNext(groupper);
-        } else if (mover) {
-            callFindNext(mover);
-        } else if (modalizer) {
-            callFindNext(modalizer);
-        } else {
-            const findProps: Types.FindNextProps = {
-                container: actualContainer,
-                currentElement,
-                referenceElement,
-                ignoreAccessibility,
-                useActiveModalizer: true,
-            };
-
+        if (next === undefined) {
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            const nextElement = tabster.focusable[
-                isBackward ? "findPrev" : "findNext"
-            ](findProps, findPropsOut);
+            const nextElement = _findFocusable(
+                tabster,
+                {
+                    container: actualContainer,
+                    currentElement,
+                    referenceElement,
+                    ignoreAccessibility,
+                    useActiveModalizer: true,
+                    isBackward,
+                },
+                findPropsOut
+            );
 
             next = {
                 element: nextElement,
@@ -758,3 +736,65 @@ export const FocusedElementState = {
         return next;
     },
 };
+
+/**
+ * Parent-context fallback used by Mover/Groupper findNext strategies — when
+ * the part itself yields nothing, walk up to the parent context and recurse.
+ * Exported so the bytes only join the bundle when getMover or getGroupper is
+ * imported. Modalizer is a hard trap and never calls this.
+ */
+export function findNextTabbableWithParentFallback(
+    tabster: Types.TabsterCore,
+    part: Types.TabsterPartWithFindNextTabbable & {
+        getElement(): HTMLElement | undefined;
+    },
+    container: HTMLElement | undefined,
+    currentElement: HTMLElement | undefined,
+    referenceElement: HTMLElement | undefined,
+    isBackward: boolean | undefined,
+    ignoreAccessibility: boolean | undefined
+): Types.NextTabbable | null {
+    let next = part.findNextTabbable(
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+
+    if (currentElement && !next?.element) {
+        const parentElement = dom.getParentElement(part.getElement());
+
+        if (parentElement) {
+            const parentCtx = getTabsterContext(tabster, currentElement, {
+                referenceElement: parentElement,
+            });
+
+            if (parentCtx) {
+                const currentScopeElement = part.getElement();
+                const newCurrent = isBackward
+                    ? currentScopeElement
+                    : (currentScopeElement &&
+                          getLastChild(currentScopeElement)) ||
+                      currentScopeElement;
+
+                if (newCurrent) {
+                    next = FocusedElementState.findNextTabbable(
+                        tabster,
+                        parentCtx,
+                        container,
+                        newCurrent,
+                        parentElement,
+                        isBackward,
+                        ignoreAccessibility
+                    );
+
+                    if (next) {
+                        next.outOfDOMOrder = true;
+                    }
+                }
+            }
+        }
+    }
+
+    return next;
+}

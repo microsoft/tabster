@@ -11,6 +11,7 @@ export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
     if (!tabsterCore.restorer) {
         const api = createRestorerAPI(tabsterCore);
         tabsterCore.restorer = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "restorer",
             (element, existingRestorer, newProps) => {

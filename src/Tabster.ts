@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FocusableAPI } from "./Focusable.js";
 import {
     FocusedElementState,
     createFocusedElementState,
@@ -32,7 +31,6 @@ import * as shadowDOMAPI from "./Shadowdomize/index.js";
 class Tabster implements Types.Tabster {
     declare keyboardNavigation: Types.KeyboardNavigationState;
     declare focusedElement: Types.FocusedElementState;
-    declare focusable: Types.FocusableAPI;
     declare root: Types.RootAPI;
     declare uncontrolled: Types.UncontrolledAPI;
     declare core: Types.TabsterCore;
@@ -40,7 +38,6 @@ class Tabster implements Types.Tabster {
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
         this.focusedElement = tabster.focusedElement;
-        this.focusable = tabster.focusable;
         this.root = tabster.root;
         this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
@@ -76,24 +73,27 @@ class TabsterCore implements Types.TabsterCore {
     // value type (the type-erased shape).
     attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
+    /**
+     * Disposable extended APIs register themselves here in their `getX`
+     * factories; `dispose()` iterates this set instead of hard-coding each
+     * `deloser?.dispose()` call.
+     */
+    disposers = new Set<Types.Disposable>();
+
     // Core APIs
     declare keyboardNavigation: Types.KeyboardNavigationState;
     declare focusedElement: Types.FocusedElementState;
-    declare focusable: Types.FocusableAPI;
     declare root: Types.RootAPI;
     declare uncontrolled: Types.UncontrolledAPI;
     declare internal: Types.InternalAPI;
     declare _dummyObserver: Types.DummyInputObserver;
 
-    // Extended APIs
-    groupper?: Types.GroupperAPI;
-    mover?: Types.MoverAPI;
-    outline?: Types.OutlineAPI;
-    deloser?: Types.DeloserAPI;
-    modalizer?: Types.ModalizerAPI;
-    observedElement?: Types.ObservedElementAPI;
-    crossOrigin?: Types.CrossOriginAPI;
-    restorer?: Types.RestorerAPI;
+    // Extended APIs slots (groupper / mover / modalizer / outline / deloser /
+    // observedElement / crossOrigin / restorer) are declared on
+    // Types.TabsterCore as optional fields but intentionally NOT redeclared
+    // here. We rely on `undefined`-on-read; the optional property still
+    // type-checks because Types.TabsterCore declares them.
+
     declare getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
@@ -110,7 +110,6 @@ class TabsterCore implements Types.TabsterCore {
 
         this.keyboardNavigation = createKeyboardNavigationState(getWindow);
         this.focusedElement = createFocusedElementState(this, getWindow);
-        this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = createUncontrolledAPI(
             // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
@@ -205,17 +204,15 @@ class TabsterCore implements Types.TabsterCore {
         this._initQueue = [];
         this._forgetMemorizedElements = [];
 
-        this.outline?.dispose();
-        this.crossOrigin?.dispose();
-        this.deloser?.dispose();
-        this.groupper?.dispose();
-        this.mover?.dispose();
-        this.modalizer?.dispose();
-        this.observedElement?.dispose();
-        this.restorer?.dispose();
+        // Extended APIs register themselves in `disposers` from their `getX`
+        // factories; iterate and clear so adding a new extended API doesn't
+        // require touching this method.
+        for (const d of this.disposers) {
+            d.dispose();
+        }
+        this.disposers.clear();
 
         this.keyboardNavigation.dispose();
-        this.focusable.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
 
