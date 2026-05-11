@@ -3,8 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { MoverAPI } from "../Mover.js";
+import { createMoverAPI } from "../Mover.js";
+import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
+
+const moverFindNextStrategy: Types.FindNextTabbableStrategy = (
+    tabster,
+    ctx,
+    container,
+    currentElement,
+    referenceElement,
+    isBackward,
+    ignoreAccessibility
+) => {
+    const mover = ctx.mover;
+    // Mover yields to a Groupper that wins the precedence flag
+    // (`groupperBeforeMover`); otherwise it owns the dispatch.
+    if (!mover || (ctx.groupper && ctx.groupperBeforeMover)) {
+        return undefined;
+    }
+    return findNextTabbableWithParentFallback(
+        tabster,
+        mover,
+        container,
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+};
 
 /**
  * Creates a new mover instance or returns an existing one
@@ -14,8 +41,9 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.mover) {
-        const api = new MoverAPI(tabsterCore, tabsterCore.getWindow);
+        const api = createMoverAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.mover = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "mover",
             (element, existingMover, newProps, _oldProps, sys) => {
@@ -26,7 +54,11 @@ export function getMover(tabster: Types.Tabster): Types.MoverAPI {
                 return api.createMover(element, newProps, sys);
             }
         );
+        (tabsterCore.findNextTabbableStrategies ??= []).push(
+            moverFindNextStrategy
+        );
     }
 
-    return tabsterCore.mover;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return tabsterCore.mover!;
 }

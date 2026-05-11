@@ -144,9 +144,10 @@ describe("<iframe />", () => {
             </div>
         )
             .eval(() => {
-                return getTabsterTestVariables()
-                    .core?.focusable.findAll({ container: document.body })
-                    .map((el) => el.textContent);
+                return getTabsterTestVariables().findAllFocusable!(
+                    getTabsterTestVariables().core!,
+                    { container: document.body }
+                ).map((el) => el.textContent);
             })
             .check((evalRet: string[]) => {
                 expect(evalRet).toEqual(["Button1", "Button2"]);
@@ -168,13 +169,12 @@ describe("<iframe />", () => {
         )
             .eval(() => {
                 const vars = getTabsterTestVariables();
-                const rootAPI = vars?.core?.root;
                 const iframe = vars.dom?.getElementById(document, "iframe");
-                const tabster = (rootAPI as any)?._tabster;
-                const context = (rootAPI?.constructor as any).getTabsterContext(
-                    tabster,
-                    iframe
-                );
+                const tabsterCore = (vars?.core as any)?.core;
+                const context =
+                    tabsterCore && iframe
+                        ? vars.getTabsterContext?.(tabsterCore, iframe)
+                        : undefined;
                 return {
                     contextType: typeof context,
                     uncontrolled: (context as Types.TabsterContext)

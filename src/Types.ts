@@ -317,7 +317,10 @@ export interface ObservedElementAsyncRequest<T> {
 
 interface ObservedElementAPIInternal {
     /** @internal */
-    onObservedElementUpdate(element: HTMLElement): void;
+    onObservedElementUpdate(
+        element: HTMLElement,
+        observed: ObservedElementProps | undefined
+    ): void;
 }
 
 export interface ObservedElementAPI
@@ -714,48 +717,6 @@ export type FindAllProps = Pick<
  */
 export type FindElementCallback = (element: HTMLElement) => boolean;
 
-export interface FocusableAPI extends Disposable {
-    getProps(element: HTMLElement): FocusableProps;
-
-    isFocusable(
-        element: HTMLElement,
-        includeProgrammaticallyFocusable?: boolean,
-        noVisibleCheck?: boolean,
-        noAccessibleCheck?: boolean
-    ): boolean;
-    isVisible(element: HTMLElement): boolean;
-    isAccessible(element: HTMLElement): boolean;
-    // find* return null when there is no element and undefined when there is an uncontrolled area.
-    findFirst(
-        options: FindFirstProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findLast(
-        options: FindFirstProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findNext(
-        options: FindNextProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findPrev(
-        options: FindNextProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-    findDefault(
-        options: FindDefaultProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null;
-    /**
-     * @returns All focusables in a given context that satisfy an given condition
-     */
-    findAll(options: FindAllProps): HTMLElement[];
-    findElement(
-        options: FindFocusableProps,
-        out?: FindFocusableOutputProps
-    ): HTMLElement | null | undefined;
-}
-
 export interface DummyInputManager {
     moveOut: (backwards: boolean) => void;
     moveOutWithDefaultAction: (
@@ -941,6 +902,8 @@ export interface GroupperAPI extends GroupperAPIInternal, Disposable {
 
 export interface GroupperAPIInternal {
     forgetCurrentGrouppers(): void;
+    /** @internal - exposed for tests only */
+    readonly _grouppers: Record<string, Groupper>;
 }
 
 export interface ModalizerProps {
@@ -1063,8 +1026,6 @@ interface RootAPIInternal {
         sys: SysProps | undefined
     ): Root;
     /**@internal*/
-    onRoot(root: Root, removed?: boolean): void;
-    /**@internal*/
     addDummyInputs(): void;
 }
 
@@ -1103,6 +1064,8 @@ interface ModalizerAPIInternal extends TabsterPartWithAcceptElement {
     hiddenUpdate(): void;
     /** @internal */
     isAugmented(element: HTMLElement): boolean;
+    /** @internal - exposed for tests only */
+    readonly _modalizers: Record<string, Modalizer>;
 }
 
 export interface ModalizerAPI extends ModalizerAPIInternal, Disposable {
@@ -1351,9 +1314,41 @@ export interface TabsterAttrHandlerRegistry extends Map<
     ): this;
 }
 
+/**
+ * @internal
+ * Selector each Mover/Groupper/Modalizer registers from `getX` to drive
+ * `FocusedElementState.findNextTabbable`. Returning `undefined` means the
+ * strategy doesn't claim this context (the iterator tries the next one).
+ * Returning a `NextTabbable | null` short-circuits dispatch with that result.
+ *
+ * The strategy receives every `findNextTabbable` argument (so it can recurse
+ * via `FocusedElementState.findNextTabbable` for parent-context fallback) and
+ * is expected to be self-contained — Mover/Groupper share a parent-fallback
+ * helper they import from `State/FocusedElement.js`; Modalizer (a hard trap)
+ * skips the parent walk entirely.
+ */
+export type FindNextTabbableStrategy = (
+    tabster: TabsterCore,
+    ctx: TabsterContext,
+    container: HTMLElement | undefined,
+    currentElement: HTMLElement | undefined,
+    referenceElement: HTMLElement | undefined,
+    isBackward: boolean | undefined,
+    ignoreAccessibility: boolean | undefined
+) => NextTabbable | null | undefined;
+
 interface TabsterCoreInternal {
     /** @internal */
     attrHandlers: TabsterAttrHandlerRegistry;
+    /** @internal — extended APIs add themselves on creation; iterated by core.dispose() */
+    disposers: Set<Disposable>;
+    /**
+     * @internal — Mover/Groupper/Modalizer push their findNextTabbable
+     * dispatch entry here from their `getX` factories. Empty/absent when no
+     * extended part is in use, so the always-on `FocusedElementState.findNextTabbable`
+     * path falls straight through to its default `_findFocusable` walk.
+     */
+    findNextTabbableStrategies?: FindNextTabbableStrategy[];
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */
@@ -1410,7 +1405,6 @@ interface TabsterCoreInternal {
 export interface Tabster {
     keyboardNavigation: KeyboardNavigationState;
     focusedElement: FocusedElementState;
-    focusable: FocusableAPI;
     root: RootAPI;
     uncontrolled: UncontrolledAPI;
 

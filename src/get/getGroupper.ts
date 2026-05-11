@@ -3,8 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { GroupperAPI } from "../Groupper.js";
+import { createGroupperAPI } from "../Groupper.js";
+import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
 import type * as Types from "../Types.js";
+
+const groupperFindNextStrategy: Types.FindNextTabbableStrategy = (
+    tabster,
+    ctx,
+    container,
+    currentElement,
+    referenceElement,
+    isBackward,
+    ignoreAccessibility
+) => {
+    const groupper = ctx.groupper;
+    // Groupper claims the dispatch when there's no Mover, or when the
+    // precedence flag (`groupperBeforeMover`) puts it ahead of the Mover.
+    if (!groupper || (ctx.mover && !ctx.groupperBeforeMover)) {
+        return undefined;
+    }
+    return findNextTabbableWithParentFallback(
+        tabster,
+        groupper,
+        container,
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+};
 
 /**
  * Creates a new groupper instance or returns an existing one
@@ -14,8 +41,9 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.groupper) {
-        const api = new GroupperAPI(tabsterCore, tabsterCore.getWindow);
+        const api = createGroupperAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.groupper = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "groupper",
             (element, existingGroupper, newProps, _oldProps, sys) => {
@@ -25,6 +53,9 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
                 }
                 return api.createGroupper(element, newProps, sys);
             }
+        );
+        (tabsterCore.findNextTabbableStrategies ??= []).push(
+            groupperFindNextStrategy
         );
     }
 
