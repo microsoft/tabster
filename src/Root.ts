@@ -99,13 +99,14 @@ export class Root
     extends TabsterPart<Types.RootProps, undefined>
     implements Types.Root
 {
-    readonly uid: string;
-
-    private _dummyManager?: RootDummyManager;
-    private _sys?: Types.SysProps;
+    // `declare` keeps the type info for TS without emitting a `this.x = void 0`
+    // class-field initializer that the constructor immediately overwrites.
+    declare readonly uid: string;
+    declare private _dummyManager?: RootDummyManager;
+    declare private _sys?: Types.SysProps;
     private _isFocused = false;
-    private _setFocusedTimer: number | undefined;
-    private _onDispose: (root: Root) => void;
+    declare private _setFocusedTimer: number | undefined;
+    declare private _onDispose: (root: Root) => void;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -255,9 +256,10 @@ function validateRootProps(props: Types.RootProps): void {
 }
 
 export class RootAPI implements Types.RootAPI {
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _autoRoot: Types.RootProps | undefined;
+    declare private _tabster: Types.TabsterCore;
+    declare private _win: Types.GetWindow;
+    /** @internal — read by `getTabsterContext` (src/Context.ts) for auto-root fallback. */
+    declare _autoRoot: Types.RootProps | undefined;
     private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
     private _forceDummy = false;

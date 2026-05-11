@@ -98,10 +98,10 @@ export class Groupper
     implements Types.Groupper
 {
     private _shouldTabInside = false;
-    private _first: WeakHTMLElement | undefined;
-    private _onDispose: (groupper: Groupper) => void;
+    declare private _first: WeakHTMLElement | undefined;
+    declare private _onDispose: (groupper: Groupper) => void;
 
-    dummyManager: GroupperDummyManager | undefined;
+    declare dummyManager: GroupperDummyManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
