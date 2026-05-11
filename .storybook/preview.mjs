@@ -9,6 +9,7 @@ import {
     getOutline,
     getCrossOrigin,
     getRestorer,
+    getRootDummyInputs,
 } from "../src";
 
 export const parameters = {
@@ -36,6 +37,9 @@ export const decorators = [
             controlTab,
             rootDummyInputs,
         });
+        if (controlTab || rootDummyInputs) {
+            getRootDummyInputs(tabster);
+        }
         console.log(
             "created tabster",
             `as ${
