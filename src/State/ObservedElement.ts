@@ -326,44 +326,6 @@ export function createObservedElementAPI(
         },
 
         /**
-         * Returns all registered observed names with their respective elements and full names arrays
-         */
-        getAllObservedElements(): Map<
-            string,
-            Array<{ element: HTMLElement; names: string[] }>
-        > {
-            const result = new Map<
-                string,
-                Array<{ element: HTMLElement; names: string[] }>
-            >();
-
-            for (const name of Object.keys(observedByName)) {
-                const elementsWithNames: Array<{
-                    element: HTMLElement;
-                    names: string[];
-                }> = [];
-                const observed = observedByName[name];
-
-                for (const uid of Object.keys(observed)) {
-                    const el = observed[uid].element.get();
-                    if (el) {
-                        const info = observedById[uid];
-                        elementsWithNames.push({
-                            element: el,
-                            names: info?.prevNames || [],
-                        });
-                    }
-                }
-
-                if (elementsWithNames.length > 0) {
-                    result.set(name, elementsWithNames);
-                }
-            }
-
-            return result;
-        },
-
-        /**
          * Returns existing element by observed name
          */
         getElement(

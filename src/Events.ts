@@ -89,11 +89,6 @@ const CustomEvent_ =
           } as typeof CustomEvent);
 
 export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
-    /**
-     * @deprecated use `detail`.
-     */
-    declare details?: D;
-
     constructor(type: string, detail?: D) {
         super(type, {
             bubbles: true,
@@ -101,8 +96,6 @@ export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
             composed: true,
             detail,
         });
-
-        this.details = detail;
     }
 }
 

@@ -9,13 +9,13 @@ import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
     __tabsterElementFlags?: {
         /**
-         * @deprecated This option is added to support interop between Fluent UI V9 and Fluent UI V8.
-         * Once Fluent UI V8 is not supported anymore, this option should be removed.
+         * When Modalizer sets aria-hidden on everything outside of the modal,
+         * do not set aria-hidden directly on this element — descend into its
+         * children and set aria-hidden on those instead. Used on container
+         * elements that host children whose virtual parent is the active
+         * modal (e.g. portaled content).
          */
-        noDirectAriaHidden?: boolean; // When Modalizer sets aria-hidden on everything outside of the modal,
-        // do not set aria-hidden directly on this element, go inside and check its children,
-        // and set aria-hidden on the children. This is to be set on a container that hosts
-        // elements which have the active modal dialog as virtual parent.
+        noDirectAriaHidden?: boolean;
     };
 }
 
@@ -48,10 +48,6 @@ export interface TabsterCoreProps {
         element: HTMLElement,
         completely: boolean // A uncontrolled.completely value from the element.
     ) => boolean | undefined;
-    /**
-     * @deprecated use checkUncontrolledCompletely.
-     */
-    checkUncontrolledTrappingFocus?: (element: HTMLElement) => boolean;
     /**
      * Custom getter for parent elements. Defaults to the default .parentElement call
      * Currently only used to detect tabster contexts
@@ -332,24 +328,6 @@ export interface ObservedElementAPI
         timeout: number,
         options?: Pick<FocusOptions, "preventScroll">
     ): ObservedElementAsyncRequest<boolean>;
-    /**
-     * Returns all currently registered observed elements grouped by their observed names.
-     *
-     * @returns A Map where each key is an observed name, and each value is an array of elements
-     * associated with that name along with their complete names arrays.
-     *
-     * @example
-     * ```typescript
-     * const allObserved = observedElement.getAllObservedElements();
-     * // Map might contain:
-     * // "button-1" -> [{ element: <button>, names: ["button-1", "primary"] }]
-     * // "primary" -> [{ element: <button>, names: ["button-1", "primary"] }]
-     * ```
-     */
-    getAllObservedElements(): Map<
-        string,
-        Array<{ element: HTMLElement; names: string[] }>
-    >;
     /**
      * Optional callback that is invoked whenever an observed element is added, removed, or updated in the DOM.
      */
