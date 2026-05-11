@@ -7,3 +7,5 @@ docs/.docusaurus
 docs/.cache-loader
 *.yml
 .pages-deploy
+bundle-size/.readable/
+.claude/
