@@ -51,7 +51,7 @@ export interface InstanceContext {
         };
     };
     lastContainerBoundingRectCacheId: number;
-    containerBoundingRectCacheTimer?: number;
+    containerBoundingRectCacheTimer: Timer;
 }
 
 let _uidCounter = 0;
@@ -66,6 +66,7 @@ export function getInstanceContext(getWindow: GetWindow): InstanceContext {
         elementByUId: {},
         containerBoundingRectCache: {},
         lastContainerBoundingRectCacheId: 0,
+        containerBoundingRectCacheTimer: createTimer(),
     });
 }
 
@@ -76,9 +77,7 @@ export function disposeInstanceContext(win: Window): void {
         // The maps held only WeakHTMLElement wrappers (WeakRef-backed) and
         // bounding-rect snapshots — both are dropped when the context object
         // is unreached. Just cancel the timer and unhook from the window.
-        if (ctx.containerBoundingRectCacheTimer) {
-            win.clearTimeout(ctx.containerBoundingRectCacheTimer);
-        }
+        clearTimer(ctx.containerBoundingRectCacheTimer, win);
         delete w.__tabsterInstanceContext;
     }
 }
@@ -186,17 +185,22 @@ export function getBoundingRect(
         element,
     };
 
-    if (!context.containerBoundingRectCacheTimer) {
-        context.containerBoundingRectCacheTimer = window.setTimeout(() => {
-            context.containerBoundingRectCacheTimer = undefined;
+    if (!isTimerActive(context.containerBoundingRectCacheTimer)) {
+        setTimer(
+            context.containerBoundingRectCacheTimer,
+            window,
+            () => {
+                for (const cId of Object.keys(
+                    context.containerBoundingRectCache
+                )) {
+                    delete context.containerBoundingRectCache[cId].element
+                        .__tabsterCacheId;
+                }
 
-            for (const cId of Object.keys(context.containerBoundingRectCache)) {
-                delete context.containerBoundingRectCache[cId].element
-                    .__tabsterCacheId;
-            }
-
-            context.containerBoundingRectCache = {};
-        }, 50);
+                context.containerBoundingRectCache = {};
+            },
+            50
+        );
     }
 
     return rect;
@@ -592,6 +596,90 @@ export function getRadioButtonGroup(
         buttons: new Set(radioButtons),
         checked: radioButtons.find((el) => el.checked),
     };
+}
+
+/**
+ * Opaque handle for a single setTimeout id. Use {@link setTimer},
+ * {@link clearTimer}, and {@link isTimerActive} to operate on it.
+ *
+ * Built as a free-function API rather than methods because the function names
+ * mangle to single characters (1 char per call site) while property names like
+ * `.clear` would be preserved by the minifier (~5 chars per call site).
+ */
+export interface Timer {
+    id: number | null;
+}
+
+export function createTimer(): Timer {
+    return { id: null };
+}
+
+/** Cancels any pending timer on `t` and schedules `callback` after `delay` ms. */
+export function setTimer(
+    t: Timer,
+    window: Window,
+    callback: () => void,
+    delay: number
+): void {
+    if (t.id !== null) {
+        window.clearTimeout(t.id);
+    }
+    t.id = window.setTimeout(() => {
+        t.id = null;
+        callback();
+    }, delay) as unknown as number;
+}
+
+/** Cancels the pending timer on `t`; no-op if there isn't one. */
+export function clearTimer(t: Timer, window: Window): void {
+    if (t.id !== null) {
+        window.clearTimeout(t.id);
+        t.id = null;
+    }
+}
+
+/** Whether `t` has a pending timer. */
+export function isTimerActive(t: Timer): boolean {
+    return t.id !== null;
+}
+
+/**
+ * Thin wrappers around `addEventListener` / `removeEventListener`. Their
+ * names get mangled to single chars by the minifier, while the inlined
+ * property accesses on `target` would not — so each call site shrinks by
+ * the difference between the helper's mangled name and the property name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyEventHandler = (event: any) => void;
+
+export function addListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | AddEventListenerOptions
+): void {
+    target?.addEventListener(type, handler, options);
+}
+
+export function removeListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | EventListenerOptions
+): void {
+    target?.removeEventListener(type, handler, options);
+}
+
+/**
+ * Thin wrapper around `target.dispatchEvent`. Returns `false` if the dispatch
+ * was canceled (preventDefault) OR if `target` is nullish — both shapes the
+ * existing call sites already handle the same way.
+ */
+export function dispatchEvent(
+    target: EventTarget | null | undefined,
+    event: Event
+): boolean {
+    return !!target && target.dispatchEvent(event);
 }
 
 /**

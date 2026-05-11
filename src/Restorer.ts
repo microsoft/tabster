@@ -18,7 +18,13 @@ import {
     RestorerRestoreFocusEvent,
     RestorerRestoreFocusEventName,
 } from "./Events.js";
-import { TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    dispatchEvent,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
@@ -33,8 +39,8 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
 
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
-            element?.addEventListener("focusout", this._onFocusOut);
-            element?.addEventListener("focusin", this._onFocusIn);
+            addListener(element, "focusout", this._onFocusOut);
+            addListener(element, "focusin", this._onFocusIn);
 
             // set hasFocus when the instance is created, in case focus has already moved within it
             this._hasFocus = dom.nodeContains(
@@ -47,12 +53,12 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     dispose(): void {
         if (this._props.type === RestorerTypes.Source) {
             const element = this._element?.get();
-            element?.removeEventListener("focusout", this._onFocusOut);
-            element?.removeEventListener("focusin", this._onFocusIn);
+            removeListener(element, "focusout", this._onFocusOut);
+            removeListener(element, "focusin", this._onFocusIn);
 
             if (this._hasFocus) {
                 const doc = this._tabster.getWindow().document;
-                doc.body.dispatchEvent(new RestorerRestoreFocusEvent());
+                dispatchEvent(doc.body, new RestorerRestoreFocusEvent());
             }
         }
     }
@@ -60,7 +66,7 @@ class Restorer extends TabsterPart<RestorerProps> implements RestorerInterface {
     private _onFocusOut = (e: FocusEvent) => {
         const element = this._element?.get();
         if (element && e.relatedTarget === null) {
-            element.dispatchEvent(new RestorerRestoreFocusEvent());
+            dispatchEvent(element, new RestorerRestoreFocusEvent());
         }
         if (
             element &&
@@ -140,7 +146,8 @@ export class RestorerAPI implements RestorerAPIType {
     constructor(tabster: TabsterCore) {
         this._tabster = tabster;
         this._getWindow = tabster.getWindow;
-        this._getWindow().addEventListener(
+        addListener(
+            this._getWindow(),
             RestorerRestoreFocusEventName,
             this._onRestoreFocus
         );
@@ -158,7 +165,8 @@ export class RestorerAPI implements RestorerAPIType {
 
         this._focusedElementState.cancelAsyncFocus(AsyncFocusSources.Restorer);
 
-        win.removeEventListener(
+        removeListener(
+            win,
             RestorerRestoreFocusEventName,
             this._onRestoreFocus
         );

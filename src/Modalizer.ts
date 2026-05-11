@@ -17,7 +17,14 @@ import {
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import { augmentAttribute, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    augmentAttribute,
+    dispatchEvent,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 let _wasFocusedCounter = 0;
@@ -304,7 +311,7 @@ export class Modalizer
                         ? new ModalizerActiveEvent(eventDetail)
                         : new ModalizerInactiveEvent(eventDetail);
 
-                    el.dispatchEvent(event);
+                    dispatchEvent(el, event);
 
                     if (event.defaultPrevented) {
                         defaultPrevented = true;
@@ -367,7 +374,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         const win = this._win();
-        win.addEventListener("keydown", this._onKeyDown, true);
+        addListener(win, "keydown", this._onKeyDown, true);
 
         tabster.queueInit(() => {
             this._tabster.focusedElement.subscribe(this._onFocus);
@@ -377,7 +384,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     dispose(): void {
         const win = this._win();
 
-        win.removeEventListener("keydown", this._onKeyDown, true);
+        removeListener(win, "keydown", this._onKeyDown, true);
 
         // Dispose all modalizers managed by the API
         Object.keys(this._modalizers).forEach((modalizerId) => {

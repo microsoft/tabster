@@ -15,8 +15,13 @@ import { UncontrolledAPI } from "./Uncontrolled.js";
 import { DummyInputObserver } from "./DummyInput.js";
 import {
     clearElementCache,
+    clearTimer,
     createElementTreeWalker,
+    createTimer,
     disposeInstanceContext,
+    isTimerActive,
+    setTimer,
+    type Timer,
 } from "./Utils.js";
 import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
@@ -51,10 +56,10 @@ class TabsterCore implements Types.TabsterCore {
     declare private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
     declare private _unobserve: (() => void) | undefined;
     declare private _win: WindowWithTabsterInstance | undefined;
-    private _forgetMemorizedTimer: number | undefined;
+    private _forgetMemorizedTimer: Timer;
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
-    private _initTimer: number | undefined;
+    private _initTimer: Timer;
     private _initQueue: (() => void)[] = [];
 
     _version: string = __VERSION__;
@@ -91,6 +96,8 @@ class TabsterCore implements Types.TabsterCore {
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = new WeakMap();
         this._win = win;
+        this._forgetMemorizedTimer = createTimer();
+        this._initTimer = createTimer();
 
         const getWindow = this.getWindow;
 
@@ -187,16 +194,13 @@ class TabsterCore implements Types.TabsterCore {
 
         const win = this._win;
 
-        win?.clearTimeout(this._initTimer);
-        delete this._initTimer;
-        this._initQueue = [];
-
-        this._forgetMemorizedElements = [];
-
-        if (win && this._forgetMemorizedTimer) {
-            win.clearTimeout(this._forgetMemorizedTimer);
-            delete this._forgetMemorizedTimer;
+        if (win) {
+            clearTimer(this._initTimer, win);
+            clearTimer(this._forgetMemorizedTimer, win);
         }
+
+        this._initQueue = [];
+        this._forgetMemorizedElements = [];
 
         this.outline?.dispose();
         this.crossOrigin?.dispose();
@@ -265,23 +269,29 @@ class TabsterCore implements Types.TabsterCore {
 
         this._forgetMemorizedElements.push(this._win.document.body);
 
-        if (this._forgetMemorizedTimer) {
+        if (isTimerActive(this._forgetMemorizedTimer)) {
             return;
         }
 
-        this._forgetMemorizedTimer = this._win.setTimeout(() => {
-            delete this._forgetMemorizedTimer;
-
-            for (
-                let el: HTMLElement | undefined =
-                    this._forgetMemorizedElements.shift();
-                el;
-                el = this._forgetMemorizedElements.shift()
-            ) {
-                clearElementCache(this.getWindow, el);
-                FocusedElementState.forgetMemorized(this.focusedElement, el);
-            }
-        }, 0);
+        setTimer(
+            this._forgetMemorizedTimer,
+            this._win,
+            () => {
+                for (
+                    let el: HTMLElement | undefined =
+                        this._forgetMemorizedElements.shift();
+                    el;
+                    el = this._forgetMemorizedElements.shift()
+                ) {
+                    clearElementCache(this.getWindow, el);
+                    FocusedElementState.forgetMemorized(
+                        this.focusedElement,
+                        el
+                    );
+                }
+            },
+            0
+        );
     }
 
     queueInit(callback: () => void): void {
@@ -291,11 +301,15 @@ class TabsterCore implements Types.TabsterCore {
 
         this._initQueue.push(callback);
 
-        if (!this._initTimer) {
-            this._initTimer = this._win?.setTimeout(() => {
-                delete this._initTimer;
-                this.drainInitQueue();
-            }, 0);
+        if (!isTimerActive(this._initTimer)) {
+            setTimer(
+                this._initTimer,
+                this._win,
+                () => {
+                    this.drainInitQueue();
+                },
+                0
+            );
         }
     }
 

@@ -26,7 +26,14 @@ import {
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import { getAdjacentElement, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    dispatchEvent,
+    getAdjacentElement,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 class GroupperDummyManager extends DummyInputManager {
@@ -451,9 +458,9 @@ export class GroupperAPI implements Types.GroupperAPI {
             this._onFocus(activeElement as HTMLElement);
         }
 
-        doc.addEventListener("mousedown", this._onMouseDown, true);
-        win.addEventListener("keydown", this._onKeyDown, true);
-        win.addEventListener(GroupperMoveFocusEventName, this._onMoveFocus);
+        addListener(doc, "mousedown", this._onMouseDown, true);
+        addListener(win, "keydown", this._onKeyDown, true);
+        addListener(win, GroupperMoveFocusEventName, this._onMoveFocus);
     };
 
     dispose(): void {
@@ -472,9 +479,9 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.document.removeEventListener("mousedown", this._onMouseDown, true);
-        win.removeEventListener("keydown", this._onKeyDown, true);
-        win.removeEventListener(GroupperMoveFocusEventName, this._onMoveFocus);
+        removeListener(win.document, "mousedown", this._onMouseDown, true);
+        removeListener(win, "keydown", this._onKeyDown, true);
+        removeListener(win, GroupperMoveFocusEventName, this._onMoveFocus);
 
         Object.keys(this._grouppers).forEach((groupperId) => {
             if (this._grouppers[groupperId]) {
@@ -656,7 +663,8 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,
@@ -716,7 +724,8 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,

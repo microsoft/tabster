@@ -12,7 +12,18 @@ import {
     DummyInputManager,
     DummyInputManagerPriorities,
 } from "./DummyInput.js";
-import { getElementUId, TabsterPart, type WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    clearTimer,
+    createTimer,
+    dispatchEvent,
+    getElementUId,
+    removeListener,
+    setTimer,
+    TabsterPart,
+    type Timer,
+    type WeakHTMLElement,
+} from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
 
 export interface WindowWithTabsterInstance extends Window {
@@ -105,7 +116,7 @@ export class Root
     declare private _dummyManager?: RootDummyManager;
     declare private _sys?: Types.SysProps;
     private _isFocused = false;
-    declare private _setFocusedTimer: number | undefined;
+    declare private _setFocusedTimer: Timer;
     declare private _onDispose: (root: Root) => void;
 
     constructor(
@@ -118,6 +129,7 @@ export class Root
         super(tabster, element, props);
 
         this._onDispose = onDispose;
+        this._setFocusedTimer = createTimer();
 
         const win = tabster.getWindow;
         this.uid = getElementUId(win, element);
@@ -131,8 +143,8 @@ export class Root
         const w = win();
         const doc = w.document;
 
-        doc.addEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
-        doc.addEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
+        addListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
+        addListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
         this._add();
     }
@@ -154,13 +166,10 @@ export class Root
         const win = this._tabster.getWindow();
         const doc = win.document;
 
-        doc.removeEventListener(KEYBORG_FOCUSIN, this._onFocusIn);
-        doc.removeEventListener(KEYBORG_FOCUSOUT, this._onFocusOut);
+        removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
+        removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
-        if (this._setFocusedTimer) {
-            win.clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        clearTimer(this._setFocusedTimer, win);
 
         this._dummyManager?.dispose();
         this._remove();
@@ -187,10 +196,8 @@ export class Root
     }
 
     private _setFocused = (hasFocused: boolean): void => {
-        if (this._setFocusedTimer) {
-            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        const win = this._tabster.getWindow();
+        clearTimer(this._setFocusedTimer, win);
 
         if (this._isFocused === hasFocused) {
             return;
@@ -202,17 +209,18 @@ export class Root
             if (hasFocused) {
                 this._isFocused = true;
                 this._dummyManager?.setTabbable(false);
-                element.dispatchEvent(new RootFocusEvent({ element }));
+                dispatchEvent(element, new RootFocusEvent({ element }));
             } else {
-                this._setFocusedTimer = this._tabster
-                    .getWindow()
-                    .setTimeout(() => {
-                        delete this._setFocusedTimer;
-
+                setTimer(
+                    this._setFocusedTimer,
+                    win,
+                    () => {
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
-                        element.dispatchEvent(new RootBlurEvent({ element }));
-                    }, 0);
+                        dispatchEvent(element, new RootBlurEvent({ element }));
+                    },
+                    0
+                );
             }
         }
     };
@@ -293,14 +301,14 @@ export class RootAPI implements Types.RootAPI {
             }
         } else if (!this._autoRootWaiting) {
             this._autoRootWaiting = true;
-            doc.addEventListener("readystatechange", this._autoRootCreate);
+            addListener(doc, "readystatechange", this._autoRootCreate);
         }
 
         return undefined;
     };
 
     private _autoRootUnwait(doc: Document): void {
-        doc.removeEventListener("readystatechange", this._autoRootCreate);
+        removeListener(doc, "readystatechange", this._autoRootCreate);
         this._autoRootWaiting = false;
     }
 

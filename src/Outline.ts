@@ -5,7 +5,7 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import type * as Types from "./Types.js";
-import { getBoundingRect } from "./Utils.js";
+import { addListener, getBoundingRect, removeListener } from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {
@@ -82,9 +82,10 @@ export class OutlineAPI implements Types.OutlineAPI {
 
         const win = this._win();
 
-        win.addEventListener("scroll", this._onScroll, true); // Capture!
+        addListener(win, "scroll", this._onScroll, true); // Capture!
 
-        win.document.addEventListener(
+        addListener(
+            win.document,
             "fullscreenchange",
             this._onFullScreenChanged
         );
@@ -123,9 +124,10 @@ export class OutlineAPI implements Types.OutlineAPI {
         );
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.removeEventListener("scroll", this._onScroll, true);
+        removeListener(win, "scroll", this._onScroll, true);
 
-        win.document.removeEventListener(
+        removeListener(
+            win.document,
             "fullscreenchange",
             this._onFullScreenChanged
         );
