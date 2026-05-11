@@ -14,7 +14,7 @@ import { RootAPI, type WindowWithTabsterInstance } from "./Root.js";
 import type * as Types from "./Types.js";
 import { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
 import { createUncontrolledAPI } from "./Uncontrolled.js";
-import { createDummyInputObserver } from "./DummyInput.js";
+import { getRootDummyInputs } from "./get/getRootDummyInputs.js";
 import {
     clearElementCache,
     clearTimer,
@@ -80,7 +80,8 @@ class TabsterCore implements Types.TabsterCore {
     declare root: Types.RootAPI;
     declare uncontrolled: Types.UncontrolledAPI;
     declare internal: Types.InternalAPI;
-    declare _dummyObserver: Types.DummyInputObserver;
+    /** Created by getRootDummyInputs; only present when dummy inputs are opted in. */
+    declare _dummyObserver?: Types.DummyInputObserver;
 
     // Extended APIs slots (groupper / mover / modalizer / outline / deloser /
     // observedElement / crossOrigin / restorer) are declared on
@@ -110,8 +111,6 @@ class TabsterCore implements Types.TabsterCore {
         );
         this.controlTab = props?.controlTab ?? true;
         this.rootDummyInputs = !!props?.rootDummyInputs;
-
-        this._dummyObserver = createDummyInputObserver(getWindow);
 
         this.getParent = props?.getParent ?? dom.getParentNode;
 
@@ -186,13 +185,6 @@ class TabsterCore implements Types.TabsterCore {
     dispose(): void {
         this.internal.stopObserver();
 
-        const win = this._win;
-
-        if (win) {
-            clearTimer(this._initTimer, win);
-            clearTimer(this._forgetMemorizedTimer, win);
-        }
-
         this._initQueue = [];
         this._forgetMemorizedElements = [];
 
@@ -208,8 +200,6 @@ class TabsterCore implements Types.TabsterCore {
         this.focusedElement.dispose();
         this.root.dispose();
 
-        this._dummyObserver.dispose();
-
         // Drop handler closures — they capture the API instances we just
         // disposed, and any post-dispose updateTabsterByAttribute call would
         // otherwise dispatch to those zombies.
@@ -220,7 +210,10 @@ class TabsterCore implements Types.TabsterCore {
         this._storage = new WeakMap();
         this._wrappers.clear();
 
+        const win = this._win;
         if (win) {
+            clearTimer(this._initTimer, win);
+            clearTimer(this._forgetMemorizedTimer, win);
             disposeInstanceContext(win);
             delete win.__tabsterInstance;
             delete this._win;
@@ -326,6 +319,14 @@ export function forceCleanup(tabster: Types.Tabster): void {
 
 /**
  * Creates an instance of Tabster, returns the current window instance if it already exists.
+ *
+ * `controlTab` defaults to `true`, which means root-level dummy inputs are
+ * required to drive Tab navigation. To avoid forcing every consumer through
+ * a separate `getRootDummyInputs` call when they want the default, we
+ * install dummy inputs automatically here whenever `controlTab` or
+ * `rootDummyInputs` is on. Apps that explicitly opt out
+ * (`createTabster(win, { controlTab: false })` and skip
+ * `getRootDummyInputs`) keep the slim, dummy-free bundle.
  */
 export function createTabster(
     win: Window,
@@ -333,15 +334,20 @@ export function createTabster(
 ): Types.Tabster {
     let tabster = getCurrentTabster(win as WindowWithTabsterInstance);
 
+    let wrapper: Types.Tabster;
     if (tabster) {
-        return tabster.createTabster(false, props);
+        wrapper = tabster.createTabster(false, props);
+    } else {
+        tabster = new TabsterCore(win, props);
+        (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
+        wrapper = tabster.createTabster();
     }
 
-    tabster = new TabsterCore(win, props);
+    if (tabster.controlTab || tabster.rootDummyInputs) {
+        getRootDummyInputs(wrapper);
+    }
 
-    (win as WindowWithTabsterInstance).__tabsterInstance = tabster;
-
-    return tabster.createTabster();
+    return wrapper;
 }
 
 /**
@@ -434,3 +440,4 @@ export { getMover } from "./get/getMover.js";
 export { getObservedElement } from "./get/getObservedElement.js";
 export { getOutline } from "./get/getOutline.js";
 export { getRestorer } from "./get/getRestorer.js";
+export { getRootDummyInputs } from "./get/getRootDummyInputs.js";
