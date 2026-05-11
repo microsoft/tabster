@@ -401,10 +401,12 @@ describe("Radio buttons", () => {
                 );
 
                 if (root) {
-                    const buttons =
-                        getTabsterTestVariables().core?.focusable.findAll({
+                    const buttons = getTabsterTestVariables().findAllFocusable!(
+                        getTabsterTestVariables().core!,
+                        {
                             container: root,
-                        });
+                        }
+                    );
 
                     return buttons?.map((button) =>
                         button.getAttribute("value")

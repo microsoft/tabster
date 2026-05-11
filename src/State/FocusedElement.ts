@@ -8,57 +8,33 @@ import {
     KEYBORG_FOCUSOUT,
     type KeyborgFocusInEvent,
     type KeyborgFocusOutEvent,
-    nativeFocus,
 } from "keyborg";
 
-import { Keys } from "../Keys.js";
-import { RootAPI } from "../Root.js";
+import {
+    _findDefaultFocusable,
+    _isElementVisible,
+    _isFocusable,
+} from "../Focusable.js";
+import { getTabsterContext } from "../Context.js";
+import { findNextTabbable } from "../Tab.js";
 import type * as Types from "../Types.js";
 import { AsyncFocusSources } from "../Consts.js";
+import { TabsterFocusInEvent, TabsterFocusOutEvent } from "../Events.js";
 import {
-    TabsterFocusInEvent,
-    TabsterFocusOutEvent,
-    TabsterMoveFocusEvent,
-} from "../Events.js";
-import { DummyInputManager } from "../DummyInput.js";
-import {
+    addListener,
+    clearTimer,
+    createTimer,
+    dispatchEvent,
     documentContains,
     getLastChild,
+    removeListener,
+    setTimer,
     shouldIgnoreFocus,
+    type Timer,
     WeakHTMLElement,
 } from "../Utils.js";
-import { getTabsterOnElement } from "../Instance.js";
 import { dom } from "../DOMAPI.js";
-import { Subscribable } from "./Subscribable.js";
-
-function getUncontrolledCompletelyContainer(
-    tabster: Types.TabsterCore,
-    element: HTMLElement
-): HTMLElement | undefined {
-    const getParent = tabster.getParent;
-    let el: HTMLElement | null = element;
-
-    do {
-        const uncontrolledOnElement = getTabsterOnElement(
-            tabster,
-            el
-        )?.uncontrolled;
-
-        if (
-            uncontrolledOnElement &&
-            tabster.uncontrolled.isUncontrolledCompletely(
-                el,
-                !!uncontrolledOnElement.completely
-            )
-        ) {
-            return el;
-        }
-
-        el = getParent(el) as HTMLElement | null;
-    } while (el);
-
-    return undefined;
-}
+import { createSubscribable } from "./Subscribable.js";
 
 const AsyncFocusIntentPriorityBySource = {
     [AsyncFocusSources.Restorer]: 0,
@@ -69,318 +45,92 @@ const AsyncFocusIntentPriorityBySource = {
 interface AsyncFocus {
     source: Types.AsyncFocusSource;
     callback: () => void;
-    timeout: number;
+    timer: Timer;
 }
 
-export class FocusedElementState
-    extends Subscribable<HTMLElement | undefined, Types.FocusedElementDetail>
-    implements Types.FocusedElementState
-{
-    private static _lastResetElement: WeakHTMLElement | undefined;
-    private static _isTabbingTimer: number | undefined;
-    static isTabbing = false;
-
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _nextVal:
+/**
+ * Internal shape of the focused-element state. Public surface is
+ * deliberately slim (just `dispose`, `subscribe*`/`unsubscribe`,
+ * `getFocusedElement`, `focus`); rarely-touched helpers like `focusFirst`,
+ * `resetFocus`, `requestAsyncFocus`, etc. live as module-level functions
+ * (`_focusFirst`, `_resetFocus`, ...) so they tree-shake out of fixtures
+ * that don't pull a feature module that needs them. The cast back to this
+ * interface lets those helpers reach the few stateful slots
+ * (`_lastVal`, `_asyncFocus`, `_nextVal`) without paying for them on every
+ * api consumer that doesn't.
+ */
+interface FocusedElementStateInternal extends Types.FocusedElementState {
+    _nextVal:
         | {
               element: WeakHTMLElement | undefined;
               detail: Types.FocusedElementDetail;
           }
         | undefined;
-    private _lastVal: WeakHTMLElement | undefined;
-    private _asyncFocus?: AsyncFocus;
+    _lastVal: WeakHTMLElement | undefined;
+    _asyncFocus: AsyncFocus | undefined;
+}
 
-    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
-        super();
+let _lastResetElement: WeakHTMLElement | undefined;
 
-        this._tabster = tabster;
-        this._win = getWindow;
-        tabster.queueInit(this._init);
+function setOrRemoveAttribute(
+    element: HTMLElement,
+    name: string,
+    value: string | null
+): void {
+    if (value === null) {
+        element.removeAttribute(name);
+    } else {
+        element.setAttribute(name, value);
     }
+}
 
-    private _init = (): void => {
-        const win = this._win();
-        const doc = win.document;
+export function createFocusedElementState(
+    tabster: Types.TabsterCore,
+    getWindow: Types.GetWindow
+): Types.FocusedElementState {
+    const sub = createSubscribable<
+        HTMLElement | undefined,
+        Types.FocusedElementDetail
+    >();
+    let nextVal:
+        | {
+              element: WeakHTMLElement | undefined;
+              detail: Types.FocusedElementDetail;
+          }
+        | undefined;
+    let lastVal: WeakHTMLElement | undefined;
+    let asyncFocus: AsyncFocus | undefined;
 
-        // Add these event listeners as capture - we want Tabster to run before user event handlers
-        doc.addEventListener(
-            KEYBORG_FOCUSIN,
-            this._onFocusIn as EventListener,
-            true
-        );
-        doc.addEventListener(
-            KEYBORG_FOCUSOUT,
-            this._onFocusOut as EventListener,
-            true
-        );
-        win.addEventListener("keydown", this._onKeyDown, true);
+    const setVal = (
+        val: HTMLElement | undefined,
+        detail: Types.FocusedElementDetail
+    ): void => {
+        sub.setVal(val, detail);
 
-        const activeElement = dom.getActiveElement(doc);
-
-        if (activeElement && activeElement !== doc.body) {
-            this._setFocusedElement(activeElement as HTMLElement);
+        if (val) {
+            lastVal = new WeakHTMLElement(val);
         }
-
-        this.subscribe(this._onChanged);
     };
 
-    dispose(): void {
-        super.dispose();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const validateFocusedElement = (element: HTMLElement): void => {
+        // TODO: Make sure this is not needed anymore and write tests.
+    };
 
-        const win = this._win();
-        const doc = win.document;
-
-        doc.removeEventListener(
-            KEYBORG_FOCUSIN,
-            this._onFocusIn as EventListener,
-            true
-        );
-        doc.removeEventListener(
-            KEYBORG_FOCUSOUT,
-            this._onFocusOut as EventListener,
-            true
-        );
-        win.removeEventListener("keydown", this._onKeyDown, true);
-
-        this.unsubscribe(this._onChanged);
-
-        const asyncFocus = this._asyncFocus;
-        if (asyncFocus) {
-            win.clearTimeout(asyncFocus.timeout);
-            delete this._asyncFocus;
-        }
-
-        delete FocusedElementState._lastResetElement;
-
-        delete this._nextVal;
-        delete this._lastVal;
-    }
-
-    static forgetMemorized(
-        instance: Types.FocusedElementState,
-        parent: HTMLElement
-    ): void {
-        let wel = FocusedElementState._lastResetElement;
-        let el = wel && wel.get();
-        if (el && dom.nodeContains(parent, el)) {
-            delete FocusedElementState._lastResetElement;
-        }
-
-        el = (instance as FocusedElementState)._nextVal?.element?.get();
-        if (el && dom.nodeContains(parent, el)) {
-            delete (instance as FocusedElementState)._nextVal;
-        }
-
-        wel = (instance as FocusedElementState)._lastVal;
-        el = wel && wel.get();
-        if (el && dom.nodeContains(parent, el)) {
-            delete (instance as FocusedElementState)._lastVal;
-        }
-    }
-
-    getFocusedElement(): HTMLElement | undefined {
-        return this.getVal();
-    }
-
-    getLastFocusedElement(): HTMLElement | undefined {
-        let el = this._lastVal?.get();
-
-        if (!el || (el && !documentContains(el.ownerDocument, el))) {
-            this._lastVal = el = undefined;
-        }
-
-        return el;
-    }
-
-    focus(
-        element: HTMLElement,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean,
-        preventScroll?: boolean
-    ): boolean {
-        if (
-            !this._tabster.focusable.isFocusable(
-                element,
-                noFocusedProgrammaticallyFlag,
-                false,
-                noAccessibleCheck
-            )
-        ) {
-            return false;
-        }
-
-        element.focus({ preventScroll });
-
-        return true;
-    }
-
-    focusDefault(container: HTMLElement): boolean {
-        const el = this._tabster.focusable.findDefault({ container });
-
-        if (el) {
-            this._tabster.focusedElement.focus(el);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    getFirstOrLastTabbable(
-        isFirst: boolean,
-        props: Pick<
-            Types.FindFocusableProps,
-            "container" | "ignoreAccessibility"
-        >
-    ): HTMLElement | undefined {
-        const { container, ignoreAccessibility } = props;
-        let toFocus: HTMLElement | null | undefined;
-
-        if (container) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, container);
-
-            if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
-                    this._tabster,
-                    ctx,
-                    container,
-                    undefined,
-                    undefined,
-                    !isFirst,
-                    ignoreAccessibility
-                )?.element;
-            }
-        }
-
-        if (toFocus && !dom.nodeContains(container, toFocus)) {
-            toFocus = undefined;
-        }
-
-        return toFocus || undefined;
-    }
-
-    private _focusFirstOrLast(
-        isFirst: boolean,
-        props: Types.FindFirstProps
-    ): boolean {
-        const toFocus = this.getFirstOrLastTabbable(isFirst, props);
-
-        if (toFocus) {
-            this.focus(toFocus, false, true);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    focusFirst(props: Types.FindFirstProps): boolean {
-        return this._focusFirstOrLast(true, props);
-    }
-
-    focusLast(props: Types.FindFirstProps): boolean {
-        return this._focusFirstOrLast(false, props);
-    }
-
-    resetFocus(container: HTMLElement): boolean {
-        if (!this._tabster.focusable.isVisible(container)) {
-            return false;
-        }
-
-        if (!this._tabster.focusable.isFocusable(container, true, true, true)) {
-            const prevTabIndex = container.getAttribute("tabindex");
-            const prevAriaHidden = container.getAttribute("aria-hidden");
-
-            container.tabIndex = -1;
-            container.setAttribute("aria-hidden", "true");
-
-            FocusedElementState._lastResetElement = new WeakHTMLElement(
-                container
-            );
-
-            this.focus(container, true, true);
-
-            this._setOrRemoveAttribute(container, "tabindex", prevTabIndex);
-            this._setOrRemoveAttribute(
-                container,
-                "aria-hidden",
-                prevAriaHidden
-            );
-        } else {
-            this.focus(container);
-        }
-
-        return true;
-    }
-
-    requestAsyncFocus(
-        source: Types.AsyncFocusSource,
-        callback: () => void,
-        delay: number
-    ): void {
-        const win = this._tabster.getWindow();
-        const currentAsyncFocus = this._asyncFocus;
-
-        if (currentAsyncFocus) {
-            if (
-                AsyncFocusIntentPriorityBySource[source] >
-                AsyncFocusIntentPriorityBySource[currentAsyncFocus.source]
-            ) {
-                // Previously registered intent has higher priority.
-                return;
-            }
-
-            // New intent has higher priority.
-            win.clearTimeout(currentAsyncFocus.timeout);
-        }
-
-        this._asyncFocus = {
-            source,
-            callback,
-            timeout: win.setTimeout(() => {
-                this._asyncFocus = undefined;
-                callback();
-            }, delay),
-        };
-    }
-
-    cancelAsyncFocus(source: Types.AsyncFocusSource): void {
-        const asyncFocus = this._asyncFocus;
-
-        if (asyncFocus?.source === source) {
-            this._tabster.getWindow().clearTimeout(asyncFocus.timeout);
-            this._asyncFocus = undefined;
-        }
-    }
-
-    private _setOrRemoveAttribute(
-        element: HTMLElement,
-        name: string,
-        value: string | null
-    ): void {
-        if (value === null) {
-            element.removeAttribute(name);
-        } else {
-            element.setAttribute(name, value);
-        }
-    }
-
-    private _setFocusedElement(
+    const setFocusedElement = (
         element?: HTMLElement,
         relatedTarget?: HTMLElement,
         isFocusedProgrammatically?: boolean
-    ): void {
-        if (this._tabster._noop) {
+    ): void => {
+        if (tabster._noop) {
             return;
         }
 
         const detail: Types.FocusedElementDetail = { relatedTarget };
 
         if (element) {
-            const lastResetElement =
-                FocusedElementState._lastResetElement?.get();
-            FocusedElementState._lastResetElement = undefined;
+            const lastResetElement = _lastResetElement?.get();
+            _lastResetElement = undefined;
 
             if (lastResetElement === element || shouldIgnoreFocus(element)) {
                 return;
@@ -388,7 +138,7 @@ export class FocusedElementState
 
             detail.isFocusedProgrammatically = isFocusedProgrammatically;
 
-            const ctx = RootAPI.getTabsterContext(this._tabster, element);
+            const ctx = getTabsterContext(tabster, element);
 
             const modalizerId = ctx?.modalizer?.userId;
 
@@ -397,40 +147,29 @@ export class FocusedElementState
             }
         }
 
-        const nextVal = (this._nextVal = {
+        const tracked = (nextVal = {
             element: element ? new WeakHTMLElement(element) : undefined,
             detail,
         });
 
-        if (element && element !== this._val) {
-            this._validateFocusedElement(element);
+        if (element && element !== sub.getVal()) {
+            validateFocusedElement(element);
         }
 
-        // _validateFocusedElement() might cause the refocus which will trigger
+        // validateFocusedElement() might cause the refocus which will trigger
         // another call to this function. Making sure that the value is correct.
-        if (this._nextVal === nextVal) {
-            this.setVal(element, detail);
+        if (nextVal === tracked) {
+            setVal(element, detail);
         }
 
-        this._nextVal = undefined;
-    }
+        nextVal = undefined;
+    };
 
-    protected setVal(
-        val: HTMLElement | undefined,
-        detail: Types.FocusedElementDetail
-    ): void {
-        super.setVal(val, detail);
-
-        if (val) {
-            this._lastVal = new WeakHTMLElement(val);
-        }
-    }
-
-    private _onFocusIn = (e: KeyborgFocusInEvent): void => {
+    const onFocusIn = (e: KeyborgFocusInEvent): void => {
         const target = e.composedPath()[0] as HTMLElement;
 
         if (target) {
-            this._setFocusedElement(
+            setFocusedElement(
                 target,
                 e.detail.relatedTarget as HTMLElement | undefined,
                 e.detail.isFocusedProgrammatically
@@ -438,303 +177,473 @@ export class FocusedElementState
         }
     };
 
-    private _onFocusOut = (e: KeyborgFocusOutEvent): void => {
-        this._setFocusedElement(
+    const onFocusOut = (e: KeyborgFocusOutEvent): void => {
+        setFocusedElement(
             undefined,
             e.detail?.originalEvent.relatedTarget as HTMLElement | undefined
         );
     };
 
-    static findNextTabbable(
-        tabster: Types.TabsterCore,
-        ctx: Types.TabsterContext,
-        container?: HTMLElement,
-        currentElement?: HTMLElement,
-        referenceElement?: HTMLElement,
-        isBackward?: boolean,
-        ignoreAccessibility?: boolean
-    ): Types.NextTabbable | null {
-        const actualContainer = container || ctx.root.getElement();
-
-        if (!actualContainer) {
-            return null;
-        }
-
-        let next: Types.NextTabbable | null = null;
-
-        const isTabbingTimer = FocusedElementState._isTabbingTimer;
-        const win = tabster.getWindow();
-
-        if (isTabbingTimer) {
-            win.clearTimeout(isTabbingTimer);
-        }
-
-        FocusedElementState.isTabbing = true;
-        FocusedElementState._isTabbingTimer = win.setTimeout(() => {
-            delete FocusedElementState._isTabbingTimer;
-            FocusedElementState.isTabbing = false;
-        }, 0);
-
-        const modalizer = ctx.modalizer;
-        const groupper = ctx.groupper;
-        const mover = ctx.mover;
-
-        const callFindNext = (
-            what: Types.Groupper | Types.Mover | Types.Modalizer
-        ) => {
-            next = what.findNextTabbable(
-                currentElement,
-                referenceElement,
-                isBackward,
-                ignoreAccessibility
-            );
-
-            if (currentElement && !next?.element) {
-                const parentElement =
-                    what !== modalizer &&
-                    dom.getParentElement(what.getElement());
-
-                if (parentElement) {
-                    const parentCtx = RootAPI.getTabsterContext(
-                        tabster,
-                        currentElement,
-                        { referenceElement: parentElement }
-                    );
-
-                    if (parentCtx) {
-                        const currentScopeElement = what.getElement();
-                        const newCurrent = isBackward
-                            ? currentScopeElement
-                            : (currentScopeElement &&
-                                  getLastChild(currentScopeElement)) ||
-                              currentScopeElement;
-
-                        if (newCurrent) {
-                            next = FocusedElementState.findNextTabbable(
-                                tabster,
-                                parentCtx,
-                                container,
-                                newCurrent,
-                                parentElement,
-                                isBackward,
-                                ignoreAccessibility
-                            );
-
-                            if (next) {
-                                next.outOfDOMOrder = true;
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        if (groupper && mover) {
-            callFindNext(ctx.groupperBeforeMover ? groupper : mover);
-        } else if (groupper) {
-            callFindNext(groupper);
-        } else if (mover) {
-            callFindNext(mover);
-        } else if (modalizer) {
-            callFindNext(modalizer);
-        } else {
-            const findProps: Types.FindNextProps = {
-                container: actualContainer,
-                currentElement,
-                referenceElement,
-                ignoreAccessibility,
-                useActiveModalizer: true,
-            };
-
-            const findPropsOut: Types.FindFocusableOutputProps = {};
-
-            const nextElement = tabster.focusable[
-                isBackward ? "findPrev" : "findNext"
-            ](findProps, findPropsOut);
-
-            next = {
-                element: nextElement,
-                outOfDOMOrder: findPropsOut.outOfDOMOrder,
-                uncontrolled: findPropsOut.uncontrolled,
-            };
-        }
-
-        return next;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private _validateFocusedElement = (element: HTMLElement): void => {
-        // TODO: Make sure this is not needed anymore and write tests.
-    };
-
-    private _onKeyDown = (event: KeyboardEvent): void => {
-        if (event.key !== Keys.Tab || event.ctrlKey) {
-            return;
-        }
-
-        const currentElement = this.getVal();
-
-        if (
-            !currentElement ||
-            !currentElement.ownerDocument ||
-            currentElement.contentEditable === "true"
-        ) {
-            return;
-        }
-
-        const tabster = this._tabster;
-        const controlTab = tabster.controlTab;
-        const ctx = RootAPI.getTabsterContext(tabster, currentElement);
-
-        if (!ctx || ctx.ignoreKeydown(event)) {
-            return;
-        }
-
-        const isBackward = event.shiftKey;
-
-        const next = FocusedElementState.findNextTabbable(
-            tabster,
-            ctx,
-            undefined,
-            currentElement,
-            undefined,
-            isBackward,
-            true
-        );
-
-        const rootElement = ctx.root.getElement();
-
-        if (!rootElement) {
-            return;
-        }
-
-        const nextElement = next?.element;
-        const uncontrolledCompletelyContainer =
-            getUncontrolledCompletelyContainer(tabster, currentElement);
-
-        if (nextElement) {
-            const nextUncontrolled = next.uncontrolled;
-
-            if (
-                ctx.uncontrolled ||
-                dom.nodeContains(nextUncontrolled, currentElement)
-            ) {
-                if (
-                    (!next.outOfDOMOrder &&
-                        nextUncontrolled === ctx.uncontrolled) ||
-                    (uncontrolledCompletelyContainer &&
-                        !dom.nodeContains(
-                            uncontrolledCompletelyContainer,
-                            nextElement
-                        ))
-                ) {
-                    // Nothing to do, everything will be done by the browser or something
-                    // that controls the uncontrolled area.
-                    return;
-                }
-
-                // We are in uncontrolled area. We allow whatever controls it to move
-                // focus, but we add a phantom dummy to make sure the focus is moved
-                // to the correct place if the uncontrolled area allows default action.
-                // We only need that in the controlled mode, because in uncontrolled
-                // mode we have dummy inputs around everything that redirects focus.
-                DummyInputManager.addPhantomDummyWithTarget(
-                    tabster,
-                    currentElement,
-                    isBackward,
-                    nextElement
-                );
-
-                return;
-            }
-
-            if (
-                (nextUncontrolled &&
-                    tabster.focusable.isVisible(nextUncontrolled)) ||
-                (nextElement.tagName === "IFRAME" &&
-                    tabster.focusable.isVisible(nextElement))
-            ) {
-                // For iframes and uncontrolled areas we always want to use default action to
-                // move focus into.
-                if (
-                    rootElement.dispatchEvent(
-                        new TabsterMoveFocusEvent({
-                            by: "root",
-                            owner: rootElement,
-                            next: nextElement,
-                            relatedEvent: event,
-                        })
-                    )
-                ) {
-                    DummyInputManager.moveWithPhantomDummy(
-                        tabster,
-                        nextUncontrolled ?? nextElement,
-                        false,
-                        isBackward,
-                        event
-                    );
-                }
-
-                return;
-            }
-
-            if (controlTab || next?.outOfDOMOrder) {
-                if (
-                    rootElement.dispatchEvent(
-                        new TabsterMoveFocusEvent({
-                            by: "root",
-                            owner: rootElement,
-                            next: nextElement,
-                            relatedEvent: event,
-                        })
-                    )
-                ) {
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-
-                    nativeFocus(nextElement);
-                }
-            } else {
-                // We are in uncontrolled mode and the next element is in DOM order.
-                // Just allow the default action.
-            }
-        } else {
-            if (
-                !uncontrolledCompletelyContainer &&
-                rootElement.dispatchEvent(
-                    new TabsterMoveFocusEvent({
-                        by: "root",
-                        owner: rootElement,
-                        next: null,
-                        relatedEvent: event,
-                    })
-                )
-            ) {
-                ctx.root.moveOutWithDefaultAction(isBackward, event);
-            }
-        }
-    };
-
-    _onChanged = (
+    const onChanged = (
         element: HTMLElement | undefined,
         detail: Types.FocusedElementDetail
     ): void => {
         if (element) {
-            element.dispatchEvent(new TabsterFocusInEvent(detail));
+            dispatchEvent(element, new TabsterFocusInEvent(detail));
         } else {
-            const last = this._lastVal?.get();
+            const last = lastVal?.get();
 
             if (last) {
                 const d = { ...detail };
-                const lastCtx = RootAPI.getTabsterContext(this._tabster, last);
+                const lastCtx = getTabsterContext(tabster, last);
                 const modalizerId = lastCtx?.modalizer?.userId;
 
                 if (modalizerId) {
                     d.modalizerId = modalizerId;
                 }
 
-                last.dispatchEvent(new TabsterFocusOutEvent(d));
+                dispatchEvent(last, new TabsterFocusOutEvent(d));
             }
         }
     };
+
+    tabster.queueInit(() => {
+        const win = getWindow();
+        const doc = win.document;
+
+        // Add these event listeners as capture - we want Tabster to run before user event handlers
+        addListener(doc, KEYBORG_FOCUSIN, onFocusIn as EventListener, true);
+        addListener(doc, KEYBORG_FOCUSOUT, onFocusOut as EventListener, true);
+
+        const activeElement = dom.getActiveElement(doc);
+
+        if (activeElement && activeElement !== doc.body) {
+            setFocusedElement(activeElement as HTMLElement);
+        }
+
+        sub.subscribe(onChanged);
+    });
+
+    const api: FocusedElementStateInternal = {
+        get _nextVal() {
+            return nextVal;
+        },
+        set _nextVal(value) {
+            nextVal = value;
+        },
+        get _lastVal() {
+            return lastVal;
+        },
+        set _lastVal(value) {
+            lastVal = value;
+        },
+        get _asyncFocus() {
+            return asyncFocus;
+        },
+        set _asyncFocus(value) {
+            asyncFocus = value;
+        },
+
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+
+        dispose(): void {
+            sub.dispose();
+
+            const win = getWindow();
+            const doc = win.document;
+
+            removeListener(
+                doc,
+                KEYBORG_FOCUSIN,
+                onFocusIn as EventListener,
+                true
+            );
+            removeListener(
+                doc,
+                KEYBORG_FOCUSOUT,
+                onFocusOut as EventListener,
+                true
+            );
+
+            sub.unsubscribe(onChanged);
+
+            if (asyncFocus) {
+                clearTimer(asyncFocus.timer, win);
+                asyncFocus = undefined;
+            }
+
+            _lastResetElement = undefined;
+
+            nextVal = undefined;
+            lastVal = undefined;
+        },
+
+        getFocusedElement(): HTMLElement | undefined {
+            return sub.getVal();
+        },
+
+        focus(
+            element: HTMLElement,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean,
+            preventScroll?: boolean
+        ): boolean {
+            if (
+                !_isFocusable(
+                    tabster,
+                    element,
+                    noFocusedProgrammaticallyFlag,
+                    false,
+                    noAccessibleCheck
+                )
+            ) {
+                return false;
+            }
+
+            element.focus({ preventScroll });
+
+            return true;
+        },
+    };
+
+    return api;
+}
+
+/**
+ * Forgets any focused-element references that point inside `parent` —
+ * called by `Tabster.forceCleanup` when a subtree is being torn down so
+ * we don't keep dangling weakrefs.
+ */
+export function _forgetMemorized(
+    instance: Types.FocusedElementState,
+    parent: HTMLElement
+): void {
+    const internal = instance as FocusedElementStateInternal;
+
+    let wel = _lastResetElement;
+    let el = wel && wel.get();
+    if (el && dom.nodeContains(parent, el)) {
+        _lastResetElement = undefined;
+    }
+
+    el = internal._nextVal?.element?.get();
+    if (el && dom.nodeContains(parent, el)) {
+        internal._nextVal = undefined;
+    }
+
+    wel = internal._lastVal;
+    el = wel && wel.get();
+    if (el && dom.nodeContains(parent, el)) {
+        internal._lastVal = undefined;
+    }
+}
+
+/**
+ * Parent-context fallback used by Mover/Groupper findNext strategies — when
+ * the part itself yields nothing, walk up to the parent context and recurse.
+ * Exported so the bytes only join the bundle when getMover or getGroupper is
+ * imported. Modalizer is a hard trap and never calls this.
+ */
+export function findNextTabbableWithParentFallback(
+    tabster: Types.TabsterCore,
+    part: Types.TabsterPartWithFindNextTabbable & {
+        getElement(): HTMLElement | undefined;
+    },
+    container: HTMLElement | undefined,
+    currentElement: HTMLElement | undefined,
+    referenceElement: HTMLElement | undefined,
+    isBackward: boolean | undefined,
+    ignoreAccessibility: boolean | undefined
+): Types.NextTabbable | null {
+    let next = part.findNextTabbable(
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+
+    if (currentElement && !next?.element) {
+        const parentElement = dom.getParentElement(part.getElement());
+
+        if (parentElement) {
+            const parentCtx = getTabsterContext(tabster, currentElement, {
+                referenceElement: parentElement,
+            });
+
+            if (parentCtx) {
+                const currentScopeElement = part.getElement();
+                const newCurrent = isBackward
+                    ? currentScopeElement
+                    : (currentScopeElement &&
+                          getLastChild(currentScopeElement)) ||
+                      currentScopeElement;
+
+                if (newCurrent) {
+                    next = findNextTabbable(
+                        tabster,
+                        parentCtx,
+                        container,
+                        newCurrent,
+                        parentElement,
+                        isBackward,
+                        ignoreAccessibility
+                    );
+
+                    if (next) {
+                        next.outOfDOMOrder = true;
+                    }
+                }
+            }
+        }
+    }
+
+    return next;
+}
+
+// -----------------------------------------------------------------------
+// Module-level focused-element helpers
+//
+// These used to live as methods on the `api` object returned by
+// `createFocusedElementState`. Object methods aren't tree-shakeable, so
+// they shipped to every consumer that pulled `tabster.focusedElement`. As
+// module-level functions they only enter the bundle when something
+// imports them — typically a feature module (Deloser/Modalizer/Groupper/
+// RootDummyManager). Internal callers use the `_`-prefixed forms; public
+// consumers use the `Tabster`-wrapper variants exported below.
+// -----------------------------------------------------------------------
+
+/** @internal */
+export function _getLastFocusedElement(
+    tabster: Types.TabsterCore
+): HTMLElement | undefined {
+    const state = tabster.focusedElement as FocusedElementStateInternal;
+    let el = state._lastVal?.get();
+
+    if (!el || (el && !documentContains(el.ownerDocument, el))) {
+        state._lastVal = undefined;
+        el = undefined;
+    }
+
+    return el;
+}
+
+/** @internal */
+export function _getFirstOrLastTabbable(
+    tabster: Types.TabsterCore,
+    isFirst: boolean,
+    props: Pick<Types.FindFocusableProps, "container" | "ignoreAccessibility">
+): HTMLElement | undefined {
+    const { container, ignoreAccessibility } = props;
+    let toFocus: HTMLElement | null | undefined;
+
+    if (container) {
+        const ctx = getTabsterContext(tabster, container);
+
+        if (ctx) {
+            toFocus = findNextTabbable(
+                tabster,
+                ctx,
+                container,
+                undefined,
+                undefined,
+                !isFirst,
+                ignoreAccessibility
+            )?.element;
+        }
+    }
+
+    if (toFocus && !dom.nodeContains(container, toFocus)) {
+        toFocus = undefined;
+    }
+
+    return toFocus || undefined;
+}
+
+/** @internal */
+export function _focusFirst(
+    tabster: Types.TabsterCore,
+    props: Types.FindFirstProps
+): boolean {
+    const toFocus = _getFirstOrLastTabbable(tabster, true, props);
+
+    if (toFocus) {
+        tabster.focusedElement.focus(toFocus, false, true);
+        return true;
+    }
+
+    return false;
+}
+
+/** @internal */
+export function _focusLast(
+    tabster: Types.TabsterCore,
+    props: Types.FindFirstProps
+): boolean {
+    const toFocus = _getFirstOrLastTabbable(tabster, false, props);
+
+    if (toFocus) {
+        tabster.focusedElement.focus(toFocus, false, true);
+        return true;
+    }
+
+    return false;
+}
+
+/** @internal */
+export function _focusDefault(
+    tabster: Types.TabsterCore,
+    container: HTMLElement
+): boolean {
+    const el = _findDefaultFocusable(tabster, { container });
+
+    if (el) {
+        tabster.focusedElement.focus(el);
+        return true;
+    }
+
+    return false;
+}
+
+/** @internal */
+export function _resetFocus(
+    tabster: Types.TabsterCore,
+    container: HTMLElement
+): boolean {
+    if (!_isElementVisible(container)) {
+        return false;
+    }
+
+    if (!_isFocusable(tabster, container, true, true, true)) {
+        const prevTabIndex = container.getAttribute("tabindex");
+        const prevAriaHidden = container.getAttribute("aria-hidden");
+
+        container.tabIndex = -1;
+        container.setAttribute("aria-hidden", "true");
+
+        _lastResetElement = new WeakHTMLElement(container);
+
+        tabster.focusedElement.focus(container, true, true);
+
+        setOrRemoveAttribute(container, "tabindex", prevTabIndex);
+        setOrRemoveAttribute(container, "aria-hidden", prevAriaHidden);
+    } else {
+        tabster.focusedElement.focus(container);
+    }
+
+    return true;
+}
+
+/** @internal */
+export function _requestAsyncFocus(
+    tabster: Types.TabsterCore,
+    source: Types.AsyncFocusSource,
+    callback: () => void,
+    delay: number
+): void {
+    const state = tabster.focusedElement as FocusedElementStateInternal;
+    const win = tabster.getWindow();
+    const current = state._asyncFocus;
+
+    if (current) {
+        if (
+            AsyncFocusIntentPriorityBySource[source] >
+            AsyncFocusIntentPriorityBySource[current.source]
+        ) {
+            // Previously registered intent has higher priority.
+            return;
+        }
+
+        // New intent has higher priority.
+        clearTimer(current.timer, win);
+    }
+
+    const timer = createTimer();
+    state._asyncFocus = {
+        source,
+        callback,
+        timer,
+    };
+    setTimer(
+        timer,
+        win,
+        () => {
+            state._asyncFocus = undefined;
+            callback();
+        },
+        delay
+    );
+}
+
+/** @internal */
+export function _cancelAsyncFocus(
+    tabster: Types.TabsterCore,
+    source: Types.AsyncFocusSource
+): void {
+    const state = tabster.focusedElement as FocusedElementStateInternal;
+
+    if (state._asyncFocus?.source === source) {
+        clearTimer(state._asyncFocus.timer, tabster.getWindow());
+        state._asyncFocus = undefined;
+    }
+}
+
+// -----------------------------------------------------------------------
+// Public API — take the `Tabster` wrapper. Re-exported from `index.ts`.
+// -----------------------------------------------------------------------
+
+/**
+ * Returns the last element that was focused via Tabster, if it is still in
+ * the document. Used to be `tabster.focusedElement.getLastFocusedElement()`.
+ */
+export function getLastFocusedElement(
+    tabster: Types.Tabster
+): HTMLElement | undefined {
+    return _getLastFocusedElement(tabster.core);
+}
+
+/**
+ * Focuses the first tabbable element in `props.container`. Used to be
+ * `tabster.focusedElement.focusFirst(props)`.
+ */
+export function focusFirst(
+    tabster: Types.Tabster,
+    props: Types.FindFirstProps
+): boolean {
+    return _focusFirst(tabster.core, props);
+}
+
+/**
+ * Focuses the last tabbable element in `props.container`. Used to be
+ * `tabster.focusedElement.focusLast(props)`.
+ */
+export function focusLast(
+    tabster: Types.Tabster,
+    props: Types.FindFirstProps
+): boolean {
+    return _focusLast(tabster.core, props);
+}
+
+/**
+ * Focuses the element marked as `[isDefault]` within `container`. Used to
+ * be `tabster.focusedElement.focusDefault(container)`.
+ */
+export function focusDefault(
+    tabster: Types.Tabster,
+    container: HTMLElement
+): boolean {
+    return _focusDefault(tabster.core, container);
+}
+
+/**
+ * Focuses `container` itself, applying a temporary `tabindex=-1` /
+ * `aria-hidden=true` if it isn't already focusable. Used to be
+ * `tabster.focusedElement.resetFocus(container)`.
+ */
+export function resetFocus(
+    tabster: Types.Tabster,
+    container: HTMLElement
+): boolean {
+    return _resetFocus(tabster.core, container);
 }
