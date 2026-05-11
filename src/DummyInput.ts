@@ -17,7 +17,14 @@ import {
 } from "./Consts.js";
 import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
-import { hasSubFocusable, makeFocusIgnored, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    dispatchEvent,
+    hasSubFocusable,
+    makeFocusIgnored,
+    removeListener,
+    WeakHTMLElement,
+} from "./Utils.js";
 
 const _updateDummyInputsTimeout = 100;
 
@@ -91,8 +98,8 @@ export class DummyInput {
         this._isPhantom = props.isPhantom ?? false;
         this._fixedTarget = fixedTarget;
 
-        input.addEventListener("focusin", this._focusIn);
-        input.addEventListener("focusout", this._focusOut);
+        addListener(input, "focusin", this._focusIn);
+        addListener(input, "focusout", this._focusOut);
 
         (input as HTMLElementWithDummyContainer).__tabsterDummyContainer =
             element;
@@ -130,8 +137,8 @@ export class DummyInput {
         delete this.onFocusOut;
         delete this.input;
 
-        input.removeEventListener("focusin", this._focusIn);
-        input.removeEventListener("focusout", this._focusOut);
+        removeListener(input, "focusin", this._focusIn);
+        removeListener(input, "focusout", this._focusOut);
 
         delete (input as HTMLElementWithDummyContainer).__tabsterDummyContainer;
 
@@ -404,7 +411,9 @@ export class DummyInputManager {
             }
 
             if (
-                parent?.dispatchEvent(
+                parent &&
+                dispatchEvent(
+                    parent,
                     new TabsterMoveFocusEvent({
                         by: "root",
                         owner: parent,
@@ -786,7 +795,7 @@ class DummyInputManagerCore {
                 .__tabsterDummy;
 
             for (const el of this._transformElements) {
-                el.removeEventListener("scroll", this._addTransformOffsets);
+                removeListener(el, "scroll", this._addTransformOffsets);
             }
             this._transformElements.clear();
 
@@ -922,7 +931,8 @@ class DummyInputManagerCore {
 
                 if (
                     toFocus &&
-                    element.dispatchEvent(
+                    dispatchEvent(
+                        element,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: element,
@@ -1104,10 +1114,7 @@ class DummyInputManagerCore {
                 newTransformElements.add(element);
 
                 if (!transformElements.has(element)) {
-                    element.addEventListener(
-                        "scroll",
-                        this._addTransformOffsets
-                    );
+                    addListener(element, "scroll", this._addTransformOffsets);
                 }
 
                 scrollTop += scrollTopLeft.scrollTop;
@@ -1117,7 +1124,7 @@ class DummyInputManagerCore {
 
         for (const el of transformElements) {
             if (!newTransformElements.has(el)) {
-                el.removeEventListener("scroll", this._addTransformOffsets);
+                removeListener(el, "scroll", this._addTransformOffsets);
             }
         }
 

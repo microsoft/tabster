@@ -10,15 +10,22 @@ import {
 } from "./Deloser.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { RootAPI } from "./Root.js";
-import { Subscribable } from "./State/Subscribable.js";
+import { createSubscribable } from "./State/Subscribable.js";
 import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
 import {
+    addListener,
+    clearTimer,
+    createTimer,
     getElementUId,
     getInstanceContext,
     getUId,
     getWindowUId,
     type HTMLElementWithUID,
+    isTimerActive,
+    removeListener,
+    setTimer,
+    type Timer,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
@@ -53,8 +60,8 @@ interface KnownTargets {
 }
 
 class CrossOriginDeloserItem extends DeloserItemBase<CrossOriginDeloser> {
-    private _deloser: CrossOriginDeloser;
-    private _transactions: CrossOriginTransactions;
+    declare private _deloser: CrossOriginDeloser;
+    declare private _transactions: CrossOriginTransactions;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -97,7 +104,7 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<
     CrossOriginDeloser,
     CrossOriginDeloserItem
 > {
-    private _transactions: CrossOriginTransactions;
+    declare private _transactions: CrossOriginTransactions;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -155,20 +162,22 @@ class CrossOriginDeloserHistoryByRoot extends DeloserHistoryByRootBase<
 
 abstract class CrossOriginTransaction<I, O> {
     abstract type: Types.CrossOriginTransactionType;
-    readonly id: string;
-    readonly beginData: I;
-    readonly timeout?: number;
-    protected tabster: Types.TabsterCore;
-    protected endData: O | undefined;
-    protected owner: Types.GetWindow;
-    protected ownerId: string;
-    protected sendUp: Types.CrossOriginTransactionSend | undefined;
-    private _promise: Promise<O>;
-    protected _resolve: ((endData: O | PromiseLike<O>) => void) | undefined;
-    private _reject: ((reason: string) => void) | undefined;
-    private _knownTargets: KnownTargets;
-    private _sentTo: Types.CrossOriginSentTo;
-    protected targetId: string | undefined;
+    declare readonly id: string;
+    declare readonly beginData: I;
+    declare readonly timeout?: number;
+    declare protected tabster: Types.TabsterCore;
+    declare protected endData: O | undefined;
+    declare protected owner: Types.GetWindow;
+    declare protected ownerId: string;
+    declare protected sendUp: Types.CrossOriginTransactionSend | undefined;
+    declare private _promise: Promise<O>;
+    declare protected _resolve:
+        | ((endData: O | PromiseLike<O>) => void)
+        | undefined;
+    declare private _reject: ((reason: string) => void) | undefined;
+    declare private _knownTargets: KnownTargets;
+    declare private _sentTo: Types.CrossOriginSentTo;
+    declare protected targetId: string | undefined;
     private _inProgress: { [id: string]: boolean } = {};
     private _isDone = false;
     private _isSelfResponding = false;
@@ -950,24 +959,24 @@ class PingTransaction extends CrossOriginTransaction<undefined, true> {
 
 interface CrossOriginTransactionWrapper<I, O> {
     transaction: CrossOriginTransaction<I, O>;
-    timer?: number;
+    timer: Timer;
 }
 
 class CrossOriginTransactions {
-    private _owner: Types.GetWindow;
-    private _ownerUId: string;
+    declare private _owner: Types.GetWindow;
+    declare private _ownerUId: string;
     private _knownTargets: KnownTargets = {};
     private _transactions: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [id: string]: CrossOriginTransactionWrapper<any, any>;
     } = {};
-    private _tabster: Types.TabsterCore;
-    private _pingTimer: number | undefined;
+    declare private _tabster: Types.TabsterCore;
+    private _pingTimer: Timer;
     private _isDefaultSendUp = false;
-    private _deadPromise: Promise<true | undefined> | undefined;
+    declare private _deadPromise: Promise<true | undefined> | undefined;
     isSetUp = false;
-    sendUp: Types.CrossOriginTransactionSend | undefined;
-    ctx: CrossOriginInstanceContext;
+    declare sendUp: Types.CrossOriginTransactionSend | undefined;
+    declare ctx: CrossOriginInstanceContext;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -978,6 +987,7 @@ class CrossOriginTransactions {
         this._owner = getOwner;
         this._ownerUId = getWindowUId(getOwner());
         this.ctx = context;
+        this._pingTimer = createTimer();
     }
 
     setup(
@@ -992,7 +1002,7 @@ class CrossOriginTransactions {
 
             this.setSendUp(sendUp);
 
-            this._owner().addEventListener("pagehide", this._onPageHide);
+            addListener(this._owner(), "pagehide", this._onPageHide);
 
             this._ping();
         }
@@ -1029,11 +1039,11 @@ class CrossOriginTransactions {
                         };
                     }
 
-                    owner.addEventListener("message", this._onBrowserMessage);
+                    addListener(owner, "message", this._onBrowserMessage);
                 }
             }
         } else if (this._isDefaultSendUp) {
-            owner.removeEventListener("message", this._onBrowserMessage);
+            removeListener(owner, "message", this._onBrowserMessage);
             this._isDefaultSendUp = false;
         }
 
@@ -1043,13 +1053,10 @@ class CrossOriginTransactions {
     async dispose(): Promise<void> {
         const owner = this._owner();
 
-        if (this._pingTimer) {
-            owner.clearTimeout(this._pingTimer);
-            this._pingTimer = undefined;
-        }
+        clearTimer(this._pingTimer, owner);
 
-        owner.removeEventListener("message", this._onBrowserMessage);
-        owner.removeEventListener("pagehide", this._onPageHide);
+        removeListener(owner, "message", this._onBrowserMessage);
+        removeListener(owner, "pagehide", this._onPageHide);
 
         await this._dead();
 
@@ -1058,11 +1065,7 @@ class CrossOriginTransactions {
         for (const id of Object.keys(this._transactions)) {
             const t = this._transactions[id];
 
-            if (t.timer) {
-                owner.clearTimeout(t.timer);
-                delete t.timer;
-            }
-
+            clearTimer(t.timer, owner);
             t.transaction.end();
         }
 
@@ -1145,14 +1148,17 @@ class CrossOriginTransactions {
 
         const wrapper: CrossOriginTransactionWrapper<I, O> = {
             transaction,
-            timer: owner.setTimeout(
-                () => {
-                    delete wrapper.timer;
-                    transaction.end("Cross origin transaction timed out.");
-                },
-                _transactionTimeout + (timeout || 0)
-            ),
+            timer: createTimer(),
         };
+
+        setTimer(
+            wrapper.timer,
+            owner,
+            () => {
+                transaction.end("Cross origin transaction timed out.");
+            },
+            _transactionTimeout + (timeout || 0)
+        );
 
         this._transactions[transaction.id] = wrapper;
 
@@ -1161,9 +1167,7 @@ class CrossOriginTransactions {
         ret.catch(() => {
             /**/
         }).finally(() => {
-            if (wrapper.timer) {
-                owner.clearTimeout(wrapper.timer);
-            }
+            clearTimer(wrapper.timer, owner);
             delete this._transactions[transaction.id];
         });
 
@@ -1341,7 +1345,7 @@ class CrossOriginTransactions {
     }
 
     private async _ping(): Promise<void> {
-        if (this._pingTimer) {
+        if (isTimerActive(this._pingTimer)) {
             return;
         }
 
@@ -1407,10 +1411,14 @@ class CrossOriginTransactions {
             }
         }
 
-        this._pingTimer = this._owner().setTimeout(() => {
-            this._pingTimer = undefined;
-            this._ping();
-        }, _pingTimeout);
+        setTimer(
+            this._pingTimer,
+            this._owner(),
+            () => {
+                this._ping();
+            },
+            _pingTimeout
+        );
     }
 
     private _onBrowserMessage = (e: MessageEvent) => {
@@ -1438,13 +1446,13 @@ class CrossOriginTransactions {
 }
 
 export class CrossOriginElement implements Types.CrossOriginElement {
-    private _tabster: Types.TabsterCore;
-    readonly uid: string;
-    readonly ownerId: string;
-    readonly id?: string;
-    readonly rootId?: string;
-    readonly observedName?: string;
-    readonly observedDetails?: string;
+    declare private _tabster: Types.TabsterCore;
+    declare readonly uid: string;
+    declare readonly ownerId: string;
+    declare readonly id?: string;
+    declare readonly rootId?: string;
+    declare readonly observedName?: string;
+    declare readonly observedDetails?: string;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -1477,73 +1485,29 @@ export class CrossOriginElement implements Types.CrossOriginElement {
     }
 }
 
-export class CrossOriginFocusedElementState
-    extends Subscribable<
+interface CrossOriginFocusedElementStateInternal
+    extends Types.CrossOriginFocusedElementState {
+    _setVal: (
+        val: CrossOriginElement | undefined,
+        detail: Types.FocusedElementDetail
+    ) => void;
+}
+
+function createCrossOriginFocusedElementState(
+    transactions: CrossOriginTransactions
+): Types.CrossOriginFocusedElementState {
+    const sub = createSubscribable<
         CrossOriginElement | undefined,
         Types.FocusedElementDetail
-    >
-    implements Types.CrossOriginFocusedElementState
-{
-    private _transactions: CrossOriginTransactions;
+    >();
 
-    constructor(transactions: CrossOriginTransactions) {
-        super();
-        this._transactions = transactions;
-    }
-
-    async focus(
-        element: Types.CrossOriginElement,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            {
-                uid: element.uid,
-                id: element.id,
-                rootId: element.rootId,
-                ownerId: element.ownerId,
-                observedName: element.observedName,
-            },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck
-        );
-    }
-
-    async focusById(
-        elementId: string,
-        rootId?: string,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            { id: elementId, rootId },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck
-        );
-    }
-
-    async focusByObservedName(
-        observedName: string,
-        timeout?: number,
-        rootId?: string,
-        noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
-    ): Promise<boolean> {
-        return this._focus(
-            { observedName, rootId },
-            noFocusedProgrammaticallyFlag,
-            noAccessibleCheck,
-            timeout
-        );
-    }
-
-    private async _focus(
+    const focusInternal = async (
         elementData: CrossOriginElementDataIn,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean,
         timeout?: number
-    ): Promise<boolean> {
-        return this._transactions
+    ): Promise<boolean> => {
+        return transactions
             .beginTransaction(
                 FocusElementTransaction,
                 {
@@ -1554,47 +1518,102 @@ export class CrossOriginFocusedElementState
                 timeout
             )
             .then((value) => !!value);
-    }
+    };
 
-    static setVal(
+    const api: CrossOriginFocusedElementStateInternal = {
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+        dispose: sub.dispose,
+        _setVal: sub.setVal,
+
+        async focus(
+            element: Types.CrossOriginElement,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                {
+                    uid: element.uid,
+                    id: element.id,
+                    rootId: element.rootId,
+                    ownerId: element.ownerId,
+                    observedName: element.observedName,
+                },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck
+            );
+        },
+
+        async focusById(
+            elementId: string,
+            rootId?: string,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                { id: elementId, rootId },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck
+            );
+        },
+
+        async focusByObservedName(
+            observedName: string,
+            timeout?: number,
+            rootId?: string,
+            noFocusedProgrammaticallyFlag?: boolean,
+            noAccessibleCheck?: boolean
+        ): Promise<boolean> {
+            return focusInternal(
+                { observedName, rootId },
+                noFocusedProgrammaticallyFlag,
+                noAccessibleCheck,
+                timeout
+            );
+        },
+    };
+
+    return api;
+}
+
+export const CrossOriginFocusedElementState = {
+    setVal(
         instance: Types.CrossOriginFocusedElementState,
         val: CrossOriginElement | undefined,
         detail: Types.FocusedElementDetail
     ): void {
-        (instance as CrossOriginFocusedElementState).setVal(val, detail);
-    }
+        (instance as CrossOriginFocusedElementStateInternal)._setVal(
+            val,
+            detail
+        );
+    },
+};
+
+interface CrossOriginObservedElementStateInternal
+    extends Types.CrossOriginObservedElementState {
+    _trigger: (
+        element: CrossOriginElement,
+        details: Types.ObservedElementProps
+    ) => void;
 }
 
-export class CrossOriginObservedElementState
-    extends Subscribable<CrossOriginElement, Types.ObservedElementProps>
-    implements Types.CrossOriginObservedElementState
-{
-    private _tabster: Types.TabsterCore;
-    private _transactions: CrossOriginTransactions;
-    private _lastRequestFocusId = 0;
+function createCrossOriginObservedElementState(
+    tabster: Types.TabsterCore,
+    transactions: CrossOriginTransactions
+): Types.CrossOriginObservedElementState {
+    const sub = createSubscribable<
+        CrossOriginElement,
+        Types.ObservedElementProps
+    >();
+    let lastRequestFocusId = 0;
 
-    constructor(
-        tabster: Types.TabsterCore,
-        transactions: CrossOriginTransactions
-    ) {
-        super();
-        this._tabster = tabster;
-        this._transactions = transactions;
-    }
-
-    async getElement(
-        observedName: string,
-        accessibility?: Types.ObservedElementAccessibility
-    ): Promise<CrossOriginElement | null> {
-        return this.waitElement(observedName, 0, accessibility);
-    }
-
-    async waitElement(
+    const waitElement = async (
         observedName: string,
         timeout: number,
         accessibility?: Types.ObservedElementAccessibility
-    ): Promise<CrossOriginElement | null> {
-        return this._transactions
+    ): Promise<CrossOriginElement | null> => {
+        return transactions
             .beginTransaction(
                 GetElementTransaction,
                 {
@@ -1604,43 +1623,71 @@ export class CrossOriginObservedElementState
                 timeout
             )
             .then((value) =>
-                value
-                    ? StateTransaction.createElement(this._tabster, value)
-                    : null
+                value ? StateTransaction.createElement(tabster, value) : null
             );
-    }
+    };
 
-    async requestFocus(
-        observedName: string,
-        timeout: number
-    ): Promise<boolean> {
-        const requestId = ++this._lastRequestFocusId;
-        return this.waitElement(
-            observedName,
-            timeout,
-            ObservedElementAccessibilities.Focusable
-        ).then((element) =>
-            this._lastRequestFocusId === requestId && element
-                ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  this._tabster.crossOrigin!.focusedElement.focus(element, true)
-                : false
-        );
-    }
+    const api: CrossOriginObservedElementStateInternal = {
+        subscribe: sub.subscribe,
+        subscribeFirst: sub.subscribeFirst,
+        unsubscribe: sub.unsubscribe,
+        dispose: sub.dispose,
+        _trigger: sub.trigger,
 
-    static trigger(
+        async getElement(
+            observedName: string,
+            accessibility?: Types.ObservedElementAccessibility
+        ): Promise<CrossOriginElement | null> {
+            return waitElement(observedName, 0, accessibility);
+        },
+
+        async waitElement(
+            observedName: string,
+            timeout: number,
+            accessibility?: Types.ObservedElementAccessibility
+        ): Promise<CrossOriginElement | null> {
+            return waitElement(observedName, timeout, accessibility);
+        },
+
+        async requestFocus(
+            observedName: string,
+            timeout: number
+        ): Promise<boolean> {
+            const requestId = ++lastRequestFocusId;
+            return waitElement(
+                observedName,
+                timeout,
+                ObservedElementAccessibilities.Focusable
+            ).then((element) =>
+                lastRequestFocusId === requestId && element
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      tabster.crossOrigin!.focusedElement.focus(element, true)
+                    : false
+            );
+        },
+    };
+
+    return api;
+}
+
+export const CrossOriginObservedElementState = {
+    trigger(
         instance: Types.CrossOriginObservedElementState,
         element: CrossOriginElement,
         details: Types.ObservedElementProps
     ): void {
-        (instance as CrossOriginObservedElementState).trigger(element, details);
-    }
-}
+        (instance as CrossOriginObservedElementStateInternal)._trigger(
+            element,
+            details
+        );
+    },
+};
 
 export class CrossOriginAPI implements Types.CrossOriginAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _transactions: CrossOriginTransactions;
-    private _blurTimer: number | undefined;
+    private _blurTimer: Timer;
     private _ctx: CrossOriginInstanceContext;
 
     focusedElement: Types.CrossOriginFocusedElementState;
@@ -1649,6 +1696,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
     constructor(tabster: Types.TabsterCore) {
         this._tabster = tabster;
         this._win = tabster.getWindow;
+        this._blurTimer = createTimer();
         this._ctx = {
             ignoreKeyboardNavigationStateUpdate: false,
             deloserByUId: {},
@@ -1659,10 +1707,10 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
             this._win,
             this._ctx
         );
-        this.focusedElement = new CrossOriginFocusedElementState(
+        this.focusedElement = createCrossOriginFocusedElementState(
             this._transactions
         );
-        this.observedElement = new CrossOriginObservedElementState(
+        this.observedElement = createCrossOriginObservedElementState(
             tabster,
             this._transactions
         );
@@ -1754,10 +1802,7 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
 
         const ownerUId = getWindowUId(win);
 
-        if (this._blurTimer) {
-            win.clearTimeout(this._blurTimer);
-            this._blurTimer = undefined;
-        }
+        clearTimer(this._blurTimer, win);
 
         if (element) {
             this._transactions.beginTransaction(StateTransaction, {
@@ -1771,26 +1816,35 @@ export class CrossOriginAPI implements Types.CrossOriginAPI {
                 state: CrossOriginStates.Focused,
             });
         } else {
-            this._blurTimer = win.setTimeout(() => {
-                this._blurTimer = undefined;
-
-                if (this._ctx.focusOwner && this._ctx.focusOwner === ownerUId) {
-                    this._transactions
-                        .beginTransaction(GetElementTransaction, undefined)
-                        .then((value) => {
-                            if (!value && this._ctx.focusOwner === ownerUId) {
-                                this._transactions.beginTransaction(
-                                    StateTransaction,
-                                    {
-                                        ownerUId,
-                                        state: CrossOriginStates.Blurred,
-                                        force: false,
-                                    }
-                                );
-                            }
-                        });
-                }
-            }, 0);
+            setTimer(
+                this._blurTimer,
+                win,
+                () => {
+                    if (
+                        this._ctx.focusOwner &&
+                        this._ctx.focusOwner === ownerUId
+                    ) {
+                        this._transactions
+                            .beginTransaction(GetElementTransaction, undefined)
+                            .then((value) => {
+                                if (
+                                    !value &&
+                                    this._ctx.focusOwner === ownerUId
+                                ) {
+                                    this._transactions.beginTransaction(
+                                        StateTransaction,
+                                        {
+                                            ownerUId,
+                                            state: CrossOriginStates.Blurred,
+                                            force: false,
+                                        }
+                                    );
+                                }
+                            });
+                    }
+                },
+                0
+            );
         }
     };
 

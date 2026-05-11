@@ -25,10 +25,13 @@ import {
     getDummyInputContainer,
 } from "./DummyInput.js";
 import {
+    addListener,
     createElementTreeWalker,
+    dispatchEvent,
     getElementUId,
     isElementVerticallyVisibleInContainer,
     matchesSelector,
+    removeListener,
     scrollIntoView,
     TabsterPart,
     WeakHTMLElement,
@@ -107,21 +110,21 @@ export class Mover
     extends TabsterPart<Types.MoverProps>
     implements Types.Mover
 {
-    private _unobserve: (() => void) | undefined;
-    private _intersectionObserver: IntersectionObserver | undefined;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _intersectionObserver: IntersectionObserver | undefined;
     private _setCurrentTimer: number | undefined;
-    private _current: WeakHTMLElement | undefined;
-    private _prevCurrent: WeakHTMLElement | undefined;
+    declare private _current: WeakHTMLElement | undefined;
+    declare private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
-    private _fullyVisible: string | undefined;
-    private _win: Types.GetWindow;
-    private _onDispose: (mover: Mover) => void;
-    private _allElements: WeakMap<HTMLElement, Mover> | undefined;
-    private _updateQueue: MoverUpdateQueueItem[] | undefined;
+    declare private _fullyVisible: string | undefined;
+    declare private _win: Types.GetWindow;
+    declare private _onDispose: (mover: Mover) => void;
+    declare private _allElements: WeakMap<HTMLElement, Mover> | undefined;
+    declare private _updateQueue: MoverUpdateQueueItem[] | undefined;
     private _updateTimer: number | undefined;
 
-    visibilityTolerance: number;
-    dummyManager: MoverDummyManager | undefined;
+    declare visibilityTolerance: number;
+    declare dummyManager: MoverDummyManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -227,7 +230,7 @@ export class Mover
                             const state = this.getState(el);
 
                             if (state) {
-                                el.dispatchEvent(new MoverStateEvent(state));
+                                dispatchEvent(el, new MoverStateEvent(state));
                             }
                         }
                     }
@@ -399,7 +402,7 @@ export class Mover
                 const state = this.getState(el);
 
                 if (state) {
-                    el.dispatchEvent(new MoverStateEvent(state));
+                    dispatchEvent(el, new MoverStateEvent(state));
                 }
             }
         }
@@ -701,9 +704,10 @@ export class MoverAPI implements Types.MoverAPI {
     private _init = (): void => {
         const win = this._win();
 
-        win.addEventListener("keydown", this._onKeyDown, true);
-        win.addEventListener(MoverMoveFocusEventName, this._onMoveFocus);
-        win.addEventListener(
+        addListener(win, "keydown", this._onKeyDown, true);
+        addListener(win, MoverMoveFocusEventName, this._onMoveFocus);
+        addListener(
+            win,
             MoverMemorizedElementEventName,
             this._onMemorizedElement
         );
@@ -723,9 +727,10 @@ export class MoverAPI implements Types.MoverAPI {
             delete this._ignoredInputTimer;
         }
 
-        win.removeEventListener("keydown", this._onKeyDown, true);
-        win.removeEventListener(MoverMoveFocusEventName, this._onMoveFocus);
-        win.removeEventListener(
+        removeListener(win, "keydown", this._onKeyDown, true);
+        removeListener(win, MoverMoveFocusEventName, this._onMoveFocus);
+        removeListener(
+            win,
             MoverMemorizedElementEventName,
             this._onMemorizedElement
         );
@@ -1197,7 +1202,8 @@ export class MoverAPI implements Types.MoverAPI {
             next &&
             (!relatedEvent ||
                 (relatedEvent &&
-                    container.dispatchEvent(
+                    dispatchEvent(
+                        container,
                         new TabsterMoveFocusEvent({
                             by: "mover",
                             owner: container,
