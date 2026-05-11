@@ -92,7 +92,7 @@ export abstract class TabsterCustomEvent<D> extends CustomEvent_<D> {
     /**
      * @deprecated use `detail`.
      */
-    details?: D;
+    declare details?: D;
 
     constructor(type: string, detail?: D) {
         super(type, {
