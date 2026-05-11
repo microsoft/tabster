@@ -6,6 +6,10 @@
 import { nativeFocus } from "keyborg";
 
 import { _findFocusable, _isFocusable } from "./Focusable.js";
+import {
+    _cancelAsyncFocus,
+    _requestAsyncFocus,
+} from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
 import { getTabsterContext } from "./Context.js";
@@ -622,9 +626,7 @@ export function createGroupperAPI(
         const ctx = getTabsterContext(tabster, element);
 
         if (ctx && (ctx?.groupper || ctx?.modalizerInGroupper)) {
-            tabster.focusedElement.cancelAsyncFocus(
-                AsyncFocusSources.EscapeGroupper
-            );
+            _cancelAsyncFocus(tabster, AsyncFocusSources.EscapeGroupper);
 
             if (ctx.ignoreKeydown(event)) {
                 return;
@@ -638,7 +640,8 @@ export function createGroupperAPI(
                 const focusedElement =
                     tabster.focusedElement.getFocusedElement();
 
-                tabster.focusedElement.requestAsyncFocus(
+                _requestAsyncFocus(
+                    tabster,
                     AsyncFocusSources.EscapeGroupper,
                     () => {
                         if (
@@ -716,9 +719,7 @@ export function createGroupperAPI(
         dispose(): void {
             const win = getWindow();
 
-            tabster.focusedElement.cancelAsyncFocus(
-                AsyncFocusSources.EscapeGroupper
-            );
+            _cancelAsyncFocus(tabster, AsyncFocusSources.EscapeGroupper);
 
             current = {};
 
