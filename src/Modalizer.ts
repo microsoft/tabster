@@ -12,12 +12,20 @@ import type * as Types from "./Types.js";
 import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
 import { type ModalizerEventDetail } from "./EventsTypes.js";
 import {
+    createDummyInputManager,
     type DummyInput,
-    DummyInputManager,
+    type DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import { augmentAttribute, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    augmentAttribute,
+    dispatchEvent,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 let _wasFocusedCounter = 0;
@@ -56,62 +64,67 @@ function _setInformativeStyle(
 }
 
 /**
- * Manages the dummy inputs for the Modalizer.
+ * Creates the dummy-input manager for a Modalizer.
  */
-class ModalizerDummyManager extends DummyInputManager {
-    constructor(
-        element: WeakHTMLElement,
-        tabster: Types.TabsterCore,
-        sys: Types.SysProps | undefined
-    ) {
-        super(tabster, element, DummyInputManagerPriorities.Modalizer, sys);
+function createModalizerDummyManager(
+    element: WeakHTMLElement,
+    tabster: Types.TabsterCore,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Modalizer,
+        sys
+    );
 
-        this._setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
-            const el = element.get();
-            const container = el && RootAPI.getRoot(tabster, el)?.getElement();
-            const input = dummyInput.input;
-            let toFocus: HTMLElement | null | undefined;
+    manager.setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
+        const el = element.get();
+        const container = el && RootAPI.getRoot(tabster, el)?.getElement();
+        const input = dummyInput.input;
+        let toFocus: HTMLElement | null | undefined;
 
-            if (container && input) {
-                const dummyContainer = getDummyInputContainer(input);
+        if (container && input) {
+            const dummyContainer = getDummyInputContainer(input);
 
-                const ctx = RootAPI.getTabsterContext(
+            const ctx = RootAPI.getTabsterContext(
+                tabster,
+                dummyContainer || input
+            );
+
+            if (ctx) {
+                toFocus = FocusedElementState.findNextTabbable(
                     tabster,
-                    dummyContainer || input
-                );
-
-                if (ctx) {
-                    toFocus = FocusedElementState.findNextTabbable(
-                        tabster,
-                        ctx,
-                        container,
-                        input,
-                        undefined,
-                        isBackward,
-                        true
-                    )?.element;
-                }
-
-                if (toFocus) {
-                    nativeFocus(toFocus);
-                }
+                    ctx,
+                    container,
+                    input,
+                    undefined,
+                    isBackward,
+                    true
+                )?.element;
             }
-        });
-    }
+
+            if (toFocus) {
+                nativeFocus(toFocus);
+            }
+        }
+    });
+
+    return manager;
 }
 
 export class Modalizer
     extends TabsterPart<Types.ModalizerProps>
     implements Types.Modalizer
 {
-    userId: string;
+    declare userId: string;
 
-    private _isActive: boolean | undefined;
+    declare private _isActive: boolean | undefined;
     private _wasFocused = 0;
-    private _onDispose: (modalizer: Modalizer) => void;
-    private _activeElements: WeakHTMLElement<HTMLElement>[];
+    declare private _onDispose: (modalizer: Modalizer) => void;
+    declare private _activeElements: WeakHTMLElement<HTMLElement>[];
 
-    dummyManager: ModalizerDummyManager | undefined;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -128,7 +141,7 @@ export class Modalizer
         this._activeElements = activeElements;
 
         if (!tabster.controlTab) {
-            this.dummyManager = new ModalizerDummyManager(
+            this.dummyManager = createModalizerDummyManager(
                 this._element,
                 tabster,
                 sys
@@ -304,7 +317,7 @@ export class Modalizer
                         ? new ModalizerActiveEvent(eventDetail)
                         : new ModalizerInactiveEvent(eventDetail);
 
-                    el.dispatchEvent(event);
+                    dispatchEvent(el, event);
 
                     if (event.defaultPrevented) {
                         defaultPrevented = true;
@@ -367,7 +380,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         }
 
         const win = this._win();
-        win.addEventListener("keydown", this._onKeyDown, true);
+        addListener(win, "keydown", this._onKeyDown, true);
 
         tabster.queueInit(() => {
             this._tabster.focusedElement.subscribe(this._onFocus);
@@ -377,7 +390,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     dispose(): void {
         const win = this._win();
 
-        win.removeEventListener("keydown", this._onKeyDown, true);
+        removeListener(win, "keydown", this._onKeyDown, true);
 
         // Dispose all modalizers managed by the API
         Object.keys(this._modalizers).forEach((modalizerId) => {

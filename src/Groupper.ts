@@ -21,76 +21,81 @@ import {
 } from "./Events.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
 import {
+    createDummyInputManager,
     type DummyInput,
-    DummyInputManager,
+    type DummyInputManager,
     DummyInputManagerPriorities,
     getDummyInputContainer,
 } from "./DummyInput.js";
-import { getAdjacentElement, TabsterPart, WeakHTMLElement } from "./Utils.js";
+import {
+    addListener,
+    dispatchEvent,
+    getAdjacentElement,
+    removeListener,
+    TabsterPart,
+    WeakHTMLElement,
+} from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
-class GroupperDummyManager extends DummyInputManager {
-    constructor(
-        element: WeakHTMLElement,
-        groupper: Groupper,
-        tabster: Types.TabsterCore,
-        sys: Types.SysProps | undefined
-    ) {
-        super(
-            tabster,
-            element,
-            DummyInputManagerPriorities.Groupper,
-            sys,
-            true
-        );
+function createGroupperDummyManager(
+    element: WeakHTMLElement,
+    groupper: Groupper,
+    tabster: Types.TabsterCore,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Groupper,
+        sys,
+        true
+    );
 
-        this._setHandlers(
-            (
-                dummyInput: DummyInput,
-                isBackward: boolean,
-                relatedTarget: HTMLElement | null
-            ) => {
-                const container = element.get();
-                const input = dummyInput.input;
+    manager.setHandlers(
+        (
+            dummyInput: DummyInput,
+            isBackward: boolean,
+            relatedTarget: HTMLElement | null
+        ) => {
+            const container = element.get();
+            const input = dummyInput.input;
 
-                if (container && input) {
-                    const ctx = RootAPI.getTabsterContext(tabster, input);
+            if (container && input) {
+                const ctx = RootAPI.getTabsterContext(tabster, input);
 
-                    if (ctx) {
-                        let next: HTMLElement | null | undefined;
+                if (ctx) {
+                    let next: HTMLElement | null | undefined;
 
-                        next = groupper.findNextTabbable(
-                            relatedTarget || undefined,
+                    next = groupper.findNextTabbable(
+                        relatedTarget || undefined,
+                        undefined,
+                        isBackward,
+                        true
+                    )?.element;
+
+                    if (!next) {
+                        next = FocusedElementState.findNextTabbable(
+                            tabster,
+                            ctx,
+                            undefined,
+                            dummyInput.isOutside
+                                ? input
+                                : getAdjacentElement(container, !isBackward),
                             undefined,
                             isBackward,
                             true
                         )?.element;
+                    }
 
-                        if (!next) {
-                            next = FocusedElementState.findNextTabbable(
-                                tabster,
-                                ctx,
-                                undefined,
-                                dummyInput.isOutside
-                                    ? input
-                                    : getAdjacentElement(
-                                          container,
-                                          !isBackward
-                                      ),
-                                undefined,
-                                isBackward,
-                                true
-                            )?.element;
-                        }
-
-                        if (next) {
-                            nativeFocus(next);
-                        }
+                    if (next) {
+                        nativeFocus(next);
                     }
                 }
             }
-        );
-    }
+        }
+    );
+
+    return manager;
 }
 
 export class Groupper
@@ -98,10 +103,10 @@ export class Groupper
     implements Types.Groupper
 {
     private _shouldTabInside = false;
-    private _first: WeakHTMLElement | undefined;
-    private _onDispose: (groupper: Groupper) => void;
+    declare private _first: WeakHTMLElement | undefined;
+    declare private _onDispose: (groupper: Groupper) => void;
 
-    dummyManager: GroupperDummyManager | undefined;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -116,7 +121,7 @@ export class Groupper
         this._onDispose = onDispose;
 
         if (!tabster.controlTab) {
-            this.dummyManager = new GroupperDummyManager(
+            this.dummyManager = createGroupperDummyManager(
                 this._element,
                 this,
                 tabster,
@@ -451,9 +456,9 @@ export class GroupperAPI implements Types.GroupperAPI {
             this._onFocus(activeElement as HTMLElement);
         }
 
-        doc.addEventListener("mousedown", this._onMouseDown, true);
-        win.addEventListener("keydown", this._onKeyDown, true);
-        win.addEventListener(GroupperMoveFocusEventName, this._onMoveFocus);
+        addListener(doc, "mousedown", this._onMouseDown, true);
+        addListener(win, "keydown", this._onKeyDown, true);
+        addListener(win, GroupperMoveFocusEventName, this._onMoveFocus);
     };
 
     dispose(): void {
@@ -472,9 +477,9 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.document.removeEventListener("mousedown", this._onMouseDown, true);
-        win.removeEventListener("keydown", this._onKeyDown, true);
-        win.removeEventListener(GroupperMoveFocusEventName, this._onMoveFocus);
+        removeListener(win.document, "mousedown", this._onMouseDown, true);
+        removeListener(win, "keydown", this._onKeyDown, true);
+        removeListener(win, GroupperMoveFocusEventName, this._onMoveFocus);
 
         Object.keys(this._grouppers).forEach((groupperId) => {
             if (this._grouppers[groupperId]) {
@@ -656,7 +661,8 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,
@@ -716,7 +722,8 @@ export class GroupperAPI implements Types.GroupperAPI {
                 next &&
                 (!relatedEvent ||
                     (relatedEvent &&
-                        groupperElement.dispatchEvent(
+                        dispatchEvent(
+                            groupperElement,
                             new TabsterMoveFocusEvent({
                                 by: "groupper",
                                 owner: groupperElement,
