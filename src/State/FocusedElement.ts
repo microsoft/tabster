@@ -22,8 +22,11 @@ import {
 } from "../Events.js";
 import { DummyInputManager } from "../DummyInput.js";
 import {
+    addListener,
+    dispatchEvent,
     documentContains,
     getLastChild,
+    removeListener,
     shouldIgnoreFocus,
     WeakHTMLElement,
 } from "../Utils.js";
@@ -104,17 +107,19 @@ export class FocusedElementState
         const doc = win.document;
 
         // Add these event listeners as capture - we want Tabster to run before user event handlers
-        doc.addEventListener(
+        addListener(
+            doc,
             KEYBORG_FOCUSIN,
             this._onFocusIn as EventListener,
             true
         );
-        doc.addEventListener(
+        addListener(
+            doc,
             KEYBORG_FOCUSOUT,
             this._onFocusOut as EventListener,
             true
         );
-        win.addEventListener("keydown", this._onKeyDown, true);
+        addListener(win, "keydown", this._onKeyDown, true);
 
         const activeElement = dom.getActiveElement(doc);
 
@@ -131,17 +136,19 @@ export class FocusedElementState
         const win = this._win();
         const doc = win.document;
 
-        doc.removeEventListener(
+        removeListener(
+            doc,
             KEYBORG_FOCUSIN,
             this._onFocusIn as EventListener,
             true
         );
-        doc.removeEventListener(
+        removeListener(
+            doc,
             KEYBORG_FOCUSOUT,
             this._onFocusOut as EventListener,
             true
         );
-        win.removeEventListener("keydown", this._onKeyDown, true);
+        removeListener(win, "keydown", this._onKeyDown, true);
 
         this.unsubscribe(this._onChanged);
 
@@ -657,7 +664,8 @@ export class FocusedElementState
                 // For iframes and uncontrolled areas we always want to use default action to
                 // move focus into.
                 if (
-                    rootElement.dispatchEvent(
+                    dispatchEvent(
+                        rootElement,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
@@ -680,7 +688,8 @@ export class FocusedElementState
 
             if (controlTab || next?.outOfDOMOrder) {
                 if (
-                    rootElement.dispatchEvent(
+                    dispatchEvent(
+                        rootElement,
                         new TabsterMoveFocusEvent({
                             by: "root",
                             owner: rootElement,
@@ -701,7 +710,8 @@ export class FocusedElementState
         } else {
             if (
                 !uncontrolledCompletelyContainer &&
-                rootElement.dispatchEvent(
+                dispatchEvent(
+                    rootElement,
                     new TabsterMoveFocusEvent({
                         by: "root",
                         owner: rootElement,
@@ -720,7 +730,7 @@ export class FocusedElementState
         detail: Types.FocusedElementDetail
     ): void => {
         if (element) {
-            element.dispatchEvent(new TabsterFocusInEvent(detail));
+            dispatchEvent(element, new TabsterFocusInEvent(detail));
         } else {
             const last = this._lastVal?.get();
 
@@ -733,7 +743,7 @@ export class FocusedElementState
                     d.modalizerId = modalizerId;
                 }
 
-                last.dispatchEvent(new TabsterFocusOutEvent(d));
+                dispatchEvent(last, new TabsterFocusOutEvent(d));
             }
         }
     };

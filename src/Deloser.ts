@@ -14,9 +14,12 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
+    addListener,
+    dispatchEvent,
     documentContains,
     getElementUId,
     isDisplayNone,
+    removeListener,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -30,9 +33,9 @@ export abstract class DeloserItemBase<C> {
 }
 
 export class DeloserItem extends DeloserItemBase<Types.Deloser> {
-    readonly uid: string;
-    private _tabster: Types.TabsterCore;
-    private _deloser: Types.Deloser;
+    declare readonly uid: string;
+    declare private _tabster: Types.TabsterCore;
+    declare private _deloser: Types.Deloser;
 
     constructor(tabster: Types.TabsterCore, deloser: Types.Deloser) {
         super();
@@ -55,7 +58,8 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
 
         if (available && deloserElement) {
             if (
-                !deloserElement.dispatchEvent(
+                !dispatchEvent(
+                    deloserElement,
                     new TabsterMoveFocusEvent({
                         by: "deloser",
                         owner: deloserElement,
@@ -82,9 +86,9 @@ export abstract class DeloserHistoryByRootBase<
     I,
     D extends DeloserItemBase<I>,
 > {
-    protected _tabster: Types.TabsterCore;
+    declare protected _tabster: Types.TabsterCore;
     protected _history: D[] = [];
-    readonly rootUId: string;
+    declare readonly rootUId: string;
 
     constructor(tabster: Types.TabsterCore, rootUId: string) {
         this._tabster = tabster;
@@ -184,7 +188,7 @@ class DeloserHistoryByRoot extends DeloserHistoryByRootBase<
 }
 
 export class DeloserHistory {
-    private _tabster: Types.TabsterCore;
+    declare private _tabster: Types.TabsterCore;
     private _history: DeloserHistoryByRootBase<
         unknown,
         DeloserItemBase<unknown>
@@ -400,12 +404,12 @@ export class Deloser
     extends TabsterPart<Types.DeloserProps>
     implements Types.Deloser
 {
-    readonly uid: string;
-    readonly strategy: Types.DeloserStrategy;
+    declare readonly uid: string;
+    declare readonly strategy: Types.DeloserStrategy;
     private _isActive = false;
     private _history: WeakHTMLElement<HTMLElement, string>[][] = [[]];
     private _snapshotIndex = 0;
-    private _onDispose: (deloser: Deloser) => void;
+    declare private _onDispose: (deloser: Deloser) => void;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -611,7 +615,8 @@ export class Deloser
     };
 
     customFocusLostHandler(element: HTMLElement): boolean {
-        return element.dispatchEvent(
+        return dispatchEvent(
+            element,
             new DeloserFocusLostEvent(this.getActions())
         );
     }
@@ -723,7 +728,8 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._tabster.focusedElement.subscribe(this._onFocus);
             const doc = this._win().document;
 
-            doc.addEventListener(
+            addListener(
+                doc,
                 DeloserRestoreFocusEventName,
                 this._onRestoreFocus
             );
@@ -758,7 +764,8 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.document.removeEventListener(
+        removeListener(
+            win.document,
             DeloserRestoreFocusEventName,
             this._onRestoreFocus
         );
@@ -929,13 +936,15 @@ export class DeloserAPI implements Types.DeloserAPI {
 
                     if (
                         el &&
-                        (!curDeloserElement?.dispatchEvent(
-                            new TabsterMoveFocusEvent({
-                                by: "deloser",
-                                owner: curDeloserElement,
-                                next: el,
-                            })
-                        ) ||
+                        (!curDeloserElement ||
+                            !dispatchEvent(
+                                curDeloserElement,
+                                new TabsterMoveFocusEvent({
+                                    by: "deloser",
+                                    owner: curDeloserElement,
+                                    next: el,
+                                })
+                            ) ||
                             this._tabster.focusedElement.focus(el))
                     ) {
                         return;
