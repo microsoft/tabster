@@ -22,12 +22,12 @@ import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
 class Tabster implements Types.Tabster {
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    core: Types.TabsterCore;
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare focusable: Types.FocusableAPI;
+    declare root: Types.RootAPI;
+    declare uncontrolled: Types.UncontrolledAPI;
+    declare core: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
@@ -43,9 +43,14 @@ class Tabster implements Types.Tabster {
  * Extends Window to include an internal Tabster instance.
  */
 class TabsterCore implements Types.TabsterCore {
-    private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
-    private _unobserve: (() => void) | undefined;
-    private _win: WindowWithTabsterInstance | undefined;
+    // `declare` on typed fields suppresses the runtime field-initializer
+    // emit (target ES2022 compiles plain `field: T;` to `this.x = void 0`,
+    // which the constructor immediately overwrites). Initializer-bearing
+    // fields below stay as plain class-field syntax — that's where the
+    // initial value actually comes from.
+    declare private _storage: WeakMap<HTMLElement, Types.TabsterElementStorage>;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _win: WindowWithTabsterInstance | undefined;
     private _forgetMemorizedTimer: number | undefined;
     private _forgetMemorizedElements: HTMLElement[] = [];
     private _wrappers: Set<Tabster> = new Set<Tabster>();
@@ -54,8 +59,8 @@ class TabsterCore implements Types.TabsterCore {
 
     _version: string = __VERSION__;
     _noop = false;
-    controlTab: boolean;
-    rootDummyInputs: boolean;
+    declare controlTab: boolean;
+    declare rootDummyInputs: boolean;
     // Variance gap: per-key handler types are contravariant in their
     // parameters, so a fully-typed Map<K, TabsterAttrHandler<K>> can't unify
     // them. Cast a plain Map to the typed view; the override on `set` keeps
@@ -64,13 +69,13 @@ class TabsterCore implements Types.TabsterCore {
     attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
     // Core APIs
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    internal: Types.InternalAPI;
-    _dummyObserver: Types.DummyInputObserver;
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare focusable: Types.FocusableAPI;
+    declare root: Types.RootAPI;
+    declare uncontrolled: Types.UncontrolledAPI;
+    declare internal: Types.InternalAPI;
+    declare _dummyObserver: Types.DummyInputObserver;
 
     // Extended APIs
     groupper?: Types.GroupperAPI;
@@ -81,7 +86,7 @@ class TabsterCore implements Types.TabsterCore {
     observedElement?: Types.ObservedElementAPI;
     crossOrigin?: Types.CrossOriginAPI;
     restorer?: Types.RestorerAPI;
-    getParent: (el: Node) => Node | null;
+    declare getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = new WeakMap();

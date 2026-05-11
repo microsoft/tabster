@@ -1,0 +1,232 @@
+diff --git a/node_modules/keyborg/dist/index.cjs b/node_modules/keyborg/dist/index.cjs
+index a30679a..872f2c5 100644
+--- a/node_modules/keyborg/dist/index.cjs
++++ b/node_modules/keyborg/dist/index.cjs
+@@ -24,18 +24,6 @@ const FOCUS_IN_HANDLER = 0;
+ const FOCUS_OUT_HANDLER = 1;
+ const SHADOW_TARGETS = 2;
+ const LAST_FOCUSED_PROGRAMMATICALLY = 3;
+-function canOverrideNativeFocus(win) {
+-	const HTMLElement = win.HTMLElement;
+-	const origFocus = HTMLElement.prototype.focus;
+-	let isCustomFocusCalled = false;
+-	HTMLElement.prototype.focus = function focus() {
+-		isCustomFocusCalled = true;
+-	};
+-	win.document.createElement("button").focus();
+-	HTMLElement.prototype.focus = origFocus;
+-	return isCustomFocusCalled;
+-}
+-let _canOverrideNativeFocus = false;
+ /**
+ * Guarantees that the native `focus` will be used
+ */
+@@ -51,7 +39,6 @@ function setupFocusEvent(win) {
+ 	const kwin = win;
+ 	const doc = kwin.document;
+ 	const proto = kwin.HTMLElement.prototype;
+-	if (!_canOverrideNativeFocus) _canOverrideNativeFocus = canOverrideNativeFocus(kwin);
+ 	const origFocus = proto.focus;
+ 	if (origFocus.__keyborgNativeFocus) return;
+ 	proto.focus = focus;
+@@ -154,11 +141,8 @@ function setupFocusEvent(win) {
+ 			composed: true,
+ 			detail: details
+ 		});
+-		event.details = details;
+-		if (_canOverrideNativeFocus || data[LAST_FOCUSED_PROGRAMMATICALLY]) {
+-			details.isFocusedProgrammatically = target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
+-			data[LAST_FOCUSED_PROGRAMMATICALLY] = void 0;
+-		}
++		details.isFocusedProgrammatically = target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
++		data[LAST_FOCUSED_PROGRAMMATICALLY] = void 0;
+ 		target.dispatchEvent(event);
+ 	};
+ 	const data = [
+@@ -221,19 +205,11 @@ function getLastFocusedProgrammatically(win) {
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+-const _dismissTimeout = 500;
+ let _lastId = 0;
+-function createKeyborgCore(targetWindow, props) {
++function createKeyborgCore(targetWindow) {
+ 	let currentTargetWindow = targetWindow;
+ 	let isNavigating = false;
+ 	let isMouseOrTouchUsedTimer;
+-	let dismissTimer;
+-	let triggerKeys;
+-	let dismissKeys;
+-	if (props) {
+-		if (props.triggerKeys?.length) triggerKeys = new Set(props.triggerKeys);
+-		if (props.dismissKeys?.length) dismissKeys = new Set(props.dismissKeys);
+-	}
+ 	const broadcast = () => {
+ 		const refs = currentTargetWindow?.__keyborg?.refs;
+ 		if (refs) for (const id of Object.keys(refs)) refs[id]._notify(isNavigating);
+@@ -247,26 +223,8 @@ function createKeyborgCore(targetWindow, props) {
+ 	const shouldTrigger = (e) => {
+ 		if (e.key === "Tab") return true;
+ 		const active = currentTargetWindow?.document.activeElement;
+-		const isTriggerKey = !triggerKeys || triggerKeys.has(e.keyCode);
+ 		const isEditable = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+-		return isTriggerKey && !isEditable;
+-	};
+-	const shouldDismiss = (e) => {
+-		return !!dismissKeys?.has(e.keyCode);
+-	};
+-	const scheduleDismiss = () => {
+-		const targetWindow = currentTargetWindow;
+-		if (!targetWindow) return;
+-		if (dismissTimer) {
+-			targetWindow.clearTimeout(dismissTimer);
+-			dismissTimer = void 0;
+-		}
+-		const previousActiveElement = targetWindow.document.activeElement;
+-		dismissTimer = targetWindow.setTimeout(() => {
+-			dismissTimer = void 0;
+-			const currentActiveElement = targetWindow.document.activeElement;
+-			if (previousActiveElement && currentActiveElement && previousActiveElement === currentActiveElement) setNavigating(false);
+-		}, _dismissTimeout);
++		return !isEditable;
+ 	};
+ 	const onFocusIn = (e) => {
+ 		if (isMouseOrTouchUsedTimer) return;
+@@ -290,9 +248,7 @@ function createKeyborgCore(targetWindow, props) {
+ 		onMouseOrTouch();
+ 	};
+ 	const onKeyDown = (e) => {
+-		if (isNavigating) {
+-			if (shouldDismiss(e)) scheduleDismiss();
+-		} else if (shouldTrigger(e)) setNavigating(true);
++		if (!isNavigating && shouldTrigger(e)) setNavigating(true);
+ 	};
+ 	const targetDocument = targetWindow.document;
+ 	addEventListener(targetDocument, KEYBORG_FOCUSIN, onFocusIn);
+@@ -308,10 +264,6 @@ function createKeyborgCore(targetWindow, props) {
+ 			currentTargetWindow.clearTimeout(isMouseOrTouchUsedTimer);
+ 			isMouseOrTouchUsedTimer = void 0;
+ 		}
+-		if (dismissTimer) {
+-			currentTargetWindow.clearTimeout(dismissTimer);
+-			dismissTimer = void 0;
+-		}
+ 		disposeFocusEvent(currentTargetWindow);
+ 		const targetDocument = currentTargetWindow.document;
+ 		removeEventListener(targetDocument, KEYBORG_FOCUSIN, onFocusIn);
+diff --git a/node_modules/keyborg/dist/index.js b/node_modules/keyborg/dist/index.js
+index 3702904..84e609a 100644
+--- a/node_modules/keyborg/dist/index.js
++++ b/node_modules/keyborg/dist/index.js
+@@ -22,18 +22,6 @@ const FOCUS_IN_HANDLER = 0;
+ const FOCUS_OUT_HANDLER = 1;
+ const SHADOW_TARGETS = 2;
+ const LAST_FOCUSED_PROGRAMMATICALLY = 3;
+-function canOverrideNativeFocus(win) {
+-	const HTMLElement = win.HTMLElement;
+-	const origFocus = HTMLElement.prototype.focus;
+-	let isCustomFocusCalled = false;
+-	HTMLElement.prototype.focus = function focus() {
+-		isCustomFocusCalled = true;
+-	};
+-	win.document.createElement("button").focus();
+-	HTMLElement.prototype.focus = origFocus;
+-	return isCustomFocusCalled;
+-}
+-let _canOverrideNativeFocus = false;
+ /**
+ * Guarantees that the native `focus` will be used
+ */
+@@ -49,7 +37,6 @@ function setupFocusEvent(win) {
+ 	const kwin = win;
+ 	const doc = kwin.document;
+ 	const proto = kwin.HTMLElement.prototype;
+-	if (!_canOverrideNativeFocus) _canOverrideNativeFocus = canOverrideNativeFocus(kwin);
+ 	const origFocus = proto.focus;
+ 	if (origFocus.__keyborgNativeFocus) return;
+ 	proto.focus = focus;
+@@ -152,11 +139,8 @@ function setupFocusEvent(win) {
+ 			composed: true,
+ 			detail: details
+ 		});
+-		event.details = details;
+-		if (_canOverrideNativeFocus || data[LAST_FOCUSED_PROGRAMMATICALLY]) {
+-			details.isFocusedProgrammatically = target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
+-			data[LAST_FOCUSED_PROGRAMMATICALLY] = void 0;
+-		}
++		details.isFocusedProgrammatically = target === data[LAST_FOCUSED_PROGRAMMATICALLY]?.deref();
++		data[LAST_FOCUSED_PROGRAMMATICALLY] = void 0;
+ 		target.dispatchEvent(event);
+ 	};
+ 	const data = [
+@@ -219,19 +203,11 @@ function getLastFocusedProgrammatically(win) {
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+-const _dismissTimeout = 500;
+ let _lastId = 0;
+-function createKeyborgCore(targetWindow, props) {
++function createKeyborgCore(targetWindow) {
+ 	let currentTargetWindow = targetWindow;
+ 	let isNavigating = false;
+ 	let isMouseOrTouchUsedTimer;
+-	let dismissTimer;
+-	let triggerKeys;
+-	let dismissKeys;
+-	if (props) {
+-		if (props.triggerKeys?.length) triggerKeys = new Set(props.triggerKeys);
+-		if (props.dismissKeys?.length) dismissKeys = new Set(props.dismissKeys);
+-	}
+ 	const broadcast = () => {
+ 		const refs = currentTargetWindow?.__keyborg?.refs;
+ 		if (refs) for (const id of Object.keys(refs)) refs[id]._notify(isNavigating);
+@@ -245,26 +221,8 @@ function createKeyborgCore(targetWindow, props) {
+ 	const shouldTrigger = (e) => {
+ 		if (e.key === "Tab") return true;
+ 		const active = currentTargetWindow?.document.activeElement;
+-		const isTriggerKey = !triggerKeys || triggerKeys.has(e.keyCode);
+ 		const isEditable = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+-		return isTriggerKey && !isEditable;
+-	};
+-	const shouldDismiss = (e) => {
+-		return !!dismissKeys?.has(e.keyCode);
+-	};
+-	const scheduleDismiss = () => {
+-		const targetWindow = currentTargetWindow;
+-		if (!targetWindow) return;
+-		if (dismissTimer) {
+-			targetWindow.clearTimeout(dismissTimer);
+-			dismissTimer = void 0;
+-		}
+-		const previousActiveElement = targetWindow.document.activeElement;
+-		dismissTimer = targetWindow.setTimeout(() => {
+-			dismissTimer = void 0;
+-			const currentActiveElement = targetWindow.document.activeElement;
+-			if (previousActiveElement && currentActiveElement && previousActiveElement === currentActiveElement) setNavigating(false);
+-		}, _dismissTimeout);
++		return !isEditable;
+ 	};
+ 	const onFocusIn = (e) => {
+ 		if (isMouseOrTouchUsedTimer) return;
+@@ -288,9 +246,7 @@ function createKeyborgCore(targetWindow, props) {
+ 		onMouseOrTouch();
+ 	};
+ 	const onKeyDown = (e) => {
+-		if (isNavigating) {
+-			if (shouldDismiss(e)) scheduleDismiss();
+-		} else if (shouldTrigger(e)) setNavigating(true);
++		if (!isNavigating && shouldTrigger(e)) setNavigating(true);
+ 	};
+ 	const targetDocument = targetWindow.document;
+ 	addEventListener(targetDocument, KEYBORG_FOCUSIN, onFocusIn);
+@@ -306,10 +262,6 @@ function createKeyborgCore(targetWindow, props) {
+ 			currentTargetWindow.clearTimeout(isMouseOrTouchUsedTimer);
+ 			isMouseOrTouchUsedTimer = void 0;
+ 		}
+-		if (dismissTimer) {
+-			currentTargetWindow.clearTimeout(dismissTimer);
+-			dismissTimer = void 0;
+-		}
+ 		disposeFocusEvent(currentTargetWindow);
+ 		const targetDocument = currentTargetWindow.document;
+ 		removeEventListener(targetDocument, KEYBORG_FOCUSIN, onFocusIn);
