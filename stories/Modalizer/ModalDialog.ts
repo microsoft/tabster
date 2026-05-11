@@ -6,6 +6,7 @@
 import "./modalizer.css";
 import {
     createTabster,
+    findFirstFocusable,
     getTabsterAttribute,
     TABSTER_ATTRIBUTE_NAME,
     Types as TabsterTypes,
@@ -35,19 +36,18 @@ export const createModalDialog = (props: ModalDialogProps) => {
 
     const openDialog = () => {
         dialog.classList.remove("hidden");
-        const firstFocusable = tabster?.focusable.findFirst({
-            container: dialog,
-        });
+        const firstFocusable =
+            tabster && findFirstFocusable(tabster, { container: dialog });
         firstFocusable?.focus();
     };
 
     const closeDialog = () => {
-        tabster?.focusable
-            .findFirst({
+        if (tabster) {
+            findFirstFocusable(tabster, {
                 container: document.body,
                 modalizerId: null,
-            })
-            ?.focus();
+            })?.focus();
+        }
         dialog.classList.add("hidden");
     };
 
