@@ -8,6 +8,7 @@ import { getTabsterOnElement, updateTabsterByAttribute } from "./Instance.js";
 import type * as Types from "./Types.js";
 import { RootFocusEvent, RootBlurEvent } from "./Events.js";
 import {
+    createDummyInputManager,
     type DummyInput,
     DummyInputManager,
     DummyInputManagerPriorities,
@@ -47,52 +48,41 @@ function _setInformativeStyle(
     }
 }
 
-class RootDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-    private _setFocused: (focused: boolean) => void;
+function createRootDummyManager(
+    tabster: Types.TabsterCore,
+    element: WeakHTMLElement,
+    setFocused: (focused: boolean) => void,
+    sys: Types.SysProps | undefined
+): DummyInputManager {
+    const manager = createDummyInputManager(
+        tabster,
+        element,
+        DummyInputManagerPriorities.Root,
+        sys,
+        undefined,
+        true
+    );
 
-    constructor(
-        tabster: Types.TabsterCore,
-        element: WeakHTMLElement,
-        setFocused: (focused: boolean) => void,
-        sys: Types.SysProps | undefined
-    ) {
-        super(
-            tabster,
-            element,
-            DummyInputManagerPriorities.Root,
-            sys,
-            undefined,
-            true
-        );
-
-        this._setHandlers(this._onDummyInputFocus);
-
-        this._tabster = tabster;
-        this._setFocused = setFocused;
-    }
-
-    private _onDummyInputFocus = (dummyInput: DummyInput): void => {
+    const onDummyInputFocus = (dummyInput: DummyInput): void => {
         if (dummyInput.useDefaultAction) {
             // When we've reached the last focusable element, we want to let the browser
             // to move the focus outside of the page. In order to do that we're synchronously
             // calling focus() of the dummy input from the Tab key handler and allowing
             // the default action to move the focus out.
-            this._setFocused(false);
+            setFocused(false);
         } else {
             // The only way a dummy input gets focused is during the keyboard navigation.
-            this._tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
+            tabster.keyboardNavigation.setNavigatingWithKeyboard(true);
 
-            const element = this._element.get();
+            const el = element.get();
 
-            if (element) {
-                this._setFocused(true);
+            if (el) {
+                setFocused(true);
 
-                const toFocus =
-                    this._tabster.focusedElement.getFirstOrLastTabbable(
-                        dummyInput.isFirst,
-                        { container: element, ignoreAccessibility: true }
-                    );
+                const toFocus = tabster.focusedElement.getFirstOrLastTabbable(
+                    dummyInput.isFirst,
+                    { container: el, ignoreAccessibility: true }
+                );
 
                 if (toFocus) {
                     nativeFocus(toFocus);
@@ -103,19 +93,24 @@ class RootDummyManager extends DummyInputManager {
             dummyInput.input?.blur();
         }
     };
+
+    manager.setHandlers(onDummyInputFocus);
+
+    return manager;
 }
 
 export class Root
     extends TabsterPart<Types.RootProps, undefined>
     implements Types.Root
 {
-    readonly uid: string;
-
-    private _dummyManager?: RootDummyManager;
-    private _sys?: Types.SysProps;
+    // `declare` keeps the type info for TS without emitting a `this.x = void 0`
+    // class-field initializer that the constructor immediately overwrites.
+    declare readonly uid: string;
+    declare private _dummyManager?: DummyInputManager;
+    declare private _sys?: Types.SysProps;
     private _isFocused = false;
-    private _setFocusedTimer?: Timer;
-    private _onDispose: (root: Root) => void;
+    declare private _setFocusedTimer: Timer | undefined;
+    declare private _onDispose: (root: Root) => void;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -125,7 +120,7 @@ export class Root
         sys: Types.SysProps | undefined
     ) {
         super(tabster, element, props);
-
+        this._onDispose = onDispose;
         this._onDispose = onDispose;
 
         const win = tabster.getWindow;
@@ -148,7 +143,7 @@ export class Root
 
     addDummyInputs(): void {
         if (!this._dummyManager) {
-            this._dummyManager = new RootDummyManager(
+            this._dummyManager = createRootDummyManager(
                 this._tabster,
                 this._element,
                 this._setFocused,
@@ -181,7 +176,7 @@ export class Root
             const el = this.getElement();
 
             if (el) {
-                RootDummyManager.moveWithPhantomDummy(
+                DummyInputManager.moveWithPhantomDummy(
                     this._tabster,
                     el,
                     true,
@@ -261,9 +256,10 @@ function validateRootProps(props: Types.RootProps): void {
 }
 
 export class RootAPI implements Types.RootAPI {
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _autoRoot: Types.RootProps | undefined;
+    declare private _tabster: Types.TabsterCore;
+    declare private _win: Types.GetWindow;
+    /** @internal — read by `getTabsterContext` (src/Context.ts) for auto-root fallback. */
+    declare _autoRoot: Types.RootProps | undefined;
     private _autoRootWaiting = false;
     private _roots: Record<string, Types.Root> = {};
     private _forceDummy = false;
