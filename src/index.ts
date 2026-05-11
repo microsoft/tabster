@@ -16,6 +16,20 @@ export {
 
 export { getDummyInputContainer } from "./DummyInput.js";
 
+export {
+    findAllFocusable,
+    findDefaultFocusable,
+    findFirstFocusable,
+    findFocusable,
+    findLastFocusable,
+    findNextFocusable,
+    findPrevFocusable,
+    getFocusableProps,
+    isElementAccessible,
+    isElementVisible,
+    isFocusable,
+} from "./Focusable.js";
+
 export { getCrossOrigin } from "./get/getCrossOrigin.js";
 export { getDeloser } from "./get/getDeloser.js";
 export { getGroupper } from "./get/getGroupper.js";

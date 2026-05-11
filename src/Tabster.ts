@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FocusableAPI } from "./Focusable.js";
 import {
     FocusedElementState,
     createFocusedElementState,
@@ -29,17 +28,15 @@ import { dom, setDOMAPI } from "./DOMAPI.js";
 import * as shadowDOMAPI from "./Shadowdomize/index.js";
 
 class Tabster implements Types.Tabster {
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    core: Types.TabsterCore;
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare root: Types.RootAPI;
+    declare uncontrolled: Types.UncontrolledAPI;
+    declare core: Types.TabsterCore;
 
     constructor(tabster: Types.TabsterCore) {
         this.keyboardNavigation = tabster.keyboardNavigation;
         this.focusedElement = tabster.focusedElement;
-        this.focusable = tabster.focusable;
         this.root = tabster.root;
         this.uncontrolled = tabster.uncontrolled;
         this.core = tabster;
@@ -70,25 +67,28 @@ class TabsterCore implements Types.TabsterCore {
     // value type (the type-erased shape).
     attrHandlers = new Map() as Types.TabsterAttrHandlerRegistry;
 
-    // Core APIs
-    keyboardNavigation: Types.KeyboardNavigationState;
-    focusedElement: Types.FocusedElementState;
-    focusable: Types.FocusableAPI;
-    root: Types.RootAPI;
-    uncontrolled: Types.UncontrolledAPI;
-    internal: Types.InternalAPI;
-    _dummyObserver: Types.DummyInputObserver;
+    /**
+     * Disposable extended APIs register themselves here in their `getX`
+     * factories; `dispose()` iterates this set instead of hard-coding each
+     * `deloser?.dispose()` call.
+     */
+    disposers = new Set<Types.Disposable>();
 
-    // Extended APIs
-    groupper?: Types.GroupperAPI;
-    mover?: Types.MoverAPI;
-    outline?: Types.OutlineAPI;
-    deloser?: Types.DeloserAPI;
-    modalizer?: Types.ModalizerAPI;
-    observedElement?: Types.ObservedElementAPI;
-    crossOrigin?: Types.CrossOriginAPI;
-    restorer?: Types.RestorerAPI;
-    getParent: (el: Node) => Node | null;
+    // Core APIs
+    declare keyboardNavigation: Types.KeyboardNavigationState;
+    declare focusedElement: Types.FocusedElementState;
+    declare root: Types.RootAPI;
+    declare uncontrolled: Types.UncontrolledAPI;
+    declare internal: Types.InternalAPI;
+    declare _dummyObserver: Types.DummyInputObserver;
+
+    // Extended APIs slots (groupper / mover / modalizer / outline / deloser /
+    // observedElement / crossOrigin / restorer) are declared on
+    // Types.TabsterCore as optional fields but intentionally NOT redeclared
+    // here. We rely on `undefined`-on-read; the optional property still
+    // type-checks because Types.TabsterCore declares them.
+
+    declare getParent: (el: Node) => Node | null;
 
     constructor(win: Window, props?: Types.TabsterCoreProps) {
         this._storage = new WeakMap();
@@ -102,7 +102,6 @@ class TabsterCore implements Types.TabsterCore {
 
         this.keyboardNavigation = createKeyboardNavigationState(getWindow);
         this.focusedElement = createFocusedElementState(this, getWindow);
-        this.focusable = new FocusableAPI(this);
         this.root = new RootAPI(this, props?.autoRoot);
         this.uncontrolled = createUncontrolledAPI(
             // TODO: Remove checkUncontrolledTrappingFocus in the next major version.
@@ -197,17 +196,15 @@ class TabsterCore implements Types.TabsterCore {
         this._initQueue = [];
         this._forgetMemorizedElements = [];
 
-        this.outline?.dispose();
-        this.crossOrigin?.dispose();
-        this.deloser?.dispose();
-        this.groupper?.dispose();
-        this.mover?.dispose();
-        this.modalizer?.dispose();
-        this.observedElement?.dispose();
-        this.restorer?.dispose();
+        // Extended APIs register themselves in `disposers` from their `getX`
+        // factories; iterate and clear so adding a new extended API doesn't
+        // require touching this method.
+        for (const d of this.disposers) {
+            d.dispose();
+        }
+        this.disposers.clear();
 
         this.keyboardNavigation.dispose();
-        this.focusable.dispose();
         this.focusedElement.dispose();
         this.root.dispose();
 

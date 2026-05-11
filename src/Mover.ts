@@ -4,10 +4,16 @@
  */
 
 import { nativeFocus } from "keyborg";
+import {
+    _findAllFocusable,
+    _findDefaultFocusable,
+    _findFocusable,
+    _isFocusable,
+} from "./Focusable.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import { Visibilities, MoverDirections, MoverKeys } from "./Consts.js";
 import {
@@ -63,7 +69,7 @@ function createMoverDummyManager(
         const input = dummyInput.input;
 
         if (container && input) {
-            const ctx = RootAPI.getTabsterContext(tabster, container);
+            const ctx = getTabsterContext(tabster, container);
 
             let toFocus: HTMLElement | null | undefined;
 
@@ -81,7 +87,7 @@ function createMoverDummyManager(
 
             const memorized = getMemorized()?.get();
 
-            if (memorized && tabster.focusable.isFocusable(memorized)) {
+            if (memorized && _isFocusable(tabster, memorized)) {
                 toFocus = memorized;
             }
 
@@ -183,6 +189,7 @@ export class Mover
         }
 
         const win = this._win();
+
         clearTimer(this._setCurrentTimer, win);
         clearTimer(this._updateTimer, win);
 
@@ -278,9 +285,11 @@ export class Mover
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            next = this._tabster.focusable[
-                isBackward ? "findPrev" : "findNext"
-            ](findProps, findPropsOut);
+            next = _findFocusable(
+                this._tabster,
+                { ...findProps, isBackward },
+                findPropsOut
+            );
 
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
             uncontrolled = findPropsOut.uncontrolled;
@@ -327,14 +336,14 @@ export class Mover
             }
 
             if (!found && hasDefault) {
-                found = this._tabster.focusable.findDefault({
+                found = _findDefaultFocusable(this._tabster, {
                     container: moverElement,
                     useActiveModalizer: true,
                 });
             }
 
             if (!found && visibilityAware) {
-                found = this._tabster.focusable.findElement({
+                found = _findFocusable(this._tabster, {
                     container: moverElement,
                     useActiveModalizer: true,
                     isBackward: state.isBackward,
@@ -423,7 +432,7 @@ export class Mover
 
         const win = this._win();
         const allElements = (this._allElements = new WeakMap());
-        const tabsterFocusable = this._tabster.focusable;
+        const tabster = this._tabster;
         let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
         const observer = dom.createMutationObserver(
@@ -478,7 +487,7 @@ export class Mover
         };
 
         const updateElement = (element: HTMLElement): void => {
-            const isFocusable = tabsterFocusable.isFocusable(element);
+            const isFocusable = _isFocusable(tabster, element);
             const current = allElements.get(element);
 
             if (current) {
@@ -498,7 +507,7 @@ export class Mover
             if (mover && mover !== this) {
                 if (
                     mover.getElement() === element &&
-                    tabsterFocusable.isFocusable(element)
+                    _isFocusable(tabster, element)
                 ) {
                     setElement(element);
                 } else {
@@ -529,7 +538,7 @@ export class Mover
                         return NodeFilter.FILTER_REJECT;
                     }
 
-                    if (tabsterFocusable.isFocusable(node as HTMLElement)) {
+                    if (_isFocusable(tabster, node as HTMLElement)) {
                         setElement(node as HTMLElement);
                     }
 
@@ -729,7 +738,7 @@ export function createMoverAPI(
                 currentFocusableElement = undefined;
             }
 
-            if (!currentFocusableElement && tabster.focusable.isFocusable(el)) {
+            if (!currentFocusableElement && _isFocusable(tabster, el)) {
                 currentFocusableElement = deepestFocusableElement = el;
             }
         }
@@ -740,7 +749,7 @@ export function createMoverAPI(
         key: Types.MoverKey,
         relatedEvent?: KeyboardEvent
     ): HTMLElement | null => {
-        const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
+        const ctx = getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
 
@@ -785,7 +794,6 @@ export function createMoverAPI(
             return null;
         }
 
-        const focusable = tabster.focusable;
         const moverProps = mover.getProps();
         const direction = moverProps.direction || MoverDirections.Both;
         const isBoth = direction === MoverDirections.Both;
@@ -820,7 +828,7 @@ export function createMoverAPI(
             (key === MoverKeys.ArrowDown && isVertical) ||
             (key === MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
-            next = focusable.findNext({
+            next = _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
@@ -835,7 +843,7 @@ export function createMoverAPI(
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findFirst({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
                 });
@@ -844,10 +852,11 @@ export function createMoverAPI(
             (key === MoverKeys.ArrowUp && isVertical) ||
             (key === MoverKeys.ArrowLeft && (isHorizontal || isGrid))
         ) {
-            next = focusable.findPrev({
+            next = _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
+                isBackward: true,
             });
 
             if (next && isGrid) {
@@ -859,20 +868,21 @@ export function createMoverAPI(
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findLast({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
+                    isBackward: true,
                 });
             }
         } else if (key === MoverKeys.Home) {
             if (isGrid) {
-                focusable.findElement({
+                _findFocusable(tabster, {
                     container,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -892,19 +902,19 @@ export function createMoverAPI(
                     },
                 });
             } else {
-                next = focusable.findFirst({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
                 });
             }
         } else if (key === MoverKeys.End) {
             if (isGrid) {
-                focusable.findElement({
+                _findFocusable(tabster, {
                     container,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -924,19 +934,20 @@ export function createMoverAPI(
                     },
                 });
             } else {
-                next = focusable.findLast({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
+                    isBackward: true,
                 });
             }
         } else if (key === MoverKeys.PageUp) {
-            focusable.findElement({
+            _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 isBackward: true,
                 acceptCondition: (el) => {
-                    if (!focusable.isFocusable(el)) {
+                    if (!_isFocusable(tabster, el)) {
                         return false;
                     }
 
@@ -960,12 +971,12 @@ export function createMoverAPI(
                 const firstColumnX1 = Math.ceil(
                     next.getBoundingClientRect().left
                 );
-                focusable.findElement({
+                _findFocusable(tabster, {
                     currentElement: next,
                     container,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -986,12 +997,12 @@ export function createMoverAPI(
 
             scrollIntoViewArg = false;
         } else if (key === MoverKeys.PageDown) {
-            focusable.findElement({
+            _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 acceptCondition: (el) => {
-                    if (!focusable.isFocusable(el)) {
+                    if (!_isFocusable(tabster, el)) {
                         return false;
                     }
 
@@ -1015,13 +1026,13 @@ export function createMoverAPI(
                 const lastColumnX1 = Math.ceil(
                     next.getBoundingClientRect().left
                 );
-                focusable.findElement({
+                _findFocusable(tabster, {
                     currentElement: next,
                     container,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -1053,7 +1064,7 @@ export function createMoverAPI(
             let lastDistance: number | undefined;
             let lastIntersection = 0;
 
-            focusable.findAll({
+            _findAllFocusable(tabster, {
                 container,
                 currentElement: fromElement,
                 isBackward,
@@ -1214,7 +1225,7 @@ export function createMoverAPI(
         let memorizedElement = e.detail?.memorizedElement;
 
         if (target) {
-            const ctx = RootAPI.getTabsterContext(tabster, target);
+            const ctx = getTabsterContext(tabster, target);
             const mover = ctx?.mover;
 
             if (mover) {
@@ -1312,9 +1323,6 @@ export function createMoverAPI(
                         resolve(value);
                     };
 
-                    const win = getWindow();
-                    clearTimer(ignoredInputTimer, win);
-
                     const {
                         anchorNode: prevAnchorNode,
                         focusNode: prevFocusNode,
@@ -1325,7 +1333,7 @@ export function createMoverAPI(
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
                     ignoredInputTimer = setTimer(
                         ignoredInputTimer,
-                        win,
+                        getWindow(),
                         () => {
                             const {
                                 anchorNode,
@@ -1457,6 +1465,7 @@ export function createMoverAPI(
             tabster.focusedElement.unsubscribe(onFocus);
 
             ignoredInputResolve?.(false);
+
             clearTimer(ignoredInputTimer, win);
 
             removeListener(win, "keydown", onKeyDown, true);

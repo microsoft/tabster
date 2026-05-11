@@ -12,7 +12,9 @@ export function getObservedElement(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.observedElement) {
-        tabsterCore.observedElement = createObservedElementAPI(tabsterCore);
+        const api = createObservedElementAPI(tabsterCore);
+        tabsterCore.observedElement = api;
+        tabsterCore.disposers.add(api);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

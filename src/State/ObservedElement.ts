@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { _isElementAccessible, _isFocusable } from "../Focusable.js";
 import { getTabsterOnElement } from "../Instance.js";
 import type * as Types from "../Types.js";
 import {
@@ -109,8 +110,8 @@ export function createObservedElementAPI(
         if (!elementInDOM) {
             reason = ObservedElementFailureReasons.TimeoutElementNotInDOM;
         } else {
-            isAccessible = tabster.focusable.isAccessible(elementInDOM);
-            isFocusable = tabster.focusable.isFocusable(elementInDOM, true);
+            isAccessible = _isElementAccessible(tabster, elementInDOM);
+            isFocusable = _isFocusable(tabster, elementInDOM, true);
 
             if (!isAccessible) {
                 reason =
@@ -245,7 +246,7 @@ export function createObservedElementAPI(
                 if (
                     element &&
                     documentContains(element.ownerDocument, element) &&
-                    tabster.focusable.isAccessible(element)
+                    _isElementAccessible(tabster, element)
                 ) {
                     resolve(
                         element,
@@ -276,7 +277,7 @@ export function createObservedElementAPI(
                 if (
                     element &&
                     documentContains(element.ownerDocument, element) &&
-                    tabster.focusable.isFocusable(element, true)
+                    _isFocusable(tabster, element, true)
                 ) {
                     resolve(
                         element,
@@ -376,10 +377,10 @@ export function createObservedElementAPI(
                         if (
                             (accessibility ===
                                 ObservedElementAccessibilities.Accessible &&
-                                !tabster.focusable.isAccessible(el)) ||
+                                !_isElementAccessible(tabster, el)) ||
                             (accessibility ===
                                 ObservedElementAccessibilities.Focusable &&
-                                !tabster.focusable.isFocusable(el, true))
+                                !_isFocusable(tabster, el, true))
                         ) {
                             el = null;
                         }
@@ -439,11 +440,13 @@ export function createObservedElementAPI(
             }
 
             w = waiting[key] = {};
+
             w.timer = setTimer(
                 w.timer,
                 win(),
                 () => {
                     clearTimer(w.conditionTimer, win());
+
                     delete waiting[key];
 
                     if (w.request) {
@@ -580,8 +583,10 @@ export function createObservedElementAPI(
             return ret;
         },
 
-        onObservedElementUpdate(element: HTMLElement): void {
-            const observed = getTabsterOnElement(tabster, element)?.observed;
+        onObservedElementUpdate(
+            element: HTMLElement,
+            observed: Types.ObservedElementProps | undefined
+        ): void {
             const uid = getElementUId(win, element);
             let info: ObservedElementInfo | undefined = observedById[uid];
 

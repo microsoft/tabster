@@ -16,6 +16,7 @@ import {
     TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME,
 } from "./Consts.js";
 import { TabsterMoveFocusEvent } from "./Events.js";
+import { _isFocusable } from "./Focusable.js";
 import { dom } from "./DOMAPI.js";
 import {
     addListener,
@@ -97,7 +98,6 @@ export function createDummyInput(
 
     const isPhantom = props.isPhantom ?? false;
     let disposeTimer: Timer | undefined;
-    let clearDisposeTimeout: (() => void) | undefined;
 
     const isBackward = (
         isIn: boolean,
@@ -174,9 +174,7 @@ export function createDummyInput(
         },
 
         dispose(): void {
-            if (clearDisposeTimeout) {
-                clearDisposeTimeout();
-            }
+            clearTimer(disposeTimer, win);
 
             const currentInput = api.input;
 
@@ -200,12 +198,7 @@ export function createDummyInput(
     };
 
     if (isPhantom) {
-        disposeTimer = setTimer(disposeTimer, win, () => api.dispose(), 0);
-
-        clearDisposeTimeout = () => {
-            clearTimer(disposeTimer, win);
-            clearDisposeTimeout = undefined;
-        };
+        disposeTimer = setTimer(disposeTimer, win, api.dispose, 0);
     }
 
     return api;
@@ -384,12 +377,7 @@ export const DummyInputManager = {
                     moveOutOfElement &&
                     (!isBackward ||
                         (isBackward &&
-                            !tabster.focusable.isFocusable(
-                                element,
-                                false,
-                                true,
-                                true
-                            )))
+                            !_isFocusable(tabster, element, false, true, true)))
                 ) {
                     parent = element;
                     insertBefore = isBackward
@@ -552,19 +540,14 @@ export function createDummyInputObserver(
 
         changedParents.add(parent);
 
-        if (isTimerActive(updateDummyInputsTimer)) {
-            return;
-        }
-
-        const currentWindow = win?.();
-
-        if (!currentWindow) {
+        const w = win?.();
+        if (!w || isTimerActive(updateDummyInputsTimer)) {
             return;
         }
 
         updateDummyInputsTimer = setTimer(
             updateDummyInputsTimer,
-            currentWindow,
+            w,
             () => {
                 for (const ref of dummyElements) {
                     const dummyElement = ref.get();
@@ -592,19 +575,14 @@ export function createDummyInputObserver(
     };
 
     const scheduledUpdatePositions = (): void => {
-        if (isTimerActive(updateTimer)) {
-            return;
-        }
-
-        const currentWindow = win?.();
-
-        if (!currentWindow) {
+        const w = win?.();
+        if (!w || isTimerActive(updateTimer)) {
             return;
         }
 
         updateTimer = setTimer(
             updateTimer,
-            currentWindow,
+            w,
             () => {
                 // updatePositions() might be called quite a lot during the scrolling.
                 // So, instead of clearing the timeout and scheduling a new one, we
@@ -1039,12 +1017,7 @@ function createDummyInputManagerCore(
                 if (backwards) {
                     if (
                         !firstDummy.isOutside &&
-                        tabster.focusable.isFocusable(
-                            currentElement,
-                            true,
-                            true,
-                            true
-                        )
+                        _isFocusable(tabster, currentElement, true, true, true)
                     ) {
                         toFocus = currentElement;
                     } else {
@@ -1127,8 +1100,7 @@ function createDummyInputManagerCore(
                 }
                 transformElements.clear();
 
-                const win = getWindow();
-                clearTimer(addTimer, win);
+                clearTimer(addTimer, getWindow());
 
                 const input = firstDummy.input;
                 input && tabster._dummyObserver.remove(input);

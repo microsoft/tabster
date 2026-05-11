@@ -4,8 +4,9 @@
  */
 
 import { nativeFocus } from "keyborg";
+import { _findFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
-import { RootAPI } from "./Root.js";
+import { getRoot, getTabsterContext } from "./Context.js";
 import { FocusedElementState } from "./State/FocusedElement.js";
 import { Keys } from "./Keys.js";
 import type * as Types from "./Types.js";
@@ -84,17 +85,14 @@ function createModalizerDummyManager(
 
     manager.setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
         const el = element.get();
-        const container = el && RootAPI.getRoot(tabster, el)?.getElement();
+        const container = el && getRoot(tabster, el)?.getElement();
         const input = dummyInput.input;
         let toFocus: HTMLElement | null | undefined;
 
         if (container && input) {
             const dummyContainer = getDummyInputContainer(input);
 
-            const ctx = RootAPI.getTabsterContext(
-                tabster,
-                dummyContainer || input
-            );
+            const ctx = getTabsterContext(tabster, dummyContainer || input);
 
             if (ctx) {
                 toFocus = FocusedElementState.findNextTabbable(
@@ -253,8 +251,7 @@ export class Modalizer
         let uncontrolled: HTMLElement | null | undefined;
 
         const container =
-            currentElement &&
-            RootAPI.getRoot(tabster, currentElement)?.getElement();
+            currentElement && getRoot(tabster, currentElement)?.getElement();
 
         if (container) {
             const findProps: Types.FindNextProps = {
@@ -267,17 +264,20 @@ export class Modalizer
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            next = tabster.focusable[isBackward ? "findPrev" : "findNext"](
-                findProps,
+            next = _findFocusable(
+                tabster,
+                { ...findProps, isBackward },
                 findPropsOut
             );
 
             if (!next && this._props.isTrapped && tabster.modalizer?.activeId) {
-                next = tabster.focusable[isBackward ? "findLast" : "findFirst"](
+                next = _findFocusable(
+                    tabster,
                     {
                         container,
                         ignoreAccessibility,
                         useActiveModalizer: true,
+                        isBackward,
                     },
                     findPropsOut
                 );
@@ -524,7 +524,7 @@ export function createModalizerAPI(
         const focusedElement = tabster.focusedElement.getFocusedElement();
         const focusedElementModalizer =
             focusedElement &&
-            RootAPI.getTabsterContext(tabster, focusedElement)?.modalizer;
+            getTabsterContext(tabster, focusedElement)?.modalizer;
 
         if (
             !focusedElement ||
@@ -535,7 +535,7 @@ export function createModalizerAPI(
             return;
         }
 
-        const ctx = RootAPI.getTabsterContext(tabster, outsideElement);
+        const ctx = getTabsterContext(tabster, outsideElement);
         const modalizer = ctx?.modalizer;
         const activeIdLocal = api.activeId;
 
@@ -549,7 +549,7 @@ export function createModalizerAPI(
         const container = ctx?.root.getElement();
 
         if (container) {
-            let toFocus = tabster.focusable.findFirst({
+            let toFocus = _findFocusable(tabster, {
                 container,
                 useActiveModalizer: true,
             });
@@ -559,8 +559,9 @@ export function createModalizerAPI(
                     outsideElement.compareDocumentPosition(toFocus) &
                     document.DOCUMENT_POSITION_PRECEDING
                 ) {
-                    toFocus = tabster.focusable.findLast({
+                    toFocus = _findFocusable(tabster, {
                         container,
+                        isBackward: true,
                         useActiveModalizer: true,
                     });
 
@@ -589,8 +590,7 @@ export function createModalizerAPI(
         detail: Types.FocusedElementDetail
     ): void => {
         const ctx =
-            focusedElement &&
-            RootAPI.getTabsterContext(tabster, focusedElement);
+            focusedElement && getTabsterContext(tabster, focusedElement);
 
         // Modalizer behaviour is opt in, only apply to elements that have a tabster context
         if (!ctx || !focusedElement) {
@@ -633,8 +633,7 @@ export function createModalizerAPI(
                 const parentElement = tabster.getParent(focusedElement);
                 const parentModalizer =
                     parentElement &&
-                    RootAPI.getTabsterContext(tabster, parentElement)
-                        ?.modalizer;
+                    getTabsterContext(tabster, parentElement)?.modalizer;
 
                 if (parentModalizer) {
                     modalizer = parentModalizer;
@@ -666,7 +665,7 @@ export function createModalizerAPI(
         } else {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
             // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
-            // Figure out a better way of doing this rather than a 100ms timeout
+            // Figure out a better way of doing this rather than a 100ms timeout.
             restoreModalizerFocusTimer = setTimer(
                 restoreModalizerFocusTimer,
                 win(),
@@ -741,7 +740,7 @@ export function createModalizerAPI(
         const element = tabster.focusedElement.getFocusedElement();
 
         if (element) {
-            const ctx = RootAPI.getTabsterContext(tabster, element);
+            const ctx = getTabsterContext(tabster, element);
             const modalizer = ctx?.modalizer;
 
             if (
@@ -955,10 +954,7 @@ export function createModalizerAPI(
             noFocusFirst?: boolean,
             noFocusDefault?: boolean
         ): boolean {
-            const ctx = RootAPI.getTabsterContext(
-                tabster,
-                elementFromModalizer
-            );
+            const ctx = getTabsterContext(tabster, elementFromModalizer);
 
             const modalizer = ctx?.modalizer;
 
@@ -1011,10 +1007,8 @@ export function createModalizerAPI(
         ): boolean {
             const modalizerToActivate: Types.Modalizer | undefined =
                 modalizerElementOrContainer
-                    ? RootAPI.getTabsterContext(
-                          tabster,
-                          modalizerElementOrContainer
-                      )?.modalizer
+                    ? getTabsterContext(tabster, modalizerElementOrContainer)
+                          ?.modalizer
                     : undefined;
 
             if (!modalizerElementOrContainer || modalizerToActivate) {

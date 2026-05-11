@@ -20,6 +20,7 @@ export function getDeloser(
     if (!tabsterCore.deloser) {
         const api = createDeloserAPI(tabsterCore, props);
         tabsterCore.deloser = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "deloser",
             (element, existingDeloser, newProps) => {

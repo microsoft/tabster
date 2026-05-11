@@ -8,8 +8,9 @@ import {
     DeloserHistoryByRootBase,
     DeloserItemBase,
 } from "./Deloser.js";
+import { _isFocusable } from "./Focusable.js";
 import { getTabsterOnElement } from "./Instance.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import { createSubscribable } from "./State/Subscribable.js";
 import type * as Types from "./Types.js";
 import { ObservedElementAccessibilities } from "./Consts.js";
@@ -436,7 +437,7 @@ class FocusElementTransaction extends CrossOriginTransaction<
             getOwner,
             data.beginData
         );
-        return !el || !tabster.focusable.isFocusable(el);
+        return !el || !_isFocusable(tabster, el);
     }
 
     static async makeResponse(
@@ -766,7 +767,7 @@ class GetElementTransaction extends CrossOriginTransaction<
                 element = dom.getElementById(getOwner().document, data.id);
 
                 if (element && data.rootId) {
-                    const ctx = RootAPI.getTabsterContext(tabster, element);
+                    const ctx = getTabsterContext(tabster, element);
 
                     if (!ctx || ctx.root.uid !== data.rootId) {
                         return null;
@@ -795,7 +796,7 @@ class GetElementTransaction extends CrossOriginTransaction<
         ownerUId: string
     ): CrossOriginElementDataOut {
         const deloser = DeloserAPI.getDeloser(tabster, element);
-        const ctx = RootAPI.getTabsterContext(tabster, element);
+        const ctx = getTabsterContext(tabster, element);
         const tabsterOnElement = getTabsterOnElement(tabster, element);
         const observed = tabsterOnElement && tabsterOnElement.observed;
 

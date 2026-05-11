@@ -12,7 +12,11 @@ module.exports = (api) => {
           ];
 
     return {
-        presets: ["@babel/preset-typescript", "@babel/preset-react", presetEnv],
+        presets: [
+            ["@babel/preset-typescript", { allowDeclareFields: true }],
+            "@babel/preset-react",
+            presetEnv,
+        ],
         plugins: [["@babel/plugin-transform-react-jsx"]],
     };
 };
