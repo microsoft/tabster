@@ -35,6 +35,14 @@ const modalizerFindNextStrategy: Types.FindNextTabbableStrategy = (
     );
 };
 
+const modalizerFocusableResolver: Types.FocusableContextResolver = (
+    core,
+    element,
+    _container,
+    state
+    // ctx unused — Modalizer reads its own active state from `core`
+) => core.modalizer?.acceptElement(element, state);
+
 /**
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
@@ -80,6 +88,12 @@ export function getModalizer(
         );
         (tabsterCore.findNextTabbableStrategies ??= []).push(
             modalizerFindNextStrategy
+        );
+        // Modalizer's resolver runs first in the chain so its trap-out
+        // behaviour (skipping elements outside the active modalizer) takes
+        // precedence over Mover/Groupper containment checks.
+        (tabsterCore.focusableContextResolvers ??= []).unshift(
+            modalizerFocusableResolver
         );
     }
 

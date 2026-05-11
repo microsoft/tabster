@@ -1316,6 +1316,22 @@ export interface TabsterAttrHandlerRegistry extends Map<
 
 /**
  * @internal
+ * Resolver for mover/groupper containment conflicts inside Focusable's
+ * `_acceptElement` walker. Set by `getMover` / `getGroupper` so the resolver
+ * code only enters the bundle when one of those features is in use; the
+ * always-on Focusable path stays slim. Returns `FILTER_REJECT` to skip an
+ * element, or `undefined` to fall through to the default acceptance check.
+ */
+export type FocusableContextResolver = (
+    core: TabsterCore,
+    element: HTMLElement,
+    container: HTMLElement,
+    state: FocusableAcceptElementState,
+    ctx: TabsterContext
+) => number | undefined;
+
+/**
+ * @internal
  * Selector each Mover/Groupper/Modalizer registers from `getX` to drive
  * `FocusedElementState.findNextTabbable`. Returning `undefined` means the
  * strategy doesn't claim this context (the iterator tries the next one).
@@ -1342,6 +1358,15 @@ interface TabsterCoreInternal {
     attrHandlers: TabsterAttrHandlerRegistry;
     /** @internal — extended APIs add themselves on creation; iterated by core.dispose() */
     disposers: Set<Disposable>;
+    /**
+     * @internal — Modalizer / Mover-Groupper push their resolver into this
+     * chain from their `getX` factories. `Focusable._acceptElement` iterates
+     * the chain so it doesn't reference Modalizer/Mover/Groupper APIs
+     * directly. First non-`undefined` result wins; resolvers earlier in the
+     * array take precedence (Modalizer registers first so its trap-out behaviour
+     * runs before Mover/Groupper containment checks).
+     */
+    focusableContextResolvers?: FocusableContextResolver[];
     /**
      * @internal — Mover/Groupper/Modalizer push their findNextTabbable
      * dispatch entry here from their `getX` factories. Empty/absent when no
