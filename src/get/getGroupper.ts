@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ensureDummyInputObserver } from "../DummyInput.js";
 import { createGroupperAPI } from "../Groupper.js";
 import { registerMoverGroupperResolver } from "../MoverGroupperResolver.js";
 import { findNextTabbableWithParentFallback } from "../State/FocusedElement.js";
@@ -42,6 +43,11 @@ export function getGroupper(tabster: Types.Tabster): Types.GroupperAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.groupper) {
+        // Per-feature dummy-input redirection should "just work" when the
+        // consumer opts into a feature, regardless of whether they also
+        // called `getRootDummyInputs`. The observer is idempotent.
+        ensureDummyInputObserver(tabsterCore);
+
         const api = createGroupperAPI(tabsterCore, tabsterCore.getWindow);
         tabsterCore.groupper = api;
         tabsterCore.disposers.add(api);

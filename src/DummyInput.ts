@@ -521,6 +521,22 @@ type ScrollTopLeftCache = Map<
     { scrollTop: number; scrollLeft: number } | null
 >;
 
+/**
+ * Lazy-initialises `tabster._dummyObserver`. Called from the per-feature
+ * `getMover`/`getGroupper`/`getModalizer` factories so that opting into
+ * any feature is enough to make its dummy-input redirection work — the
+ * consumer doesn't have to call `getRootDummyInputs` first. Idempotent;
+ * safe to call repeatedly. Default `createTabster(win)` is unchanged
+ * (no feature factory called → no observer created).
+ */
+export function ensureDummyInputObserver(tabster: TabsterCore): void {
+    if (!tabster._dummyObserver) {
+        const observer = createDummyInputObserver(tabster.getWindow);
+        tabster._dummyObserver = observer;
+        tabster.disposers.add(observer);
+    }
+}
+
 export function createDummyInputObserver(
     getWindow: GetWindow
 ): DummyInputObserverInterface {
@@ -915,7 +931,7 @@ function createDummyInputManagerCore(
     };
 
     const addTransformOffsets = (): void => {
-        tabster._dummyObserver.updatePositions(computeTransformOffsets);
+        tabster._dummyObserver?.updatePositions(computeTransformOffsets);
     };
 
     /**
@@ -962,7 +978,7 @@ function createDummyInputManagerCore(
     // So, it is enough to have just one of the inputs observed, because
     // both dummy inputs always have the same parent.
     const dummyElement = firstDummy.input;
-    dummyElement && tabster._dummyObserver.add(dummyElement, addDummyInputs);
+    dummyElement && tabster._dummyObserver?.add(dummyElement, addDummyInputs);
 
     firstDummy.onFocusIn = onFocusIn;
     firstDummy.onFocusOut = onFocusOut;
@@ -1104,7 +1120,7 @@ function createDummyInputManagerCore(
                 clearTimer(addTimer, getWindow());
 
                 const input = firstDummy.input;
-                input && tabster._dummyObserver.remove(input);
+                input && tabster._dummyObserver?.remove(input);
 
                 firstDummy.dispose();
                 lastDummy.dispose();

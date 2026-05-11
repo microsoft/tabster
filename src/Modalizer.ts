@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { nativeFocus } from "keyborg";
 import { _findFocusable } from "./Focusable.js";
 import {
     _focusDefault,
@@ -12,18 +11,12 @@ import {
 } from "./State/FocusedElement.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { getRoot, getTabsterContext } from "./Context.js";
-import { FocusedElementState } from "./State/FocusedElement.js";
 import { Keys } from "./Keys.js";
 import type * as Types from "./Types.js";
 import { ModalizerActiveEvent, ModalizerInactiveEvent } from "./Events.js";
 import { type ModalizerEventDetail } from "./EventsTypes.js";
-import {
-    createDummyInputManager,
-    type DummyInput,
-    type DummyInputManager,
-    DummyInputManagerPriorities,
-    getDummyInputContainer,
-} from "./DummyInput.js";
+import { type DummyInputManager } from "./DummyInput.js";
+import { createModalizerDummyManager } from "./ModalizerDummyManager.js";
 import {
     addListener,
     augmentAttribute,
@@ -74,53 +67,6 @@ function _setInformativeStyle(
     }
 }
 
-/**
- * Creates the dummy-input manager for a Modalizer.
- */
-function createModalizerDummyManager(
-    element: WeakHTMLElement,
-    tabster: Types.TabsterCore,
-    sys: Types.SysProps | undefined
-): DummyInputManager {
-    const manager = createDummyInputManager(
-        tabster,
-        element,
-        DummyInputManagerPriorities.Modalizer,
-        sys
-    );
-
-    manager.setHandlers((dummyInput: DummyInput, isBackward: boolean) => {
-        const el = element.get();
-        const container = el && getRoot(tabster, el)?.getElement();
-        const input = dummyInput.input;
-        let toFocus: HTMLElement | null | undefined;
-
-        if (container && input) {
-            const dummyContainer = getDummyInputContainer(input);
-
-            const ctx = getTabsterContext(tabster, dummyContainer || input);
-
-            if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
-                    tabster,
-                    ctx,
-                    container,
-                    input,
-                    undefined,
-                    isBackward,
-                    true
-                )?.element;
-            }
-
-            if (toFocus) {
-                nativeFocus(toFocus);
-            }
-        }
-    });
-
-    return manager;
-}
-
 export class Modalizer
     extends TabsterPart<Types.ModalizerProps>
     implements Types.Modalizer
@@ -149,6 +95,11 @@ export class Modalizer
         this._activeElements = activeElements;
 
         if (!tabster.controlTab) {
+            // `getModalizer` ensures `_dummyObserver` exists before any
+            // Modalizer is constructed, so we don't have to gate on it.
+            // Controlled mode (`controlTab: true`) skips the per-feature
+            // dummy because the keyhandler intercepts Tab and never lets
+            // focus reach the dummy input anyway.
             this.dummyManager = createModalizerDummyManager(
                 this._element,
                 tabster,

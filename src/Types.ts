@@ -4,6 +4,7 @@
  */
 
 import type { TABSTER_ATTRIBUTE_NAME } from "./Consts.js";
+import type { RootDummyManagerFactory } from "./RootDummyManager.js";
 
 export interface HTMLElementWithTabsterFlags extends HTMLElement {
     __tabsterElementFlags?: {
@@ -1363,6 +1364,20 @@ interface TabsterCoreInternal {
      * path falls straight through to its default `_findFocusable` walk.
      */
     findNextTabbableStrategies?: FindNextTabbableStrategy[];
+    /** @internal — set by getRootDummyInputs, see `RootDummyManagerFactory`. */
+    rootDummyManagerFactory?: RootDummyManagerFactory;
+    /**
+     * @internal — set by getRootDummyInputs; routes
+     * `Root.moveOutWithDefaultAction` either through an existing dummy
+     * manager or the phantom-dummy fallback. Without it the call no-ops.
+     */
+    moveOutOfRoot?: (
+        tabster: TabsterCore,
+        rootElement: HTMLElement | undefined,
+        dummyManager: DummyInputManager | undefined,
+        isBackward: boolean,
+        relatedEvent: KeyboardEvent
+    ) => void;
     /** @internal */
     groupper?: GroupperAPI;
     /** @internal */
@@ -1382,8 +1397,9 @@ interface TabsterCoreInternal {
     /** @internal */
     restorer?: RestorerAPI;
 
-    /** @internal */
-    _dummyObserver: DummyInputObserver;
+    /** @internal — created by `getRootDummyInputs`; absent when dummy
+     * inputs aren't opted in. Callers must use optional chaining. */
+    _dummyObserver?: DummyInputObserver;
 
     // The version of the tabster package this instance is on
     /** @internal */
