@@ -80,14 +80,10 @@ export class OutlineAPI implements Types.OutlineAPI {
                 this._fullScreenEventName = "fullscreenchange";
                 this._fullScreenElementName = "fullscreenElement";
             } else if ("onwebkitfullscreenchange" in document) {
+                // Safari 15-16.3 only ships the webkit-prefixed API;
+                // unprefixed landed in Safari 16.4.
                 this._fullScreenEventName = "webkitfullscreenchange";
                 this._fullScreenElementName = "webkitFullscreenElement";
-            } else if ("onmozfullscreenchange" in document) {
-                this._fullScreenEventName = "mozfullscreenchange";
-                this._fullScreenElementName = "mozFullScreenElement";
-            } else if ("onmsfullscreenchange" in document) {
-                this._fullScreenEventName = "msfullscreenchange";
-                this._fullScreenElementName = "msFullscreenElement";
             }
         }
     }
