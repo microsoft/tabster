@@ -3,8 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { ModalizerAPI } from "../Modalizer.js";
+import { createModalizerAPI } from "../Modalizer.js";
 import type * as Types from "../Types.js";
+
+const modalizerFindNextStrategy: Types.FindNextTabbableStrategy = (
+    _tabster,
+    ctx,
+    _container,
+    currentElement,
+    referenceElement,
+    isBackward,
+    ignoreAccessibility
+) => {
+    // Modalizer is the lowest-precedence dispatcher — it only claims the
+    // ctx when no Mover or Groupper is present. This matches the original
+    // `else if (modalizer)` ordering and keeps the strategy independent of
+    // registration order.
+    //
+    // Modalizer is also a hard trap — when its findNextTabbable yields
+    // nothing we don't escape to the parent context (unlike Mover/Groupper),
+    // so the parent-fallback helper isn't needed here.
+    const modalizer = ctx.modalizer;
+    if (!modalizer || ctx.mover || ctx.groupper) {
+        return undefined;
+    }
+    return modalizer.findNextTabbable(
+        currentElement,
+        referenceElement,
+        isBackward,
+        ignoreAccessibility
+    );
+};
+
+const modalizerFocusableResolver: Types.FocusableContextResolver = (
+    core,
+    element,
+    _container,
+    state
+    // ctx unused — Modalizer reads its own active state from `core`
+) => core.modalizer?.acceptElement(element, state);
 
 /**
  * Creates a new modalizer instance or returns an existing one
@@ -24,12 +61,13 @@ export function getModalizer(
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.modalizer) {
-        const api = new ModalizerAPI(
+        const api = createModalizerAPI(
             tabsterCore,
             alwaysAccessibleSelector,
             accessibleCheck
         );
         tabsterCore.modalizer = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "modalizer",
             (element, existingModalizer, newProps, oldProps, sys) => {
@@ -47,6 +85,15 @@ export function getModalizer(
                 }
                 return api.createModalizer(element, newProps, sys);
             }
+        );
+        (tabsterCore.findNextTabbableStrategies ??= []).push(
+            modalizerFindNextStrategy
+        );
+        // Modalizer's resolver runs first in the chain so its trap-out
+        // behaviour (skipping elements outside the active modalizer) takes
+        // precedence over Mover/Groupper containment checks.
+        (tabsterCore.focusableContextResolvers ??= []).unshift(
+            modalizerFocusableResolver
         );
     }
 
