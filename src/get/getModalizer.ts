@@ -47,16 +47,11 @@ const modalizerFocusableResolver: Types.FocusableContextResolver = (
 /**
  * Creates a new modalizer instance or returns an existing one
  * @param tabster Tabster instance
- * @param alwaysAccessibleSelector When Modalizer is active, we put aria-hidden to
- * everything else to hide it from screen readers. This CSS selector allows to
- * exclude some elements from this behaviour.
  * @param accessibleCheck An optional callback used to exclude elements from
  * receiving aria-hidden when a Modalizer is active.
  */
 export function getModalizer(
     tabster: Types.Tabster,
-    // @deprecated use accessibleCheck.
-    alwaysAccessibleSelector?: string,
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const tabsterCore = tabster.core;
@@ -67,11 +62,7 @@ export function getModalizer(
         // called `getRootDummyInputs`. The observer is idempotent.
         ensureDummyInputObserver(tabsterCore);
 
-        const api = createModalizerAPI(
-            tabsterCore,
-            alwaysAccessibleSelector,
-            accessibleCheck
-        );
+        const api = createModalizerAPI(tabsterCore, accessibleCheck);
         tabsterCore.modalizer = api;
         tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(

@@ -303,8 +303,6 @@ function validateModalizerProps(props: Types.ModalizerProps): void {
 
 export function createModalizerAPI(
     tabster: Types.TabsterCore,
-    // @deprecated use accessibleCheck.
-    alwaysAccessibleSelector?: string,
     accessibleCheck?: Types.ModalizerElementAccessibleCheck
 ): Types.ModalizerAPI {
     const win = tabster.getWindow;
@@ -324,14 +322,7 @@ export function createModalizerAPI(
 
         const visibleElements: HTMLElement[] = [];
         const hiddenElements: HTMLElement[] = [];
-        const alwaysAccessibleElements: HTMLElement[] = alwaysAccessibleSelector
-            ? Array.from(
-                  dom.querySelectorAll(
-                      body,
-                      alwaysAccessibleSelector
-                  ) as HTMLElement[]
-              )
-            : [];
+        const alwaysAccessibleElements: HTMLElement[] = [];
         const activeModalizerElements: HTMLElement[] = [];
 
         for (const userId of Object.keys(parts)) {
