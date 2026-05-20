@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v3
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: 24.x
 
       - run: npm install
       - run: npm run type-check

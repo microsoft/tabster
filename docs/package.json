@@ -11,18 +11,18 @@
         "typecheck": "tsc"
     },
     "dependencies": {
-        "@docusaurus/core": "3.10.0",
-        "@docusaurus/preset-classic": "3.10.0",
-        "@docusaurus/theme-live-codeblock": "3.10.0",
-        "react": "^19.2.5",
-        "react-dom": "^19.2.5"
+        "@docusaurus/core": "3.10.1",
+        "@docusaurus/preset-classic": "3.10.1",
+        "@docusaurus/theme-live-codeblock": "3.10.1",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6"
     },
     "devDependencies": {
-        "@docusaurus/module-type-aliases": "3.10.0",
-        "typescript": "^6.0.2"
+        "@docusaurus/module-type-aliases": "3.10.1",
+        "typescript": "^6.0.3"
     },
     "overrides": {
-        "webpack": "5.105.4",
+        "webpack": "5.107.0",
         "serialize-javascript": "7.0.5"
     },
     "browserslist": {

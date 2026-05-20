@@ -8,7 +8,11 @@ const config = {
     url: "https://tabster.io",
     baseUrl: "/",
     onBrokenLinks: "throw",
-    onBrokenMarkdownLinks: "warn",
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: "warn",
+        },
+    },
     favicon: "img/favicon.png",
     organizationName: "microsoft",
     projectName: "tabster",
