@@ -1,5 +1,6 @@
 // eslint.config.mjs
-import eslintPluginImport from "eslint-plugin-import";
+import { fixupPluginRules } from "@eslint/compat";
+import eslintPluginImport from "eslint-plugin-import-x";
 import eslintPluginHeader from "eslint-plugin-header";
 import tseslint from "typescript-eslint";
 
@@ -29,7 +30,7 @@ export default [
         },
         plugins: {
             import: eslintPluginImport,
-            header: eslintPluginHeader,
+            header: fixupPluginRules(eslintPluginHeader),
             "@typescript-eslint": tseslint.plugin,
         },
         rules: {
