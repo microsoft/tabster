@@ -110,4 +110,33 @@ export default [
             ],
         },
     },
+    {
+        // Library source must go through the free-function helpers in
+        // `Utils.ts` instead of calling the raw DOM event APIs directly —
+        // helper names mangle to single chars after minification, native
+        // property names like `addEventListener` are preserved verbatim.
+        files: ["src/**/*.ts"],
+        ignores: ["src/Utils.ts"],
+        rules: {
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector:
+                        "CallExpression[callee.property.name='addEventListener']",
+                    message:
+                        "Use `addListener` from './Utils.js' (saves bytes after minification).",
+                },
+                {
+                    selector:
+                        "CallExpression[callee.property.name='removeEventListener']",
+                    message: "Use `removeListener` from './Utils.js'.",
+                },
+                {
+                    selector:
+                        "CallExpression[callee.property.name='dispatchEvent']",
+                    message: "Use `dispatchEvent` from './Utils.js'.",
+                },
+            ],
+        },
+    },
 ];

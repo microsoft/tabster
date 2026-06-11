@@ -602,6 +602,45 @@ export function getRadioButtonGroup(
 }
 
 /**
+ * Thin wrappers around `addEventListener` / `removeEventListener`. Their
+ * names get mangled to single chars by the minifier, while the inlined
+ * property accesses on `target` would not — so each call site shrinks by
+ * the difference between the helper's mangled name and the property name.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyEventHandler = (event: any) => void;
+
+export function addListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | AddEventListenerOptions
+): void {
+    target?.addEventListener(type, handler, options);
+}
+
+export function removeListener(
+    target: EventTarget | null | undefined,
+    type: string,
+    handler: AnyEventHandler,
+    options?: boolean | EventListenerOptions
+): void {
+    target?.removeEventListener(type, handler, options);
+}
+
+/**
+ * Thin wrapper around `target.dispatchEvent`. Returns `false` if the dispatch
+ * was canceled (preventDefault) OR if `target` is nullish — both shapes the
+ * existing call sites already handle the same way.
+ */
+export function dispatchEvent(
+    target: EventTarget | null | undefined,
+    event: Event
+): boolean {
+    return !!target && target.dispatchEvent(event);
+}
+
+/**
  * If the passed element is Tabster dummy input, returns the container element this dummy input belongs to.
  * @param element Element to check for being dummy input.
  * @returns Dummy input container element (if the passed element is a dummy input) or null.

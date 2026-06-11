@@ -9,13 +9,14 @@ import {
     MoverMoveFocusEvent,
     MoverMemorizedElementEvent,
 } from "./Events.js";
+import { dispatchEvent } from "./Utils.js";
 
 /** @deprecated This function is obsolete, use native element.dispatchEvent(new GroupperMoveFocusEvent(...)). */
 export function dispatchGroupperMoveFocusEvent(
     target: HTMLElement,
     action: GroupperMoveFocusAction
 ) {
-    return target.dispatchEvent(new GroupperMoveFocusEvent({ action }));
+    return dispatchEvent(target, new GroupperMoveFocusEvent({ action }));
 }
 
 /** @deprecated This function is obsolete, use native element.dispatchEvent(new MoverMoveFocusEvent(...)). */
@@ -23,7 +24,7 @@ export function dispatchMoverMoveFocusEvent(
     target: HTMLElement,
     key: MoverKey
 ) {
-    return target.dispatchEvent(new MoverMoveFocusEvent({ key }));
+    return dispatchEvent(target, new MoverMoveFocusEvent({ key }));
 }
 
 /** @deprecated This function is obsolete, use native element.dispatchEvent(new MoverMemorizedElementEvent(...)). */
@@ -31,7 +32,8 @@ export function dispatchMoverMemorizedElementEvent(
     target: HTMLElement,
     memorizedElement: HTMLElement | undefined
 ) {
-    return target.dispatchEvent(
+    return dispatchEvent(
+        target,
         new MoverMemorizedElementEvent({ memorizedElement })
     );
 }

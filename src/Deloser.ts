@@ -14,9 +14,12 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
+    addListener,
+    dispatchEvent,
     documentContains,
     getElementUId,
     isDisplayNone,
+    removeListener,
     TabsterPart,
     WeakHTMLElement,
 } from "./Utils.js";
@@ -55,7 +58,8 @@ export class DeloserItem extends DeloserItemBase<Types.Deloser> {
 
         if (available && deloserElement) {
             if (
-                !deloserElement.dispatchEvent(
+                !dispatchEvent(
+                    deloserElement,
                     new TabsterMoveFocusEvent({
                         by: "deloser",
                         owner: deloserElement,
@@ -611,7 +615,8 @@ export class Deloser
     };
 
     customFocusLostHandler(element: HTMLElement): boolean {
-        return element.dispatchEvent(
+        return dispatchEvent(
+            element,
             new DeloserFocusLostEvent(this.getActions())
         );
     }
@@ -723,7 +728,8 @@ export class DeloserAPI implements Types.DeloserAPI {
             this._tabster.focusedElement.subscribe(this._onFocus);
             const doc = this._win().document;
 
-            doc.addEventListener(
+            addListener(
+                doc,
                 DeloserRestoreFocusEventName,
                 this._onRestoreFocus
             );
@@ -758,7 +764,8 @@ export class DeloserAPI implements Types.DeloserAPI {
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
-        win.document.removeEventListener(
+        removeListener(
+            win.document,
             DeloserRestoreFocusEventName,
             this._onRestoreFocus
         );
@@ -927,18 +934,23 @@ export class DeloserAPI implements Types.DeloserAPI {
                     const curDeloserElement = curDeloser.getElement();
                     const el = curDeloser.findAvailable();
 
-                    if (
-                        el &&
-                        (!curDeloserElement?.dispatchEvent(
-                            new TabsterMoveFocusEvent({
-                                by: "deloser",
-                                owner: curDeloserElement,
-                                next: el,
-                            })
-                        ) ||
-                            this._tabster.focusedElement.focus(el))
-                    ) {
-                        return;
+                    if (el) {
+                        if (!curDeloserElement) {
+                            return;
+                        }
+                        if (
+                            !dispatchEvent(
+                                curDeloserElement,
+                                new TabsterMoveFocusEvent({
+                                    by: "deloser",
+                                    owner: curDeloserElement,
+                                    next: el,
+                                })
+                            ) ||
+                            this._tabster.focusedElement.focus(el)
+                        ) {
+                            return;
+                        }
                     }
                 }
             }
