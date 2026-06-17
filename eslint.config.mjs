@@ -112,7 +112,7 @@ export default [
     },
     {
         // Library source must go through the free-function helpers in
-        // `Utils.ts` instead of calling the raw DOM event APIs directly —
+        // `Utils.ts` instead of calling the raw DOM/window APIs directly —
         // helper names mangle to single chars after minification, native
         // property names like `addEventListener` are preserved verbatim.
         files: ["src/**/*.ts"],
@@ -135,6 +135,16 @@ export default [
                     selector:
                         "CallExpression[callee.property.name='dispatchEvent']",
                     message: "Use `dispatchEvent` from './Utils.js'.",
+                },
+                {
+                    selector:
+                        "CallExpression[callee.property.name='setTimeout']",
+                    message: "Use `setTimer` from './Utils.js'.",
+                },
+                {
+                    selector:
+                        "CallExpression[callee.property.name='clearTimeout']",
+                    message: "Use `clearTimer` from './Utils.js'.",
                 },
             ],
         },

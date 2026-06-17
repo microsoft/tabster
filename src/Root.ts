@@ -14,10 +14,13 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     dispatchEvent,
     getElementUId,
     removeListener,
+    setTimer,
     TabsterPart,
+    type Timer,
     type WeakHTMLElement,
 } from "./Utils.js";
 import { setTabsterAttribute } from "./AttributeHelpers.js";
@@ -111,7 +114,7 @@ export class Root
     private _dummyManager?: RootDummyManager;
     private _sys?: Types.SysProps;
     private _isFocused = false;
-    private _setFocusedTimer: number | undefined;
+    private _setFocusedTimer?: Timer;
     private _onDispose: (root: Root) => void;
 
     constructor(
@@ -163,10 +166,7 @@ export class Root
         removeListener(doc, KEYBORG_FOCUSIN, this._onFocusIn);
         removeListener(doc, KEYBORG_FOCUSOUT, this._onFocusOut);
 
-        if (this._setFocusedTimer) {
-            win.clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        clearTimer(this._setFocusedTimer, win);
 
         this._dummyManager?.dispose();
         this._remove();
@@ -193,10 +193,8 @@ export class Root
     }
 
     private _setFocused = (hasFocused: boolean): void => {
-        if (this._setFocusedTimer) {
-            this._tabster.getWindow().clearTimeout(this._setFocusedTimer);
-            delete this._setFocusedTimer;
-        }
+        const win = this._tabster.getWindow();
+        clearTimer(this._setFocusedTimer, win);
 
         if (this._isFocused === hasFocused) {
             return;
@@ -210,15 +208,16 @@ export class Root
                 this._dummyManager?.setTabbable(false);
                 dispatchEvent(element, new RootFocusEvent({ element }));
             } else {
-                this._setFocusedTimer = this._tabster
-                    .getWindow()
-                    .setTimeout(() => {
-                        delete this._setFocusedTimer;
-
+                this._setFocusedTimer = setTimer(
+                    this._setFocusedTimer,
+                    win,
+                    () => {
                         this._isFocused = false;
                         this._dummyManager?.setTabbable(true);
                         dispatchEvent(element, new RootBlurEvent({ element }));
-                    }, 0);
+                    },
+                    0
+                );
             }
         }
     };

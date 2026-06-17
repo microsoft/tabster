@@ -10,7 +10,15 @@ import {
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
 } from "../Consts.js";
-import { documentContains, getElementUId, WeakHTMLElement } from "../Utils.js";
+import {
+    clearTimer,
+    documentContains,
+    getElementUId,
+    isTimerActive,
+    setTimer,
+    type Timer,
+    WeakHTMLElement,
+} from "../Utils.js";
 import { Subscribable } from "./Subscribable.js";
 
 const _conditionCheckTimeout = 100;
@@ -21,8 +29,8 @@ interface ObservedElementInfo {
 }
 
 interface ObservedWaiting {
-    timer?: number;
-    conditionTimer?: number;
+    timer?: Timer;
+    conditionTimer?: Timer;
     request?: Types.ObservedElementAsyncRequest<HTMLElement | null>;
     resolve?: (value: HTMLElement | null) => void;
     reject?: () => void;
@@ -99,13 +107,8 @@ export class ObservedElementAPI
         if (w) {
             const win = this._win();
 
-            if (w.timer) {
-                win.clearTimeout(w.timer);
-            }
-
-            if (w.conditionTimer) {
-                win.clearTimeout(w.conditionTimer);
-            }
+            clearTimer(w.timer, win);
+            clearTimer(w.conditionTimer, win);
 
             if (!shouldResolve && w.reject) {
                 w.reject();
@@ -334,11 +337,13 @@ export class ObservedElementAPI
             return w.request;
         }
 
-        w = this._waiting[key] = {
-            timer: this._win().setTimeout(() => {
-                if (w.conditionTimer) {
-                    this._win().clearTimeout(w.conditionTimer);
-                }
+        w = this._waiting[key] = {};
+
+        w.timer = setTimer(
+            w.timer,
+            this._win(),
+            () => {
+                clearTimer(w.conditionTimer, this._win());
 
                 delete this._waiting[key];
 
@@ -355,8 +360,9 @@ export class ObservedElementAPI
                 if (w.resolve) {
                     w.resolve(null);
                 }
-            }, timeout),
-        };
+            },
+            timeout
+        );
 
         const promise = new Promise<HTMLElement | null>((resolve, reject) => {
             w.resolve = resolve;
@@ -576,9 +582,7 @@ export class ObservedElementAPI
                 return;
             }
 
-            if (waiting.timer) {
-                win.clearTimeout(waiting.timer);
-            }
+            clearTimer(waiting.timer, win);
 
             delete this._waiting[key];
 
@@ -613,7 +617,7 @@ export class ObservedElementAPI
 
         if (
             waitingAccessibleElement &&
-            !waitingAccessibleElement.conditionTimer
+            !isTimerActive(waitingAccessibleElement.conditionTimer)
         ) {
             const resolveAccessible = () => {
                 const element = this.getElement(observedName);
@@ -630,7 +634,9 @@ export class ObservedElementAPI
                         ObservedElementAccessibilities.Accessible
                     );
                 } else {
-                    waitingAccessibleElement.conditionTimer = win.setTimeout(
+                    waitingAccessibleElement.conditionTimer = setTimer(
+                        waitingAccessibleElement.conditionTimer,
+                        win,
                         resolveAccessible,
                         _conditionCheckTimeout
                     );
@@ -642,7 +648,7 @@ export class ObservedElementAPI
 
         if (
             waitingFocusableElement &&
-            !waitingFocusableElement.conditionTimer
+            !isTimerActive(waitingFocusableElement.conditionTimer)
         ) {
             const resolveFocusable = () => {
                 const element = this.getElement(observedName);
@@ -659,7 +665,9 @@ export class ObservedElementAPI
                         ObservedElementAccessibilities.Focusable
                     );
                 } else {
-                    waitingFocusableElement.conditionTimer = win.setTimeout(
+                    waitingFocusableElement.conditionTimer = setTimer(
+                        waitingFocusableElement.conditionTimer,
+                        win,
                         resolveFocusable,
                         _conditionCheckTimeout
                     );

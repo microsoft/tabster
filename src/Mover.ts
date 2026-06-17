@@ -26,14 +26,18 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     createElementTreeWalker,
     dispatchEvent,
     getElementUId,
     isElementVerticallyVisibleInContainer,
+    isTimerActive,
     matchesSelector,
     removeListener,
     scrollIntoView,
+    setTimer,
     TabsterPart,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
@@ -112,7 +116,7 @@ export class Mover
 {
     private _unobserve: (() => void) | undefined;
     private _intersectionObserver: IntersectionObserver | undefined;
-    private _setCurrentTimer: number | undefined;
+    private _setCurrentTimer?: Timer;
     private _current: WeakHTMLElement | undefined;
     private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
@@ -121,7 +125,7 @@ export class Mover
     private _onDispose: (mover: Mover) => void;
     private _allElements: WeakMap<HTMLElement, Mover> | undefined;
     private _updateQueue: MoverUpdateQueueItem[] | undefined;
-    private _updateTimer: number | undefined;
+    private _updateTimer?: Timer;
 
     visibilityTolerance: number;
     dummyManager: MoverDummyManager | undefined;
@@ -180,15 +184,8 @@ export class Mover
 
         const win = this._win();
 
-        if (this._setCurrentTimer) {
-            win.clearTimeout(this._setCurrentTimer);
-            delete this._setCurrentTimer;
-        }
-
-        if (this._updateTimer) {
-            win.clearTimeout(this._updateTimer);
-            delete this._updateTimer;
-        }
+        clearTimer(this._setCurrentTimer, win);
+        clearTimer(this._updateTimer, win);
 
         this.dummyManager?.dispose();
         delete this.dummyManager;
@@ -203,39 +200,45 @@ export class Mover
 
         if (
             (this._props.trackState || this._props.visibilityAware) &&
-            !this._setCurrentTimer
+            !isTimerActive(this._setCurrentTimer)
         ) {
-            this._setCurrentTimer = this._win().setTimeout(() => {
-                delete this._setCurrentTimer;
+            this._setCurrentTimer = setTimer(
+                this._setCurrentTimer,
+                this._win(),
+                () => {
+                    const changed: (WeakHTMLElement | undefined)[] = [];
 
-                const changed: (WeakHTMLElement | undefined)[] = [];
+                    if (this._current !== this._prevCurrent) {
+                        changed.push(this._current);
+                        changed.push(this._prevCurrent);
+                        this._prevCurrent = this._current;
+                    }
 
-                if (this._current !== this._prevCurrent) {
-                    changed.push(this._current);
-                    changed.push(this._prevCurrent);
-                    this._prevCurrent = this._current;
-                }
+                    for (const weak of changed) {
+                        const el = weak?.get();
 
-                for (const weak of changed) {
-                    const el = weak?.get();
+                        if (el && this._allElements?.get(el) === this) {
+                            const props = this._props;
 
-                    if (el && this._allElements?.get(el) === this) {
-                        const props = this._props;
+                            if (
+                                el &&
+                                (props.visibilityAware !== undefined ||
+                                    props.trackState)
+                            ) {
+                                const state = this.getState(el);
 
-                        if (
-                            el &&
-                            (props.visibilityAware !== undefined ||
-                                props.trackState)
-                        ) {
-                            const state = this.getState(el);
-
-                            if (state) {
-                                dispatchEvent(el, new MoverStateEvent(state));
+                                if (state) {
+                                    dispatchEvent(
+                                        el,
+                                        new MoverStateEvent(state)
+                                    );
+                                }
                             }
                         }
                     }
-                }
-            });
+                },
+                0
+            );
         }
     }
 
@@ -561,26 +564,29 @@ export class Mover
         };
 
         const requestUpdate = () => {
-            if (!this._updateTimer && updateQueue.length) {
-                this._updateTimer = win.setTimeout(() => {
-                    delete this._updateTimer;
-
-                    for (const { element, type } of updateQueue) {
-                        switch (type) {
-                            case _moverUpdateAttr:
-                                updateElement(element);
-                                break;
-                            case _moverUpdateAdd:
-                                addNewElements(element);
-                                break;
-                            case _moverUpdateRemove:
-                                removeWalk(element);
-                                break;
+            if (!isTimerActive(this._updateTimer) && updateQueue.length) {
+                this._updateTimer = setTimer(
+                    this._updateTimer,
+                    win,
+                    () => {
+                        for (const { element, type } of updateQueue) {
+                            switch (type) {
+                                case _moverUpdateAttr:
+                                    updateElement(element);
+                                    break;
+                                case _moverUpdateAdd:
+                                    addNewElements(element);
+                                    break;
+                                case _moverUpdateRemove:
+                                    removeWalk(element);
+                                    break;
+                            }
                         }
-                    }
 
-                    updateQueue = this._updateQueue = [];
-                }, 0);
+                        updateQueue = this._updateQueue = [];
+                    },
+                    0
+                );
             }
         };
 
@@ -690,7 +696,7 @@ export class MoverAPI implements Types.MoverAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
     private _movers: Record<string, Mover>;
-    private _ignoredInputTimer: number | undefined;
+    private _ignoredInputTimer?: Timer;
     private _ignoredInputResolve: ((value: boolean) => void) | undefined;
 
     constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
@@ -722,10 +728,7 @@ export class MoverAPI implements Types.MoverAPI {
 
         this._ignoredInputResolve?.(false);
 
-        if (this._ignoredInputTimer) {
-            win.clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
+        clearTimer(this._ignoredInputTimer, win);
 
         removeListener(win, "keydown", this._onKeyDown, true);
         removeListener(win, MoverMoveFocusEventName, this._onMoveFocus);
@@ -1230,10 +1233,7 @@ export class MoverAPI implements Types.MoverAPI {
     }
 
     private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
+        clearTimer(this._ignoredInputTimer, this._win());
 
         this._ignoredInputResolve?.(false);
 
@@ -1392,10 +1392,6 @@ export class MoverAPI implements Types.MoverAPI {
 
                     const win = this._win();
 
-                    if (this._ignoredInputTimer) {
-                        win.clearTimeout(this._ignoredInputTimer);
-                    }
-
                     const {
                         anchorNode: prevAnchorNode,
                         focusNode: prevFocusNode,
@@ -1404,85 +1400,90 @@ export class MoverAPI implements Types.MoverAPI {
                     } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    this._ignoredInputTimer = win.setTimeout(() => {
-                        delete this._ignoredInputTimer;
+                    this._ignoredInputTimer = setTimer(
+                        this._ignoredInputTimer,
+                        win,
+                        () => {
+                            const {
+                                anchorNode,
+                                focusNode,
+                                anchorOffset,
+                                focusOffset,
+                            } = dom.getSelection(element) || {};
 
-                        const {
-                            anchorNode,
-                            focusNode,
-                            anchorOffset,
-                            focusOffset,
-                        } = dom.getSelection(element) || {};
-
-                        if (
-                            anchorNode !== prevAnchorNode ||
-                            focusNode !== prevFocusNode ||
-                            anchorOffset !== prevAnchorOffset ||
-                            focusOffset !== prevFocusOffset
-                        ) {
-                            this._ignoredInputResolve?.(false);
-                            return;
-                        }
-
-                        selectionStart = anchorOffset || 0;
-                        selectionEnd = focusOffset || 0;
-                        textLength = element.textContent?.length || 0;
-
-                        if (anchorNode && focusNode) {
                             if (
-                                dom.nodeContains(element, anchorNode) &&
-                                dom.nodeContains(element, focusNode)
+                                anchorNode !== prevAnchorNode ||
+                                focusNode !== prevFocusNode ||
+                                anchorOffset !== prevAnchorOffset ||
+                                focusOffset !== prevFocusOffset
                             ) {
-                                if (anchorNode !== element) {
-                                    let anchorFound = false;
+                                this._ignoredInputResolve?.(false);
+                                return;
+                            }
 
-                                    const addOffsets = (
-                                        node: ChildNode
-                                    ): boolean => {
-                                        if (node === anchorNode) {
-                                            anchorFound = true;
-                                        } else if (node === focusNode) {
-                                            return true;
-                                        }
+                            selectionStart = anchorOffset || 0;
+                            selectionEnd = focusOffset || 0;
+                            textLength = element.textContent?.length || 0;
 
-                                        const nodeText = node.textContent;
+                            if (anchorNode && focusNode) {
+                                if (
+                                    dom.nodeContains(element, anchorNode) &&
+                                    dom.nodeContains(element, focusNode)
+                                ) {
+                                    if (anchorNode !== element) {
+                                        let anchorFound = false;
 
-                                        if (
-                                            nodeText &&
-                                            !dom.getFirstChild(node)
-                                        ) {
-                                            const len = nodeText.length;
+                                        const addOffsets = (
+                                            node: ChildNode
+                                        ): boolean => {
+                                            if (node === anchorNode) {
+                                                anchorFound = true;
+                                            } else if (node === focusNode) {
+                                                return true;
+                                            }
 
-                                            if (anchorFound) {
-                                                if (focusNode !== anchorNode) {
+                                            const nodeText = node.textContent;
+
+                                            if (
+                                                nodeText &&
+                                                !dom.getFirstChild(node)
+                                            ) {
+                                                const len = nodeText.length;
+
+                                                if (anchorFound) {
+                                                    if (
+                                                        focusNode !== anchorNode
+                                                    ) {
+                                                        selectionEnd += len;
+                                                    }
+                                                } else {
+                                                    selectionStart += len;
                                                     selectionEnd += len;
                                                 }
-                                            } else {
-                                                selectionStart += len;
-                                                selectionEnd += len;
                                             }
-                                        }
 
-                                        let stop = false;
+                                            let stop = false;
 
-                                        for (
-                                            let e = dom.getFirstChild(node);
-                                            e && !stop;
-                                            e = e.nextSibling
-                                        ) {
-                                            stop = addOffsets(e);
-                                        }
+                                            for (
+                                                let e = dom.getFirstChild(node);
+                                                e && !stop;
+                                                e = e.nextSibling
+                                            ) {
+                                                stop = addOffsets(e);
+                                            }
 
-                                        return stop;
-                                    };
+                                            return stop;
+                                        };
 
-                                    addOffsets(element);
+                                        addOffsets(element);
+                                    }
                                 }
                             }
-                        }
 
-                        this._ignoredInputResolve?.(true);
-                    }, 0);
+                            this._ignoredInputResolve?.(true);
+                        },
+                        0
+                    );
                 });
             }
 

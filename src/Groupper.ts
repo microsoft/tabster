@@ -28,10 +28,14 @@ import {
 } from "./DummyInput.js";
 import {
     addListener,
+    clearTimer,
     dispatchEvent,
     getAdjacentElement,
+    isTimerActive,
     removeListener,
+    setTimer,
     TabsterPart,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
@@ -433,7 +437,7 @@ function validateGroupperProps(props: Types.GroupperProps): void {
 
 export class GroupperAPI implements Types.GroupperAPI {
     private _tabster: Types.TabsterCore;
-    private _updateTimer: number | undefined;
+    private _updateTimer?: Timer;
     private _win: Types.GetWindow;
     private _current: Record<string, Types.Groupper> = {};
     private _grouppers: Record<string, Types.Groupper> = {};
@@ -472,10 +476,7 @@ export class GroupperAPI implements Types.GroupperAPI {
 
         this._current = {};
 
-        if (this._updateTimer) {
-            win.clearTimeout(this._updateTimer);
-            delete this._updateTimer;
-        }
+        clearTimer(this._updateTimer, win);
 
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
@@ -518,18 +519,22 @@ export class GroupperAPI implements Types.GroupperAPI {
         if (
             focusedElement &&
             dom.nodeContains(element, focusedElement) &&
-            !this._updateTimer
+            !isTimerActive(this._updateTimer)
         ) {
-            this._updateTimer = this._win().setTimeout(() => {
-                delete this._updateTimer;
-                // Making sure the focused element hasn't changed.
-                if (
-                    focusedElement ===
-                    tabster.focusedElement.getFocusedElement()
-                ) {
-                    this._updateCurrent(focusedElement);
-                }
-            }, 0);
+            this._updateTimer = setTimer(
+                this._updateTimer,
+                this._win(),
+                () => {
+                    // Making sure the focused element hasn't changed.
+                    if (
+                        focusedElement ===
+                        tabster.focusedElement.getFocusedElement()
+                    ) {
+                        this._updateCurrent(focusedElement);
+                    }
+                },
+                0
+            );
         }
 
         return newGroupper;
@@ -562,10 +567,7 @@ export class GroupperAPI implements Types.GroupperAPI {
     };
 
     private _updateCurrent(element: HTMLElement): void {
-        if (this._updateTimer) {
-            this._win().clearTimeout(this._updateTimer);
-            delete this._updateTimer;
-        }
+        clearTimer(this._updateTimer, this._win());
 
         const tabster = this._tabster;
         const newIds: Record<string, true> = {};

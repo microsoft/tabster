@@ -5,7 +5,14 @@
 
 import { getTabsterOnElement } from "./Instance.js";
 import type * as Types from "./Types.js";
-import { addListener, getBoundingRect, removeListener } from "./Utils.js";
+import {
+    addListener,
+    clearTimer,
+    getBoundingRect,
+    removeListener,
+    setTimer,
+    type Timer,
+} from "./Utils.js";
 
 interface WindowWithOutlineStyle extends Window {
     __tabsterOutline?: {
@@ -59,7 +66,7 @@ class OutlinePosition {
 export class OutlineAPI implements Types.OutlineAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _updateTimer: number | undefined;
+    private _updateTimer?: Timer;
     private _outlinedElement: HTMLElement | undefined;
     private _curPos: OutlinePosition | undefined;
     private _isVisible = false;
@@ -130,10 +137,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     dispose(): void {
         const win = this._win();
 
-        if (this._updateTimer) {
-            win.clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
+        clearTimer(this._updateTimer, win);
 
         this._tabster.keyboardNavigation.unsubscribe(
             this._onKeyboardNavigationStateChanged
@@ -220,10 +224,7 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _updateElement(e: HTMLElement | undefined): boolean {
         this._outlinedElement = undefined;
 
-        if (this._updateTimer) {
-            this._win().clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
+        clearTimer(this._updateTimer, this._win());
 
         this._curPos = undefined;
 
@@ -293,19 +294,20 @@ export class OutlineAPI implements Types.OutlineAPI {
     private _updateOutline(): void {
         this._setOutlinePosition();
 
-        if (this._updateTimer) {
-            this._win().clearTimeout(this._updateTimer);
-            this._updateTimer = undefined;
-        }
+        clearTimer(this._updateTimer, this._win());
 
         if (!this._outlinedElement) {
             return;
         }
 
-        this._updateTimer = this._win().setTimeout(() => {
-            this._updateTimer = undefined;
-            this._updateOutline();
-        }, 30);
+        this._updateTimer = setTimer(
+            this._updateTimer,
+            this._win(),
+            () => {
+                this._updateOutline();
+            },
+            30
+        );
     }
 
     private _setVisibility(visible: boolean): void {

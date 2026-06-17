@@ -20,9 +20,13 @@ import {
 import {
     addListener,
     augmentAttribute,
+    clearTimer,
     dispatchEvent,
+    isTimerActive,
     removeListener,
+    setTimer,
     TabsterPart,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
@@ -338,12 +342,12 @@ function validateModalizerProps(props: Types.ModalizerProps): void {
 export class ModalizerAPI implements Types.ModalizerAPI {
     private _tabster: Types.TabsterCore;
     private _win: Types.GetWindow;
-    private _restoreModalizerFocusTimer: number | undefined;
+    private _restoreModalizerFocusTimer?: Timer;
     private _modalizers: Record<string, Types.Modalizer>;
     private _parts: Record<string, Record<string, Types.Modalizer>>;
     private _augMap: WeakMap<HTMLElement, true>;
     private _aug: WeakHTMLElement<HTMLElement>[];
-    private _hiddenUpdateTimer: number | undefined;
+    private _hiddenUpdateTimer?: Timer;
     private _alwaysAccessibleSelector: string | undefined;
     private _accessibleCheck: Types.ModalizerElementAccessibleCheck | undefined;
     private _activationHistory: (string | undefined)[];
@@ -394,8 +398,8 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             }
         });
 
-        win.clearTimeout(this._restoreModalizerFocusTimer);
-        win.clearTimeout(this._hiddenUpdateTimer);
+        clearTimer(this._restoreModalizerFocusTimer, win);
+        clearTimer(this._hiddenUpdateTimer, win);
 
         this._parts = {};
         delete this.activeId;
@@ -587,14 +591,18 @@ export class ModalizerAPI implements Types.ModalizerAPI {
     }
 
     hiddenUpdate(): void {
-        if (this._hiddenUpdateTimer) {
+        if (isTimerActive(this._hiddenUpdateTimer)) {
             return;
         }
 
-        this._hiddenUpdateTimer = this._win().setTimeout(() => {
-            delete this._hiddenUpdateTimer;
-            this._hiddenUpdate();
-        }, 250);
+        this._hiddenUpdateTimer = setTimer(
+            this._hiddenUpdateTimer,
+            this._win(),
+            () => {
+                this._hiddenUpdate();
+            },
+            250
+        );
     }
 
     setActive(modalizer: Types.Modalizer | undefined): void {
@@ -984,11 +992,11 @@ export class ModalizerAPI implements Types.ModalizerAPI {
             this.setActive(modalizer);
         } else {
             // Focused outside of the active modalizer, try pull focus back to current modalizer
-            const win = this._win();
-            win.clearTimeout(this._restoreModalizerFocusTimer);
             // TODO some rendering frameworks (i.e. React) might async rerender the DOM so we need to wait for a duration
             // Figure out a better way of doing this rather than a 100ms timeout
-            this._restoreModalizerFocusTimer = win.setTimeout(
+            this._restoreModalizerFocusTimer = setTimer(
+                this._restoreModalizerFocusTimer,
+                this._win(),
                 () => this._restoreModalizerFocus(focusedElement),
                 100
             );
