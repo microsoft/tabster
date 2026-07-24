@@ -18,6 +18,59 @@ interface NodeWithVirtualParent extends Node {
     };
 }
 
+describe("FocusedElement", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({});
+    });
+
+    it("should forward focus options and support the legacy boolean", async () => {
+        const focusOptions: Types.TabsterFocusOptions = {
+            preventScroll: true,
+            focusVisible: true,
+        };
+
+        await new BroTest.BroTest(<button id="button">Button</button>)
+            .eval((options: Types.TabsterFocusOptions) => {
+                const button = document.getElementById(
+                    "button"
+                ) as HTMLButtonElement;
+                const receivedOptions: Array<
+                    Types.TabsterFocusOptions | undefined
+                > = [];
+
+                button.focus = (received?: FocusOptions) => {
+                    receivedOptions.push(received);
+                };
+
+                const tabster = (window as unknown as WindowWithTabster)
+                    .__tabsterInstance as Types.TabsterCore;
+
+                const legacyResult = tabster.focusedElement.focus(
+                    button,
+                    undefined,
+                    undefined,
+                    true
+                );
+                const optionsResult = tabster.focusedElement.focus(
+                    button,
+                    undefined,
+                    undefined,
+                    options
+                );
+
+                return { legacyResult, optionsResult, receivedOptions };
+            }, focusOptions)
+            .check(({ legacyResult, optionsResult, receivedOptions }) => {
+                expect(legacyResult).toBe(true);
+                expect(optionsResult).toBe(true);
+                expect(receivedOptions).toEqual([
+                    { preventScroll: true },
+                    focusOptions,
+                ]);
+            });
+    });
+});
+
 describe("Tabster dispose", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({});

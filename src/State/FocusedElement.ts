@@ -204,7 +204,7 @@ export class FocusedElementState
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean,
-        preventScroll?: boolean
+        focusOptions?: boolean | Types.TabsterFocusOptions
     ): boolean {
         if (
             !this._tabster.focusable.isFocusable(
@@ -217,7 +217,12 @@ export class FocusedElementState
             return false;
         }
 
-        element.focus({ preventScroll });
+        const options =
+            typeof focusOptions === "boolean"
+                ? { preventScroll: focusOptions }
+                : focusOptions;
+
+        element.focus(options);
 
         return true;
     }

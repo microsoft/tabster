@@ -139,6 +139,16 @@ export type AsyncFocusSources = typeof _AsyncFocusSources;
 
 export type AsyncFocusSource = AsyncFocusSources[keyof AsyncFocusSources];
 
+export interface TabsterFocusOptions extends FocusOptions {
+    /**
+     * Forces the browser to show or hide a visible focus indicator.
+     *
+     * This is declared explicitly until it is available in all supported
+     * TypeScript DOM library versions.
+     */
+    focusVisible?: boolean;
+}
+
 export interface FocusedElementState
     extends
         Subscribable<HTMLElement | undefined, FocusedElementDetail>,
@@ -149,7 +159,7 @@ export interface FocusedElementState
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
         noAccessibleCheck?: boolean,
-        preventScroll?: boolean
+        focusOptions?: boolean | TabsterFocusOptions
     ): boolean;
     focusDefault(container: HTMLElement): boolean;
     /** @internal */
