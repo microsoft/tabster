@@ -17,6 +17,64 @@ describe("Focusable", () => {
         await BroTest.bootstrapTabsterPage({ observed: true });
     });
 
+    it("should forward focus options", async () => {
+        const name = "test";
+        const focusOptions: Types.TabsterFocusOptions = {
+            preventScroll: true,
+            focusVisible: true,
+        };
+
+        await new BroTest.BroTest(
+            <button
+                id="button"
+                {...getTabsterAttribute({
+                    observed: { names: [name] },
+                })}
+            >
+                Button
+            </button>
+        )
+            .eval(
+                async ({
+                    name,
+                    options,
+                }: {
+                    name: string;
+                    options: Types.TabsterFocusOptions;
+                }) => {
+                    const button =
+                        getTabsterTestVariables().dom?.getElementById(
+                            document,
+                            "button"
+                        ) as HTMLButtonElement;
+                    const receivedOptions: Array<
+                        Types.TabsterFocusOptions | undefined
+                    > = [];
+
+                    button.focus = (received?: FocusOptions) => {
+                        receivedOptions.push(received);
+                    };
+
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            name,
+                            0,
+                            options
+                        );
+
+                    return {
+                        result: request ? await request.result : false,
+                        receivedOptions,
+                    };
+                },
+                { name, options: focusOptions }
+            )
+            .check(({ result, receivedOptions }) => {
+                expect(result).toBe(true);
+                expect(receivedOptions).toEqual([focusOptions]);
+            });
+    });
+
     it("should request focus for element with tabindex -1", async () => {
         const name = "test";
         await new BroTest.BroTest(

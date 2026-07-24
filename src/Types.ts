@@ -347,7 +347,7 @@ export interface ObservedElementAPI
     requestFocus(
         observedName: string,
         timeout: number,
-        options?: Pick<FocusOptions, "preventScroll">
+        options?: TabsterFocusOptions
     ): ObservedElementAsyncRequest<boolean>;
     /**
      * Returns all currently registered observed elements grouped by their observed names.

@@ -31,7 +31,8 @@ describe("FocusedElement", () => {
 
         await new BroTest.BroTest(<button id="button">Button</button>)
             .eval((options: Types.TabsterFocusOptions) => {
-                const button = document.getElementById(
+                const button = getTabsterTestVariables().dom?.getElementById(
+                    document,
                     "button"
                 ) as HTMLButtonElement;
                 const receivedOptions: Array<
