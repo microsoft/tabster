@@ -85,7 +85,7 @@
         "jest-puppeteer": "^11.0.0",
         "monosize": "0.9.0",
         "monosize-bundler-webpack": "0.4.0",
-        "monosize-storage-git": "0.3.4",
+        "monosize-storage-git": "0.3.5",
         "prettier": "^3.8.3",
         "puppeteer": "^25.0.4",
         "react": "^19.2.6",
