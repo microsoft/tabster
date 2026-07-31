@@ -29,30 +29,39 @@ jobs:
 
       - name: Compare bundle size with base
         id: compare-remote
-        continue-on-error: true
-        run: npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
+        run: |
+          status=0
+          npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json" 2> ./monosize-error.log || status=$?
+          cat ./monosize-error.log >&2
+
+          if [ "$status" -ne 0 ] && grep -q "Artifact has expired" ./monosize-error.log; then
+            echo "use-local-base=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          exit "$status"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check out base for local comparison
-        if: steps.compare-remote.outcome == 'failure'
+        if: steps.compare-remote.outputs.use-local-base == 'true'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: .bundle-size-base
 
       - name: Install base dependencies
-        if: steps.compare-remote.outcome == 'failure'
+        if: steps.compare-remote.outputs.use-local-base == 'true'
         run: npm install
         working-directory: .bundle-size-base
 
       - name: Build base bundle-size report
-        if: steps.compare-remote.outcome == 'failure'
+        if: steps.compare-remote.outputs.use-local-base == 'true'
         run: npm run bundle-size
         working-directory: .bundle-size-base
 
       - name: Compare bundle size with local base
-        if: steps.compare-remote.outcome == 'failure'
+        if: steps.compare-remote.outputs.use-local-base == 'true'
         run: npx monosize compare-reports --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
         env:
           MONOSIZE_BASE_REPORT: ${{ github.workspace }}/.bundle-size-base/dist/bundle-size/monosize.json
