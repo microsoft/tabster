@@ -19,10 +19,14 @@ import { TabsterMoveFocusEvent } from "./Events.js";
 import { dom } from "./DOMAPI.js";
 import {
     addListener,
+    clearTimer,
     dispatchEvent,
     hasSubFocusable,
+    isTimerActive,
     makeFocusIgnored,
     removeListener,
+    setTimer,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 
@@ -55,7 +59,7 @@ export type DummyInputFocusCallback = (
 export class DummyInput {
     private _isPhantom: DummyInputProps["isPhantom"];
     private _fixedTarget?: WeakHTMLElement;
-    private _disposeTimer: number | undefined;
+    private _disposeTimer?: Timer;
     private _clearDisposeTimeout: (() => void) | undefined;
 
     input: HTMLElement | undefined;
@@ -105,17 +109,17 @@ export class DummyInput {
             element;
 
         if (this._isPhantom) {
-            this._disposeTimer = win.setTimeout(() => {
-                delete this._disposeTimer;
-                this.dispose();
-            }, 0);
+            this._disposeTimer = setTimer(
+                this._disposeTimer,
+                win,
+                () => {
+                    this.dispose();
+                },
+                0
+            );
 
             this._clearDisposeTimeout = () => {
-                if (this._disposeTimer) {
-                    win.clearTimeout(this._disposeTimer);
-                    delete this._disposeTimer;
-                }
-
+                clearTimer(this._disposeTimer, win);
                 delete this._clearDisposeTimeout;
             };
         }
@@ -511,10 +515,10 @@ export class DummyInputObserver implements DummyInputObserverInterface {
             >
         ) => () => void
     > = new Set();
-    private _updateTimer?: number;
+    private _updateTimer?: Timer;
     private _lastUpdateQueueTime = 0;
     private _changedParents: WeakSet<Node> = new WeakSet();
-    private _updateDummyInputsTimer?: number;
+    private _updateDummyInputsTimer?: Timer;
     private _dummyElements: WeakHTMLElement<HTMLElement>[] = [];
     private _dummyCallbacks: WeakMap<HTMLElement, () => void> = new WeakMap();
     domChanged?(parent: HTMLElement): void;
@@ -547,14 +551,9 @@ export class DummyInputObserver implements DummyInputObserverInterface {
     dispose(): void {
         const win = this._win?.();
 
-        if (this._updateTimer) {
-            win?.clearTimeout(this._updateTimer);
-            delete this._updateTimer;
-        }
-
-        if (this._updateDummyInputsTimer) {
-            win?.clearTimeout(this._updateDummyInputsTimer);
-            delete this._updateDummyInputsTimer;
+        if (win) {
+            clearTimer(this._updateTimer, win);
+            clearTimer(this._updateDummyInputsTimer, win);
         }
 
         this._changedParents = new WeakSet();
@@ -573,34 +572,42 @@ export class DummyInputObserver implements DummyInputObserverInterface {
 
         this._changedParents.add(parent);
 
-        if (this._updateDummyInputsTimer) {
+        if (isTimerActive(this._updateDummyInputsTimer)) {
             return;
         }
 
-        this._updateDummyInputsTimer = this._win?.().setTimeout(() => {
-            delete this._updateDummyInputsTimer;
+        const win = this._win?.();
+        if (!win) {
+            return;
+        }
 
-            for (const ref of this._dummyElements) {
-                const dummyElement = ref.get();
+        this._updateDummyInputsTimer = setTimer(
+            this._updateDummyInputsTimer,
+            win,
+            () => {
+                for (const ref of this._dummyElements) {
+                    const dummyElement = ref.get();
 
-                if (dummyElement) {
-                    const callback = this._dummyCallbacks.get(dummyElement);
+                    if (dummyElement) {
+                        const callback = this._dummyCallbacks.get(dummyElement);
 
-                    if (callback) {
-                        const dummyParent = dom.getParentNode(dummyElement);
+                        if (callback) {
+                            const dummyParent = dom.getParentNode(dummyElement);
 
-                        if (
-                            !dummyParent ||
-                            this._changedParents.has(dummyParent)
-                        ) {
-                            callback();
+                            if (
+                                !dummyParent ||
+                                this._changedParents.has(dummyParent)
+                            ) {
+                                callback();
+                            }
                         }
                     }
                 }
-            }
 
-            this._changedParents = new WeakSet();
-        }, _updateDummyInputsTimeout);
+                this._changedParents = new WeakSet();
+            },
+            _updateDummyInputsTimeout
+        );
     };
 
     updatePositions(
@@ -625,49 +632,57 @@ export class DummyInputObserver implements DummyInputObserverInterface {
     }
 
     private _scheduledUpdatePositions(): void {
-        if (this._updateTimer) {
+        if (isTimerActive(this._updateTimer)) {
             return;
         }
 
-        this._updateTimer = this._win?.().setTimeout(() => {
-            delete this._updateTimer;
+        const win = this._win?.();
+        if (!win) {
+            return;
+        }
 
-            // updatePositions() might be called quite a lot during the scrolling.
-            // So, instead of clearing the timeout and scheduling a new one, we
-            // check if enough time has passed since the last updatePositions() call
-            // and only schedule a new one if not.
-            // At maximum, we will update dummy inputs positions
-            // _updateDummyInputsTimeout * 2 after the last updatePositions() call.
-            if (
-                this._lastUpdateQueueTime + _updateDummyInputsTimeout <=
-                Date.now()
-            ) {
-                // A cache for current bulk of updates to reduce getComputedStyle() calls.
-                const scrollTopLeftCache = new Map<
-                    HTMLElement,
-                    { scrollTop: number; scrollLeft: number } | null
-                >();
+        this._updateTimer = setTimer(
+            this._updateTimer,
+            win,
+            () => {
+                // updatePositions() might be called quite a lot during the scrolling.
+                // So, instead of clearing the timeout and scheduling a new one, we
+                // check if enough time has passed since the last updatePositions() call
+                // and only schedule a new one if not.
+                // At maximum, we will update dummy inputs positions
+                // _updateDummyInputsTimeout * 2 after the last updatePositions() call.
+                if (
+                    this._lastUpdateQueueTime + _updateDummyInputsTimeout <=
+                    Date.now()
+                ) {
+                    // A cache for current bulk of updates to reduce getComputedStyle() calls.
+                    const scrollTopLeftCache = new Map<
+                        HTMLElement,
+                        { scrollTop: number; scrollLeft: number } | null
+                    >();
 
-                const setTopLeftCallbacks: (() => void)[] = [];
+                    const setTopLeftCallbacks: (() => void)[] = [];
 
-                for (const compute of this._updateQueue) {
-                    setTopLeftCallbacks.push(compute(scrollTopLeftCache));
+                    for (const compute of this._updateQueue) {
+                        setTopLeftCallbacks.push(compute(scrollTopLeftCache));
+                    }
+
+                    this._updateQueue.clear();
+
+                    // We're splitting the computation of offsets and setting them to avoid extra
+                    // reflows.
+                    for (const setTopLeft of setTopLeftCallbacks) {
+                        setTopLeft();
+                    }
+
+                    // Explicitly clear to not hold references till the next garbage collection.
+                    scrollTopLeftCache.clear();
+                } else {
+                    this._scheduledUpdatePositions();
                 }
-
-                this._updateQueue.clear();
-
-                // We're splitting the computation of offsets and setting them to avoid extra
-                // reflows.
-                for (const setTopLeft of setTopLeftCallbacks) {
-                    setTopLeft();
-                }
-
-                // Explicitly clear to not hold references till the next garbage collection.
-                scrollTopLeftCache.clear();
-            } else {
-                this._scheduledUpdatePositions();
-            }
-        }, _updateDummyInputsTimeout);
+            },
+            _updateDummyInputsTimeout
+        );
     }
 }
 
@@ -676,7 +691,7 @@ export class DummyInputObserver implements DummyInputObserverInterface {
  */
 class DummyInputManagerCore {
     private _tabster: TabsterCore;
-    private _addTimer: number | undefined;
+    private _addTimer?: Timer;
     private _getWindow: GetWindow;
     private _wrappers: DummyInputWrapper[] = [];
     private _element: WeakHTMLElement | undefined;
@@ -801,10 +816,7 @@ class DummyInputManagerCore {
 
             const win = this._getWindow();
 
-            if (this._addTimer) {
-                win.clearTimeout(this._addTimer);
-                delete this._addTimer;
-            }
+            clearTimer(this._addTimer, win);
 
             const dummyElement = this._firstDummy?.input;
             dummyElement && this._tabster._dummyObserver.remove(dummyElement);
@@ -998,24 +1010,33 @@ class DummyInputManagerCore {
      * Called each time the children under the element is mutated
      */
     private _addDummyInputs = () => {
-        if (this._addTimer) {
+        if (isTimerActive(this._addTimer)) {
             return;
         }
 
-        this._addTimer = this._getWindow().setTimeout(() => {
-            delete this._addTimer;
+        this._addTimer = setTimer(
+            this._addTimer,
+            this._getWindow(),
+            () => {
+                this._ensurePosition();
 
-            this._ensurePosition();
+                if (__DEV__) {
+                    this._firstDummy &&
+                        setDummyInputDebugValue(
+                            this._firstDummy,
+                            this._wrappers
+                        );
+                    this._lastDummy &&
+                        setDummyInputDebugValue(
+                            this._lastDummy,
+                            this._wrappers
+                        );
+                }
 
-            if (__DEV__) {
-                this._firstDummy &&
-                    setDummyInputDebugValue(this._firstDummy, this._wrappers);
-                this._lastDummy &&
-                    setDummyInputDebugValue(this._lastDummy, this._wrappers);
-            }
-
-            this._addTransformOffsets();
-        }, 0);
+                this._addTransformOffsets();
+            },
+            0
+        );
     };
 
     private _ensurePosition(): void {

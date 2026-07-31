@@ -15,12 +15,15 @@ import {
 } from "./Events.js";
 import {
     addListener,
+    clearTimer,
     dispatchEvent,
     documentContains,
     getElementUId,
     isDisplayNone,
     removeListener,
+    setTimer,
     TabsterPart,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
@@ -710,7 +713,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     private _inDeloser = false;
     private _curDeloser: Types.Deloser | undefined;
     private _history: DeloserHistory;
-    private _restoreFocusTimer: number | undefined;
+    private _restoreFocusTimer?: Timer;
     private _isRestoringFocus = false;
     private _isPaused = false;
     private _autoDeloser: Types.DeloserProps | undefined;
@@ -751,10 +754,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     dispose(): void {
         const win = this._win();
 
-        if (this._restoreFocusTimer) {
-            win.clearTimeout(this._restoreFocusTimer);
-            this._restoreFocusTimer = undefined;
-        }
+        clearTimer(this._restoreFocusTimer, win);
 
         if (this._autoDeloserInstance) {
             this._autoDeloserInstance.dispose();
@@ -821,10 +821,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     pause(): void {
         this._isPaused = true;
 
-        if (this._restoreFocusTimer) {
-            this._win().clearTimeout(this._restoreFocusTimer);
-            this._restoreFocusTimer = undefined;
-        }
+        clearTimer(this._restoreFocusTimer, this._win());
     }
 
     resume(restore?: boolean): void {
@@ -854,10 +851,7 @@ export class DeloserAPI implements Types.DeloserAPI {
     };
 
     private _onFocus = (e: HTMLElement | undefined): void => {
-        if (this._restoreFocusTimer) {
-            this._win().clearTimeout(this._restoreFocusTimer);
-            this._restoreFocusTimer = undefined;
-        }
+        clearTimer(this._restoreFocusTimer, this._win());
 
         if (!e) {
             this._scheduleRestoreFocus();
@@ -902,7 +896,8 @@ export class DeloserAPI implements Types.DeloserAPI {
         }
 
         const restoreFocus = async () => {
-            this._restoreFocusTimer = undefined;
+            clearTimer(this._restoreFocusTimer, this._win());
+
             const lastFocused =
                 this._tabster.focusedElement.getLastFocusedElement();
 
@@ -973,7 +968,12 @@ export class DeloserAPI implements Types.DeloserAPI {
         if (force) {
             restoreFocus();
         } else {
-            this._restoreFocusTimer = this._win().setTimeout(restoreFocus, 100);
+            this._restoreFocusTimer = setTimer(
+                this._restoreFocusTimer,
+                this._win(),
+                restoreFocus,
+                100
+            );
         }
     }
 

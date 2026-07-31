@@ -23,11 +23,14 @@ import {
 import { DummyInputManager } from "../DummyInput.js";
 import {
     addListener,
+    clearTimer,
     dispatchEvent,
     documentContains,
     getLastChild,
     removeListener,
+    setTimer,
     shouldIgnoreFocus,
+    type Timer,
     WeakHTMLElement,
 } from "../Utils.js";
 import { getTabsterOnElement } from "../Instance.js";
@@ -72,7 +75,7 @@ const AsyncFocusIntentPriorityBySource = {
 interface AsyncFocus {
     source: Types.AsyncFocusSource;
     callback: () => void;
-    timeout: number;
+    timeout?: Timer;
 }
 
 export class FocusedElementState
@@ -80,7 +83,7 @@ export class FocusedElementState
     implements Types.FocusedElementState
 {
     private static _lastResetElement: WeakHTMLElement | undefined;
-    private static _isTabbingTimer: number | undefined;
+    private static _isTabbingTimer?: Timer;
     static isTabbing = false;
 
     private _tabster: Types.TabsterCore;
@@ -154,7 +157,7 @@ export class FocusedElementState
 
         const asyncFocus = this._asyncFocus;
         if (asyncFocus) {
-            win.clearTimeout(asyncFocus.timeout);
+            clearTimer(asyncFocus.timeout, win);
             delete this._asyncFocus;
         }
 
@@ -339,24 +342,32 @@ export class FocusedElementState
             }
 
             // New intent has higher priority.
-            win.clearTimeout(currentAsyncFocus.timeout);
+            clearTimer(currentAsyncFocus.timeout, win);
         }
 
-        this._asyncFocus = {
+        const asyncFocus: AsyncFocus = {
             source,
             callback,
-            timeout: win.setTimeout(() => {
+            timeout: undefined,
+        };
+        this._asyncFocus = asyncFocus;
+
+        asyncFocus.timeout = setTimer(
+            asyncFocus.timeout,
+            win,
+            () => {
                 this._asyncFocus = undefined;
                 callback();
-            }, delay),
-        };
+            },
+            delay
+        );
     }
 
     cancelAsyncFocus(source: Types.AsyncFocusSource): void {
         const asyncFocus = this._asyncFocus;
 
         if (asyncFocus?.source === source) {
-            this._tabster.getWindow().clearTimeout(asyncFocus.timeout);
+            clearTimer(asyncFocus.timeout, this._tabster.getWindow());
             this._asyncFocus = undefined;
         }
     }
@@ -469,18 +480,17 @@ export class FocusedElementState
 
         let next: Types.NextTabbable | null = null;
 
-        const isTabbingTimer = FocusedElementState._isTabbingTimer;
         const win = tabster.getWindow();
 
-        if (isTabbingTimer) {
-            win.clearTimeout(isTabbingTimer);
-        }
-
         FocusedElementState.isTabbing = true;
-        FocusedElementState._isTabbingTimer = win.setTimeout(() => {
-            delete FocusedElementState._isTabbingTimer;
-            FocusedElementState.isTabbing = false;
-        }, 0);
+        FocusedElementState._isTabbingTimer = setTimer(
+            FocusedElementState._isTabbingTimer,
+            win,
+            () => {
+                FocusedElementState.isTabbing = false;
+            },
+            0
+        );
 
         const modalizer = ctx.modalizer;
         const groupper = ctx.groupper;

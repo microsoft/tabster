@@ -51,7 +51,7 @@ export interface InstanceContext {
         };
     };
     lastContainerBoundingRectCacheId: number;
-    containerBoundingRectCacheTimer?: number;
+    containerBoundingRectCacheTimer?: Timer;
 }
 
 let _uidCounter = 0;
@@ -75,9 +75,7 @@ export function disposeInstanceContext(win: Window): void {
     if (ctx) {
         ctx.elementByUId = {};
         ctx.containerBoundingRectCache = {};
-        if (ctx.containerBoundingRectCacheTimer) {
-            win.clearTimeout(ctx.containerBoundingRectCacheTimer);
-        }
+        clearTimer(ctx.containerBoundingRectCacheTimer, win);
         delete w.__tabsterInstanceContext;
     }
 }
@@ -185,17 +183,22 @@ export function getBoundingRect(
         element,
     };
 
-    if (!context.containerBoundingRectCacheTimer) {
-        context.containerBoundingRectCacheTimer = window.setTimeout(() => {
-            context.containerBoundingRectCacheTimer = undefined;
+    if (!isTimerActive(context.containerBoundingRectCacheTimer)) {
+        context.containerBoundingRectCacheTimer = setTimer(
+            context.containerBoundingRectCacheTimer,
+            window,
+            () => {
+                for (const cId of Object.keys(
+                    context.containerBoundingRectCache
+                )) {
+                    delete context.containerBoundingRectCache[cId].element
+                        .__tabsterCacheId;
+                }
 
-            for (const cId of Object.keys(context.containerBoundingRectCache)) {
-                delete context.containerBoundingRectCache[cId].element
-                    .__tabsterCacheId;
-            }
-
-            context.containerBoundingRectCache = {};
-        }, 50);
+                context.containerBoundingRectCache = {};
+            },
+            50
+        );
     }
 
     return rect;
@@ -599,6 +602,61 @@ export function getRadioButtonGroup(
         buttons: new Set(radioButtons),
         checked,
     };
+}
+
+/**
+ * Opaque handle for a single setTimeout id. Use {@link setTimer},
+ * {@link clearTimer}, and {@link isTimerActive} to operate on it.
+ *
+ * Built as a free-function API rather than methods because the function names
+ * mangle to single characters (1 char per call site) while property names like
+ * `.clear` would be preserved by the minifier (~5 chars per call site).
+ *
+ * `id` is `undefined` while no timeout is pending (either never scheduled or
+ * already fired/cleared). Typed as the raw `setTimeout` return so the value
+ * round-trips through `window.setTimeout` / `window.clearTimeout` without a
+ * cast.
+ */
+export interface Timer {
+    id: ReturnType<typeof setTimeout> | undefined;
+}
+
+/**
+ * Cancels any pending timeout on `t` and schedules `callback` after `delay` ms.
+ * Pass `undefined` (or a never-used field) the first time — a fresh {@link Timer}
+ * is created and returned. Reuse the returned handle on subsequent calls.
+ */
+export function setTimer(
+    t: Timer | undefined,
+    window: Window,
+    callback: () => void,
+    delay: number
+): Timer {
+    if (t?.id !== undefined) {
+        window.clearTimeout(t.id);
+    }
+
+    const timer: Timer = t ?? { id: undefined };
+
+    timer.id = window.setTimeout(() => {
+        timer.id = undefined;
+        callback();
+    }, delay);
+
+    return timer;
+}
+
+/** Cancels the pending timeout on `t`; no-op if there isn't one. */
+export function clearTimer(t: Timer | undefined, window: Window): void {
+    if (t?.id !== undefined) {
+        window.clearTimeout(t.id);
+        t.id = undefined;
+    }
+}
+
+/** Whether `t` has a pending timeout. */
+export function isTimerActive(t: Timer | undefined): boolean {
+    return t?.id !== undefined;
 }
 
 /**
