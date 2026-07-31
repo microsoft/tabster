@@ -9,29 +9,26 @@ import { installTabKeyHandler } from "../Tab.js";
 import type * as Types from "../Types.js";
 
 /**
- * Opt the Tabster instance into Tab-key control + root-level dummy
- * inputs.
+ * Opt the Tabster instance into Tab-key and dummy-input infrastructure.
  *
- * Calling this function *is* the opt-in. It registers the root
- * dummy-manager factory, the dummy-input observer, the `moveOutOfRoot`
- * routing, the Tab-key keydown handler, and adds root-level dummy
- * inputs to existing roots — all of which used to be eagerly installed
- * by `createTabster`.
+ * Calling this function *is* the opt-in. It registers the dummy-input
+ * observer, the `moveOutOfRoot` routing, and the Tab-key keydown handler.
+ * When `controlTab` or `rootDummyInputs` is enabled, it also registers the
+ * root dummy-manager factory and adds root-level dummy inputs to existing
+ * roots. All of this used to be eagerly installed by `createTabster`.
  *
  * Per-feature dummies (Mover/Groupper/Modalizer) don't need this:
  * `getMover`/`getGroupper`/`getModalizer` ensure their own dummy
  * infrastructure when called.
  *
- * Default `createTabster(win)` is the slim baseline (no Tab control, no
+ * Default `createTabster(win)` is the slim baseline (no Tab handling, no
  * root dummies, no phantom-dummy machinery). Pair it with
- * `getRootDummyInputs(tabster)` for "Tab just works" behaviour.
+ * `getRootDummyInputs(tabster)` for Tabster-managed Tab behaviour.
  */
 export function getRootDummyInputs(tabster: Types.Tabster): void {
     const tabsterCore = tabster.core;
 
-    if (!tabsterCore.rootDummyManagerFactory) {
-        tabsterCore.rootDummyManagerFactory = createRootDummyManager;
-
+    if (!tabsterCore.moveOutOfRoot) {
         // Shared with the per-feature `get*` factories so opting into
         // either path gets the observer.
         ensureDummyInputObserver(tabsterCore);
@@ -70,10 +67,12 @@ export function getRootDummyInputs(tabster: Types.Tabster): void {
         );
         tabsterCore.disposers.add({ dispose: stopTabKeyHandler });
 
-        // Apply to existing roots; per-part Mover/Groupper/Modalizer
-        // dummies are picked up lazily inside the per-part constructors
-        // (`Mover`/`Groupper`/`Modalizer`) when each part instance is
-        // built.
-        tabsterCore.root.addDummyInputs();
+        if (tabsterCore.controlTab || tabsterCore.rootDummyInputs) {
+            tabsterCore.rootDummyManagerFactory = createRootDummyManager;
+
+            // Apply to existing roots; future roots create their manager
+            // from the registered factory in the Root constructor.
+            tabsterCore.root.addDummyInputs();
+        }
     }
 }

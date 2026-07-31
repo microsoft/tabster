@@ -91,6 +91,10 @@ export class Root
                 this._setFocused,
                 this._sys
             );
+
+            if (this._isFocused) {
+                this._dummyManager?.setTabbable(false);
+            }
         }
     }
 

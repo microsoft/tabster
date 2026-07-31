@@ -61,15 +61,14 @@ tabsterTest.createTabster = (win, props) => {
         newProps.controlTab = true;
     }
     const tabster = createTabster(win, newProps);
-    // Register dummy-input infrastructure unconditionally — per-part
-    // Mover/Groupper/Modalizer dummies need the factories regardless of
-    // whether root dummies are installed. The Tab keyhandler / root
-    // dummy installation inside `getRootDummyInputs` is gated by the
-    // controlTab/rootDummyInputs flags above.
+    // Preserve the historical controlled and uncontrolled Tab behaviour.
+    // Persistent root dummies remain gated by the core options.
     getRootDummyInputs(tabster);
     return tabster;
 };
 tabsterTest.disposeTabster = disposeTabster;
+tabsterTest.createTabsterWithoutDummyInputs = createTabster;
+tabsterTest.getRootDummyInputs = getRootDummyInputs;
 tabsterTest.getTabster = getTabster;
 tabsterTest.getCrossOrigin = getCrossOrigin;
 tabsterTest.getDeloser = getDeloser;

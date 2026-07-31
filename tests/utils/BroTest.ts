@@ -25,6 +25,7 @@ import {
     getObservedElement,
     getOutline,
     getRestorer,
+    getRootDummyInputs,
     getTabster,
     getTabsterAttribute,
     isElementAccessible,
@@ -155,6 +156,8 @@ async function waitPageReadyAndDecorateConsoleError(
 export interface BroTestTabsterTestVariables {
     disposeTabster?: typeof disposeTabster;
     createTabster?: typeof createTabster;
+    createTabsterWithoutDummyInputs?: typeof createTabster;
+    getRootDummyInputs?: typeof getRootDummyInputs;
     findAllFocusable?: typeof findAllFocusable;
     findDefaultFocusable?: typeof findDefaultFocusable;
     findFirstFocusable?: typeof findFirstFocusable;

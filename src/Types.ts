@@ -26,13 +26,17 @@ export interface TabsterDOMAttribute {
 export interface TabsterCoreProps {
     autoRoot?: RootProps;
     /**
-     * Allows all tab key presses under the tabster root to be controlled by tabster
-     * @default true
+     * Allows all tab key presses under the Tabster root to be controlled by
+     * Tabster after the optional handler is installed with
+     * `getRootDummyInputs(tabster)`.
+     * @default false
      */
     controlTab?: boolean;
     /**
-     * When controlTab is false, Root doesn't have dummy inputs by default.
-     * This option allows to enable dummy inputs on Root.
+     * Requests root dummy inputs when `controlTab` is false. To keep the
+     * baseline bundle tree-shakeable, callers must also import and call
+     * `getRootDummyInputs(tabster)`.
+     * @default false
      */
     rootDummyInputs?: boolean;
     /**

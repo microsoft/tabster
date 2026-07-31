@@ -57,6 +57,55 @@ describe("Root", () => {
         }
     );
 
+    it("should keep dummy inputs untabbable when added to a focused root", async () => {
+        await new BroTest.BroTest(
+            <div id="root" {...getTabsterAttribute({ root: {} })}>
+                <button id="button">Button</button>
+            </div>
+        )
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                if (vars.core) {
+                    vars.disposeTabster?.(vars.core, true);
+                }
+
+                const tabster = vars.createTabsterWithoutDummyInputs?.(window, {
+                    controlTab: true,
+                });
+
+                if (tabster) {
+                    vars.core = tabster;
+                }
+            })
+            .wait(100)
+            .focusElement("#button")
+            .eval(() => {
+                const vars = getTabsterTestVariables();
+
+                if (vars.core) {
+                    vars.getRootDummyInputs?.(vars.core);
+                }
+            })
+            .wait(100)
+            .eval((dummyAttribute) => {
+                const vars = getTabsterTestVariables();
+                const root = vars.dom?.getElementById(document, "root");
+                const dummies = root
+                    ? vars.dom?.querySelectorAll(root, `[${dummyAttribute}]`) ||
+                      []
+                    : [];
+
+                return Array.from(
+                    dummies,
+                    (dummy) => (dummy as HTMLElement).tabIndex
+                );
+            }, TABSTER_DUMMY_INPUT_ATTRIBUTE_NAME)
+            .check((tabIndexes: number[]) => {
+                expect(tabIndexes).toEqual([-1, -1]);
+            });
+    });
+
     it("should allow to go outside of the application when tabbing forward", async () => {
         await new BroTest.BroTest(
             <div {...getTabsterAttribute({ root: {} })}>
