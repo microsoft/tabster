@@ -76,6 +76,7 @@
         "auto-changelog": "^2.5.1",
         "babel-jest": "^30.4.1",
         "babel-loader": "^10.1.1",
+        "brace-expansion": "file:./compat/brace-expansion",
         "copyfiles": "^2.4.1",
         "eslint": "^10.4.0",
         "eslint-config-prettier": "^10.1.8",
@@ -85,7 +86,7 @@
         "jest-puppeteer": "^11.0.0",
         "monosize": "0.9.0",
         "monosize-bundler-webpack": "0.4.0",
-        "monosize-storage-git": "0.3.4",
+        "monosize-storage-git": "0.3.5",
         "prettier": "^3.8.3",
         "puppeteer": "^25.0.4",
         "react": "^19.2.6",
@@ -101,6 +102,7 @@
         "vite": "^8.0.13"
     },
     "overrides": {
+        "brace-expansion": "$brace-expansion",
         "jest-environment-puppeteer": {
             "jest-environment-node": "30.4.1"
         }

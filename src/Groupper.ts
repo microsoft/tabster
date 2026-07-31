@@ -253,8 +253,7 @@ export class Groupper
             e = dom.getParentElement(e)
         ) {
             const g = getTabsterOnElement(this._tabster, e)?.groupper as
-                | Groupper
-                | undefined;
+                Groupper | undefined;
 
             if (g) {
                 if (!g._shouldTabInside) {

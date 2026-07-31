@@ -837,9 +837,7 @@ export class DeloserAPI implements Types.DeloserAPI {
 
     private _onRestoreFocus = (event: DeloserRestoreFocusEvent): void => {
         const target = event.composedPath()[0] as
-            | HTMLElement
-            | null
-            | undefined;
+            HTMLElement | null | undefined;
 
         if (target) {
             const available = DeloserAPI.getDeloser(

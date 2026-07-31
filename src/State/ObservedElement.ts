@@ -41,8 +41,7 @@ export class ObservedElementAPI
         [name: string]: { [uid: string]: ObservedElementInfo };
     } = {};
     private _currentRequest:
-        | Types.ObservedElementAsyncRequest<HTMLElement | null>
-        | undefined;
+        Types.ObservedElementAsyncRequest<HTMLElement | null> | undefined;
     private _currentRequestTimestamp = 0;
     onObservedElementChange?: (change: Types.ObservedElementChange) => void;
 

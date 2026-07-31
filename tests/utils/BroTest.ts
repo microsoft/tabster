@@ -425,8 +425,7 @@ export class BroTest implements PromiseLike<undefined> {
     private _nextTimer: number | undefined;
     private _promise: Promise<undefined>;
     private _resolve:
-        | ((value?: undefined | PromiseLike<undefined>) => void)
-        | undefined;
+        ((value?: undefined | PromiseLike<undefined>) => void) | undefined;
     private _reject: ((reason?: any) => void) | undefined;
     private _lastEval: any;
     private _frameStack: BroTestFrameStackItem[];
@@ -461,9 +460,7 @@ export class BroTest implements PromiseLike<undefined> {
 
     catch<TResult = never>(
         onrejected?:
-            | ((reason: any) => TResult | PromiseLike<TResult>)
-            | undefined
-            | null
+            ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null
     ): Promise<undefined | TResult> {
         return this._promise.catch(onrejected);
     }

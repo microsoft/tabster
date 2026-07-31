@@ -472,7 +472,7 @@ export class ModalizerAPI implements Types.ModalizerAPI {
                 let prevHistoryItem: string | undefined;
 
                 // The history order is from most recent to oldest.
-                for (let i = activationHistory.length; i--; ) {
+                for (let i = activationHistory.length; i--;) {
                     // Remove from activation history, making sure there are no duplicates
                     // for cases like [modal2, modal1, modal2, modal1]: just removing modal2
                     // will result in [modal1, modal1] and we want just [modal1]. Otherwise,

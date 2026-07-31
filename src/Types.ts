@@ -1036,8 +1036,7 @@ export interface GetTabsterContextOptions {
 }
 
 export type TabsterContextMoverGroupper =
-    | { isMover: true; mover: Mover }
-    | { isMover: false; groupper: Groupper };
+    { isMover: true; mover: Mover } | { isMover: false; groupper: Groupper };
 
 export interface TabsterContext {
     root: Root;

@@ -1,0 +1,9 @@
+{
+    "name": "brace-expansion",
+    "version": "5.0.9",
+    "private": true,
+    "main": "index.cjs",
+    "dependencies": {
+        "brace-expansion-modern": "npm:brace-expansion@5.0.9"
+    }
+}
