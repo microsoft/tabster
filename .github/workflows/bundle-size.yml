@@ -28,10 +28,35 @@ jobs:
         run: npm run bundle-size
 
       - name: Compare bundle size with base
+        id: compare-remote
+        continue-on-error: true
         run: npx monosize compare-reports --branch=${{ github.event.pull_request.base.ref }} --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check out base for local comparison
+        if: steps.compare-remote.outcome == 'failure'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .bundle-size-base
+
+      - name: Install base dependencies
+        if: steps.compare-remote.outcome == 'failure'
+        run: npm install
+        working-directory: .bundle-size-base
+
+      - name: Build base bundle-size report
+        if: steps.compare-remote.outcome == 'failure'
+        run: npm run bundle-size
+        working-directory: .bundle-size-base
+
+      - name: Compare bundle size with local base
+        if: steps.compare-remote.outcome == 'failure'
+        run: npx monosize compare-reports --output=markdown --quiet > ./monosize-report.md --report-files-glob="dist/bundle-size/monosize.json"
+        env:
+          MONOSIZE_BASE_REPORT: ${{ github.workspace }}/.bundle-size-base/dist/bundle-size/monosize.json
+          MONOSIZE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > pr.txt
