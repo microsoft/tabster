@@ -28,7 +28,9 @@ import type * as Types from "../Types.js";
 export function getRootDummyInputs(tabster: Types.Tabster): void {
     const tabsterCore = tabster.core;
 
-    if (!tabsterCore.moveOutOfRoot) {
+    if (!tabsterCore.rootDummyManagerFactory) {
+        tabsterCore.rootDummyManagerFactory = createRootDummyManager;
+
         // Shared with the per-feature `get*` factories so opting into
         // either path gets the observer.
         ensureDummyInputObserver(tabsterCore);
@@ -68,10 +70,7 @@ export function getRootDummyInputs(tabster: Types.Tabster): void {
         tabsterCore.disposers.add({ dispose: stopTabKeyHandler });
 
         if (tabsterCore.controlTab || tabsterCore.rootDummyInputs) {
-            tabsterCore.rootDummyManagerFactory = createRootDummyManager;
-
-            // Apply to existing roots; future roots create their manager
-            // from the registered factory in the Root constructor.
+            // Apply to existing roots and force future roots to add dummies.
             tabsterCore.root.addDummyInputs();
         }
     }
