@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { OutlineAPI } from "../Outline.js";
+import { createOutlineAPI } from "../Outline.js";
 import type * as Types from "../Types.js";
 
 export function getOutline(tabster: Types.Tabster): Types.OutlineAPI {
     const tabsterCore = tabster.core;
 
     if (!tabsterCore.outline) {
-        tabsterCore.outline = new OutlineAPI(tabsterCore);
+        const api = createOutlineAPI(tabsterCore);
+        tabsterCore.outline = api;
+        tabsterCore.disposers.add(api);
+        tabsterCore.attrHandlers.set("outline", (_, __, newProps) => newProps);
     }
 
     return tabsterCore.outline;

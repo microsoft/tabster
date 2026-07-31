@@ -440,9 +440,11 @@ describe("Tabster create", () => {
                     );
 
                 if (modalContainer && tabster) {
-                    const first = tabster.focusable.findFirst({
-                        container: modalContainer,
-                    });
+                    const first =
+                        getTabsterTestVariables().findFirstFocusable?.(
+                            tabster,
+                            { container: modalContainer }
+                        );
 
                     first?.focus();
                 }

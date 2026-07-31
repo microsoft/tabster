@@ -5,65 +5,62 @@
 
 import type * as Types from "../Types.js";
 
-export abstract class Subscribable<
+/**
+ * Internal subscribable composed by API factories. The public surface
+ * (`subscribe`, `subscribeFirst`, `unsubscribe`) matches `Types.Subscribable`;
+ * `setVal`/`getVal`/`trigger` are exposed for the composing factory only and
+ * should not be re-exposed on the consumer's external API.
+ */
+export interface SubscribableCore<A, B = undefined> extends Types.Subscribable<
     A,
-    B = undefined,
-> implements Types.Subscribable<A, B> {
-    protected _val: A | undefined;
-    private _callbacks: Types.SubscribableCallback<A, B>[] = [];
+    B
+> {
+    dispose(): void;
+    setVal(val: A, detail: B): void;
+    getVal(): A | undefined;
+    trigger(val: A, detail: B): void;
+}
 
-    dispose(): void {
-        this._callbacks = [];
-        delete this._val;
-    }
+export function createSubscribable<A, B = undefined>(): SubscribableCore<A, B> {
+    let val: A | undefined;
+    let callbacks: Types.SubscribableCallback<A, B>[] = [];
 
-    subscribe(callback: Types.SubscribableCallback<A, B>): void {
-        const callbacks = this._callbacks;
-        const index = callbacks.indexOf(callback);
+    const trigger = (v: A, detail: B): void => {
+        callbacks.forEach((cb) => cb(v, detail));
+    };
 
-        if (index < 0) {
-            callbacks.push(callback);
-        }
-    }
-
-    subscribeFirst(callback: Types.SubscribableCallback<A, B>): void {
-        const callbacks = this._callbacks;
-        const index = callbacks.indexOf(callback);
-
-        if (index >= 0) {
-            callbacks.splice(index, 1);
-        }
-
-        callbacks.unshift(callback);
-    }
-
-    unsubscribe(callback: Types.SubscribableCallback<A, B>): void {
-        const index = this._callbacks.indexOf(callback);
-
-        if (index >= 0) {
-            this._callbacks.splice(index, 1);
-        }
-    }
-
-    protected setVal(val: A, detail: B): void {
-        if (this._val === val) {
-            return;
-        }
-
-        this._val = val;
-
-        this._callCallbacks(val, detail);
-    }
-
-    protected getVal(): A | undefined {
-        return this._val;
-    }
-
-    protected trigger(val: A, detail: B): void {
-        this._callCallbacks(val, detail);
-    }
-
-    private _callCallbacks(val: A, detail: B): void {
-        this._callbacks.forEach((callback) => callback(val, detail));
-    }
+    return {
+        dispose(): void {
+            callbacks = [];
+            val = undefined;
+        },
+        subscribe(cb): void {
+            if (callbacks.indexOf(cb) < 0) {
+                callbacks.push(cb);
+            }
+        },
+        subscribeFirst(cb): void {
+            const i = callbacks.indexOf(cb);
+            if (i >= 0) {
+                callbacks.splice(i, 1);
+            }
+            callbacks.unshift(cb);
+        },
+        unsubscribe(cb): void {
+            const i = callbacks.indexOf(cb);
+            if (i >= 0) {
+                callbacks.splice(i, 1);
+            }
+        },
+        setVal(v, detail): void {
+            if (val !== v) {
+                val = v;
+                trigger(v, detail);
+            }
+        },
+        getVal(): A | undefined {
+            return val;
+        },
+        trigger,
+    };
 }

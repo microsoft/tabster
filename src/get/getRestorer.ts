@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { RestorerAPI } from "../Restorer.js";
+import { createRestorerAPI } from "../Restorer.js";
 import type * as Types from "../Types.js";
 
 export function getRestorer(tabster: Types.Tabster): Types.RestorerAPI {
     const tabsterCore = tabster.core;
     if (!tabsterCore.restorer) {
-        const api = new RestorerAPI(tabsterCore);
+        const api = createRestorerAPI(tabsterCore);
         tabsterCore.restorer = api;
+        tabsterCore.disposers.add(api);
         tabsterCore.attrHandlers.set(
             "restorer",
             (element, existingRestorer, newProps) => {

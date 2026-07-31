@@ -63,12 +63,12 @@ export function observeMutations(
                 for (const removedNode of removed) {
                     removedNodes.add(removedNode);
                     updateTabsterElements(removedNode, true);
-                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
+                    tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
 
                 for (const addedNode of added) {
                     updateTabsterElements(addedNode);
-                    tabster._dummyObserver.domChanged?.(target as HTMLElement);
+                    tabster._dummyObserver?.domChanged?.(target as HTMLElement);
                 }
             }
         }

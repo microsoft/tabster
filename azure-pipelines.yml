@@ -52,9 +52,9 @@ extends:
                 displayName: Use Node 22.x
                 inputs:
                   versionSpec: 22.x
-              - script: | 
-                  npm install
-                displayName: npm install
+              - script: |
+                  npm ci
+                displayName: npm ci
             
               - task: CmdLine@2
                 displayName: Authenticate git for pushes

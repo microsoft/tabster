@@ -6,6 +6,14 @@
 import {
     disposeTabster,
     createTabster,
+    findAllFocusable,
+    findDefaultFocusable,
+    findFirstFocusable,
+    findFocusable,
+    findLastFocusable,
+    findNextFocusable,
+    findPrevFocusable,
+    getFocusableProps,
     getTabster,
     getCrossOrigin,
     getDeloser,
@@ -13,14 +21,19 @@ import {
     getModalizer,
     getMover,
     getRestorer,
+    getRootDummyInputs,
     getObservedElement,
     getOutline,
+    isElementAccessible,
+    isElementVisible,
+    isFocusable,
     makeNoOp,
     mergeTabsterProps,
     getTabsterAttribute,
     setTabsterAttribute,
     getDummyInputContainer,
 } from "../src";
+import { getTabsterContext } from "../src/Context";
 import * as Events from "../src/Events";
 import * as shadowDOM from "../src/Shadowdomize";
 import { dom } from "../src/DOMAPI";
@@ -37,11 +50,25 @@ const parts =
 const partsToEnable = {};
 
 tabsterTest.createTabster = (win, props) => {
-    const newProps = props || {};
+    const newProps = { ...(props || {}) };
     newProps.DOMAPI = enableShadowDOM ? shadowDOM : undefined;
-    return createTabster(win, newProps);
+    // The public `controlTab` default is now `false` (slim baseline).
+    // Tests historically relied on `createTabster(win)` giving controlled
+    // Tab behaviour, so the test-time wrapper defaults to `true` unless
+    // the caller explicitly sets it. Tests that want uncontrolled mode
+    // still pass `controlTab: false` via the parts-bootstrap URL params.
+    if (newProps.controlTab === undefined) {
+        newProps.controlTab = true;
+    }
+    const tabster = createTabster(win, newProps);
+    // Preserve the historical controlled and uncontrolled Tab behaviour.
+    // Persistent root dummies remain gated by the core options.
+    getRootDummyInputs(tabster);
+    return tabster;
 };
 tabsterTest.disposeTabster = disposeTabster;
+tabsterTest.createTabsterWithoutDummyInputs = createTabster;
+tabsterTest.getRootDummyInputs = getRootDummyInputs;
 tabsterTest.getTabster = getTabster;
 tabsterTest.getCrossOrigin = getCrossOrigin;
 tabsterTest.getDeloser = getDeloser;
@@ -55,6 +82,17 @@ tabsterTest.getTabsterAttribute = getTabsterAttribute;
 tabsterTest.setTabsterAttribute = setTabsterAttribute;
 tabsterTest.mergeTabsterProps = mergeTabsterProps;
 tabsterTest.getDummyInputContainer = getDummyInputContainer;
+tabsterTest.findAllFocusable = findAllFocusable;
+tabsterTest.findDefaultFocusable = findDefaultFocusable;
+tabsterTest.findFirstFocusable = findFirstFocusable;
+tabsterTest.findFocusable = findFocusable;
+tabsterTest.findLastFocusable = findLastFocusable;
+tabsterTest.findNextFocusable = findNextFocusable;
+tabsterTest.findPrevFocusable = findPrevFocusable;
+tabsterTest.getFocusableProps = getFocusableProps;
+tabsterTest.isElementAccessible = isElementAccessible;
+tabsterTest.isElementVisible = isElementVisible;
+tabsterTest.isFocusable = isFocusable;
 tabsterTest.dom = dom;
 tabsterTest.shadowDOM = shadowDOM;
 tabsterTest.Events = Events;
@@ -119,5 +157,7 @@ if (parts !== undefined) {
         console.log("created cross origin");
     }
 }
+
+tabsterTest.getTabsterContext = getTabsterContext;
 
 window.getTabsterTestVariables = () => tabsterTest;

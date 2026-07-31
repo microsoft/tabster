@@ -4,10 +4,16 @@
  */
 
 import { nativeFocus } from "keyborg";
-import { FocusedElementState } from "./State/FocusedElement.js";
+import {
+    _findAllFocusable,
+    _findDefaultFocusable,
+    _findFocusable,
+    _isFocusable,
+} from "./Focusable.js";
+import { isTabbing } from "./Tab.js";
 import { getTabsterOnElement } from "./Instance.js";
 import { Keys } from "./Keys.js";
-import { RootAPI } from "./Root.js";
+import { getTabsterContext } from "./Context.js";
 import type * as Types from "./Types.js";
 import { Visibilities, MoverDirections, MoverKeys } from "./Consts.js";
 import {
@@ -19,78 +25,29 @@ import {
     TabsterMoveFocusEvent,
 } from "./Events.js";
 import {
-    type DummyInput,
-    DummyInputManager,
-    DummyInputManagerPriorities,
+    type DummyInputManager,
     getDummyInputContainer,
 } from "./DummyInput.js";
+import { createMoverDummyManager } from "./MoverDummyManager.js";
 import {
     addListener,
+    clearTimer,
     createElementTreeWalker,
     dispatchEvent,
     getElementUId,
     isElementVerticallyVisibleInContainer,
+    isTimerActive,
     matchesSelector,
     removeListener,
     scrollIntoView,
+    setTimer,
     TabsterPart,
+    type Timer,
     WeakHTMLElement,
 } from "./Utils.js";
 import { dom } from "./DOMAPI.js";
 
 const _inputSelector = ["input", "textarea", "*[contenteditable]"].join(", ");
-
-class MoverDummyManager extends DummyInputManager {
-    private _tabster: Types.TabsterCore;
-    private _getMemorized: () => WeakHTMLElement | undefined;
-
-    constructor(
-        element: WeakHTMLElement,
-        tabster: Types.TabsterCore,
-        getMemorized: () => WeakHTMLElement | undefined,
-        sys: Types.SysProps | undefined
-    ) {
-        super(tabster, element, DummyInputManagerPriorities.Mover, sys);
-
-        this._tabster = tabster;
-        this._getMemorized = getMemorized;
-
-        this._setHandlers(this._onFocusDummyInput);
-    }
-
-    private _onFocusDummyInput = (dummyInput: DummyInput) => {
-        const container = this._element.get();
-        const input = dummyInput.input;
-
-        if (container && input) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, container);
-
-            let toFocus: HTMLElement | null | undefined;
-
-            if (ctx) {
-                toFocus = FocusedElementState.findNextTabbable(
-                    this._tabster,
-                    ctx,
-                    undefined,
-                    input,
-                    undefined,
-                    !dummyInput.isFirst,
-                    true
-                )?.element;
-            }
-
-            const memorized = this._getMemorized()?.get();
-
-            if (memorized && this._tabster.focusable.isFocusable(memorized)) {
-                toFocus = memorized;
-            }
-
-            if (toFocus) {
-                nativeFocus(toFocus);
-            }
-        }
-    };
-}
 
 // TypeScript enums produce depressing JavaScript code, so, we're just using
 // a few old style constants here.
@@ -110,21 +67,21 @@ export class Mover
     extends TabsterPart<Types.MoverProps>
     implements Types.Mover
 {
-    private _unobserve: (() => void) | undefined;
-    private _intersectionObserver: IntersectionObserver | undefined;
-    private _setCurrentTimer: number | undefined;
-    private _current: WeakHTMLElement | undefined;
-    private _prevCurrent: WeakHTMLElement | undefined;
+    declare private _unobserve: (() => void) | undefined;
+    declare private _intersectionObserver: IntersectionObserver | undefined;
+    private _setCurrentTimer: Timer | undefined;
+    declare private _current: WeakHTMLElement | undefined;
+    declare private _prevCurrent: WeakHTMLElement | undefined;
     private _visible: Record<string, Types.Visibility> = {};
-    private _fullyVisible: string | undefined;
-    private _win: Types.GetWindow;
-    private _onDispose: (mover: Mover) => void;
-    private _allElements: WeakMap<HTMLElement, Mover> | undefined;
-    private _updateQueue: MoverUpdateQueueItem[] | undefined;
-    private _updateTimer: number | undefined;
+    declare private _fullyVisible: string | undefined;
+    declare private _win: Types.GetWindow;
+    declare private _onDispose: (mover: Mover) => void;
+    declare private _allElements: WeakMap<HTMLElement, Mover> | undefined;
+    declare private _updateQueue: MoverUpdateQueueItem[] | undefined;
+    private _updateTimer: Timer | undefined;
 
-    visibilityTolerance: number;
-    dummyManager: MoverDummyManager | undefined;
+    declare visibilityTolerance: number;
+    declare dummyManager: DummyInputManager | undefined;
 
     constructor(
         tabster: Types.TabsterCore,
@@ -151,7 +108,12 @@ export class Mover
             props.memorizeCurrent ? this._current : undefined;
 
         if (!tabster.controlTab) {
-            this.dummyManager = new MoverDummyManager(
+            // `getMover` ensures `_dummyObserver` exists before any Mover
+            // is constructed, so we don't have to gate on it. Controlled
+            // mode (`controlTab: true`) skips the per-feature dummy
+            // because the keyhandler intercepts Tab and never lets focus
+            // reach the dummy input anyway.
+            this.dummyManager = createMoverDummyManager(
                 this._element,
                 tabster,
                 getMemorized,
@@ -180,15 +142,8 @@ export class Mover
 
         const win = this._win();
 
-        if (this._setCurrentTimer) {
-            win.clearTimeout(this._setCurrentTimer);
-            delete this._setCurrentTimer;
-        }
-
-        if (this._updateTimer) {
-            win.clearTimeout(this._updateTimer);
-            delete this._updateTimer;
-        }
+        clearTimer(this._setCurrentTimer, win);
+        clearTimer(this._updateTimer, win);
 
         this.dummyManager?.dispose();
         delete this.dummyManager;
@@ -203,39 +158,45 @@ export class Mover
 
         if (
             (this._props.trackState || this._props.visibilityAware) &&
-            !this._setCurrentTimer
+            !isTimerActive(this._setCurrentTimer)
         ) {
-            this._setCurrentTimer = this._win().setTimeout(() => {
-                delete this._setCurrentTimer;
+            this._setCurrentTimer = setTimer(
+                this._setCurrentTimer,
+                this._win(),
+                () => {
+                    const changed: (WeakHTMLElement | undefined)[] = [];
 
-                const changed: (WeakHTMLElement | undefined)[] = [];
+                    if (this._current !== this._prevCurrent) {
+                        changed.push(this._current);
+                        changed.push(this._prevCurrent);
+                        this._prevCurrent = this._current;
+                    }
 
-                if (this._current !== this._prevCurrent) {
-                    changed.push(this._current);
-                    changed.push(this._prevCurrent);
-                    this._prevCurrent = this._current;
-                }
+                    for (const weak of changed) {
+                        const el = weak?.get();
 
-                for (const weak of changed) {
-                    const el = weak?.get();
+                        if (el && this._allElements?.get(el) === this) {
+                            const props = this._props;
 
-                    if (el && this._allElements?.get(el) === this) {
-                        const props = this._props;
+                            if (
+                                el &&
+                                (props.visibilityAware !== undefined ||
+                                    props.trackState)
+                            ) {
+                                const state = this.getState(el);
 
-                        if (
-                            el &&
-                            (props.visibilityAware !== undefined ||
-                                props.trackState)
-                        ) {
-                            const state = this.getState(el);
-
-                            if (state) {
-                                dispatchEvent(el, new MoverStateEvent(state));
+                                if (state) {
+                                    dispatchEvent(
+                                        el,
+                                        new MoverStateEvent(state)
+                                    );
+                                }
                             }
                         }
                     }
-                }
-            });
+                },
+                0
+            );
         }
     }
 
@@ -276,9 +237,11 @@ export class Mover
 
             const findPropsOut: Types.FindFocusableOutputProps = {};
 
-            next = this._tabster.focusable[
-                isBackward ? "findPrev" : "findNext"
-            ](findProps, findPropsOut);
+            next = _findFocusable(
+                this._tabster,
+                { ...findProps, isBackward },
+                findPropsOut
+            );
 
             outOfDOMOrder = !!findPropsOut.outOfDOMOrder;
             uncontrolled = findPropsOut.uncontrolled;
@@ -295,7 +258,7 @@ export class Mover
         element: HTMLElement,
         state: Types.FocusableAcceptElementState
     ): number | undefined {
-        if (!FocusedElementState.isTabbing) {
+        if (!isTabbing()) {
             return state.currentCtx?.excludedFromMover
                 ? NodeFilter.FILTER_REJECT
                 : undefined;
@@ -325,14 +288,14 @@ export class Mover
             }
 
             if (!found && hasDefault) {
-                found = this._tabster.focusable.findDefault({
+                found = _findDefaultFocusable(this._tabster, {
                     container: moverElement,
                     useActiveModalizer: true,
                 });
             }
 
             if (!found && visibilityAware) {
-                found = this._tabster.focusable.findElement({
+                found = _findFocusable(this._tabster, {
                     container: moverElement,
                     useActiveModalizer: true,
                     isBackward: state.isBackward,
@@ -421,7 +384,7 @@ export class Mover
 
         const win = this._win();
         const allElements = (this._allElements = new WeakMap());
-        const tabsterFocusable = this._tabster.focusable;
+        const tabster = this._tabster;
         let updateQueue: MoverUpdateQueueItem[] = (this._updateQueue = []);
 
         const observer = dom.createMutationObserver(
@@ -476,7 +439,7 @@ export class Mover
         };
 
         const updateElement = (element: HTMLElement): void => {
-            const isFocusable = tabsterFocusable.isFocusable(element);
+            const isFocusable = _isFocusable(tabster, element);
             const current = allElements.get(element);
 
             if (current) {
@@ -496,7 +459,7 @@ export class Mover
             if (mover && mover !== this) {
                 if (
                     mover.getElement() === element &&
-                    tabsterFocusable.isFocusable(element)
+                    _isFocusable(tabster, element)
                 ) {
                     setElement(element);
                 } else {
@@ -527,7 +490,7 @@ export class Mover
                         return NodeFilter.FILTER_REJECT;
                     }
 
-                    if (tabsterFocusable.isFocusable(node as HTMLElement)) {
+                    if (_isFocusable(tabster, node as HTMLElement)) {
                         setElement(node as HTMLElement);
                     }
 
@@ -561,26 +524,29 @@ export class Mover
         };
 
         const requestUpdate = () => {
-            if (!this._updateTimer && updateQueue.length) {
-                this._updateTimer = win.setTimeout(() => {
-                    delete this._updateTimer;
-
-                    for (const { element, type } of updateQueue) {
-                        switch (type) {
-                            case _moverUpdateAttr:
-                                updateElement(element);
-                                break;
-                            case _moverUpdateAdd:
-                                addNewElements(element);
-                                break;
-                            case _moverUpdateRemove:
-                                removeWalk(element);
-                                break;
+            if (!isTimerActive(this._updateTimer) && updateQueue.length) {
+                this._updateTimer = setTimer(
+                    this._updateTimer,
+                    win,
+                    () => {
+                        for (const { element, type } of updateQueue) {
+                            switch (type) {
+                                case _moverUpdateAttr:
+                                    updateElement(element);
+                                    break;
+                                case _moverUpdateAdd:
+                                    addNewElements(element);
+                                    break;
+                                case _moverUpdateRemove:
+                                    removeWalk(element);
+                                    break;
+                            }
                         }
-                    }
 
-                    updateQueue = this._updateQueue = [];
-                }, 0);
+                        updateQueue = this._updateQueue = [];
+                    },
+                    0
+                );
             }
         };
 
@@ -686,88 +652,19 @@ function getDistance(
           : Math.sqrt(xDistance * xDistance + yDistance * yDistance);
 }
 
-export class MoverAPI implements Types.MoverAPI {
-    private _tabster: Types.TabsterCore;
-    private _win: Types.GetWindow;
-    private _movers: Record<string, Mover>;
-    private _ignoredInputTimer: number | undefined;
-    private _ignoredInputResolve: ((value: boolean) => void) | undefined;
+export function createMoverAPI(
+    tabster: Types.TabsterCore,
+    getWindow: Types.GetWindow
+): Types.MoverAPI {
+    const movers: Record<string, Mover> = {};
+    let ignoredInputTimer: Timer | undefined;
+    let ignoredInputResolve: ((value: boolean) => void) | undefined;
 
-    constructor(tabster: Types.TabsterCore, getWindow: Types.GetWindow) {
-        this._tabster = tabster;
-        this._win = getWindow;
-        this._movers = {};
-
-        tabster.queueInit(this._init);
-    }
-
-    private _init = (): void => {
-        const win = this._win();
-
-        addListener(win, "keydown", this._onKeyDown, true);
-        addListener(win, MoverMoveFocusEventName, this._onMoveFocus);
-        addListener(
-            win,
-            MoverMemorizedElementEventName,
-            this._onMemorizedElement
-        );
-
-        this._tabster.focusedElement.subscribe(this._onFocus);
+    const onMoverDispose = (mover: Mover) => {
+        delete movers[mover.id];
     };
 
-    dispose(): void {
-        const win = this._win();
-
-        this._tabster.focusedElement.unsubscribe(this._onFocus);
-
-        this._ignoredInputResolve?.(false);
-
-        if (this._ignoredInputTimer) {
-            win.clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
-
-        removeListener(win, "keydown", this._onKeyDown, true);
-        removeListener(win, MoverMoveFocusEventName, this._onMoveFocus);
-        removeListener(
-            win,
-            MoverMemorizedElementEventName,
-            this._onMemorizedElement
-        );
-
-        Object.keys(this._movers).forEach((moverId) => {
-            if (this._movers[moverId]) {
-                this._movers[moverId].dispose();
-                delete this._movers[moverId];
-            }
-        });
-    }
-
-    createMover(
-        element: HTMLElement,
-        props: Types.MoverProps,
-        sys: Types.SysProps | undefined
-    ): Types.Mover {
-        if (__DEV__) {
-            validateMoverProps(props);
-        }
-
-        const newMover = new Mover(
-            this._tabster,
-            element,
-            this._onMoverDispose,
-            props,
-            sys
-        );
-        this._movers[newMover.id] = newMover;
-        return newMover;
-    }
-
-    private _onMoverDispose = (mover: Mover) => {
-        delete this._movers[mover.id];
-    };
-
-    private _onFocus = (element: HTMLElement | undefined): void => {
+    const onFocus = (element: HTMLElement | undefined): void => {
         // When something in the app gets focused, we are making sure that
         // the relevant context Mover is aware of it.
         // Looking for the relevant context Mover from the currently
@@ -786,36 +683,25 @@ export class MoverAPI implements Types.MoverAPI {
             // We go through all Movers up from the focused element and
             // set their current element to the deepest focusable of that
             // Mover.
-            const mover = getTabsterOnElement(this._tabster, el)?.mover;
+            const mover = getTabsterOnElement(tabster, el)?.mover;
 
             if (mover) {
                 mover.setCurrent(deepestFocusableElement);
                 currentFocusableElement = undefined;
             }
 
-            if (
-                !currentFocusableElement &&
-                this._tabster.focusable.isFocusable(el)
-            ) {
+            if (!currentFocusableElement && _isFocusable(tabster, el)) {
                 currentFocusableElement = deepestFocusableElement = el;
             }
         }
     };
 
-    moveFocus(
-        fromElement: HTMLElement,
-        key: Types.MoverKey
-    ): HTMLElement | null {
-        return this._moveFocus(fromElement, key);
-    }
-
-    private _moveFocus(
+    const moveFocusInternal = (
         fromElement: HTMLElement,
         key: Types.MoverKey,
         relatedEvent?: KeyboardEvent
-    ): HTMLElement | null {
-        const tabster = this._tabster;
-        const ctx = RootAPI.getTabsterContext(tabster, fromElement, {
+    ): HTMLElement | null => {
+        const ctx = getTabsterContext(tabster, fromElement, {
             checkRtl: true,
         });
 
@@ -860,7 +746,6 @@ export class MoverAPI implements Types.MoverAPI {
             return null;
         }
 
-        const focusable = tabster.focusable;
         const moverProps = mover.getProps();
         const direction = moverProps.direction || MoverDirections.Both;
         const isBoth = direction === MoverDirections.Both;
@@ -895,7 +780,7 @@ export class MoverAPI implements Types.MoverAPI {
             (key === MoverKeys.ArrowDown && isVertical) ||
             (key === MoverKeys.ArrowRight && (isHorizontal || isGrid))
         ) {
-            next = focusable.findNext({
+            next = _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
@@ -910,7 +795,7 @@ export class MoverAPI implements Types.MoverAPI {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findFirst({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
                 });
@@ -919,10 +804,11 @@ export class MoverAPI implements Types.MoverAPI {
             (key === MoverKeys.ArrowUp && isVertical) ||
             (key === MoverKeys.ArrowLeft && (isHorizontal || isGrid))
         ) {
-            next = focusable.findPrev({
+            next = _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
+                isBackward: true,
             });
 
             if (next && isGrid) {
@@ -934,20 +820,21 @@ export class MoverAPI implements Types.MoverAPI {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
-                next = focusable.findLast({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
+                    isBackward: true,
                 });
             }
         } else if (key === MoverKeys.Home) {
             if (isGrid) {
-                focusable.findElement({
+                _findFocusable(tabster, {
                     container,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -967,19 +854,19 @@ export class MoverAPI implements Types.MoverAPI {
                     },
                 });
             } else {
-                next = focusable.findFirst({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
                 });
             }
         } else if (key === MoverKeys.End) {
             if (isGrid) {
-                focusable.findElement({
+                _findFocusable(tabster, {
                     container,
                     currentElement: fromElement,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -999,25 +886,26 @@ export class MoverAPI implements Types.MoverAPI {
                     },
                 });
             } else {
-                next = focusable.findLast({
+                next = _findFocusable(tabster, {
                     container,
                     useActiveModalizer: true,
+                    isBackward: true,
                 });
             }
         } else if (key === MoverKeys.PageUp) {
-            focusable.findElement({
+            _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 isBackward: true,
                 acceptCondition: (el) => {
-                    if (!focusable.isFocusable(el)) {
+                    if (!_isFocusable(tabster, el)) {
                         return false;
                     }
 
                     if (
                         isElementVerticallyVisibleInContainer(
-                            this._win,
+                            getWindow,
                             el,
                             mover.visibilityTolerance
                         )
@@ -1035,12 +923,12 @@ export class MoverAPI implements Types.MoverAPI {
                 const firstColumnX1 = Math.ceil(
                     next.getBoundingClientRect().left
                 );
-                focusable.findElement({
+                _findFocusable(tabster, {
                     currentElement: next,
                     container,
                     useActiveModalizer: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -1061,18 +949,18 @@ export class MoverAPI implements Types.MoverAPI {
 
             scrollIntoViewArg = false;
         } else if (key === MoverKeys.PageDown) {
-            focusable.findElement({
+            _findFocusable(tabster, {
                 currentElement: fromElement,
                 container,
                 useActiveModalizer: true,
                 acceptCondition: (el) => {
-                    if (!focusable.isFocusable(el)) {
+                    if (!_isFocusable(tabster, el)) {
                         return false;
                     }
 
                     if (
                         isElementVerticallyVisibleInContainer(
-                            this._win,
+                            getWindow,
                             el,
                             mover.visibilityTolerance
                         )
@@ -1090,13 +978,13 @@ export class MoverAPI implements Types.MoverAPI {
                 const lastColumnX1 = Math.ceil(
                     next.getBoundingClientRect().left
                 );
-                focusable.findElement({
+                _findFocusable(tabster, {
                     currentElement: next,
                     container,
                     useActiveModalizer: true,
                     isBackward: true,
                     acceptCondition: (el) => {
-                        if (!focusable.isFocusable(el)) {
+                        if (!_isFocusable(tabster, el)) {
                             return false;
                         }
 
@@ -1128,7 +1016,7 @@ export class MoverAPI implements Types.MoverAPI {
             let lastDistance: number | undefined;
             let lastIntersection = 0;
 
-            focusable.findAll({
+            _findAllFocusable(tabster, {
                 container,
                 currentElement: fromElement,
                 isBackward,
@@ -1213,7 +1101,7 @@ export class MoverAPI implements Types.MoverAPI {
                     )))
         ) {
             if (scrollIntoViewArg !== undefined) {
-                scrollIntoView(this._win, next, scrollIntoViewArg);
+                scrollIntoView(getWindow, next, scrollIntoViewArg);
             }
 
             if (relatedEvent) {
@@ -1227,15 +1115,12 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         return null;
-    }
+    };
 
-    private _onKeyDown = async (event: KeyboardEvent): Promise<void> => {
-        if (this._ignoredInputTimer) {
-            this._win().clearTimeout(this._ignoredInputTimer);
-            delete this._ignoredInputTimer;
-        }
+    const onKeyDown = async (event: KeyboardEvent): Promise<void> => {
+        clearTimer(ignoredInputTimer, getWindow());
 
-        this._ignoredInputResolve?.(false);
+        ignoredInputResolve?.(false);
 
         // Give a chance to other listeners to handle the event (for example,
         // to scroll instead of moving focus).
@@ -1268,31 +1153,31 @@ export class MoverAPI implements Types.MoverAPI {
             return;
         }
 
-        const focused = this._tabster.focusedElement.getFocusedElement();
+        const focused = tabster.focusedElement.getFocusedElement();
 
-        if (!focused || (await this._isIgnoredInput(focused, key))) {
+        if (!focused || (await isIgnoredInput(focused, key))) {
             return;
         }
 
-        this._moveFocus(focused, moverKey, event);
+        moveFocusInternal(focused, moverKey, event);
     };
 
-    private _onMoveFocus = (e: MoverMoveFocusEvent): void => {
+    const onMoveFocus = (e: MoverMoveFocusEvent): void => {
         const element = e.composedPath()[0] as HTMLElement | null | undefined;
         const key = e.detail?.key;
 
         if (element && key !== undefined && !e.defaultPrevented) {
-            this._moveFocus(element, key);
+            moveFocusInternal(element, key);
             e.stopImmediatePropagation();
         }
     };
 
-    private _onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
+    const onMemorizedElement = (e: MoverMemorizedElementEvent): void => {
         const target = e.composedPath()[0] as HTMLElement | null | undefined;
         let memorizedElement = e.detail?.memorizedElement;
 
         if (target) {
-            const ctx = RootAPI.getTabsterContext(this._tabster, target);
+            const ctx = getTabsterContext(tabster, target);
             const mover = ctx?.mover;
 
             if (mover) {
@@ -1310,10 +1195,10 @@ export class MoverAPI implements Types.MoverAPI {
         }
     };
 
-    private async _isIgnoredInput(
+    const isIgnoredInput = async (
         element: HTMLElement,
         key: string
-    ): Promise<boolean> {
+    ): Promise<boolean> => {
         if (
             element.getAttribute("aria-expanded") === "true" &&
             (element.hasAttribute("aria-activedescendant") ||
@@ -1385,16 +1270,10 @@ export class MoverAPI implements Types.MoverAPI {
                 }
             } else if (element.contentEditable === "true") {
                 asyncRet = new Promise<boolean>((resolve) => {
-                    this._ignoredInputResolve = (value: boolean) => {
-                        delete this._ignoredInputResolve;
+                    ignoredInputResolve = (value: boolean) => {
+                        ignoredInputResolve = undefined;
                         resolve(value);
                     };
-
-                    const win = this._win();
-
-                    if (this._ignoredInputTimer) {
-                        win.clearTimeout(this._ignoredInputTimer);
-                    }
 
                     const {
                         anchorNode: prevAnchorNode,
@@ -1404,85 +1283,90 @@ export class MoverAPI implements Types.MoverAPI {
                     } = dom.getSelection(element) || {};
 
                     // Get selection gives incorrect value if we call it syncronously onKeyDown.
-                    this._ignoredInputTimer = win.setTimeout(() => {
-                        delete this._ignoredInputTimer;
+                    ignoredInputTimer = setTimer(
+                        ignoredInputTimer,
+                        getWindow(),
+                        () => {
+                            const {
+                                anchorNode,
+                                focusNode,
+                                anchorOffset,
+                                focusOffset,
+                            } = dom.getSelection(element) || {};
 
-                        const {
-                            anchorNode,
-                            focusNode,
-                            anchorOffset,
-                            focusOffset,
-                        } = dom.getSelection(element) || {};
-
-                        if (
-                            anchorNode !== prevAnchorNode ||
-                            focusNode !== prevFocusNode ||
-                            anchorOffset !== prevAnchorOffset ||
-                            focusOffset !== prevFocusOffset
-                        ) {
-                            this._ignoredInputResolve?.(false);
-                            return;
-                        }
-
-                        selectionStart = anchorOffset || 0;
-                        selectionEnd = focusOffset || 0;
-                        textLength = element.textContent?.length || 0;
-
-                        if (anchorNode && focusNode) {
                             if (
-                                dom.nodeContains(element, anchorNode) &&
-                                dom.nodeContains(element, focusNode)
+                                anchorNode !== prevAnchorNode ||
+                                focusNode !== prevFocusNode ||
+                                anchorOffset !== prevAnchorOffset ||
+                                focusOffset !== prevFocusOffset
                             ) {
-                                if (anchorNode !== element) {
-                                    let anchorFound = false;
+                                ignoredInputResolve?.(false);
+                                return;
+                            }
 
-                                    const addOffsets = (
-                                        node: ChildNode
-                                    ): boolean => {
-                                        if (node === anchorNode) {
-                                            anchorFound = true;
-                                        } else if (node === focusNode) {
-                                            return true;
-                                        }
+                            selectionStart = anchorOffset || 0;
+                            selectionEnd = focusOffset || 0;
+                            textLength = element.textContent?.length || 0;
 
-                                        const nodeText = node.textContent;
+                            if (anchorNode && focusNode) {
+                                if (
+                                    dom.nodeContains(element, anchorNode) &&
+                                    dom.nodeContains(element, focusNode)
+                                ) {
+                                    if (anchorNode !== element) {
+                                        let anchorFound = false;
 
-                                        if (
-                                            nodeText &&
-                                            !dom.getFirstChild(node)
-                                        ) {
-                                            const len = nodeText.length;
+                                        const addOffsets = (
+                                            node: ChildNode
+                                        ): boolean => {
+                                            if (node === anchorNode) {
+                                                anchorFound = true;
+                                            } else if (node === focusNode) {
+                                                return true;
+                                            }
 
-                                            if (anchorFound) {
-                                                if (focusNode !== anchorNode) {
+                                            const nodeText = node.textContent;
+
+                                            if (
+                                                nodeText &&
+                                                !dom.getFirstChild(node)
+                                            ) {
+                                                const len = nodeText.length;
+
+                                                if (anchorFound) {
+                                                    if (
+                                                        focusNode !== anchorNode
+                                                    ) {
+                                                        selectionEnd += len;
+                                                    }
+                                                } else {
+                                                    selectionStart += len;
                                                     selectionEnd += len;
                                                 }
-                                            } else {
-                                                selectionStart += len;
-                                                selectionEnd += len;
                                             }
-                                        }
 
-                                        let stop = false;
+                                            let stop = false;
 
-                                        for (
-                                            let e = dom.getFirstChild(node);
-                                            e && !stop;
-                                            e = e.nextSibling
-                                        ) {
-                                            stop = addOffsets(e);
-                                        }
+                                            for (
+                                                let e = dom.getFirstChild(node);
+                                                e && !stop;
+                                                e = e.nextSibling
+                                            ) {
+                                                stop = addOffsets(e);
+                                            }
 
-                                        return stop;
-                                    };
+                                            return stop;
+                                        };
 
-                                    addOffsets(element);
+                                        addOffsets(element);
+                                    }
                                 }
                             }
-                        }
 
-                        this._ignoredInputResolve?.(true);
-                    }, 0);
+                            ignoredInputResolve?.(true);
+                        },
+                        0
+                    );
                 });
             }
 
@@ -1514,5 +1398,69 @@ export class MoverAPI implements Types.MoverAPI {
         }
 
         return false;
-    }
+    };
+
+    tabster.queueInit(() => {
+        const win = getWindow();
+
+        addListener(win, "keydown", onKeyDown, true);
+        addListener(win, MoverMoveFocusEventName, onMoveFocus);
+        addListener(win, MoverMemorizedElementEventName, onMemorizedElement);
+
+        tabster.focusedElement.subscribe(onFocus);
+    });
+
+    return {
+        dispose(): void {
+            const win = getWindow();
+
+            tabster.focusedElement.unsubscribe(onFocus);
+
+            ignoredInputResolve?.(false);
+
+            clearTimer(ignoredInputTimer, win);
+
+            removeListener(win, "keydown", onKeyDown, true);
+            removeListener(win, MoverMoveFocusEventName, onMoveFocus);
+            removeListener(
+                win,
+                MoverMemorizedElementEventName,
+                onMemorizedElement
+            );
+
+            Object.keys(movers).forEach((moverId) => {
+                if (movers[moverId]) {
+                    movers[moverId].dispose();
+                    delete movers[moverId];
+                }
+            });
+        },
+
+        createMover(
+            element: HTMLElement,
+            props: Types.MoverProps,
+            sys: Types.SysProps | undefined
+        ): Types.Mover {
+            if (__DEV__) {
+                validateMoverProps(props);
+            }
+
+            const newMover = new Mover(
+                tabster,
+                element,
+                onMoverDispose,
+                props,
+                sys
+            );
+            movers[newMover.id] = newMover;
+            return newMover;
+        },
+
+        moveFocus(
+            fromElement: HTMLElement,
+            key: Types.MoverKey
+        ): HTMLElement | null {
+            return moveFocusInternal(fromElement, key);
+        },
+    };
 }

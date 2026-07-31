@@ -1,9 +1,10 @@
 import {
     createTabster,
     disposeTabster,
-    findPrevFocusable,
     getTabsterAttribute,
     setTabsterAttribute,
+    getModalizer,
+    getRootDummyInputs,
     Types,
 } from "tabster";
 
@@ -12,10 +13,11 @@ console.log(
     disposeTabster,
     getTabsterAttribute,
     setTabsterAttribute,
-    findPrevFocusable,
+    getModalizer,
+    getRootDummyInputs,
     Types
 );
 
 export default {
-    name: "findPrevFocusable",
+    name: "getModalizer (with dummy inputs)",
 };

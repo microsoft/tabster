@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CrossOriginAPI } from "../CrossOrigin.js";
+import { createCrossOriginAPI } from "../CrossOrigin.js";
 import type * as Types from "../Types.js";
 import { getDeloser } from "./getDeloser.js";
 import { getModalizer } from "./getModalizer.js";
@@ -21,7 +21,9 @@ export function getCrossOrigin(tabster: Types.Tabster): Types.CrossOriginAPI {
         getGroupper(tabster);
         getOutline(tabster);
         getObservedElement(tabster);
-        tabsterCore.crossOrigin = new CrossOriginAPI(tabsterCore);
+        const api = createCrossOriginAPI(tabsterCore);
+        tabsterCore.crossOrigin = api;
+        tabsterCore.disposers.add(api);
     }
 
     return tabsterCore.crossOrigin;
