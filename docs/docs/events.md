@@ -32,16 +32,22 @@ document.addEventListener(TabsterMoveFocusEventName, (e) => {
 
 ## Core focus events
 
-| Name (constant)                                   | Class                   | Detail                                                                                  | Fired when                                                                                                                                                                                                        |
-| ------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tabster:focusin` (`TabsterFocusInEventName`)     | `TabsterFocusInEvent`   | `FocusedElementDetail` (`relatedTarget?`, `isFocusedProgrammatically?`, `modalizerId?`) | The focused element tracked by the Tabster core changes to an element.                                                                                                                                            |
-| `tabster:focusout` (`TabsterFocusOutEventName`)   | `TabsterFocusOutEvent`  | `FocusedElementDetail`                                                                  | Focus leaves the element currently tracked by the Tabster core.                                                                                                                                                   |
-| `tabster:movefocus` (`TabsterMoveFocusEventName`) | `TabsterMoveFocusEvent` | `{ by, owner, next, relatedEvent? }`                                                    | Tabster is about to move focus as a result of handling a keyboard event (Mover, Groupper, Modalizer, Root, or Deloser initiated). Call `preventDefault()` to stop Tabster's default move and substitute your own. |
+| Name (constant)                                   | Class                   | Detail                                                                                  | Fired when                                                                                                                                |
+| ------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `tabster:focusin` (`TabsterFocusInEventName`)     | `TabsterFocusInEvent`   | `FocusedElementDetail` (`relatedTarget?`, `isFocusedProgrammatically?`, `modalizerId?`) | The focused element tracked by the Tabster core changes to an element.                                                                    |
+| `tabster:focusout` (`TabsterFocusOutEventName`)   | `TabsterFocusOutEvent`  | `FocusedElementDetail`                                                                  | Focus leaves the element currently tracked by the Tabster core.                                                                           |
+| `tabster:movefocus` (`TabsterMoveFocusEventName`) | `TabsterMoveFocusEvent` | `{ by, owner, next, relatedEvent? }`                                                    | Tabster is about to perform an interceptable focus move. Call `preventDefault()` to stop Tabster's proposed move and substitute your own. |
 
 `TabsterMoveFocusEventDetail.by` is `"mover" | "groupper" | "modalizer" |
 "root" | "deloser"`, `owner` is the element that initiated the move, and
 `next` is the element Tabster intends to focus (`null` means "leave the
 Tabster root entirely", e.g. to the browser's own UI).
+
+This is the general interception point for Tabster-initiated focus movement
+that exposes a proposed destination. Calling `preventDefault()` on the custom
+event tells Tabster not to perform that move; the listener can then focus its
+own destination. If a native keyboard action also needs to be suppressed,
+prevent its `relatedEvent` as well.
 
 ```ts
 document.addEventListener("tabster:movefocus", (e) => {

@@ -147,6 +147,32 @@ properties can mark application defaults, exclude elements from Tabster
 navigation, or alter how an element participates without changing its semantic
 role.
 
+### Applications cannot ask the browser to follow their navigation policy
+
+`HTMLElement.focus()` can focus a target the application has already chosen,
+but the platform has no general API that means "move to the next item according
+to this application's nested Mover, Groupper, Modalizer, uncontrolled-region,
+visibility, and logical-ancestry rules." Reimplementing that calculation in
+each component can make programmatic movement disagree with keyboard movement.
+
+Tabster exposes both its shared [Focusable traversal API](core.md#focusable)
+and application-dispatched [Mover and Groupper events](events.md#mover-events).
+An application can find a destination directly, ask a Mover to process a
+specific movement command, enter or escape a Groupper, update a Mover's
+memorized item, and observe Mover item state. Combined with
+[`ignoreKeydown`](core.md#focusable-element-properties), this lets an
+application replace selected built-in key bindings or connect other input and
+state models while preserving Tabster's navigation context.
+
+Tabster also exposes the movement it is about to perform. Before an
+interceptable built-in focus move, it dispatches a bubbling
+[`tabster:movefocus`](events.md#core-focus-events) event containing the
+initiating feature, owning element, proposed destination, and original keyboard
+event when applicable. A listener can call `preventDefault()` to cancel
+Tabster's move and focus a different destination instead. This provides a
+single override point without requiring components to replace all of Tabster's
+normal behavior.
+
 ### Native and third-party behavior must remain usable
 
 An application-wide focus system cannot assume it owns every subtree. Editors,

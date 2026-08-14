@@ -135,6 +135,30 @@ element must remain vertically visible when Page Up or Page Down searches for
 its destination. For example, an element that's 10% clipped by its scroll
 container still qualifies at the default tolerance.
 
+## Custom navigation
+
+Mover's key handling is replaceable one key at a time. Set
+[`focusable.ignoreKeydown`](core.md#focusable-element-properties) on an element
+or ancestor to stop Tabster from handling selected keys there, then use your
+own input or application state to dispatch:
+
+- `MoverMoveFocusEvent` to ask the containing Mover to perform a movement
+  command using its normal direction, visibility, and boundary rules.
+- `MoverMemorizedElementEvent` to replace or clear the item used by
+  `memorizeCurrent`.
+
+`MoverStateEvent` also exposes current-item and visibility changes when
+`trackState` is enabled. Together, these
+[Mover events](events.md#mover-events) support custom key maps, command
+surfaces, and controlled selection models without reimplementing Mover's
+focus traversal.
+
+For Mover's built-in keyboard handling, Tabster also dispatches
+[`tabster:movefocus`](events.md#core-focus-events) before applying the proposed
+focus change. Preventing that event cancels the move, allowing a listener to
+substitute a different destination while leaving Mover's behavior unchanged
+for all other cases.
+
 ## Examples
 
 [See Mover examples in Storybook](https://tabster.io/storybook/?path=/story/mover).

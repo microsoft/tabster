@@ -98,6 +98,24 @@ element — useful when the container can't carry `tabindex={0}` itself (for
 example, a `<tr>` in some browsers) but should still require an explicit
 "enter" gesture.
 
+## Custom navigation
+
+Groupper's Enter and Escape handling can be replaced independently. Use
+[`focusable.ignoreKeydown`](core.md#focusable-element-properties) to leave
+either key to your application, then dispatch a
+`GroupperMoveFocusEvent` with `GroupperMoveFocusActions.Enter` or
+`GroupperMoveFocusActions.Escape` when your own command, input method, or
+application state should enter or leave the Groupper.
+
+This [programmatic event](events.md#groupper-events) follows the same nested
+Groupper context as the built-in keyboard behavior, allowing custom
+interaction models without duplicating its focus traversal.
+
+For built-in Enter/Escape handling, Tabster also dispatches
+[`tabster:movefocus`](events.md#core-focus-events) before changing focus.
+Preventing that event cancels the proposed move, so an application can choose
+another destination without replacing Groupper behavior globally.
+
 ## Examples
 
 [See Groupper examples in Storybook](https://tabster.io/storybook/?path=/story/groupper).
