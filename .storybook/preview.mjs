@@ -11,6 +11,32 @@ import {
     getRestorer,
 } from "../src";
 
+const ensurePrototypeFocusCanBeRead = (win) => {
+    const prototype = win.HTMLElement.prototype;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, "focus");
+
+    if (!descriptor?.get) {
+        return;
+    }
+
+    try {
+        descriptor.get.call(prototype);
+        return;
+    } catch {
+        const getFocus = descriptor.get;
+        const fallbackElement = win.document.documentElement;
+
+        Object.defineProperty(prototype, "focus", {
+            ...descriptor,
+            get() {
+                return getFocus.call(
+                    this === prototype ? fallbackElement : this
+                );
+            },
+        });
+    }
+};
+
 export const parameters = {
     actions: { argTypesRegex: "^on[A-Z].*" },
     controls: {
@@ -23,6 +49,8 @@ export const parameters = {
 
 export const decorators = [
     (Story) => {
+        ensurePrototypeFocusCanBeRead(window);
+
         const env =
             typeof import.meta !== "undefined" && import.meta.env
                 ? import.meta.env
