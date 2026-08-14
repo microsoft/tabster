@@ -41,7 +41,8 @@ outline ([Outline](outline.md)), and traverse focusable elements
 programmatically ([Focusable](core.md#focusable)).
 
 Browsers will hopefully grow native alternatives for some of this over time,
-but until then, this is what Tabster offers.
+but application-level composition will still be necessary. See
+[Browser APIs and Tabster](browser-support.md) for a detailed comparison.
 
 ## How it works
 

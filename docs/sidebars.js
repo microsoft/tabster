@@ -13,7 +13,7 @@ const sidebars = {
             type: "category",
             label: "Introduction",
             collapsed: false,
-            items: ["intro", "concept"],
+            items: ["intro", "concept", "browser-support"],
         },
         {
             type: "category",
