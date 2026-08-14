@@ -2,7 +2,7 @@
 title: Getting Started
 ---
 
-# Getting Started <img src="/img/catgettingstarted.png" className="image image_header" />
+# Getting Started <img src="/img/catgettingstarted.png" className="image image_header" alt="" />
 
 **Tabster** is a small, dependency-free layer on top of the DOM that adds the
 keyboard navigation behaviours browsers don't provide out of the box: moving
@@ -48,10 +48,10 @@ disposeTabster(tabster);
 
 ## The root: where Tabster starts managing focus
 
-Tabster doesn't do anything until it knows which part of the DOM it owns. You
-mark that boundary with a **root**, using the `root` key of the `data-tabster`
-attribute on a container that wraps your application (or the part of it you
-want Tabster to manage):
+Tabster's navigation features need to know which part of the DOM they manage.
+You mark that boundary with a **root**, using the `root` key of the
+`data-tabster` attribute on a container that wraps your application (or the
+part of it you want Tabster to manage):
 
 ```tsx
 import { getTabsterAttribute } from "tabster";
@@ -59,7 +59,11 @@ import { getTabsterAttribute } from "tabster";
 <div {...getTabsterAttribute({ root: {} })}>{/* your app */}</div>;
 ```
 
-Without a root, `data-tabster` attributes elsewhere in the DOM are inert.
+The Tabster core instance itself always exists after `createTabster()`, but
+navigation features such as Mover, Groupper, and Modalizer need an authored or
+automatic root to participate in the application focus model. Utilities that
+do not depend on navigation context, such as Observed Element, can operate
+without a root.
 Alternatively, pass `autoRoot` to `createTabster()` to make Tabster create a
 root for the whole document automatically, without adding the attribute by
 hand:

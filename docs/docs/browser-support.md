@@ -37,12 +37,12 @@ even nested composites. Applications often need focus to stop on the item as a
 whole, Enter to move into its contents, Escape to return to the item, and
 optionally Tab to remain trapped inside while that level is active.
 
-The emerging
+The new, still-evolving
 [`focusgroup`](https://open-ui.org/components/scoped-focusgroup.explainer/)
 API standardizes roving focus, arrow-key navigation, a guaranteed Tab stop,
 and focus memory. Its proposed
 [`itemcontrols`](https://open-ui.org/components/focusgroup-v2.explainer/#itemcontrols)
-behavior can filter controls belonging to inactive items. It intentionally
+modifier can filter controls belonging to inactive items. It intentionally
 does not define hierarchical Enter/Escape navigation, an activated interaction
 mode, arbitrary Tab trapping, or application selection and activation state.
 
@@ -165,8 +165,8 @@ can be clipped by an ancestor with `overflow: hidden` or obscured by complex
 layering. The browser cannot choose an application-specific overlay strategy.
 
 [Outline](outline.md) uses Tabster's shared keyboard-navigation state and draws
-the indicator in a fixed-position overlay so that it remains visible across
-common clipping layouts.
+the indicator in a body-level overlay, outside the focused element's clipping
+ancestors, so that it remains visible across common clipping layouts.
 
 ### Shadow DOM requires consistent traversal across every feature
 

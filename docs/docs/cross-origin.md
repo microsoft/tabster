@@ -2,7 +2,7 @@
 title: Cross-Origin
 ---
 
-# Cross-Origin <img src="/img/catcrossorigin.png" className="image image_header" />
+# Cross-Origin <img src="/img/catcrossorigin.png" className="image image_header" alt="" />
 
 ## About
 
@@ -78,9 +78,9 @@ crossOrigin.observedElement.requestFocus("myButton", 5000).then((focused) => {
 });
 ```
 
-`observedElement.getElement()`/`waitElement()`/`requestFocus()` mirror the
-single-window [Observed Element](observed.md#methods) API, but return
-`CrossOriginElement`s (async) instead of plain `HTMLElement`s.
+`observedElement.getElement()` and `waitElement()` resolve asynchronously to
+`CrossOriginElement`s instead of plain `HTMLElement`s. `requestFocus()` resolves
+to a boolean indicating whether focus was moved.
 
 ### `focusedElement`
 
@@ -91,8 +91,8 @@ Lets you focus an element in another frame, either by direct
 crossOrigin.focusedElement.focusById("some-element-id", "root-id");
 ```
 
-You can also `subscribe()` to `focusedElement` to be notified when focus
-moves to an element owned by a different frame.
+You can also `subscribe()` to `focusedElement` to track focus as it moves
+among elements in the participating frames.
 
 ## Examples
 

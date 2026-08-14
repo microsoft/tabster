@@ -20,7 +20,7 @@ export default function Home(): React.ReactElement {
                 <img
                     src="/img/tabster.png"
                     className="image image_logo"
-                    alt="Tabster"
+                    alt=""
                 />
                 <em className={styles.motto}>Tabindex on steroids.</em>
                 <p>
@@ -53,7 +53,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catgettingstarted.png"
                                 className="image"
-                                alt="Getting Started"
+                                alt=""
                             />
                             <h2>Getting Started</h2>
                             <p>Install, initialize, and enable features</p>
@@ -64,7 +64,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catconcept.png"
                                 className="image"
-                                alt="Concept"
+                                alt=""
                             />
                             <h2>Concept</h2>
                             <p>What Tabster is and how it works</p>
@@ -75,7 +75,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catcore.png"
                                 className="image"
-                                alt="Core"
+                                alt=""
                             />
                             <h2>Core</h2>
                             <p>Lifecycle, focused element, root</p>
@@ -86,7 +86,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catmover.png"
                                 className="image"
-                                alt="Mover"
+                                alt=""
                             />
                             <h2>Mover</h2>
                             <p>Move focus using arrow keys</p>
@@ -97,7 +97,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catuncontrolled.png"
                                 className="image"
-                                alt="Uncontrolled"
+                                alt=""
                             />
                             <h2>Uncontrolled</h2>
                             <p>Integrate third-party focus management</p>
@@ -108,7 +108,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catgroupper.png"
                                 className="image"
-                                alt="Groupper"
+                                alt=""
                             />
                             <h2>Groupper</h2>
                             <p>Group focusable items</p>
@@ -119,7 +119,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catdeloser.png"
                                 className="image"
-                                alt="Deloser"
+                                alt=""
                             />
                             <h2>Deloser</h2>
                             <p>Do not lose your focus</p>
@@ -130,10 +130,12 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catmodalizer.png"
                                 className="image"
-                                alt="Modalizer"
+                                alt=""
                             />
                             <h2>Modalizer</h2>
-                            <p>Create accessible modals</p>
+                            <p>
+                                Manage modal focus and accessibility boundaries
+                            </p>
                         </a>
                     </li>
                     <li>
@@ -141,7 +143,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catobserved.png"
                                 className="image"
-                                alt="Observed Element"
+                                alt=""
                             />
                             <h2>Observed Element</h2>
                             <p>Wait for items to appear</p>
@@ -152,7 +154,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catmore.png"
                                 className="image"
-                                alt="Restorer"
+                                alt=""
                             />
                             <h2>Restorer</h2>
                             <p>Restore focus after elements disappear</p>
@@ -163,7 +165,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catoutline.png"
                                 className="image"
-                                alt="Outline"
+                                alt=""
                             />
                             <h2>Outline</h2>
                             <p>Custom focus outline</p>
@@ -174,7 +176,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catcrossorigin.png"
                                 className="image"
-                                alt="Cross-Origin"
+                                alt=""
                             />
                             <h2>Cross-Origin</h2>
                             <p>Coordinate focus across iframes</p>
@@ -185,7 +187,7 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/tabster.png"
                                 className="image"
-                                alt="API Reference"
+                                alt=""
                             />
                             <h2>API Reference</h2>
                             <p>Every exported function, type, and constant</p>

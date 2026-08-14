@@ -2,7 +2,7 @@
 title: Concepts
 ---
 
-# Concepts <img src="/img/catconcept.png" className="image image_header" />
+# Concepts <img src="/img/catconcept.png" className="image image_header" alt="" />
 
 ## Why Tabster exists
 
@@ -34,14 +34,15 @@ handles these keyboard-navigation scenarios declaratively, mostly by adding a
 It lets you group focusable elements so they behave as a single entity
 ([Groupper](groupper.md)), move focus with arrow keys instead of just Tab
 ([Mover](mover.md)), restore focus when the focused element disappears from
-the DOM ([Deloser](deloser.md), [Restorer](restorer.md)), build modal dialogs
-and popups ([Modalizer](modalizer.md)), find and wait for elements that
-aren't mounted yet ([Observed Element](observed.md)), draw a robust focus
-outline ([Outline](outline.md)), and traverse focusable elements
-programmatically ([Focusable](core.md#focusable)).
+the DOM ([Deloser](deloser.md), [Restorer](restorer.md)), manage focus and
+accessibility boundaries for modal regions and popups
+([Modalizer](modalizer.md)), find and wait for elements that aren't mounted yet
+([Observed Element](observed.md)), draw a robust focus outline
+([Outline](outline.md)), and traverse focusable elements programmatically
+([Focusable](core.md#focusable)).
 
-Browsers will hopefully grow native alternatives for some of this over time,
-but application-level composition will still be necessary. See
+Browsers continue to add native alternatives for some of these capabilities,
+but application-level composition remains necessary. See
 [Browser APIs and Tabster](browser-support.md) for a detailed comparison.
 
 ## How it works

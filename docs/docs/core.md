@@ -2,7 +2,7 @@
 title: Core
 ---
 
-# Core <img src="/img/catcore.png" className="image image_header" />
+# Core <img src="/img/catcore.png" className="image image_header" alt="" />
 
 The core is the part of Tabster that is always present, regardless of which
 optional features you enable. It's responsible for creating/disposing

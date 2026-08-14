@@ -2,7 +2,7 @@
 title: Attribute Helpers
 ---
 
-# Attribute Helpers <img src="/img/catcore.png" className="image image_header" />
+# Attribute Helpers <img src="/img/catcore.png" className="image image_header" alt="" />
 
 Tabster's declarative API is a single `data-tabster` attribute holding a
 JSON-serialized object, keyed by feature name (`root`, `mover`, `groupper`,

@@ -2,7 +2,7 @@
 title: Mover
 ---
 
-# Mover <img src="/img/catmover.png" className="image image_header" />
+# Mover <img src="/img/catmover.png" className="image image_header" alt="" />
 
 ## About
 
@@ -131,9 +131,9 @@ when entering from outside.
 ### `visibilityTolerance`
 
 A number between `0` and `1` (default `0.8`) controlling how much of an
-element must be within the viewport to count as visible for
-`visibilityAware` purposes. For example, an element that's 10% scrolled out
-of view still counts as visible at the default tolerance.
+element must remain vertically visible when Page Up or Page Down searches for
+its destination. For example, an element that's 10% clipped by its scroll
+container still qualifies at the default tolerance.
 
 ## Examples
 

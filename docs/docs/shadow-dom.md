@@ -2,7 +2,7 @@
 title: Shadow DOM
 ---
 
-# Shadow DOM <img src="/img/catcore.png" className="image image_header" />
+# Shadow DOM <img src="/img/catcore.png" className="image image_header" alt="" />
 
 By default Tabster's internals (`querySelector`, `TreeWalker`,
 `MutationObserver`, `document.activeElement`, and friends) use the regular,

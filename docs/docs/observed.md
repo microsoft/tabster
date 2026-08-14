@@ -2,7 +2,7 @@
 title: Observed Element
 ---
 
-# Observed Element <img src="/img/catobserved.png" className="image image_header" />
+# Observed Element <img src="/img/catobserved.png" className="image image_header" alt="" />
 
 ## About
 

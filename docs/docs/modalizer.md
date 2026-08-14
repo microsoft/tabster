@@ -2,7 +2,7 @@
 title: Modalizer
 ---
 
-# Modalizer <img src="/img/catmodalizer.png" className="image image_header" />
+# Modalizer <img src="/img/catmodalizer.png" className="image image_header" alt="" />
 
 ## About
 
@@ -60,10 +60,11 @@ interface ModalizerProps {
   Tab order, but screen readers can still see the rest of the app).
 - **`isAlwaysAccessible?: boolean`** — this specific Modalizer instance stays
   accessible (no `aria-hidden`) even while a _different_ Modalizer is active.
-- **`isNoFocusFirst?: boolean`** — don't automatically focus the first
-  focusable element when the Modalizer activates.
-- **`isNoFocusDefault?: boolean`** — don't automatically focus the element
-  marked `focusable: { isDefault: true }` when the Modalizer activates.
+- **`isNoFocusFirst?: boolean`** — when `ModalizerAPI.focus()` is called,
+  don't choose the first focusable element as its keyboard-navigation
+  destination.
+- **`isNoFocusDefault?: boolean`** — when `ModalizerAPI.focus()` is called,
+  don't choose the element marked `focusable: { isDefault: true }`.
 - **`isTrapped?: boolean`** — focus trap variant: Tab/Shift+Tab cycle within
   the Modalizer instead of allowing focus to leave it.
 
@@ -80,16 +81,34 @@ interface ModalizerProps {
 </div>
 ```
 
+## Programmatic API
+
+`getModalizer()` returns a `ModalizerAPI` with two application-facing methods:
+
+```ts
+interface ModalizerAPI {
+    focus(
+        elementFromModalizer: HTMLElement,
+        noFocusFirst?: boolean,
+        noFocusDefault?: boolean
+    ): boolean;
+    activate(modalizerElementOrContainer: HTMLElement | undefined): boolean;
+}
+```
+
+- `focus()` activates the Modalizer containing the supplied element and applies
+  its configured initial-focus policy. It returns whether an element was
+  focused immediately.
+- `activate()` changes the active Modalizer without moving focus. Pass an
+  element inside the Modalizer to activate it, or `undefined` to deactivate
+  the current Modalizer.
+
 ## Interactions and caveats
 
-- Activating a Modalizer and focusing into it are two different concerns.
-  Use `tabster.focusable.findFirst({ container: dialogElement })` (see
-  [`focusable`](core.md#focusable)) to focus the first element inside the
-  dialog once you show it, and
-  `tabster.focusable.findFirst({ container: document.body, modalizerId: null })`
-  to focus something _outside_ any Modalizer (e.g. the button that opened
-  the dialog) once you hide it — this is exactly the pattern used in the
-  [Storybook example](https://tabster.io/storybook/?path=/story/modalizer).
+- Activating a Modalizer and focusing into it are separate operations.
+  `ModalizerAPI.focus()` performs both; `activate()` changes only the active
+  region. The lower-level [`focusable`](core.md#focusable) API remains
+  available when the application needs a custom destination.
 - Applying `aria-hidden` to everything outside the active Modalizer happens
   in two passes: the element that currently has focus is cleared
   synchronously (so screen readers never announce a hidden, focused

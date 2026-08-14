@@ -2,7 +2,7 @@
 title: Events
 ---
 
-# Events <img src="/img/catcore.png" className="image image_header" />
+# Events <img src="/img/catcore.png" className="image image_header" alt="" />
 
 Tabster communicates state changes and lets you hook into (or override) its
 keyboard handling via standard DOM `CustomEvent`s. Every event bubbles,
@@ -19,8 +19,8 @@ import {
 
 All event classes extend an internal `TabsterCustomEvent<D>` base
 (itself extending `CustomEvent<D>`), so `event.detail` is typed per event —
-listed as "Detail" below. (`event.details`, without the trailing `s` removed,
-also exists for backwards compatibility — prefer `detail`.)
+listed as "Detail" below. (`event.details`, with a trailing `s`, also exists
+for backwards compatibility — prefer `detail`.)
 
 You can listen the same way you would for any other DOM event:
 
@@ -34,8 +34,8 @@ document.addEventListener(TabsterMoveFocusEventName, (e) => {
 
 | Name (constant)                                   | Class                   | Detail                                                                                  | Fired when                                                                                                                                                                                                        |
 | ------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tabster:focusin` (`TabsterFocusInEventName`)     | `TabsterFocusInEvent`   | `FocusedElementDetail` (`relatedTarget?`, `isFocusedProgrammatically?`, `modalizerId?`) | An element inside a Tabster root gains focus.                                                                                                                                                                     |
-| `tabster:focusout` (`TabsterFocusOutEventName`)   | `TabsterFocusOutEvent`  | `FocusedElementDetail`                                                                  | An element inside a Tabster root loses focus.                                                                                                                                                                     |
+| `tabster:focusin` (`TabsterFocusInEventName`)     | `TabsterFocusInEvent`   | `FocusedElementDetail` (`relatedTarget?`, `isFocusedProgrammatically?`, `modalizerId?`) | The focused element tracked by the Tabster core changes to an element.                                                                                                                                            |
+| `tabster:focusout` (`TabsterFocusOutEventName`)   | `TabsterFocusOutEvent`  | `FocusedElementDetail`                                                                  | Focus leaves the element currently tracked by the Tabster core.                                                                                                                                                   |
 | `tabster:movefocus` (`TabsterMoveFocusEventName`) | `TabsterMoveFocusEvent` | `{ by, owner, next, relatedEvent? }`                                                    | Tabster is about to move focus as a result of handling a keyboard event (Mover, Groupper, Modalizer, Root, or Deloser initiated). Call `preventDefault()` to stop Tabster's default move and substitute your own. |
 
 `TabsterMoveFocusEventDetail.by` is `"mover" | "groupper" | "modalizer" |

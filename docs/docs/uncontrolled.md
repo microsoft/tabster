@@ -2,7 +2,7 @@
 title: Uncontrolled
 ---
 
-# Uncontrolled <img src="/img/catuncontrolled.png" className="image image_header" />
+# Uncontrolled <img src="/img/catuncontrolled.png" className="image image_header" alt="" />
 
 Uncontrolled regions let native browser behavior or a third-party component
 manage focus within part of a Tabster root. They are useful when embedding a

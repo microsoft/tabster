@@ -2,7 +2,7 @@
 title: Outline
 ---
 
-# Outline <img src="/img/catoutline.png" className="image image_header" />
+# Outline <img src="/img/catoutline.png" className="image image_header" alt="" />
 
 ## About
 
@@ -10,8 +10,8 @@ Outline draws a custom border around the focused element to make it clear
 where keyboard focus currently is. The native CSS `outline` has a
 long-standing problem: it gets visually cropped (or hidden entirely) by any
 ancestor with `overflow: hidden`. Outline works around that by drawing the
-indicator in a fixed-position overlay instead of relying on the browser's
-native outline rendering.
+indicator in a body-level, absolutely positioned overlay instead of inside
+the focused element's clipping ancestors.
 
 Outline visibility is tied to Tabster's [keyboard-navigation
 state](core.md#keyboardnavigation) — it only shows up while the user is

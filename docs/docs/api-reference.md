@@ -2,7 +2,7 @@
 title: API Reference
 ---
 
-# API Reference <img src="/img/favicon.png" className="image image_header" />
+# API Reference <img src="/img/favicon.png" className="image image_header" alt="" />
 
 Complete reference of everything exported from the `tabster` package root
 (`import { ... } from "tabster"`), grouped by category. For guided
@@ -129,7 +129,7 @@ shapes, and usage examples. Quick index:
 ## `Types` namespace
 
 ```ts
-import { Types } from "tabster";
+import type { Types } from "tabster";
 ```
 
 A namespace holding every TypeScript type Tabster's API surface uses —
@@ -143,9 +143,9 @@ props interfaces (`MoverProps`, `GroupperProps`, `ModalizerProps`,
 `find*()` options types (`FindFirstProps`, `FindNextProps`, `FindAllProps`,
 `FindFocusableOutputProps`, ...), and the
 type aliases derived from each constant object above (e.g.
-`Types.MoverDirection` for the `MoverDirections` values). It's compile-time
-only — nothing under `Types` exists at runtime, unlike the constants and
-functions above.
+`Types.MoverDirection` for the `MoverDirections` values). These members are
+TypeScript types and are erased from emitted application code; use the
+package-root constants for runtime values.
 
 The `Tabster` instance's `uncontrolled` member and its
 `isUncontrolledCompletely()` method are documented in the
@@ -154,7 +154,7 @@ The `Tabster` instance's `uncontrolled` member and its
 ## `EventsTypes` namespace
 
 ```ts
-import { EventsTypes } from "tabster";
+import type { EventsTypes } from "tabster";
 ```
 
 Compile-time-only detail-payload types for the events documented on the

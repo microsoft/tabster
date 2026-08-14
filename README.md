@@ -2,13 +2,13 @@
 
 _Tabindex on steroids._
 
-Tabster is a small, framework-agnostic, zero-runtime-dependency library that
-adds the keyboard navigation and focus management behaviours browsers don't
-provide out of the box: moving focus with arrow keys, grouping controls so
-Tab doesn't have to visit every one of them, trapping focus in dialogs,
-restoring focus when the focused element disappears, and more. It operates
-directly on the DOM through a single `data-tabster` attribute, so it works
-with any UI framework (or none at all).
+Tabster is a small, framework-agnostic library for composing keyboard
+navigation and focus-management policies in complex applications: moving
+focus with arrow keys, grouping controls so Tab doesn't have to visit every
+one of them, restricting focus within modal regions, restoring focus when the
+focused element disappears, and more. It operates directly on the DOM through
+a single `data-tabster` attribute, so it works with any UI framework (or none
+at all).
 
 - 📖 **Documentation:** [https://tabster.io](https://tabster.io)
 - 🧪 **Live examples:** [Storybook](https://tabster.io/storybook/)
@@ -16,12 +16,16 @@ with any UI framework (or none at all).
 
 ## Why Tabster
 
-The browser and screen-reader focus model was designed for static documents.
-Modern, dynamic web applications need more: focus has to move predictably
-inside composite widgets, stay trapped in modal dialogs, and be restored
-when the element that had it is removed from the DOM. Tabster provides a
-consistent, well-tested way to handle all of that, without requiring you to
-rewrite your existing markup or adopt a specific framework.
+Browser APIs provide the primitives for focus and sequential navigation.
+Modern, dynamic web applications also need those primitives to compose:
+focus has to move predictably inside composite widgets, remain restricted
+within modal regions, and be restored when the element that had it is removed
+from the DOM. Tabster provides a consistent, well-tested way to coordinate
+those policies without requiring a specific framework.
+
+See [Browser APIs and Tabster](https://tabster.io/docs/browser-support) for a
+detailed comparison of the platform primitives and the application-level gaps
+Tabster covers.
 
 ## Installation
 
@@ -91,9 +95,10 @@ if (container) {
 ```
 
 See [Getting Started](https://tabster.io/docs/intro) for the full walkthrough
-(installation, lifecycle, the root requirement, and every `get*()` opt-in),
-and the [API Reference](https://tabster.io/docs/api-reference) for the
-complete list of exports.
+(installation, lifecycle, Root setup for navigation features, and every
+`get*()` opt-in), and the
+[API Reference](https://tabster.io/docs/api-reference) for the complete list
+of exports.
 
 ## What's included
 
@@ -101,14 +106,14 @@ complete list of exports.
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | [Core](https://tabster.io/docs/core)                 | Focused-element tracking, keyboard-navigation detection, focusable-element lookup — always available. |
 | [Mover](https://tabster.io/docs/mover)               | Arrow-key/Home/End/PageUp/PageDown navigation between sibling elements (lists, toolbars, grids).      |
-| [Groupper](https://tabster.io/docs/groupper)         | Makes only one element of a group Tab-stoppable, with Enter/Escape to move focus in/out.              |
-| [Modalizer](https://tabster.io/docs/modalizer)       | Traps focus and hides the rest of the app from assistive tech while a dialog/popup is active.         |
+| [Groupper](https://tabster.io/docs/groupper)         | Supports single-entry groups with Enter/Escape navigation and optional focus trapping.                |
+| [Modalizer](https://tabster.io/docs/modalizer)       | Manages focus and accessibility boundaries while a modal region or popup is active.                   |
 | [Deloser](https://tabster.io/docs/deloser)           | Automatically restores focus when the focused element is removed from the DOM.                        |
 | [Restorer](https://tabster.io/docs/restorer)         | A lighter-weight, single-element alternative to Deloser for restoring focus.                          |
 | [Observed Element](https://tabster.io/docs/observed) | Waits for an element to appear (or become focusable/accessible) and optionally focuses it.            |
 | [Outline](https://tabster.io/docs/outline)           | A custom, keyboard-only focus outline that isn't cropped by `overflow: hidden`.                       |
-| [Cross-Origin](https://tabster.io/docs/cross-origin) | Coordinates Deloser/Modalizer/Observed Element/focus state across same-site iframes.                  |
-| [Shadow DOM](https://tabster.io/docs/shadow-dom)     | Opt-in `DOMAPI` so all of the above work inside shadow trees.                                         |
+| [Cross-Origin](https://tabster.io/docs/cross-origin) | Coordinates selected focus state and operations across participating frames or windows.               |
+| [Shadow DOM](https://tabster.io/docs/shadow-dom)     | Provides opt-in, Shadow-DOM-aware traversal for Tabster features.                                     |
 
 ## Local development
 

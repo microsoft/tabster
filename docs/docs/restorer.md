@@ -2,7 +2,7 @@
 title: Restorer
 ---
 
-# Restorer <img src="/img/catdeloser.png" className="image image_header" />
+# Restorer <img src="/img/catdeloser.png" className="image image_header" alt="" />
 
 ## About
 
@@ -73,10 +73,10 @@ un-rendering it) moves focus back to "Open dialog" automatically.
   internally to distinguish the two, _unless_ the `Source` element is no
   longer in the DOM at all, in which case it always restores.
 - A `Source` element, when disposed (e.g. removed from the tree) while it
-  still has focus within it, dispatches a `RestorerRestoreFocusEvent` — the
-  same event Deloser's [`Manual` strategy](deloser.md#strategy) uses — so
-  both features can share the same restore-triggering mechanism if you use
-  them together.
+  still has focus within it, dispatches a `RestorerRestoreFocusEvent`.
+  Restorer and Deloser use separate event types and restoration policies;
+  Deloser's [`Manual` strategy](deloser.md#strategy) is triggered with
+  `DeloserRestoreFocusEvent`.
 
 ## Examples
 

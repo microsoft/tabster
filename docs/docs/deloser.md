@@ -2,7 +2,7 @@
 title: Deloser
 ---
 
-# Deloser <img src="/img/catdeloser.png" className="image image_header" />
+# Deloser <img src="/img/catdeloser.png" className="image image_header" alt="" />
 
 ## About
 
