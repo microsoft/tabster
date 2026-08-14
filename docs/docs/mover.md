@@ -1,108 +1,140 @@
+---
+title: Mover
+---
+
 # Mover <img src="/img/catmover.png" className="image image_header" />
 
 ## About
 
-Mover allows to move focus within the container using arrow keys.
-
-Mover plays well with [Groupper](groupper.md).
-
-Consider the example:
+Mover lets focus move within a container using the arrow keys (plus
+Home/End/PageUp/PageDown), instead of requiring a Tab press per item.
 
 ```html
-<div data-tabster='{"mover": {...}"'>
+<div data-tabster='{"mover": {}}'>
     <button>Button1</button>
     <button>Button2</button>
     <button>Button3</button>
 </div>
 ```
 
-Normally, it would take a Tab press to move between the buttons. With Mover, the focus will be moved when the arrow keys are pressed.
+Normally reaching `Button3` from `Button1` takes two Tab presses. With Mover
+enabled, arrow keys move between the buttons, and a single Tab press moves
+focus out of the whole container (unless `tabbable` is set — see below).
+
+Mover plays well with [Groupper](groupper.md): a common pattern is a Mover
+list whose items are each a Groupper, so arrow keys move between items and
+Enter/Escape moves into/out of an item's own focusable content.
 
 ## Setup
 
-To get Mover working, we need to call `getMover()` function:
+Call `getMover()` once to enable the `mover` `data-tabster` key:
 
 ```ts
 import { createTabster, getMover } from "tabster";
 
-let tabsterCore = createTabster(window);
-
-getMover(tabsterCore);
+const tabster = createTabster(window);
+getMover(tabster);
 ```
 
 ## Properties
 
-To tune the Mover's behaviour, several properties are available.
-
-### direction?: _MoverDirection_
-
-`Both | Vertical | Horizontal | Grid`
-
-The default value is `Both` meaning both Up/Down and Left/Right button
-presses will move focus to the previous/next focusable element inside the Mover.
-
-With `Vertical` only Up/Down buttons will move the focus.
-
-With `Horizontal` onlt Left/Right buttons will do.
-
-With `Grid` the focus will be moving to visually adjacent item when the arrow
-keys are used.
-
-Of course PageUp/PageDown, Home and End keys work for Mover too.
-
-```tsx
-import { createTabster, getMover, getTabsterAttribute, Types } from "tabster";
-
-const tabsterCore = createTabster(window);
-getMover(tabsterCore);
-
-...
-
-<div {...getTabsterAttribute({ mover: { direction: Types.MoverDirections.Grid } })}>
-    ...
-</div>
+```ts
+interface MoverProps {
+    direction?: MoverDirection;
+    memorizeCurrent?: boolean;
+    tabbable?: boolean;
+    cyclic?: boolean;
+    trackState?: boolean;
+    visibilityAware?: Visibility;
+    hasDefault?: boolean;
+    visibilityTolerance?: number;
+}
 ```
 
-### memorizeCurrent?: _boolean_
+### `direction`
 
-When you Tab to Mover from outside, the focus will land on the first element of the Mover
-(or on the last one if you Tab backwards). With `memorizeCurrent` set to true, Tabster
-will remember last focusable element you have been interacting with in the Mover and once
-you Tab to the Mover from outside, the focus will go not to the first/last focusable in
-the Mover container, but to the last item you've interacted with previously (if available).
+`Both | Vertical | Horizontal | Grid | GridLinear`
 
-### tabbable?: _boolean_
+The default, `Both`, moves focus to the previous/next focusable element for
+either Up/Left or Down/Right presses. `Vertical` only responds to Up/Down,
+`Horizontal` only to Left/Right.
 
-By default when you press Tab inside the Mover, the focus will go outside of the Mover to
-the next focusable element. That allows us to, for example, Tab past the infinite lists.
-Though sometime we might want both Tab and Arrow keys to work inside the Mover, so we can
-make it tabbable.
+`Grid` moves focus to the visually adjacent item based on layout (useful for
+a grid of cards or table cells) — arrow keys don't wrap between rows.
+`GridLinear` behaves like `Grid` but additionally allows linear movement:
+pressing Right past the last item of a row continues onto the first item of
+the next row (and Left/wrap the other way).
 
-### cyclic?: _boolean_
+```tsx
+import {
+    createTabster,
+    getMover,
+    getTabsterAttribute,
+    MoverDirections,
+} from "tabster";
 
-When we press an arrow key to go to the next item while the last item is focused already,
-nothing happens by default. With `cyclic` it will move the focus to the first item.
+const tabster = createTabster(window);
+getMover(tabster);
 
-### trackState?: _boolean_
+<div
+    {...getTabsterAttribute({
+        mover: { direction: MoverDirections.Grid },
+    })}
+>
+    {/* grid items */}
+</div>;
+```
 
-Mover can track the state of visibility of its focusable elements. It triggers custom DOM
-event `tabster:mover` providing this state. The triggered event will also have `isCurrent`
-flag for the currently focused Mover item.
+### `memorizeCurrent`
 
-This should only be used when really needed, because it might have a performance impact
-caused by observing the Mover's children visibility.
+When Tabbing into the Mover from outside, focus normally lands on the first
+element (or last, if Tabbing backwards). With `memorizeCurrent: true`,
+Tabster remembers the last element you interacted with inside the Mover and
+returns focus there instead, if it's still available.
 
-### visibilityAware?: _Visibility_
+### `tabbable`
+
+By default, pressing Tab while inside a Mover moves focus _out_ of the Mover
+entirely (so you can Tab past a long or infinite list in one press). Set
+`tabbable: true` to let both Tab and the arrow keys move within the Mover.
+
+### `cyclic`
+
+By default, pressing an arrow key on the last item does nothing further.
+With `cyclic: true`, it wraps around to the first item (and vice versa).
+
+### `trackState`
+
+When set, Mover tracks each item's visibility and dispatches a
+[`tabster:mover:state`](events.md#mover-events) custom event with that state
+(`{ isCurrent, visibility }`) whenever it changes. Only enable this when you
+actually consume the event — tracking visibility for every item has a real
+performance cost, especially for long lists.
+
+### `visibilityAware`
 
 `Invisible | PartiallyVisible | Visible`
 
-By default, when we Tab to a Mover from outside, the focus will go to the first rendered
-focusable element inside the Mover. Which might make the list to scroll and might be
-very inconvenient for the virtualized lists when the scrolling causes more items to load.
+By default, Tabbing into a Mover from outside focuses the first _rendered_
+focusable element, which can force a virtualized list to scroll and load
+more items just to reach it. `visibilityAware` changes that to focus the
+first element that is actually visible (at or above the given visibility
+level) instead. Implicitly enables `trackState`.
 
-With `visibilityAware` we can alter that behaviour to be able to Tab to the first visible
-element instead of the first rendered one. Enables `trackState` internally.
+### `hasDefault`
+
+Defaults to `true`. When enabled, Mover prioritizes an element marked
+`focusable: { isDefault: true }` (see [Focusable element
+properties](core.md#focusable-element-properties)) as the element to focus
+when entering from outside.
+
+### `visibilityTolerance`
+
+A number between `0` and `1` (default `0.8`) controlling how much of an
+element must be within the viewport to count as visible for
+`visibilityAware` purposes. For example, an element that's 10% scrolled out
+of view still counts as visible at the default tolerance.
 
 ## Examples
 
-[See a few Mover examples in the Storybook](https://tabster.io/storybook/?path=/story/mover).
+[See Mover examples in Storybook](https://tabster.io/storybook/?path=/story/mover).

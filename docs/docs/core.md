@@ -1,311 +1,169 @@
+---
+title: Core
+---
+
 # Core <img src="/img/catcore.png" className="image image_header" />
 
-## Setup
+The core is the part of Tabster that is always present, regardless of which
+optional features you enable. It's responsible for creating/disposing
+instances, tracking the focused element and keyboard-navigation state,
+finding focusable elements, and recognizing the `root` and `uncontrolled`
+`data-tabster` keys. This page documents those always-available pieces; see
+[Getting Started](intro.md) for the setup walkthrough and [API
+Reference](api-reference.md) for the full export list.
 
-In order to get Tabster working, we need to create an instance of Tabster core inside the
-application code.
+## Lifecycle functions
 
 ```ts
-import { createTabster, disposeTabster } from "tabster";
-
-// During the page startup.
-let tabsterCore = createTabster(window);
-
-// Don't forget to dispose on unload.
-disposeTabster(tabsterCore);
-```
-
-Once the Tabster core is created for a window, Tabster should become fully functional
-for the window and the Tabster attributes could be used on the DOM nodes.
-
-Although Tabster doesn't manage focus by default. To make it manage focus, we need
-to specify a container within which the focus is managed (usually, the root application
-container).
-
-Tabster API is mostly declarative. Set `data-tabster` attribute on a DOM node and it
-starts behaving the required way.
-
-`data-tabster` attribute is a serialized JSON with all Tabster components on the DOM
-node, there is no need to build that value manually though. `getTabsterAttribute()`
-function should be used instead. Below is an example of a small React application using
-Tabster.
-
-```tsx
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import {
     createTabster,
-    getGroupper,
-    getMover,
-    getTabsterAttribute,
-    Types,
+    disposeTabster,
+    getTabster,
+    forceCleanup,
+    makeNoOp,
+    isNoOp,
+    getInternal,
 } from "tabster";
-
-var tabster = createTabster(window);
-getMover(tabster);
-getGroupper(tabster);
-
-ReactDOM.render(
-    // Adding Tabster root, within that root Tabster manages focus.
-    <div {...getTabsterAttribute({ root: {} })}>
-        {/* Adding Mover, to be able to move between the list items using
-            Up/Down keys. */}
-        <ol
-            {...getTabsterAttribute({
-                mover: { direction: Types.MoverDirections.Vertical },
-            })}
-        >
-            {/* Adding Grouppers to the list items so that Mover treats
-            list items as singular entities (not looking at the inner
-            focusable buttons) and to trap the focus inside the
-            list item when we interact with it. */}
-            <li
-                tabIndex={0}
-                {...getTabsterAttribute({
-                    groupper: {
-                        tabbability:
-                            Types.GroupperTabbabilities.LimitedTrapFocus,
-                    },
-                })}
-            >
-                <button>Button1</button>
-                <button>Button2</button>
-            </li>
-            <li
-                tabIndex={0}
-                {...getTabsterAttribute({
-                    groupper: {
-                        tabbability:
-                            Types.GroupperTabbabilities.LimitedTrapFocus,
-                    },
-                })}
-            >
-                <button>Button3</button>
-                <button>Button4</button>
-            </li>
-            <li
-                tabIndex={0}
-                {...getTabsterAttribute({
-                    groupper: {
-                        tabbability:
-                            Types.GroupperTabbabilities.LimitedTrapFocus,
-                    },
-                })}
-            >
-                <button>Button5</button>
-                <button>Button6</button>
-            </li>
-        </ol>
-    </div>,
-    document.getElementById("root")
-);
 ```
 
-The generated HTML will look like this:
+| Function                                 | Purpose                                                                                                                                                              |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createTabster(win, props?)`             | Creates (or attaches to) the Tabster instance for `win`. See [`TabsterCoreProps`](#tabstercoreprops).                                                                |
+| `disposeTabster(tabster, allInstances?)` | Releases a handle returned by `createTabster()`; tears down the shared core once every handle is released, or immediately when `allInstances` is `true`.             |
+| `getTabster(win)`                        | Returns the existing instance for `win`, or `null` if `createTabster()` was never called for it. Does not create one.                                                |
+| `forceCleanup(tabster)`                  | Asynchronously forgets memorized focus history; use after removing the entire application DOM.                                                                       |
+| `makeNoOp(tabster, noop)`                | Toggles a live instance in/out of no-op mode (for perf debugging) without touching application code.                                                                 |
+| `isNoOp(tabster.core)`                   | Returns whether the instance is currently in no-op mode.                                                                                                             |
+| `getInternal(tabster)`                   | Returns the low-level `stopObserver()`/`resumeObserver()` pair Tabster uses to pause/resume its DOM mutation observer. Advanced — most applications never need this. |
 
-```html
-<div data-tabster='{"root":{}}'>
-    ...
-    <ol data-tabster='{"mover":{"direction":1}}'>
-        <li tabindex="0" data-tabster='{"groupper":{"tabbability":2}}'>
-            <button>Button1</button><button>Button2</button>
-        </li>
-        <li tabindex="0" data-tabster='{"groupper":{"tabbability":2}}'>
-            <button>Button3</button><button>Button4</button>
-        </li>
-        <li tabindex="0" data-tabster='{"groupper":{"tabbability":2}}'>
-            <button>Button5</button><button>Button6</button>
-        </li>
-    </ol>
-    ...
-</div>
-```
+### `TabsterCoreProps`
 
-In that example we have a list of items, we can move between the items using Up/Down
-arrow keys ([Mover](mover.md) is used) and we can enter the item's inner buttons by
-pressing Enter on a focused list item (and Esc to go back to the list item container,
-[Groupper](groupper.md) is used).
+Passed as the second argument to `createTabster()`:
 
-## Types
+| Prop                             | Type                                                     | Description                                                                                                                                                                                                                                       |
+| -------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `autoRoot`                       | `RootProps`                                              | When set, Tabster creates a root for the whole document automatically, without requiring a `data-tabster="{\"root\":{}}"` attribute.                                                                                                              |
+| `controlTab`                     | `boolean` (default `true`)                               | Selects the application's Tab-navigation model. `true` makes Tabster calculate and focus the next element programmatically; it is best suited to relatively simple applications that own their focusable DOM. `false` leaves ordinary Tab order to the browser and uses dummy inputs when Tabster must redirect focus, which better accommodates complex applications and third-party focus management at the cost of extra DOM nodes. See [How it works](concept.md#how-it-works). |
+| `rootDummyInputs`                | `boolean`                                                | When `controlTab` is `false`, the root does not get dummy inputs by default; set this to `true` to add them. Feature containers can still create their own dummy inputs where redirection is required.                                                                                                           |
+| `checkUncontrolledCompletely`    | `(element, completely: boolean) => boolean \| undefined` | Callback asked, for uncontrolled areas, whether the area currently wants complete control of Tab handling (for example because it's trapping focus itself). Returning `undefined` falls back to the element's own `uncontrolled.completely` prop. |
+| `checkUncontrolledTrappingFocus` | `(element) => boolean`                                   | **Deprecated**, use `checkUncontrolledCompletely`.                                                                                                                                                                                                |
+| `getParent`                      | `(el: Node) => Node \| null`                             | Custom parent-traversal function, used wherever Tabster walks up the tree to compute context (roots, Movers, Grouppers, Modalizers). Useful for virtual/portal parents that aren't real DOM ancestors.                                            |
+| `DOMAPI`                         | `Partial<DOMAPI>`                                        | Overrides the low-level DOM calls Tabster uses internally. This is how [Shadow DOM support](shadow-dom.md) is enabled.                                                                                                                            |
 
-All Tabster-related TypeScript type definitions are stored in the Types namespace:
+## Core instance
+
+`createTabster()` returns a `Tabster` handle with these members:
 
 ```ts
-import { Types } from "tabster";
-```
-
-## Methods
-
-### createTabster()
-
-Creates instance of Tabster core. This should be done during the application startup,
-it starts handling `data-tabster` attribute of the DOM nodes.
-
-```ts
-import { createTabster } from "tabster";
-
-let tabsterCore = createTabster(window);
-```
-
-### disposeTabster()
-
-It is important to not forget to dispose Tabster instance during the application
-unmount. Otherwise, it might lead to memory leaks in multi-window environments
-(like Electron applications).
-
-```ts
-import { disposeTabster } from "tabster";
-
-disposeTabster(tabsterCore);
-```
-
-### getTabsterAttribute()
-
-Tabster attribute value should not be generated manually. `getTabsterAttribute()`
-function provides a properly typed helper for building the value.
-
-```ts
-// Returns object like { 'data-tabster': '{...}' }.
-getTabsterAttribute(props: Types.TabsterAttributeProps): Types.TabsterDOMAttribute;
-// Only returns the attribute value as string.
-getTabsterAttribute(props: Types.TabsterAttributeProps, plain: true): string;
-```
-
-### setTabsterAttribute()
-
-Another helper function which helps to set or update Tabster attribute
-on an HTMLElement instance programmaticaly.
-
-```ts
-setTabsterAttribute(
-    element: HTMLElement,
-    newProps: Types.TabsterAttributeProps,
-    update?: boolean // When true, newProps will be added to the existing
-                    // Tabster props on that element, otherwise, the existing
-                    // props will be replaced by newProps.
-): void;
-```
-
-### getCurrentTabster()
-
-If a Tabster core instance has already been created for the window, returns that instance.
-
-```ts
-import { getCurrentTabster } from "tabster";
-
-let tabsterCore = getCurrentTabster(window);
-
-if (tabsterCore) {
-    ...
+interface Tabster {
+    keyboardNavigation: KeyboardNavigationState;
+    focusedElement: FocusedElementState;
+    focusable: FocusableAPI;
+    root: RootAPI;
+    uncontrolled: UncontrolledAPI;
 }
 ```
 
-## Core Instance
+### `keyboardNavigation`
 
-Tabster core instance provides a few APIs.
-
-### keyboardNavigation
-
-Keyboard navigation state is used to determine if the user is using keyboard
-to navigate the application. You can subscribe to the keyboard navigation state
-changes or determine the current state. Keyboard navigation state implementation
-detects if the focus is moved not using the mouse or programmatically (i.e. Tab
-is pressed or screen reader moves the focus).
+Tracks whether the user is currently navigating with the keyboard (as
+opposed to the mouse or a programmatic focus call). Movement detection is
+automatic — Tabster observes Tab presses, arrow keys, and other
+navigation-relevant input.
 
 ```ts
 interface KeyboardNavigationState {
-    subscribe(callback: (value: boolean) => void): void;
-    unsubscribe(callback: (value: boolean) => void): void;
+    subscribe(callback: (isNavigatingWithKeyboard: boolean) => void): void;
+    unsubscribe(callback: (isNavigatingWithKeyboard: boolean) => void): void;
     isNavigatingWithKeyboard(): boolean;
+    setNavigatingWithKeyboard(isNavigatingWithKeyboard: boolean): void;
 }
 ```
 
 ```ts
-import { createTabster } from "tabster";
+const tabster = createTabster(window);
 
-let tabsterCore = createTabster(window);
+console.log(tabster.keyboardNavigation.isNavigatingWithKeyboard());
 
-console.log(
-    "Current keyboard navigation state:",
-    tabsterCore.keyboardNavigation.isNavigatingWithKeyboard()
-);
-
-tabster.keyboardNavigation.subscribe((isNavigatingWithKeyboard: boolean) => {
-    console.log("Keyboard navigation state changed:", isNavigatingWithKeyboard);
+tabster.keyboardNavigation.subscribe((isNavigatingWithKeyboard) => {
+    console.log("Keyboard navigation:", isNavigatingWithKeyboard);
 });
 ```
 
-### focusedElement
+[Outline](outline.md) and [Restorer](restorer.md) both use this state to
+decide when to act.
 
-Focused element state holds currently focused element and provides focusing
-helper functions.
+### `focusedElement`
+
+Tracks the currently/last focused element and exposes focus helpers that add
+an accessibility check on top of the native `element.focus()`.
 
 ```ts
 interface FocusedElementState {
     subscribe(
-        callback: (HTMLElement | undefined, details: FocusedElementDetails): void
+        callback: (
+            element: HTMLElement | undefined,
+            detail: FocusedElementDetail
+        ) => void
     ): void;
     unsubscribe(
-        callback: (HTMLElement | undefined, details: FocusedElementDetails): void
+        callback: (
+            element: HTMLElement | undefined,
+            detail: FocusedElementDetail
+        ) => void
     ): void;
-    // Returns currently focused element.
     getFocusedElement(): HTMLElement | undefined;
-    // Returns last focused element (even if the currently focused one is
-    // undefined).
     getLastFocusedElement(): HTMLElement | undefined;
-    // Focuses the element. By default the focus function provides the
-    // accessibility check (to not focus something which is not accessible).
-    // Also, whenever you focus something programmatically, FocusedElementDetails
-    // in the focused element state callback receives a flag that the element
-    // is focused programmatically, here we can override that flag.
-    // Returns true when the element is successfully focused.
     focus(
         element: HTMLElement,
         noFocusedProgrammaticallyFlag?: boolean,
-        noAccessibleCheck?: boolean
+        noAccessibleCheck?: boolean,
+        focusOptions?: boolean | TabsterFocusOptions
     ): boolean;
-    // We can mark some DOM node default focusable using Tabster attribute.
-    // This function will find such default focusable in the container (if any)
-    // and focus it. Returns true if successful.
     focusDefault(container: HTMLElement): boolean;
-    // focusFirst/focusLast find first/last focusable element within the
-    // container and focus it, returning true if successful.
     focusFirst(props: FindFirstProps): boolean;
     focusLast(props: FindFirstProps): boolean;
-    // Gets a container in a state when first Tab press will move the focus
-    // to the first focusable element in the container.
     resetFocus(container: HTMLElement): boolean;
 }
 ```
 
+- `focus()` returns `true` when the element was actually focused (it will
+  refuse to focus something that fails the accessibility check unless
+  `noAccessibleCheck` is passed). The last argument accepts either a legacy
+  boolean (mapped to `{ preventScroll: boolean }`) or a full
+  `TabsterFocusOptions` object (standard `FocusOptions` plus `focusVisible`).
+- `focusDefault()` focuses the element marked `focusable: { isDefault: true }`
+  inside `container`, if any — see [Focusable element
+  properties](#focusable-element-properties) and [Deloser](deloser.md).
+- `focusFirst()`/`focusLast()` focus the first/last focusable element that
+  matches a subset of the `findFocusable` options (see
+  [`focusable`](#focusable) below).
+- `resetFocus()` puts a container into the state where the next Tab press
+  moves focus to its first focusable element.
+
 ```ts
-import { createTabster } from "tabster";
-
-let tabsterCore = createTabster(window);
-
-let element = tabsterCore.focusedElement.getLastFocusedElement();
+tabster.focusedElement.subscribe((element, detail) => {
+    console.log("Focused:", element, detail.isFocusedProgrammatically);
+});
 ```
 
-### focusable
+### `focusable`
 
-Focusable API provides a set of methods to check and find focusable elements.
+Finds and classifies focusable elements. This is the same engine Mover,
+Groupper, and Modalizer use internally to compute tabbing order, so it's
+reliable to build custom navigation on top of.
 
 ```ts
-export interface FocusableAPI {
-    // Returns
+interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
-    // Checks if the element is focusable.
     isFocusable(
         element: HTMLElement,
         includeProgrammaticallyFocusable?: boolean,
         noVisibleCheck?: boolean,
         noAccessibleCheck?: boolean
     ): boolean;
-    // Checks if the element is visible.
     isVisible(element: HTMLElement): boolean;
-    // Checks if the element is accessible (using screen readers).
     isAccessible(element: HTMLElement): boolean;
-    // Methods to find focusables on the page.
     findFirst(options: FindFirstProps): HTMLElement | null | undefined;
     findLast(options: FindFirstProps): HTMLElement | null | undefined;
     findNext(options: FindNextProps): HTMLElement | null | undefined;
@@ -316,37 +174,101 @@ export interface FocusableAPI {
 }
 ```
 
-## Components
+`find*()` methods return `null` when there's nothing to find and `undefined`
+when the search hit an uncontrolled area it can't see into. The most common
+options (all keyed off `container`):
 
-Core instance runs the main Tabster engine, but what really makes it useful
-are the rest of Tabster's components. We have [Mover](mover.md), [Groupper](groupper.md),
-[Deloser](deloser.md), [Modalizer](modalizer.md), [Observed](observed.md) and
-[Outline](outline.md).
-
-To use these components, an additional function needs to be called right after
-Tabster core creation in order to enable them. This is because Tabster is treeshakeable
-and only the components which are actually used should reach the final application
-bundle.
-
-## Focusable Element Properties
-
-We can use Tabster attribute to set some additional properties on the focusable element.
+| Option                               | Applies to                      | Meaning                                                                         |
+| ------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------- |
+| `container`                          | all                             | The element to search within.                                                   |
+| `currentElement`                     | `findNext`/`findPrev`/`findAll` | Where to start searching from.                                                  |
+| `isBackward`                         | `findAll`                       | Search/report elements in reverse DOM order.                                    |
+| `includeProgrammaticallyFocusable`   | all                             | Include elements that are only focusable via `.focus()` (e.g. `tabindex="-1"`). |
+| `useActiveModalizer` / `modalizerId` | all                             | Restrict the search to (or exclude) the currently-active Modalizer.             |
+| `acceptCondition`                    | `findAll`                       | Custom predicate an element must satisfy to be included.                        |
+| `onElement`                          | `findAll`                       | Callback invoked per found element; returning `false` stops the search early.   |
 
 ```ts
-interface FocusableProps {
-    // Mark element as default focusable which is used in
-    // tabsterCore.focusedElement.focusDefault() and in Deloser.
-    isDefault?: boolean;
-    // Sometimes we might have some technical element on the page and we want
-    // it to be ignored.
-    isIgnored?: boolean;
-    // Do not determine element's focusability based on aria-disabled. Sometimes
-    // elements with aria-disabled must still be focusable.
-    ignoreAriaDisabled?: boolean;
+const buttons = tabster.focusable.findAll({
+    container: document.body,
+    acceptCondition: (el) => el.tagName === "BUTTON",
+});
+
+const next = tabster.focusable.findNext({
+    currentElement: document.activeElement as HTMLElement,
+    container: document.body,
+});
+```
+
+### `root`
+
+`RootAPI` mostly exposes internal wiring; the practical surface for a root
+is the `root` `data-tabster` key itself:
+
+```ts
+interface RootProps {
+    restoreFocusOrder?: RestoreFocusOrder;
 }
 ```
 
-Example:
+```tsx
+<div {...getTabsterAttribute({ root: {} })}>{/* app */}</div>
+```
+
+`restoreFocusOrder` uses the same [`RestoreFocusOrders`](api-reference.md#constants)
+enum as [Deloser](deloser.md#restorefocusorder), and controls what happens
+when focus would otherwise be lost to the very edge of the application.
+
+### `uncontrolled`
+
+Marks a subtree whose native or third-party keyboard behavior should control
+focus. The core API also exposes
+`uncontrolled.isUncontrolledCompletely(element, completely)` to resolve the
+configured complete-control policy. See the dedicated
+[Uncontrolled guide](uncontrolled.md) for the attribute, core callback,
+programmatic API, and feature interactions.
+
+## Focusable element properties
+
+Any focusable element can carry a `focusable` key with extra hints Tabster
+uses when computing default/ignored elements, and — for
+[Mover](mover.md)/[Groupper](groupper.md)/[Modalizer](modalizer.md) —
+keyboard handling:
+
+```ts
+interface FocusableProps {
+    isDefault?: boolean;
+    isIgnored?: boolean;
+    ignoreAriaDisabled?: boolean;
+    excludeFromMover?: boolean;
+    ignoreKeydown?: {
+        Tab?: boolean;
+        Escape?: boolean;
+        Enter?: boolean;
+        ArrowUp?: boolean;
+        ArrowDown?: boolean;
+        ArrowLeft?: boolean;
+        ArrowRight?: boolean;
+        PageUp?: boolean;
+        PageDown?: boolean;
+        Home?: boolean;
+        End?: boolean;
+    };
+}
+```
+
+- `isDefault` — marks the element used by `focusedElement.focusDefault()` and
+  by [Deloser's](deloser.md) `DeloserDefault`/`RootDefault` restore orders.
+- `isIgnored` — completely excludes the element from Tabster's focusable
+  search (it still gets native Tab behaviour from the browser, if any).
+- `ignoreAriaDisabled` — keeps the element focusable even if `aria-disabled`
+  is set (by default Tabster treats `aria-disabled` like `disabled`).
+- `excludeFromMover` — removes the element (and its subtree) from a
+  surrounding [Mover's](mover.md) arrow-key navigation, without removing it
+  from the DOM or from Tab order.
+- `ignoreKeydown` — tells Tabster's Mover/Groupper/Modalizer handlers to
+  leave a specific key alone on this element, letting your own keydown
+  handler (or the browser default) run instead.
 
 ```html
 <button data-tabster='{"focusable": {"isDefault": true}}'>Press Me</button>

@@ -12,6 +12,14 @@ h2 {
     display: block;
 }
 
+.cta {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
 .sections {
     display: flex;
     justify-content: space-evenly;

@@ -1,75 +1,123 @@
+---
+title: Deloser
+---
+
 # Deloser <img src="/img/catdeloser.png" className="image image_header" />
 
 ## About
 
-Ideally when we use keyboard to navigate, the application should always have a focused element.
-In the real world, we have scenarios like modal dialogs — when we close a modal dialog, the focus
-goes nowhere (we call it _«focus goes to the \<body\>»_). The lost focus is especially confusing
-for the screen reader users.
+Ideally, the application should always have a focused element while
+navigating with the keyboard. In practice, closing a modal dialog or removing
+a focused item from a list often leaves focus nowhere — "focus goes to
+`<body>`" — which is especially confusing for screen reader users.
 
-Things are getting even worse because we tend to build our applications from the independent
-components which might be not aware of each other. The modal dialog shouldn't know which button
-needs to be focused once it closes.
+This gets harder because applications are usually built from independent
+components that don't know about each other: the component that closes a
+dialog shouldn't need to know which button opened it in order to restore
+focus there.
 
-Deloser tracks focus history and restores focus to the most recent element from the history
-which is still available in case the focus gets lost. From the modal dialog example perspective it
-would likely be a button which opened it.
+Deloser tracks focus history and, when focus is lost, restores it to the
+most recent element from that history that's still available (from the
+dialog example, likely the button that opened it).
 
-Delosers can be nested. When we apply the Deloser to the DOM element, it keeps the recent focus
-history for that container, when a nested Deloser is present, its history is tracked as a single
-history record from the parent Deloser point. Together with the main application Deloser (which
-likely should be on the root element of the application), it makes sense to add Delosers to the
-list containers so that the history inside the lists is tracked separately and doen't pollute the
-main Deloser history.
+Delosers can be nested. A Deloser on a list container keeps its own focus
+history for that list, without polluting the application-level Deloser
+(typically on the root element) — nested Delosers are recorded as a single
+entry from their parent's point of view.
 
 ## Setup
 
-To get Deloser working, we need to call `getDeloser()` function:
+Call `getDeloser()` once to enable the `deloser` `data-tabster` key:
 
 ```ts
 import { createTabster, getDeloser } from "tabster";
 
-let tabsterCore = createTabster(window);
-
-getDeloser(tabsterCore);
+const tabster = createTabster(window);
+getDeloser(tabster);
 ```
-
-Then we can apply `data-tabster` attribute:
 
 ```html
-<div data-tabster='{"deloser": {...}}'></div>
+<div data-tabster='{"deloser": {}}'>
+    <button>Button1</button>
+    <button>Button2</button>
+    <button>Button3</button>
+</div>
 ```
+
+If `Button2` above is focused and then removed from the DOM, Deloser
+restores focus to `Button3` (or `Button1`, depending on history) instead of
+leaving focus on `<body>`.
 
 ## Properties
 
-### restoreFocusOrder?: _RestoreFocusOrder_
+```ts
+interface DeloserProps {
+    restoreFocusOrder?: RestoreFocusOrder;
+    noSelectorCheck?: boolean;
+    strategy?: DeloserStrategy;
+}
+```
+
+### `restoreFocusOrder`
 
 `History | DeloserDefault | RootDefault | DeloserFirst | RootFirst`
 
-We can vary how Deloser finds the element to focus once the focus is lost.
+- `History` (default) — walk backwards through previously-focused elements.
+- `DeloserDefault` — focus the element marked `focusable: { isDefault: true }`
+  (see [Focusable element properties](core.md#focusable-element-properties))
+  within this Deloser's own container.
+- `RootDefault` — same, but search the whole application root instead of
+  just this Deloser's container.
+- `DeloserFirst` — focus the first focusable element in this Deloser's
+  container.
+- `RootFirst` — focus the first focusable element in the whole application.
 
-With `History`, Deloser will look through the history of previosly focused elements.
+### `noSelectorCheck`
 
-With `DeloserDefault`, the focus will be restored to an element marked as default focusable.
+Deloser keeps weak references to DOM elements, plus the CSS selector that
+located them. In apps using a virtual DOM (React, etc.), part of the tree
+can be re-rendered — visually unchanged, but with new element instances —
+which would make the stored element reference stale. By default, Deloser
+falls back to re-locating the element via its stored selector when the
+direct reference is gone; set `noSelectorCheck: true` to disable that
+fallback.
 
-With `RootDefault`, the focus will go to the element marked as default focusable, but the
-whole application is the target for finding that default element, not just the Deloser container.
+### `strategy`
 
-With `DeloserFirst`, Deloser will focus first focusable element in the Deloser container.
+`Auto | Manual`
 
-With `RootFirst`, Deloser will focus first focusable element in the application.
+`Auto` (default) restores focus automatically using the available history,
+as described above. With `Manual`, focus is **not** restored automatically
+when lost from this Deloser instance — the application must call it itself
+by dispatching a `DeloserRestoreFocusEvent` (see
+[Events](events.md#deloser-events)) at the point it wants the restore to
+happen:
 
-### noSelectorCheck?: _boolean_
+```ts
+import { DeloserRestoreFocusEvent } from "tabster";
 
-Deloser keeps weak references to the DOM nodes but it also keeps the exact selectors to the
-elements. In a virtual DOM frameworks like React, a part of the page might
-be rerendered, stay visually the same, but the DOM element in the history will be obsolete.
+deloserElement.dispatchEvent(new DeloserRestoreFocusEvent());
+```
 
-By default, locating the available element in the history, Tabster will try also locating it
-by selector if the element instance is not available.
-
-With `noSelectorCheck` we can disable checking the selectors.
+Note that even with `Manual` strategy on this Deloser, its history can still
+be used to find an element to focus when the _focus is lost from a
+different_ Deloser instance.
 
 ## Examples
 
-Here be dragons.
+```tsx
+import { createTabster, getDeloser, getTabsterAttribute } from "tabster";
+
+const tabster = createTabster(window);
+getDeloser(tabster);
+
+<div {...getTabsterAttribute({ root: {}, deloser: {} })}>
+    <button>Button1</button>
+    <button>Button2</button>
+    <button>Button3</button>
+    <button>Button4</button>
+</div>;
+```
+
+Focus `Button2`, remove it from the DOM, and focus automatically moves to
+`Button3`.

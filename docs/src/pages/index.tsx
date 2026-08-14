@@ -11,7 +11,10 @@ import styles from "./index.module.css";
 export default function Home(): React.ReactElement {
     const { siteConfig } = useDocusaurusContext();
     return (
-        <Layout>
+        <Layout
+            title={siteConfig.title}
+            description="Tabindex on steroids: keyboard navigation, focus trapping, and focus restoration for web applications."
+        >
             <main className={styles.main}>
                 <h1>{siteConfig.title}</h1>
                 <img
@@ -21,10 +24,41 @@ export default function Home(): React.ReactElement {
                 />
                 <em className={styles.motto}>Tabindex on steroids.</em>
                 <p>
-                    A set of tools to handle web application keyboard
-                    navigation.
+                    A framework-agnostic set of tools for keyboard navigation,
+                    focus trapping, and focus restoration in web applications.
                 </p>
+                <div className={styles.cta}>
+                    <a
+                        className="button button--primary button--lg"
+                        href="/docs/intro"
+                    >
+                        Getting Started
+                    </a>
+                    <a
+                        className="button button--secondary button--lg"
+                        href="/docs/api-reference"
+                    >
+                        API Reference
+                    </a>
+                    <a
+                        className="button button--secondary button--lg"
+                        href="https://tabster.io/storybook/"
+                    >
+                        Storybook
+                    </a>
+                </div>
                 <ul className={styles.sections}>
+                    <li>
+                        <a href="/docs/intro">
+                            <img
+                                src="/img/catgettingstarted.png"
+                                className="image"
+                                alt="Getting Started"
+                            />
+                            <h2>Getting Started</h2>
+                            <p>Install, initialize, and enable features</p>
+                        </a>
+                    </li>
                     <li>
                         <a href="/docs/concept">
                             <img
@@ -33,7 +67,7 @@ export default function Home(): React.ReactElement {
                                 alt="Concept"
                             />
                             <h2>Concept</h2>
-                            <p>What and how</p>
+                            <p>What Tabster is and how it works</p>
                         </a>
                     </li>
                     <li>
@@ -44,7 +78,7 @@ export default function Home(): React.ReactElement {
                                 alt="Core"
                             />
                             <h2>Core</h2>
-                            <p>Basic things</p>
+                            <p>Lifecycle, focused element, root</p>
                         </a>
                     </li>
                     <li>
@@ -56,6 +90,17 @@ export default function Home(): React.ReactElement {
                             />
                             <h2>Mover</h2>
                             <p>Move focus using arrow keys</p>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/docs/uncontrolled">
+                            <img
+                                src="/img/catuncontrolled.png"
+                                className="image"
+                                alt="Uncontrolled"
+                            />
+                            <h2>Uncontrolled</h2>
+                            <p>Integrate third-party focus management</p>
                         </a>
                     </li>
                     <li>
@@ -88,7 +133,7 @@ export default function Home(): React.ReactElement {
                                 alt="Modalizer"
                             />
                             <h2>Modalizer</h2>
-                            <p>Create modals</p>
+                            <p>Create accessible modals</p>
                         </a>
                     </li>
                     <li>
@@ -96,10 +141,21 @@ export default function Home(): React.ReactElement {
                             <img
                                 src="/img/catobserved.png"
                                 className="image"
-                                alt="Observed"
+                                alt="Observed Element"
                             />
-                            <h2>Observed</h2>
+                            <h2>Observed Element</h2>
                             <p>Wait for items to appear</p>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/docs/restorer">
+                            <img
+                                src="/img/catmore.png"
+                                className="image"
+                                alt="Restorer"
+                            />
+                            <h2>Restorer</h2>
+                            <p>Restore focus after elements disappear</p>
                         </a>
                     </li>
                     <li>
@@ -114,14 +170,25 @@ export default function Home(): React.ReactElement {
                         </a>
                     </li>
                     <li>
-                        <a href="/docs/more">
+                        <a href="/docs/cross-origin">
                             <img
-                                src="/img/catmore.png"
+                                src="/img/catcrossorigin.png"
                                 className="image"
-                                alt="More"
+                                alt="Cross-Origin"
                             />
-                            <h2>More</h2>
-                            <p>Miscellaneous things</p>
+                            <h2>Cross-Origin</h2>
+                            <p>Coordinate focus across iframes</p>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/docs/api-reference">
+                            <img
+                                src="/img/tabster.png"
+                                className="image"
+                                alt="API Reference"
+                            />
+                            <h2>API Reference</h2>
+                            <p>Every exported function, type, and constant</p>
                         </a>
                     </li>
                 </ul>

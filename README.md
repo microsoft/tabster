@@ -2,54 +2,133 @@
 
 _Tabindex on steroids._
 
-A set of tools and concepts for making a dynamic web application properly accessible and keyboard-navigable.
+Tabster is a small, framework-agnostic, zero-runtime-dependency library that
+adds the keyboard navigation and focus management behaviours browsers don't
+provide out of the box: moving focus with arrow keys, grouping controls so
+Tab doesn't have to visit every one of them, trapping focus in dialogs,
+restoring focus when the focused element disappears, and more. It operates
+directly on the DOM through a single `data-tabster` attribute, so it works
+with any UI framework (or none at all).
 
-[https://tabster.io](https://tabster.io).
+- 📖 **Documentation:** [https://tabster.io](https://tabster.io)
+- 🧪 **Live examples:** [Storybook](https://tabster.io/storybook/)
+- 📦 **Package:** [`tabster` on npm](https://www.npmjs.com/package/tabster)
 
-## About
+## Why Tabster
 
-The way a browser and the screen readers handle a web application is evolved from the static web era. A process of making a modern dynamic web application accessible presents a number of challenges like, for example, the proper focus management between modal dialogs, popups, lists and other parts of the dynamically changing application. This project is an attempt to solve some of those challenges.
+The browser and screen-reader focus model was designed for static documents.
+Modern, dynamic web applications need more: focus has to move predictably
+inside composite widgets, stay trapped in modal dialogs, and be restored
+when the element that had it is removed from the DOM. Tabster provides a
+consistent, well-tested way to handle all of that, without requiring you to
+rewrite your existing markup or adopt a specific framework.
 
-## Dependencies
+## Installation
 
-This project is framework-agnostic. It operates on the DOM level and has no external runtime dependencies. Though it is possible that your framework or application might have own logic to achieve similar result, in that case runtime conflicts and behavioural inconsistencies are definitely possible. At the same time, it does not do things automatically and parts of it should be explicitly enabled.
+```bash
+npm install tabster
+```
 
-## Parts
+Tabster ships as ESM and CJS builds with bundled TypeScript types — no
+separate `@types` package is needed.
 
-### Focusable
+## Quick start
 
-An API for traversing focusable elements.
+```tsx
+import * as React from "react";
+import { createRoot } from "react-dom/client";
+import {
+    createTabster,
+    getGroupper,
+    getMover,
+    getTabsterAttribute,
+    GroupperTabbabilities,
+    MoverDirections,
+} from "tabster";
 
-### Deloser
+// Create the Tabster instance once, during app startup.
+const tabster = createTabster(window);
 
-When you remove, for example, a button which has focus from the DOM, the focus gets lost which is confusing for the screen reader and keyboard navigation users. Deloser is a concept which helps to automatically restore the focus when it gets lost without manually calling `.focus()` method from the application code.
+// Opt into the features you use (tree-shakeable, so unused ones cost nothing).
+getMover(tabster);
+getGroupper(tabster);
 
-### FocusedElementState
+function App() {
+    return (
+        // Tabster only manages focus inside a marked root.
+        <div {...getTabsterAttribute({ root: {} })}>
+            {/* Up/Down arrow keys move between the list items. */}
+            <ul
+                {...getTabsterAttribute({
+                    mover: { direction: MoverDirections.Vertical },
+                })}
+            >
+                {["First", "Second"].map((label) => (
+                    <li
+                        key={label}
+                        tabIndex={0}
+                        // Enter moves focus inside the item, Escape moves back out.
+                        {...getTabsterAttribute({
+                            groupper: {
+                                tabbability:
+                                    GroupperTabbabilities.LimitedTrapFocus,
+                            },
+                        })}
+                    >
+                        <button>{label} action A</button>
+                        <button>{label} action B</button>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
 
-An event and a couple of methods to track and change currently focused element.
+const container = document.getElementById("root");
+if (container) {
+    createRoot(container).render(<App />);
+}
+```
 
-### KeyboardNavigationState
+See [Getting Started](https://tabster.io/docs/intro) for the full walkthrough
+(installation, lifecycle, the root requirement, and every `get*()` opt-in),
+and the [API Reference](https://tabster.io/docs/api-reference) for the
+complete list of exports.
 
-An event and a method to determine if the user is using keyboard to navigate through the application.
+## What's included
 
-### Groupper
+| Feature                                              | What it does                                                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [Core](https://tabster.io/docs/core)                 | Focused-element tracking, keyboard-navigation detection, focusable-element lookup — always available. |
+| [Mover](https://tabster.io/docs/mover)               | Arrow-key/Home/End/PageUp/PageDown navigation between sibling elements (lists, toolbars, grids).      |
+| [Groupper](https://tabster.io/docs/groupper)         | Makes only one element of a group Tab-stoppable, with Enter/Escape to move focus in/out.              |
+| [Modalizer](https://tabster.io/docs/modalizer)       | Traps focus and hides the rest of the app from assistive tech while a dialog/popup is active.         |
+| [Deloser](https://tabster.io/docs/deloser)           | Automatically restores focus when the focused element is removed from the DOM.                        |
+| [Restorer](https://tabster.io/docs/restorer)         | A lighter-weight, single-element alternative to Deloser for restoring focus.                          |
+| [Observed Element](https://tabster.io/docs/observed) | Waits for an element to appear (or become focusable/accessible) and optionally focuses it.            |
+| [Outline](https://tabster.io/docs/outline)           | A custom, keyboard-only focus outline that isn't cropped by `overflow: hidden`.                       |
+| [Cross-Origin](https://tabster.io/docs/cross-origin) | Coordinates Deloser/Modalizer/Observed Element/focus state across same-site iframes.                  |
+| [Shadow DOM](https://tabster.io/docs/shadow-dom)     | Opt-in `DOMAPI` so all of the above work inside shadow trees.                                         |
 
-Keyboard navigation for the lists should allow to avoid going through every list item when the users use Tab key (only one item of the list should be tabbable), also the arrow keys and Home/End/PageUp/PageDown keys should be handled to move between the list items. This is an API to easily make properly behaving lists.
+## Local development
 
-### Modalizer
+This repository includes a Storybook-based examples project used both as a
+manual test bed and as the source for [tabster.io/storybook](https://tabster.io/storybook/):
 
-When you show, for example, a modal dialog, the rest of the application might need to be excluded from the keyboard and screen reader navigation flow. Modalizer is a concept to conveniently make that possible.
+```bash
+npm install
+npm start   # starts Storybook at http://localhost:8080
+```
 
-### Outline
-
-When people navigate with the keyboard, the currently focused element should be properly highlighted. There is a CSS property called `outline`, which is unfortunately insufficient: the outline of an element gets cropped when a parent element has `overflow: hidden`, there is no way to limit the outline visibility to only the cases when the user is navigating with keyboard. So, we have a custom outline component which is supposed to solve both of the problems.
+The documentation site itself lives in [`docs/`](./docs) and is built with
+[Docusaurus](https://docusaurus.io/); run `npm run build-docs` from the repo
+root to build it.
 
 ## Contributing
 
-Contributions are welcome (see the [CONTRIBUTING](./CONTRIBUTING.md) file), though please keep in mind the work-in-progress proof-of-concept state. Might make sense to just observe/discuss until the thing gets stable and well-documented.
-
-The repo now has an examples project powered by Storybook. Just run `npm start`
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see [LICENSE](./LICENSE)
+for details.

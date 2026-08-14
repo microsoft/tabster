@@ -1,99 +1,149 @@
+---
+title: Observed Element
+---
+
 # Observed Element <img src="/img/catobserved.png" className="image image_header" />
 
 ## About
 
-Observed Element allows finding and focusing elements which are not yet in the DOM.
+Observed Element lets you find and focus elements by name, including ones
+that aren't mounted in the DOM yet — Tabster waits for them to appear.
 
-All we do is mark an element as observed by giving it a name.
+Mark an element as observed by giving it one or more names:
 
 ```html
-<button data-tabster='{"observed": {"name": "observedButton"}}'>
-    Observed
-</button>
+<button data-tabster='{"observed": {"names": ["myButton"]}}'>Observed</button>
 ```
 
 ## Setup
 
-To get Observed Element working, we need to call `getObservedElement()` function:
+Call `getObservedElement()` once to enable the `observed` `data-tabster` key
+and get the API:
 
 ```ts
 import { createTabster, getObservedElement } from "tabster";
 
-let tabsterCore = createTabster(window);
+const tabster = createTabster(window);
+const observedElement = getObservedElement(tabster);
 
-let observedElement = getObservedElement(tabsterCore);
-
-observedElement.requestFocus("observedButton", 100500);
+observedElement.requestFocus("myButton", 3000);
 ```
+
+## Properties
+
+```ts
+interface ObservedElementProps {
+    names: string[];
+    details?: unknown;
+}
+```
+
+`names` is the list of names this element can be looked up by; `details` is
+an arbitrary application-defined payload retrievable through
+`getAllObservedElements()`/`onObservedElementChange` below.
 
 ## Methods
 
-### getElement()
+### `getElement()`
 
-Returns observed element by the name if it's present in the application.
+Returns the observed element currently in the DOM for a name, or `null`.
 
 ```ts
-import { createTabster, getObservedElement } from "tabster";
-
-let tabsterCore = createTabster(window);
-
-let observedElement = getObservedElement(tabsterCore);
-
-let element = observedElement.getElement("observedButton");
+const element = observedElement.getElement("myButton");
 ```
 
-### waitElement()
+### `waitElement()`
 
-Waits for an element for the specified time, returns an element if it appears.
+Waits (up to `timeout` ms) for an element with the given name to appear.
 
 ```ts
-import { createTabster, getObservedElement, Types } from "tabster";
+import { ObservedElementAccessibilities } from "tabster";
 
-let tabsterCore = createTabster(window);
-
-let observedElement = getObservedElement(tabsterCore);
-
-let wait = observed.waitElement(
-    "observedButton", // Name set using Tabster attribute.
-    100500, // Timeout.
-    Types.ObservedElementAccessibilities.Focusable // Only return when the
-    // element becomes focusable.
+const wait = observedElement.waitElement(
+    "myButton",
+    3000,
+    ObservedElementAccessibilities.Focusable // Only resolve once focusable.
 );
 
-// The result promise will be resolved once the element is mounted.
-wait.result.then((value) => {
-    console.log("Observed element:", value);
+wait.result.then((element) => {
+    console.log("Observed element:", element);
 });
 
-// We can also cancel the wait request.
+// Cancel the wait if it's no longer needed.
 wait.cancel();
 ```
 
-### requestFocus()
+### `requestFocus()`
 
-Waits for the observed element to appear in the DOM and focuses it.
-
-A consecutive `requestFocus()` call or a manual focus movement inside the application
-will cancel the focus request automatically.
+Waits for the observed element to appear, then focuses it. A subsequent
+`requestFocus()` call, or the user manually moving focus, cancels the
+pending request automatically.
 
 ```ts
-import { createTabster, getObservedElement, Types } from "tabster";
+const focus = observedElement.requestFocus("myButton", 3000);
 
-let tabsterCore = createTabster(window);
-
-let observedElement = getObservedElement(tabsterCore);
-
-let focus = observed.requestFocus("observedButton", 100500);
-
-// The result promise will be resolved once the element is focused (or timed out).
-focus.result.then((value: boolean) => {
-    console.log("Observed element is focused:", value);
+focus.result.then((focused: boolean) => {
+    console.log("Focused:", focused);
 });
 
-// We can also cancel the focus request.
 focus.cancel();
 ```
 
+`waitElement()`/`requestFocus()` both return an
+`ObservedElementAsyncRequest`, whose `status` is one of the
+[`ObservedElementRequestStatuses`](api-reference.md#constants)
+(`Waiting`/`Succeeded`/`Canceled`/`TimedOut`), and whose `diagnostics` field
+carries details useful for debugging a failed/timed-out request:
+
+```ts
+interface ObservedElementAsyncRequestDiagnostics {
+    reason?: ObservedElementFailureReason; // set when Canceled or TimedOut
+    waitForElementDuration?: number; // ms actually spent waiting
+    targetState?: {
+        inDOM: boolean;
+        isAccessible?: boolean;
+        isFocusable?: boolean;
+    };
+    getCancelTriggeringElement?: () => HTMLElement | null;
+}
+```
+
+`reason` is one of the
+[`ObservedElementFailureReasons`](api-reference.md#constants) —
+`TimeoutElementNotInDOM`, `TimeoutElementNotAccessible`,
+`TimeoutElementNotFocusable`, `TimeoutElementNotReady`,
+`CanceledFocusChange`, `SupersededByNewRequest`, or `FocusCallFailed`.
+
+### `getAllObservedElements()`
+
+Returns every currently registered observed element, grouped by name:
+
+```ts
+const all = observedElement.getAllObservedElements();
+// Map<string, Array<{ element: HTMLElement; names: string[] }>>
+```
+
+### `onObservedElementChange`
+
+An optional callback you can assign to be notified whenever an observed
+element is added, removed, or has its names updated:
+
+```ts
+observedElement.onObservedElementChange = (change) => {
+    // change.type: "added" | "removed" | "updated"
+    // change.element, change.names, change.addedNames?, change.removedNames?
+    console.log(change.type, change.element, change.names);
+};
+```
+
+## Cross-origin lookups
+
+Observed Element names are also reachable across `<iframe>` boundaries once
+[Cross-Origin](cross-origin.md) support is set up — see
+`crossOrigin.observedElement.requestFocus()` on that page.
+
 ## Examples
 
-Here be dragons.
+[See Observed Element examples in Storybook](https://tabster.io/storybook/?path=/story/observed),
+including a live demo of `getAllObservedElements()`/`onObservedElementChange`
+and a cross-iframe focus request.

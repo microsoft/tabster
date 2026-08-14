@@ -1,30 +1,75 @@
+---
+title: Outline
+---
+
 # Outline <img src="/img/catoutline.png" className="image image_header" />
 
 ## About
 
-Outline is a border around focused element which helps the user to identify where the focus is.
-HTML has native outline but its fundamental problem is that any parent element with `overflow: hidden`
-might crop the outline to a funny shape or make it completely invisible.
+Outline draws a custom border around the focused element to make it clear
+where keyboard focus currently is. The native CSS `outline` has a
+long-standing problem: it gets visually cropped (or hidden entirely) by any
+ancestor with `overflow: hidden`. Outline works around that by drawing the
+indicator in a fixed-position overlay instead of relying on the browser's
+native outline rendering.
 
-This is a custom implementation which tries to work the `overflow: hidden` problem around.
-
-The custom outline visibility depends on the Tabster's keyboard navigation state.
+Outline visibility is tied to Tabster's [keyboard-navigation
+state](core.md#keyboardnavigation) — it only shows up while the user is
+navigating with the keyboard, not after a mouse click.
 
 ## Setup
 
-To get Outline working, we need to call `getOutline()` function:
+Call `getOutline()` and then, unlike other features, also call `.setup()` to
+actually start it — `getOutline()` alone only registers the `outline`
+`data-tabster` key, it doesn't start rendering anything:
 
 ```ts
 import { createTabster, getOutline } from "tabster";
 
-let tabsterCore = createTabster(window);
+const tabster = createTabster(window);
+const outline = getOutline(tabster);
 
-let outline = getOutline(tabsterCore);
-
-// To actually start the outline.
+// Required: actually starts the outline.
 outline.setup();
+```
+
+`setup()` accepts a partial override of the default visual props:
+
+```ts
+interface OutlineProps {
+    areaClass: string; // default: "tabster-focus-outline-area"
+    outlineClass: string; // default: "tabster-focus-outline"
+    outlineColor: string; // default: "#ff4500"
+    outlineWidth: number; // default: 2
+    zIndex: number; // default: 2147483647
+}
+
+outline.setup({ outlineColor: "#0078d4", outlineWidth: 3 });
+```
+
+## Properties
+
+Individual elements can opt out of the outline with the `outline`
+`data-tabster` key:
+
+```ts
+interface OutlinedElementProps {
+    isIgnored?: boolean;
+}
+```
+
+```html
+<button data-tabster='{"outline": {"isIgnored": true}}'>No outline here</button>
 ```
 
 ## Examples
 
-Here be dragons.
+```tsx
+import { createTabster, getOutline } from "tabster";
+
+const tabster = createTabster(window);
+getOutline(tabster).setup();
+```
+
+With this in place, Tabbing through the page shows a colored border around
+the focused element; clicking with the mouse does not.

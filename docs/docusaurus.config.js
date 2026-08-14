@@ -23,7 +23,7 @@ const config = {
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
                 docs: {
-                    sidebarPath: false,
+                    sidebarPath: require.resolve("./sidebars.js"),
                 },
                 blog: false,
                 theme: {
@@ -44,60 +44,22 @@ const config = {
                 },
                 items: [
                     {
-                        type: "doc",
-                        docId: "concept",
+                        type: "docSidebar",
+                        sidebarId: "docsSidebar",
                         position: "left",
-                        label: "Concept",
+                        label: "Docs",
                     },
                     {
                         type: "doc",
-                        docId: "core",
+                        docId: "api-reference",
                         position: "left",
-                        label: "Core",
+                        label: "API Reference",
                     },
                     {
-                        type: "doc",
-                        docId: "mover",
+                        href: "https://tabster.io/storybook/",
+                        label: "Storybook",
                         position: "left",
-                        label: "Mover",
                     },
-                    {
-                        type: "doc",
-                        docId: "groupper",
-                        position: "left",
-                        label: "Groupper",
-                    },
-                    {
-                        type: "doc",
-                        docId: "deloser",
-                        position: "left",
-                        label: "Deloser",
-                    },
-                    {
-                        type: "doc",
-                        docId: "modalizer",
-                        position: "left",
-                        label: "Modalizer",
-                    },
-                    {
-                        type: "doc",
-                        docId: "observed",
-                        position: "left",
-                        label: "Observed",
-                    },
-                    {
-                        type: "doc",
-                        docId: "outline",
-                        position: "left",
-                        label: "Outline",
-                    },
-                    {
-                        type: "doc",
-                        docId: "more",
-                        position: "left",
-                        label: "More",
-                    },
-
                     {
                         href: "https://github.com/microsoft/tabster",
                         label: "GitHub",
@@ -106,8 +68,6 @@ const config = {
                 ],
             },
         }),
-
-    themes: ["@docusaurus/theme-live-codeblock"],
 };
 
 module.exports = config;

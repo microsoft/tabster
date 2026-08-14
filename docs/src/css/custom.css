@@ -14,10 +14,16 @@
     --ifm-font-size-base: 120%;
     --ifm-background-color: rgb(255, 255, 255);
     --ifm-background-color-semi-transparent: rgb(127, 127, 127, 0.03);
+    --docs-menu-active-color: #075e54;
+    --docs-menu-active-background: #d5f5ed;
+    --docs-menu-hover-background: #eaf9f5;
 }
 
 html[data-theme="dark"]:root {
     --ifm-background-color-semi-transparent: rgb(127, 127, 127, 0.2);
+    --docs-menu-active-color: #8ff5e3;
+    --docs-menu-active-background: #14302c;
+    --docs-menu-hover-background: #23443e;
 }
 
 .docusaurus-highlight-code-line {
@@ -35,12 +41,12 @@ html[data-theme="dark"] .docusaurus-highlight-code-line {
     background-image:
         linear-gradient(
             to right,
-            rgba(255, 255, 255, 0.4),
+            rgba(255, 255, 255, 0.7),
             var(--ifm-background-color)
         ),
         linear-gradient(
             to left,
-            rgba(255, 255, 255, 0.4),
+            rgba(255, 255, 255, 0.7),
             var(--ifm-background-color)
         ),
         url("/img/catsleft.png"), url("/img/catsright.png");
@@ -55,19 +61,20 @@ html[data-theme="dark"] .main-wrapper {
     background-image:
         linear-gradient(
             to right,
-            rgba(0, 0, 0, 0.4),
+            rgba(0, 0, 0, 0.7),
             var(--ifm-background-color)
         ),
         linear-gradient(
             to left,
-            rgba(0, 0, 0, 0.4),
+            rgba(0, 0, 0, 0.7),
             var(--ifm-background-color)
         ),
         url("/img/catsleft.png"), url("/img/catsright.png");
 }
 
 .image {
-    width: 100%;
+    width: auto;
+    height: auto;
     max-width: 166px;
     max-height: 128px;
 }
@@ -79,4 +86,36 @@ html[data-theme="dark"] .main-wrapper {
 
 .image_header {
     vertical-align: -40px;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+    background-color: var(--docs-menu-active-background);
+    box-shadow: inset 4px 0 var(--docs-menu-active-color);
+    color: var(--docs-menu-active-color);
+    font-weight: 700;
+}
+
+.menu__link:hover,
+.menu__link--active:not(.menu__link--sublist):hover {
+    background-color: var(--docs-menu-hover-background);
+    color: var(--docs-menu-active-color);
+}
+
+.table-of-contents__link--active {
+    color: var(--docs-menu-active-color);
+    font-weight: 700;
+}
+
+.table-of-contents__link:hover {
+    color: var(--docs-menu-active-color);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.menu__link:focus-visible,
+.table-of-contents__link:focus-visible {
+    border-radius: var(--ifm-menu-link-sublist-icon-border-radius);
+    outline: 3px solid var(--docs-menu-active-color);
+    outline-offset: 2px;
 }
