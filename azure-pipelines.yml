@@ -40,6 +40,7 @@ extends:
             steps:
               - checkout: self
                 clean: true
+                persistCredentials: true
             
               - task: CmdLine@2
                 displayName: Re-attach head
@@ -64,7 +65,7 @@ extends:
             
                     git config user.email "fluentui-internal@service.microsoft.com"
             
-                    git remote set-url origin https://$(githubUser):$(githubPAT)@github.com/microsoft/tabster.git
+                    git remote set-url origin https://github.com/microsoft/tabster.git
             
               - task: CmdLine@2
                 displayName: Write npmrc for publish token
@@ -76,7 +77,10 @@ extends:
                 displayName: Publish (official)
                 condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, false))
                 inputs:
-                  script: 'npm run release -- $(publishVersion) --ci '
+                  script: |
+                    set -euo pipefail
+                    npm run release -- $(publishVersion) --ci
+                    git push --atomic --follow-tags origin "HEAD:${BUILD_SOURCEBRANCH}"
                 env:
                     NPM_TOKEN: $(npmToken)
             
@@ -84,6 +88,9 @@ extends:
                 displayName: Publish (prerelease)
                 condition: and(eq(variables.skipPublish, false), eq(variables.prerelease, true))
                 inputs:
-                  script: npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+                  script: |
+                    set -euo pipefail
+                    npm run release -- $(publishVersion) --preRelease $(prereleaseTag) --ci
+                    git push --atomic --follow-tags origin "HEAD:${BUILD_SOURCEBRANCH}"
                 env:
                     NPM_TOKEN: $(npmToken)
