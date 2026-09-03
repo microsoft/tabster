@@ -60,11 +60,16 @@ extends:
               - task: CmdLine@2
                 displayName: Authenticate git for pushes
                 inputs:
-                  script: >-
+                  script: |
+                    set -euo pipefail
                     git config user.name "Tabster Build"
-            
                     git config user.email "fluentui-internal@service.microsoft.com"
-            
+                    git config --unset-all http.https://github.com/microsoft/tabster.extraheader || true
+                    git remote set-url origin "https://${GITHUB_USER}:${GITHUB_PAT}@github.com/microsoft/tabster.git"
+                env:
+                    GITHUB_USER: $(githubUser)
+                    GITHUB_PAT: $(githubPAT)
+
               - task: CmdLine@2
                 displayName: Write npmrc for publish token
                 inputs:
