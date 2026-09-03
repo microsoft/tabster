@@ -65,8 +65,6 @@ extends:
             
                     git config user.email "fluentui-internal@service.microsoft.com"
             
-                    git remote set-url origin https://github.com/microsoft/tabster.git
-            
               - task: CmdLine@2
                 displayName: Write npmrc for publish token
                 inputs:
