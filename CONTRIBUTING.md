@@ -14,7 +14,21 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Setup
 
+- Use Node.js 24, matching `.nvmrc` and CI.
 - npm install
+
+Dependency upgrades should use stable releases rather than alpha or beta
+dist-tags. TypeScript stays on 6.0.3 in the library and docs because the current
+typescript-eslint release requires TypeScript below 6.1. Babel stays on 7.29.7
+because Jest's syntax preset still depends on Babel 7-only plugins.
+
+The docs override `qs` to 6.16.0 because Express and body-parser's dependency
+ranges exclude that security fix. Docusaurus still depends on `image-size`
+2.0.2, so the docs temporarily replace it with the local, PNG-only reader in
+`docs/compat/image-size`, without a third-party fork. Its README documents
+the supported API and removal steps. Recheck GHSA-w3rx-r6r6-pgpr and
+GHSA-5p2g-fcmc-qvqq at every dependency bump and remove the replacement once
+a trusted official release fixes both.
 
 ## Available commands
 
@@ -35,6 +49,9 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 `npm run test:uncontrolled` - to run all tests in the uncontrolled codepath of tabster.
 
 Tests need to be run in browser, so make sure storybook is running before running tests.
+
+`npm test --prefix docs` - checks the local image-size replacement and its
+Docusaurus integration without a browser.
 
 ### format
 

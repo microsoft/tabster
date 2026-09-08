@@ -94,3 +94,5 @@ jobs:
           git diff-index --quiet HEAD -- || exit 1
       - name: "Build docs"
         run: npm run build-docs
+      - name: "Test docs dependency compatibility"
+        run: npm test --prefix docs

@@ -8,24 +8,28 @@
         "swizzle": "docusaurus swizzle",
         "clear": "docusaurus clear",
         "serve": "docusaurus serve",
+        "test": "node --test tests/image-size.test.cjs",
         "typecheck": "tsc"
     },
     "dependencies": {
         "@docusaurus/core": "3.10.2",
         "@docusaurus/preset-classic": "3.10.2",
-        "react": "^19.2.6",
-        "react-dom": "^19.2.6"
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8"
     },
     "devDependencies": {
         "@docusaurus/module-type-aliases": "3.10.2",
         "brace-expansion": "file:./compat/brace-expansion",
+        "image-size": "file:./compat/image-size",
         "typescript": "^6.0.3"
     },
     "overrides": {
-        "webpack": "5.107.0",
-        "serialize-javascript": "7.0.5",
-        "uuid": "11.1.1",
-        "brace-expansion": "$brace-expansion"
+        "webpack": "5.110.2",
+        "serialize-javascript": "7.1.1",
+        "qs": "6.16.0",
+        "uuid": "14.0.2",
+        "brace-expansion": "$brace-expansion",
+        "image-size": "$image-size"
     },
     "browserslist": {
         "production": [
