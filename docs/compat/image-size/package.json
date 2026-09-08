@@ -1,0 +1,15 @@
+{
+    "name": "tabster-docs-image-size",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Temporary PNG-only image metadata reader for Tabster docs",
+    "exports": {
+        "./fromFile": {
+            "types": "./fromFile.d.ts",
+            "default": "./fromFile.cjs"
+        }
+    },
+    "engines": {
+        "node": ">=24"
+    }
+}
