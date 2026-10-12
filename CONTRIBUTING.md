@@ -19,16 +19,31 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 Dependency upgrades should use stable releases rather than alpha or beta
 dist-tags. TypeScript stays on 6.0.3 in the library and docs because the current
-typescript-eslint release requires TypeScript below 6.1. Babel stays on 7.29.7
-because Jest's syntax preset still depends on Babel 7-only plugins.
+typescript-eslint release requires TypeScript below 6.1. Babel stays on the
+latest compatible 7.x releases because Jest's syntax preset still depends on
+Babel 7-only plugins.
 
-The docs override `qs` to 6.16.0 because Express and body-parser's dependency
-ranges exclude that security fix. Docusaurus still depends on `image-size`
-2.0.2, so the docs temporarily replace it with the local, PNG-only reader in
-`docs/compat/image-size`, without a third-party fork. Its README documents
-the supported API and removal steps. Recheck GHSA-w3rx-r6r6-pgpr and
-GHSA-5p2g-fcmc-qvqq at every dependency bump and remove the replacement once
-a trusted official release fixes both.
+Docusaurus now resolves the official `image-size` 2.0.4 release, which includes
+the fixes for GHSA-w3rx-r6r6-pgpr and GHSA-5p2g-fcmc-qvqq. The temporary
+PNG-only replacement has been removed; the docs tests retain Docusaurus
+integration coverage and bounded malformed-image regression checks. The
+`qs` and `webpack` overrides have also been removed because their consumers
+now accept the fixed releases.
+
+Dependency ranges still require overrides for `basic-ftp` in the root and
+`postcss-selector-parser` and `tinypool` in the docs to resolve fixed
+official releases. Recheck these overrides at each dependency bump.
+The root also overrides `@istanbuljs/load-nyc-config` to use `js-yaml` 4.3.2,
+matching the YAML version used by the other tooling and removing the
+vulnerable `sprintf-js` dependency. The loader uses the supported `load` API.
+The local `brace-expansion` adapters remain necessary for older
+minimatch consumers that expect a callable CommonJS export.
+
+The docs still transitively require `braces` 3.0.3, affected by
+GHSA-vfj7-8cjw-p6xm (Dependabot alert 499). No patched official release is
+currently available, and current stable Docusaurus and micromatch releases
+still depend on it. This dependency bump does not resolve that alert;
+recheck upstream releases at each bump.
 
 ## Available commands
 
@@ -50,8 +65,8 @@ a trusted official release fixes both.
 
 Tests need to be run in browser, so make sure storybook is running before running tests.
 
-`npm test --prefix docs` - checks the local image-size replacement and its
-Docusaurus integration without a browser.
+`npm test --prefix docs` - checks Docusaurus image-size integration and
+malformed-image regressions without a browser.
 
 ### format
 
