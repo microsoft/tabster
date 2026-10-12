@@ -6,12 +6,10 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const fsPromises = require("node:fs/promises");
 const { createRequire } = require("node:module");
 const { tmpdir } = require("node:os");
 const path = require("node:path");
 const { test } = require("node:test");
-const { crc32 } = require("node:zlib");
 
 const siteDir = path.resolve(__dirname, "..");
 const mdxLoaderPath = require.resolve("@docusaurus/mdx-loader");
@@ -40,24 +38,23 @@ test("Docusaurus's image API preserves dimensions for every docs image", async (
     assert.ok(images.length > 0);
 
     for (const image of images) {
-        assert.equal(
-            path.extname(image.name),
-            ".png",
-            "The temporary image-size replacement only supports PNGs"
-        );
         const file = path.join(image.parentPath, image.name);
-        const png = fs.readFileSync(file);
         const result = imageSizeFromFile(file);
         assert.equal(typeof result.then, "function");
-        assert.deepEqual(
-            await result,
-            {
-                width: png.readUInt32BE(16),
-                height: png.readUInt32BE(20),
-                type: "png",
-            },
-            image.name
-        );
+        const dimensions = await result;
+        assert.ok(dimensions.width > 0 && dimensions.height > 0, image.name);
+        if (path.extname(image.name) === ".png") {
+            const png = fs.readFileSync(file);
+            assert.deepEqual(
+                dimensions,
+                {
+                    width: png.readUInt32BE(16),
+                    height: png.readUInt32BE(20),
+                    type: "png",
+                },
+                image.name
+            );
+        }
     }
 });
 
@@ -104,40 +101,20 @@ test("Docusaurus adds dimensions when transforming a Markdown image", async () =
     }
 });
 
-test("PNG reads are bounded to 33 bytes even when reads are short", async (t) => {
-    let totalBytes = 0;
-    const close = t.mock.fn(async () => {});
-    t.mock.method(fsPromises, "open", async () => ({
-        async read(buffer, offset, length, position) {
-            assert.ok(position + length <= 33);
-            const bytesRead = Math.min(3, length);
-            favicon.copy(buffer, offset, position, position + bytesRead);
-            totalBytes += bytesRead;
-            return { bytesRead };
-        },
-        close,
-    }));
-
-    assert.deepEqual(await imageSizeFromFile("short-reads.png"), {
-        width: favicon.readUInt32BE(16),
-        height: favicon.readUInt32BE(20),
-        type: "png",
+test("Docusaurus's image API supports non-PNG images", async (t) => {
+    const file = path.join(temporaryDirectory(t), "image.gif");
+    fs.writeFileSync(
+        file,
+        Buffer.from(
+            "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+            "base64"
+        )
+    );
+    assert.deepEqual(await imageSizeFromFile(file), {
+        width: 1,
+        height: 1,
+        type: "gif",
     });
-    assert.equal(totalBytes, 33);
-    assert.equal(close.mock.callCount(), 1);
-});
-
-test("read failures propagate and close the file", async (t) => {
-    const failure = new Error("Read failed");
-    const close = t.mock.fn(async () => {});
-    t.mock.method(fsPromises, "open", async () => ({
-        async read() {
-            throw failure;
-        },
-        close,
-    }));
-    await assert.rejects(imageSizeFromFile("failed-read.png"), failure);
-    assert.equal(close.mock.callCount(), 1);
 });
 
 test("missing files reject with the filesystem error", async (t) => {
@@ -145,36 +122,6 @@ test("missing files reject with the filesystem error", async (t) => {
         imageSizeFromFile(path.join(temporaryDirectory(t), "missing.png")),
         { code: "ENOENT" }
     );
-});
-
-test("unsupported formats and malformed PNG headers reject explicitly", async (t) => {
-    const directory = temporaryDirectory(t);
-    const invalid = [
-        ["unsupported", Buffer.from("GIF89a"), /only supports PNG/],
-        ["truncated", favicon.subarray(0, 32), /truncated PNG IHDR/],
-    ];
-    for (const [name, offset, value, error] of [
-        ["length", 8, 12, /PNG IHDR header/],
-        ["chunk", 12, 0x49444154, /PNG IHDR header/],
-        ["non-ascii-chunk", 12, 0xc9c8c4d2, /PNG IHDR header/],
-        ["checksum", 29, 0, /PNG IHDR checksum/],
-        ["zero-width", 16, 0, /PNG dimensions/],
-        ["zero-height", 20, 0, /PNG dimensions/],
-        ["large-width", 16, 0x80000000, /PNG dimensions/],
-        ["large-height", 20, 0x80000000, /PNG dimensions/],
-    ]) {
-        const header = Buffer.from(favicon.subarray(0, 33));
-        header.writeUInt32BE(value, offset);
-        if (offset >= 12 && offset <= 20) {
-            header.writeUInt32BE(crc32(header.subarray(12, 29)), 29);
-        }
-        invalid.push([name, header, error]);
-    }
-    for (const [name, bytes, error] of invalid) {
-        const file = path.join(directory, name);
-        fs.writeFileSync(file, bytes);
-        await assert.rejects(imageSizeFromFile(file), error, name);
-    }
 });
 
 function box(name, data, size = data.length + 8) {

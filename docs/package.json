@@ -14,22 +14,20 @@
     "dependencies": {
         "@docusaurus/core": "3.10.2",
         "@docusaurus/preset-classic": "3.10.2",
-        "react": "^19.2.8",
-        "react-dom": "^19.2.8"
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0"
     },
     "devDependencies": {
         "@docusaurus/module-type-aliases": "3.10.2",
         "brace-expansion": "file:./compat/brace-expansion",
-        "image-size": "file:./compat/image-size",
         "typescript": "^6.0.3"
     },
     "overrides": {
-        "webpack": "5.110.2",
-        "serialize-javascript": "7.1.1",
-        "qs": "6.16.0",
-        "uuid": "14.0.2",
+        "serialize-javascript": "7.1.2",
+        "uuid": "14.0.3",
         "brace-expansion": "$brace-expansion",
-        "image-size": "$image-size"
+        "postcss-selector-parser": "7.1.6",
+        "tinypool": "2.2.0"
     },
     "browserslist": {
         "production": [
