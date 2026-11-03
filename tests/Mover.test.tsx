@@ -2192,6 +2192,153 @@ describe("Mover with grid", () => {
     });
 });
 
+describe("Mover grid direction", () => {
+    beforeEach(async () => {
+        await BroTest.bootstrapTabsterPage({ mover: true });
+    });
+
+    it.each<[string, Types.MoverDirection, "ltr" | "rtl", "table" | "flex"]>([
+        ["grid", MoverDirections.Grid, "ltr", "table"],
+        ["grid", MoverDirections.Grid, "rtl", "table"],
+        ["grid", MoverDirections.Grid, "ltr", "flex"],
+        ["grid", MoverDirections.Grid, "rtl", "flex"],
+        ["linear grid", MoverDirections.GridLinear, "ltr", "table"],
+        ["linear grid", MoverDirections.GridLinear, "rtl", "table"],
+        ["linear grid", MoverDirections.GridLinear, "ltr", "flex"],
+        ["linear grid", MoverDirections.GridLinear, "rtl", "flex"],
+    ])(
+        "should preserve row and column navigation in %s (direction %s) with %s %s layout",
+        async (_, direction, dir, layout) => {
+            const widths = [60.5, 100.5, 80.5];
+            const rows = [1, 2, 3];
+            const cell = (row: number, column: number) => (
+                <button
+                    id={`row${row}-col${column}`}
+                    style={{
+                        boxSizing: "border-box",
+                        width: widths[column - 1],
+                        height: 40,
+                        padding: 0,
+                        margin: 0,
+                    }}
+                >
+                    Row{row}-Col{column}
+                </button>
+            );
+            const forward = dir === "rtl" ? "ArrowLeft" : "ArrowRight";
+            const backward = dir === "rtl" ? "ArrowRight" : "ArrowLeft";
+            const expectCell =
+                (row: number, column: number) =>
+                (el: BroTest.BrowserElement | null | undefined) => {
+                    expect(el?.textContent).toEqual(`Row${row}-Col${column}`);
+                };
+
+            const test = new BroTest.BroTest(
+                <div dir={dir} {...getTabsterAttribute({ root: {} })}>
+                    <div {...getTabsterAttribute({ mover: { direction } })}>
+                        {layout === "table" ? (
+                            <table style={{ borderSpacing: 0 }}>
+                                <tbody>
+                                    {rows.map((row) => (
+                                        <tr key={row}>
+                                            {widths.map((_, index) => (
+                                                <td
+                                                    key={index}
+                                                    style={{ padding: 0 }}
+                                                >
+                                                    {cell(row, index + 1)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    width: 241.5,
+                                }}
+                            >
+                                {rows.map((row) =>
+                                    widths.map((_, index) => (
+                                        <React.Fragment key={`${row}-${index}`}>
+                                            {cell(row, index + 1)}
+                                        </React.Fragment>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+                .pressTab()
+                .activeElement(expectCell(1, 1))
+                .press(backward)
+                .activeElement(expectCell(1, 1))
+                .press(forward)
+                .activeElement(expectCell(1, 2))
+                .press(forward)
+                .activeElement(expectCell(1, 3))
+                .press(forward)
+                .activeElement(
+                    expectCell(
+                        direction === MoverDirections.GridLinear ? 2 : 1,
+                        direction === MoverDirections.GridLinear ? 1 : 3
+                    )
+                )
+                .press(backward)
+                .activeElement(
+                    expectCell(
+                        1,
+                        direction === MoverDirections.GridLinear ? 3 : 2
+                    )
+                )
+                .focusElement("#row2-col1")
+                .press(backward)
+                .activeElement(
+                    expectCell(
+                        direction === MoverDirections.GridLinear ? 1 : 2,
+                        direction === MoverDirections.GridLinear ? 3 : 1
+                    )
+                )
+                .focusElement("#row3-col3")
+                .press(forward)
+                .activeElement(expectCell(3, 3));
+
+            for (const column of [1, 2, 3]) {
+                test.focusElement(`#row2-col${column}`)
+                    .pressUp()
+                    .activeElement(expectCell(1, column))
+                    .pressUp()
+                    .activeElement(expectCell(1, column))
+                    .pressDown()
+                    .activeElement(expectCell(2, column))
+                    .pressDown()
+                    .activeElement(expectCell(3, column))
+                    .pressDown()
+                    .activeElement(expectCell(3, column))
+                    .press("PageUp")
+                    .activeElement(expectCell(1, column))
+                    .press("PageUp")
+                    .activeElement(expectCell(1, column))
+                    .press("PageDown")
+                    .activeElement(expectCell(3, column))
+                    .press("PageDown")
+                    .activeElement(expectCell(3, column))
+                    .focusElement(`#row2-col${column}`)
+                    .press("Home")
+                    .activeElement(expectCell(2, 1))
+                    .press("End")
+                    .activeElement(expectCell(2, 3));
+            }
+
+            await test;
+        }
+    );
+});
+
 describe("Mover with linear grid", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ mover: true });

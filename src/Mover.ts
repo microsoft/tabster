@@ -902,11 +902,14 @@ export class MoverAPI implements Types.MoverAPI {
             });
 
             if (next && isGrid) {
-                const nextElementX1 = Math.ceil(
-                    next.getBoundingClientRect().left
-                );
+                const nextRect = next.getBoundingClientRect();
 
-                if (!isGridLinear && focusedElementX2 > nextElementX1) {
+                if (
+                    !isGridLinear &&
+                    (ctx.rtl
+                        ? Math.floor(nextRect.right) > focusedElementX1
+                        : focusedElementX2 > Math.ceil(nextRect.left))
+                ) {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
@@ -926,11 +929,14 @@ export class MoverAPI implements Types.MoverAPI {
             });
 
             if (next && isGrid) {
-                const nextElementX2 = Math.floor(
-                    next.getBoundingClientRect().right
-                );
+                const nextRect = next.getBoundingClientRect();
 
-                if (!isGridLinear && nextElementX2 > focusedElementX1) {
+                if (
+                    !isGridLinear &&
+                    (ctx.rtl
+                        ? focusedElementX2 > Math.ceil(nextRect.left)
+                        : Math.floor(nextRect.right) > focusedElementX1)
+                ) {
                     next = undefined;
                 }
             } else if (!next && isCyclic) {
@@ -957,7 +963,9 @@ export class MoverAPI implements Types.MoverAPI {
 
                         if (
                             el !== fromElement &&
-                            focusedElementX1 <= nextElementX1
+                            (ctx.rtl
+                                ? focusedElementX1 >= nextElementX1
+                                : focusedElementX1 <= nextElementX1)
                         ) {
                             return true;
                         }
@@ -989,7 +997,9 @@ export class MoverAPI implements Types.MoverAPI {
 
                         if (
                             el !== fromElement &&
-                            focusedElementX1 >= nextElementX1
+                            (ctx.rtl
+                                ? focusedElementX1 <= nextElementX1
+                                : focusedElementX1 >= nextElementX1)
                         ) {
                             return true;
                         }
@@ -1048,8 +1058,11 @@ export class MoverAPI implements Types.MoverAPI {
                             el.getBoundingClientRect().left
                         );
                         if (
-                            focusedElementX1 < nextElementX1 ||
-                            firstColumnX1 >= nextElementX1
+                            ctx.rtl
+                                ? focusedElementX1 > nextElementX1 ||
+                                  firstColumnX1 <= nextElementX1
+                                : focusedElementX1 < nextElementX1 ||
+                                  firstColumnX1 >= nextElementX1
                         ) {
                             return true;
                         }
@@ -1104,8 +1117,11 @@ export class MoverAPI implements Types.MoverAPI {
                             el.getBoundingClientRect().left
                         );
                         if (
-                            focusedElementX1 > nextElementX1 ||
-                            lastColumnX1 <= nextElementX1
+                            ctx.rtl
+                                ? focusedElementX1 < nextElementX1 ||
+                                  lastColumnX1 >= nextElementX1
+                                : focusedElementX1 > nextElementX1 ||
+                                  lastColumnX1 <= nextElementX1
                         ) {
                             return true;
                         }

@@ -63,7 +63,14 @@ either Up/Left or Down/Right presses. `Vertical` only responds to Up/Down,
 a grid of cards or table cells) — arrow keys don't wrap between rows.
 `GridLinear` behaves like `Grid` but additionally allows linear movement:
 pressing Right past the last item of a row continues onto the first item of
-the next row (and Left/wrap the other way).
+the next row (and Left/wrap the other way). In RTL layouts, Left moves to
+the next item and Right to the previous item, including `GridLinear` row
+wrapping. Horizontal traversal follows DOM order, so items should be laid
+out in reading order.
+
+For both grid modes, Home/End move to the first/last focusable item in the
+current row in reading order. PageUp/PageDown move to the first/last
+vertically visible row while preserving the current column where possible.
 
 ```tsx
 import {
