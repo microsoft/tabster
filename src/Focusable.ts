@@ -156,10 +156,11 @@ export class FocusableAPI implements Types.FocusableAPI {
                 {
                     ...options,
                     acceptCondition: (el) =>
+                        !!this.getProps(el).isDefault &&
                         this.isFocusable(
                             el,
                             options.includeProgrammaticallyFocusable
-                        ) && !!this.getProps(el).isDefault,
+                        ),
                 },
                 out
             ) || null
