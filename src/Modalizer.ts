@@ -401,6 +401,13 @@ export class ModalizerAPI implements Types.ModalizerAPI {
         delete this.activeId;
         this.activeElements = [];
 
+        this._aug.forEach((reference) => {
+            const element = reference.get();
+            if (element) {
+                augmentAttribute(this._tabster, element, "aria-hidden");
+            }
+        });
+
         this._augMap = new WeakMap();
         this._aug = [];
 
