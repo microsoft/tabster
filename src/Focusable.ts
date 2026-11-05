@@ -260,6 +260,17 @@ export class FocusableAPI implements Types.FocusableAPI {
 
             if (isFindAll) {
                 if (foundElement) {
+                    // A deferred backward candidate can be reported from a
+                    // different walker node. Continue from the candidate so
+                    // that the reporting node is not skipped.
+                    if (
+                        isBackward &&
+                        acceptElementState.foundBackward === foundElement &&
+                        dom.nodeContains(container, foundElement)
+                    ) {
+                        walker.currentNode = foundElement;
+                    }
+
                     acceptElementState.found = false;
                     delete acceptElementState.foundElement;
                     delete acceptElementState.foundBackward;
