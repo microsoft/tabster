@@ -376,8 +376,10 @@ export class ObservedElementAPI
                     request.status = ObservedElementRequestStatuses.Canceled;
                     request.diagnostics.waitForElementDuration =
                         Date.now() - startTime;
+                    if (this._waiting[key] === w) {
+                        this._rejectWaiting(key, true);
+                    }
                 }
-                this._rejectWaiting(key, true);
             },
             status: ObservedElementRequestStatuses.Waiting,
             diagnostics: {},
@@ -462,7 +464,7 @@ export class ObservedElementAPI
                 return focusResult;
             }),
             cancel: () => {
-                if (!isCompleted) {
+                if (!isCompleted && !isCanceled) {
                     isCanceled = true;
                     request.cancel();
                     ret.status = ObservedElementRequestStatuses.Canceled;

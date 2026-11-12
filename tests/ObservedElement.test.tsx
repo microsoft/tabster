@@ -866,6 +866,73 @@ describe("Focusable", () => {
     });
 
     describe("Cancellation before delivery", () => {
+        it.each(["focus", "wait"])(
+            "should not cancel a newer same-name request through repeated cancellation (%s)",
+            async (kind) => {
+                await new BroTest.BroTest(
+                    <div id="root" {...getTabsterAttribute({ root: {} })}>
+                        <button id="start">Start</button>
+                    </div>
+                )
+                    .eval(async (kind: string) => {
+                        const { observedElement, dom } =
+                            getTabsterTestVariables();
+                        const root = dom?.getElementById(document, "root");
+                        if (!observedElement || !root) {
+                            throw new Error("Missing observed test setup");
+                        }
+
+                        dom?.getElementById(document, "start")?.focus();
+                        const oldRequest =
+                            kind === "focus"
+                                ? observedElement.requestFocus("target", 1000)
+                                : observedElement.waitElement("target", 1000);
+                        oldRequest.cancel();
+                        const newerRequest =
+                            kind === "focus"
+                                ? observedElement.requestFocus("target", 1000)
+                                : observedElement.waitElement("target", 1000);
+                        oldRequest.cancel();
+
+                        const target = document.createElement("button");
+                        target.id = "target";
+                        target.setAttribute(
+                            "data-tabster",
+                            JSON.stringify({
+                                observed: { names: ["target"] },
+                            })
+                        );
+                        root.appendChild(target);
+
+                        const result = await newerRequest.result;
+                        return {
+                            result:
+                                typeof result === "boolean"
+                                    ? result
+                                    : result?.id,
+                            status: newerRequest.status,
+                            oldResult: await oldRequest.result,
+                            oldStatus: oldRequest.status,
+                        };
+                    }, kind)
+                    .check(({ result, status, oldResult, oldStatus }) => {
+                        expect(result).toBe(kind === "focus" ? true : "target");
+                        expect(status).toBe(
+                            ObservedElementRequestStatuses.Succeeded
+                        );
+                        expect(oldResult).toBe(kind === "focus" ? false : null);
+                        expect(oldStatus).toBe(
+                            ObservedElementRequestStatuses.Canceled
+                        );
+                    })
+                    .activeElement((el) => {
+                        expect(el?.attributes.id).toBe(
+                            kind === "focus" ? "target" : "start"
+                        );
+                    });
+            }
+        );
+
         it.each(["manual", "superseded", "disposed"])(
             "should not focus an already found target after cancellation (%s)",
             async (kind) => {

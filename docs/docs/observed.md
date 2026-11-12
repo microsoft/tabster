@@ -73,6 +73,9 @@ wait.result.then((element) => {
 wait.cancel();
 ```
 
+Canceling a wait again after it has ended does not affect a newer wait for the
+same observed name.
+
 ### `requestFocus()`
 
 Waits for the observed element to appear, then focuses it. A subsequent
