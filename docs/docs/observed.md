@@ -52,6 +52,11 @@ Returns the observed element currently in the DOM for a name, or `null`.
 const element = observedElement.getElement("myButton");
 ```
 
+When multiple elements share a name, an accessibility filter skips ineligible
+registrations and returns the first eligible match in registration order.
+The same selection applies to pending `waitElement()` and `requestFocus()`
+calls; an ineligible earlier registration does not block a later eligible one.
+
 ### `waitElement()`
 
 Waits (up to `timeout` ms) for an element with the given name to appear.
