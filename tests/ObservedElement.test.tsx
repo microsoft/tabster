@@ -17,6 +17,116 @@ describe("Focusable", () => {
         await BroTest.bootstrapTabsterPage({ observed: true });
     });
 
+    it.each([
+        ["button", "block"],
+        ["input", "block"],
+        ["div", "block"],
+        ["button", "contents"],
+    ])(
+        "should focus a visible fixed %s inside a fixed parent with display %s",
+        async (tag, display) => {
+            await new BroTest.BroTest(
+                <div {...getTabsterAttribute({ root: {} })}>
+                    <button id="start">Start</button>
+                    <div style={{ position: "fixed", display }}>
+                        {React.createElement(
+                            tag,
+                            {
+                                id: "target",
+                                tabIndex: -1,
+                                style: { position: "fixed" },
+                                ...getTabsterAttribute({
+                                    observed: { names: ["target"] },
+                                }),
+                            },
+                            tag === "input" ? undefined : "Target"
+                        )}
+                    </div>
+                </div>
+            )
+                .eval(async () => {
+                    const { observedElement, dom } = getTabsterTestVariables();
+                    const start = dom?.getElementById(document, "start");
+                    const target = dom?.getElementById(document, "target");
+                    if (!observedElement || !start || !target) {
+                        throw new Error("Missing observed test setup");
+                    }
+
+                    let nativeFocused = false;
+                    target.addEventListener(
+                        "focus",
+                        () => {
+                            nativeFocused = true;
+                        },
+                        { once: true }
+                    );
+                    target.focus();
+                    start.focus();
+
+                    const request = observedElement.requestFocus("target", 500);
+                    return {
+                        nativeFocused,
+                        result: await request.result,
+                        status: request.status,
+                    };
+                })
+                .check(({ nativeFocused, result, status }) => {
+                    expect(nativeFocused).toBe(true);
+                    expect(result).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                })
+                .activeElement((el) => {
+                    expect(el?.attributes.id).toBe("target");
+                });
+        }
+    );
+
+    it("should wait for a hidden fixed parent to become visible", async () => {
+        await new BroTest.BroTest(
+            <div {...getTabsterAttribute({ root: {} })}>
+                <div id="parent" style={{ position: "fixed", display: "none" }}>
+                    <button
+                        id="target"
+                        style={{ position: "fixed" }}
+                        {...getTabsterAttribute({
+                            observed: { names: ["target"] },
+                        })}
+                    >
+                        Target
+                    </button>
+                </div>
+            </div>
+        )
+            .eval(async () => {
+                const { observedElement, dom } = getTabsterTestVariables();
+                const parent = dom?.getElementById(document, "parent");
+                if (!observedElement || !parent) {
+                    throw new Error("Missing observed test setup");
+                }
+
+                const request = observedElement.requestFocus("target", 1000);
+                const initialStatus = request.status;
+                parent.style.display = "block";
+                return {
+                    initialStatus,
+                    result: await request.result,
+                    status: request.status,
+                };
+            })
+            .check(({ initialStatus, result, status }) => {
+                expect(initialStatus).toBe(
+                    ObservedElementRequestStatuses.Waiting
+                );
+                expect(result).toBe(true);
+                expect(status).toBe(ObservedElementRequestStatuses.Succeeded);
+            })
+            .activeElement((el) => {
+                expect(el?.attributes.id).toBe("target");
+            });
+    });
+
     it("should forward focus options", async () => {
         const name = "test";
         const focusOptions: Types.TabsterFocusOptions = {
