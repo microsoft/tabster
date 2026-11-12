@@ -41,7 +41,7 @@ export class ObservedElementAPI
         [name: string]: { [uid: string]: ObservedElementInfo };
     } = {};
     private _currentRequest:
-        Types.ObservedElementAsyncRequest<HTMLElement | null> | undefined;
+        Types.ObservedElementAsyncRequest<boolean> | undefined;
     private _currentRequestTimestamp = 0;
     onObservedElementChange?: (change: Types.ObservedElementChange) => void;
 
@@ -56,6 +56,8 @@ export class ObservedElementAPI
     }
 
     dispose(): void {
+        this._currentRequest?.cancel();
+        this._currentRequest = undefined;
         this._tabster.focusedElement.unsubscribe(this._onFocus);
 
         for (const key of Object.keys(this._waiting)) {
@@ -412,15 +414,26 @@ export class ObservedElementAPI
             ObservedElementAccessibilities.Focusable
         );
 
-        this._currentRequest = request;
         this._currentRequestTimestamp = Date.now();
+        let isCanceled = false;
+        let isCompleted = false;
 
         const ret: Types.ObservedElementAsyncRequest<boolean> = {
             result: request.result.then((element) => {
+                if (isCanceled) {
+                    return false;
+                }
+
                 if (this._lastRequestFocusId !== requestId) {
+                    isCanceled = true;
                     request.diagnostics.reason =
                         ObservedElementFailureReasons.SupersededByNewRequest;
                     return false;
+                }
+
+                isCompleted = true;
+                if (this._currentRequest === ret) {
+                    delete this._currentRequest;
                 }
 
                 if (!element) {
@@ -449,18 +462,27 @@ export class ObservedElementAPI
                 return focusResult;
             }),
             cancel: () => {
-                request.cancel();
+                if (!isCompleted) {
+                    isCanceled = true;
+                    request.cancel();
+                    ret.status = ObservedElementRequestStatuses.Canceled;
+                }
             },
             status: request.status,
             diagnostics: request.diagnostics,
         };
 
+        this._currentRequest = ret;
+
         request.result.finally(() => {
-            if (this._currentRequest === request) {
+            isCompleted = true;
+            if (this._currentRequest === ret) {
                 delete this._currentRequest;
             }
 
-            ret.status = request.status;
+            ret.status = isCanceled
+                ? ObservedElementRequestStatuses.Canceled
+                : request.status;
         });
 
         return ret;

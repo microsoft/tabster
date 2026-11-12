@@ -865,6 +865,126 @@ describe("Focusable", () => {
             );
     });
 
+    describe("Cancellation before delivery", () => {
+        it.each(["manual", "superseded", "disposed"])(
+            "should not focus an already found target after cancellation (%s)",
+            async (kind) => {
+                await new BroTest.BroTest(
+                    <div {...getTabsterAttribute({ root: {} })}>
+                        <button
+                            id="start"
+                            {...getTabsterAttribute({
+                                observed: { names: ["start"] },
+                            })}
+                        >
+                            Start
+                        </button>
+                        <button
+                            id="target"
+                            {...getTabsterAttribute({
+                                observed: { names: ["target"] },
+                            })}
+                        >
+                            Target
+                        </button>
+                    </div>
+                )
+                    .eval(async (kind: string) => {
+                        const { observedElement, dom } =
+                            getTabsterTestVariables();
+                        const start = dom?.getElementById(document, "start");
+                        const target = dom?.getElementById(document, "target");
+                        if (!observedElement || !start || !target) {
+                            throw new Error("Missing observed test setup");
+                        }
+
+                        start.focus();
+                        let targetFocusCount = 0;
+                        target.addEventListener("focus", () => {
+                            targetFocusCount++;
+                        });
+                        const request = observedElement.requestFocus(
+                            "target",
+                            1000
+                        );
+                        let newerRequest:
+                            | Types.ObservedElementAsyncRequest<boolean>
+                            | undefined;
+
+                        if (kind === "manual") {
+                            request.cancel();
+                        } else if (kind === "superseded") {
+                            newerRequest = observedElement.requestFocus(
+                                "start",
+                                1000
+                            );
+                        } else {
+                            observedElement.dispose();
+                        }
+
+                        const result = await request.result;
+                        const newerResult = await newerRequest?.result;
+                        return {
+                            result,
+                            status: request.status,
+                            targetFocusCount,
+                            newerResult,
+                        };
+                    }, kind)
+                    .check(
+                        ({ result, status, targetFocusCount, newerResult }) => {
+                            expect(result).toBe(false);
+                            expect(status).toBe(
+                                ObservedElementRequestStatuses.Canceled
+                            );
+                            expect(targetFocusCount).toBe(0);
+                            if (kind === "superseded") {
+                                expect(newerResult).toBe(true);
+                            }
+                        }
+                    )
+                    .activeElement((el) => {
+                        expect(el?.attributes.id).toBe("start");
+                    });
+            }
+        );
+
+        it("should preserve a completed focus request when cancel is called later", async () => {
+            await new BroTest.BroTest(
+                <button
+                    id="target"
+                    {...getTabsterAttribute({
+                        observed: { names: ["target"] },
+                    })}
+                >
+                    Target
+                </button>
+            )
+                .eval(async () => {
+                    const request =
+                        getTabsterTestVariables().observedElement?.requestFocus(
+                            "target",
+                            1000
+                        );
+                    if (!request) {
+                        throw new Error("Missing observed test setup");
+                    }
+                    const result = await request.result;
+                    request.cancel();
+                    return { result, status: request.status };
+                })
+                .check(({ result, status }) => {
+                    expect(result).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                })
+                .activeElement((el) => {
+                    expect(el?.attributes.id).toBe("target");
+                });
+        });
+    });
+
     describe("Diagnostics", () => {
         it("should provide diagnostics with waitForElementDuration when element is found immediately", async () => {
             const name = "test";

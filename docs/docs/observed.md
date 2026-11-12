@@ -89,6 +89,11 @@ focus.result.then((focused: boolean) => {
 focus.cancel();
 ```
 
+Cancellation prevents focus delivery even when the element has already been
+found but the request's promise has not delivered focus yet. Once focus has
+been delivered, canceling the completed request does not undo it. Disposing
+the observed-element API also cancels its pending focus request.
+
 `waitElement()`/`requestFocus()` both return an
 `ObservedElementAsyncRequest`, whose `status` is one of the
 [`ObservedElementRequestStatuses`](api-reference.md#constants)
