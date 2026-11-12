@@ -153,10 +153,6 @@ Finds and classifies focusable elements. This is the same engine Mover,
 Groupper, and Modalizer use internally to compute tabbing order, so it's
 reliable to build custom navigation on top of.
 
-Visibility checks include fixed-position targets inside fixed-position or
-`display: contents` containers. A container having no `offsetParent` does
-not by itself make its descendants hidden.
-
 ```ts
 interface FocusableAPI {
     getProps(element: HTMLElement): FocusableProps;
