@@ -23,6 +23,8 @@ dts/
 /.rollup.cache
 
 .npmrc
+!/.npmrc
+!/docs/.npmrc
 
 .devcontainer
 
