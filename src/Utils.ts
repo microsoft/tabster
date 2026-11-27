@@ -557,10 +557,8 @@ export function isDisplayNone(element: HTMLElement): boolean {
             return true;
         }
 
-        if (
-            element.parentElement?.offsetParent === null &&
-            elementDocument.body !== element.parentElement
-        ) {
+        // A visible fixed or display:contents parent can also have no offsetParent.
+        if (element.getClientRects().length === 0) {
             return true;
         }
     }
