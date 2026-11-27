@@ -7,6 +7,7 @@ import * as React from "react";
 import {
     getTabsterAttribute,
     Types,
+    ObservedElementAccessibilities,
     ObservedElementRequestStatuses,
     ObservedElementFailureReasons,
 } from "tabster";
@@ -16,6 +17,191 @@ describe("Focusable", () => {
     beforeEach(async () => {
         await BroTest.bootstrapTabsterPage({ observed: true });
     });
+
+    it("should return the first eligible duplicate for the requested accessibility", async () => {
+        const name = "duplicate";
+        const observed = getTabsterAttribute({ observed: { names: [name] } });
+
+        await new BroTest.BroTest(
+            <div {...getTabsterAttribute({ root: {} })}>
+                <button id="inaccessible" aria-hidden="true" {...observed}>
+                    Inaccessible
+                </button>
+                <button id="first-eligible" {...observed}>
+                    First eligible
+                </button>
+                <button id="second-eligible" {...observed}>
+                    Second eligible
+                </button>
+            </div>
+        )
+            .eval(
+                (name, accessible, focusable) => {
+                    const observedElement =
+                        getTabsterTestVariables().observedElement;
+
+                    return {
+                        any: observedElement?.getElement(name)?.id,
+                        accessible: observedElement?.getElement(
+                            name,
+                            accessible
+                        )?.id,
+                        focusable: observedElement?.getElement(name, focusable)
+                            ?.id,
+                    };
+                },
+                name,
+                ObservedElementAccessibilities.Accessible,
+                ObservedElementAccessibilities.Focusable
+            )
+            .check((elements) => {
+                expect(elements).toEqual({
+                    any: "inaccessible",
+                    accessible: "first-eligible",
+                    focusable: "first-eligible",
+                });
+            });
+    });
+
+    it.each([false, true])(
+        "should focus a duplicate after a hidden registration (late: %s)",
+        async (late) => {
+            const name = "duplicate";
+            const observed = getTabsterAttribute({
+                observed: { names: [name] },
+            });
+
+            await new BroTest.BroTest(
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <button hidden {...observed}>
+                        Hidden
+                    </button>
+                    {!late && (
+                        <button id="eligible" {...observed}>
+                            Eligible
+                        </button>
+                    )}
+                </div>
+            )
+                .eval(
+                    async (name, late) => {
+                        const { observedElement, dom } =
+                            getTabsterTestVariables();
+                        const root = dom?.getElementById(document, "root");
+
+                        if (!observedElement || !root) {
+                            throw new Error("Missing observed test setup");
+                        }
+
+                        const request = observedElement.requestFocus(
+                            name,
+                            1000
+                        );
+                        const initialStatus = request.status;
+
+                        if (late) {
+                            const button = document.createElement("button");
+                            button.id = "eligible";
+                            button.textContent = "Eligible";
+                            button.setAttribute(
+                                "data-tabster",
+                                JSON.stringify({
+                                    observed: { names: [name] },
+                                })
+                            );
+                            root.appendChild(button);
+                        }
+
+                        return {
+                            result: await request.result,
+                            status: request.status,
+                            initialStatus,
+                        };
+                    },
+                    name,
+                    late
+                )
+                .check(({ result, status, initialStatus }) => {
+                    expect(result).toBe(true);
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    expect(initialStatus).toBe(
+                        late
+                            ? ObservedElementRequestStatuses.Waiting
+                            : ObservedElementRequestStatuses.Succeeded
+                    );
+                })
+                .activeElement((el) => {
+                    expect(el?.attributes.id).toBe("eligible");
+                });
+        }
+    );
+
+    it.each([
+        ObservedElementAccessibilities.Accessible,
+        ObservedElementAccessibilities.Focusable,
+    ])(
+        "should resolve a pending wait for an eligible duplicate (accessibility: %s)",
+        async (accessibility) => {
+            const name = "duplicate";
+
+            await new BroTest.BroTest(
+                <div id="root" {...getTabsterAttribute({ root: {} })}>
+                    <button
+                        aria-hidden="true"
+                        {...getTabsterAttribute({
+                            observed: { names: [name] },
+                        })}
+                    >
+                        Inaccessible
+                    </button>
+                </div>
+            )
+                .eval(
+                    async (name, accessibility) => {
+                        const { observedElement, dom } =
+                            getTabsterTestVariables();
+                        const root = dom?.getElementById(document, "root");
+
+                        if (!observedElement || !root) {
+                            throw new Error("Missing observed test setup");
+                        }
+
+                        const request = observedElement.waitElement(
+                            name,
+                            1000,
+                            accessibility
+                        );
+                        const initialStatus = request.status;
+                        const button = document.createElement("button");
+                        button.id = "eligible";
+                        button.setAttribute(
+                            "data-tabster",
+                            JSON.stringify({ observed: { names: [name] } })
+                        );
+                        root.appendChild(button);
+
+                        return {
+                            id: (await request.result)?.id,
+                            status: request.status,
+                            initialStatus,
+                        };
+                    },
+                    name,
+                    accessibility
+                )
+                .check(({ id, status, initialStatus }) => {
+                    expect(id).toBe("eligible");
+                    expect(status).toBe(
+                        ObservedElementRequestStatuses.Succeeded
+                    );
+                    expect(initialStatus).toBe(
+                        ObservedElementRequestStatuses.Waiting
+                    );
+                });
+        }
+    );
 
     it("should forward focus options", async () => {
         const name = "test";

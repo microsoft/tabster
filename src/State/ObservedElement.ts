@@ -280,7 +280,9 @@ export class ObservedElementAPI
                     delete this._observedById[uid];
                 }
 
-                return el;
+                if (el) {
+                    return el;
+                }
             }
         }
 
@@ -615,7 +617,10 @@ export class ObservedElementAPI
             !waitingAccessibleElement.conditionTimer
         ) {
             const resolveAccessible = () => {
-                const element = this.getElement(observedName);
+                const element = this.getElement(
+                    observedName,
+                    ObservedElementAccessibilities.Accessible
+                );
 
                 if (
                     element &&
@@ -644,7 +649,10 @@ export class ObservedElementAPI
             !waitingFocusableElement.conditionTimer
         ) {
             const resolveFocusable = () => {
-                const element = this.getElement(observedName);
+                const element = this.getElement(
+                    observedName,
+                    ObservedElementAccessibilities.Focusable
+                );
 
                 if (
                     element &&
