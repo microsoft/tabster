@@ -47,6 +47,10 @@ overrides at each dependency bump.
 The root also overrides `@istanbuljs/load-nyc-config` to use `js-yaml` 4.3.2,
 matching the YAML version used by the other tooling and removing the
 vulnerable `sprintf-js` dependency. The loader uses the supported `load` API.
+The root overrides vulnerable `minimatch` versions from 7.x through 11.0.0
+to 11.0.9 for GHSA-g3hv-75wg-m249 (Dependabot alert 555). Legacy 3.x consumers
+retain their callable CommonJS API. Recheck the override when Jest and
+its coverage dependencies accept fixed releases.
 The local `brace-expansion` adapters remain necessary for older
 minimatch consumers that expect a callable CommonJS export.
 

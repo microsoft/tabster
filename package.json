@@ -115,6 +115,7 @@
         },
         "basic-ftp": "6.2.6",
         "brace-expansion": "$brace-expansion",
-        "jest-environment-node": "30.5.2"
+        "jest-environment-node": "30.5.2",
+        "minimatch@>=7 <11.0.1": "11.0.9"
     }
 }
