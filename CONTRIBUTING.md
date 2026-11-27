@@ -17,11 +17,20 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 - Use Node.js 24, matching `.nvmrc` and CI.
 - npm install
 
+Keep lockfiles registry-neutral. Both npm projects omit registry URLs so
+installs use npm's public registry by default, or the user's configured
+registry. Do not commit environment-specific registry overrides.
+Use SHA-512 tarball integrity hashes in both lockfiles; do not downgrade
+existing hashes when registry metadata supplies only SHA-1.
+
 Dependency upgrades should use stable releases rather than alpha or beta
 dist-tags. TypeScript stays on 6.0.3 in the library and docs because the current
 typescript-eslint release requires TypeScript below 6.1. Babel stays on the
 latest compatible 7.x releases because Jest's syntax preset still depends on
-Babel 7-only plugins.
+Babel 7-only plugins. The `js-yaml` override stays on 4.3.2 because
+version 5 changes the default YAML schema and merge-key behavior.
+`jest-environment-puppeteer` provides its own types, so the redundant
+`@types/jest-environment-puppeteer` dependency has been removed.
 
 Docusaurus now resolves the official `image-size` 2.0.4 release, which includes
 the fixes for GHSA-w3rx-r6r6-pgpr and GHSA-5p2g-fcmc-qvqq. The temporary
@@ -31,19 +40,19 @@ integration coverage and bounded malformed-image regression checks. The
 now accept the fixed releases.
 
 Dependency ranges still require overrides for `basic-ftp` in the root and
-`postcss-selector-parser` and `tinypool` in the docs to resolve fixed
-official releases. Recheck these overrides at each dependency bump.
+`postcss-selector-parser`, `serialize-javascript`, `uuid`, and `tinypool` in
+the docs to resolve fixed official releases. The current proxy tooling still
+pins an older `get-uri` release that requires `basic-ftp` 5.x. Recheck these
+overrides at each dependency bump.
 The root also overrides `@istanbuljs/load-nyc-config` to use `js-yaml` 4.3.2,
 matching the YAML version used by the other tooling and removing the
 vulnerable `sprintf-js` dependency. The loader uses the supported `load` API.
 The local `brace-expansion` adapters remain necessary for older
 minimatch consumers that expect a callable CommonJS export.
 
-The docs still transitively require `braces` 3.0.3, affected by
-GHSA-vfj7-8cjw-p6xm (Dependabot alert 499). No patched official release is
-currently available, and current stable Docusaurus and micromatch releases
-still depend on it. This dependency bump does not resolve that alert;
-recheck upstream releases at each bump.
+The docs still transitively require `braces` 3.0.3, the latest official
+release. Its previously reported advisory GHSA-vfj7-8cjw-p6xm (Dependabot
+alert 499) was withdrawn upstream on October 23, 2026.
 
 ## Available commands
 
